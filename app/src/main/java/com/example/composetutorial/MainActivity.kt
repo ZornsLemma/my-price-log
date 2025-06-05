@@ -293,7 +293,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        Log.d("TODO2", "TODO2")
         // TODO: Experiment with adding a Settings activity and make the dark/light/follow system available and grey out (with some text saying why) follow system on Android < 10
         val isDarkTheme = true /* TODO when (userThemePref) {
             ThemePreference.DARK -> true
