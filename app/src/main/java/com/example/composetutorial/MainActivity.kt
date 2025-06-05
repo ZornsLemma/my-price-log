@@ -19,6 +19,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,13 +66,15 @@ fun ComboBox(label: String,
              onValueChange: (String) -> Unit,
              content: List<String>, // TODO: poor name for var?
              modifier: Modifier = Modifier) {
+    // TODO: I suspect we may not want to pass all value changes in the text box through to the onValueChange provided by our parent. We are encouraging the user to type partial substrings which are meaningless to the parent, and it also doesn't really care anyway until we have "finished" and have a possibly-valid (but we may not) string, either because the user typed it or because they clicked it in the list. For now I am not even trying to call the parent and just ignoring the value they supply.
     var isExpanded by remember { mutableStateOf(false) }
+    var text by rememberSaveable { mutableStateOf( "" ) }
     Column() {
         Row(modifier = modifier) {
             TextField(
                 label = { Text(label) },
-                value = value,
-                onValueChange = onValueChange,
+                value = text,
+                onValueChange = { newText -> text = newText },
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
