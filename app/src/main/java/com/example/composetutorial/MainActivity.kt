@@ -65,6 +65,16 @@ enum class ThemePreference {
 
 // TODO: This probably needs to track state/events via parents
 // TODO: A final version of this might want an internal (database, not linear) ID for each item and it might expose that ID as well as/instead of the associated String to the caller, but the ID is of course invisible to the UI
+// TODO: Next problem to solve - if you have cursor in the combobox text and click the icon to make
+// the dropdown appear, the cursor disappears (fine). If you click the icon again, the cursor
+// reappears (also fine). But if instead of clicking the icon, you click "off" it (let's say in th
+// middle of the screen, to be clear) the dropdown disappears (good) but the cursor remains in the
+// label (bad). I have been unable to get ChatGPT or Grok to solve this. Note that as per comment
+// below, you cannot trivially distinguish these two cases because we do *not* see a click on the
+// dropdown icon when we close it. For what it's worth, both ChatGPT and Grok suggest that the
+// dropdown is a Popup which overlays the entire screen and effectively blocks the
+// clearFocusOnTapOutside code from executing in this case. (Not that it would necessarily do the
+// right thing anyway, because it would clear the focus in all cases, which we don't want.)
 @Composable
 fun ComboBox(
     label: String,
@@ -88,7 +98,14 @@ fun ComboBox(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = null,
                         modifier = Modifier.clickable {
-                            isExpanded = !isExpanded
+                            // Superficially we want "isExpanded = !isExpanded" here, but that's not
+                            // how it works. Clicking on the icon in an attempt to close the
+                            // dropdown actually just triggers onDismissRequest on the dropdown and
+                            // this code never gets called, presumably because it is a click not on
+                            // the dropdown. Of course the toggle code is not wrong, but the
+                            // implication that it's called symmetrically is confusing when trying
+                            // to get focus behaviour correct, so let's be explicit.
+                            isExpanded = true
                         })
                 })
         }
