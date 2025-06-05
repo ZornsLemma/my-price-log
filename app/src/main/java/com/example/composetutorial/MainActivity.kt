@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -51,6 +52,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.core.view.WindowCompat
@@ -262,11 +264,18 @@ class MainActivity : ComponentActivity() {
                             awaitPointerEventScope {
                                 while (true) {
                                     val event = awaitPointerEvent()
-                                    Log.d("POINTER", "Got pointer: $event")
-                                    focusManager.clearFocus()
+                                    val changes = event.changes
+
+                                    Log.d("MyApp", "TODO1")
+                                    if (changes.any { it.pressed && !it.previousPressed }) {
+                                        Log.d("MyApp", "TODO2")
+
+                                        focusManager.clearFocus()
+                                    }
                                 }
                             }
-                        }) {
+                        })
+                        {
                             Conversation(SampleData.conversationSample)
                         }
                     }
