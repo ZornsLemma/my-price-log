@@ -52,6 +52,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.composed
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
@@ -242,6 +244,51 @@ fun MessageCard(msg: Message) {
     }
 }
 
+// ChatGPT wrote this for me after much wrangling. I 70% understand what's going on but there is
+// definitely some voodoo here. Compose apparently has no real concept of clearing the focus on
+// a TextField when we tap elsewhere on the screen. Instead, we need to arrange for this to happen
+// ourselves. We try to wrap "elsewhere" in a Box and attach this modifier to it (although I think
+// we could apply this modifier to multiple composables if we couldn't cover "elsewhere" in a single
+// Box). Because it uses pointerInput() it gets to see pointer-related events *even if* one of the
+// children (which get to see events first - they propagate child->parent) has consumed it, which is
+// what we want. (It generally drives me nuts that tapping somewhere just to "close" some
+// interaction also triggers new interaction if you tap something like a button, but this is
+// apparently standard behaviour so we don't try to change it.)
+//
+// This still doesn't really work properly. If you drag to scroll the screen, that is picked up here
+// and focus is cleared, which is apparently wrong. In practice I suspect this is fine for this app.
+//
+// The "proper" way to do this is apparently to explicitly call clearFocus() in *every* component on
+// the screen which consumes clicks and which the user might choose to tap on when the TextField has
+// focus. I think we would also need either this modifier or (maybe, and if so then it's probably
+// cleaner, since pointerInput feels more wizard-level than onClick) an onClick handler on this
+// "elsewhere" component to catch taps on non-interactive components like labels and actual empty
+// space, but I am really not sure.
+//
+// I am thoroughly disgusted with this. I can't find any helpful discussion on the web generally and
+// that such an apparently standard UI interaction requires sprinkling clearFocus() calls around
+// every interactive component or convoluted hacks like this which bring their own corner cases
+// (e.g. scrolling) feels wrong. But as far as I am able to tell, there is no official, clean
+// solution to this and no one ever discusses it outside a couple of niche StackExchange questions
+// which don't address the problem generally. I haven't even been able to find anyone saying that
+// I shouldn't even want this style of interaction (clearing the focus on clicking elsewhere,
+// even if that somewhere is itself an active element like a button) and to stop fighting the
+// framework.
+@Composable
+fun Modifier.clearFocusOnTapOutside() = composed {
+    val focusManager: FocusManager = LocalFocusManager.current
+    pointerInput(Unit) {
+        awaitPointerEventScope {
+            while (true) {
+                val event = awaitPointerEvent()
+                if (event.changes.any { it.pressed && !it.previousPressed }) {
+                    focusManager.clearFocus()
+                }
+            }
+        }
+    }
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -260,22 +307,7 @@ class MainActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)) {
                     Column(modifier = Modifier.padding(it)) {
                         ComboBox("Label", "Value", onValueChange = {}, content = listOf("c1", "c2"))
-                        Box(modifier = Modifier.pointerInput(Unit) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    val event = awaitPointerEvent()
-                                    val changes = event.changes
-
-                                    Log.d("MyApp", "TODO1")
-                                    if (changes.any { it.pressed && !it.previousPressed }) {
-                                        Log.d("MyApp", "TODO2")
-
-                                        focusManager.clearFocus()
-                                    }
-                                }
-                            }
-                        })
-                        {
+                        Box(modifier = Modifier.clearFocusOnTapOutside()) {
                             Conversation(SampleData.conversationSample)
                         }
                     }
