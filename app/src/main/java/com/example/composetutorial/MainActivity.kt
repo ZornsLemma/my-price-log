@@ -65,7 +65,7 @@ enum class ThemePreference {
 
 // TODO: This probably needs to track state/events via parents
 // TODO: A final version of this might want an internal (database, not linear) ID for each item and it might expose that ID as well as/instead of the associated String to the caller, but the ID is of course invisible to the UI
-// TODO: OK - this just may fix my problems and/or simply be "right" - should I be using ExposedDropdownMenu(Box) - this may practically *be* a standard combo box? (see e.g.https://kotlinlang.org/api/compose-multiplatform/material3/androidx.compose.material3/-exposed-dropdown-menu-box.html - TBH documentation on this feels oddly sparse)
+// TODO: OK - this just may fix my problems and/or simply be "right" - should I be using ExposedDropdownMenu(Box) - this may practically *be* a standard combo box? (see e.g.https://kotlinlang.org/api/compose-multiplatform/material3/androidx.compose.material3/-exposed-dropdown-menu-box.html - TBH documentation on this feels oddly sparse) - FWIW https://m3.material.io/components/menus/guidelines under "Filtering" looks like precisely what I want
 // TODO: Next problem to solve - if you have cursor in the combobox text and click the icon to make
 // the dropdown appear, the cursor disappears (fine). If you click the icon again, the cursor
 // reappears (also fine). But if instead of clicking the icon, you click "off" it (let's say in th
