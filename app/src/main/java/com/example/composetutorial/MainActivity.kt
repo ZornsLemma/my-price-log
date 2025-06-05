@@ -75,6 +75,20 @@ enum class ThemePreference {
 // dropdown is a Popup which overlays the entire screen and effectively blocks the
 // clearFocusOnTapOutside code from executing in this case. (Not that it would necessarily do the
 // right thing anyway, because it would clear the focus in all cases, which we don't want.)
+// (Aside: since I *actually* want to be showing a filtered list of options below the combobox as
+// soon as it contains any text at all, it is possible that this precise problem won't exist in
+// a final version of this code - the situation where the cursor is in the combobox but the dropdown
+// is not shown probably isn't possible. I suspect it will be instructive to try to address this
+// anyway to build confidence with forcing Compose to actually do things which are sensible despite
+// its natural inclinations. Still, if solving this particular problem eludes me, it might be as
+// well to push on with the filtering always-show-dropdown version I actually want and see how
+// that goes. I do actually wonder if the dropdown arrow is necessary in this final version,
+// although maybe - I'm not sure right now - having it there is helpful as offering one explicit
+// way to get rid of the dropdown and go with whatever text is currently in the TextField. In reality
+// it's probably not necessary to do that, because you can click anywhere on the screen - modulo
+// worries about that activating a button - to get the same behaviour, but it is probably nice to
+// have the hint that you can click the dropdown arrow to close the dropdown list, as well as have
+// it as a known safe place you can click without other side effects.)
 @Composable
 fun ComboBox(
     label: String,
