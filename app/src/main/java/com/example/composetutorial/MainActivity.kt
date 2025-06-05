@@ -365,3 +365,8 @@ fun PreviewMessageCard() {
 
 
 data class Message(val author: String, val body: String)
+
+// TODO: ChatGPT-inspired (and maybe do my own searches too) libraries that may solve the ComboBox issue:
+// https://github.com/Breens-Mbaka/Searchable-Dropdown-Menu-Jetpack-Compose
+// https://composablehorizons.github.io/ComposeTheme/
+// https://github.com/szeweq/desktopose combo-box (last commit three years ago though, but maybe it's perfect...)
