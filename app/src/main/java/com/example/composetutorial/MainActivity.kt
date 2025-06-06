@@ -52,7 +52,10 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.TextField
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,6 +70,26 @@ import androidx.core.view.WindowCompat
 
 enum class ThemePreference {
     LIGHT, DARK, SYSTEM
+}
+
+// TODO: START SKETCH FOR THE PULLING OUT MENTIONED BELOW
+@Composable
+fun LabeledItem(
+    label: String,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Column(modifier = modifier) {
+        Text(text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        CompositionLocalProvider(
+            LocalTextStyle provides MaterialTheme.typography.bodyLarge,
+            LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+            content()
+        }
+    }
 }
 
 // This composable provides the at-a-glance status of an item at a particular source. It won't always be visible because we may not have a current source, but when we do this should provide "most" of what a user wants to know:
@@ -85,16 +108,13 @@ fun ItemSourceInfo() {
         Column {
             Row {
                 Column {
-                    TextField(value="£5.75 for 250g", onValueChange = {}, readOnly = true, label={ Text("Absolute price")})
-                    // TODO:Try pulling the following Column(Text+Thing) out into a reusable "LabelledThing" component, and then try using that to wrap the absolute price instead of the (unsatisfactory) attempt to use a TextField int he line above
-                    Column {
-                        Text(
-                            "Unit price",
-
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            /*modifier = Modifier.padding(bottom = 4.dp) */)
-                        Row {
+                    // TODO: I am not sure I am applying "main item" text color right to either of these labelieditems
+                    LabeledItem("Price") { // TODO: better terminology? "Absolute price"???? "Shelf price"?
+                        Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
+                    }
+                    // TODO: We probably need some spacing between these lines
+                    LabeledItem("Unit price") {
+                        Row() {
                                 Text("£2.30/")
                                 Box {
                                     Row(
