@@ -34,6 +34,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -47,6 +48,9 @@ import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -135,6 +139,57 @@ fun ComboBox(
                     isExpanded = false
                     focusManager.clearFocus()
                 })
+            }
+        }
+    }
+}
+
+// TODO: ChatGPT code. Not tried to understand and I think it definitely has some flaws (which are
+// not necessarily its fault) but want to play with this a bit anyway and see if it's viable.
+// TODO: So, what's wrong with this?
+// - on clicking, text box gets the cursor very briefly then loses it - it *may* be that there's
+//   something inherent in "having the drop down on screen" which stops the text field having the
+//   cursor.
+// - after selecting an item from the drop down, the cursor remains active and the drop down disappears
+// - the drop down is not aways present when the cursor is active. This is kind of the goal which
+//   ties the above together, although it's valuable to note specific ways it can occur if we're
+//   trying to fix it.
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ComboBoxSample() {
+    val options = listOf("Apple", "Banana", "Cherry")
+    var expanded by remember { mutableStateOf(false) }
+    var selectedOptionText by remember { mutableStateOf("") }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        TextField(
+            value = selectedOptionText,
+            onValueChange = { selectedOptionText = it },
+            label = { Text("Select a fruit") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { selectionOption ->
+                DropdownMenuItem(
+                    text = { Text(selectionOption) },
+                    onClick = {
+                        selectedOptionText = selectionOption
+                        expanded = false
+                    }
+                )
             }
         }
     }
@@ -337,7 +392,11 @@ class MainActivity : ComponentActivity() {
             ComposeTutorialTheme(/* darkTheme = isDarkTheme */) {
                 Scaffold(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)) {
                     Column(modifier = Modifier.padding(it)) {
-                        ComboBox("Label", "Value", onValueChange = {}, content = listOf("c1", "c2"))
+                        // ComboBox("Label", "Value", onValueChange = {}, content = lwistOf("c1", "c2"))
+                        ComboBoxSample()
+                        // TODO: Just possible we don't need clearFocusOnTapOutside hack now, but
+                        // we probably do. Try taking it out later. If we don't need it, we don't
+                        // need the Box, which is just there to hook clearFocus... on.
                         Box(modifier = Modifier.clearFocusOnTapOutside()) {
                             Conversation(SampleData.conversationSample)
                         }
@@ -370,3 +429,7 @@ data class Message(val author: String, val body: String)
 // https://github.com/Breens-Mbaka/Searchable-Dropdown-Menu-Jetpack-Compose
 // https://composablehorizons.github.io/ComposeTheme/
 // https://github.com/szeweq/desktopose combo-box (last commit three years ago though, but maybe it's perfect...)
+
+// TODO: ~/pc-sync/ai-chat-misc-to-move/grok-combo-box-and-alternate-ui.txt is a potentially
+// valuable discussion, touching on some implementation ideas, design ideas (small tweaks and
+// alternatives) etc and would probably be worth a re-read later.
