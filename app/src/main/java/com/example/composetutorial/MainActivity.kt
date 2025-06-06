@@ -72,7 +72,8 @@ enum class ThemePreference {
     LIGHT, DARK, SYSTEM
 }
 
-// TODO: START SKETCH FOR THE PULLING OUT MENTIONED BELOW
+// LabeledItem() attempts to mimic the label style of a TextField but for "read-only" content. It
+// works best with a simple Text() child, but other things are possible.
 @Composable
 fun LabeledItem(
     label: String,
@@ -84,6 +85,10 @@ fun LabeledItem(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        // Passing LocalTextStyle and LocalContentColor *tries* to influence these aspects of all
+        // the content. Some components won't respect this, but many will, and if some don't it
+        // does at least introduce a visual inconsistency which I might notice and fix, rather
+        // than the content being consistent internally but the wrong size/colour.
         CompositionLocalProvider(
             LocalTextStyle provides MaterialTheme.typography.bodyLarge,
             LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
@@ -108,7 +113,6 @@ fun ItemSourceInfo() {
         Column {
             Row {
                 Column {
-                    // TODO: I am not sure I am applying "main item" text color right to either of these labelieditems
                     LabeledItem("Price") { // TODO: better terminology? "Absolute price"???? "Shelf price"?
                         Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
                     }
