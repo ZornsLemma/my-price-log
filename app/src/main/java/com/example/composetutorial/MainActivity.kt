@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -65,6 +66,64 @@ import androidx.core.view.WindowCompat
 
 enum class ThemePreference {
     LIGHT, DARK, SYSTEM
+}
+
+// This composable provides the at-a-glance status of an item at a particular source. It won't always be visible because we may not have a current source, but when we do this should provide "most" of what a user wants to know:
+// - is the item well-priced?
+// - do we have an up-to-date price for this item?
+// - make it easy for the user to confirm our current price or update it
+// - (borderline?) do we have up-to-date prices for other sources? if not it's hard to know if this is well-priced or not no matter how up to the date the price at this source is.
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true)
+@Composable
+fun ItemSourceInfo() {
+    // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
+    var expanded by remember { mutableStateOf(false)}
+    var currentUnit by remember { mutableStateOf( "100g")}
+    Row {
+        Column {
+            Row {
+                Text("£5.75 for 250g (£2.30/")
+                ExposedDropdownMenuBox(expanded = expanded,
+                    onExpandedChange = { expanded = !expanded },
+                    modifier = Modifier.width(140.dp)) {
+
+                    TextField(
+                        value = currentUnit,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = null,
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                        },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .width(IntrinsicSize.Min),
+                        colors = ExposedDropdownMenuDefaults.textFieldColors()
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        var availableUnits = listOf("100g", "kg", "oz")
+                        availableUnits.forEach { selectionOption ->
+                            DropdownMenuItem(
+                                text = { Text(selectionOption) },
+                                onClick = {
+                                    currentUnit = selectionOption
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Text(")")
+            }
+            Text("Price confirmed 02/04/2025")
+            Text("Competitively priced")
+        }
+    }
 }
 
 // TODO: This probably needs to track state/events via parents
@@ -392,7 +451,8 @@ class MainActivity : ComponentActivity() {
             ComposeTutorialTheme(/* darkTheme = isDarkTheme */) {
                 Scaffold(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)) {
                     Column(modifier = Modifier.padding(it)) {
-                        ComboBox("Label", "Value", onValueChange = {}, content = listOf("thing 1", "thing 2"))
+                        ItemSourceInfo()
+                        // ComboBox("Label", "Value", onValueChange = {}, content = listOf("thing 1", "thing 2"))
                         //ComboBoxSample()
                         // TODO: Just possible we don't need clearFocusOnTapOutside hack now, but
                         // we probably do. Try taking it out later. If we don't need it, we don't
