@@ -108,7 +108,7 @@ fun LabeledItem(
 fun ItemSourceInfo() {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
     var expanded by remember { mutableStateOf(false) }
-    var currentUnit by remember { mutableStateOf("100g") }
+    var currentUnit by remember { mutableStateOf("100x") } // TODO: temp change "g" to "x" to rule out this descender being an issue
     Row {
         Column {
             Row {
@@ -139,7 +139,7 @@ fun ItemSourceInfo() {
                                     DropdownMenu(
                                         expanded = expanded,
                                         onDismissRequest = { expanded = false }) {
-                                        var availableUnits = listOf("100g", "kg", "oz")
+                                        var availableUnits = listOf("100x", "kx", "oz") // TODO: 100x temp instead of 100g for no descender, ditto kx instead of kg
                                         availableUnits.forEach { selectionOption ->
                                             DropdownMenuItem(
                                                 text = { Text(selectionOption) },
