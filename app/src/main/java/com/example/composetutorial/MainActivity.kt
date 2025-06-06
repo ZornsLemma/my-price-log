@@ -57,6 +57,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.pointer.changedToDown
@@ -78,43 +79,32 @@ enum class ThemePreference {
 @Composable
 fun ItemSourceInfo() {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
-    var expanded by remember { mutableStateOf(false)}
-    var currentUnit by remember { mutableStateOf( "100g")}
+    var expanded by remember { mutableStateOf(false) }
+    var currentUnit by remember { mutableStateOf("100g") }
     Row {
         Column {
             Row {
                 Text("£5.75 for 250g (£2.30/")
-                ExposedDropdownMenuBox(expanded = expanded,
-                    onExpandedChange = { expanded = !expanded },
-                    modifier = Modifier.width(140.dp)) {
-
-                    TextField(
-                        value = currentUnit,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = null,
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                        },
-                        modifier = Modifier
-                            .menuAnchor()
-                            .width(IntrinsicSize.Min),
-                        colors = ExposedDropdownMenuDefaults.textFieldColors()
-                    )
-
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
+                Box {
+                    Row(
+                        modifier = Modifier.clickable { expanded = true },
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
+
+                        Text(text = currentUnit, style = MaterialTheme.typography.bodyLarge)
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Select unit"
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = expanded, onDismissRequest = { expanded = false }) {
                         var availableUnits = listOf("100g", "kg", "oz")
                         availableUnits.forEach { selectionOption ->
-                            DropdownMenuItem(
-                                text = { Text(selectionOption) },
-                                onClick = {
-                                    currentUnit = selectionOption
-                                    expanded = false
-                                }
-                            )
+                            DropdownMenuItem(text = { Text(selectionOption) }, onClick = {
+                                currentUnit = selectionOption
+                                expanded = false
+                            })
                         }
                     }
                 }
@@ -222,9 +212,7 @@ fun ComboBoxSample() {
     var selectedOptionText by remember { mutableStateOf("") }
 
     ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
+        expanded = expanded, onExpandedChange = { expanded = !expanded }) {
         TextField(
             value = selectedOptionText,
             onValueChange = { selectedOptionText = it },
@@ -238,17 +226,12 @@ fun ComboBoxSample() {
         )
 
         ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
+            expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { selectionOption ->
-                DropdownMenuItem(
-                    text = { Text(selectionOption) },
-                    onClick = {
-                        selectedOptionText = selectionOption
-                        expanded = false
-                    }
-                )
+                DropdownMenuItem(text = { Text(selectionOption) }, onClick = {
+                    selectedOptionText = selectionOption
+                    expanded = false
+                })
             }
         }
     }
