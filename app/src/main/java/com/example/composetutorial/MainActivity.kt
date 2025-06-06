@@ -86,6 +86,7 @@ fun ItemSourceInfo() {
             Row {
                 Column {
                     TextField(value="£5.75 for 250g", onValueChange = {}, readOnly = true, label={ Text("Absolute price")})
+                    // TODO:Try pulling the following Column(Text+Thing) out into a reusable "LabelledThing" component, and then try using that to wrap the absolute price instead of the (unsatisfactory) attempt to use a TextField int he line above
                     Column {
                         Text(
                             "Unit price",
