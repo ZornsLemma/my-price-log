@@ -121,7 +121,7 @@ fun ItemSourceInfo() {
         Column {
             Row {
                 Column {
-                    LabeledItem("Price") { // TODO: better terminology? "Absolute price"???? "Shelf price"?
+                    LabeledItem("Price as sold") { // TODO: quite like this, but maybe "Shelf price"?
                         Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
                     }
                     // TODO: We probably need some spacing between these lines
