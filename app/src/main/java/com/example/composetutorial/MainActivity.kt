@@ -110,7 +110,7 @@ fun LabeledItem(
 fun ItemSourceInfo() {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
     var expanded by remember { mutableStateOf(false) }
-    var currentUnit by remember { mutableStateOf("100x") } // TODO: temp change "g" to "x" to rule out this descender being an issue
+    var currentUnit by remember { mutableStateOf("100g") }
     // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
     // changes the system font size. (Even if we didn't do this, we'd still want to use a fixed
     // size() Modifier (16.dp works quite nicely at the default settings on my current emulator) to
@@ -149,7 +149,7 @@ fun ItemSourceInfo() {
                                     DropdownMenu(
                                         expanded = expanded,
                                         onDismissRequest = { expanded = false }) {
-                                        var availableUnits = listOf("100x", "kx", "oz") // TODO: 100x temp instead of 100g for no descender, ditto kx instead of kg
+                                        var availableUnits = listOf("100g", "kg", "oz")
                                         availableUnits.forEach { selectionOption ->
                                             DropdownMenuItem(
                                                 text = { Text(selectionOption) },
