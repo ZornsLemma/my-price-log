@@ -65,6 +65,8 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LastBaseline
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.core.view.WindowCompat
 
@@ -109,6 +111,12 @@ fun ItemSourceInfo() {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
     var expanded by remember { mutableStateOf(false) }
     var currentUnit by remember { mutableStateOf("100x") } // TODO: temp change "g" to "x" to rule out this descender being an issue
+    // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
+    // changes the system font size. (Even if we didn't do this, we'd still want to use a fixed
+    // size() Modifier (16.dp works quite nicely at the default settings on my current emulator) to
+    // improve the appearance, but it's nicer to take font size into account.)
+    val fontSize = MaterialTheme.typography.bodyLarge.fontSize
+    val iconSize = with(LocalDensity.current) { fontSize.toDp() }
     Row {
         Column {
             Row {
@@ -129,11 +137,13 @@ fun ItemSourceInfo() {
                                         Text(
                                             text = currentUnit,
                                             style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onSurface
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.alignBy(LastBaseline)
                                         )
                                         Icon(
                                             imageVector = Icons.Default.ArrowDropDown,
-                                            contentDescription = "Select unit"
+                                            contentDescription = "Select unit",
+                                            modifier = Modifier.size(iconSize /* 16.dp */ )
                                         )
                                     }
                                     DropdownMenu(
