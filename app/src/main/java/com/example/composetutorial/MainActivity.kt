@@ -85,32 +85,47 @@ fun ItemSourceInfo() {
         Column {
             Row {
                 Column {
-                Text("£5.75 for 250g")
-                    Row {
-                        Text("£2.30/")
-                        Box {
-                            Row(
-                                modifier = Modifier.clickable { expanded = true },
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                    TextField(value="£5.75 for 250g", onValueChange = {}, readOnly = true, label={ Text("Absolute price")})
+                    Column {
+                        Text(
+                            "Unit price",
 
-                                Text(text = currentUnit, style = MaterialTheme.typography.bodyLarge)
-                                Icon(
-                                    imageVector = Icons.Default.ArrowDropDown,
-                                    contentDescription = "Select unit"
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = expanded, onDismissRequest = { expanded = false }) {
-                                var availableUnits = listOf("100g", "kg", "oz")
-                                availableUnits.forEach { selectionOption ->
-                                    DropdownMenuItem(text = { Text(selectionOption) }, onClick = {
-                                        currentUnit = selectionOption
-                                        expanded = false
-                                    })
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            /*modifier = Modifier.padding(bottom = 4.dp) */)
+                        Row {
+                                Text("£2.30/")
+                                Box {
+                                    Row(
+                                        modifier = Modifier.clickable { expanded = true },
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+
+                                        Text(
+                                            text = currentUnit,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Icon(
+                                            imageVector = Icons.Default.ArrowDropDown,
+                                            contentDescription = "Select unit"
+                                        )
+                                    }
+                                    DropdownMenu(
+                                        expanded = expanded,
+                                        onDismissRequest = { expanded = false }) {
+                                        var availableUnits = listOf("100g", "kg", "oz")
+                                        availableUnits.forEach { selectionOption ->
+                                            DropdownMenuItem(
+                                                text = { Text(selectionOption) },
+                                                onClick = {
+                                                    currentUnit = selectionOption
+                                                    expanded = false
+                                                })
+                                        }
+                                    }
                                 }
                             }
-                        }
                     }
                 }
             }
