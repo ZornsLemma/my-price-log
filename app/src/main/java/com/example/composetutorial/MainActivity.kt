@@ -84,31 +84,35 @@ fun ItemSourceInfo() {
     Row {
         Column {
             Row {
-                Text("£5.75 for 250g (£2.30/")
-                Box {
-                    Row(
-                        modifier = Modifier.clickable { expanded = true },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                Column {
+                Text("£5.75 for 250g")
+                    Row {
+                        Text("£2.30/")
+                        Box {
+                            Row(
+                                modifier = Modifier.clickable { expanded = true },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
 
-                        Text(text = currentUnit, style = MaterialTheme.typography.bodyLarge)
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Select unit"
-                        )
-                    }
-                    DropdownMenu(
-                        expanded = expanded, onDismissRequest = { expanded = false }) {
-                        var availableUnits = listOf("100g", "kg", "oz")
-                        availableUnits.forEach { selectionOption ->
-                            DropdownMenuItem(text = { Text(selectionOption) }, onClick = {
-                                currentUnit = selectionOption
-                                expanded = false
-                            })
+                                Text(text = currentUnit, style = MaterialTheme.typography.bodyLarge)
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = "Select unit"
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = expanded, onDismissRequest = { expanded = false }) {
+                                var availableUnits = listOf("100g", "kg", "oz")
+                                availableUnits.forEach { selectionOption ->
+                                    DropdownMenuItem(text = { Text(selectionOption) }, onClick = {
+                                        currentUnit = selectionOption
+                                        expanded = false
+                                    })
+                                }
+                            }
                         }
                     }
                 }
-                Text(")")
             }
             Text("Price confirmed 02/04/2025")
             Text("Competitively priced")
