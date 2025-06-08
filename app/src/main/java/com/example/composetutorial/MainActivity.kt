@@ -35,6 +35,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.systemBars
@@ -48,6 +49,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -118,19 +120,19 @@ fun ItemSourceInfo() {
     // improve the appearance, but it's nicer to take font size into account.)
     val fontSize = MaterialTheme.typography.bodyLarge.fontSize
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.padding(16.dp)) {
-            Surface(modifier = Modifier.weight(1f)) {
-                Column {
+    Card(modifier = Modifier.fillMaxWidth().padding(4.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */ colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+        Row(modifier = Modifier.padding(8.dp).height(IntrinsicSize.Min)) {
+            Surface(modifier = Modifier.weight(1f).fillMaxHeight(), color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.small) {
+                Column(modifier = Modifier.padding(8.dp)) {
                     LabeledItem("Price as sold") { // TODO: quite like this, but maybe "Shelf price"?
                         Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
                     }
                     Text("Price confirmed 02/04/2025")
                 }
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Surface(modifier = Modifier.weight(1f)) {
-                Column {
+            Spacer(modifier = Modifier.width(8.dp))
+            Surface(modifier = Modifier.weight(1f).fillMaxHeight(), color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.small) {
+                Column(modifier = Modifier.padding(8.dp)) {
                     // TODO: We probably need some spacing between these lines
                     LabeledItem("Unit price") {
                         Row() {
