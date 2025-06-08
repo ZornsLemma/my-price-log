@@ -174,7 +174,8 @@ fun ItemSourceInfo() {
             }
         }
         // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
-        Row(modifier = Modifier.padding(8.dp)) { // TODO: Too much vertical padding? this is right horz tho
+        // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
+        Row(modifier = Modifier.padding(horizontal=8.dp)) {
             LabeledItem("Notes") {
                 Text("Special offer price")
             }
