@@ -55,6 +55,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.TextField
@@ -120,6 +121,9 @@ fun ItemSourceInfo() {
     // improve the appearance, but it's nicer to take font size into account.)
     val fontSize = MaterialTheme.typography.bodyLarge.fontSize
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
+    // TODO: Will we have a free-form text field on item-at-source? For eg things like noting the specific product to help find it again.
+    // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective, it's not as if the offer duration is usually clearly stated, free text note probably can be used for this among other things
+    // TODO: Should we show free-form text or special offer information here?
     Card(modifier = Modifier.fillMaxWidth().padding(4.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */ colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
         Row(modifier = Modifier.padding(8.dp).height(IntrinsicSize.Min)) {
             Surface(modifier = Modifier.weight(1f).fillMaxHeight(), color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.small) {
@@ -129,7 +133,17 @@ fun ItemSourceInfo() {
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     LabeledItem("Last checked") {
-                        Text("5 days ago")
+                        Text("5 days ago") // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
+                    }
+                    Row() {
+                        // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
+                        FilledTonalButton(onClick = {}, shape=MaterialTheme.shapes.small) {
+                            Text("Confirm")
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        FilledTonalButton(onClick = {}, shape=MaterialTheme.shapes.small) {
+                            Text("Change")
+                        }
                     }
                 }
             }
@@ -173,7 +187,7 @@ fun ItemSourceInfo() {
                             }
                         }
                     }
-                    Text("Competitively priced")
+                    Text("Competitively\npriced")
                 }
             }
         }
