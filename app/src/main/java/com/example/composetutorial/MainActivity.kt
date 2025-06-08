@@ -124,71 +124,70 @@ fun ItemSourceInfo() {
     // TODO: Will we have a free-form text field on item-at-source? For eg things like noting the specific product to help find it again.
     // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective, it's not as if the offer duration is usually clearly stated, free text note probably can be used for this among other things
     // TODO: Should we show free-form text or special offer information here?
+    // TODO: Just possibly the card inside layout should be some kind of grid control rather than row+column?
     Card(modifier = Modifier.fillMaxWidth().padding(4.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */ colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-        Row(modifier = Modifier.padding(8.dp).height(IntrinsicSize.Min)) {
-            Surface(modifier = Modifier.weight(1f).fillMaxHeight(), color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.small) {
-                Column(modifier = Modifier.padding(8.dp)) {
-                    LabeledItem("Price as sold") { // TODO: quite like this, but maybe "Shelf price"?
-                        Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    LabeledItem("Last checked") {
-                        Text("5 days ago") // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
-                    }
-                    Row() {
-                        // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
-                        FilledTonalButton(onClick = {}, shape=MaterialTheme.shapes.small) {
-                            Text("Confirm")
+        Row(modifier = Modifier.padding(8.dp)) {
+            LabeledItem(
+                modifier = Modifier.weight(1f),
+                label = "Price as sold"
+            ) { // TODO: quite like this, but maybe "Shelf price"?
+                Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
+            }
+            LabeledItem(modifier = Modifier.weight(1f), label = "Last checked") {
+                Text("5 days ago") // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
+            }
+            LabeledItem(modifier = Modifier.weight(1f), label = "Unit price") {
+                Row() {
+                    Text("£2.30/")
+                    Box {
+                        Row(
+                            modifier = Modifier.clickable { expanded = true },
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+
+                            Text(
+                                text = currentUnit,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.alignBy(LastBaseline)
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = "Select unit",
+                                modifier = Modifier.size(iconSize /* 16.dp */)
+                            )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        FilledTonalButton(onClick = {}, shape=MaterialTheme.shapes.small) {
-                            Text("Change")
+                        DropdownMenu(
+                            expanded = expanded, onDismissRequest = { expanded = false }) {
+                            var availableUnits = listOf("100g", "kg", "oz")
+                            availableUnits.forEach { selectionOption ->
+                                DropdownMenuItem(
+                                    text = { Text(selectionOption) },
+                                    onClick = {
+                                        currentUnit = selectionOption
+                                        expanded = false
+                                    })
+                            }
                         }
                     }
                 }
             }
+        }
+        // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
+        Row(modifier = Modifier.padding(8.dp)) { // TODO: Too much vertical padding? this is right horz tho
+            LabeledItem("Notes") {
+                Text("Special offer price")
+            }
+        }
+        Row() {
+            Text("Competitively priced")
+            // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
+            FilledTonalButton(onClick = {}, shape=MaterialTheme.shapes.small) {
+                Text("Confirm")
+            }
             Spacer(modifier = Modifier.width(8.dp))
-            Surface(modifier = Modifier.weight(1f).fillMaxHeight(), color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.small) {
-                Column(modifier = Modifier.padding(8.dp)) {
-                    // TODO: We probably need some spacing between these lines
-                    LabeledItem("Unit price") {
-                        Row() {
-                            Text("£2.30/")
-                            Box {
-                                Row(
-                                    modifier = Modifier.clickable { expanded = true },
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-
-                                    Text(
-                                        text = currentUnit,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.alignBy(LastBaseline)
-                                    )
-                                    Icon(
-                                        imageVector = Icons.Default.ArrowDropDown,
-                                        contentDescription = "Select unit",
-                                        modifier = Modifier.size(iconSize /* 16.dp */)
-                                    )
-                                }
-                                DropdownMenu(
-                                    expanded = expanded, onDismissRequest = { expanded = false }) {
-                                    var availableUnits = listOf("100g", "kg", "oz")
-                                    availableUnits.forEach { selectionOption ->
-                                        DropdownMenuItem(
-                                            text = { Text(selectionOption) },
-                                            onClick = {
-                                                currentUnit = selectionOption
-                                                expanded = false
-                                            })
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    Text("Competitively\npriced")
-                }
+            FilledTonalButton(onClick = {}, shape=MaterialTheme.shapes.small) {
+                Text("Change")
             }
         }
     }
