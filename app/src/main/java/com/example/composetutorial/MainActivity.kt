@@ -244,7 +244,7 @@ fun DataTable(
 
         // data rows
         itemsIndexed(rows) { rowIndex, rowData ->
-            // TODO: Zebra-striping is experimental, not sure how I feel about it.
+            // TODO: Zebra-striping is experimental, not sure how I feel about it. Even if we do keep it, note that the header row has a somewhat inconsistent colour - it is darker than the "surface" rows (which is probably good) but lighter than the surfaceVariant rows, which is probably bad (this comment is assuming a light mode display)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -589,12 +589,17 @@ fun DataTable(
                         Column(modifier = Modifier.padding(it)) {
                             ItemSourceInfo()
 
-                            val header = listOf("Name", "Age", "City", "Score")
+                            // TODO: This mock data shows some questions:
+                            // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display.
+                            // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
+                            // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
+                            // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
+                            val header = listOf("Source", "Unit price", "Notes")
                             val data = listOf(
-                                listOf("Alice", "23", "NYC", "98"),
-                                listOf("Bob",   "31", "LA",  "87"),
-                                listOf("Carol", "44", "LA",  "83"),
-                                listOf("Derek", "24", "NH",  "77"),
+                                listOf("Tesco", "£2.13/100g", "Tesco Finest is actually cheapest"),
+                                listOf("Sainsbury's Local", "£2.94/100g", ""),
+                                listOf("Asda", "£2.08/100g", "KTC brand"),
+                                listOf("Iceland", "£2.38/100g", ""),
                                 // …
                             )
 
@@ -607,7 +612,7 @@ fun DataTable(
                                     header = header,
                                     rows = data,
                                     // e.g. you want the “Score” column to be narrower:
-                                    columnWeights = listOf(2f, 1f, 2f, 1f)
+                                    columnWeights = listOf(2f, 1.4f, 2f)
                                 )
                             }
 
