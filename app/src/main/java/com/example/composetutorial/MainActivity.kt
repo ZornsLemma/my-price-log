@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -43,6 +44,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -213,6 +215,12 @@ fun DataTable(
     rows: List<List<String>>,
     columnWeights: List<Float> = List(header.size) { 1f }
 ) {
+    // TODO: Is there an argument that the column headings should actually use the same appearance
+    // as the labels like "Unit price" - they are arguably playing the same kind of informative
+    // role and don't necessarily deserve the bold same-size (ish) text treatment they are currently
+    // getting. Maybe this would look weird though - perhaps there is a strong expectation that
+    // "tables" do have bold header rows which are "at least as big" as the data rows. Not sure,
+    // need to experiment.
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         // optional header
         item {
@@ -220,12 +228,12 @@ fun DataTable(
                 modifier = Modifier
                     .fillMaxWidth()
                     //.background(MaterialTheme.colorScheme.primaryContainer)
-                    .padding(vertical = 8.dp, horizontal = 16.dp)
+                    .padding(vertical = 8.dp, horizontal = 8.dp)
             ) {
                 header.forEachIndexed { index, title ->
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier
                             .weight(columnWeights[index])
                             .padding(end = 8.dp)
@@ -235,20 +243,26 @@ fun DataTable(
         }
 
         // data rows
-        items(rows) { rowData ->
+        itemsIndexed(rows) { rowIndex, rowData ->
+            // TODO: Zebra-striping is experimental, not sure how I feel about it.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp, horizontal = 16.dp)
+                    .padding(vertical = 0.dp, horizontal = 0.dp)
+                    .background(if (rowIndex % 2 == 0) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant)
             ) {
-                rowData.forEachIndexed { index, cell ->
-                    Text(
-                        text = cell,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier
-                            .weight(columnWeights[index])
-                            .padding(end = 8.dp)
-                    )
+                // TODO: This inner Row is only here for the zebra-striping - if we get rid of it, we can do without it (and move the padding to the parent Row)
+                Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
+                    rowData.forEachIndexed { index, cell ->
+                        Text(
+                            text = cell,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .weight(columnWeights[index])
+                                .padding(end = 8.dp)
+                        )
+                    }
                 }
             }
         }
@@ -579,10 +593,13 @@ fun DataTable(
                             val data = listOf(
                                 listOf("Alice", "23", "NYC", "98"),
                                 listOf("Bob",   "31", "LA",  "87"),
+                                listOf("Carol", "44", "LA",  "83"),
+                                listOf("Derek", "24", "NH",  "77"),
                                 // …
                             )
 
                             // TODO: If we want this, the Card should probably be inside DataTable - but this is all experimental
+                            // TODO: The way the bottom row of this Card and its curved edges does not match up with the last row (when the table is short enough not to need to scroll) is ugly - but this somewhat ties in with the hacky fixed height, just be aware of it when tweaking further
                             // TODO: Fixed .height() on card is a hack, a real implementation would probably give .weight() to all the elements of the outer Column, but this will do for now
                             Card(modifier = Modifier.fillMaxWidth().padding(4.dp).height(200.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */ colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
 
