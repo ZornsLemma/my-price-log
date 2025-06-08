@@ -46,6 +46,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material3.Card
@@ -180,16 +181,27 @@ fun ItemSourceInfo() {
                 Text("Special offer price")
             }
         }
-        Row() {
-            Text("Competitively priced")
-            // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
-            FilledTonalButton(onClick = {}, shape=MaterialTheme.shapes.small) {
-                Text("Confirm")
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            FilledTonalButton(onClick = {}, shape=MaterialTheme.shapes.small) {
-                Text("Change")
-            }
+        // TODO: Vertical spacing probably poor with or without notes field - needs tweaking/better "plan" for how to specify it - that said, the vertical space above this final row probably should be "a bit" larger than the space between the two "reporting our status" rows - the following row is a "summary plus action" row and does want some visual distinction
+        Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(modifier = Modifier.weight(1f)) {
+                    Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Checked",
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.primary) // TODO: probably "primary"=good, default text color=neutral, "error"=bad
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Good price")
+                }
+                Row(modifier = Modifier.weight(1.2f)) {
+                    // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
+                    FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
+                        Text("Confirm")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
+                        Text("Change")
+                    }
+                }
         }
     }
 }
