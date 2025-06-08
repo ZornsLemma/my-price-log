@@ -127,7 +127,10 @@ fun ItemSourceInfo() {
                     LabeledItem("Price as sold") { // TODO: quite like this, but maybe "Shelf price"?
                         Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
                     }
-                    Text("Price confirmed 02/04/2025")
+                    Spacer(modifier = Modifier.height(4.dp))
+                    LabeledItem("Last checked") {
+                        Text("5 days ago")
+                    }
                 }
             }
             Spacer(modifier = Modifier.width(8.dp))
