@@ -206,6 +206,55 @@ fun ItemSourceInfo() {
     }
 }
 
+// TODO: o4-mini code, review if keep
+@Composable
+fun DataTable(
+    header: List<String>,
+    rows: List<List<String>>,
+    columnWeights: List<Float> = List(header.size) { 1f }
+) {
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        // optional header
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    //.background(MaterialTheme.colorScheme.primaryContainer)
+                    .padding(vertical = 8.dp, horizontal = 16.dp)
+            ) {
+                header.forEachIndexed { index, title ->
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier
+                            .weight(columnWeights[index])
+                            .padding(end = 8.dp)
+                    )
+                }
+            }
+        }
+
+        // data rows
+        items(rows) { rowData ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp, horizontal = 16.dp)
+            ) {
+                rowData.forEachIndexed { index, cell ->
+                    Text(
+                        text = cell,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier
+                            .weight(columnWeights[index])
+                            .padding(end = 8.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
     // TODO: This probably needs to track state/events via parents
 // TODO: A final version of this might want an internal (database, not linear) ID for each item and it might expose that ID as well as/instead of the associated String to the caller, but the ID is of course invisible to the UI
 // TODO: OK - this just may fix my problems and/or simply be "right" - should I be using ExposedDropdownMenu(Box) - this may practically *be* a standard combo box? (see e.g.https://kotlinlang.org/api/compose-multiplatform/material3/androidx.compose.material3/-exposed-dropdown-menu-box.html - TBH documentation on this feels oddly sparse) - FWIW https://m3.material.io/components/menus/guidelines under "Filtering" looks like precisely what I want
@@ -525,6 +574,26 @@ fun ItemSourceInfo() {
                     Scaffold(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)) {
                         Column(modifier = Modifier.padding(it)) {
                             ItemSourceInfo()
+
+                            val header = listOf("Name", "Age", "City", "Score")
+                            val data = listOf(
+                                listOf("Alice", "23", "NYC", "98"),
+                                listOf("Bob",   "31", "LA",  "87"),
+                                // …
+                            )
+
+                            // TODO: If we want this, the Card should probably be inside DataTable - but this is all experimental
+                            // TODO: Fixed .height() on card is a hack, a real implementation would probably give .weight() to all the elements of the outer Column, but this will do for now
+                            Card(modifier = Modifier.fillMaxWidth().padding(4.dp).height(200.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */ colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+
+                                DataTable(
+                                    header = header,
+                                    rows = data,
+                                    // e.g. you want the “Score” column to be narrower:
+                                    columnWeights = listOf(2f, 1f, 2f, 1f)
+                                )
+                            }
+
                             // ComboBox("Label", "Value", onValueChange = {}, content = listOf("thing 1", "thing 2"))
                             //ComboBoxSample()
                             // TODO: Just possible we don't need clearFocusOnTapOutside hack now, but
