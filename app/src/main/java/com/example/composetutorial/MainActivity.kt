@@ -43,10 +43,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.handwriting.handwritingHandler
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -79,6 +81,11 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LastBaseline
@@ -538,10 +545,26 @@ fun DataTable(
                 },
                 modifier = Modifier
                     .menuAnchor()
+                    // TODO: This onKeyEvent is necessary to allow you to press Enter to open the
+                    // drop-down. I haven't tested it yet but Grok tells me this *won't* handle
+                    // a D-pad click and we may need to also recognize Key.DpadCenter to do that.
+                    // With this tweak, I suspect this implementation of a "no keyboard entry"
+                    // combo box is the nicest one going - since we are mostly using TextField
+                    // without active coercion and we have been able to leave it enabled, color
+                    // changes and keyboard navigation mostly seem to "just work".
+                    .onKeyEvent { keyEvent ->
+                        if (keyEvent.key == Key.Enter && keyEvent.type == KeyEventType.KeyUp) {
+                            expanded = true
+                            true // Consume the event
+                        } else {
+                            false // Let other events pass through
+                        }
+                    }
                     //.fillMaxWidth()
             )
 
             ExposedDropdownMenu(
+                // TODO: The font in this dropdown appears unnecessarily small
                 expanded = expanded, onDismissRequest = { expanded = false }) {
                 options.forEach { selectionOption ->
                     DropdownMenuItem(text = { Text(selectionOption) }, onClick = {
