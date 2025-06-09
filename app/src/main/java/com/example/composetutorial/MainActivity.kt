@@ -205,7 +205,7 @@ fun MainScreen() {
 fun myTextFieldColors() = TextFieldDefaults.colors(
     disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
     disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+    disabledTextColor = MaterialTheme.colorScheme.primary, // TODO: was (and "should" be for pure TextField copatibility) MaterialTheme.colorScheme.onSurface, - but since in practice these elements are setting context for the whole screen, I am experimentally trying to see if highlighting them slightly looks good/OK and breaks up the greyness
     disabledIndicatorColor = /* indicatorColor */ MaterialTheme.colorScheme.onSurfaceVariant,
 // focusedIndicatorColor = MaterialTheme.colorScheme.primary, // TODO NOT WORKING
 )
