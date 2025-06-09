@@ -149,6 +149,7 @@ fun MainScreen() {
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                 focusedContainerColor = MaterialTheme.colorScheme.surface
             ) */
+            colors = myTextFieldColors()
         )
 
         // Product Modal Bottom Sheet
@@ -192,6 +193,18 @@ fun MainScreen() {
     }
 }
 
+// Sometimes we have to make a TextField "enabled = false" for it to be clickable, so we need
+// to override the colours to make it look like it is enabled.
+@Composable
+fun myTextFieldColors() =
+TextFieldDefaults.colors(
+disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+disabledTextColor = MaterialTheme.colorScheme.onSurface,
+disabledIndicatorColor = /* indicatorColor */ MaterialTheme.colorScheme.onSurfaceVariant,
+// focusedIndicatorColor = MaterialTheme.colorScheme.primary, // TODO NOT WORKING
+)
+
 @Composable
 fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly with the m3 component
     value: String,
@@ -231,15 +244,7 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             focusedContainerColor = MaterialTheme.colorScheme.surface
         ) */
-            // We have to make the TextField "enabled = false" for it to be clickable, so we need
-            // to override the colours to make it look like it is enabled.
-            colors = TextFieldDefaults.colors(
-                disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledIndicatorColor = /* indicatorColor */ MaterialTheme.colorScheme.onSurfaceVariant,
-                // focusedIndicatorColor = MaterialTheme.colorScheme.primary, // TODO NOT WORKING
-            )
+            colors = myTextFieldColors()
         )
         DropdownMenu(
             modifier = Modifier. width(with(LocalDensity.current) { textFieldWidth.toDp() }) .background(MaterialTheme.colorScheme.surfaceContainer), // TODO: REDUNDANT?
