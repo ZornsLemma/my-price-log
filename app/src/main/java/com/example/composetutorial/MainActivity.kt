@@ -68,6 +68,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -174,7 +175,7 @@ fun MainScreen() {
 }
 
 @Composable
-fun ExposedDropdownMenuBox(
+fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly with the m3 component
     value: String,
     onValueChange: (String) -> Unit,
     label: @Composable () -> Unit,
@@ -186,23 +187,30 @@ fun ExposedDropdownMenuBox(
         TextField(
             value = value,
             onValueChange = { /* No-op, handled by dropdown */ },
-            enabled = false, // TODO: hack to make clickable work
             label = label,
             readOnly = true,
+            enabled = false, // TODO HACK
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = "Expand",
-                    /* modifier = Modifier.rotate(if (expanded) 180f else 0f) */
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    /* TODO modifier = Modifier.rotate(if (expanded) 180f else 0f) */
                 )
             },
             modifier = Modifier
                 .clickable { expanded = true }
                 .fillMaxWidth(),
             /* colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                focusedContainerColor = MaterialTheme.colorScheme.surface
-            ) */
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedContainerColor = MaterialTheme.colorScheme.surface
+        ) */
+            colors = TextFieldDefaults.colors(
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         )
         DropdownMenu(
             expanded = expanded,
@@ -733,6 +741,8 @@ fun DataTable(
                 ComposeTutorialTheme(/* darkTheme = isDarkTheme */) {
                     Scaffold(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)) {
                         Column(modifier = Modifier.padding(it)) {
+                            TextField( value = "Foo", onValueChange = {}, label = { Text("Label") } )  // TODO temp for cmparison
+
                             MainScreen()
 
                             Row {
