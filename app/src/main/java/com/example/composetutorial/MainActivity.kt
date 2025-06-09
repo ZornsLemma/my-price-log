@@ -315,6 +315,8 @@ fun ItemSourceInfo() {
     // improve the appearance, but it's nicer to take font size into account.)
     val fontSize = MaterialTheme.typography.bodyLarge.fontSize
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
+    var selectedSource by remember { mutableStateOf("") }
+    val sources = listOf("Tesco", "Asda", "Sainsbury's Local", "Iceland")
     // TODO: Will we have a free-form text field on item-at-source? For eg things like noting the specific product to help find it again.
     // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective, it's not as if the offer duration is usually clearly stated, free text note probably can be used for this among other things
     // TODO: Should we show free-form text or special offer information here?
@@ -323,79 +325,91 @@ fun ItemSourceInfo() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(4.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Row(modifier = Modifier.padding(8.dp)) {
-            LabeledItem(
-                modifier = Modifier.weight(1f), label = "Price as sold"
-            ) { // TODO: quite like this, but maybe "Shelf price"?
-                Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
-            }
-            LabeledItem(modifier = Modifier.weight(1f), label = "Last checked") {
-                Text("5 days ago") // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
-            }
-            LabeledItem(modifier = Modifier.weight(1f), label = "Unit price") {
-                Row() {
-                    Text("£2.30/")
-                    Box {
-                        Row(
-                            modifier = Modifier.clickable { expanded = true },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+        Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
+            ExposedDropdownMenuBox(
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .fillMaxWidth(),
+                value = selectedSource,
+                onValueChange = { selectedSource = it },
+                label = { Text("Source") },
+                items = sources
+            )
+            Row(/* modifier = Modifier.padding(8.dp) */) {
 
-                            Text(
-                                text = currentUnit,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.alignBy(LastBaseline)
-                            )
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = "Select unit",
-                                modifier = Modifier.size(iconSize /* 16.dp */)
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = expanded, onDismissRequest = { expanded = false }) {
-                            var availableUnits = listOf("100g", "kg", "oz")
-                            availableUnits.forEach { selectionOption ->
-                                DropdownMenuItem(text = { Text(selectionOption) }, onClick = {
-                                    currentUnit = selectionOption
-                                    expanded = false
-                                })
+                LabeledItem(
+                    modifier = Modifier.weight(1f), label = "Price as sold"
+                ) { // TODO: quite like this, but maybe "Shelf price"?
+                    Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
+                }
+                LabeledItem(modifier = Modifier.weight(1f), label = "Last checked") {
+                    Text("5 days ago") // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
+                }
+                LabeledItem(modifier = Modifier.weight(1f), label = "Unit price") {
+                    Row() {
+                        Text("£2.30/")
+                        Box {
+                            Row(
+                                modifier = Modifier.clickable { expanded = true },
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+
+                                Text(
+                                    text = currentUnit,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.alignBy(LastBaseline)
+                                )
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = "Select unit",
+                                    modifier = Modifier.size(iconSize /* 16.dp */)
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = expanded, onDismissRequest = { expanded = false }) {
+                                var availableUnits = listOf("100g", "kg", "oz")
+                                availableUnits.forEach { selectionOption ->
+                                    DropdownMenuItem(text = { Text(selectionOption) }, onClick = {
+                                        currentUnit = selectionOption
+                                        expanded = false
+                                    })
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
-        // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
-        Row(modifier = Modifier.padding(horizontal = 8.dp)) {
-            LabeledItem("Notes") {
-                Text("Special offer price")
-            }
-        }
-        // TODO: Vertical spacing probably poor with or without notes field - needs tweaking/better "plan" for how to specify it - that said, the vertical space above this final row probably should be "a bit" larger than the space between the two "reporting our status" rows - the following row is a "summary plus action" row and does want some visual distinction
-        Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Row(modifier = Modifier.weight(1f)) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Checked",
-                    modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                ) // TODO: probably "primary"=good, default text color=neutral, "error"=bad
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Good price")
-            }
-            Row(modifier = Modifier.weight(1.2f)) {
-                // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
-                FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
-                    Text("Confirm")
+            // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
+            // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
+            Row(/* modifier = Modifier.padding(horizontal = 8.dp) */) {
+                LabeledItem("Notes") {
+                    Text("Special offer price")
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
-                    Text("Change")
+            }
+            // TODO: Vertical spacing probably poor with or without notes field - needs tweaking/better "plan" for how to specify it - that said, the vertical space above this final row probably should be "a bit" larger than the space between the two "reporting our status" rows - the following row is a "summary plus action" row and does want some visual distinction
+            Row(/* modifier = Modifier.padding(8.dp), */ verticalAlignment = Alignment.CenterVertically) {
+                Row(modifier = Modifier.weight(1f)) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Checked",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    ) // TODO: probably "primary"=good, default text color=neutral, "error"=bad
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Good price")
+                }
+                Row(modifier = Modifier.weight(1.2f)) {
+                    // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
+                    FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
+                        Text("Confirm")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
+                        Text("Change")
+                    }
                 }
             }
         }
@@ -885,7 +899,7 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxWidth()
                                 .padding(4.dp)
                                 .height(200.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                         ) {
 
                             DataTable(
