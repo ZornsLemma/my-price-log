@@ -232,12 +232,15 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
             )
         )
         DropdownMenu(
+            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer), // TODO: REDUNDANT?
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
             items.forEach { item ->
+                // TODO: THE TEXT IN THIS DROPDOWN DOESN'T LEFT-ALIGN WITH THE PARENT TEXTFIELD
                 DropdownMenuItem(
-                    text = { Text(item) },
+                    text = { Text(item, style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface ) },
                     onClick = {
                         onValueChange(item)
                         expanded = false
