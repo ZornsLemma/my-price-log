@@ -107,8 +107,14 @@ enum class ThemePreference {
 // Start Grok chunk
 @Composable
 fun MainScreen() {
-    var selectedCategory by remember { mutableStateOf("Dairy") }
-    var selectedProduct by remember { mutableStateOf("Beans") }
+    // TODO: Note that because category and product use a TextField, they have the (I think) nice
+    // property that the label expands into a sort of big hint when they are empty. We should
+    // probably take advantage of this where having them empty makes sense - and it probably does
+    // everywhere, even if it's rare, because the user *could* go and delete every single item in
+    // the database in theory. TODO: We should make sure we have the same behaviour for Source,
+    // because that actually *should* allow the user to easily set it to empty/none.
+    var selectedCategory by remember { mutableStateOf("" /* "Dairy" */) }
+    var selectedProduct by remember { mutableStateOf("" /* "Beans" */) }
     var showProductSheet by remember { mutableStateOf(false) }
     val categories = listOf("Dairy", "Bakery", "Produce", "Meat", "Frozen")
     val products = listOf("Beans", "Milk", "Bread", "Chicken", /* ... */ )
