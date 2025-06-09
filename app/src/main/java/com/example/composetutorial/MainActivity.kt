@@ -188,13 +188,13 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
     val focusedColor   = MaterialTheme.colorScheme.error
     val unfocusedColor = MaterialTheme.colorScheme.tertiary //     onSurfaceVariant
     var indicatorColor by remember { mutableStateOf(unfocusedColor) } // TODO: ALL THIS STUFF ISN'T WORKING, I SUSPECT THE *FOCUS* ISN'T HITTING THE CONTROL AS IT'S DISABLED, BUT *SOMETHING* IS HITTING IT AND TOGGLING ITS COLOUR BUT IT ISN'T THIS, NOT SURE
-    Box(modifier = modifier) {
+    Box(modifier = modifier.fillMaxWidth().clickable { Log.d("MyApp", "BOXCLICK") }) {
         TextField(
             value = value,
             onValueChange = { /* No-op, handled by dropdown */ },
             label = label,
             readOnly = true,
-            enabled = false, // TODO HACK
+            //enabled = false, // TODO HACK
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
@@ -750,7 +750,7 @@ fun DataTable(
                 ComposeTutorialTheme(/* darkTheme = isDarkTheme */) {
                     Scaffold(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)) {
                         Column(modifier = Modifier.padding(it)) {
-                            TextField( value = "Foo", onValueChange = {}, label = { Text("Label") } )  // TODO temp for cmparison
+                            TextField( value = "Foozle", readOnly = true, onValueChange = {}, label = { Text("Label") } )  // TODO temp for cmparison
 
                             MainScreen()
 
