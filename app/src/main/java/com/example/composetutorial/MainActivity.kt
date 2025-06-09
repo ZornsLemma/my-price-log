@@ -433,13 +433,15 @@ fun DataTable(
     // although I am not sure - and certainly if we did, we would not want to mix that with the
     // small text label style used by LabelledText(). To some extent, I need to consider the
     // appearance of the whole screen in deciding this.
+    // TODO: The header should remain fixed even when the list scrolls.
+    // TODO: Should the header and the last item of the list have rounded corners? I am not sure. Probably best square corners TBH.
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         // optional header
         item {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    //.background(MaterialTheme.colorScheme.primaryContainer)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest) // TODO: OK colour?
                     .padding(vertical = 8.dp, horizontal = 8.dp)
             ) {
                 header.forEachIndexed { index, title ->
@@ -903,12 +905,13 @@ class MainActivity : ComponentActivity() {
                                 .height(200.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                         ) {
-
-                            DataTable(
-                                header = header, rows = data,
-                                // e.g. you want the “Score” column to be narrower:
-                                columnWeights = listOf(2f, 1.4f, 2f)
-                            )
+                            Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
+                                DataTable(
+                                    header = header, rows = data,
+                                    // e.g. you want the “Score” column to be narrower:
+                                    columnWeights = listOf(2f, 1.4f, 2f)
+                                )
+                            }
                         }
 
                         // ComboBox("Label", "Value", onValueChange = {}, content = listOf("thing 1", "thing 2"))
