@@ -77,6 +77,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LastBaseline
@@ -183,6 +185,9 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val focusedColor   = MaterialTheme.colorScheme.error
+    val unfocusedColor = MaterialTheme.colorScheme.tertiary //     onSurfaceVariant
+    var indicatorColor by remember { mutableStateOf(unfocusedColor) } // TODO: ALL THIS STUFF ISN'T WORKING, I SUSPECT THE *FOCUS* ISN'T HITTING THE CONTROL AS IT'S DISABLED, BUT *SOMETHING* IS HITTING IT AND TOGGLING ITS COLOUR BUT IT ISN'T THIS, NOT SURE
     Box(modifier = modifier) {
         TextField(
             value = value,
@@ -199,17 +204,21 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
                 )
             },
             modifier = Modifier
-                .clickable { expanded = true }
+                .clickable { Log.d("MyApp", "CATCLICK"); expanded = true }
+                .onFocusChanged { Log.d("MyApp", if (it.isFocused) "Foc" else "Unfoc"); indicatorColor = if (it.isFocused) focusedColor else unfocusedColor  }
                 .fillMaxWidth(),
             /* colors = TextFieldDefaults.colors(
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             focusedContainerColor = MaterialTheme.colorScheme.surface
         ) */
+            // We have to make the TextField "enabled = false" for it to be clickable, so we need
+            // to override the colours to make it look like it is enabled.
             colors = TextFieldDefaults.colors(
-                disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                disabledContainerColor = MaterialTheme.colorScheme.secondary, // MaterialTheme.colorScheme.surfaceContainerHighest,
                 disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledIndicatorColor = indicatorColor, // MaterialTheme.colorScheme.onSurfaceVariant,
+                // focusedIndicatorColor = MaterialTheme.colorScheme.primary, // TODO NOT WORKING
             )
         )
         DropdownMenu(
@@ -514,7 +523,7 @@ fun DataTable(
     fun ComboBoxSample(modifier: Modifier = Modifier) {
         val options = listOf("Apple", "Banana", "Cherry")
         var expanded by remember { mutableStateOf(false) }
-        var selectedOptionText by remember { mutableStateOf("") }
+        var selectedOptionText by remember { mutableStateOf("Apple") }
 
         ExposedDropdownMenuBox(
             modifier = modifier, expanded = expanded, onExpandedChange = { expanded = !expanded }) {
