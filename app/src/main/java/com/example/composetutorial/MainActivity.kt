@@ -54,6 +54,7 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ShoppingCart
@@ -66,6 +67,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
@@ -73,6 +75,7 @@ import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -94,6 +97,7 @@ import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.view.WindowCompat
 
 enum class ThemePreference {
@@ -784,11 +788,47 @@ fun DataTable(
             ThemePreference.SYSTEM -> isSystemInDarkTheme()
         } */
             setContent {
+                var menuExpanded by remember { mutableStateOf(false) }
                 val focusManager = LocalFocusManager.current
                 Box(Modifier.safeDrawingPadding())
                 ComposeTutorialTheme(/* darkTheme = isDarkTheme */) {
-                    Scaffold(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)) {
+                    Scaffold(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars),
+                        // TODO: Probably need to apply MD colors to topBar, just poss also font size but it may default to something sensible
+                        topBar = {TopAppBar(title = { Text("My App Name Here")},
+                            actions = {
+                                IconButton(onClick = { menuExpanded = true }) {
+                                    Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                                }
+
+                                DropdownMenu(
+                                    expanded = menuExpanded,
+                                    onDismissRequest = { menuExpanded = false }
+                                ) {
+                                    // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
+                                    DropdownMenuItem(
+                                        text = { Text("Edit product list") },
+                                        onClick = {
+                                            menuExpanded = false
+                                            // Handle navigation or action
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Edit categories") },
+                                        onClick = {
+                                            menuExpanded = false
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Settings") },
+                                        onClick = {
+                                            menuExpanded = false
+                                        }
+                                    )
+                                }
+
+                            })}) {
                         Column(modifier = Modifier.padding(it)) {
+
                             TextField( value = "Foozle", readOnly = true, onValueChange = {}, label = { Text("Label") } )  // TODO temp for cmparison
 
                             MainScreen()
