@@ -116,7 +116,8 @@ fun MainScreen() {
             value = selectedProduct,
             onValueChange = { /* No-op, read-only */ },
             label = { Text("Product") },
-            modifier = Modifier.clickable { showProductSheet = true },
+            enabled = false, // TODO: this is necessary to make "clickable" work, it looks wrong but this is all an experimental hack anyway
+            modifier = Modifier.clickable { Log.d("MyApp", "SPS"); showProductSheet = true },
             readOnly = true,
             trailingIcon = {
                 Icon(
