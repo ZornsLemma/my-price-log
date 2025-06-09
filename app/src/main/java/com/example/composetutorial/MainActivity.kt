@@ -37,6 +37,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -90,6 +91,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.changedToDown
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LastBaseline
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.core.view.WindowCompat
@@ -198,6 +200,7 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
     val unfocusedColor = MaterialTheme.colorScheme.tertiary //     onSurfaceVariant
     var indicatorColor by remember { mutableStateOf(unfocusedColor) } // TODO: ALL THIS STUFF ISN'T WORKING, I SUSPECT THE *FOCUS* ISN'T HITTING THE CONTROL AS IT'S DISABLED, BUT *SOMETHING* IS HITTING IT AND TOGGLING ITS COLOUR BUT IT ISN'T THIS, NOT SURE
     */
+    var textFieldWidth by remember { mutableStateOf(0) }
     Box(modifier = modifier) {
         TextField(
             value = value,
@@ -216,7 +219,8 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
             modifier = Modifier
                 .clickable { Log.d("MyApp", "CATCLICK"); expanded = true }
                 //.onFocusChanged { Log.d("MyApp", if (it.isFocused) "Foc" else "Unfoc"); indicatorColor = if (it.isFocused) focusedColor else unfocusedColor  }
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .onGloballyPositioned { coordinates -> textFieldWidth = coordinates.size.width },
             /* colors = TextFieldDefaults.colors(
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             focusedContainerColor = MaterialTheme.colorScheme.surface
@@ -232,7 +236,7 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
             )
         )
         DropdownMenu(
-            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer), // TODO: REDUNDANT?
+            modifier = Modifier. width(with(LocalDensity.current) { textFieldWidth.toDp() }) .background(MaterialTheme.colorScheme.surfaceContainer), // TODO: REDUNDANT?
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
@@ -241,6 +245,7 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
                 DropdownMenuItem(
                     text = { Text(item, style = MaterialTheme.typography.bodyLarge,
                                             color = MaterialTheme.colorScheme.onSurface ) },
+                    contentPadding = PaddingValues(start = 16.dp),
                     onClick = {
                         onValueChange(item)
                         expanded = false
@@ -874,3 +879,6 @@ fun DataTable(
 // TODO: ~/pc-sync/ai-chat-misc-to-move/grok-combo-box-and-alternate-ui.txt is a potentially
 // valuable discussion, touching on some implementation ideas, design ideas (small tweaks and
 // alternatives) etc and would probably be worth a re-read later.
+
+
+
