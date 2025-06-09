@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.example.composetutorial
 
 import android.content.res.Configuration
@@ -61,8 +63,10 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -82,6 +86,139 @@ import androidx.core.view.WindowCompat
 enum class ThemePreference {
     LIGHT, DARK, SYSTEM
 }
+
+// Start Grok chunk
+@Composable
+fun MainScreen() {
+    var selectedCategory by remember { mutableStateOf("Dairy") }
+    var selectedProduct by remember { mutableStateOf("Beans") }
+    var showProductSheet by remember { mutableStateOf(false) }
+    val categories = listOf("Dairy", "Bakery", "Produce", "Meat", "Frozen")
+    val products = listOf("Beans", "Milk", "Bread", "Chicken", /* ... */ )
+    var searchQuery by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        // Category Selector
+        ExposedDropdownMenuBox(
+            modifier = Modifier.padding(bottom = 8.dp),
+            value = selectedCategory,
+            onValueChange = { selectedCategory = it },
+            label = { Text("Category") },
+            items = categories
+        )
+
+        // Product Selector
+        TextField(
+            value = selectedProduct,
+            onValueChange = { /* No-op, read-only */ },
+            label = { Text("Product") },
+            modifier = Modifier.clickable { showProductSheet = true },
+            readOnly = true,
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search Products",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            /* colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedContainerColor = MaterialTheme.colorScheme.surface
+            ) */
+        )
+
+        // Product Modal Bottom Sheet
+        if (showProductSheet) {
+            ModalBottomSheet(onDismissRequest = { showProductSheet = false }) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    TextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        label = { Text("Search Products") },
+                        modifier = Modifier.fillMaxWidth(),
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search"
+                            )
+                        }
+                    )
+                    LazyColumn {
+                        items(products.filter {
+                            it.contains(searchQuery, ignoreCase = true)
+                        }) { product ->
+                            ListItem(
+                                headlineContent = { Text(product) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        selectedProduct = product
+                                        showProductSheet = false
+                                    }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ExposedDropdownMenuBox(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: @Composable () -> Unit,
+    items: List<String>,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(modifier = modifier) {
+        TextField(
+            value = value,
+            onValueChange = { /* No-op, handled by dropdown */ },
+            label = label,
+            readOnly = true,
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "Expand",
+                    /* modifier = Modifier.rotate(if (expanded) 180f else 0f) */
+                )
+            },
+            modifier = Modifier
+                .clickable { expanded = true }
+                .fillMaxWidth(),
+            /* colors = TextFieldDefaults.colors(
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedContainerColor = MaterialTheme.colorScheme.surface
+            ) */
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            items.forEach { item ->
+                DropdownMenuItem(
+                    text = { Text(item) },
+                    onClick = {
+                        onValueChange(item)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+// End Grok chunk
 
 // LabeledItem() attempts to mimic the label style of a TextField but for "read-only" content. It
 // works best with a simple Text() child, but other things are possible.
@@ -594,6 +731,8 @@ fun DataTable(
                 ComposeTutorialTheme(/* darkTheme = isDarkTheme */) {
                     Scaffold(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)) {
                         Column(modifier = Modifier.padding(it)) {
+                            MainScreen()
+
                             Row {
                                 ComboBoxSample(modifier = Modifier.weight(1f))
                                 Button(modifier = Modifier.weight(2f), onClick = {}, shape = MaterialTheme.shapes.small) {
