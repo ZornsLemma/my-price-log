@@ -185,7 +185,8 @@ fun ExposedDropdownMenuBox(
     Box(modifier = modifier) {
         TextField(
             value = value,
-            onValueChange = { /* No-op, handled by dropdown */ },
+             onValueChange = { /* No-op, handled by dropdown */ },
+            enabled = false, // TODO: hack to make clickable work
             label = label,
             readOnly = true,
             trailingIcon = {
