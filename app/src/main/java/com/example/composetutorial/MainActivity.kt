@@ -116,7 +116,7 @@ fun MainScreen() {
     var selectedCategory by remember { mutableStateOf("" /* "Dairy" */) }
     var selectedProduct by remember { mutableStateOf("" /* "Beans" */) }
     var showProductSheet by remember { mutableStateOf(false) }
-    val categories = listOf("Dairy", "Bakery", "Produce", "Meat", "Frozen")
+    val categories = listOf("Demo", "Groceries (home)", "Groceries (Manchester)")
     val products = listOf("Beans", "Milk", "Bread", "Chicken" /* ... */)
     var searchQuery by remember { mutableStateOf("") }
 
