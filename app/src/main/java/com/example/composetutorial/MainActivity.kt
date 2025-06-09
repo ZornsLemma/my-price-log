@@ -117,7 +117,7 @@ fun MainScreen() {
     var selectedProduct by remember { mutableStateOf("" /* "Beans" */) }
     var showProductSheet by remember { mutableStateOf(false) }
     val categories = listOf("Dairy", "Bakery", "Produce", "Meat", "Frozen")
-    val products = listOf("Beans", "Milk", "Bread", "Chicken", /* ... */ )
+    val products = listOf("Beans", "Milk", "Bread", "Chicken" /* ... */)
     var searchQuery by remember { mutableStateOf("") }
 
     Column(
@@ -129,7 +129,9 @@ fun MainScreen() {
         // TODO: I am starting to think this is the best drop down menu implementation (needs renaming to avoid confusion). We probably don't *want* the primary colour underline highlight here, given that e.g. "buttons" get highlighted by an overall colour change as this does rather than an "underline" - TextFields obviously *do* get this underline for whatever reason known only to MD3 specs, but our TextField is not a "real" TextField so this "darken whole thing" approach is probably consistent
         // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
         ExposedDropdownMenuBox(
-            modifier = Modifier.padding(bottom = 8.dp).fillMaxWidth(),
+            modifier = Modifier
+                .padding(bottom = 8.dp)
+                .fillMaxWidth(),
             value = selectedCategory,
             onValueChange = { selectedCategory = it },
             label = { Text("Category") },
@@ -142,7 +144,9 @@ fun MainScreen() {
             onValueChange = { /* No-op, read-only */ },
             label = { Text("Product") },
             enabled = false, // TODO: this is necessary to make "clickable" work, it looks wrong but this is all an experimental hack anyway
-            modifier = Modifier.fillMaxWidth().clickable { Log.d("MyApp", "SPS"); showProductSheet = true },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { Log.d("MyApp", "SPS"); showProductSheet = true },
             readOnly = true,
             trailingIcon = {
                 Icon(
@@ -150,8 +154,7 @@ fun MainScreen() {
                     contentDescription = "Search Products",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            },
-            /* colors = TextFieldDefaults.colors(
+            },/* colors = TextFieldDefaults.colors(
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                 focusedContainerColor = MaterialTheme.colorScheme.surface
             ) */
@@ -173,11 +176,9 @@ fun MainScreen() {
                         modifier = Modifier.fillMaxWidth(),
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Search"
+                                imageVector = Icons.Default.Search, contentDescription = "Search"
                             )
-                        }
-                    )
+                        })
                     LazyColumn {
                         items(products.filter {
                             it.contains(searchQuery, ignoreCase = true)
@@ -189,8 +190,7 @@ fun MainScreen() {
                                     .clickable {
                                         selectedProduct = product
                                         showProductSheet = false
-                                    }
-                            )
+                                    })
                         }
                     }
                 }
@@ -202,12 +202,11 @@ fun MainScreen() {
 // Sometimes we have to make a TextField "enabled = false" for it to be clickable, so we need
 // to override the colours to make it look like it is enabled.
 @Composable
-fun myTextFieldColors() =
-TextFieldDefaults.colors(
-disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-disabledTextColor = MaterialTheme.colorScheme.onSurface,
-disabledIndicatorColor = /* indicatorColor */ MaterialTheme.colorScheme.onSurfaceVariant,
+fun myTextFieldColors() = TextFieldDefaults.colors(
+    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+    disabledIndicatorColor = /* indicatorColor */ MaterialTheme.colorScheme.onSurfaceVariant,
 // focusedIndicatorColor = MaterialTheme.colorScheme.primary, // TODO NOT WORKING
 )
 
@@ -219,8 +218,7 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
     items: List<String>,
     modifier: Modifier = Modifier
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    /*
+    var expanded by remember { mutableStateOf(false) }/*
     val focusedColor   = MaterialTheme.colorScheme.error
     val unfocusedColor = MaterialTheme.colorScheme.tertiary //     onSurfaceVariant
     var indicatorColor by remember { mutableStateOf(unfocusedColor) } // TODO: ALL THIS STUFF ISN'T WORKING, I SUSPECT THE *FOCUS* ISN'T HITTING THE CONTROL AS IT'S DISABLED, BUT *SOMETHING* IS HITTING IT AND TOGGLING ITS COLOUR BUT IT ISN'T THIS, NOT SURE
@@ -245,29 +243,29 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
                 .clickable { Log.d("MyApp", "CATCLICK"); expanded = true }
                 //.onFocusChanged { Log.d("MyApp", if (it.isFocused) "Foc" else "Unfoc"); indicatorColor = if (it.isFocused) focusedColor else unfocusedColor  }
                 .fillMaxWidth()
-                .onGloballyPositioned { coordinates -> textFieldWidth = coordinates.size.width },
-            /* colors = TextFieldDefaults.colors(
+                .onGloballyPositioned { coordinates -> textFieldWidth = coordinates.size.width },/* colors = TextFieldDefaults.colors(
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             focusedContainerColor = MaterialTheme.colorScheme.surface
         ) */
             colors = myTextFieldColors()
         )
         DropdownMenu(
-            modifier = Modifier. width(with(LocalDensity.current) { textFieldWidth.toDp() }) .background(MaterialTheme.colorScheme.surfaceContainer), // TODO: REDUNDANT?
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
+            modifier = Modifier
+                .width(with(LocalDensity.current) { textFieldWidth.toDp() })
+                .background(MaterialTheme.colorScheme.surfaceContainer), // TODO: REDUNDANT?
+            expanded = expanded, onDismissRequest = { expanded = false }) {
             items.forEach { item ->
                 // TODO: THE TEXT IN THIS DROPDOWN DOESN'T LEFT-ALIGN WITH THE PARENT TEXTFIELD
-                DropdownMenuItem(
-                    text = { Text(item, style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onSurface ) },
-                    contentPadding = PaddingValues(start = 16.dp),
-                    onClick = {
-                        onValueChange(item)
-                        expanded = false
-                    }
-                )
+                DropdownMenuItem(text = {
+                    Text(
+                        item,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }, contentPadding = PaddingValues(start = 16.dp), onClick = {
+                    onValueChange(item)
+                    expanded = false
+                })
             }
         }
     }
@@ -321,11 +319,15 @@ fun ItemSourceInfo() {
     // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective, it's not as if the offer duration is usually clearly stated, free text note probably can be used for this among other things
     // TODO: Should we show free-form text or special offer information here?
     // TODO: Just possibly the card inside layout should be some kind of grid control rather than row+column?
-    Card(modifier = Modifier.fillMaxWidth().padding(4.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */ colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(4.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+    ) {
         Row(modifier = Modifier.padding(8.dp)) {
             LabeledItem(
-                modifier = Modifier.weight(1f),
-                label = "Price as sold"
+                modifier = Modifier.weight(1f), label = "Price as sold"
             ) { // TODO: quite like this, but maybe "Shelf price"?
                 Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
             }
@@ -357,12 +359,10 @@ fun ItemSourceInfo() {
                             expanded = expanded, onDismissRequest = { expanded = false }) {
                             var availableUnits = listOf("100g", "kg", "oz")
                             availableUnits.forEach { selectionOption ->
-                                DropdownMenuItem(
-                                    text = { Text(selectionOption) },
-                                    onClick = {
-                                        currentUnit = selectionOption
-                                        expanded = false
-                                    })
+                                DropdownMenuItem(text = { Text(selectionOption) }, onClick = {
+                                    currentUnit = selectionOption
+                                    expanded = false
+                                })
                             }
                         }
                     }
@@ -371,32 +371,33 @@ fun ItemSourceInfo() {
         }
         // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
         // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
-        Row(modifier = Modifier.padding(horizontal=8.dp)) {
+        Row(modifier = Modifier.padding(horizontal = 8.dp)) {
             LabeledItem("Notes") {
                 Text("Special offer price")
             }
         }
         // TODO: Vertical spacing probably poor with or without notes field - needs tweaking/better "plan" for how to specify it - that said, the vertical space above this final row probably should be "a bit" larger than the space between the two "reporting our status" rows - the following row is a "summary plus action" row and does want some visual distinction
         Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Row(modifier = Modifier.weight(1f)) {
-                    Icon(
+            Row(modifier = Modifier.weight(1f)) {
+                Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = "Checked",
                     modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.primary) // TODO: probably "primary"=good, default text color=neutral, "error"=bad
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Good price")
+                    tint = MaterialTheme.colorScheme.primary
+                ) // TODO: probably "primary"=good, default text color=neutral, "error"=bad
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Good price")
+            }
+            Row(modifier = Modifier.weight(1.2f)) {
+                // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
+                FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
+                    Text("Confirm")
                 }
-                Row(modifier = Modifier.weight(1.2f)) {
-                    // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
-                    FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
-                        Text("Confirm")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
-                        Text("Change")
-                    }
+                Spacer(modifier = Modifier.width(8.dp))
+                FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
+                    Text("Change")
                 }
+            }
         }
     }
 }
@@ -465,7 +466,7 @@ fun DataTable(
     }
 }
 
-    // TODO: This probably needs to track state/events via parents
+// TODO: This probably needs to track state/events via parents
 // TODO: A final version of this might want an internal (database, not linear) ID for each item and it might expose that ID as well as/instead of the associated String to the caller, but the ID is of course invisible to the UI
 // TODO: OK - this just may fix my problems and/or simply be "right" - should I be using ExposedDropdownMenu(Box) - this may practically *be* a standard combo box? (see e.g.https://kotlinlang.org/api/compose-multiplatform/material3/androidx.compose.material3/-exposed-dropdown-menu-box.html - TBH documentation on this feels oddly sparse) - FWIW https://m3.material.io/components/menus/guidelines under "Filtering" looks like precisely what I want
 // TODO: Next problem to solve - if you have cursor in the combobox text and click the icon to make
@@ -492,55 +493,55 @@ fun DataTable(
 // worries about that activating a button - to get the same behaviour, but it is probably nice to
 // have the hint that you can click the dropdown arrow to close the dropdown list, as well as have
 // it as a known safe place you can click without other side effects.)
-    @Composable
-    fun ComboBox(
-        label: String,
-        value: String,
-        onValueChange: (String) -> Unit,
-        content: List<String>, // TODO: poor name for var?
-        modifier: Modifier = Modifier
-    ) {
-        // TODO: I suspect we may not want to pass all value changes in the text box through to the onValueChange provided by our parent. We are encouraging the user to type partial substrings which are meaningless to the parent, and it also doesn't really care anyway until we have "finished" and have a possibly-valid (but we may not) string, either because the user typed it or because they clicked it in the list. For now I am not even trying to call the parent and just ignoring the value they supply.
-        var isExpanded by remember { mutableStateOf(false) }
-        var text by rememberSaveable { mutableStateOf("") }
-        val focusManager = LocalFocusManager.current
-        Column() {
-            Row(modifier = modifier) {
-                TextField(
-                    label = { Text(label) },
-                    value = text,
-                    onValueChange = { newText -> text = newText },
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = null,
-                            modifier = Modifier.clickable {
-                                // Superficially we want "isExpanded = !isExpanded" here, but that's not
-                                // how it works. Clicking on the icon in an attempt to close the
-                                // dropdown actually just triggers onDismissRequest on the dropdown and
-                                // this code never gets called, presumably because it is a click not on
-                                // the dropdown. Of course the toggle code is not wrong, but the
-                                // implication that it's called symmetrically is confusing when trying
-                                // to get focus behaviour correct, so let's be explicit.
-                                isExpanded = true
-                            })
-                    })
-            }
-            // TODO: I may need to use LazyColumn inside DropdownMenu to get laziness, given my list could have approx 100 items. Not worrying about that just now.
-            DropdownMenu(
-                expanded = isExpanded,
-                onDismissRequest = { isExpanded = false },
-            ) {
-                for (item in content) {
-                    DropdownMenuItem(text = { Text(item) }, onClick = {
-                        text = item
-                        isExpanded = false
-                        focusManager.clearFocus()
-                    })
-                }
+@Composable
+fun ComboBox(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    content: List<String>, // TODO: poor name for var?
+    modifier: Modifier = Modifier
+) {
+    // TODO: I suspect we may not want to pass all value changes in the text box through to the onValueChange provided by our parent. We are encouraging the user to type partial substrings which are meaningless to the parent, and it also doesn't really care anyway until we have "finished" and have a possibly-valid (but we may not) string, either because the user typed it or because they clicked it in the list. For now I am not even trying to call the parent and just ignoring the value they supply.
+    var isExpanded by remember { mutableStateOf(false) }
+    var text by rememberSaveable { mutableStateOf("") }
+    val focusManager = LocalFocusManager.current
+    Column() {
+        Row(modifier = modifier) {
+            TextField(
+                label = { Text(label) },
+                value = text,
+                onValueChange = { newText -> text = newText },
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        modifier = Modifier.clickable {
+                            // Superficially we want "isExpanded = !isExpanded" here, but that's not
+                            // how it works. Clicking on the icon in an attempt to close the
+                            // dropdown actually just triggers onDismissRequest on the dropdown and
+                            // this code never gets called, presumably because it is a click not on
+                            // the dropdown. Of course the toggle code is not wrong, but the
+                            // implication that it's called symmetrically is confusing when trying
+                            // to get focus behaviour correct, so let's be explicit.
+                            isExpanded = true
+                        })
+                })
+        }
+        // TODO: I may need to use LazyColumn inside DropdownMenu to get laziness, given my list could have approx 100 items. Not worrying about that just now.
+        DropdownMenu(
+            expanded = isExpanded,
+            onDismissRequest = { isExpanded = false },
+        ) {
+            for (item in content) {
+                DropdownMenuItem(text = { Text(item) }, onClick = {
+                    text = item
+                    isExpanded = false
+                    focusManager.clearFocus()
+                })
             }
         }
     }
+}
 
 // TODO: ChatGPT code. Not tried to understand and I think it definitely has some flaws (which are
 // not necessarily its fault) but want to play with this a bit anyway and see if it's viable.
@@ -553,86 +554,114 @@ fun DataTable(
 //   ties the above together, although it's valuable to note specific ways it can occur if we're
 //   trying to fix it.
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun ComboBoxSample(modifier: Modifier = Modifier) {
-        val options = listOf("Apple", "Banana", "Cherry")
-        var expanded by remember { mutableStateOf(false) }
-        var selectedOptionText by remember { mutableStateOf("Apple") }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ComboBoxSample(modifier: Modifier = Modifier) {
+    val options = listOf("Apple", "Banana", "Cherry")
+    var expanded by remember { mutableStateOf(false) }
+    var selectedOptionText by remember { mutableStateOf("Apple") }
 
-        ExposedDropdownMenuBox(
-            modifier = modifier, expanded = expanded, onExpandedChange = { expanded = !expanded }) {
-            TextField(
-                readOnly = true,
-                // keyboardOptions = null,
-                value = selectedOptionText,
-                onValueChange = { selectedOptionText = it },
-                label = { Text("Select a fruit") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                },
-                modifier = Modifier
-                    .menuAnchor()
-                    // TODO: This onKeyEvent is necessary to allow you to press Enter to open the
-                    // drop-down. I haven't tested it yet but Grok tells me this *won't* handle
-                    // a D-pad click and we may need to also recognize Key.DpadCenter to do that.
-                    // With this tweak, I suspect this implementation of a "no keyboard entry"
-                    // combo box is the nicest one going - since we are mostly using TextField
-                    // without active coercion and we have been able to leave it enabled, color
-                    // changes and keyboard navigation mostly seem to "just work".
-                    .onKeyEvent { keyEvent ->
-                        if (keyEvent.key == Key.Enter && keyEvent.type == KeyEventType.KeyUp) {
-                            expanded = true
-                            true // Consume the event
-                        } else {
-                            false // Let other events pass through
-                        }
+    ExposedDropdownMenuBox(
+        modifier = modifier, expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+        TextField(
+            readOnly = true,
+            // keyboardOptions = null,
+            value = selectedOptionText,
+            onValueChange = { selectedOptionText = it },
+            label = { Text("Select a fruit") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+                .menuAnchor()
+                // TODO: This onKeyEvent is necessary to allow you to press Enter to open the
+                // drop-down. I haven't tested it yet but Grok tells me this *won't* handle
+                // a D-pad click and we may need to also recognize Key.DpadCenter to do that.
+                // With this tweak, I suspect this implementation of a "no keyboard entry"
+                // combo box is the nicest one going - since we are mostly using TextField
+                // without active coercion and we have been able to leave it enabled, color
+                // changes and keyboard navigation mostly seem to "just work".
+                .onKeyEvent { keyEvent ->
+                    if (keyEvent.key == Key.Enter && keyEvent.type == KeyEventType.KeyUp) {
+                        expanded = true
+                        true // Consume the event
+                    } else {
+                        false // Let other events pass through
                     }
-                    //.fillMaxWidth()
-            )
-
-            // TODO: The text in this dropdown doesn't left align with the text in the TextField
-            ExposedDropdownMenu(
-                // TODO: The font in this dropdown appears unnecessarily small - prob fixed
-                modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer), // TODO: perhaps redundant?
-                expanded = expanded, onDismissRequest = { expanded = false }) {
-                options.forEach { selectionOption ->
-                    DropdownMenuItem(text = { Text(selectionOption,             style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface) }, onClick = {
-                        selectedOptionText = selectionOption
-                        expanded = false
-                    })
                 }
+            //.fillMaxWidth()
+        )
+
+        // TODO: The text in this dropdown doesn't left align with the text in the TextField
+        ExposedDropdownMenu(
+            // TODO: The font in this dropdown appears unnecessarily small - prob fixed
+            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer), // TODO: perhaps redundant?
+            expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { selectionOption ->
+                DropdownMenuItem(text = {
+                    Text(
+                        selectionOption,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }, onClick = {
+                    selectedOptionText = selectionOption
+                    expanded = false
+                })
             }
         }
     }
+}
 
-    @Preview(showBackground = true)
-    @Composable
-    fun PreviewComboBox() {
+@Preview(showBackground = true)
+@Composable
+fun PreviewComboBox() {
+    ComboBox(
+        label = "Label3",
+        value = "Value3",
+        onValueChange = {},
+        content = listOf("foo", "bar", "baz")
+    )
+}
+
+@Preview
+@Composable
+fun TripleComboBox() {
+    Row() {
         ComboBox(
-            label = "Label3",
-            value = "Value3",
+            label = "Category",
+            value = "Foo",
             onValueChange = {},
-            content = listOf("foo", "bar", "baz")
+            content = listOf(),
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        ComboBox(
+            label = "Item",
+            value = "Bar",
+            onValueChange = {},
+            content = listOf(),
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        ComboBox(
+            label = "Source",
+            value = "Baz",
+            onValueChange = {},
+            content = listOf(),
+            modifier = Modifier.weight(1f)
         )
     }
+}
 
-    @Preview
-    @Composable
-    fun TripleComboBox() {
+@Preview
+@Composable
+fun TwoRowTripleComboBox() {
+    Column() {
         Row() {
             ComboBox(
                 label = "Category",
                 value = "Foo",
-                onValueChange = {},
-                content = listOf(),
-                modifier = Modifier.weight(1f)
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            ComboBox(
-                label = "Item",
-                value = "Bar",
                 onValueChange = {},
                 content = listOf(),
                 modifier = Modifier.weight(1f)
@@ -646,104 +675,81 @@ fun DataTable(
                 modifier = Modifier.weight(1f)
             )
         }
-    }
-
-    @Preview
-    @Composable
-    fun TwoRowTripleComboBox() {
-        Column() {
-            Row() {
-                ComboBox(
-                    label = "Category",
-                    value = "Foo",
-                    onValueChange = {},
-                    content = listOf(),
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                ComboBox(
-                    label = "Source",
-                    value = "Baz",
-                    onValueChange = {},
-                    content = listOf(),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Row() {
-                ComboBox(
-                    label = "Item",
-                    value = "Bar",
-                    onValueChange = {},
-                    content = listOf(),
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
-
-    @Composable
-    fun Conversation(messages: List<Message>) {
-        LazyColumn {
-            items(messages) { message ->
-                MessageCard(message)
-            }
-        }
-    }
-
-    @Preview
-    @Composable
-    fun PreviewConversation() {
-        ComposeTutorialTheme {
-            Conversation(SampleData.conversationSample)
-        }
-    }
-
-    @Composable
-    fun MessageCard(msg: Message) {
-        Row(modifier = Modifier.padding(all = 8.dp)) {
-            Image(
-                painter = painterResource(R.drawable.profile_picture),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape)
+        Spacer(modifier = Modifier.height(4.dp))
+        Row() {
+            ComboBox(
+                label = "Item",
+                value = "Bar",
+                onValueChange = {},
+                content = listOf(),
+                modifier = Modifier.weight(1f)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+        }
+    }
+}
 
-            // We keep track if the message is expanded or not in this
-            // variable
-            var isExpanded by remember { mutableStateOf(false) }
+@Composable
+fun Conversation(messages: List<Message>) {
+    LazyColumn {
+        items(messages) { message ->
+            MessageCard(message)
+        }
+    }
+}
 
-            // We toggle the isExpanded variable when we click on this Column
-            Column(modifier = Modifier.clickable { isExpanded = !isExpanded }) {
+@Preview
+@Composable
+fun PreviewConversation() {
+    ComposeTutorialTheme {
+        Conversation(SampleData.conversationSample)
+    }
+}
+
+@Composable
+fun MessageCard(msg: Message) {
+    Row(modifier = Modifier.padding(all = 8.dp)) {
+        Image(
+            painter = painterResource(R.drawable.profile_picture),
+            contentDescription = null,
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // We keep track if the message is expanded or not in this
+        // variable
+        var isExpanded by remember { mutableStateOf(false) }
+
+        // We toggle the isExpanded variable when we click on this Column
+        Column(modifier = Modifier.clickable { isExpanded = !isExpanded }) {
+            Text(
+                text = msg.author,
+                color = MaterialTheme.colorScheme.secondary,
+                style = MaterialTheme.typography.titleSmall
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                shadowElevation = 1.dp,
+            ) {
                 Text(
-                    text = msg.author,
-                    color = MaterialTheme.colorScheme.secondary,
-                    style = MaterialTheme.typography.titleSmall
+                    text = msg.body,
+                    modifier = Modifier.padding(all = 4.dp),
+                    // If the message is expanded, we display all its content
+                    // otherwise we only display the first line
+                    maxLines = if (isExpanded) Int.MAX_VALUE else 1,
+                    style = MaterialTheme.typography.bodyMedium
                 )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    shadowElevation = 1.dp,
-                ) {
-                    Text(
-                        text = msg.body,
-                        modifier = Modifier.padding(all = 4.dp),
-                        // If the message is expanded, we display all its content
-                        // otherwise we only display the first line
-                        maxLines = if (isExpanded) Int.MAX_VALUE else 1,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
             }
         }
     }
+}
 
-    // ChatGPT wrote this for me after much wrangling. I 70% understand what's going on but there is
+// ChatGPT wrote this for me after much wrangling. I 70% understand what's going on but there is
 // definitely some voodoo here. Compose apparently has no real concept of clearing the focus on
 // a TextField when we tap elsewhere on the screen. Instead, we need to arrange for this to happen
 // ourselves. We try to wrap "elsewhere" in a Box and attach this modifier to it (although I think
@@ -773,157 +779,154 @@ fun DataTable(
 // I shouldn't even want this style of interaction (clearing the focus on clicking elsewhere,
 // even if that somewhere is itself an active element like a button) and to stop fighting the
 // framework.
-    @Composable
-    fun Modifier.clearFocusOnTapOutside() = composed {
-        val focusManager: FocusManager = LocalFocusManager.current
-        pointerInput(Unit) {
-            awaitPointerEventScope {
-                while (true) {
-                    val event = awaitPointerEvent()
-                    if (event.changes.any { it.pressed && !it.previousPressed }) {
-                        focusManager.clearFocus()
-                    }
+@Composable
+fun Modifier.clearFocusOnTapOutside() = composed {
+    val focusManager: FocusManager = LocalFocusManager.current
+    pointerInput(Unit) {
+        awaitPointerEventScope {
+            while (true) {
+                val event = awaitPointerEvent()
+                if (event.changes.any { it.pressed && !it.previousPressed }) {
+                    focusManager.clearFocus()
                 }
             }
         }
     }
+}
 
-    class MainActivity : ComponentActivity() {
-        override fun onCreate(savedInstanceState: Bundle?) {
-            super.onCreate(savedInstanceState)
-            enableEdgeToEdge()
-            // TODO: Experiment with adding a Settings activity and make the dark/light/follow system available and grey out (with some text saying why) follow system on Android < 10
-            val isDarkTheme = true /* TODO when (userThemePref) {
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        // TODO: Experiment with adding a Settings activity and make the dark/light/follow system available and grey out (with some text saying why) follow system on Android < 10
+        val isDarkTheme = true /* TODO when (userThemePref) {
             ThemePreference.DARK -> true
             ThemePreference.LIGHT -> false
             ThemePreference.SYSTEM -> isSystemInDarkTheme()
         } */
-            setContent {
-                var menuExpanded by remember { mutableStateOf(false) }
-                val focusManager = LocalFocusManager.current
-                Box(Modifier.safeDrawingPadding())
-                ComposeTutorialTheme(/* darkTheme = isDarkTheme */) {
-                    Scaffold(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars),
-                        // TODO: Probably need to apply MD colors to topBar, just poss also font size but it may default to something sensible
-                        topBar = {TopAppBar(title = { Text("My App Name Here")},
-                            actions = {
-                                IconButton(onClick = { menuExpanded = true }) {
-                                    Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                                }
+        setContent {
+            var menuExpanded by remember { mutableStateOf(false) }
+            val focusManager = LocalFocusManager.current
+            Box(Modifier.safeDrawingPadding())
+            ComposeTutorialTheme(/* darkTheme = isDarkTheme */) {
+                Scaffold(
+                    modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars),
+                    // TODO: Probably need to apply MD colors to topBar, just poss also font size but it may default to something sensible
+                    topBar = {
+                        TopAppBar(title = { Text("My App Name Here") }, actions = {
+                            IconButton(onClick = { menuExpanded = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                            }
 
-                                DropdownMenu(
-                                    expanded = menuExpanded,
-                                    onDismissRequest = { menuExpanded = false }
-                                ) {
-                                    // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
-                                    DropdownMenuItem(
-                                        text = { Text("Edit product list") },
-                                        onClick = {
-                                            menuExpanded = false
-                                            // Handle navigation or action
-                                        }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("Edit categories") },
-                                        onClick = {
-                                            menuExpanded = false
-                                        }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text("Settings") },
-                                        onClick = {
-                                            menuExpanded = false
-                                        }
-                                    )
-                                }
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false }) {
+                                // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
+                                DropdownMenuItem(text = { Text("Edit product list") }, onClick = {
+                                    menuExpanded = false
+                                    // Handle navigation or action
+                                })
+                                DropdownMenuItem(text = { Text("Edit categories") }, onClick = {
+                                    menuExpanded = false
+                                })
+                                DropdownMenuItem(text = { Text("Settings") }, onClick = {
+                                    menuExpanded = false
+                                })
+                            }
 
-                            })}) {
-                        Column(modifier = Modifier.padding(it)) {
+                        })
+                    }) {
+                    Column(modifier = Modifier.padding(it)) {
 
-                            // TextField( value = "Foozle", readOnly = true, onValueChange = {}, label = { Text("Label") } )  // TODO temp for cmparison
+                        // TextField( value = "Foozle", readOnly = true, onValueChange = {}, label = { Text("Label") } )  // TODO temp for cmparison
 
-                            MainScreen()
+                        MainScreen()
 
+                        /*
+                        Row {
+                            ComboBoxSample(modifier = Modifier.weight(1f))
                             /*
-                            Row {
-                                ComboBoxSample(modifier = Modifier.weight(1f))
-                                /*
-                                Button(modifier = Modifier.weight(2f), onClick = {}, shape = MaterialTheme.shapes.small) {
-                                    Icon(Icons.Default.Search, contentDescription = null)
-                                    Text("Product: Ground coffee",style = MaterialTheme.typography.bodyLarge)
-                                }
+                            Button(modifier = Modifier.weight(2f), onClick = {}, shape = MaterialTheme.shapes.small) {
+                                Icon(Icons.Default.Search, contentDescription = null)
+                                Text("Product: Ground coffee",style = MaterialTheme.typography.bodyLarge)
+                            }
 
-                                 */
-                            }*/
+                             */
+                        }*/
 
-                            ItemSourceInfo()
+                        ItemSourceInfo()
 
-                            // TODO: This mock data shows some questions:
-                            // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
-                            // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
-                            // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
-                            // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
-                            // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
-                            // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
-                            // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
-                            // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
-                            // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
-                            // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
-                            // but things are slightly different if we go with this approach.
-                            val header = listOf("Source", "Unit price", "Notes")
-                            val data = listOf(
-                                listOf("Tesco", "£2.13/100g", "Tesco Finest is actually cheapest"),
-                                listOf("Sainsbury's Local", "£2.94/100g", ""),
-                                listOf("Asda", "£2.08/100g", "KTC brand"),
-                                listOf("Iceland", "£2.38/100g", ""),
-                                // …
+                        // TODO: This mock data shows some questions:
+                        // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
+                        // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
+                        // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
+                        // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
+                        // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
+                        // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
+                        // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
+                        // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
+                        // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
+                        // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
+                        // but things are slightly different if we go with this approach.
+                        val header = listOf("Source", "Unit price", "Notes")
+                        val data = listOf(
+                            listOf("Tesco", "£2.13/100g", "Tesco Finest is actually cheapest"),
+                            listOf("Sainsbury's Local", "£2.94/100g", ""),
+                            listOf("Asda", "£2.08/100g", "KTC brand"),
+                            listOf("Iceland", "£2.38/100g", ""),
+                            // …
+                        )
+
+                        // TODO: If we want this, the Card should probably be inside DataTable - but this is all experimental
+                        // TODO: The way the bottom row of this Card and its curved edges does not match up with the last row (when the table is short enough not to need to scroll) is ugly - but this somewhat ties in with the hacky fixed height, just be aware of it when tweaking further
+                        // TODO: Fixed .height() on card is a hack, a real implementation would probably give .weight() to all the elements of the outer Column, but this will do for now
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(4.dp)
+                                .height(200.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                        ) {
+
+                            DataTable(
+                                header = header, rows = data,
+                                // e.g. you want the “Score” column to be narrower:
+                                columnWeights = listOf(2f, 1.4f, 2f)
                             )
+                        }
 
-                            // TODO: If we want this, the Card should probably be inside DataTable - but this is all experimental
-                            // TODO: The way the bottom row of this Card and its curved edges does not match up with the last row (when the table is short enough not to need to scroll) is ugly - but this somewhat ties in with the hacky fixed height, just be aware of it when tweaking further
-                            // TODO: Fixed .height() on card is a hack, a real implementation would probably give .weight() to all the elements of the outer Column, but this will do for now
-                            Card(modifier = Modifier.fillMaxWidth().padding(4.dp).height(200.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */ colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)) {
-
-                                DataTable(
-                                    header = header,
-                                    rows = data,
-                                    // e.g. you want the “Score” column to be narrower:
-                                    columnWeights = listOf(2f, 1.4f, 2f)
-                                )
-                            }
-
-                            // ComboBox("Label", "Value", onValueChange = {}, content = listOf("thing 1", "thing 2"))
-                            //ComboBoxSample()
-                            // TODO: Just possible we don't need clearFocusOnTapOutside hack now, but
-                            // we probably do. Try taking it out later. If we don't need it, we don't
-                            // need the Box, which is just there to hook clearFocus... on.
-                            Box(modifier = Modifier.clearFocusOnTapOutside()) {
-                                Conversation(SampleData.conversationSample)
-                            }
+                        // ComboBox("Label", "Value", onValueChange = {}, content = listOf("thing 1", "thing 2"))
+                        //ComboBoxSample()
+                        // TODO: Just possible we don't need clearFocusOnTapOutside hack now, but
+                        // we probably do. Try taking it out later. If we don't need it, we don't
+                        // need the Box, which is just there to hook clearFocus... on.
+                        Box(modifier = Modifier.clearFocusOnTapOutside()) {
+                            Conversation(SampleData.conversationSample)
                         }
                     }
                 }
             }
         }
     }
+}
 
-    @Preview(name = "Light Mode")
-    @Preview(
-        uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true, name = "Dark Mode"
-    )
-    @Composable
-    fun PreviewMessageCard() {
-        ComposeTutorialTheme {
-            Surface {
-                MessageCard(
-                    msg = Message("Lexi", "Take a look at Jetpack Compose, it's great!")
-                )
-            }
+@Preview(name = "Light Mode")
+@Preview(
+    uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true, name = "Dark Mode"
+)
+@Composable
+fun PreviewMessageCard() {
+    ComposeTutorialTheme {
+        Surface {
+            MessageCard(
+                msg = Message("Lexi", "Take a look at Jetpack Compose, it's great!")
+            )
         }
     }
+}
 
 
-    data class Message(val author: String, val body: String)
+data class Message(val author: String, val body: String)
 
 // TODO: ChatGPT-inspired (and maybe do my own searches too) libraries that may solve the ComboBox issue:
 // https://github.com/Breens-Mbaka/Searchable-Dropdown-Menu-Jetpack-Compose
