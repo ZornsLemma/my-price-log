@@ -328,6 +328,7 @@ fun ItemSourceInfo() {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
+            // TODO: We need to allow this to be set to empty/None by the user - how best to do that? And if it is empty, we need to collapse all the stuff below it and replace it with a brief instructional string roughly "Select a store to see and edit product details" - check the ChatGPT discussion I saved for some wording
             ExposedDropdownMenuBox(
                 modifier = Modifier
                     .padding(bottom = 8.dp)
@@ -894,6 +895,7 @@ class MainActivity : ComponentActivity() {
                         // TODO: If we want this, the Card should probably be inside DataTable - but this is all experimental
                         // TODO: The way the bottom row of this Card and its curved edges does not match up with the last row (when the table is short enough not to need to scroll) is ugly - but this somewhat ties in with the hacky fixed height, just be aware of it when tweaking further
                         // TODO: Fixed .height() on card is a hack, a real implementation would probably give .weight() to all the elements of the outer Column, but this will do for now
+                        // TODO: I wonder if the DataTable should be more visibly contained "inside" the Card, rather than practically running up to its edges. This might match the style of the store+product card better. It might also look a bit weird since the table is the only thing on this card, but maybe that isn't a problem.
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
