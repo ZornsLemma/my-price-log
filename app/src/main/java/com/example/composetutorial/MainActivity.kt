@@ -49,6 +49,7 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material3.Card
@@ -58,6 +59,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
@@ -362,14 +364,16 @@ fun DataTable(
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun ComboBoxSample() {
+    fun ComboBoxSample(modifier: Modifier = Modifier) {
         val options = listOf("Apple", "Banana", "Cherry")
         var expanded by remember { mutableStateOf(false) }
         var selectedOptionText by remember { mutableStateOf("") }
 
         ExposedDropdownMenuBox(
-            expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+            modifier = modifier, expanded = expanded, onExpandedChange = { expanded = !expanded }) {
             TextField(
+                readOnly = true,
+                // keyboardOptions = null,
                 value = selectedOptionText,
                 onValueChange = { selectedOptionText = it },
                 label = { Text("Select a fruit") },
@@ -378,7 +382,7 @@ fun DataTable(
                 },
                 modifier = Modifier
                     .menuAnchor()
-                    .fillMaxWidth()
+                    //.fillMaxWidth()
             )
 
             ExposedDropdownMenu(
@@ -590,6 +594,14 @@ fun DataTable(
                 ComposeTutorialTheme(/* darkTheme = isDarkTheme */) {
                     Scaffold(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars)) {
                         Column(modifier = Modifier.padding(it)) {
+                            Row {
+                                ComboBoxSample(modifier = Modifier.weight(1f))
+                                Button(modifier = Modifier.weight(2f), onClick = {}, shape = MaterialTheme.shapes.small) {
+                                    Icon(Icons.Default.Search, contentDescription = null)
+                                    Text("Product: Ground coffee",style = MaterialTheme.typography.bodyLarge)
+                                }
+                            }
+
                             ItemSourceInfo()
 
                             // TODO: This mock data shows some questions:
