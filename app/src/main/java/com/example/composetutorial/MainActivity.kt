@@ -116,6 +116,7 @@ fun MainScreen() {
             .padding(16.dp)
     ) {
         // Category Selector
+        // TODO: I am starting to think this is the best drop down menu implementation (needs renaming to avoid confusion). We probably don't *want* the primary colour underline highlight here, given that e.g. "buttons" get highlighted by an overall colour change as this does rather than an "underline" - TextFields obviously *do* get this underline for whatever reason known only to MD3 specs, but our TextField is not a "real" TextField so this "darken whole thing" approach is probably consistent
         ExposedDropdownMenuBox(
             modifier = Modifier.padding(bottom = 8.dp),
             value = selectedCategory,
