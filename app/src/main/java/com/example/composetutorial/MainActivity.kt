@@ -204,8 +204,8 @@ fun MainScreen() {
 @Composable
 fun myTextFieldColors() = TextFieldDefaults.colors(
     disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    disabledTextColor = MaterialTheme.colorScheme.primary, // TODO: was (and "should" be for pure TextField copatibility) MaterialTheme.colorScheme.onSurface, - but since in practice these elements are setting context for the whole screen, I am experimentally trying to see if highlighting them slightly looks good/OK and breaks up the greyness
+    disabledLabelColor = MaterialTheme.colorScheme.primary, // TODO: experimental, "should be" MaterialTheme.colorScheme.onSurfaceVariant, - the idea is that in practice we use these colors for our dropdown selectors and they are "interactive" and maybe deserve highlighting - I have mixed feelings about how good this looks, but will go with primary for the moment
+    disabledTextColor = MaterialTheme.colorScheme.onSurface,
     disabledIndicatorColor = /* indicatorColor */ MaterialTheme.colorScheme.onSurfaceVariant,
 // focusedIndicatorColor = MaterialTheme.colorScheme.primary, // TODO NOT WORKING
 )
