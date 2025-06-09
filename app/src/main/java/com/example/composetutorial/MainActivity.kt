@@ -68,6 +68,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -192,16 +193,18 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    /*
     val focusedColor   = MaterialTheme.colorScheme.error
     val unfocusedColor = MaterialTheme.colorScheme.tertiary //     onSurfaceVariant
     var indicatorColor by remember { mutableStateOf(unfocusedColor) } // TODO: ALL THIS STUFF ISN'T WORKING, I SUSPECT THE *FOCUS* ISN'T HITTING THE CONTROL AS IT'S DISABLED, BUT *SOMETHING* IS HITTING IT AND TOGGLING ITS COLOUR BUT IT ISN'T THIS, NOT SURE
-    Box(modifier = modifier.fillMaxWidth().clickable { Log.d("MyApp", "BOXCLICK") }) {
+    */
+    Box(modifier = modifier) {
         TextField(
             value = value,
             onValueChange = { /* No-op, handled by dropdown */ },
             label = label,
             readOnly = true,
-            //enabled = false, // TODO HACK
+            enabled = false, // TODO HACK
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
@@ -212,7 +215,7 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
             },
             modifier = Modifier
                 .clickable { Log.d("MyApp", "CATCLICK"); expanded = true }
-                .onFocusChanged { Log.d("MyApp", if (it.isFocused) "Foc" else "Unfoc"); indicatorColor = if (it.isFocused) focusedColor else unfocusedColor  }
+                //.onFocusChanged { Log.d("MyApp", if (it.isFocused) "Foc" else "Unfoc"); indicatorColor = if (it.isFocused) focusedColor else unfocusedColor  }
                 .fillMaxWidth(),
             /* colors = TextFieldDefaults.colors(
             unfocusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -221,10 +224,10 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
             // We have to make the TextField "enabled = false" for it to be clickable, so we need
             // to override the colours to make it look like it is enabled.
             colors = TextFieldDefaults.colors(
-                disabledContainerColor = MaterialTheme.colorScheme.secondary, // MaterialTheme.colorScheme.surfaceContainerHighest,
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledIndicatorColor = indicatorColor, // MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledIndicatorColor = /* indicatorColor */ MaterialTheme.colorScheme.onSurfaceVariant,
                 // focusedIndicatorColor = MaterialTheme.colorScheme.primary, // TODO NOT WORKING
             )
         )
@@ -563,11 +566,14 @@ fun DataTable(
                     //.fillMaxWidth()
             )
 
+            // TODO: The text in this dropdown doesn't left align with the text in the TextField
             ExposedDropdownMenu(
-                // TODO: The font in this dropdown appears unnecessarily small
+                // TODO: The font in this dropdown appears unnecessarily small - prob fixed
+                modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer), // TODO: perhaps redundant?
                 expanded = expanded, onDismissRequest = { expanded = false }) {
                 options.forEach { selectionOption ->
-                    DropdownMenuItem(text = { Text(selectionOption) }, onClick = {
+                    DropdownMenuItem(text = { Text(selectionOption,             style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface) }, onClick = {
                         selectedOptionText = selectionOption
                         expanded = false
                     })
@@ -779,10 +785,13 @@ fun DataTable(
 
                             Row {
                                 ComboBoxSample(modifier = Modifier.weight(1f))
+                                /*
                                 Button(modifier = Modifier.weight(2f), onClick = {}, shape = MaterialTheme.shapes.small) {
                                     Icon(Icons.Default.Search, contentDescription = null)
                                     Text("Product: Ground coffee",style = MaterialTheme.typography.bodyLarge)
                                 }
+
+                                 */
                             }
 
                             ItemSourceInfo()
