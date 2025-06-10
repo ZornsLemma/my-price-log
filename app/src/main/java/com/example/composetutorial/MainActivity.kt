@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -329,7 +330,8 @@ fun ItemSourceInfo() {
             .padding(4.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
+        // TODO: animateContentSize() is experimental. If I keep it, I may also want it on the lower card, which can change size when product changes (just not yet, in this mockup).
+        Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp).animateContentSize()) {
             // TODO: We need to allow this to be set to empty/None by the user - how best to do that? And if it is empty, we need to collapse all the stuff below it and replace it with a brief instructional string roughly "Select a store to see and edit product details" - check the ChatGPT discussion I saved for some wording
             ExposedDropdownMenuBox(
                 modifier = Modifier
