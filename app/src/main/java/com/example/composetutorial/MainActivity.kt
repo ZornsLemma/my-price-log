@@ -442,49 +442,51 @@ fun DataTable(
     // although I am not sure - and certainly if we did, we would not want to mix that with the
     // small text label style used by LabelledText(). To some extent, I need to consider the
     // appearance of the whole screen in deciding this.
-    // TODO: The header should remain fixed even when the list scrolls.
+    // TODO: The header should remain fixed even when the list scrolls. - this is now done, but the header now loses contrast when a dark zebra row is adjacent
     // TODO: Should the header and the last item of the list have rounded corners? I am not sure. Probably best square corners TBH.
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    Column {
+
         // optional header
-        item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest) // TODO: OK colour?
-                    .padding(vertical = 8.dp, horizontal = 8.dp)
-            ) {
-                header.forEachIndexed { index, title ->
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier
-                            .weight(columnWeights[index])
-                            .padding(end = 8.dp)
-                    )
-                }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceContainerHighest) // TODO: OK colour?
+                .padding(vertical = 8.dp, horizontal = 8.dp)
+        ) {
+            header.forEachIndexed { index, title ->
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier
+                        .weight(columnWeights[index])
+                        .padding(end = 8.dp)
+                )
             }
         }
 
-        // data rows
-        itemsIndexed(rows) { rowIndex, rowData ->
-            // TODO: Zebra-striping is experimental, not sure how I feel about it. Even if we do keep it, note that the header row has a somewhat inconsistent colour - it is darker than the "surface" rows (which is probably good) but lighter than the surfaceVariant rows, which is probably bad (this comment is assuming a light mode display)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 0.dp, horizontal = 0.dp)
-                    .background(if (rowIndex % 2 == 0) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant)
-            ) {
-                // TODO: This inner Row is only here for the zebra-striping - if we get rid of it, we can do without it (and move the padding to the parent Row)
-                Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
-                    rowData.forEachIndexed { index, cell ->
-                        Text(
-                            text = cell,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier
-                                .weight(columnWeights[index])
-                                .padding(end = 8.dp)
-                        )
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+
+            // data rows
+            itemsIndexed(rows) { rowIndex, rowData ->
+                // TODO: Zebra-striping is experimental, not sure how I feel about it. Even if we do keep it, note that the header row has a somewhat inconsistent colour - it is darker than the "surface" rows (which is probably good) but lighter than the surfaceVariant rows, which is probably bad (this comment is assuming a light mode display)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 0.dp, horizontal = 0.dp)
+                        .background(if (rowIndex % 2 == 0) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    // TODO: This inner Row is only here for the zebra-striping - if we get rid of it, we can do without it (and move the padding to the parent Row)
+                    Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
+                        rowData.forEachIndexed { index, cell ->
+                            Text(
+                                text = cell,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier
+                                    .weight(columnWeights[index])
+                                    .padding(end = 8.dp)
+                            )
+                        }
                     }
                 }
             }
