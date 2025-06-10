@@ -68,7 +68,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.Divider
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
@@ -454,20 +456,29 @@ fun DataTable(
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         stickyHeader {
             // optional header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest) // TODO: OK colour?
-                    .padding(vertical = 8.dp, horizontal = 8.dp)
-            ) {
-                header.forEachIndexed { index, title ->
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
+            Surface(color = MaterialTheme.colorScheme.surfaceContainerHighest) {
+                Column {
+                    Row(
                         modifier = Modifier
-                            .weight(columnWeights[index])
-                            .padding(end = 8.dp)
-                    )
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp, horizontal = 8.dp)
+                    ) {
+                        header.forEachIndexed { index, title ->
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier
+                                    .weight(columnWeights[index])
+                                    .padding(end = 8.dp)
+                            )
+                        }
+                    }
+                    /* I like this divider, but while the item rows also have a leading divider we don't need this one as it gives a double divider
+                       TODO: Hmm, not so sure. When the rows scroll, we then lose the divider under the header. Maybe the header should have a trailing divisor and the first row of data should not have a leading divisor.
+                    HorizontalDivider(
+                        thickness = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    ) */
                 }
             }
         }
@@ -480,19 +491,26 @@ fun DataTable(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 0.dp, horizontal = 0.dp)
-                        .background(if (rowIndex % 2 == 0) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh /* if (rowIndex % 2 == 0) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant */)
                 ) {
                     // TODO: This inner Row is only here for the zebra-striping - if we get rid of it, we can do without it (and move the padding to the parent Row)
-                    Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
-                        rowData.forEachIndexed { index, cell ->
-                            Text(
-                                text = cell,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier
-                                    .weight(columnWeights[index])
-                                    .padding(end = 8.dp)
-                            )
+                    Column {
+                        HorizontalDivider(
+                            thickness = 1.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+
+                        Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
+                            rowData.forEachIndexed { index, cell ->
+                                Text(
+                                    text = cell,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier
+                                        .weight(columnWeights[index])
+                                        .padding(end = 8.dp)
+                                )
+                            }
                         }
                     }
                 }
