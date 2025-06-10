@@ -948,15 +948,6 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
-
-                        // ComboBox("Label", "Value", onValueChange = {}, content = listOf("thing 1", "thing 2"))
-                        //ComboBoxSample()
-                        // TODO: Just possible we don't need clearFocusOnTapOutside hack now, but
-                        // we probably do. Try taking it out later. If we don't need it, we don't
-                        // need the Box, which is just there to hook clearFocus... on.
-                        Box(modifier = Modifier.clearFocusOnTapOutside()) {
-                            Conversation(SampleData.conversationSample)
-                        }
                     }
                 }
             }
