@@ -350,7 +350,7 @@ fun ItemSourceInfo() {
                 items = sources
             )
             if (selectedSource != "") {
-                Row(/* modifier = Modifier.padding(8.dp) */) {
+                Row(modifier = Modifier.padding(vertical = 4.dp)) {
 
                     LabeledItem(
                         modifier = Modifier.weight(1f), label = "Price as sold"
@@ -399,14 +399,14 @@ fun ItemSourceInfo() {
                 }
                 // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
                 // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
-                Row(/* modifier = Modifier.padding(horizontal = 8.dp) */) {
+                Row(modifier = Modifier.padding(vertical = 4.dp)) {
                     LabeledItem("Notes") {
                         Text("Special offer price")
                     }
                     //Text("TODO DUMMY TO FILL SPACE", modifier=Modifier.padding(vertical=130.dp))
                 }
                 // TODO: Vertical spacing probably poor with or without notes field - needs tweaking/better "plan" for how to specify it - that said, the vertical space above this final row probably should be "a bit" larger than the space between the two "reporting our status" rows - the following row is a "summary plus action" row and does want some visual distinction
-                Row(/* modifier = Modifier.padding(8.dp), */ verticalAlignment = Alignment.CenterVertically) {
+                Row(modifier = Modifier.padding(0.dp), verticalAlignment = Alignment.CenterVertically) {
                     Row(modifier = Modifier.weight(1f)) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
