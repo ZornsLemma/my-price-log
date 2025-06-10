@@ -331,7 +331,7 @@ fun ItemSourceInfo() {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         // TODO: animateContentSize() is experimental. If I keep it, I may also want it on the lower card, which can change size when product changes (just not yet, in this mockup).
-        Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp).animateContentSize()) {
+        Column(modifier = Modifier.animateContentSize().padding(horizontal = 8.dp, vertical = 16.dp)) {
             // TODO: We need to allow this to be set to empty/None by the user - how best to do that? And if it is empty, we need to collapse all the stuff below it and replace it with a brief instructional string roughly "Select a store to see and edit product details" - check the ChatGPT discussion I saved for some wording
             ExposedDropdownMenuBox(
                 modifier = Modifier
