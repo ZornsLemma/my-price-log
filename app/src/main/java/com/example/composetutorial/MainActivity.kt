@@ -112,7 +112,7 @@ enum class ThemePreference {
     LIGHT, DARK, SYSTEM
 }
 
-val screenBorder = 4.dp
+val screenBorder = 8.dp
 
 // Start Grok chunk
 @Composable
