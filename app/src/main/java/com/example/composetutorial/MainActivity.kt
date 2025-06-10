@@ -316,7 +316,7 @@ fun ItemSourceInfo() {
     val fontSize = MaterialTheme.typography.bodyLarge.fontSize
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
     var selectedSource by remember { mutableStateOf("") }
-    val sources = listOf("Tesco", "Asda", "Sainsbury's Local", "Iceland")
+    val sources = listOf("None", "Tesco", "Asda", "Sainsbury's Local", "Iceland")
     // TODO: Will we have a free-form text field on item-at-source? For eg things like noting the specific product to help find it again.
     // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective, it's not as if the offer duration is usually clearly stated, free text note probably can be used for this among other things
     // TODO: Should we show free-form text or special offer information here?
@@ -334,7 +334,7 @@ fun ItemSourceInfo() {
                     .padding(bottom = 8.dp)
                     .fillMaxWidth(),
                 value = selectedSource,
-                onValueChange = { selectedSource = it },
+                onValueChange = { selectedSource = if (it != "None") it else "" },
                 label = { Text("Source") },
                 items = sources
             )
