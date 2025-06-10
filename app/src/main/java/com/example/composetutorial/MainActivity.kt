@@ -382,6 +382,17 @@ fun ItemSourceInfo() {
                                         modifier = Modifier.size(iconSize /* 16.dp */)
                                     )
                                 }
+                                // TODO: I probably actually don't want this dropdown. It just *might* make sense to allow
+                                // the unit to be temporarily changed here (some slightly contrived situation where we're
+                                // looking at a new product on shelf and want to see if it's potentially cheaper but it
+                                // uses a different unit price as shown on shelf, for example - but we're already not
+                                // doing that well, if anything we want a "check new product" option which lets us enter
+                                // its pack size and shelf price and compute unit price ourself, there may not be a unit
+                                // price on shelf or it may not be correct if there's an offer), but it's far from clear,
+                                // and if anything it might make more sense to have a screen-wide "temporarily use X as
+                                // the unit price unit" setting which also affects the card with the cross-store prices
+                                // on. I won't rip this out of the UI yet, but I suspect in a finished first version of
+                                // the app this code will be gone, at least from specifically here.
                                 DropdownMenu(
                                     expanded = expanded, onDismissRequest = { expanded = false }) {
                                     var availableUnits = listOf("100g", "kg", "oz")
