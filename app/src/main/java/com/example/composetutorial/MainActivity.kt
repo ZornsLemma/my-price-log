@@ -428,6 +428,10 @@ fun ItemSourceInfo() {
 }
 
 // TODO: o4-mini code, review if keep
+// TODO: I should probably display an arrow of some sort next to the column which controls the sort
+// order, and I should probably make it clickable to reverse the order - the main thing being to
+// visually indicate that the data is sorted, I don't think in practice changing the order is of
+// much interest and I certainly don't see the need to allow sorting on other columns.
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DataTable(
