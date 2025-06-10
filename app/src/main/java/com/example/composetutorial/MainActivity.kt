@@ -434,6 +434,9 @@ fun ItemSourceInfo() {
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Good price")
                     }
+                    // TODO: *If* we consider "Confirm" to be the primary action (potentially users
+                    // click it every time they buy this item), it should probably get the bottom
+                    // right position, i.e. we should swap its position with "Edit".
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
                         FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
