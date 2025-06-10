@@ -877,12 +877,12 @@ class MainActivity : ComponentActivity() {
                         // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
                         // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
                         // but things are slightly different if we go with this approach.
-                        val header = listOf("Source", "Unit price", "Notes")
+                        val header = listOf("Source", "Price/100g", "Notes")
                         val data = listOf(
-                            listOf("Tesco", "£2.13/100g", "Tesco Finest is actually cheapest"),
-                            listOf("Sainsbury's Local", "£2.94/100g", ""),
-                            listOf("Asda", "£2.08/100g", "KTC brand"),
-                            listOf("Iceland", "£2.38/100g", ""),
+                            listOf("Tesco", "£2.13", "Tesco Finest is actually cheapest"),
+                            listOf("Sainsbury's Local", "£2.94", ""),
+                            listOf("Asda", "£2.08", "KTC brand"),
+                            listOf("Iceland", "£2.38", ""),
                             // …
                         )
 
