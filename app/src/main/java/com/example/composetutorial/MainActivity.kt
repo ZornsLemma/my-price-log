@@ -893,10 +893,6 @@ class MainActivity : ComponentActivity() {
                             // …
                         )
 
-                        // TODO: If we want this, the Card should probably be inside DataTable - but this is all experimental
-                        // TODO: The way the bottom row of this Card and its curved edges does not match up with the last row (when the table is short enough not to need to scroll) is ugly - but this somewhat ties in with the hacky fixed height, just be aware of it when tweaking further
-                        // TODO: Fixed .height() on card is a hack, a real implementation would probably give .weight() to all the elements of the outer Column, but this will do for now
-                        // TODO: I wonder if the DataTable should be more visibly contained "inside" the Card, rather than practically running up to its edges. This might match the style of the store+product card better. It might also look a bit weird since the table is the only thing on this card, but maybe that isn't a problem.
                         // TODO: Price column should be right-aligned, of course
                         Card(
                             modifier = Modifier
