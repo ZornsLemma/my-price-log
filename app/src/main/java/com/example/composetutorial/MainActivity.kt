@@ -112,6 +112,8 @@ enum class ThemePreference {
     LIGHT, DARK, SYSTEM
 }
 
+val screenBorder = 4.dp
+
 // Start Grok chunk
 @Composable
 fun MainScreen() {
@@ -131,7 +133,6 @@ fun MainScreen() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp)
     ) {
         // Category Selector
         // TODO: I am starting to think this is the best drop down menu implementation (needs renaming to avoid confusion). We probably don't *want* the primary colour underline highlight here, given that e.g. "buttons" get highlighted by an overall colour change as this does rather than an "underline" - TextFields obviously *do* get this underline for whatever reason known only to MD3 specs, but our TextField is not a "real" TextField so this "darken whole thing" approach is probably consistent
@@ -333,8 +334,7 @@ fun ItemSourceInfo() {
     // TODO: Just possibly the card inside layout should be some kind of grid control rather than row+column?
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(4.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         // TODO: animateContentSize() is experimental. If I keep it, I may also want it on the lower card, which can change size when product changes (just not yet, in this mockup).
@@ -841,7 +841,7 @@ class MainActivity : ComponentActivity() {
 
                         })
                     }) {
-                    Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(it)) {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(it).padding(horizontal = screenBorder)) {
 
                         // TextField( value = "Foozle", readOnly = true, onValueChange = {}, label = { Text("Label") } )  // TODO temp for cmparison
 
@@ -859,7 +859,11 @@ class MainActivity : ComponentActivity() {
                              */
                         }*/
 
+                        Spacer(modifier = Modifier.height(4.dp))
+
                         ItemSourceInfo()
+
+                        Spacer(modifier = Modifier.height(4.dp))
 
                         // TODO: This mock data shows some questions:
                         // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
@@ -889,9 +893,7 @@ class MainActivity : ComponentActivity() {
                         Card(
                             modifier = Modifier
                                 //.weight(1f, fill=false) // only component with weight, so fills all remaining space
-                                .fillMaxWidth()
-                                .padding(4.dp)
-                                ,// .height(200.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp) */
+                                .fillMaxWidth(),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                         ) {
                             Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
