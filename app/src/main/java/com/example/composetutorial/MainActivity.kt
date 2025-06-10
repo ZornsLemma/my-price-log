@@ -351,17 +351,17 @@ fun ItemSourceInfo() {
                 items = sources
             )
             if (selectedSource != "") {
-                Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
 
                     LabeledItem(
-                        modifier = Modifier.weight(1f), label = "Price as sold"
+                        /* modifier = Modifier.weight(1f), */ label = "Price as sold"
                     ) { // TODO: quite like this, but maybe "Shelf price"?
                         Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
                     }
-                    LabeledItem(modifier = Modifier.weight(1f), label = "Last checked") {
+                    LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Last checked") {
                         Text("5 days ago") // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
                     }
-                    LabeledItem(modifier = Modifier.weight(1f), label = "Unit price") {
+                    LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Unit price") {
                         Row() {
                             Text("£2.30/")
                             Box {
