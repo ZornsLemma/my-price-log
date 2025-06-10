@@ -52,8 +52,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.handwriting.handwritingHandler
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
@@ -401,7 +403,7 @@ fun ItemSourceInfo() {
                     LabeledItem("Notes") {
                         Text("Special offer price")
                     }
-                    // Text("TODO DUMMY TO FILL SPACE", modifier=Modifier.padding(vertical=130.dp))
+                    //Text("TODO DUMMY TO FILL SPACE", modifier=Modifier.padding(vertical=130.dp))
                 }
                 // TODO: Vertical spacing probably poor with or without notes field - needs tweaking/better "plan" for how to specify it - that said, the vertical space above this final row probably should be "a bit" larger than the space between the two "reporting our status" rows - the following row is a "summary plus action" row and does want some visual distinction
                 Row(/* modifier = Modifier.padding(8.dp), */ verticalAlignment = Alignment.CenterVertically) {
@@ -455,8 +457,7 @@ fun DataTable(
     // TODO: The header should remain fixed even when the list scrolls. - this is now done, but the header now loses contrast when a dark zebra row is adjacent
     // TODO: Should the header and the last item of the list have rounded corners? I am not sure. Probably best square corners TBH.
 
-    LazyColumn(modifier = Modifier.wrapContentHeight()) {
-        stickyHeader {
+    Column() {
             // optional header
             Surface(color = MaterialTheme.colorScheme.surfaceContainerHighest) {
                 Column {
@@ -481,11 +482,10 @@ fun DataTable(
                     )
                 }
             }
-        }
 
 
             // data rows
-            itemsIndexed(rows) { rowIndex, rowData ->
+            rows.forEachIndexed { rowIndex, rowData ->
                 // TODO: Zebra-striping is experimental, not sure how I feel about it. Even if we do keep it, note that the header row has a somewhat inconsistent colour - it is darker than the "surface" rows (which is probably good) but lighter than the surfaceVariant rows, which is probably bad (this comment is assuming a light mode display)
                 Row(
                     modifier = Modifier
@@ -890,7 +890,7 @@ class MainActivity : ComponentActivity() {
 
                         })
                     }) {
-                    Column(modifier = Modifier.padding(it)) {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(it)) {
 
                         // TextField( value = "Foozle", readOnly = true, onValueChange = {}, label = { Text("Label") } )  // TODO temp for cmparison
 
@@ -937,7 +937,7 @@ class MainActivity : ComponentActivity() {
                         // TODO: I wonder if the DataTable should be more visibly contained "inside" the Card, rather than practically running up to its edges. This might match the style of the store+product card better. It might also look a bit weird since the table is the only thing on this card, but maybe that isn't a problem.
                         Card(
                             modifier = Modifier
-                                .weight(1f, fill=false) // only component with weight, so fills all remaining space
+                                //.weight(1f, fill=false) // only component with weight, so fills all remaining space
                                 .fillMaxWidth()
                                 .padding(4.dp)
                                 ,// .height(200.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp) */
