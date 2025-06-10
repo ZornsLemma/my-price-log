@@ -38,6 +38,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -407,7 +408,7 @@ fun ItemSourceInfo() {
                 }
                 // TODO: Vertical spacing probably poor with or without notes field - needs tweaking/better "plan" for how to specify it - that said, the vertical space above this final row probably should be "a bit" larger than the space between the two "reporting our status" rows - the following row is a "summary plus action" row and does want some visual distinction
                 Row(modifier = Modifier.padding(0.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Row(modifier = Modifier.weight(1f)) {
+                    Row() {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = "Checked",
@@ -417,14 +418,14 @@ fun ItemSourceInfo() {
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Good price")
                     }
-                    Row(modifier = Modifier.weight(1.2f)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                         // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
                         FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
                             Text("Confirm")
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
-                            Text("Change")
+                            Text("Edit")
                         }
                     }
                 }
@@ -742,67 +743,6 @@ fun TwoRowTripleComboBox() {
     }
 }
 
-@Composable
-fun Conversation(messages: List<Message>) {
-    LazyColumn {
-        items(messages) { message ->
-            MessageCard(message)
-        }
-    }
-}
-
-@Preview
-@Composable
-fun PreviewConversation() {
-    ComposeTutorialTheme {
-        Conversation(SampleData.conversationSample)
-    }
-}
-
-@Composable
-fun MessageCard(msg: Message) {
-    Row(modifier = Modifier.padding(all = 8.dp)) {
-        Image(
-            painter = painterResource(R.drawable.profile_picture),
-            contentDescription = null,
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .border(1.5.dp, MaterialTheme.colorScheme.primary, CircleShape)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-
-        // We keep track if the message is expanded or not in this
-        // variable
-        var isExpanded by remember { mutableStateOf(false) }
-
-        // We toggle the isExpanded variable when we click on this Column
-        Column(modifier = Modifier.clickable { isExpanded = !isExpanded }) {
-            Text(
-                text = msg.author,
-                color = MaterialTheme.colorScheme.secondary,
-                style = MaterialTheme.typography.titleSmall
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Surface(
-                shape = MaterialTheme.shapes.medium,
-                shadowElevation = 1.dp,
-            ) {
-                Text(
-                    text = msg.body,
-                    modifier = Modifier.padding(all = 4.dp),
-                    // If the message is expanded, we display all its content
-                    // otherwise we only display the first line
-                    maxLines = if (isExpanded) Int.MAX_VALUE else 1,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-    }
-}
-
 // ChatGPT wrote this for me after much wrangling. I 70% understand what's going on but there is
 // definitely some voodoo here. Compose apparently has no real concept of clearing the focus on
 // a TextField when we tap elsewhere on the screen. Instead, we need to arrange for this to happen
@@ -958,23 +898,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Preview(name = "Light Mode")
-@Preview(
-    uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true, name = "Dark Mode"
-)
-@Composable
-fun PreviewMessageCard() {
-    ComposeTutorialTheme {
-        Surface {
-            MessageCard(
-                msg = Message("Lexi", "Take a look at Jetpack Compose, it's great!")
-            )
-        }
-    }
-}
 
-
-data class Message(val author: String, val body: String)
 
 // TODO: ChatGPT-inspired (and maybe do my own searches too) libraries that may solve the ComboBox issue:
 // https://github.com/Breens-Mbaka/Searchable-Dropdown-Menu-Jetpack-Compose
