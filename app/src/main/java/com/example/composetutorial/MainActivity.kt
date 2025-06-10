@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -427,6 +428,7 @@ fun ItemSourceInfo() {
 }
 
 // TODO: o4-mini code, review if keep
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DataTable(
     header: List<String>,
@@ -444,27 +446,28 @@ fun DataTable(
     // appearance of the whole screen in deciding this.
     // TODO: The header should remain fixed even when the list scrolls. - this is now done, but the header now loses contrast when a dark zebra row is adjacent
     // TODO: Should the header and the last item of the list have rounded corners? I am not sure. Probably best square corners TBH.
-    Column {
 
-        // optional header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceContainerHighest) // TODO: OK colour?
-                .padding(vertical = 8.dp, horizontal = 8.dp)
-        ) {
-            header.forEachIndexed { index, title ->
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier
-                        .weight(columnWeights[index])
-                        .padding(end = 8.dp)
-                )
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        stickyHeader {
+            // optional header
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainerHighest) // TODO: OK colour?
+                    .padding(vertical = 8.dp, horizontal = 8.dp)
+            ) {
+                header.forEachIndexed { index, title ->
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier
+                            .weight(columnWeights[index])
+                            .padding(end = 8.dp)
+                    )
+                }
             }
         }
 
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
 
             // data rows
             itemsIndexed(rows) { rowIndex, rowData ->
@@ -491,7 +494,6 @@ fun DataTable(
                 }
             }
         }
-    }
 }
 
 // TODO: This probably needs to track state/events via parents
