@@ -215,6 +215,7 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
     value: String,
     onValueChange: (String) -> Unit,
     label: @Composable () -> Unit,
+    supportingText: @Composable (() -> Unit)? = null,
     items: List<String>,
     modifier: Modifier = Modifier
 ) {
@@ -229,6 +230,7 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
             value = value,
             onValueChange = { /* No-op, handled by dropdown */ },
             label = label,
+            supportingText = supportingText,
             readOnly = true,
             enabled = false, // TODO HACK
             trailingIcon = {
@@ -336,12 +338,10 @@ fun ItemSourceInfo() {
                 value = selectedSource,
                 onValueChange = { selectedSource = if (it != "None") it else "" },
                 label = { Text("Source") },
+                supportingText = if (selectedSource != "") null else { { Text("Select a source to view or change the price there") } },
                 items = sources
             )
-            if (selectedSource == "") {
-                // TODO: Probably want to consider padding here, especially wrt consistency with the none/other change.
-                Text("Select a source to view or change the price there.", style=MaterialTheme.typography.bodySmall)
-            } else {
+            if (selectedSource != "") {
                 Row(/* modifier = Modifier.padding(8.dp) */) {
 
                     LabeledItem(
