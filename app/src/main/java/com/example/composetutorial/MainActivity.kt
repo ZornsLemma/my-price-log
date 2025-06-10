@@ -338,7 +338,12 @@ fun ItemSourceInfo() {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         // TODO: animateContentSize() is experimental. If I keep it, I may also want it on the lower card, which can change size when product changes (just not yet, in this mockup).
-        Column(modifier = Modifier.animateContentSize().padding(horizontal = 8.dp, vertical = 16.dp)) {
+        // The odd padding here is because we want 8.dp at the left and right and 12.dp at the top and bottom to try to keep the square-ish
+        // corners of the TextField away from the round-ish corners at the top of the card. Because the bottom of the card has two buttons
+        // and these have "touchable but background colour" space around them to meet the minimum touch size (and we don't want to make them visually
+        // larger), if we use 12.dp at the bottom we actually get a bit more because of that extra space "around" the buttons. So we manually
+        // adjust the bottom padding to visually compensate for this while allowing the buttons to have their natural touch region.
+        Column(modifier = Modifier.animateContentSize().padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom=8.dp)) {
             // TODO: We need to allow this to be set to empty/None by the user - how best to do that? And if it is empty, we need to collapse all the stuff below it and replace it with a brief instructional string roughly "Select a store to see and edit product details" - check the ChatGPT discussion I saved for some wording
             ExposedDropdownMenuBox(
                 modifier = Modifier
@@ -418,7 +423,7 @@ fun ItemSourceInfo() {
                     //Text("TODO DUMMY TO FILL SPACE", modifier=Modifier.padding(vertical=130.dp))
                 }
                 // TODO: Vertical spacing probably poor with or without notes field - needs tweaking/better "plan" for how to specify it - that said, the vertical space above this final row probably should be "a bit" larger than the space between the two "reporting our status" rows - the following row is a "summary plus action" row and does want some visual distinction
-                Row(modifier = Modifier.padding(0.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Row() {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
@@ -899,7 +904,7 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxWidth(),
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                         ) {
-                            Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
+                            Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)) {
                                 DataTable(
                                     header = header, rows = data,
                                     // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
