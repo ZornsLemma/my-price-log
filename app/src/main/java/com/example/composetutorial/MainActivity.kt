@@ -990,3 +990,5 @@ data class Message(val author: String, val body: String)
 // TODO: It may be that on a real device more than 4.dp around the screen border looks nice. I should probably introduce a named constant for "screen border" and use that everywhere, it would probably help readability and it *is* a clearly defined concept I can identify, not some vague "it looks nicer with 8dp here" layout thing.
 
 // TODO: I should probably lock the app to portrait mode
+
+// TODO: I should probably switch to whole screen (just maybe "everything below the top two drop downs"?) scrolling. On a medium phone it will make little difference, on a small phone it will make a big difference.
