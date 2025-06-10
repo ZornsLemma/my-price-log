@@ -877,7 +877,9 @@ class MainActivity : ComponentActivity() {
                         // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
                         // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
                         // but things are slightly different if we go with this approach.
-                        val header = listOf("Source", "Price/100g", "Notes")
+                        // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
+                        val header = listOf("Source", "£/100g", "Notes")
+                        // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
                         val data = listOf(
                             listOf("Tesco", "£2.13", "Tesco Finest is actually cheapest"),
                             listOf("Sainsbury's Local", "£2.94", ""),
@@ -890,6 +892,7 @@ class MainActivity : ComponentActivity() {
                         // TODO: The way the bottom row of this Card and its curved edges does not match up with the last row (when the table is short enough not to need to scroll) is ugly - but this somewhat ties in with the hacky fixed height, just be aware of it when tweaking further
                         // TODO: Fixed .height() on card is a hack, a real implementation would probably give .weight() to all the elements of the outer Column, but this will do for now
                         // TODO: I wonder if the DataTable should be more visibly contained "inside" the Card, rather than practically running up to its edges. This might match the style of the store+product card better. It might also look a bit weird since the table is the only thing on this card, but maybe that isn't a problem.
+                        // TODO: Price column should be right-aligned, of course
                         Card(
                             modifier = Modifier
                                 //.weight(1f, fill=false) // only component with weight, so fills all remaining space
@@ -899,8 +902,8 @@ class MainActivity : ComponentActivity() {
                             Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
                                 DataTable(
                                     header = header, rows = data,
-                                    // e.g. you want the “Score” column to be narrower:
-                                    columnWeights = listOf(2f, 1.4f, 2f)
+                                    // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
+                                    columnWeights = listOf(1.6f, 1f, 2.2f)
                                 )
                             }
                         }
