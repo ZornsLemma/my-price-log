@@ -47,6 +47,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -400,6 +401,7 @@ fun ItemSourceInfo() {
                     LabeledItem("Notes") {
                         Text("Special offer price")
                     }
+                    // Text("TODO DUMMY TO FILL SPACE", modifier=Modifier.padding(vertical=130.dp))
                 }
                 // TODO: Vertical spacing probably poor with or without notes field - needs tweaking/better "plan" for how to specify it - that said, the vertical space above this final row probably should be "a bit" larger than the space between the two "reporting our status" rows - the following row is a "summary plus action" row and does want some visual distinction
                 Row(/* modifier = Modifier.padding(8.dp), */ verticalAlignment = Alignment.CenterVertically) {
@@ -453,7 +455,7 @@ fun DataTable(
     // TODO: The header should remain fixed even when the list scrolls. - this is now done, but the header now loses contrast when a dark zebra row is adjacent
     // TODO: Should the header and the last item of the list have rounded corners? I am not sure. Probably best square corners TBH.
 
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    LazyColumn(modifier = Modifier.wrapContentHeight()) {
         stickyHeader {
             // optional header
             Surface(color = MaterialTheme.colorScheme.surfaceContainerHighest) {
@@ -935,9 +937,10 @@ class MainActivity : ComponentActivity() {
                         // TODO: I wonder if the DataTable should be more visibly contained "inside" the Card, rather than practically running up to its edges. This might match the style of the store+product card better. It might also look a bit weird since the table is the only thing on this card, but maybe that isn't a problem.
                         Card(
                             modifier = Modifier
+                                .weight(1f, fill=false) // only component with weight, so fills all remaining space
                                 .fillMaxWidth()
                                 .padding(4.dp)
-                                .height(200.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), */
+                                ,// .height(200.dp), /* elevation = CardDefaults.cardElevation(defaultElevation = 1.dp) */
                             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                         ) {
                             Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
