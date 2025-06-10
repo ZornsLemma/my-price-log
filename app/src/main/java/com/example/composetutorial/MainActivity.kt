@@ -473,12 +473,10 @@ fun DataTable(
                             )
                         }
                     }
-                    /* I like this divider, but while the item rows also have a leading divider we don't need this one as it gives a double divider
-                       TODO: Hmm, not so sure. When the rows scroll, we then lose the divider under the header. Maybe the header should have a trailing divisor and the first row of data should not have a leading divisor.
                     HorizontalDivider(
                         thickness = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    ) */
+                        color = MaterialTheme.colorScheme.outline /* Variant */
+                    )
                 }
             }
         }
@@ -495,10 +493,12 @@ fun DataTable(
                 ) {
                     // TODO: This inner Row is only here for the zebra-striping - if we get rid of it, we can do without it (and move the padding to the parent Row)
                     Column {
-                        HorizontalDivider(
-                            thickness = 1.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        )
+                        if (rowIndex > 0) {
+                            HorizontalDivider(
+                                thickness = 1.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
+                        }
 
                         Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
                             rowData.forEachIndexed { index, cell ->
