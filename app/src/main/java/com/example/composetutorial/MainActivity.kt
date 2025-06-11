@@ -888,6 +888,11 @@ Row {
     }
 }
 
+@Composable
+fun SettingsScreen() {
+    Text("TODO SETTINGS")
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -926,6 +931,7 @@ class MainActivity : ComponentActivity() {
                                 })
                                 DropdownMenuItem(text = { Text("Settings") }, onClick = {
                                     menuExpanded = false
+                                    navController.navigate("settings")
                                 })
                             }
 
@@ -933,6 +939,7 @@ class MainActivity : ComponentActivity() {
                     }) { innerPadding ->
                     NavHost(navController = navController, startDestination = "todorenameme", modifier = Modifier.padding(innerPadding)) {
                         composable("todorenameme") { TodoRenameMe() }
+                        composable("settings") { SettingsScreen() }
                     }
                 }
             }
