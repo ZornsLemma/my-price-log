@@ -10,6 +10,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -134,8 +136,7 @@ fun MainScreen() {
     var searchQuery by remember { mutableStateOf("") }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     ) {
         // Category Selector
         // TODO: I am starting to think this is the best drop down menu implementation (needs renaming to avoid confusion). We probably don't *want* the primary colour underline highlight here, given that e.g. "buttons" get highlighted by an overall colour change as this does rather than an "underline" - TextFields obviously *do* get this underline for whatever reason known only to MD3 specs, but our TextField is not a "real" TextField so this "darken whole thing" approach is probably consistent
@@ -336,8 +337,7 @@ fun ItemSourceInfo() {
     // TODO: Should we show free-form text or special offer information here?
     // TODO: Just possibly the card inside layout should be some kind of grid control rather than row+column?
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         // TODO: animateContentSize() is experimental. If I keep it, I may also want it on the lower card, which can change size when product changes (just not yet, in this mockup).
@@ -346,7 +346,11 @@ fun ItemSourceInfo() {
         // and these have "touchable but background colour" space around them to meet the minimum touch size (and we don't want to make them visually
         // larger), if we use 12.dp at the bottom we actually get a bit more because of that extra space "around" the buttons. So we manually
         // adjust the bottom padding to visually compensate for this while allowing the buttons to have their natural touch region.
-        Column(modifier = Modifier.animateContentSize().padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom=8.dp)) {
+        Column(
+            modifier = Modifier
+                .animateContentSize()
+                .padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)
+        ) {
             // TODO: We need to allow this to be set to empty/None by the user - how best to do that? And if it is empty, we need to collapse all the stuff below it and replace it with a brief instructional string roughly "Select a store to see and edit product details" - check the ChatGPT discussion I saved for some wording
             ExposedDropdownMenuBox(
                 modifier = Modifier
@@ -355,14 +359,19 @@ fun ItemSourceInfo() {
                 value = selectedSource,
                 onValueChange = { selectedSource = if (it != "None") it else "" },
                 label = { Text("Source") },
-                supportingText = if (selectedSource != "") null else { { Text("Select a source to view or change the price there") } },
-                items = sources
-            )
+                supportingText = if (selectedSource != "") null else {
+                    { Text("Select a source to view or change the price there") }
+                },
+                items = sources)
             if (selectedSource != "") {
-                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
 
-                    LabeledItem(
-                        /* modifier = Modifier.weight(1f), */ label = "Price as sold"
+                    LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Price as sold"
                     ) { // TODO: quite like this, but maybe "Shelf price"?
                         Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
                     }
@@ -440,7 +449,10 @@ fun ItemSourceInfo() {
                     // TODO: *If* we consider "Confirm" to be the primary action (potentially users
                     // click it every time they buy this item), it should probably get the bottom
                     // right position, i.e. we should swap its position with "Edit".
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
                         // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
                         FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
                             Text("Confirm")
@@ -481,66 +493,64 @@ fun DataTable(
     // TODO: Should the header and the last item of the list have rounded corners? I am not sure. Probably best square corners TBH.
 
     Column() {
-            // optional header
-            Surface(color = MaterialTheme.colorScheme.surfaceContainerHighest) {
+        // optional header
+        Surface(color = MaterialTheme.colorScheme.surfaceContainerHighest) {
+            Column {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp, horizontal = 8.dp)
+                ) {
+                    header.forEachIndexed { index, title ->
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier
+                                .weight(columnWeights[index])
+                                .padding(end = 8.dp)
+                        )
+                    }
+                }
+                HorizontalDivider(
+                    thickness = 1.dp, color = MaterialTheme.colorScheme.outline /* Variant */
+                )
+            }
+        }
+
+
+        // data rows
+        rows.forEachIndexed { rowIndex, rowData ->
+            // TODO: Zebra-striping is experimental, not sure how I feel about it. Even if we do keep it, note that the header row has a somewhat inconsistent colour - it is darker than the "surface" rows (which is probably good) but lighter than the surfaceVariant rows, which is probably bad (this comment is assuming a light mode display)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 0.dp, horizontal = 0.dp)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh /* if (rowIndex % 2 == 0) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant */)
+            ) {
+                // TODO: This inner Row is only here for the zebra-striping - if we get rid of it, we can do without it (and move the padding to the parent Row)
                 Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp, horizontal = 8.dp)
-                    ) {
-                        header.forEachIndexed { index, title ->
+                    if (rowIndex > 0) {
+                        HorizontalDivider(
+                            thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant
+                        )
+                    }
+
+                    Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
+                        rowData.forEachIndexed { index, cell ->
                             Text(
-                                text = title,
-                                style = MaterialTheme.typography.titleMedium,
+                                text = cell,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier
                                     .weight(columnWeights[index])
                                     .padding(end = 8.dp)
                             )
                         }
                     }
-                    HorizontalDivider(
-                        thickness = 1.dp,
-                        color = MaterialTheme.colorScheme.outline /* Variant */
-                    )
-                }
-            }
-
-
-            // data rows
-            rows.forEachIndexed { rowIndex, rowData ->
-                // TODO: Zebra-striping is experimental, not sure how I feel about it. Even if we do keep it, note that the header row has a somewhat inconsistent colour - it is darker than the "surface" rows (which is probably good) but lighter than the surfaceVariant rows, which is probably bad (this comment is assuming a light mode display)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 0.dp, horizontal = 0.dp)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHigh /* if (rowIndex % 2 == 0) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant */)
-                ) {
-                    // TODO: This inner Row is only here for the zebra-striping - if we get rid of it, we can do without it (and move the padding to the parent Row)
-                    Column {
-                        if (rowIndex > 0) {
-                            HorizontalDivider(
-                                thickness = 1.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant
-                            )
-                        }
-
-                        Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
-                            rowData.forEachIndexed { index, cell ->
-                                Text(
-                                    text = cell,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier
-                                        .weight(columnWeights[index])
-                                        .padding(end = 8.dp)
-                                )
-                            }
-                        }
-                    }
                 }
             }
         }
+    }
 }
 
 // TODO: This probably needs to track state/events via parents
@@ -811,11 +821,11 @@ fun Modifier.clearFocusOnTapOutside() = composed {
 }
 
 @Composable
-fun TodoRenameMe()
-{
+fun TodoRenameMe() {
 
     androidx.compose.foundation.layout.Column(
-        modifier = androidx.compose.ui.Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState())
+        modifier = androidx.compose.ui.Modifier
+            .verticalScroll(androidx.compose.foundation.rememberScrollState())
             // .padding(it) TODO this is now on NavHost
             .padding(horizontal = screenBorder) // TODO: should this move to NavHost too?
     ) {
@@ -874,8 +884,7 @@ Row {
         ) {
             androidx.compose.foundation.layout.Box(
                 modifier = androidx.compose.ui.Modifier.padding(
-                    horizontal = 8.dp,
-                    vertical = 12.dp
+                    horizontal = 8.dp, vertical = 12.dp
                 )
             ) {
                 DataTable(
@@ -890,7 +899,9 @@ Row {
 
 @Composable
 fun SettingsScreen() {
-    Text("TODO SETTINGS")
+    Surface(modifier = Modifier.fillMaxSize() /*, color = MaterialTheme.colorScheme.surface */) {
+        Text("TODO SETTINGS")
+    }
 }
 
 class MainActivity : ComponentActivity() {
@@ -937,16 +948,23 @@ class MainActivity : ComponentActivity() {
 
                         })
                     }) { innerPadding ->
-                    NavHost(navController = navController, startDestination = "todorenameme", modifier = Modifier.padding(innerPadding)) {
+                    NavHost(
+                        navController = navController,
+                        startDestination = "todorenameme",
+                        modifier = Modifier.padding(innerPadding)
+                    ) {
                         composable("todorenameme") { TodoRenameMe() }
-                        composable("settings") { SettingsScreen() }
+                        composable(
+                            "settings",
+                            enterTransition = { slideInHorizontally(initialOffsetX = { fullWidth -> fullWidth }) },
+                            exitTransition = { slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth }) })
+                        { SettingsScreen() }
                     }
                 }
             }
         }
     }
 }
-
 
 
 // TODO: ChatGPT-inspired (and maybe do my own searches too) libraries that may solve the ComboBox issue:
@@ -957,7 +975,6 @@ class MainActivity : ComponentActivity() {
 // TODO: ~/pc-sync/ai-chat-misc-to-move/grok-combo-box-and-alternate-ui.txt is a potentially
 // valuable discussion, touching on some implementation ideas, design ideas (small tweaks and
 // alternatives) etc and would probably be worth a re-read later.
-
 
 
 // TODO: It may be that on a real device more than 4.dp around the screen border looks nice. I should probably introduce a named constant for "screen border" and use that everywhere, it would probably help readability and it *is* a clearly defined concept I can identify, not some vague "it looks nicer with 8dp here" layout thing.
