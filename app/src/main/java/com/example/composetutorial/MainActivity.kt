@@ -1180,3 +1180,5 @@ fun AppNavigation() {
 // TODO: There is no colour in the app at all when running on P7! Material You active without me realising it?
 
 // TODO: There is an ugly animation glitch where the "T" of "TODO" on SettingsScreen hangs around far too long when transitioning between home and settings. This wasn't visible before I added the previously-lost border at the left and right of the main activity. It feels like this might be a clue to some problem with the animations but I am far from sure. In practice this will probably not be an issue if we add the same border to settings, but I am not sure that's a "fix" even if it does happen.
+
+// TODO: I have lost the screen vertical scrolling in all my reworking...
