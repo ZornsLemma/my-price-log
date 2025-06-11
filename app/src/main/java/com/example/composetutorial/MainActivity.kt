@@ -2,6 +2,7 @@
 
 package com.example.composetutorial
 
+import androidx.navigation.compose.rememberNavController
 import android.content.res.Configuration
 import android.os.Bundle
 import android.util.Log
@@ -107,6 +108,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.view.WindowCompat
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 
 enum class ThemePreference {
     LIGHT, DARK, SYSTEM
@@ -818,6 +821,7 @@ class MainActivity : ComponentActivity() {
             ThemePreference.SYSTEM -> isSystemInDarkTheme()
         } */
         setContent {
+            val navController = rememberNavController()
             var menuExpanded by remember { mutableStateOf(false) }
             val focusManager = LocalFocusManager.current
             Box(Modifier.safeDrawingPadding())
@@ -848,14 +852,21 @@ class MainActivity : ComponentActivity() {
                             }
 
                         })
-                    }) {
-                    Column(modifier = Modifier.verticalScroll(rememberScrollState()).padding(it).padding(horizontal = screenBorder)) {
+                    }) { innerPadding ->
+                    NavHost(navController = navController, startDestination = "todorenameme", modifier = Modifier.padding(innerPadding)) {
+                        composable("todorenameme") {
 
-                        // TextField( value = "Foozle", readOnly = true, onValueChange = {}, label = { Text("Label") } )  // TODO temp for cmparison
+                            Column(
+                                modifier = Modifier.verticalScroll(rememberScrollState())
+                                    // .padding(it) TODO this is now on NavHost
+                                    .padding(horizontal = screenBorder) // TODO: should this move to NavHost too?
+                            ) {
 
-                        MainScreen()
+                                // TextField( value = "Foozle", readOnly = true, onValueChange = {}, label = { Text("Label") } )  // TODO temp for cmparison
 
-                        /*
+                                MainScreen() // TODO: rename this
+
+                                /*
                         Row {
                             ComboBoxSample(modifier = Modifier.weight(1f))
                             /*
@@ -867,48 +878,55 @@ class MainActivity : ComponentActivity() {
                              */
                         }*/
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                        ItemSourceInfo()
+                                ItemSourceInfo()
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                        // TODO: This mock data shows some questions:
-                        // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
-                        // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
-                        // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
-                        // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
-                        // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
-                        // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
-                        // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
-                        // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
-                        // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
-                        // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
-                        // but things are slightly different if we go with this approach.
-                        // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
-                        val header = listOf("Source", "£/100g", "Notes")
-                        // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
-                        val data = listOf(
-                            listOf("Tesco", "£2.13", "Tesco Finest is actually cheapest"),
-                            listOf("Sainsbury's Local", "£2.94", ""),
-                            listOf("Asda", "£2.08", "KTC brand"),
-                            listOf("Iceland", "£2.38", ""),
-                            // …
-                        )
-
-                        // TODO: Price column should be right-aligned, of course
-                        Card(
-                            modifier = Modifier
-                                //.weight(1f, fill=false) // only component with weight, so fills all remaining space
-                                .fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                        ) {
-                            Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)) {
-                                DataTable(
-                                    header = header, rows = data,
-                                    // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
-                                    columnWeights = listOf(1.6f, 1f, 2.2f)
+                                // TODO: This mock data shows some questions:
+                                // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
+                                // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
+                                // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
+                                // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
+                                // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
+                                // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
+                                // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
+                                // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
+                                // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
+                                // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
+                                // but things are slightly different if we go with this approach.
+                                // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
+                                val header = listOf("Source", "£/100g", "Notes")
+                                // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
+                                val data = listOf(
+                                    listOf("Tesco", "£2.13", "Tesco Finest is actually cheapest"),
+                                    listOf("Sainsbury's Local", "£2.94", ""),
+                                    listOf("Asda", "£2.08", "KTC brand"),
+                                    listOf("Iceland", "£2.38", ""),
+                                    // …
                                 )
+
+                                // TODO: Price column should be right-aligned, of course
+                                Card(
+                                    modifier = Modifier
+                                        //.weight(1f, fill=false) // only component with weight, so fills all remaining space
+                                        .fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                                ) {
+                                    Box(
+                                        modifier = Modifier.padding(
+                                            horizontal = 8.dp,
+                                            vertical = 12.dp
+                                        )
+                                    ) {
+                                        DataTable(
+                                            header = header, rows = data,
+                                            // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
+                                            columnWeights = listOf(1.6f, 1f, 2.2f)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
