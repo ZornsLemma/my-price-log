@@ -1083,7 +1083,12 @@ fun AppNavigation() {
             popEnterTransition =  { slideInHorizontally() },
             popExitTransition = { slideOutHorizontally() },
              */
-            popEnterTransition = { fadeIn(animationSpec = tween(0)) }, // or no transition
+            // popEnterTransition = { fadeIn(animationSpec = tween(0)) }, // or no transition
+            // TODO: ChatGPT suggests this would add optional smoothiness (in conjunctinon with the 300 tween on settings'
+            // popExitTransition. It might, I am not sure.
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(delayMillis = 150, durationMillis = 150))
+            }
         ) {
             TodoRenameMe(navController)
         }
@@ -1096,7 +1101,7 @@ fun AppNavigation() {
             popExitTransition = {
                 slideOutHorizontally(
                     targetOffsetX = { it },
-                    animationSpec = tween(durationMillis = 300)
+                    animationSpec = tween(durationMillis = 300) // TODO: 300 may be the default and we don't need to specify this, not certain
                 )
             },
             //popEnterTransition = { fadeIn(animationSpec = tween(0)) } // Optional to smooth timing
