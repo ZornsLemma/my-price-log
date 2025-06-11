@@ -979,7 +979,7 @@ class MainActivity : ComponentActivity() {
         } */
         setContent {
             ComposeTutorialTheme {
-                Box(modifier = Modifier.safeDrawingPadding()) { // TODO: systemBarsPadding()??
+                Box(modifier = Modifier.safeDrawingPadding().padding(horizontal = screenBorder)) { // TODO: systemBarsPadding()??
                     AppNavigation()
                 }
             }
@@ -1157,7 +1157,5 @@ fun AppNavigation() {
 // TODO: It may be that on a real device more than 4.dp around the screen border looks nice. I should probably introduce a named constant for "screen border" and use that everywhere, it would probably help readability and it *is* a clearly defined concept I can identify, not some vague "it looks nicer with 8dp here" layout thing.
 
 // TODO: I should probably lock the app to portrait mode
-
-// TODO: I should probably switch to whole screen (just maybe "everything below the top two drop downs"?) scrolling. On a medium phone it will make little difference, on a small phone it will make a big difference.
 
 // TODO: There is no colour in the app at all when running on P7! Material You active without me realising it?
