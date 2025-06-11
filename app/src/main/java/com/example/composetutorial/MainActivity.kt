@@ -849,7 +849,10 @@ fun TodoRenameMe(navController: NavHostController) {
     var menuExpanded by remember { mutableStateOf(false) }
     // TODO: I added this Surface by analogy with the one in SettingsScreen, but it appears to have
     // no real effect - even if I set its color to Red or primary, nothing shows.
-    Surface(modifier = Modifier.fillMaxSize()) {
+    // TODO: Actually it may or may not be this, but on the O6 at least there does seem to be a weird
+    // extra background shade with a bit of the white background down the edges where the border is.
+    // No - it is there, but even if I remove this surface it is still there. I will have to experiment further. Part of the issue may be that it's the top-level Nav thing which is responsible.
+    // Surface(modifier = Modifier.fillMaxSize()/*, color=MaterialTheme.colorScheme.surface */) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -952,12 +955,12 @@ fun TodoRenameMe(navController: NavHostController) {
                 }
             }
         }
-    }
+    //}
 }
 
 @Composable
 fun SettingsScreen(navController: NavHostController) {
-    Surface(modifier = Modifier.fillMaxSize() /*, color = MaterialTheme.colorScheme.surface */) {
+    //Surface(modifier = Modifier.fillMaxSize() /*, color = MaterialTheme.colorScheme.surface */) {
         Column() {
             TopAppBar(title = { Text("Settings") },
              navigationIcon = {
@@ -972,7 +975,7 @@ fun SettingsScreen(navController: NavHostController) {
 
             Text("TODO SETTINGS")
         }
-    }
+    //}
 }
 
 class MainActivity : ComponentActivity() {
@@ -987,8 +990,16 @@ class MainActivity : ComponentActivity() {
         } */
         setContent {
             ComposeTutorialTheme {
-                Box(modifier = Modifier.safeDrawingPadding().padding(horizontal = screenBorder)) { // TODO: systemBarsPadding()??
-                    AppNavigation()
+                // TODO: OK, I have added this Surface here because I wondered if I "should" as well as/instead of the Surfaces wrapping
+                // the individual screens. Honestly don't know any more. There might be some slightly odd colours on the O6 but maybe
+                // they are just its theme. I will have to play around with this and maybe it will become clearer as I write more code
+                // etc. fillMaxHeight() is perhaps a bit unusual here but I was experimenting and thought I'd leave it in for now.
+                Surface(modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
+                    Box(
+                        modifier = Modifier.safeDrawingPadding().padding(horizontal = screenBorder)
+                    ) { // TODO: systemBarsPadding()??
+                        AppNavigation()
+                    }
                 }
             }
             /* TODO
