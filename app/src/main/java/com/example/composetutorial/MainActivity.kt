@@ -950,7 +950,7 @@ fun TodoRenameMe(navController: NavHostController) {
 fun SettingsScreen(navController: NavHostController) {
     Surface(modifier = Modifier.fillMaxSize() /*, color = MaterialTheme.colorScheme.surface */) {
         Column() {
-            TopAppBar(title = { Text("My App Name Here") },
+            TopAppBar(title = { Text("Settings") },
              navigationIcon = {
 
                             IconButton(onClick = { navController.navigateUp() }) {
