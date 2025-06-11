@@ -921,7 +921,19 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             // 2) Observe the current entry; this is a State<NavBackStackEntry?>.
             //    Any time you navigate, Compose will recompose here.
-            val navBackStack by navController.currentBackStackEntryAsState()
+            // TODO: This back stack stuff works *BUT* it is probably wrong, because in order to get
+            // decent animation appearance I probably need TopAppBar to be part of each individual Screen composable,
+            // *not* a single shared TopAppBar which is context-sensitive.
+            val currentBackStackEntry by navController.currentBackStackEntryAsState()
+            val currentDestination = currentBackStackEntry?.destination?.route
+            val showBackButton = currentDestination != "todorenameme"
+            val title = when (currentDestination) {
+                "todorenameme" -> "My App Name Here"
+                "settings" -> "Settings"
+                else -> "MISSING TITLE"
+            }
+
+
             var menuExpanded by remember { mutableStateOf(false) }
             val focusManager = LocalFocusManager.current
             //val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -932,11 +944,11 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars),
                         // TODO: Probably need to apply MD colors to topBar, just poss also font size but it may default to something sensible
                         topBar = {
-                            TopAppBar(title = { Text("My App Name Here") }, navigationIcon = {
+                            TopAppBar(title = { Text(title) }, navigationIcon = {
                                 // TODO: This is absolute 4o-mini voodoo, but it does seem to work,
                                 // unlike just about every other solution I found on the web or which
                                 // an AI gave me. Note that we also probably actually need to change the title according to the activity. I do wonder if I'm doing something massively wrong. One random code sample I saw on the web actually changed the TopAppBar each time.
-                                if (navBackStack?.destination?.route != "todorenameme") {
+                                if (showBackButton) {
                                     IconButton(onClick = { navController.navigateUp() }) {
                                         Icon(
                                             imageVector = Icons.AutoMirrored.Default.ArrowBack,
