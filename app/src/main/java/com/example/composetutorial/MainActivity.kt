@@ -61,6 +61,8 @@ import androidx.compose.foundation.text.handwriting.handwritingHandler
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.MoreVert
@@ -112,6 +114,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 enum class ThemePreference {
     LIGHT, DARK, SYSTEM
@@ -918,36 +921,52 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             var menuExpanded by remember { mutableStateOf(false) }
             val focusManager = LocalFocusManager.current
-            Box(Modifier.safeDrawingPadding())
+            //val navBackStackEntry by navController.currentBackStackEntryAsState()
+            //val canNavigateBack = navBackStackEntry?.previousBackStackEntry != null
+            Box(Modifier.safeDrawingPadding()) // TODO: Should this wrap all the following in braces?!?!?!
             ComposeTutorialTheme(/* darkTheme = isDarkTheme */) {
                 Scaffold(
                     modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars),
                     // TODO: Probably need to apply MD colors to topBar, just poss also font size but it may default to something sensible
                     topBar = {
-                        TopAppBar(title = { Text("My App Name Here") }, actions = {
-                            IconButton(onClick = { menuExpanded = true }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                            }
+                        TopAppBar(
+                            title = { Text("My App Name Here") },
+                            navigationIcon = {
+                                    IconButton(onClick = { navController.navigateUp() }) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                                            contentDescription = "Back"
+                                        )
+                                    }
+                            },
+                            actions = {
+                                IconButton(onClick = { menuExpanded = true }) {
+                                    Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                                }
 
-                            DropdownMenu(
-                                expanded = menuExpanded,
-                                onDismissRequest = { menuExpanded = false }) {
-                                // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
-                                DropdownMenuItem(text = { Text("Edit product list") }, onClick = {
-                                    menuExpanded = false
-                                    // Handle navigation or action
-                                })
-                                DropdownMenuItem(text = { Text("Edit categories") }, onClick = {
-                                    menuExpanded = false
-                                })
-                                DropdownMenuItem(text = { Text("Settings") }, onClick = {
-                                    menuExpanded = false
-                                    navController.navigate("settings")
-                                })
-                            }
+                                DropdownMenu(
+                                    expanded = menuExpanded,
+                                    onDismissRequest = { menuExpanded = false }) {
+                                    // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
+                                    DropdownMenuItem(
+                                        text = { Text("Edit product list") },
+                                        onClick = {
+                                            menuExpanded = false
+                                            // Handle navigation or action
+                                        })
+                                    DropdownMenuItem(text = { Text("Edit categories") }, onClick = {
+                                        menuExpanded = false
+                                    })
+                                    DropdownMenuItem(text = { Text("Settings") }, onClick = {
+                                        menuExpanded = false
+                                        navController.navigate("settings")
+                                    })
+                                }
 
-                        })
-                    }) { innerPadding ->
+                            }
+                        )
+                    })
+                     { innerPadding ->
                     NavHost(
                         navController = navController,
                         startDestination = "todorenameme",
