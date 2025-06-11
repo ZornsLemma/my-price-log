@@ -9,9 +9,14 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.with
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -112,6 +117,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.view.WindowCompat
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -822,87 +828,128 @@ fun Modifier.clearFocusOnTapOutside() = composed {
     }
 }
 
+
+// TODO: TO INVESTIGATE (CHATGPT):
+//Option A: Stay Traditional (zero fancy insets)
+//✅ Don’t call enableEdgeToEdge()
+//✅ Force system to do padding:
+//
+//WindowCompat.setDecorFitsSystemWindows(window, true)
+//❌ Don’t manually add systemBarsPadding() or safeDrawingPadding()
+//✅ Let Scaffold and standard layouts work as expected
+//✅ Looks modern, but stays “out of the way”
+
 @Composable
-fun TodoRenameMe() {
+fun TodoRenameMe(navController: NavController) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("My App Name Here") },
+                actions = {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                    }
 
-    androidx.compose.foundation.layout.Column(
-        modifier = androidx.compose.ui.Modifier
-            .verticalScroll(androidx.compose.foundation.rememberScrollState())
-            // .padding(it) TODO this is now on NavHost
-            .padding(horizontal = screenBorder) // TODO: should this move to NavHost too?
-    ) {
-
-        // TextField( value = "Foozle", readOnly = true, onValueChange = {}, label = { Text("Label") } )  // TODO temp for cmparison
-
-        MainScreen() // TODO: rename this
-
-        /*
-Row {
-    ComboBoxSample(modifier = Modifier.weight(1f))
-    /*
-    Button(modifier = Modifier.weight(2f), onClick = {}, shape = MaterialTheme.shapes.small) {
-        Icon(Icons.Default.Search, contentDescription = null)
-        Text("Product: Ground coffee",style = MaterialTheme.typography.bodyLarge)
-    }
-
-     */
-}*/
-
-        androidx.compose.foundation.layout.Spacer(modifier = androidx.compose.ui.Modifier.height(8.dp))
-
-        ItemSourceInfo()
-
-        androidx.compose.foundation.layout.Spacer(modifier = androidx.compose.ui.Modifier.height(8.dp))
-
-        // TODO: This mock data shows some questions:
-        // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
-        // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
-        // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
-        // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
-        // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
-        // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
-        // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
-        // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
-        // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
-        // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
-        // but things are slightly different if we go with this approach.
-        // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
-        val header = kotlin.collections.listOf("Source", "£/100g", "Notes")
-        // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
-        val data = kotlin.collections.listOf(
-            kotlin.collections.listOf("Tesco", "£2.13", "Tesco Finest is actually cheapest"),
-            kotlin.collections.listOf("Sainsbury's Local", "£2.94", ""),
-            kotlin.collections.listOf("Asda", "£2.08", "KTC brand"),
-            kotlin.collections.listOf("Iceland", "£2.38", ""),
-            // …
-        )
-
-        // TODO: Price column should be right-aligned, of course
-        androidx.compose.material3.Card(
-            modifier = androidx.compose.ui.Modifier
-                //.weight(1f, fill=false) // only component with weight, so fills all remaining space
-                .fillMaxWidth(),
-            colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainer)
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false }) {
+                        // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
+                        DropdownMenuItem(
+                            text = { Text("Edit product list") },
+                            onClick = {
+                                menuExpanded = false
+                                // Handle navigation or action
+                            })
+                        DropdownMenuItem(
+                            text = { Text("Edit categories") },
+                            onClick = {
+                                menuExpanded = false
+                            })
+                        DropdownMenuItem(text = { Text("Settings") }, onClick = {
+                            menuExpanded = false
+                            navController.navigate("settings")
+                        })
+                    }
+                }
+                )
+            },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
         ) {
-            androidx.compose.foundation.layout.Box(
-                modifier = androidx.compose.ui.Modifier.padding(
-                    horizontal = 8.dp, vertical = 12.dp
+            MainScreen() // TODO: rename this
+
+            androidx.compose.foundation.layout.Spacer(
+                modifier = androidx.compose.ui.Modifier.height(
+                    8.dp
                 )
+            )
+
+            ItemSourceInfo()
+
+            androidx.compose.foundation.layout.Spacer(
+                modifier = androidx.compose.ui.Modifier.height(
+                    8.dp
+                )
+            )
+
+            // TODO: This mock data shows some questions:
+            // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
+            // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
+            // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
+            // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
+            // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
+            // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
+            // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
+            // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
+            // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
+            // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
+            // but things are slightly different if we go with this approach.
+            // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
+            val header = kotlin.collections.listOf("Source", "£/100g", "Notes")
+            // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
+            val data = kotlin.collections.listOf(
+                kotlin.collections.listOf("Tesco", "£2.13", "Tesco Finest is actually cheapest"),
+                kotlin.collections.listOf("Sainsbury's Local", "£2.94", ""),
+                kotlin.collections.listOf("Asda", "£2.08", "KTC brand"),
+                kotlin.collections.listOf("Iceland", "£2.38", ""),
+                // …
+            )
+
+            // TODO: Price column should be right-aligned, of course
+            androidx.compose.material3.Card(
+                modifier = androidx.compose.ui.Modifier
+                    //.weight(1f, fill=false) // only component with weight, so fills all remaining space
+                    .fillMaxWidth(),
+                colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainer)
             ) {
-                DataTable(
-                    header = header, rows = data,
-                    // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
-                    columnWeights = kotlin.collections.listOf(1.6f, 1f, 2.2f)
-                )
+                androidx.compose.foundation.layout.Box(
+                    modifier = androidx.compose.ui.Modifier.padding(
+                        horizontal = 8.dp, vertical = 12.dp
+                    )
+                ) {
+                    DataTable(
+                        header = header, rows = data,
+                        // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
+                        columnWeights = kotlin.collections.listOf(1.6f, 1f, 2.2f)
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(navController: NavController) {
     Surface(modifier = Modifier.fillMaxSize() /*, color = MaterialTheme.colorScheme.surface */) {
-        Text("TODO SETTINGS")
+        Column() {
+            TopAppBar(title = { Text("My App Name Here") })
+
+            Text("TODO SETTINGS")
+        }
     }
 }
 
@@ -917,6 +964,12 @@ class MainActivity : ComponentActivity() {
             ThemePreference.SYSTEM -> isSystemInDarkTheme()
         } */
         setContent {
+            ComposeTutorialTheme {
+                Box(modifier = Modifier.safeDrawingPadding()) { // TODO: systemBarsPadding()??
+                    AppNavigation()
+                }
+            }
+            /* TODO
             // 1) Set up NavController
             val navController = rememberNavController()
             // 2) Observe the current entry; this is a State<NavBackStackEntry?>.
@@ -989,19 +1042,41 @@ class MainActivity : ComponentActivity() {
                             startDestination = "todorenameme",
                             modifier = Modifier.padding(innerPadding)
                         ) {
-                            composable("todorenameme") { TodoRenameMe() }
+                            composable("todorenameme") { TodoRenameMe(navController) }
                             composable(
                                 "settings",
                                 enterTransition = { slideInHorizontally(initialOffsetX = { fullWidth -> fullWidth }) },
-                                exitTransition = { slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth }) }) { SettingsScreen() }
+                                exitTransition = { slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth }) }) { SettingsScreen(navController) }
                         }
                     }
                 }
-            }
+            }*/
         }
     }
 }
 
+// TODO: ChatGPT magic
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun AppNavigation() {
+    val navController = rememberNavController()
+
+    // Observe the current route
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination?.route
+
+    // Animate screen changes
+    AnimatedContent(
+        targetState = currentDestination,
+        // transitionSpec = { fadeIn() with fadeOut() }, // Or any other transition
+    ) { targetRoute ->
+        when (targetRoute) {
+            "home" -> TodoRenameMe(navController)
+            "settings" -> SettingsScreen(navController)
+            else -> TodoRenameMe(navController) // TODO HACK LoadingScreen()
+        }
+    }
+}
 
 // TODO: ChatGPT-inspired (and maybe do my own searches too) libraries that may solve the ComboBox issue:
 // https://github.com/Breens-Mbaka/Searchable-Dropdown-Menu-Jetpack-Compose
