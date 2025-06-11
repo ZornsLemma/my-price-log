@@ -10,6 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -1078,43 +1079,65 @@ fun AppNavigation() {
         startDestination = "home",
         // TODO!? modifier = Modifier.padding(innerPadding)
     ) {
-        // TODO: The animation here is complete voodoo. ChatGPT suggests that in order to avoid
-        // glitches on the settings->home transition, it's important to have the tween(0)
-        // popEnterTransition on home and a *specific tween(n)* on the popExitTransition on
-        // settings. I am not sure this is necessary but it's hard to be sure on the emulator.
-        // If I set the popExitTransition duration to 3000 millis it seems to always looks
-        // smooth on the emulator even without any popEnterTransition on home, so maybe this
-        // would be fine at 300 millis or with no explicit millis.
+        // TODO: The animation here is complete voodoo. This is a tweaked version of https://stackoverflow.com/questions/65643015/animating-between-composables-in-navigation-with-compose
+        // and does actually seem to more-or-less behave (and consistently too). I didn't want to force 700ms, this feels a smidge fast at the (I think) default 300 but I think it is OK.
+        // No, no, it isn't consistent. Sometimes the back animation is much faster than others. Not a clue. Not a f* clue.
+
         composable("home",
-            /* TODO DELETE
-            enterTransition =  { slideInHorizontally() },
-            exitTransition = { slideOutHorizontally() },
-            popEnterTransition =  { slideInHorizontally() },
-            popExitTransition = { slideOutHorizontally() },
-             */
-            // popEnterTransition = { fadeIn(animationSpec = tween(0)) }, // or no transition
-            // TODO: ChatGPT suggests this would add optional smoothiness (in conjunctinon with the 300 tween on settings'
-            // popExitTransition. It might, I am not sure.
+            /*
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(700)
+                )
+            },
+            exitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(700)
+                )
+            },
             popEnterTransition = {
-                fadeIn(animationSpec = tween(delayMillis = 150, durationMillis = 150))
-            }
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(700)
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(700)
+                )
+            } */
         ) {
             TodoRenameMe(navController)
         }
         composable(
             "settings",
-            enterTransition = { slideInHorizontally(initialOffsetX = { fullWidth -> fullWidth }) },
-            //exitTransition = { fadeOut() },  // or no animation if you want home to stay static
-            //popEnterTransition = { fadeIn() },  // or no animation
-            //popExitTransition = { slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth }) }
-            popExitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { it },
-                    animationSpec = tween(durationMillis = 300) // TODO: 300 may be the default and we don't need to specify this, not certain
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    //animationSpec = tween(700)
                 )
             },
-            //popEnterTransition = { fadeIn(animationSpec = tween(0)) } // Optional to smooth timing
-
+            exitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                    //animationSpec = tween(700)
+                )
+            },
+            popEnterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    //animationSpec = tween(700)
+                )
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    //animationSpec = tween(700)
+                )
+            }
         ) {
             SettingsScreen(navController)
         }
@@ -1136,3 +1159,5 @@ fun AppNavigation() {
 // TODO: I should probably lock the app to portrait mode
 
 // TODO: I should probably switch to whole screen (just maybe "everything below the top two drop downs"?) scrolling. On a medium phone it will make little difference, on a small phone it will make a big difference.
+
+// TODO: There is no colour in the app at all when running on P7! Material You active without me realising it?
