@@ -10,8 +10,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -118,6 +121,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -840,7 +844,7 @@ fun Modifier.clearFocusOnTapOutside() = composed {
 //✅ Looks modern, but stays “out of the way”
 
 @Composable
-fun TodoRenameMe(navController: NavController) {
+fun TodoRenameMe(navController: NavHostController) {
     var menuExpanded by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
@@ -943,7 +947,7 @@ fun TodoRenameMe(navController: NavController) {
 }
 
 @Composable
-fun SettingsScreen(navController: NavController) {
+fun SettingsScreen(navController: NavHostController) {
     Surface(modifier = Modifier.fillMaxSize() /*, color = MaterialTheme.colorScheme.surface */) {
         Column() {
             TopAppBar(title = { Text("My App Name Here") })
@@ -1060,20 +1064,45 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    NavHost(
+        navController = navController,
+        startDestination = "home",
+        // TODO!? modifier = Modifier.padding(innerPadding)
+    ) {
+        // TODO: The animation here is complete voodoo. ChatGPT suggests that in order to avoid
+        // glitches on the settings->home transition, it's important to have the tween(0)
+        // popEnterTransition on home and a *specific tween(n)* on the popExitTransition on
+        // settings. I am not sure this is necessary but it's hard to be sure on the emulator.
+        // If I set the popExitTransition duration to 3000 millis it seems to always looks
+        // smooth on the emulator even without any popEnterTransition on home, so maybe this
+        // would be fine at 300 millis or with no explicit millis.
+        composable("home",
+            /* TODO DELETE
+            enterTransition =  { slideInHorizontally() },
+            exitTransition = { slideOutHorizontally() },
+            popEnterTransition =  { slideInHorizontally() },
+            popExitTransition = { slideOutHorizontally() },
+             */
+            popEnterTransition = { fadeIn(animationSpec = tween(0)) }, // or no transition
+        ) {
+            TodoRenameMe(navController)
+        }
+        composable(
+            "settings",
+            enterTransition = { slideInHorizontally(initialOffsetX = { fullWidth -> fullWidth }) },
+            //exitTransition = { fadeOut() },  // or no animation if you want home to stay static
+            //popEnterTransition = { fadeIn() },  // or no animation
+            //popExitTransition = { slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth }) }
+            popExitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { it },
+                    animationSpec = tween(durationMillis = 300)
+                )
+            },
+            //popEnterTransition = { fadeIn(animationSpec = tween(0)) } // Optional to smooth timing
 
-    // Observe the current route
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination?.route
-
-    // Animate screen changes
-    AnimatedContent(
-        targetState = currentDestination,
-        // transitionSpec = { fadeIn() with fadeOut() }, // Or any other transition
-    ) { targetRoute ->
-        when (targetRoute) {
-            "home" -> TodoRenameMe(navController)
-            "settings" -> SettingsScreen(navController)
-            else -> TodoRenameMe(navController) // TODO HACK LoadingScreen()
+        ) {
+            SettingsScreen(navController)
         }
     }
 }
