@@ -453,8 +453,7 @@ fun ItemSourceInfo() {
                     // click it every time they buy this item), it should probably get the bottom
                     // right position, i.e. we should swap its position with "Edit".
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End
                     ) {
                         // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
                         FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
@@ -923,23 +922,20 @@ class MainActivity : ComponentActivity() {
             val focusManager = LocalFocusManager.current
             //val navBackStackEntry by navController.currentBackStackEntryAsState()
             //val canNavigateBack = navBackStackEntry?.previousBackStackEntry != null
-            Box(Modifier.safeDrawingPadding()) // TODO: Should this wrap all the following in braces?!?!?!
-            ComposeTutorialTheme(/* darkTheme = isDarkTheme */) {
-                Scaffold(
-                    modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars),
-                    // TODO: Probably need to apply MD colors to topBar, just poss also font size but it may default to something sensible
-                    topBar = {
-                        TopAppBar(
-                            title = { Text("My App Name Here") },
-                            navigationIcon = {
-                                    IconButton(onClick = { navController.navigateUp() }) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                            contentDescription = "Back"
-                                        )
-                                    }
-                            },
-                            actions = {
+            Box(Modifier.safeDrawingPadding()) {
+                ComposeTutorialTheme(/* darkTheme = isDarkTheme */) {
+                    Scaffold(
+                        modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars),
+                        // TODO: Probably need to apply MD colors to topBar, just poss also font size but it may default to something sensible
+                        topBar = {
+                            TopAppBar(title = { Text("My App Name Here") }, navigationIcon = {
+                                IconButton(onClick = { navController.navigateUp() }) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                                        contentDescription = "Back"
+                                    )
+                                }
+                            }, actions = {
                                 IconButton(onClick = { menuExpanded = true }) {
                                     Icon(Icons.Default.MoreVert, contentDescription = "Menu")
                                 }
@@ -954,30 +950,30 @@ class MainActivity : ComponentActivity() {
                                             menuExpanded = false
                                             // Handle navigation or action
                                         })
-                                    DropdownMenuItem(text = { Text("Edit categories") }, onClick = {
-                                        menuExpanded = false
-                                    })
+                                    DropdownMenuItem(
+                                        text = { Text("Edit categories") },
+                                        onClick = {
+                                            menuExpanded = false
+                                        })
                                     DropdownMenuItem(text = { Text("Settings") }, onClick = {
                                         menuExpanded = false
                                         navController.navigate("settings")
                                     })
                                 }
 
-                            }
-                        )
-                    })
-                     { innerPadding ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = "todorenameme",
-                        modifier = Modifier.padding(innerPadding)
-                    ) {
-                        composable("todorenameme") { TodoRenameMe() }
-                        composable(
-                            "settings",
-                            enterTransition = { slideInHorizontally(initialOffsetX = { fullWidth -> fullWidth }) },
-                            exitTransition = { slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth }) })
-                        { SettingsScreen() }
+                            })
+                        }) { innerPadding ->
+                        NavHost(
+                            navController = navController,
+                            startDestination = "todorenameme",
+                            modifier = Modifier.padding(innerPadding)
+                        ) {
+                            composable("todorenameme") { TodoRenameMe() }
+                            composable(
+                                "settings",
+                                enterTransition = { slideInHorizontally(initialOffsetX = { fullWidth -> fullWidth }) },
+                                exitTransition = { slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth }) }) { SettingsScreen() }
+                        }
                     }
                 }
             }
