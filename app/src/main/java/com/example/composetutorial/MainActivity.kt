@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -73,6 +74,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -942,7 +944,10 @@ fun SettingsScreen(navController: NavHostController) {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Target SDK >=35 directly enables edge-to-edge (see e.g. https://stackoverflow.com/questions/79018063/trying-to-understand-edge-to-edge-in-android). We don't particularly want this, but we can work with it so we don't try to fight it.
+        // We call it here to be explicit. TODO: I am far from clear but you can pass some arguments to enableEdgeToEdge(), which may have some relevant effect on older and/or newer platforms. For now I will keep it simple but if there are nightmarish inconsistencies on older versions of Android this might be part of the puzzle.
         enableEdgeToEdge()
+
         // TODO: Experiment with adding a Settings activity and make the dark/light/follow system available and grey out (with some text saying why) follow system on Android < 10
         val isDarkTheme = true /* TODO when (userThemePref) {
             ThemePreference.DARK -> true
@@ -951,14 +956,15 @@ class MainActivity : ComponentActivity() {
         } */
         setContent {
             ComposeTutorialTheme {
+                // TODO: Grok told me I could/should shove a DisposableEffect() in here to futz around with isAppearanceLightStatusBars. I don't particularly trust it, but let's make a note in csae this is part of fixing any problems we might see on older Android versions later.
                 // TODO: OK, I have added this Surface here because I wondered if I "should" as well as/instead of the Surfaces wrapping
                 // the individual screens. Honestly don't know any more. There might be some slightly odd colours on the O6 but maybe
                 // they are just its theme. I will have to play around with this and maybe it will become clearer as I write more code
                 // etc. fillMaxHeight() is perhaps a bit unusual here but I was experimenting and thought I'd leave it in for now.
-                Surface(modifier = Modifier.fillMaxWidth().fillMaxHeight()) {
-                    Box(
-                        modifier = Modifier.safeDrawingPadding().padding(horizontal = screenBorder)
-                    ) { // TODO: systemBarsPadding()??
+                Surface(modifier = Modifier.fillMaxSize().safeDrawingPadding(), color = Color.Red /* TODO SHOULD BE MaterialTheme.colorScheme.background */) {
+                    // TODO: I don't know if I could or should apply this padding to the Surface's modifier instead. I think it would work and it might be worth doing that later, but for now this feels safer, since that Surface plays a role in "defining" the real surface available to my app and I want to have less to worry about in terms of weird animation problems or anything else like that."
+                    // TODONOW: I *do* wonder (just speculating) if having the border around the TopAppBar is visually wrong and/or might explain some animation weirdness. I don't know about animation weirdness, but I'm pretty sure visually the TopAppBar should have the whole width of the screen.
+                    Box(modifier = Modifier.padding(horizontal = screenBorder)) {
                         AppNavigation()
                     }
                 }
@@ -1138,8 +1144,13 @@ fun AppNavigation() {
 
 // TODO: I should probably lock the app to portrait mode
 
-// TODO: There is no colour in the app at all when running on P7! Material You active without me realising it?
+// TODO: There is no colour in the app at all when running on P7! Material You active without me realising it? I suspect so - look at Theme.kt, which appears to support dynamic colours. This isn't a problem as such, but should make a note about it, and I may want to offer a setting which allows newer Android versions to choose the app's native theme.
 
 // TODO: There is an ugly animation glitch where the "T" of "TODO" on SettingsScreen hangs around far too long when transitioning between home and settings. This wasn't visible before I added the previously-lost border at the left and right of the main activity. It feels like this might be a clue to some problem with the animations but I am far from sure. In practice this will probably not be an issue if we add the same border to settings, but I am not sure that's a "fix" even if it does happen.
 
 // TODO: In final version make sure e.g. going from home to settings to back doesn't lose category/product/source - I think it does now, but since it's all hacky that is fine in short term
+
+
+
+// General note type comments to put somewhere appropriate in long term:
+//
