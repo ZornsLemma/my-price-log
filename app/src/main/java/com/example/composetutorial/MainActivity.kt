@@ -13,6 +13,8 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -1118,14 +1120,18 @@ fun AppNavigation() {
         ) {
             HomeScreen(navController)
         }
+        val tweenDurationMillis = 700; // TODO: should probably be 300 in final version
         composable(
             "settings",
             enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(2000)
+
+                    animationSpec = tween(durationMillis = tweenDurationMillis, easing = LinearOutSlowInEasing),
                 )
+
             },
+            /* TODO This is probably not used as this is a "leaf" screen
             exitTransition = {
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
@@ -1138,10 +1144,11 @@ fun AppNavigation() {
                     animationSpec = tween(2000)
                 )
             },
+            */
             popExitTransition = {
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(2000)
+                    animationSpec = tween(durationMillis = tweenDurationMillis, easing=FastOutLinearInEasing)
                 )
             }
         ) {
