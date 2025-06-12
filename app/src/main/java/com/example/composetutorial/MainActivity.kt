@@ -9,6 +9,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -1086,6 +1088,8 @@ fun AppNavigation() {
         // No, no, it isn't consistent. Sometimes the back animation is much faster than others. Not a clue. Not a f* clue.
 
         composable("home",
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
             /*
             enterTransition = {
                 slideIntoContainer(
