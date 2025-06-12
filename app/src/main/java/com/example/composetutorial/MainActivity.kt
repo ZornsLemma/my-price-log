@@ -11,6 +11,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -816,6 +817,7 @@ fun HomeScreen(navController: NavHostController) {
     // No - it is there, but even if I remove this surface it is still there. I will have to experiment further. Part of the issue may be that it's the top-level Nav thing which is responsible.
     // Surface(modifier = Modifier.fillMaxSize()/*, color=MaterialTheme.colorScheme.surface */) {
         Scaffold(
+            modifier = Modifier.fillMaxSize(),
             topBar = {
                 TopAppBar(
                     title = { Text("My App Name Here") },
@@ -853,6 +855,7 @@ fun HomeScreen(navController: NavHostController) {
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(horizontal = screenBorder)
+                    .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
 
                 .verticalScroll(androidx.compose.foundation.rememberScrollState())
             ) {
@@ -926,6 +929,7 @@ fun HomeScreen(navController: NavHostController) {
 @Composable
 fun SettingsScreen(navController: NavHostController) {
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 title = { Text("Settings") },
@@ -945,6 +949,7 @@ fun SettingsScreen(navController: NavHostController) {
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = screenBorder)
+                .background(MaterialTheme.colorScheme.primary) // TODO: debug hack
 
                 // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
@@ -1066,6 +1071,7 @@ class MainActivity : ComponentActivity() {
 }
 
 // TODO: ChatGPT magic
+// TODO: Random Grok suggestion to maybe play with later: Use LinearOutSlowInEasing for enter transitions (starts fast, slows down) and FastOutLinearInEasing for exit transitions (starts slow, speeds up) to make the slide feel natural.
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigation() {
@@ -1113,25 +1119,25 @@ fun AppNavigation() {
             enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                    //animationSpec = tween(700)
+                    animationSpec = tween(2000)
                 )
             },
             exitTransition = {
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                    //animationSpec = tween(700)
+                    animationSpec = tween(2000)
                 )
             },
             popEnterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    //animationSpec = tween(700)
+                    animationSpec = tween(2000)
                 )
             },
             popExitTransition = {
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    //animationSpec = tween(700)
+                    animationSpec = tween(2000)
                 )
             }
         ) {
