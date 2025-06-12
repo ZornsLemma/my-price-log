@@ -852,7 +852,9 @@ fun HomeScreen(navController: NavHostController) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .verticalScroll(androidx.compose.foundation.rememberScrollState())
+                    .padding(horizontal = screenBorder)
+
+                .verticalScroll(androidx.compose.foundation.rememberScrollState())
             ) {
                 MainScreen() // TODO: rename this
 
@@ -923,20 +925,32 @@ fun HomeScreen(navController: NavHostController) {
 
 @Composable
 fun SettingsScreen(navController: NavHostController) {
-    //Surface(modifier = Modifier.fillMaxSize() /*, color = MaterialTheme.colorScheme.surface */) {
-        Column() {
-            TopAppBar(title = { Text("Settings") },
-             navigationIcon = {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Settings") },
+                navigationIcon = {
 
-                            IconButton(onClick = { navController.navigateUp() }) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                    contentDescription = "Back"
-                                )
-                            }
-                        })
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                })
+        },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = screenBorder)
 
-            Text("TODO SETTINGS")
+                // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
+        ) {
+
+                Text("TODO SETTINGS")
+            }
         }
     //}
 }
@@ -962,11 +976,7 @@ class MainActivity : ComponentActivity() {
                 // they are just its theme. I will have to play around with this and maybe it will become clearer as I write more code
                 // etc. fillMaxHeight() is perhaps a bit unusual here but I was experimenting and thought I'd leave it in for now.
                 Surface(modifier = Modifier.fillMaxSize().safeDrawingPadding(), color = Color.Red /* TODO SHOULD BE MaterialTheme.colorScheme.background */) {
-                    // TODO: I don't know if I could or should apply this padding to the Surface's modifier instead. I think it would work and it might be worth doing that later, but for now this feels safer, since that Surface plays a role in "defining" the real surface available to my app and I want to have less to worry about in terms of weird animation problems or anything else like that."
-                    // TODONOW: I *do* wonder (just speculating) if having the border around the TopAppBar is visually wrong and/or might explain some animation weirdness. I don't know about animation weirdness, but I'm pretty sure visually the TopAppBar should have the whole width of the screen.
-                    Box(modifier = Modifier.padding(horizontal = screenBorder)) {
                         AppNavigation()
-                    }
                 }
             }
             /* TODO
