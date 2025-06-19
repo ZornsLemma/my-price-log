@@ -901,6 +901,7 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
 }
 
 // TODO: ChatGPT magic plus my hackery to fix bugs
+// TODO: Even if this seems OK and I decide to keep/use it, giving it a thorough manual code review alongside https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ would likely be a good idea.
 @Composable
 fun AnimatedFullScreenDialog(
     visible: Boolean,
@@ -924,10 +925,12 @@ fun AnimatedFullScreenDialog(
         } else {
             // Trigger exit animation
             isVisible = false
+            /*
             // Wait for animation duration, then remove from composition
             // TODO: This is foul but we can hack it to use the deferred thing in my own implementation if it works otherwise
             delay(exitDurationMillis.toLong())
             isComposed = false
+            */
         }
     }
 
@@ -993,6 +996,13 @@ fun AnimatedFullScreenDialog(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     content()
+
+                    DisposableEffect(Unit) {
+                        onDispose {
+                            isComposed = false
+                        }
+                    }
+
                 }
             }
         }
