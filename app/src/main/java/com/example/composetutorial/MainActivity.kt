@@ -67,6 +67,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -1095,46 +1096,26 @@ fun HomeScreen(navController: NavHostController) {
                             modifier = Modifier.fillMaxSize(),
                             topBar = {
                                 TopAppBar(
+                                    navigationIcon = {
+                                        IconButton(onClick = { showEditDialog = false }) {
+                                            Icon(Icons.Default.Close, contentDescription = "Close") } },
                                     title = { Text("Dialog Title") },
-                                    actions = {
-                                        IconButton(onClick = { menuExpanded = true }) {
-                                            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                                        }
-
-                                        DropdownMenu(
-                                            expanded = menuExpanded,
-                                            onDismissRequest = { menuExpanded = false }) {
-                                            // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
-                                            DropdownMenuItem(
-                                                text = { Text("Edit product list") },
-                                                onClick = {
-                                                    menuExpanded = false
-                                                    // Handle navigation or action
-                                                })
-                                            DropdownMenuItem(
-                                                text = { Text("Edit categories") },
-                                                onClick = {
-                                                    menuExpanded = false
-                                                })
-                                            DropdownMenuItem(text = { Text("Settings") }, onClick = {
-                                                menuExpanded = false
-                                                navController.navigate("settings")
-                                            })
-                                        }
-                                    }
+                                    // TODO: There should be a "Save" or other kind of "Yes, accept changes" button at the right
                                 )
                             },
                         ) { innerPadding ->
 
+                            // TODO: We could probably just pass innerPadding through to FullScreenDialog, that may or may not be clearer
+                            Box(modifier = Modifier.padding(innerPadding)) {
+                                FullScreenDialog(
+                                    // TODO: onDismiss notused any more, has moved to above inline
+                                    onDismiss = { showEditDialog = false; animatingDialog = true }
+                                )
 
-                            FullScreenDialog(
-                                // TODO: onDismiss notused any more, has moved to above inline
-                                onDismiss = { showEditDialog = false; animatingDialog = true }
-                            )
-
-                            DisposableEffect(Unit) {
-                                onDispose {
-                                    animatingDialog = false
+                                DisposableEffect(Unit) {
+                                    onDispose {
+                                        animatingDialog = false
+                                    }
                                 }
                             }
                         }
