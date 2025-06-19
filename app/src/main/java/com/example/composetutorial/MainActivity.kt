@@ -80,6 +80,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -854,10 +855,11 @@ fun Modifier.clearFocusOnTapOutside() = composed {
 
 @Composable
 fun FullScreenDialog(onDismiss: () -> Unit) {
+    /*
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
+    ) { */
 
             Box(
                 modifier = Modifier
@@ -871,13 +873,14 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
                     }
                 }
             }
-    }
+    //}
 }
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
     var menuExpanded by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
+    var animatingDialog by remember { mutableStateOf(false) }
 
     // TODO: I added this Surface by analogy with the one in SettingsScreen, but it appears to have
     // no real effect - even if I set its color to Red or primary, nothing shows.
@@ -994,14 +997,33 @@ fun HomeScreen(navController: NavHostController) {
 
             // TODO: No idea what proper MD3 animations should be here, just trying to get this to work at all for now
             // TODO: As the dialog will probably contain its own scaffold and topappbar, this animatedvisibility component should probably be outside our scaffold
-            AnimatedVisibility(visible = showEditDialog,
-                //enter = fadeIn(animationSpec = tween(durationMillis = 2000)), // Adjust duration here
-                //enter = slideInVertically(animationSpec = tween(durationMillis =2000)),
-                //exit = fadeOut(animationSpec = tween(durationMillis = 2000)) // Adjust duration here
-                         ) {
-                FullScreenDialog(
-                    onDismiss = { showEditDialog = false }
-                )
+            // TODO: If this two-bool approach works, maybe switch to a three-state enum type thing
+            if (animatingDialog || showEditDialog) {
+                Dialog(
+                    onDismissRequest = { showEditDialog = false; animatingDialog = true },
+                    properties = DialogProperties(usePlatformDefaultWidth = false))
+                {
+
+                        AnimatedVisibility(
+                            visible = showEditDialog,
+                            //enter = fadeIn(animationSpec = tween(durationMillis = 2000)), // Adjust duration here
+                            //enter = slideInVertically(animationSpec = tween(durationMillis =2000)),
+                            //exit = fadeOut(animationSpec = tween(durationMillis = 2000)) // Adjust duration here
+
+                        ) {
+                            FullScreenDialog(
+                                // TODO: onDismiss notused any more, has moved to above inline
+                                onDismiss = { showEditDialog = false; animatingDialog = true }
+                            )
+
+                            DisposableEffect(Unit) {
+                                onDispose {
+                                    animatingDialog = false
+                                }
+                            }
+
+                        }
+                    }
             }
         }
     //}
