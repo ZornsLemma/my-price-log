@@ -21,6 +21,7 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -991,9 +992,12 @@ fun HomeScreen(navController: NavHostController) {
                 }
             }
 
+            // TODO: No idea what proper MD3 animations should be here, just trying to get this to work at all for now
+            // TODO: As the dialog will probably contain its own scaffold and topappbar, this animatedvisibility component should probably be outside our scaffold
             AnimatedVisibility(visible = showEditDialog,
-                enter = fadeIn(animationSpec = tween(durationMillis = 5000)), // Adjust duration here
-                exit = fadeOut(animationSpec = tween(durationMillis = 5000)) // Adjust duration here
+                //enter = fadeIn(animationSpec = tween(durationMillis = 2000)), // Adjust duration here
+                //enter = slideInVertically(animationSpec = tween(durationMillis =2000)),
+                //exit = fadeOut(animationSpec = tween(durationMillis = 2000)) // Adjust duration here
                          ) {
                 FullScreenDialog(
                     onDismiss = { showEditDialog = false }
