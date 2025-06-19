@@ -1024,14 +1024,18 @@ fun HomeScreen(navController: NavHostController) {
     // TODO: https://github.com/JetBrains/compose-multiplatform/issues/4431
     // https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ is linked to from issue 4431, suggesting it's "reputable"
     if (animatingDialog || showEditDialog) {
+        /*
         Dialog(
             onDismissRequest = { showEditDialog = false; animatingDialog = true },
             properties = DialogProperties(usePlatformDefaultWidth = false)
         )
+        */
+        Box() // TODO: playing the role of Dialog, which I'm told is not appropriate here after all
         {
             // This Box is crucial - without it, the "expand" animation starts from the bottom right of the screen, not the centre, despite our specified transformOrigin. TODO: This is probably outdated now we don't *do* that expand
             //Box(modifier = Modifier.fillMaxSize()) {
 
+            /*
                 val dialogWindow = getDialogWindow()
 
                 SideEffect {
@@ -1046,7 +1050,7 @@ fun HomeScreen(navController: NavHostController) {
                         // window?.setWindowAnimations(-1)// TODO: needed?
                     }
                 }
-
+*/
 
                 // TODO: I am starting to think that this effect is utterly non-MD3 compliant after all.
                 var animateIn by remember { mutableStateOf(false) }
@@ -1098,7 +1102,7 @@ fun HomeScreen(navController: NavHostController) {
                             topBar = {
                                 TopAppBar(
                                     navigationIcon = {
-                                        IconButton(onClick = { showEditDialog = false }) {
+                                        IconButton(onClick = { showEditDialog = false; animatingDialog = true }) {
                                             Icon(Icons.Default.Close, contentDescription = "Close") } },
                                     title = { Text("Dialog Title") },
                                     // TODO: There should be a "Save" or other kind of "Yes, accept changes" button at the right
