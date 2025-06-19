@@ -96,6 +96,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -1047,9 +1048,6 @@ fun HomeScreen(navController: NavHostController) {
                             animationSpec = tween(durationMillis = 2000),
                             initialScale = 0.0f, // Start from nothing
                             transformOrigin = TransformOrigin.Center // Expand from center
-                        )+ fadeIn(
-                            animationSpec = tween(durationMillis = 2000),
-                            initialAlpha = 0f // Start fully transparent
                         ),
                         exit = scaleOut(
                             animationSpec = tween(durationMillis = 2000),
@@ -1058,6 +1056,14 @@ fun HomeScreen(navController: NavHostController) {
                         ),
 modifier = Modifier.zIndex(1f) // TODO: necessary?
                     ) {
+                        Box(modifier = Modifier.
+                        fillMaxSize()
+                            .graphicsLayer {
+                                // Set alpha to 0f when scale is exactly 0f (initial frame)
+                                // This hides the content during the prep phase
+                                alpha = if (this.scaleX < 0.5f) 0f else 1f
+                            }
+                        ) {
                             FullScreenDialog(
                                 // TODO: onDismiss notused any more, has moved to above inline
                                 onDismiss = { showEditDialog = false; animatingDialog = true }
@@ -1068,6 +1074,7 @@ modifier = Modifier.zIndex(1f) // TODO: necessary?
                                     animatingDialog = false
                                 }
                             }
+                        }
                     }
                 }
             }
