@@ -1051,19 +1051,30 @@ fun HomeScreen(navController: NavHostController) {
                         val scale = 0.8f // 0.0f means "start from nothing"
                         AnimatedVisibility(
                             visible = animateIn && showEditDialog,
-                            //enter = slideInVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
-                            //exit = slideOutVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
-                            enter = expandVertically(
-                                animationSpec = tween(durationMillis = tweenDurationMillisEnter, easing = FastOutLinearInEasing),
-                                expandFrom = Alignment.Top
+                            enter = slideInVertically(
+                                animationSpec = tween(
+                                    durationMillis = tweenDurationMillisEnter,
+                                    easing = FastOutSlowInEasing // MD3’s smooth easing
+                                ),
+                                initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
                             ) + fadeIn(
-                                animationSpec = tween(durationMillis = tweenDurationMillisEnter,
-                                easing = FastOutLinearInEasing)),
-                            exit = shrinkVertically(
-                                animationSpec = tween(durationMillis = tweenDurationMillisExit, easing = LinearOutSlowInEasing),
-                                shrinkTowards = Alignment.Top
+                                animationSpec = tween(
+                                    durationMillis = tweenDurationMillisEnter,
+                                    easing = FastOutSlowInEasing
+                                )
+                            ),
+                            exit = slideOutVertically(
+                                animationSpec = tween(
+                                    durationMillis = tweenDurationMillisExit,
+                                    easing = LinearOutSlowInEasing
+                                ),
+                                targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
                             ) + fadeOut(
-                                animationSpec = tween(durationMillis = tweenDurationMillisExit, easing = LinearOutSlowInEasing)),
+                                animationSpec = tween(
+                                    durationMillis = tweenDurationMillisExit,
+                                    easing = LinearOutSlowInEasing
+                                )
+                            ),
                             modifier = Modifier.zIndex(1f) // TODO: necessary?
                         ) {
                             Box( // TODO: I think this Box is a legacy of experiments and not needed
