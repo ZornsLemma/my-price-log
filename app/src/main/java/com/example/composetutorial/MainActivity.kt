@@ -7,6 +7,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
 import android.util.Log
+import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -81,6 +82,8 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -94,12 +97,15 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource.Companion.SideEffect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -998,36 +1004,54 @@ fun HomeScreen(navController: NavHostController) {
             // TODO: No idea what proper MD3 animations should be here, just trying to get this to work at all for now
             // TODO: As the dialog will probably contain its own scaffold and topappbar, this animatedvisibility component should probably be outside our scaffold
             // TODO: If this two-bool approach works, maybe switch to a three-state enum type thing
+            // TODO: https://github.com/JetBrains/compose-multiplatform/issues/4431
+            // https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ is linked to from issue 4431, suggesting it's "reputable"
             if (animatingDialog || showEditDialog) {
                 Dialog(
                     onDismissRequest = { showEditDialog = false; animatingDialog = true },
                     properties = DialogProperties(usePlatformDefaultWidth = false))
                 {
 
-                        AnimatedVisibility(
-                            visible = showEditDialog,
-                            //enter = fadeIn(animationSpec = tween(durationMillis = 2000)), // Adjust duration here
-                            //enter = slideInVertically(animationSpec = tween(durationMillis =2000)),
-                            //exit = fadeOut(animationSpec = tween(durationMillis = 2000)) // Adjust duration here
-
-                        ) {
-                            FullScreenDialog(
-                                // TODO: onDismiss notused any more, has moved to above inline
-                                onDismiss = { showEditDialog = false; animatingDialog = true }
-                            )
-
-                            DisposableEffect(Unit) {
-                                onDispose {
-                                    animatingDialog = false
-                                }
-                            }
-
+                    val dialogWindow = getDialogWindow()
+                    SideEffect {
+                        dialogWindow.let { window ->
+                            // TODO: setDimAmount(0f) disables the standard scrim, which isn't visible once the dialog is displayed (as it's full screen anyway) but does make our animations look ugly. TODO: Can/should we tweak this!? Apply a custom fading "scrim" of our own?
+                            window?.setDimAmount(0f)
+                            // window?.setWindowAnimations(-1) TODO: needed?
                         }
                     }
+
+
+                    AnimatedVisibility(
+                        visible = showEditDialog,
+                        enter = fadeIn(animationSpec = tween(durationMillis = 2000)), // Adjust duration here
+                        //enter = slideInVertically(animationSpec = tween(durationMillis =2000)),
+                        exit = fadeOut(animationSpec = tween(durationMillis = 2000)) // Adjust duration here
+
+                    ) {
+                        FullScreenDialog(
+                            // TODO: onDismiss notused any more, has moved to above inline
+                            onDismiss = { showEditDialog = false; animatingDialog = true }
+                        )
+
+                        DisposableEffect(Unit) {
+                            onDispose {
+                                animatingDialog = false
+                            }
+                        }
+
+                    }
+                }
             }
         }
     //}
 }
+
+// https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/
+@ReadOnlyComposable
+@Composable
+fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvider)?.window
+
 
 @Composable
 fun SettingsScreen(navController: NavHostController) {
@@ -1083,7 +1107,9 @@ class MainActivity : ComponentActivity() {
                 // the individual screens. Honestly don't know any more. There might be some slightly odd colours on the O6 but maybe
                 // they are just its theme. I will have to play around with this and maybe it will become clearer as I write more code
                 // etc. fillMaxHeight() is perhaps a bit unusual here but I was experimenting and thought I'd leave it in for now.
-                Surface(modifier = Modifier.fillMaxSize().safeDrawingPadding(), color = Color.Red /* TODO SHOULD BE MaterialTheme.colorScheme.background */) {
+                Surface(modifier = Modifier
+                    .fillMaxSize()
+                    .safeDrawingPadding(), color = Color.Red /* TODO SHOULD BE MaterialTheme.colorScheme.background */) {
                         AppNavigation()
                 }
             }
