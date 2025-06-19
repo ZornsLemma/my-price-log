@@ -2,6 +2,8 @@
 
 package com.example.composetutorial
 
+import androidx.compose.material3.Button
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
 import android.util.Log
@@ -9,6 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -16,6 +19,10 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -90,6 +97,7 @@ import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -293,6 +301,35 @@ fun LabeledItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MyFullScreenDialog(
+    onDismiss: () -> Unit
+) {
+    // Use a ModalBottomSheet or a Dialog for full-screen effect
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.background
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("This is a full-screen dialog", style = MaterialTheme.typography.titleLarge)
+                Spacer(modifier = Modifier.height(20.dp))
+                Button(onClick = onDismiss) {
+                    Text("Close")
+                }
+            }
+        }
+    }
+}
+
 // This composable provides the at-a-glance status of an item at a particular source. It won't always be visible because we may not have a current source, but when we do this should provide "most" of what a user wants to know:
 // - is the item well-priced?
 // - do we have an up-to-date price for this item?
@@ -301,10 +338,11 @@ fun LabeledItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
-fun ItemSourceInfo() {
+fun ItemSourceInfo(onClickEdit: () -> Unit) {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
     var expanded by remember { mutableStateOf(false) }
     var currentUnit by remember { mutableStateOf("100g") }
+
     // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
     // changes the system font size. (Even if we didn't do this, we'd still want to use a fixed
     // size() Modifier (16.dp works quite nicely at the default settings on my current emulator) to
@@ -438,8 +476,8 @@ fun ItemSourceInfo() {
                             Text("Confirm")
                         }
                         Spacer(modifier = Modifier.width(8.dp))
-                        FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
-                            Text("Edit")
+                        FilledTonalButton(onClick = onClickEdit, shape = MaterialTheme.shapes.small) {
+                            Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
                         }
                     }
                 }
@@ -812,8 +850,37 @@ fun Modifier.clearFocusOnTapOutside() = composed {
 //✅ Looks modern, but stays “out of the way”
 
 @Composable
+fun FullScreenDialog(onDismiss: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        AnimatedVisibility(
+            visible = true,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                Column {
+                    Text("Full-Screen Dialog Content")
+                    Button(onClick = onDismiss) {
+                        Text("Close")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun HomeScreen(navController: NavHostController) {
     var menuExpanded by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+
     // TODO: I added this Surface by analogy with the one in SettingsScreen, but it appears to have
     // no real effect - even if I set its color to Red or primary, nothing shows.
     // TODO: Actually it may or may not be this, but on the O6 at least there does seem to be a weird
@@ -871,7 +938,7 @@ fun HomeScreen(navController: NavHostController) {
                     )
                 )
 
-                ItemSourceInfo()
+                ItemSourceInfo(onClickEdit = { showEditDialog = true } )
 
                 androidx.compose.foundation.layout.Spacer(
                     modifier = androidx.compose.ui.Modifier.height(
@@ -925,6 +992,12 @@ fun HomeScreen(navController: NavHostController) {
                         )
                     }
                 }
+            }
+
+            if (showEditDialog) {
+                FullScreenDialog(
+                    onDismiss = { showEditDialog = false }
+                )
             }
         }
     //}
