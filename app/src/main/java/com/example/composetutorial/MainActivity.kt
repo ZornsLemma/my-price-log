@@ -24,8 +24,10 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
@@ -1044,24 +1046,22 @@ fun HomeScreen(navController: NavHostController) {
                         // TODO: I am starting to think that this effect is utterly non-MD3 compliant after all.
                         var animateIn by remember { mutableStateOf(false) }
                         LaunchedEffect(Unit) { animateIn = true }
-                        val tweenDurationMillisEnter = 250 // TODO: maybe 250 as this is a very utilitarian anim?
-                        val tweenDurationMillisExit = 200 // TODO: maybe 200, ditto?
+                        val tweenDurationMillisEnter = 2500 // 250 // TODO: maybe 250 as this is a very utilitarian anim?
+                        val tweenDurationMillisExit = 2000 // 200 // TODO: maybe 200, ditto?
                         val scale = 0.8f // 0.0f means "start from nothing"
                         AnimatedVisibility(
                             visible = animateIn && showEditDialog,
                             //enter = slideInVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
                             //exit = slideOutVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
-                            enter = scaleIn(
+                            enter = expandVertically(
                                 animationSpec = tween(durationMillis = tweenDurationMillisEnter, easing = FastOutLinearInEasing),
-                                initialScale = scale,
-                                transformOrigin = TransformOrigin.Center // Expand from center
+                                expandFrom = Alignment.Top
                             ) + fadeIn(
                                 animationSpec = tween(durationMillis = tweenDurationMillisEnter,
                                 easing = FastOutLinearInEasing)),
-                            exit = scaleOut(
+                            exit = shrinkVertically(
                                 animationSpec = tween(durationMillis = tweenDurationMillisExit, easing = LinearOutSlowInEasing),
-                                targetScale = scale,
-                                transformOrigin = TransformOrigin.Center
+                                shrinkTowards = Alignment.Top
                             ) + fadeOut(
                                 animationSpec = tween(durationMillis = tweenDurationMillisExit, easing = LinearOutSlowInEasing)),
                             modifier = Modifier.zIndex(1f) // TODO: necessary?
