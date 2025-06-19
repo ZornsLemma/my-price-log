@@ -82,6 +82,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -1022,8 +1023,10 @@ fun HomeScreen(navController: NavHostController) {
                     }
 
 
+                    var animateIn by remember { mutableStateOf( false ) }
+                    LaunchedEffect(Unit) { animateIn = true }
                     AnimatedVisibility(
-                        visible = showEditDialog,
+                        visible = animateIn && showEditDialog,
                         enter = fadeIn(animationSpec = tween(durationMillis = 2000)), // Adjust duration here
                         //enter = slideInVertically(animationSpec = tween(durationMillis =2000)),
                         exit = fadeOut(animationSpec = tween(durationMillis = 2000)) // Adjust duration here
