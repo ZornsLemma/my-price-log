@@ -63,6 +63,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
@@ -887,6 +888,27 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
+    var showEditDialog by remember { mutableStateOf(false) }
+    // TODO: We need to manually handle the back button in the full screen dialog
+    AnimatedContent(
+        targetState = showEditDialog,
+        transitionSpec = {
+            // Define the "fade through" transition TODO: FAR FROM SURE THIS IS RIGHT TRANSITION, BUT JUST TRYING TO GET IT WORKING AT ALL FOR NOW
+            fadeIn(animationSpec = tween(durationMillis = 300, delayMillis = 90)) with
+                    fadeOut(animationSpec = tween(durationMillis = 150))
+        },
+        modifier = Modifier.fillMaxSize()
+    ) { dialogVisible ->
+        if (dialogVisible) {
+            YetAnotherFullScreenDialog(navController)
+        } else {
+            HomeScreen2(navController, onClickEdit = { showEditDialog = true })
+        }
+    }
+}
+
+@Composable
+fun HomeScreen2(navController: NavHostController, onClickEdit: () -> Unit) {
     var menuExpanded by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var animatingDialog by remember { mutableStateOf(false) }
@@ -949,7 +971,7 @@ fun HomeScreen(navController: NavHostController) {
                     )
                 )
 
-                ItemSourceInfo(onClickEdit = { showEditDialog = true } )
+                ItemSourceInfo(onClickEdit = onClickEdit )
 
                 androidx.compose.foundation.layout.Spacer(
                     modifier = androidx.compose.ui.Modifier.height(
@@ -1010,54 +1032,60 @@ fun HomeScreen(navController: NavHostController) {
             // TODO: If this two-bool approach works, maybe switch to a three-state enum type thing
             // TODO: https://github.com/JetBrains/compose-multiplatform/issues/4431
             // https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ is linked to from issue 4431, suggesting it's "reputable"
-            if (animatingDialog || showEditDialog) {
-                Dialog(
-                    onDismissRequest = { showEditDialog = false; animatingDialog = true },
-                    properties = DialogProperties(usePlatformDefaultWidth = false))
-                {
 
-                    val dialogWindow = getDialogWindow()
-                    SideEffect {
-                        dialogWindow.let { window ->
-                            // Disable the standard scrim. As this is a full-screen dialog, it won't
-                            // be visible once the animation has finished anyway, and it looks ugly
-                            // to have the standard scrim appear instantly and then have our
-                            // animation run. I don't think it makes sense to try to add our own
-                            // animated scrim, since our dialog already has an opaque full screen
-                            // background which will be animated in/out.
-                            window?.setDimAmount(0f)
-                            // window?.setWindowAnimations(-1) TODO: needed?
-                        }
-                    }
-
-
-                    var animateIn by remember { mutableStateOf( false ) }
-                    LaunchedEffect(Unit) { animateIn = true }
-                    // TODO: WE SHOULD ACTUALLY BE USING ANIMATEDCONTENT HERE, BECAUSE NO DOCS
-                    AnimatedVisibility(
-                        visible = animateIn && showEditDialog,
-                        enter = fadeIn(animationSpec = tween(durationMillis = 2000)), // Adjust duration here
-                        //enter = slideInVertically(animationSpec = tween(durationMillis =2000)),
-                        exit = fadeOut(animationSpec = tween(durationMillis = 2000)) // Adjust duration here
-
-                    ) {
-                        FullScreenDialog(
-                            // TODO: onDismiss notused any more, has moved to above inline
-                            onDismiss = { showEditDialog = false; animatingDialog = true }
-                        )
-
-                        DisposableEffect(Unit) {
-                            onDispose {
-                                animatingDialog = false
-                            }
-                        }
-
-                    }
-                }
-            }
         }
     //}
 }
+
+@Composable
+fun YetAnotherFullScreenDialog(navController: NavHostController) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var animatingDialog by remember { mutableStateOf(false) }
+
+    // TODO: I added this Surface by analogy with the one in SettingsScreen, but it appears to have
+    // no real effect - even if I set its color to Red or primary, nothing shows.
+    // TODO: Actually it may or may not be this, but on the O6 at least there does seem to be a weird
+    // extra background shade with a bit of the white background down the edges where the border is.
+    // No - it is there, but even if I remove this surface it is still there. I will have to experiment further. Part of the issue may be that it's the top-level Nav thing which is responsible.
+    // Surface(modifier = Modifier.fillMaxSize()/*, color=MaterialTheme.colorScheme.surface */) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = { Text("Dialog Title") },
+                // TODO: Close icon and placement etc are probably not right - just winging it for now to make this different to main screen
+                actions = {
+                    IconButton(onClick = {  }) {
+                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    }
+
+                }
+            )
+        },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = screenBorder)
+                .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
+
+                .verticalScroll(androidx.compose.foundation.rememberScrollState())
+        ) {
+            Text("Yay! Android development is so well documented!")
+        }
+
+        // TODO: No idea what proper MD3 animations should be here, just trying to get this to work at all for now
+        // TODO: As the dialog will probably contain its own scaffold and topappbar, this animatedvisibility component should probably be outside our scaffold
+        // TODO: If this two-bool approach works, maybe switch to a three-state enum type thing
+        // TODO: https://github.com/JetBrains/compose-multiplatform/issues/4431
+        // https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ is linked to from issue 4431, suggesting it's "reputable"
+
+    }
+    //}
+}
+
 
 @Composable
 fun FullScreenDialogExample() {
