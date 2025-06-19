@@ -1,7 +1,8 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 
 package com.example.composetutorial
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.material3.Button
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
@@ -25,6 +26,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.with
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -938,6 +940,7 @@ fun HomeScreen(navController: NavHostController) {
 
                 .verticalScroll(androidx.compose.foundation.rememberScrollState())
             ) {
+                //FullScreenDialogExample()
                 MainScreen() // TODO: rename this
 
                 androidx.compose.foundation.layout.Spacer(
@@ -1030,6 +1033,7 @@ fun HomeScreen(navController: NavHostController) {
 
                     var animateIn by remember { mutableStateOf( false ) }
                     LaunchedEffect(Unit) { animateIn = true }
+                    // TODO: WE SHOULD ACTUALLY BE USING ANIMATEDCONTENT HERE, BECAUSE NO DOCS
                     AnimatedVisibility(
                         visible = animateIn && showEditDialog,
                         enter = fadeIn(animationSpec = tween(durationMillis = 2000)), // Adjust duration here
@@ -1053,6 +1057,47 @@ fun HomeScreen(navController: NavHostController) {
             }
         }
     //}
+}
+
+@Composable
+fun FullScreenDialogExample() {
+    var showDialog by remember { mutableStateOf(false) }
+
+    AnimatedContent(
+        targetState = showDialog,
+        transitionSpec = {
+            // Define the "fade through" transition
+            fadeIn(animationSpec = tween(durationMillis = 300, delayMillis = 90)) with
+                    fadeOut(animationSpec = tween(durationMillis = 150))
+        },
+        modifier = Modifier.fillMaxSize()
+    ) { dialogVisible ->
+        if (dialogVisible) {
+            // Full-screen dialog content
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+                    .clickable { showDialog = false }
+            ) {
+                Text("Full-Screen Dialog", modifier = Modifier.align(Alignment.Center))
+            }
+        } else {
+            // Main content
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Gray)
+            ) {
+                Button(
+                    onClick = { showDialog = true },
+                    modifier = Modifier.align(Alignment.Center)
+                ) {
+                    Text("Show Dialog")
+                }
+            }
+        }
+    }
 }
 
 // https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/
