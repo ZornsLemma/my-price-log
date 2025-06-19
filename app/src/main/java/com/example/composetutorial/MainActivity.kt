@@ -903,6 +903,7 @@ fun HomeScreen(navController: NavHostController) {
     // extra background shade with a bit of the white background down the edges where the border is.
     // No - it is there, but even if I remove this surface it is still there. I will have to experiment further. Part of the issue may be that it's the top-level Nav thing which is responsible.
     // Surface(modifier = Modifier.fillMaxSize()/*, color=MaterialTheme.colorScheme.surface */) {
+
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
@@ -1010,92 +1011,130 @@ fun HomeScreen(navController: NavHostController) {
                 }
             }
 
-            // MD3 spec sort of says that on Android we should be using an "expand" transition to
-            // show this dialog, but after much discussion with an AI (because I can't find any
-            // other source of advice), it might be better to slide in vertically from the bottom
-            // and then out the same way. We do this vertically not horizontally because it is a
-            // full screen dialog not a screen. TODO: I half wonder if I should try the expand.
-            // TODO: No idea what proper MD3 animations should be here, just trying to get this to work at all for now
-            // TODO: As the dialog will probably contain its own scaffold and topappbar, this animatedvisibility component should probably be outside our scaffold
-            // TODO: If this two-bool approach works, maybe switch to a three-state enum type thing
-            // TODO: https://github.com/JetBrains/compose-multiplatform/issues/4431
-            // https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ is linked to from issue 4431, suggesting it's "reputable"
-            if (animatingDialog || showEditDialog) {
-                Dialog(
-                    onDismissRequest = { showEditDialog = false; animatingDialog = true },
-                    properties = DialogProperties(usePlatformDefaultWidth = false))
-                {
-                    // This Box is crucial - without it, the "expand" animation starts from the bottom right of the screen, not the centre, despite our specified transformOrigin.
-                    Box(modifier = Modifier.fillMaxSize()) {
+        }
+    // MD3 spec sort of says that on Android we should be using an "expand" transition to
+    // show this dialog, but after much discussion with an AI (because I can't find any
+    // other source of advice), it might be better to slide in vertically from the bottom
+    // and then out the same way. We do this vertically not horizontally because it is a
+    // full screen dialog not a screen. TODO: I half wonder if I should try the expand.
+    // TODO: No idea what proper MD3 animations should be here, just trying to get this to work at all for now
+    // TODO: As the dialog will probably contain its own scaffold and topappbar, this animatedvisibility component should probably be outside our scaffold
+    // TODO: If this two-bool approach works, maybe switch to a three-state enum type thing
+    // TODO: https://github.com/JetBrains/compose-multiplatform/issues/4431
+    // https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ is linked to from issue 4431, suggesting it's "reputable"
+    if (animatingDialog || showEditDialog) {
+        Dialog(
+            onDismissRequest = { showEditDialog = false; animatingDialog = true },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        )
+        {
+            // This Box is crucial - without it, the "expand" animation starts from the bottom right of the screen, not the centre, despite our specified transformOrigin.
+            Box(modifier = Modifier.fillMaxSize()) {
 
-                        val dialogWindow = getDialogWindow()
-                        SideEffect {
-                            dialogWindow.let { window ->
-                                // Disable the standard scrim. As this is a full-screen dialog, it won't
-                                // be visible once the animation has finished anyway, and it looks ugly
-                                // to have the standard scrim appear instantly and then have our
-                                // animation run. I don't think it makes sense to try to add our own
-                                // animated scrim, since our dialog already has an opaque full screen
-                                // background which will be animated in/out.
-                                window?.setDimAmount(0f)
-                                // window?.setWindowAnimations(-1) TODO: needed?
-                            }
-                        }
+                val dialogWindow = getDialogWindow()
+                SideEffect {
+                    dialogWindow.let { window ->
+                        // Disable the standard scrim. As this is a full-screen dialog, it won't
+                        // be visible once the animation has finished anyway, and it looks ugly
+                        // to have the standard scrim appear instantly and then have our
+                        // animation run. I don't think it makes sense to try to add our own
+                        // animated scrim, since our dialog already has an opaque full screen
+                        // background which will be animated in/out.
+                        window?.setDimAmount(0f)
+                        // window?.setWindowAnimations(-1) TODO: needed?
+                    }
+                }
 
 
-                        // TODO: I am starting to think that this effect is utterly non-MD3 compliant after all.
-                        var animateIn by remember { mutableStateOf(false) }
-                        LaunchedEffect(Unit) { animateIn = true }
-                        val tweenDurationMillisEnter = 2500 // 250 // TODO: maybe 250 as this is a very utilitarian anim?
-                        val tweenDurationMillisExit = 2000 // 200 // TODO: maybe 200, ditto?
-                        val scale = 0.8f // 0.0f means "start from nothing"
-                        AnimatedVisibility(
-                            visible = animateIn && showEditDialog,
-                            enter = slideInVertically(
-                                animationSpec = tween(
-                                    durationMillis = tweenDurationMillisEnter,
-                                    easing = FastOutSlowInEasing // MD3’s smooth easing
-                                ),
-                                initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
-                            ) + fadeIn(
-                                animationSpec = tween(
-                                    durationMillis = tweenDurationMillisEnter,
-                                    easing = FastOutSlowInEasing
-                                )
-                            ),
-                            exit = slideOutVertically(
-                                animationSpec = tween(
-                                    durationMillis = tweenDurationMillisExit,
-                                    easing = LinearOutSlowInEasing
-                                ),
-                                targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
-                            ) + fadeOut(
-                                animationSpec = tween(
-                                    durationMillis = tweenDurationMillisExit,
-                                    easing = LinearOutSlowInEasing
-                                )
-                            ),
-                            modifier = Modifier.zIndex(1f) // TODO: necessary?
-                        ) {
-                            Box( // TODO: I think this Box is a legacy of experiments and not needed
-                                modifier = Modifier.fillMaxSize()
-                                /*
-                            .graphicsLayer {
-                                // Set alpha to 0f when scale is exactly 0f (initial frame)
-                                // This hides the content during the prep phase
-                                alpha = if (this.scaleX < 0.5f) 0f else 1f
-                            }
-                            */
-                            ) {
-                                FullScreenDialog(
-                                    // TODO: onDismiss notused any more, has moved to above inline
-                                    onDismiss = { showEditDialog = false; animatingDialog = true }
-                                )
+                // TODO: I am starting to think that this effect is utterly non-MD3 compliant after all.
+                var animateIn by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) { animateIn = true }
+                val tweenDurationMillisEnter =
+                    2500 // 250 // TODO: maybe 250 as this is a very utilitarian anim?
+                val tweenDurationMillisExit = 2000 // 200 // TODO: maybe 200, ditto?
+                val scale = 0.8f // 0.0f means "start from nothing"
+                AnimatedVisibility(
+                    visible = animateIn && showEditDialog,
+                    enter = slideInVertically(
+                        animationSpec = tween(
+                            durationMillis = tweenDurationMillisEnter,
+                            easing = FastOutSlowInEasing // MD3’s smooth easing
+                        ),
+                        initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
+                    ) + fadeIn(
+                        animationSpec = tween(
+                            durationMillis = tweenDurationMillisEnter,
+                            easing = FastOutSlowInEasing
+                        )
+                    ),
+                    exit = slideOutVertically(
+                        animationSpec = tween(
+                            durationMillis = tweenDurationMillisExit,
+                            easing = LinearOutSlowInEasing
+                        ),
+                        targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
+                    ) + fadeOut(
+                        animationSpec = tween(
+                            durationMillis = tweenDurationMillisExit,
+                            easing = LinearOutSlowInEasing
+                        )
+                    ),
+                    modifier = Modifier.zIndex(1f) // TODO: necessary?
+                ) {
+                    Box( // TODO: I think this Box is a legacy of experiments and not needed
+                        modifier = Modifier.fillMaxSize()
+                        /*
+                .graphicsLayer {
+                    // Set alpha to 0f when scale is exactly 0f (initial frame)
+                    // This hides the content during the prep phase
+                    alpha = if (this.scaleX < 0.5f) 0f else 1f
+                }
+                */
+                    ) {
+                        Scaffold(
+                            modifier = Modifier.fillMaxSize(),
+                            topBar = {
+                                TopAppBar(
+                                    title = { Text("Dialog Title") },
+                                    actions = {
+                                        IconButton(onClick = { menuExpanded = true }) {
+                                            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                                        }
 
-                                DisposableEffect(Unit) {
-                                    onDispose {
-                                        animatingDialog = false
+                                        DropdownMenu(
+                                            expanded = menuExpanded,
+                                            onDismissRequest = { menuExpanded = false }) {
+                                            // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
+                                            DropdownMenuItem(
+                                                text = { Text("Edit product list") },
+                                                onClick = {
+                                                    menuExpanded = false
+                                                    // Handle navigation or action
+                                                })
+                                            DropdownMenuItem(
+                                                text = { Text("Edit categories") },
+                                                onClick = {
+                                                    menuExpanded = false
+                                                })
+                                            DropdownMenuItem(text = { Text("Settings") }, onClick = {
+                                                menuExpanded = false
+                                                navController.navigate("settings")
+                                            })
+                                        }
                                     }
+                                )
+                            },
+                        ) { innerPadding ->
+
+
+                            FullScreenDialog(
+                                // TODO: onDismiss notused any more, has moved to above inline
+                                onDismiss = { showEditDialog = false; animatingDialog = true }
+                            )
+
+                            DisposableEffect(Unit) {
+                                onDispose {
+                                    animatingDialog = false
                                 }
                             }
                         }
@@ -1103,6 +1142,8 @@ fun HomeScreen(navController: NavHostController) {
                 }
             }
         }
+    }
+
     //}
 }
 
