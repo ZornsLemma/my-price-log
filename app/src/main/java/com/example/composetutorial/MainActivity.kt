@@ -2,6 +2,12 @@
 
 package com.example.composetutorial
 
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.ui.semantics.dialog
+import androidx.compose.ui.semantics.semantics
+import kotlinx.coroutines.delay
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.ui.graphics.TransformOrigin
@@ -57,7 +63,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
@@ -892,6 +900,105 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
     //}
 }
 
+// TODO: ChatGPT magic plus my hackery to fix bugs
+@Composable
+fun AnimatedFullScreenDialog(
+    visible: Boolean,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    enterDurationMillis: Int = 300,
+    exitDurationMillis: Int = 250, // was 300,
+    content: @Composable () -> Unit
+) {
+    // State controlling if dialog is currently in the composition
+    var isComposed by remember { mutableStateOf(false) }
+    // State controlling if dialog content is visible (for animation)
+    var isVisible by remember { mutableStateOf(false) }
+
+    // Launch effect reacts to visible prop changes
+    LaunchedEffect(visible) {
+        if (visible) {
+            // Compose the dialog and show it
+            isComposed = true
+            isVisible = true
+        } else {
+            // Trigger exit animation
+            isVisible = false
+            // Wait for animation duration, then remove from composition
+            // TODO: This is foul but we can hack it to use the deferred thing in my own implementation if it works otherwise
+            delay(exitDurationMillis.toLong())
+            isComposed = false
+        }
+    }
+
+    if (isComposed) {
+        // Handle Android back press: dismiss dialog on back
+        BackHandler(onBack = onDismiss)
+
+        // Box fills screen, intercepts clicks behind dialog content
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                /*
+                // Semi-transparent scrim - optional
+                .background(Color.Black.copy(alpha = 0.5f))
+                */
+                // Consume pointer input so clicks don't pass through
+                .pointerInput(Unit) {}
+                // Accessibility: announce as a dialog
+                .semantics { dialog() }
+                .zIndex(1f)
+        ) {
+            var animateIn by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { animateIn = true }
+
+            // Animate visibility for dialog content sliding vertically
+            AnimatedVisibility(
+                visible = animateIn && isVisible,
+                enter = slideInVertically(
+                    animationSpec = tween(
+                        durationMillis = enterDurationMillis,
+                        easing = FastOutSlowInEasing // MD3’s smooth easing
+                    ),
+                    initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = enterDurationMillis,
+                        easing = FastOutSlowInEasing
+                    )
+                ),
+                exit = slideOutVertically(
+                    animationSpec = tween(
+                        durationMillis = exitDurationMillis,
+                        easing = LinearOutSlowInEasing
+                    ),
+                    targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
+                ) + fadeOut(
+                    animationSpec = tween(
+                        durationMillis = exitDurationMillis,
+                        easing = LinearOutSlowInEasing
+                    )
+                ),
+
+                modifier = modifier
+                    .fillMaxSize()
+                    // Handle system bars & keyboard insets
+                    // .consumeWindowInsets(WindowInsets.systemBars) - probably don't need this, but it will not prevent insets from propagating, whether that is a bad thing or not is utterly beyond me of course - but hey, full screen dialogs are advanced ninja-level magic
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .windowInsetsPadding(WindowInsets.ime)
+            ) {
+                // The actual dialog content container (can be Scaffold, etc)
+                Surface(
+                    color = MaterialTheme.colorScheme.background,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    content()
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun HomeScreen(navController: NavHostController) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -1013,6 +1120,7 @@ fun HomeScreen(navController: NavHostController) {
             }
 
         }
+
     // MD3 spec sort of says that on Android we should be using an "expand" transition to
     // show this dialog, but after much discussion with an AI (because I can't find any
     // other source of advice), it might be better to slide in vertically from the bottom
@@ -1023,80 +1131,7 @@ fun HomeScreen(navController: NavHostController) {
     // TODO: If this two-bool approach works, maybe switch to a three-state enum type thing
     // TODO: https://github.com/JetBrains/compose-multiplatform/issues/4431
     // https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ is linked to from issue 4431, suggesting it's "reputable"
-    if (animatingDialog || showEditDialog) {
-        /*
-        Dialog(
-            onDismissRequest = { showEditDialog = false; animatingDialog = true },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        )
-        */
-        Box() // TODO: playing the role of Dialog, which I'm told is not appropriate here after all
-        {
-            // This Box is crucial - without it, the "expand" animation starts from the bottom right of the screen, not the centre, despite our specified transformOrigin. TODO: This is probably outdated now we don't *do* that expand
-            //Box(modifier = Modifier.fillMaxSize()) {
-
-            /*
-                val dialogWindow = getDialogWindow()
-
-                SideEffect {
-                    dialogWindow.let { window ->
-                        // Disable the standard scrim. As this is a full-screen dialog, it won't
-                        // be visible once the animation has finished anyway, and it looks ugly
-                        // to have the standard scrim appear instantly and then have our
-                        // animation run. I don't think it makes sense to try to add our own
-                        // animated scrim, since our dialog already has an opaque full screen
-                        // background which will be animated in/out.
-                        window?.setDimAmount(0f)
-                        // window?.setWindowAnimations(-1)// TODO: needed?
-                    }
-                }
-*/
-
-                // TODO: I am starting to think that this effect is utterly non-MD3 compliant after all.
-                var animateIn by remember { mutableStateOf(false) }
-                LaunchedEffect(Unit) { animateIn = true }
-                val tweenDurationMillisEnter =
-                    2500 // 250 // TODO: maybe 250 as this is a very utilitarian anim?
-                val tweenDurationMillisExit = 2000 // 200 // TODO: maybe 200, ditto?
-                val scale = 0.8f // 0.0f means "start from nothing"
-                AnimatedVisibility(
-                    visible = animateIn && showEditDialog,
-                    enter = slideInVertically(
-                        animationSpec = tween(
-                            durationMillis = tweenDurationMillisEnter,
-                            easing = FastOutSlowInEasing // MD3’s smooth easing
-                        ),
-                        initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
-                    ) + fadeIn(
-                        animationSpec = tween(
-                            durationMillis = tweenDurationMillisEnter,
-                            easing = FastOutSlowInEasing
-                        )
-                    ),
-                    exit = slideOutVertically(
-                        animationSpec = tween(
-                            durationMillis = tweenDurationMillisExit,
-                            easing = LinearOutSlowInEasing
-                        ),
-                        targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
-                    ) + fadeOut(
-                        animationSpec = tween(
-                            durationMillis = tweenDurationMillisExit,
-                            easing = LinearOutSlowInEasing
-                        )
-                    ),
-                    modifier = Modifier.zIndex(1f) // TODO: necessary?
-                ) {
-                    Box( // TODO: I think this Box is a legacy of experiments and not needed
-                        modifier = Modifier.fillMaxSize()
-                        /*
-                .graphicsLayer {
-                    // Set alpha to 0f when scale is exactly 0f (initial frame)
-                    // This hides the content during the prep phase
-                    alpha = if (this.scaleX < 0.5f) 0f else 1f
-                }
-                */
-                    ) {
+    AnimatedFullScreenDialog(visible = showEditDialog, onDismiss = { showEditDialog = false }) {
                         Scaffold(
                             modifier = Modifier.fillMaxSize(),
                             topBar = {
@@ -1126,12 +1161,6 @@ fun HomeScreen(navController: NavHostController) {
                         }
                     }
                 }
-            //}
-        }
-    }
-
-    //}
-}
 
 // https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/
 @ReadOnlyComposable
