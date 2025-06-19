@@ -1043,8 +1043,8 @@ fun HomeScreen(navController: NavHostController) {
 
                         var animateIn by remember { mutableStateOf(false) }
                         LaunchedEffect(Unit) { animateIn = true }
-                        val tweenDurationMillisEnter = 300
-                        val tweenDurationMillisExit = 250
+                        val tweenDurationMillisEnter = 300 // TODO: maybe 250 as this is a very utilitarian anim?
+                        val tweenDurationMillisExit = 250 // TODO: maybe 200, ditto?
                         AnimatedVisibility(
                             visible = animateIn && showEditDialog,
                             //enter = slideInVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
@@ -1053,12 +1053,15 @@ fun HomeScreen(navController: NavHostController) {
                                 animationSpec = tween(durationMillis = tweenDurationMillisEnter, easing = FastOutLinearInEasing),
                                 initialScale = 0.0f, // Start from nothing
                                 transformOrigin = TransformOrigin.Center // Expand from center
-                            ) /* + fadeIn(animationSpec = tween(durationMillis = 0), initialAlpha = 0f) */,
+                            ) + fadeIn(
+                                animationSpec = tween(durationMillis = tweenDurationMillisEnter,
+                                easing = FastOutLinearInEasing)),
                             exit = scaleOut(
                                 animationSpec = tween(durationMillis = tweenDurationMillisExit, easing = LinearOutSlowInEasing),
                                 targetScale = 0.0f,
                                 transformOrigin = TransformOrigin.Center
-                            ),
+                            ) + fadeOut(
+                                animationSpec = tween(durationMillis = tweenDurationMillisExit, easing = LinearOutSlowInEasing)),
                             modifier = Modifier.zIndex(1f) // TODO: necessary?
                         ) {
                             Box( // TODO: I think this Box is a legacy of experiments and not needed
