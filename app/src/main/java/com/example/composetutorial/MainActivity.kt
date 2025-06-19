@@ -855,6 +855,7 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
+        // TODO: This animation looks absolutely awful or maybe doesn't even work and I have no idea if it's even the right kind of animation - it came from an AI as did the whole skeleton for this dialog
         AnimatedVisibility(
             visible = true,
             enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
