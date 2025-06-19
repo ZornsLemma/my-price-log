@@ -107,6 +107,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -1002,6 +1003,11 @@ fun HomeScreen(navController: NavHostController) {
                 }
             }
 
+            // MD3 spec sort of says that on Android we should be using an "expand" transition to
+            // show this dialog, but after much discussion with an AI (because I can't find any
+            // other source of advice), it might be better to slide in vertically from the bottom
+            // and then out the same way. We do this vertically not horizontally because it is a
+            // full screen dialog not a screen. TODO: I half wonder if I should try the expand.
             // TODO: No idea what proper MD3 animations should be here, just trying to get this to work at all for now
             // TODO: As the dialog will probably contain its own scaffold and topappbar, this animatedvisibility component should probably be outside our scaffold
             // TODO: If this two-bool approach works, maybe switch to a three-state enum type thing
@@ -1032,10 +1038,10 @@ fun HomeScreen(navController: NavHostController) {
                     LaunchedEffect(Unit) { animateIn = true }
                     AnimatedVisibility(
                         visible = animateIn && showEditDialog,
-                        enter = fadeIn(animationSpec = tween(durationMillis = 2000)), // Adjust duration here
+                        enter = slideInVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
                         //enter = slideInVertically(animationSpec = tween(durationMillis =2000)),
-                        exit = fadeOut(animationSpec = tween(durationMillis = 2000)) // Adjust duration here
-
+                        exit = slideOutVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
+modifier = Modifier.zIndex(1f) // TODO: necessary?
                     ) {
                         FullScreenDialog(
                             // TODO: onDismiss notused any more, has moved to above inline
