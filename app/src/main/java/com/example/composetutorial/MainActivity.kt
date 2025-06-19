@@ -1029,10 +1029,11 @@ fun HomeScreen(navController: NavHostController) {
             properties = DialogProperties(usePlatformDefaultWidth = false)
         )
         {
-            // This Box is crucial - without it, the "expand" animation starts from the bottom right of the screen, not the centre, despite our specified transformOrigin.
-            Box(modifier = Modifier.fillMaxSize()) {
+            // This Box is crucial - without it, the "expand" animation starts from the bottom right of the screen, not the centre, despite our specified transformOrigin. TODO: This is probably outdated now we don't *do* that expand
+            //Box(modifier = Modifier.fillMaxSize()) {
 
                 val dialogWindow = getDialogWindow()
+
                 SideEffect {
                     dialogWindow.let { window ->
                         // Disable the standard scrim. As this is a full-screen dialog, it won't
@@ -1042,7 +1043,7 @@ fun HomeScreen(navController: NavHostController) {
                         // animated scrim, since our dialog already has an opaque full screen
                         // background which will be animated in/out.
                         window?.setDimAmount(0f)
-                        // window?.setWindowAnimations(-1) TODO: needed?
+                        // window?.setWindowAnimations(-1)// TODO: needed?
                     }
                 }
 
@@ -1121,7 +1122,7 @@ fun HomeScreen(navController: NavHostController) {
                         }
                     }
                 }
-            }
+            //}
         }
     }
 
