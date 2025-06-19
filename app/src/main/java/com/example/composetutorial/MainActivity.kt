@@ -958,25 +958,25 @@ fun AnimatedFullScreenDialog(
                 enter = slideInVertically(
                     animationSpec = tween(
                         durationMillis = enterDurationMillis,
-                        easing = FastOutSlowInEasing // MD3’s smooth easing
+                        easing = LinearOutSlowInEasing
                     ),
                     initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
                 ) + fadeIn(
                     animationSpec = tween(
                         durationMillis = enterDurationMillis,
-                        easing = FastOutSlowInEasing
+                        easing = LinearOutSlowInEasing
                     )
                 ),
                 exit = slideOutVertically(
                     animationSpec = tween(
                         durationMillis = exitDurationMillis,
-                        easing = LinearOutSlowInEasing
+                        easing = FastOutLinearInEasing
                     ),
                     targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
                 ) + fadeOut(
                     animationSpec = tween(
                         durationMillis = exitDurationMillis,
-                        easing = LinearOutSlowInEasing
+                        easing = FastOutLinearInEasing
                     )
                 ),
 
