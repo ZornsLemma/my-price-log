@@ -80,6 +80,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -361,7 +362,7 @@ fun ItemSourceInfo(onClickEdit: () -> Unit) {
     // improve the appearance, but it's nicer to take font size into account.)
     val fontSize = MaterialTheme.typography.bodyLarge.fontSize
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
-    var selectedSource by remember { mutableStateOf("") }
+    var selectedSource by remember { mutableStateOf("Tesco") } // TODO: starting with "Tesco" is a hack to avoid losing source between navigating to edit dialog and back - we don't want to lose that in final vsn, but I suspect in final vsn it may not happen or the fix may be different
     val sources = listOf("None", "Tesco", "Asda", "Sainsbury's Local", "Iceland")
     // TODO: Will we have a free-form text field on item-at-source? For eg things like noting the specific product to help find it again.
     // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective, it's not as if the offer duration is usually clearly stated, free text note probably can be used for this among other things
@@ -900,7 +901,7 @@ fun HomeScreen(navController: NavHostController) {
         modifier = Modifier.fillMaxSize()
     ) { dialogVisible ->
         if (dialogVisible) {
-            YetAnotherFullScreenDialog(navController)
+            YetAnotherFullScreenDialog(navController, onClose = { showEditDialog = false }, onSave = { showEditDialog = false } )
         } else {
             HomeScreen2(navController, onClickEdit = { showEditDialog = true })
         }
@@ -1038,7 +1039,7 @@ fun HomeScreen2(navController: NavHostController, onClickEdit: () -> Unit) {
 }
 
 @Composable
-fun YetAnotherFullScreenDialog(navController: NavHostController) {
+fun YetAnotherFullScreenDialog(navController: NavHostController, onClose: () -> Unit, onSave: () -> Unit) {
     var menuExpanded by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
     var animatingDialog by remember { mutableStateOf(false) }
@@ -1053,13 +1054,23 @@ fun YetAnotherFullScreenDialog(navController: NavHostController) {
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text("Dialog Title") },
-                // TODO: Close icon and placement etc are probably not right - just winging it for now to make this different to main screen
-                actions = {
-                    IconButton(onClick = {  }) {
-                        Icon(Icons.Default.Close, contentDescription = "Close")
-                    }
 
+                navigationIcon = {
+
+                    IconButton(onClick = onClose ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close"
+                        )
+                    }
+                },
+
+                title = { Text("Dialog Title") },
+                actions = {
+                    TextButton(onClick = onSave ) {
+                        // TODO: "Save" is just a quick choice - something else may be better in real dialog
+                        Text("Save")
+                    }
                 }
             )
         },
