@@ -1043,24 +1043,25 @@ fun HomeScreen(navController: NavHostController) {
 
                         var animateIn by remember { mutableStateOf(false) }
                         LaunchedEffect(Unit) { animateIn = true }
-                        val tweenDurationMillis = 300
+                        val tweenDurationMillisEnter = 300
+                        val tweenDurationMillisExit = 250
                         AnimatedVisibility(
                             visible = animateIn && showEditDialog,
                             //enter = slideInVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
                             //exit = slideOutVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
                             enter = scaleIn(
-                                animationSpec = tween(durationMillis = tweenDurationMillis, easing = FastOutLinearInEasing),
+                                animationSpec = tween(durationMillis = tweenDurationMillisEnter, easing = FastOutLinearInEasing),
                                 initialScale = 0.0f, // Start from nothing
                                 transformOrigin = TransformOrigin.Center // Expand from center
                             ) /* + fadeIn(animationSpec = tween(durationMillis = 0), initialAlpha = 0f) */,
                             exit = scaleOut(
-                                animationSpec = tween(durationMillis = tweenDurationMillis, easing = LinearOutSlowInEasing),
+                                animationSpec = tween(durationMillis = tweenDurationMillisExit, easing = LinearOutSlowInEasing),
                                 targetScale = 0.0f,
                                 transformOrigin = TransformOrigin.Center
                             ),
                             modifier = Modifier.zIndex(1f) // TODO: necessary?
                         ) {
-                            Box(
+                            Box( // TODO: I think this Box is a legacy of experiments and not needed
                                 modifier = Modifier.fillMaxSize()
                                 /*
                             .graphicsLayer {
@@ -1286,14 +1287,15 @@ fun AppNavigation() {
         ) {
             HomeScreen(navController)
         }
-        val tweenDurationMillis = 700; // TODO: should probably be 300 in final version
+        val tweenDurationMillisEnter = 700; // TODO: should probably be 300 in final version
+        val tweenDurationMillisExit = 700; // TODO: should probably be 250 in final version
         composable(
             "settings",
             enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
 
-                    animationSpec = tween(durationMillis = tweenDurationMillis, easing = LinearOutSlowInEasing),
+                    animationSpec = tween(durationMillis = tweenDurationMillisEnter, easing = LinearOutSlowInEasing),
                 )
 
             },
@@ -1314,7 +1316,7 @@ fun AppNavigation() {
             popExitTransition = {
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(durationMillis = tweenDurationMillis, easing=FastOutLinearInEasing)
+                    animationSpec = tween(durationMillis = tweenDurationMillisExit, easing=FastOutLinearInEasing)
                 )
             }
         ) {
