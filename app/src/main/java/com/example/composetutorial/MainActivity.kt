@@ -1047,6 +1047,9 @@ fun HomeScreen(navController: NavHostController) {
                             animationSpec = tween(durationMillis = 2000),
                             initialScale = 0.0f, // Start from nothing
                             transformOrigin = TransformOrigin.Center // Expand from center
+                        )+ fadeIn(
+                            animationSpec = tween(durationMillis = 2000),
+                            initialAlpha = 0f // Start fully transparent
                         ),
                         exit = scaleOut(
                             animationSpec = tween(durationMillis = 2000),
@@ -1055,17 +1058,16 @@ fun HomeScreen(navController: NavHostController) {
                         ),
 modifier = Modifier.zIndex(1f) // TODO: necessary?
                     ) {
-                        FullScreenDialog(
-                            // TODO: onDismiss notused any more, has moved to above inline
-                            onDismiss = { showEditDialog = false; animatingDialog = true }
-                        )
+                            FullScreenDialog(
+                                // TODO: onDismiss notused any more, has moved to above inline
+                                onDismiss = { showEditDialog = false; animatingDialog = true }
+                            )
 
-                        DisposableEffect(Unit) {
-                            onDispose {
-                                animatingDialog = false
+                            DisposableEffect(Unit) {
+                                onDispose {
+                                    animatingDialog = false
+                                }
                             }
-                        }
-
                     }
                 }
             }
