@@ -21,6 +21,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -1022,56 +1023,62 @@ fun HomeScreen(navController: NavHostController) {
                     onDismissRequest = { showEditDialog = false; animatingDialog = true },
                     properties = DialogProperties(usePlatformDefaultWidth = false))
                 {
+                    // This Box is crucial - without it, the "expand" animation starts from the bottom right of the screen, not the centre, despite our specified transformOrigin.
+                    Box(modifier = Modifier.fillMaxSize()) {
 
-                    val dialogWindow = getDialogWindow()
-                    SideEffect {
-                        dialogWindow.let { window ->
-                            // Disable the standard scrim. As this is a full-screen dialog, it won't
-                            // be visible once the animation has finished anyway, and it looks ugly
-                            // to have the standard scrim appear instantly and then have our
-                            // animation run. I don't think it makes sense to try to add our own
-                            // animated scrim, since our dialog already has an opaque full screen
-                            // background which will be animated in/out.
-                            window?.setDimAmount(0f)
-                            // window?.setWindowAnimations(-1) TODO: needed?
+                        val dialogWindow = getDialogWindow()
+                        SideEffect {
+                            dialogWindow.let { window ->
+                                // Disable the standard scrim. As this is a full-screen dialog, it won't
+                                // be visible once the animation has finished anyway, and it looks ugly
+                                // to have the standard scrim appear instantly and then have our
+                                // animation run. I don't think it makes sense to try to add our own
+                                // animated scrim, since our dialog already has an opaque full screen
+                                // background which will be animated in/out.
+                                window?.setDimAmount(0f)
+                                // window?.setWindowAnimations(-1) TODO: needed?
+                            }
                         }
-                    }
 
 
-                    var animateIn by remember { mutableStateOf( false ) }
-                    LaunchedEffect(Unit) { animateIn = true }
-                    AnimatedVisibility(
-                        visible = animateIn && showEditDialog,
-                        //enter = slideInVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
-                        //exit = slideOutVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
-                        enter = scaleIn(
-                            animationSpec = tween(durationMillis = 2000),
-                            initialScale = 0.0f, // Start from nothing
-                            transformOrigin = TransformOrigin.Center // Expand from center
-                        ),
-                        exit = scaleOut(
-                            animationSpec = tween(durationMillis = 2000),
-                            targetScale = 0.0f,
-                            transformOrigin = TransformOrigin.Center
-                        ),
-modifier = Modifier.zIndex(1f) // TODO: necessary?
-                    ) {
-                        Box(modifier = Modifier.
-                        fillMaxSize()
+                        var animateIn by remember { mutableStateOf(false) }
+                        LaunchedEffect(Unit) { animateIn = true }
+                        val tweenDurationMillis = 300
+                        AnimatedVisibility(
+                            visible = animateIn && showEditDialog,
+                            //enter = slideInVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
+                            //exit = slideOutVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
+                            enter = scaleIn(
+                                animationSpec = tween(durationMillis = tweenDurationMillis, easing = FastOutLinearInEasing),
+                                initialScale = 0.0f, // Start from nothing
+                                transformOrigin = TransformOrigin.Center // Expand from center
+                            ) /* + fadeIn(animationSpec = tween(durationMillis = 0), initialAlpha = 0f) */,
+                            exit = scaleOut(
+                                animationSpec = tween(durationMillis = tweenDurationMillis, easing = LinearOutSlowInEasing),
+                                targetScale = 0.0f,
+                                transformOrigin = TransformOrigin.Center
+                            ),
+                            modifier = Modifier.zIndex(1f) // TODO: necessary?
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize()
+                                /*
                             .graphicsLayer {
                                 // Set alpha to 0f when scale is exactly 0f (initial frame)
                                 // This hides the content during the prep phase
                                 alpha = if (this.scaleX < 0.5f) 0f else 1f
                             }
-                        ) {
-                            FullScreenDialog(
-                                // TODO: onDismiss notused any more, has moved to above inline
-                                onDismiss = { showEditDialog = false; animatingDialog = true }
-                            )
+                            */
+                            ) {
+                                FullScreenDialog(
+                                    // TODO: onDismiss notused any more, has moved to above inline
+                                    onDismiss = { showEditDialog = false; animatingDialog = true }
+                                )
 
-                            DisposableEffect(Unit) {
-                                onDispose {
-                                    animatingDialog = false
+                                DisposableEffect(Unit) {
+                                    onDispose {
+                                        animatingDialog = false
+                                    }
                                 }
                             }
                         }
@@ -1115,7 +1122,6 @@ fun SettingsScreen(navController: NavHostController) {
 
                 // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
-
                 Text("TODO SETTINGS")
             }
         }
