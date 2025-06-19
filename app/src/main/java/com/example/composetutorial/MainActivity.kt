@@ -2,6 +2,9 @@
 
 package com.example.composetutorial
 
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.material3.Button
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
@@ -1038,9 +1041,18 @@ fun HomeScreen(navController: NavHostController) {
                     LaunchedEffect(Unit) { animateIn = true }
                     AnimatedVisibility(
                         visible = animateIn && showEditDialog,
-                        enter = slideInVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
-                        //enter = slideInVertically(animationSpec = tween(durationMillis =2000)),
-                        exit = slideOutVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
+                        //enter = slideInVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
+                        //exit = slideOutVertically(animationSpec = tween(durationMillis = 2000)) { it }, // Adjust duration here
+                        enter = scaleIn(
+                            animationSpec = tween(durationMillis = 2000),
+                            initialScale = 0.0f, // Start from nothing
+                            transformOrigin = TransformOrigin.Center // Expand from center
+                        ),
+                        exit = scaleOut(
+                            animationSpec = tween(durationMillis = 2000),
+                            targetScale = 0.0f,
+                            transformOrigin = TransformOrigin.Center
+                        ),
 modifier = Modifier.zIndex(1f) // TODO: necessary?
                     ) {
                         FullScreenDialog(
