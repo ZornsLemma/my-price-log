@@ -1016,7 +1016,12 @@ fun HomeScreen(navController: NavHostController) {
                     val dialogWindow = getDialogWindow()
                     SideEffect {
                         dialogWindow.let { window ->
-                            // TODO: setDimAmount(0f) disables the standard scrim, which isn't visible once the dialog is displayed (as it's full screen anyway) but does make our animations look ugly. TODO: Can/should we tweak this!? Apply a custom fading "scrim" of our own?
+                            // Disable the standard scrim. As this is a full-screen dialog, it won't
+                            // be visible once the animation has finished anyway, and it looks ugly
+                            // to have the standard scrim appear instantly and then have our
+                            // animation run. I don't think it makes sense to try to add our own
+                            // animated scrim, since our dialog already has an opaque full screen
+                            // background which will be animated in/out.
                             window?.setDimAmount(0f)
                             // window?.setWindowAnimations(-1) TODO: needed?
                         }
