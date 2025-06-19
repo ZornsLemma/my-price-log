@@ -26,6 +26,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.with
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -895,8 +896,13 @@ fun HomeScreen(navController: NavHostController) {
         targetState = showEditDialog,
         transitionSpec = {
             // Define the "fade through" transition TODO: FAR FROM SURE THIS IS RIGHT TRANSITION, BUT JUST TRYING TO GET IT WORKING AT ALL FOR NOW
-            fadeIn(animationSpec = tween(durationMillis = 300, delayMillis = 90)) with
-                    fadeOut(animationSpec = tween(durationMillis = 150))
+
+
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Up,
+
+                animationSpec = tween(durationMillis = 2000, easing = LinearOutSlowInEasing),
+            ) togetherWith ExitTransition.None
         },
         modifier = Modifier.fillMaxSize()
     ) { dialogVisible ->
