@@ -849,22 +849,19 @@ fun Modifier.clearFocusOnTapOutside() = composed {
 //✅ Let Scaffold and standard layouts work as expected
 //✅ Looks modern, but stays “out of the way”
 
+
+
 @Composable
 fun FullScreenDialog(onDismiss: () -> Unit) {
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        // TODO: This animation looks absolutely awful or maybe doesn't even work and I have no idea if it's even the right kind of animation - it came from an AI as did the whole skeleton for this dialog
-        AnimatedVisibility(
-            visible = true,
-            enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-            exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
-        ) {
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(MaterialTheme.colorScheme.primary /* background */)
             ) {
                 Column {
                     Text("Full-Screen Dialog Content")
@@ -873,7 +870,6 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
                     }
                 }
             }
-        }
     }
 }
 
@@ -995,7 +991,10 @@ fun HomeScreen(navController: NavHostController) {
                 }
             }
 
-            if (showEditDialog) {
+            AnimatedVisibility(visible = showEditDialog,
+                enter = fadeIn(animationSpec = tween(durationMillis = 5000)), // Adjust duration here
+                exit = fadeOut(animationSpec = tween(durationMillis = 5000)) // Adjust duration here
+                         ) {
                 FullScreenDialog(
                     onDismiss = { showEditDialog = false }
                 )
