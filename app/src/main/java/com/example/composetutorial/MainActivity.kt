@@ -910,7 +910,7 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
                         // TODO: Don't really like this way of showing pack size and unit etc, but this is just a quick hack to get some "realistic-ish" content on the dialog for testing
                         // TODO: Using weight to size the components is also sucky, since we really just want "a reasonable fixed size" for the unit with
                         // the product taking whatever's left, but this will do for now.
-                        // TODO: This TextField will *not* show a cursor or let the value be changed - I don't know if this is because my dialog code is breaking it, or I've done something wrong here
+                        // TODO: This TextField will *not* show a cursor or let the value be changed - I don't know if this is because my dialog code is breaking it, or I've done something wrong here. OK, if I copy this code to HomeScreen() it works, so it is probably dialog related. Yay!
                         TextField(
                             label = { Text("Pack size") },
                             value = packSize,
