@@ -2,6 +2,9 @@
 
 package com.example.composetutorial
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import android.os.Build
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.WindowInsets
@@ -20,6 +23,7 @@ import android.util.Log
 import android.view.View
 import android.view.Window
 import android.view.WindowInsetsController
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -135,6 +139,7 @@ import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
+import androidx.core.view.WindowCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -939,6 +944,17 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
     //}
 }
 
+// Utility to get Activity window
+@Composable
+private fun Context.getActivityWindow(): Window? {
+    var context = this
+    while (context is ContextWrapper) {
+        if (context is Activity) return context.window
+        context = context.baseContext
+    }
+    return null
+}
+
 // TODO: ChatGPT magic plus my hackery to fix bugs
 // TODO: Even if this seems OK and I decide to keep/use it, giving it a thorough manual code review alongside https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ would likely be a good idea.
 // TODO: I got Grok to do a code review on this. Frankly it seemed to miss the point somewhat but it made some comments that *might* be relevant, so probably ought to go over its feedback again once I have studied this code and tried to simplify (if possible) the state handling, which may well be over-complex as a result of ChatGPT and/or my incompetence and/or an interaction between the two. (grok-full-screen-dialog-code-review-iffy...)
@@ -1026,34 +1042,37 @@ fun AnimatedFullScreenDialog(
 
         // TODO: Now I'm hacking Dialog back *in*, if it works we might not need some of the miscellaneous voodoo.
 
-        Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
-            // TODO: If I simply get rid of Popup, my dialog box's "pack size" starts allowing text input
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false, // Makes dialog full-width
+                dismissOnBackPress = true, // Handles back button
+                dismissOnClickOutside = true // Allows dismissal by clicking outside
+            )
+        ) {
+            // Get the window to control system bars
+            val dialogWindow = (LocalView.current.parent as? DialogWindowProvider)?.window
+            val activityWindow = LocalView.current.context.getActivityWindow()
 
-            val dialogWindow = getDialogWindow()
-
+// Apply system bar properties to match activity
             SideEffect {
                 dialogWindow?.let { window ->
-                    window.setDimAmount(0f)
-                    window.setWindowAnimations(-1)
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        val controller = window.insetsController
-                        if (controller != null) {
-                            // Clear light status bars so icons are dark on light background
-                            controller.setSystemBarsAppearance(
-                                0,
-                                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
-                            )
-                        }
-                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        @Suppress("DEPRECATION")
-                        val decorView = window.decorView
-                        decorView.systemUiVisibility = decorView.systemUiVisibility and
-                                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+                    activityWindow?.let { actWindow ->
+                        // Copy activity window flags for consistent behavior
+                        window.setFlags(
+                            actWindow.attributes.flags,
+                            actWindow.attributes.flags
+                        )
+                        // Use WindowCompat for system bar transparency and cutout support
+                        WindowCompat.setDecorFitsSystemWindows(window, false)
+                        // Match system bar appearance (light/dark icons) to activity
+                        val controller = WindowCompat.getInsetsController(window, window.decorView)
+                        val activityController = WindowCompat.getInsetsController(actWindow, actWindow.decorView)
+                        controller.isAppearanceLightStatusBars = activityController.isAppearanceLightStatusBars
+                        controller.isAppearanceLightNavigationBars = activityController.isAppearanceLightNavigationBars
                     }
                 }
             }
-
 
             val focusRequester = remember { FocusRequester() }
 
