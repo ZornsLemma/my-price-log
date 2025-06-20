@@ -1057,6 +1057,7 @@ fun AnimatedFullScreenDialog(
 // Apply system bar properties to match activity
             SideEffect {
                 dialogWindow?.let { window ->
+                    window.setDimAmount(0f)
                     activityWindow?.let { actWindow ->
                         // Copy activity window flags for consistent behavior
                         window.setFlags(
@@ -1602,3 +1603,5 @@ fun AppNavigation() {
 
 // General note type comments to put somewhere appropriate in long term:
 //
+
+
