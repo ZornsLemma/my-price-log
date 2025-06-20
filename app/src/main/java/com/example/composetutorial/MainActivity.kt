@@ -1055,7 +1055,7 @@ fun AnimatedFullScreenDialog(
             // Get the window to control system bars
             val dialogWindow = (LocalView.current.parent as? DialogWindowProvider)?.window
             val activityWindow = LocalView.current.context.getActivityWindow()
-            
+
             // Without the code in this SideEffect block, the Dialog appears to effectively invert
             // the status bar colours. This is readable but looks ugly for our full screen dialog.
             SideEffect {
@@ -1085,65 +1085,6 @@ fun AnimatedFullScreenDialog(
                 }
             }
 
-            val focusRequester = remember { FocusRequester() }
-
-            // TODO: All the focusRequester/focusable() stuff is ChatGPT voodoo
-            LaunchedEffect(Unit) {
-                focusRequester.requestFocus()
-            }
-
-
-            // Box fills screen, intercepts clicks behind dialog content
-            Box(
-                modifier = Modifier
-                    .focusRequester(focusRequester)
-                    .focusable()
-                    .fillMaxSize()
-                    // TODO: onKeyEvent is ChatGPT voodoo, need to test it (things are badly broken anyway) and I do wonder if "dpad click" is different from key.enter based on recollection of old chats
-                    .onKeyEvent { keyEvent ->
-                        when (keyEvent.key) {
-                            Key.DirectionUp, Key.DirectionDown,
-                            Key.DirectionLeft, Key.DirectionRight -> {
-                                // Consume DPAD navigation
-                                true
-                            }
-                            Key.Enter, Key.NumPadEnter -> {
-                                // Handle OK or confirm
-                                true
-                            }
-                            Key.Back -> {
-                                // Optional: dismiss dialog manually
-                                onDismiss()
-                                true
-                            }
-                            else -> false
-                        }
-                    }
-                    .background(Color.Transparent)
-                    .windowInsetsPadding(WindowInsets.systemBars)
-                    .windowInsetsPadding(WindowInsets.ime)
-                    /*
-                // Semi-transparent scrim - optional
-                .background(Color.Black.copy(alpha = 0.5f))
-                    // and I never saw any problems with an apparently broken version of this code
-                */
-                    // Consume pointer input so clicks don't pass through. This is AI-derived voodoo
-                    // earlier. However, if the AI claims are correct, this *in combination with*
-                    // our Popup (which gives us priority on receiving pointer input here), avoids
-                    // problems where something on the part of the screen we've covered up does
-                    // receive some kind of pointer input. I don't think this does any harm and I
-                    // did have both ChatGPT and Grok tell me the same thing without overtly leading
-                    // questions.
-                    .pointerInput(Unit) {
-                        awaitPointerEventScope {
-                            while (true) {
-                                awaitPointerEvent()
-                            }
-                        }
-                    }
-                    // Accessibility: announce as a dialog
-                    .semantics { dialog() }
-            ) {
                 // Animate visibility for dialog content sliding vertically
                 AnimatedVisibility(
                     visibleState,
@@ -1188,7 +1129,6 @@ fun AnimatedFullScreenDialog(
                         content()
                     }
                 }
-            }
         }
     }
 }
