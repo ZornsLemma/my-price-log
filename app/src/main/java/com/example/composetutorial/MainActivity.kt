@@ -1039,8 +1039,6 @@ fun AnimatedFullScreenDialog(
     // as well as (obviously) when it is supposed to be visible. The only time we don't need it is
     // if we are idling in the non-visible state.
     if (visibleState.currentState || visibleState.targetState) {
-        // Handle Android back press: dismiss dialog on back
-        BackHandler(onBack = onDismiss)
 
         // TODO: Now I'm hacking Dialog back *in*, if it works we might not need some of the miscellaneous voodoo.
 
@@ -1048,18 +1046,28 @@ fun AnimatedFullScreenDialog(
             onDismissRequest = onDismiss,
             properties = DialogProperties(
                 usePlatformDefaultWidth = false, // Makes dialog full-width
+                /* TODO!?
                 dismissOnBackPress = true, // Handles back button
                 dismissOnClickOutside = true // Allows dismissal by clicking outside
+                */
             )
         ) {
             // Get the window to control system bars
             val dialogWindow = (LocalView.current.parent as? DialogWindowProvider)?.window
             val activityWindow = LocalView.current.context.getActivityWindow()
-
-// Apply system bar properties to match activity
+            
+            // Without the code in this SideEffect block, the Dialog appears to effectively invert
+            // the status bar colours. This is readable but looks ugly for our full screen dialog.
             SideEffect {
                 dialogWindow?.let { window ->
+                    // Disable the dialog scrim; we don't want this for our full screen dialog,
+                    // especially since we are sliding it in from the bottom and having the screen
+                    // go dim first looks ugly.
                     window.setDimAmount(0f)
+
+                    // Absolute Grok (I think?) voodoo which avoids the status bar (at the top of
+                    // the screen) going white-on-white as a result of the previous line disabling
+                    // the scrim.
                     activityWindow?.let { actWindow ->
                         // Copy activity window flags for consistent behavior
                         window.setFlags(
