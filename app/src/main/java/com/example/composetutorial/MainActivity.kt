@@ -914,12 +914,13 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
                 var selectedUnit by remember { mutableStateOf("g") }
                 var packPrice by remember { mutableStateOf("2.98") }
                 var notes by remember { mutableStateOf("Aldi price match; don't know how long this will last.") }
-                Column {
+                Column(modifier = Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState())) {
                     // TODO: Product and Store should maybe be in a row. Just hacking up a rough
                     // dialog here for testing of my dialog box code (esp focus stuff) for now.
                     LabeledItem(label = "Product") {
                         Text("Ground coffee")
                     }
+                    Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
                     LabeledItem(label = "Store") {
                         Text("Tesco")
                     }
@@ -1323,7 +1324,7 @@ fun HomeScreen(navController: NavHostController) {
                         ) { innerPadding ->
 
                             // TODO: We could probably just pass innerPadding through to FullScreenDialog, that may or may not be clearer
-                            Box(modifier = Modifier.padding(innerPadding).padding(screenBorder)) {
+                            Box(modifier = Modifier.padding(innerPadding).padding(horizontal = screenBorder)) {
                                 FullScreenDialog(
                                     // TODO: onDismiss notused any more, has moved to above inline
                                     onDismiss = { showEditDialog = false }
