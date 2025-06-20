@@ -157,7 +157,10 @@ import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -1109,6 +1112,23 @@ fun AnimatedFullScreenDialog(
                 */
             )
         ) {
+// Get the view to manage insets
+            val view = LocalView.current
+            LaunchedEffect(view) {
+                // Get the Activity and its Window
+                val activity = view.context as? android.app.Activity
+                activity?.window?.let { window ->
+                    // Ensure content is drawn behind system bars
+                    WindowCompat.setDecorFitsSystemWindows(window, false)
+                    ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+                        // Consume system insets to prevent automatic adjustments
+                        WindowInsetsCompat.Builder(insets)
+                            .setInsets(WindowInsetsCompat.Type.systemBars(), Insets.NONE) // Use androidx.core.graphics.Insets
+                            .build()
+                    }
+                }
+            }
+
             Box(modifier = Modifier
                 .fillMaxSize()
                 .consumeWindowInsets(WindowInsets.ime)
