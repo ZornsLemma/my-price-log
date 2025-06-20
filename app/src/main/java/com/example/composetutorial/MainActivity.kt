@@ -940,6 +940,10 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
                         // two fields appears to change differenly as I navigate around with cursor
                         // keys too, although this *might* be normal - but worth trying to
                         // investigate.
+                        // TODO: When the onscreen keyboard is up for "pack size", clicking on unit
+                        // opens the dropdown and hides the keyboard but the dropdown gets
+                        // positioned "to avoid" the keyboard - this might be normal/OK, but
+                        // check/read/think
                         TextField(
                             label = { Text("Pack size") },
                             value = packSize,
