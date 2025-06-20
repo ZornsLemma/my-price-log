@@ -1046,6 +1046,7 @@ fun AnimatedFullScreenDialog(
                         )
                     ),
 
+                    // TODO: Try to understand these modifiers and if they are correct/necessary. maybe test with an on-screen keyboard.
                     modifier = modifier
                         .fillMaxSize()
                         // Handle system bars & keyboard insets
