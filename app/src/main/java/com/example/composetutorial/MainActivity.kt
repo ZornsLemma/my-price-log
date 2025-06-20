@@ -376,7 +376,7 @@ fun ItemSourceInfo(onClickEdit: () -> Unit) {
     // improve the appearance, but it's nicer to take font size into account.)
     val fontSize = MaterialTheme.typography.bodyLarge.fontSize
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
-    var selectedSource by remember { mutableStateOf("") }
+    var selectedSource by rememberSaveable { mutableStateOf("") }
     val sources = listOf("None", "Tesco", "Asda", "Sainsbury's Local", "Iceland")
     // TODO: Will we have a free-form text field on item-at-source? For eg things like noting the specific product to help find it again.
     // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective, it's not as if the offer duration is usually clearly stated, free text note probably can be used for this among other things
@@ -972,7 +972,11 @@ fun AnimatedFullScreenDialog(
     exitDurationMillis: Int = 250, // was 300,
     content: @Composable () -> Unit
 ) {
-    var visibleState = remember { MutableTransitionState(false) }
+    // The parent holds the source of truth for whether the dialog is visible or not across things
+    // like rotations. We just need to be aware that we may be visible on our first composition in
+    // that case, so we must initialise visibleState using visible and not hard-code it to false.
+    // (We don't want the dialog to animate in if it is visible on first composition.)
+    var visibleState = remember { MutableTransitionState(visible) }
     visibleState.targetState = visible
 
     // The actual content needs to be present in the compose tree during enter and exit animations
@@ -1046,7 +1050,7 @@ fun AnimatedFullScreenDialog(
 @Composable
 fun HomeScreen(navController: NavHostController) {
     var menuExpanded by remember { mutableStateOf(false) }
-    var showEditDialog by remember { mutableStateOf(false) }
+    var showEditDialog by rememberSaveable { mutableStateOf(false) }
     var animatingDialog by remember { mutableStateOf(false) }
 
     // TODO: I added this Surface by analogy with the one in SettingsScreen, but it appears to have
