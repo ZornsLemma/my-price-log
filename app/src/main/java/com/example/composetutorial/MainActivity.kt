@@ -1236,7 +1236,7 @@ fun HomeScreen(navController: NavHostController) {
                                     navigationIcon = {
                                         IconButton(onClick = { showEditDialog = false }) {
                                             Icon(Icons.Default.Close, contentDescription = "Close") } },
-                                    title = { Text("TODO: Dialog Title") },
+                                    title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price", you can also eg edit pack size and probably a free text notes field etc
                                     actions = {
                                         // TODO: Can/should there be an icon with this textbutton?
                                         TextButton(onClick = { showEditDialog = false }) {
