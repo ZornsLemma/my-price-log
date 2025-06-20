@@ -1039,14 +1039,11 @@ fun AnimatedFullScreenDialog(
     // as well as (obviously) when it is supposed to be visible. The only time we don't need it is
     // if we are idling in the non-visible state.
     if (visibleState.currentState || visibleState.targetState) {
-
-        // TODO: Now I'm hacking Dialog back *in*, if it works we might not need some of the miscellaneous voodoo.
-
         Dialog(
             onDismissRequest = onDismiss,
             properties = DialogProperties(
                 usePlatformDefaultWidth = false, // Makes dialog full-width
-                /* TODO!?
+                /* TODO!? Probably not needed now
                 dismissOnBackPress = true, // Handles back button
                 dismissOnClickOutside = true // Allows dismissal by clicking outside
                 */
@@ -1113,13 +1110,14 @@ fun AnimatedFullScreenDialog(
                         )
                     ),
 
-                    // TODO: Try to understand these modifiers and if they are correct/necessary. maybe test with an on-screen keyboard.
                     modifier = modifier
                         .fillMaxSize()
+                        /* TODO!? These were probably added when we were trying to emulate Dialog and we may well not need them now we *are* using Dialog, but I'll keep them around just in case for a bit
                         // Handle system bars & keyboard insets
                         // .consumeWindowInsets(WindowInsets.systemBars) - probably don't need this, but it will not prevent insets from propagating, whether that is a bad thing or not is utterly beyond me of course - but hey, full screen dialogs are advanced ninja-level magic
                         .windowInsetsPadding(WindowInsets.systemBars)
                         .windowInsetsPadding(WindowInsets.ime)
+                        */
                 ) {
                     // The actual dialog content container (can be Scaffold, etc)
                     Surface(
