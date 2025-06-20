@@ -903,6 +903,49 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
 // TODO: ChatGPT magic plus my hackery to fix bugs
 // TODO: Even if this seems OK and I decide to keep/use it, giving it a thorough manual code review alongside https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ would likely be a good idea.
 // TODO: I got Grok to do a code review on this. Frankly it seemed to miss the point somewhat but it made some comments that *might* be relevant, so probably ought to go over its feedback again once I have studied this code and tried to simplify (if possible) the state handling, which may well be over-complex as a result of ChatGPT and/or my incompetence and/or an interaction between the two. (grok-full-screen-dialog-code-review-iffy...)
+// TODO: It might of course be worth asking ChatGPT to do a code review, especially if it approaches the code "fresh" (tell it Grok wrote it) it might find problems
+// TODO: Perplexity.ai says "9. Focus Management
+//
+//    Focus Trap:
+//    Platform dialogs trap focus within themselves; your implementation does not.
+//    Landmine: If your dialog contains text fields or focusable elements, users could tab out of the dialog into the underlying screen. Consider using FocusRequester to ensure initial focus, and possibly a custom focus trap if accessibility is a concern."
+// I am not sure if this is a problem, using the cursor keys to move round doesn't seem to obviously be moving off the dialog (but it is very primitive), but pressing the tab key does seem to "lose" focus for a while, which suggests it might be floating behind. May be worth looking into this and/or asking ChatGPT for advice/tweaks on this.
+// TODO: o4-mini says: Definitive Bugs / Behavioral Surprises
+//– pointerInput( Unit ) {} does not actually consume all touches.
+//• You’ve seen that it blocks clicks “often,” but on a lot of devices / Compose versions touches will actually fall through.
+//• If you want to fully block taps behind your “dialog,” you need something like:
+//
+//kotlin
+//
+//.pointerInput(Unit) {
+//  awaitPointerEventScope {
+//    while (true) {
+//      // we just loop forever, consuming every event
+//      awaitPointerEvent()
+//    }
+//  }
+//}
+// • Alternatively, a zero‐visual Modifier.clickable(...) with indication = null + interactionSource = remember { MutableInteractionSource() } will also reliably eat taps.
+//
+//– zIndex might not be high enough in more complex layouts.
+//
+// • As soon as your dialog appears, you should move focus into it.
+//
+//• You can call bringIntoViewRequester on a known focusable, or use a FocusRequester on your first input or button inside.
+// • You have .semantics { dialog() } which is great. You should also move accessibility focus into your dialog container when it opens, which you can do with LaunchedEffect(visible) { focusManager.moveFocus(FocusDirection.In) }.
+//
+//– WindowInsets stacking
+//
+//• Chaining .windowInsetsPadding(WindowInsets.systemBars) and .windowInsetsPadding(WindowInsets.ime) will add navBar/inset space twice in overlapping areas (e.g. bottom).
+//• A better pattern is:
+//
+//kotlin     val combined = WindowInsets.systemBars.union(WindowInsets.ime)     Modifier.windowInsetsPadding(combined)
+//
+//    Nice-to-Haves / Hardening
+//    – BackHandler placement
+//    • You register the BackHandler only when isComposed. That’s correct, but if you inverted your AnimatedVisibility logic you could move it inside your AnimatedVisibility block so you don’t have to manage isComposed at all.
+
+
 @Composable
 fun AnimatedFullScreenDialog(
     visible: Boolean,
