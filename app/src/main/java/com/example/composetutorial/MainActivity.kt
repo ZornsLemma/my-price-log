@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -140,6 +141,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -1397,7 +1399,19 @@ class MainActivity : ComponentActivity() {
             ThemePreference.SYSTEM -> isSystemInDarkTheme()
         } */
         setContent {
-            ComposeTutorialTheme {
+            val darkTheme = isSystemInDarkTheme()
+
+            ComposeTutorialTheme(darkTheme = darkTheme) {
+                val window = (this as ComponentActivity).window
+
+                // This allows us to control status bar icon color
+                SideEffect {
+                    WindowCompat.setDecorFitsSystemWindows(window, false)
+                    val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+                    insetsController.isAppearanceLightStatusBars = !darkTheme // false in dark mode = light icons
+                    insetsController.isAppearanceLightNavigationBars = !darkTheme
+                }
+
                 // TODO: Grok told me I could/should shove a DisposableEffect() in here to futz around with isAppearanceLightStatusBars. I don't particularly trust it, but let's make a note in csae this is part of fixing any problems we might see on older Android versions later.
                 // TODO: OK, I have added this Surface here because I wondered if I "should" as well as/instead of the Surfaces wrapping
                 // the individual screens. Honestly don't know any more. There might be some slightly odd colours on the O6 but maybe
@@ -1405,8 +1419,10 @@ class MainActivity : ComponentActivity() {
                 // etc. fillMaxHeight() is perhaps a bit unusual here but I was experimenting and thought I'd leave it in for now.
                 Surface(modifier = Modifier
                     .fillMaxSize()
-                    .safeDrawingPadding(), color = Color.Red /* TODO SHOULD BE MaterialTheme.colorScheme.background */) {
+                    /* .safeDrawingPadding() */, color = /* Color.Red */ MaterialTheme.colorScheme.background) {
+                    Box(modifier = Modifier.safeDrawingPadding()) {
                         AppNavigation()
+                    }
                 }
             }
             /* TODO
