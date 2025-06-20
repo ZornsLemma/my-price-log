@@ -996,7 +996,10 @@ fun AnimatedFullScreenDialog(
     // am far from clear I have "in" and "out" the right way round, or that they have a consistent
     // meaning in the same sense as "enter" and "exit" here. I suspect it may be redundant with
     // isComposed. OK, I am wrong - if I replace animateIn's use with isComposed and get rid of
-    // animateIn, the *enter* transition does not run properly.
+    // animateIn, the *enter* transition does not run properly. On further analysis, I think the
+    // purpose of animateIn is to cause the AnimatedVisibility to be invisible when it is first
+    // composed and then change it to be visible, so we get an enter transition rather than it
+    // just appearing instantly.
     //
     // isVisible and animateIn together determine the visibility of the AnimatedVisibility
 
