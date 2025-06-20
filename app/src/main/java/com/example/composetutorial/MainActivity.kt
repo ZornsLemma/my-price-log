@@ -976,6 +976,30 @@ fun AnimatedFullScreenDialog(
     // State controlling if dialog content is visible (for animation)
     var isVisible by remember { mutableStateOf(false) }
 
+    // TODO TEMP NOTES:
+    //
+    // isComposed is set to true when we become visible (isVisible set). It is set to false when the
+    // Surface inside the AnimatedVisibility is disposed off, which happens when the exit transition
+    // finishes. Docs hint at using the MutableStateTransition API variant, but this appears to be a
+    // variant on the "visible" parameter, and superficially therefore isn't the same. OK, MST has
+    // two internal state flags, and using this may well be cleaner. We probably observe it via a
+    // LaunchedEffect, *passing both its states as separate keys*.
+    //
+    // isVisible is a copy of the visible flag when we are re-composed. It is therefore true from
+    // the start of our enter animation to the *start* of our exit animation.
+    //
+    // animateIn is set to true when isComposed becomes true (I think). It is then never reset.
+    // It is different from isComposed when our AnimatedFullScreenDialog composable has visible set
+    // to false. I am not sure its name makes much sense, as in practice it seems to be used to
+    // extend the lifespan of the AnimatedVisibility internally in order to allow the *exit*
+    // transition to play. I guess maybe this is "in" in the animation "out"/"in" sense. However, I
+    // am far from clear I have "in" and "out" the right way round, or that they have a consistent
+    // meaning in the same sense as "enter" and "exit" here. I suspect it may be redundant with
+    // isComposed.
+    //
+    // isVisible and animateIn together determine the visibility of the AnimatedVisibility
+
+
     // Launch effect reacts to visible prop changes
     LaunchedEffect(visible) {
         if (visible) {
