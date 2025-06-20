@@ -912,6 +912,8 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
             ) {
                 var packSize by remember { mutableStateOf("123") }
                 var selectedUnit by remember { mutableStateOf("g") }
+                var packPrice by remember { mutableStateOf("2.98") }
+                var notes by remember { mutableStateOf("Aldi price match; don't know how long this will last.") }
                 Column {
                     // TODO: Product and Store should maybe be in a row. Just hacking up a rough
                     // dialog here for testing of my dialog box code (esp focus stuff) for now.
@@ -921,6 +923,7 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
                     LabeledItem(label = "Store") {
                         Text("Tesco")
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
                     val units = listOf("g", "kg", "oz", "ml", "l")
                     Row {
                         // TODO: Don't really like this way of showing pack size and unit etc, but
@@ -962,6 +965,23 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
                         )
 
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute max)
+                    TextField(
+                        label = { Text("Pack price") },
+                        prefix = { Text("£") },
+                        value = packPrice,
+                        onValueChange = { packPrice = it },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                    // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
+                    TextField(
+                        label = { Text( "Notes") },
+                        value = notes,
+                        onValueChange = { notes = it },
+                    )
                 }
             }
     //}
