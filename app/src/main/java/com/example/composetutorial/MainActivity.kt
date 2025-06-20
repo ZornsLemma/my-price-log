@@ -130,6 +130,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -1023,7 +1024,8 @@ fun AnimatedFullScreenDialog(
         // We use a Popup in order to ensure the dialog appears on top, regardless of the Z-order
         // specified for its immediate siblings. In practice specifying .zIndex(1f) on the Box below
         // works fine, but I was able to contrive a failure which this Popup-based approach avoids.
-        Popup(alignment = Alignment.Center) {
+        // Setting this properties makes it very slightly work, though it's broken as hell.
+        Popup(alignment = Alignment.Center, properties = PopupProperties(focusable = true)) {
             // TODO: If I simply get rid of Popup, my dialog box's "pack size" starts allowing text input
 
             val focusRequester = remember { FocusRequester() }
