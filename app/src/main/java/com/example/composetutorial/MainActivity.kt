@@ -972,60 +972,12 @@ fun AnimatedFullScreenDialog(
     exitDurationMillis: Int = 250, // was 300,
     content: @Composable () -> Unit
 ) {
-    // State controlling if dialog is currently in the composition
-    var isComposed by remember { mutableStateOf(false) }
-    // State controlling if dialog content is visible (for animation)
-    var isVisible by remember { mutableStateOf(false) }
-
     var visibleState = remember { MutableTransitionState(false) }
     visibleState.targetState = visible
 
-    // TODO TEMP NOTES:
-    //
-    // isComposed is set to true when we become visible (isVisible set). It is set to false when the
-    // Surface inside the AnimatedVisibility is disposed off, which happens when the exit transition
-    // finishes. Docs hint at using the MutableStateTransition API variant, but this appears to be a
-    // variant on the "visible" parameter, and superficially therefore isn't the same. OK, MST has
-    // two internal state flags, and using this may well be cleaner. We probably observe it via a
-    // LaunchedEffect, *passing both its states as separate keys*.
-    //
-    // isVisible is a copy of the visible flag when we are re-composed. It is therefore true from
-    // the start of our enter animation to the *start* of our exit animation.
-    //
-    // animateIn is set to true when isComposed becomes true (I think). It is then never reset.
-    // It is different from isComposed when our AnimatedFullScreenDialog composable has visible set
-    // to false. I am not sure its name makes much sense, as in practice it seems to be used to
-    // extend the lifespan of the AnimatedVisibility internally in order to allow the *exit*
-    // transition to play. I guess maybe this is "in" in the animation "out"/"in" sense. However, I
-    // am far from clear I have "in" and "out" the right way round, or that they have a consistent
-    // meaning in the same sense as "enter" and "exit" here. I suspect it may be redundant with
-    // isComposed. OK, I am wrong - if I replace animateIn's use with isComposed and get rid of
-    // animateIn, the *enter* transition does not run properly. On further analysis, I think the
-    // purpose of animateIn is to cause the AnimatedVisibility to be invisible when it is first
-    // composed and then change it to be visible, so we get an enter transition rather than it
-    // just appearing instantly.
-    //
-    // isVisible and animateIn together determine the visibility of the AnimatedVisibility
-
-
-    // Launch effect reacts to visible prop changes
-    LaunchedEffect(visible) {
-        if (visible) {
-            // Compose the dialog and show it
-            isComposed = true
-            isVisible = true
-        } else {
-            // Trigger exit animation
-            isVisible = false
-            /*
-            // Wait for animation duration, then remove from composition
-            // TODO: This is foul but we can hack it to use the deferred thing in my own implementation if it works otherwise
-            delay(exitDurationMillis.toLong())
-            isComposed = false
-            */
-        }
-    }
-
+    // The actual content needs to be present in the compose tree during enter and exit animations
+    // as well as (obviously) when it is supposed to be visible. The only time we don't need it is
+    // if we are idling in the non-visible state.
     if (visibleState.currentState || visibleState.targetState) {
         // Handle Android back press: dismiss dialog on back
         BackHandler(onBack = onDismiss)
@@ -1044,9 +996,6 @@ fun AnimatedFullScreenDialog(
                 .semantics { dialog() }
                 .zIndex(1f)
         ) {
-            var animateIn by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) { animateIn = true }
-
             // Animate visibility for dialog content sliding vertically
             AnimatedVisibility(
                 visibleState,
@@ -1088,13 +1037,6 @@ fun AnimatedFullScreenDialog(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     content()
-
-                    DisposableEffect(Unit) {
-                        onDispose {
-                            isComposed = false
-                        }
-                    }
-
                 }
             }
         }
