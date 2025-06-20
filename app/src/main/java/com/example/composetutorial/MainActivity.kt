@@ -1404,6 +1404,7 @@ class MainActivity : ComponentActivity() {
             ComposeTutorialTheme(darkTheme = darkTheme) {
                 val window = (this as ComponentActivity).window
 
+                /*
                 // This allows us to control status bar icon color
                 SideEffect {
                     WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -1411,6 +1412,7 @@ class MainActivity : ComponentActivity() {
                     insetsController.isAppearanceLightStatusBars = !darkTheme // false in dark mode = light icons
                     insetsController.isAppearanceLightNavigationBars = !darkTheme
                 }
+                */
 
                 // TODO: Grok told me I could/should shove a DisposableEffect() in here to futz around with isAppearanceLightStatusBars. I don't particularly trust it, but let's make a note in csae this is part of fixing any problems we might see on older Android versions later.
                 // TODO: OK, I have added this Surface here because I wondered if I "should" as well as/instead of the Surfaces wrapping
