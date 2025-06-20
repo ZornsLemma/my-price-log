@@ -29,6 +29,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -976,6 +977,9 @@ fun AnimatedFullScreenDialog(
     // State controlling if dialog content is visible (for animation)
     var isVisible by remember { mutableStateOf(false) }
 
+    var visibleState = remember { MutableTransitionState(false) }
+    visibleState.targetState = visible
+
     // TODO TEMP NOTES:
     //
     // isComposed is set to true when we become visible (isVisible set). It is set to false when the
@@ -1022,7 +1026,7 @@ fun AnimatedFullScreenDialog(
         }
     }
 
-    if (isComposed) {
+    if (visibleState.currentState || visibleState.targetState) {
         // Handle Android back press: dismiss dialog on back
         BackHandler(onBack = onDismiss)
 
@@ -1045,7 +1049,7 @@ fun AnimatedFullScreenDialog(
 
             // Animate visibility for dialog content sliding vertically
             AnimatedVisibility(
-                visible = animateIn && isVisible,
+                visibleState,
                 enter = slideInVertically(
                     animationSpec = tween(
                         durationMillis = enterDurationMillis,
