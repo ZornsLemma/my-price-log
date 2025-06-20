@@ -945,7 +945,23 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
 //    – BackHandler placement
 //    • You register the BackHandler only when isComposed. That’s correct, but if you inverted your AnimatedVisibility logic you could move it inside your AnimatedVisibility block so you don’t have to manage isComposed at all.
 
-
+// This is a mash-up of some ChatGPT-written code with
+// https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ and some of my own
+// tweaking and experience from earlier implementation efforts, plus trying to investigate and
+// address points raised by code reviews from all the AIs I could get my hands on. It attempts to be
+// an MD3-compliant implementation of a full-screen dialog box, including animation (sliding in
+// vertically to distinguish it from a full-fledged screen which slides in horizontally). Note that
+// it does *not* use the standard Dialog class - I was ultimately advised not to use this and to try
+// to take care of things myself. If I remember correctly, using Dialog caused weird colour changes
+// on the status bar and although I could have hacked around that further, I decided to take
+// ChatGPT's advice and sample code and get rid of Dialog. It feels like MD3-compliant full-screen
+// dialogs on Android are a black art. I would have preferred not to take so much AI advice but I
+// really struggled to find any concrete, recent human-written advice - the amount of blogs turning
+// up in web searches which are probably just AI slop doesn't help, of course. I am concerned there
+// will be a lingering landmine here ("this crashes if you have an Android 10 device with a hardware
+// keyboard attached and use D-pad navigation during the exit animation") but I can only hope most
+// cases are covered. The AI code reviews certainly raised some things (like focus trapping in a
+// dialog) that I might have missed otherwise.
 @Composable
 fun AnimatedFullScreenDialog(
     visible: Boolean,
