@@ -59,6 +59,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -110,6 +111,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
@@ -1023,16 +1026,46 @@ fun AnimatedFullScreenDialog(
         Popup(alignment = Alignment.Center) {
             // TODO: If I simply get rid of Popup, my dialog box's "pack size" starts allowing text input
 
+            val focusRequester = remember { FocusRequester() }
+
+            // TODO: All the focusRequester/focusable() stuff is ChatGPT voodoo
+            LaunchedEffect(Unit) {
+                focusRequester.requestFocus()
+            }
+
+
             // Box fills screen, intercepts clicks behind dialog content
             Box(
                 modifier = Modifier
+                    .focusRequester(focusRequester)
+                    .focusable()
                     .fillMaxSize()
+                    // TODO: onKeyEvent is ChatGPT voodoo, need to test it (things are badly broken anyway) and I do wonder if "dpad click" is different from key.enter based on recollection of old chats
+                    .onKeyEvent { keyEvent ->
+                        when (keyEvent.key) {
+                            Key.DirectionUp, Key.DirectionDown,
+                            Key.DirectionLeft, Key.DirectionRight -> {
+                                // Consume DPAD navigation
+                                true
+                            }
+                            Key.Enter, Key.NumPadEnter -> {
+                                // Handle OK or confirm
+                                true
+                            }
+                            Key.Back -> {
+                                // Optional: dismiss dialog manually
+                                onDismiss()
+                                true
+                            }
+                            else -> false
+                        }
+                    }
                     /*
                 // Semi-transparent scrim - optional
                 .background(Color.Black.copy(alpha = 0.5f))
+                    // and I never saw any problems with an apparently broken version of this code
                 */
                     // Consume pointer input so clicks don't pass through. This is AI-derived voodoo
-                    // and I never saw any problems with an apparently broken version of this code
                     // earlier. However, if the AI claims are correct, this *in combination with*
                     // our Popup (which gives us priority on receiving pointer input here), avoids
                     // problems where something on the part of the screen we've covered up does
