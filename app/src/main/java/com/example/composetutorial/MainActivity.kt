@@ -81,6 +81,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -135,6 +136,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.ui.window.Popup
@@ -925,10 +927,13 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
                         // TODO: Using weight to size the components is also sucky, since we really just want "a reasonable fixed size" for the unit with
                         // the product taking whatever's left, but this will do for now.
                         // TODO: This TextField will *not* show a cursor or let the value be changed - I don't know if this is because my dialog code is breaking it, or I've done something wrong here. OK, if I copy this code to HomeScreen() it works, so it is probably dialog related. Yay!
+                        // TODO: Should I use OutlinedTextFields here? If so, for the drop down too.
                         TextField(
                             label = { Text("Pack size") },
                             value = packSize,
                             onValueChange = { packSize = it },
+                            // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             modifier = Modifier.weight(1f))
                         Spacer(modifier = Modifier.width(8.dp))
                         // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
@@ -1282,7 +1287,7 @@ fun HomeScreen(navController: NavHostController) {
                         ) { innerPadding ->
 
                             // TODO: We could probably just pass innerPadding through to FullScreenDialog, that may or may not be clearer
-                            Box(modifier = Modifier.padding(innerPadding)) {
+                            Box(modifier = Modifier.padding(innerPadding).padding(screenBorder)) {
                                 FullScreenDialog(
                                     // TODO: onDismiss notused any more, has moved to above inline
                                     onDismiss = { showEditDialog = false }
