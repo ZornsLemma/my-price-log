@@ -124,6 +124,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import androidx.compose.ui.window.Popup
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -986,61 +987,66 @@ fun AnimatedFullScreenDialog(
         // Handle Android back press: dismiss dialog on back
         BackHandler(onBack = onDismiss)
 
-        // Box fills screen, intercepts clicks behind dialog content
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                /*
+        // We use a Popup in order to ensure the dialog appears on top, regardless of the Z-order
+        // specified for its immediate siblings. In practice specifying .zIndex(1f) on the Box below
+        // works fine, but I was able to contrive a failure which this Popup-based approach avoids.
+        Popup(alignment = Alignment.Center) {
+
+            // Box fills screen, intercepts clicks behind dialog content
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    /*
                 // Semi-transparent scrim - optional
                 .background(Color.Black.copy(alpha = 0.5f))
                 */
-                // Consume pointer input so clicks don't pass through
-                .pointerInput(Unit) {}
-                // Accessibility: announce as a dialog
-                .semantics { dialog() }
-                .zIndex(1f)
-        ) {
-            // Animate visibility for dialog content sliding vertically
-            AnimatedVisibility(
-                visibleState,
-                enter = slideInVertically(
-                    animationSpec = tween(
-                        durationMillis = enterDurationMillis,
-                        easing = LinearOutSlowInEasing
-                    ),
-                    initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = enterDurationMillis,
-                        easing = LinearOutSlowInEasing
-                    )
-                ),
-                exit = slideOutVertically(
-                    animationSpec = tween(
-                        durationMillis = exitDurationMillis,
-                        easing = FastOutLinearInEasing
-                    ),
-                    targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = exitDurationMillis,
-                        easing = FastOutLinearInEasing
-                    )
-                ),
-
-                modifier = modifier
-                    .fillMaxSize()
-                    // Handle system bars & keyboard insets
-                    // .consumeWindowInsets(WindowInsets.systemBars) - probably don't need this, but it will not prevent insets from propagating, whether that is a bad thing or not is utterly beyond me of course - but hey, full screen dialogs are advanced ninja-level magic
-                    .windowInsetsPadding(WindowInsets.systemBars)
-                    .windowInsetsPadding(WindowInsets.ime)
+                    // Consume pointer input so clicks don't pass through
+                    .pointerInput(Unit) {}
+                    // Accessibility: announce as a dialog
+                    .semantics { dialog() }
             ) {
-                // The actual dialog content container (can be Scaffold, etc)
-                Surface(
-                    color = MaterialTheme.colorScheme.background,
-                    modifier = Modifier.fillMaxSize()
+                // Animate visibility for dialog content sliding vertically
+                AnimatedVisibility(
+                    visibleState,
+                    enter = slideInVertically(
+                        animationSpec = tween(
+                            durationMillis = enterDurationMillis,
+                            easing = LinearOutSlowInEasing
+                        ),
+                        initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
+                    ) + fadeIn(
+                        animationSpec = tween(
+                            durationMillis = enterDurationMillis,
+                            easing = LinearOutSlowInEasing
+                        )
+                    ),
+                    exit = slideOutVertically(
+                        animationSpec = tween(
+                            durationMillis = exitDurationMillis,
+                            easing = FastOutLinearInEasing
+                        ),
+                        targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
+                    ) + fadeOut(
+                        animationSpec = tween(
+                            durationMillis = exitDurationMillis,
+                            easing = FastOutLinearInEasing
+                        )
+                    ),
+
+                    modifier = modifier
+                        .fillMaxSize()
+                        // Handle system bars & keyboard insets
+                        // .consumeWindowInsets(WindowInsets.systemBars) - probably don't need this, but it will not prevent insets from propagating, whether that is a bad thing or not is utterly beyond me of course - but hey, full screen dialogs are advanced ninja-level magic
+                        .windowInsetsPadding(WindowInsets.systemBars)
+                        .windowInsetsPadding(WindowInsets.ime)
                 ) {
-                    content()
+                    // The actual dialog content container (can be Scaffold, etc)
+                    Surface(
+                        color = MaterialTheme.colorScheme.background,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        content()
+                    }
                 }
             }
         }
