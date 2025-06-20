@@ -1021,6 +1021,7 @@ fun AnimatedFullScreenDialog(
         // specified for its immediate siblings. In practice specifying .zIndex(1f) on the Box below
         // works fine, but I was able to contrive a failure which this Popup-based approach avoids.
         Popup(alignment = Alignment.Center) {
+            // TODO: If I simply get rid of Popup, my dialog box's "pack size" starts allowing text input
 
             // Box fills screen, intercepts clicks behind dialog content
             Box(
