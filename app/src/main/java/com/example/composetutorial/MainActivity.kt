@@ -2,6 +2,7 @@
 
 package com.example.composetutorial
 
+import android.os.Build
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.ui.semantics.dialog
@@ -16,7 +17,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.view.Window
+import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -1021,12 +1024,36 @@ fun AnimatedFullScreenDialog(
         // Handle Android back press: dismiss dialog on back
         BackHandler(onBack = onDismiss)
 
-        // We use a Popup in order to ensure the dialog appears on top, regardless of the Z-order
-        // specified for its immediate siblings. In practice specifying .zIndex(1f) on the Box below
-        // works fine, but I was able to contrive a failure which this Popup-based approach avoids.
-        // Setting this properties makes it very slightly work, though it's broken as hell.
-        Popup(alignment = Alignment.Center, properties = PopupProperties(focusable = true)) {
+        // TODO: Now I'm hacking Dialog back *in*, if it works we might not need some of the miscellaneous voodoo.
+
+        Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
             // TODO: If I simply get rid of Popup, my dialog box's "pack size" starts allowing text input
+
+            val dialogWindow = getDialogWindow()
+
+            SideEffect {
+                dialogWindow?.let { window ->
+                    window.setDimAmount(0f)
+                    window.setWindowAnimations(-1)
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        val controller = window.insetsController
+                        if (controller != null) {
+                            // Clear light status bars so icons are dark on light background
+                            controller.setSystemBarsAppearance(
+                                0,
+                                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                            )
+                        }
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        @Suppress("DEPRECATION")
+                        val decorView = window.decorView
+                        decorView.systemUiVisibility = decorView.systemUiVisibility and
+                                View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+                    }
+                }
+            }
+
 
             val focusRequester = remember { FocusRequester() }
 
@@ -1062,6 +1089,9 @@ fun AnimatedFullScreenDialog(
                             else -> false
                         }
                     }
+                    .background(Color.Transparent)
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .windowInsetsPadding(WindowInsets.ime)
                     /*
                 // Semi-transparent scrim - optional
                 .background(Color.Black.copy(alpha = 0.5f))
