@@ -2,12 +2,24 @@
 
 package com.example.composetutorial
 
+//import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.padding
 import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Build
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.ui.semantics.dialog
 import androidx.compose.ui.semantics.semantics
 import kotlinx.coroutines.delay
@@ -70,11 +82,14 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -897,6 +912,8 @@ fun Modifier.clearFocusOnTapOutside() = composed {
 
 
 
+
+
 @Composable
 fun FullScreenDialog(onDismiss: () -> Unit) {
     /*
@@ -914,7 +931,7 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
                 var selectedUnit by remember { mutableStateOf("g") }
                 var packPrice by remember { mutableStateOf("2.98") }
                 var notes by remember { mutableStateOf("Aldi price match; don't know how long this will last.") }
-                Column(modifier = Modifier.fillMaxSize().verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+                Column() {
                     // TODO: Product and Store should maybe be in a row. Just hacking up a rough
                     // dialog here for testing of my dialog box code (esp focus stuff) for now.
                     LabeledItem(label = "Product") {
@@ -1085,12 +1102,18 @@ fun AnimatedFullScreenDialog(
             onDismissRequest = onDismiss,
             properties = DialogProperties(
                 usePlatformDefaultWidth = false, // Makes dialog full-width
+                decorFitsSystemWindows = false, // TODO: to make imepadding work!?
                 /* TODO!? Probably not needed now
                 dismissOnBackPress = true, // Handles back button
                 dismissOnClickOutside = true // Allows dismissal by clicking outside
                 */
             )
         ) {
+            Box(modifier = Modifier
+                .fillMaxSize()
+                .consumeWindowInsets(WindowInsets.ime)
+                .windowInsetsPadding(WindowInsets.systemBars))
+            {
             // Get the window to control system bars
             val dialogWindow = (LocalView.current.parent as? DialogWindowProvider)?.window
             val activityWindow = LocalView.current.context.getActivityWindow()
@@ -1117,59 +1140,63 @@ fun AnimatedFullScreenDialog(
                         WindowCompat.setDecorFitsSystemWindows(window, false)
                         // Match system bar appearance (light/dark icons) to activity
                         val controller = WindowCompat.getInsetsController(window, window.decorView)
-                        val activityController = WindowCompat.getInsetsController(actWindow, actWindow.decorView)
-                        controller.isAppearanceLightStatusBars = activityController.isAppearanceLightStatusBars
-                        controller.isAppearanceLightNavigationBars = activityController.isAppearanceLightNavigationBars
+                        val activityController =
+                            WindowCompat.getInsetsController(actWindow, actWindow.decorView)
+                        controller.isAppearanceLightStatusBars =
+                            activityController.isAppearanceLightStatusBars
+                        controller.isAppearanceLightNavigationBars =
+                            activityController.isAppearanceLightNavigationBars
                     }
                 }
             }
 
-                // Animate visibility for dialog content sliding vertically
-                AnimatedVisibility(
-                    visibleState,
-                    enter = slideInVertically(
-                        animationSpec = tween(
-                            durationMillis = enterDurationMillis,
-                            easing = LinearOutSlowInEasing
-                        ),
-                        initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
-                    ) + fadeIn(
-                        animationSpec = tween(
-                            durationMillis = enterDurationMillis,
-                            easing = LinearOutSlowInEasing
-                        )
+            // Animate visibility for dialog content sliding vertically
+            AnimatedVisibility(
+                visibleState,
+                enter = slideInVertically(
+                    animationSpec = tween(
+                        durationMillis = enterDurationMillis,
+                        easing = LinearOutSlowInEasing
                     ),
-                    exit = slideOutVertically(
-                        animationSpec = tween(
-                            durationMillis = exitDurationMillis,
-                            easing = FastOutLinearInEasing
-                        ),
-                        targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
-                    ) + fadeOut(
-                        animationSpec = tween(
-                            durationMillis = exitDurationMillis,
-                            easing = FastOutLinearInEasing
-                        )
+                    initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = enterDurationMillis,
+                        easing = LinearOutSlowInEasing
+                    )
+                ),
+                exit = slideOutVertically(
+                    animationSpec = tween(
+                        durationMillis = exitDurationMillis,
+                        easing = FastOutLinearInEasing
                     ),
+                    targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
+                ) + fadeOut(
+                    animationSpec = tween(
+                        durationMillis = exitDurationMillis,
+                        easing = FastOutLinearInEasing
+                    )
+                ),
 
-                    modifier = modifier
-                        .fillMaxSize()
-                        /* TODO!? These were probably added when we were trying to emulate Dialog and we may well not need them now we *are* using Dialog, but I'll keep them around just in case for a bit
+                modifier = modifier
+                    .fillMaxSize()
+                /* TODO!? These were probably added when we were trying to emulate Dialog and we may well not need them now we *are* using Dialog, but I'll keep them around just in case for a bit
                         // Handle system bars & keyboard insets
                         // .consumeWindowInsets(WindowInsets.systemBars) - probably don't need this, but it will not prevent insets from propagating, whether that is a bad thing or not is utterly beyond me of course - but hey, full screen dialogs are advanced ninja-level magic
                         .windowInsetsPadding(WindowInsets.systemBars)
                         .windowInsetsPadding(WindowInsets.ime)
                         */
+            ) {
+                // The actual dialog content container (can be Scaffold, etc)
+                Surface(
+                    color = MaterialTheme.colorScheme.background,
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    // The actual dialog content container (can be Scaffold, etc)
-                    Surface(
-                        color = MaterialTheme.colorScheme.background,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        content()
-                    }
+                    content()
                 }
+            }
         }
+    }
     }
 }
 
@@ -1229,6 +1256,16 @@ fun HomeScreen(navController: NavHostController) {
                 .verticalScroll(androidx.compose.foundation.rememberScrollState())
             ) {
                 MainScreen() // TODO: rename this
+
+                // TODO TEMP HACK FOR KEYBOARD/SCROLLING EXPERIMENTS
+                var packSize by remember { mutableStateOf("123") }
+                TextField(
+                    label = { Text("Pack size") },
+                    value = packSize,
+                    onValueChange = { packSize = it },
+                    // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.fillMaxSize())
 
                 androidx.compose.foundation.layout.Spacer(
                     modifier = androidx.compose.ui.Modifier.height(
@@ -1324,7 +1361,7 @@ fun HomeScreen(navController: NavHostController) {
                         ) { innerPadding ->
 
                             // TODO: We could probably just pass innerPadding through to FullScreenDialog, that may or may not be clearer
-                            Box(modifier = Modifier.padding(innerPadding).padding(horizontal = screenBorder)) {
+                            Box(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = screenBorder).verticalScroll(rememberScrollState()).imePadding()) {
                                 FullScreenDialog(
                                     // TODO: onDismiss notused any more, has moved to above inline
                                     onDismiss = { showEditDialog = false }

@@ -52,6 +52,7 @@ dependencies {
     //implementation(libs.androidx.compose.ui) // TODO: for Dialog!?
     //implementation(libs.androidx.compose.ui.tooling.preview) // TODO: for Dialog?!
     //implementation(libs.androidx.compose.ui.window) // TODO: for Dialog!?
+    implementation(libs.compose.foundation)
     implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
