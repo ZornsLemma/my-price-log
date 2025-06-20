@@ -902,6 +902,7 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
 
 // TODO: ChatGPT magic plus my hackery to fix bugs
 // TODO: Even if this seems OK and I decide to keep/use it, giving it a thorough manual code review alongside https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ would likely be a good idea.
+// TODO: I got Grok to do a code review on this. Frankly it seemed to miss the point somewhat but it made some comments that *might* be relevant, so probably ought to go over its feedback again once I have studied this code and tried to simplify (if possible) the state handling, which may well be over-complex as a result of ChatGPT and/or my incompetence and/or an interaction between the two. (grok-full-screen-dialog-code-review-iffy...)
 @Composable
 fun AnimatedFullScreenDialog(
     visible: Boolean,
