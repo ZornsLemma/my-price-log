@@ -61,6 +61,7 @@ import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -93,6 +94,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -886,16 +888,44 @@ fun FullScreenDialog(onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) { */
-
+            // TODO: THis dialog has no padding round the edges, not sure if it should but it maybe should, think about it anyway
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.primary /* background */)
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
+                var packSize by remember { mutableStateOf("123") }
+                var selectedUnit by remember { mutableStateOf("g") }
                 Column {
-                    Text("Full-Screen Dialog Content")
-                    Button(onClick = onDismiss) {
-                        Text("Close")
+                    // TODO: Product and Store should maybe be in a row. Just hacking up a rough
+                    // dialog here for testing of my dialog box code (esp focus stuff) for now.
+                    LabeledItem(label = "Product") {
+                        Text("Ground coffee")
+                    }
+                    LabeledItem(label = "Store") {
+                        Text("Tesco")
+                    }
+                    val units = listOf("g", "kg", "oz", "ml", "l")
+                    Row {
+                        // TODO: Don't really like this way of showing pack size and unit etc, but this is just a quick hack to get some "realistic-ish" content on the dialog for testing
+                        // TODO: Using weight to size the components is also sucky, since we really just want "a reasonable fixed size" for the unit with
+                        // the product taking whatever's left, but this will do for now.
+                        // TODO: This TextField will *not* show a cursor or let the value be changed - I don't know if this is because my dialog code is breaking it, or I've done something wrong here
+                        TextField(
+                            label = { Text("Pack size") },
+                            value = packSize,
+                            onValueChange = { packSize = it },
+                            modifier = Modifier.weight(1f))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
+                        ExposedDropdownMenuBox(
+                            value = selectedUnit,
+                            onValueChange = { selectedUnit = it },
+                            label = { Text("Unit") },
+                            items = units,
+                            modifier = Modifier.weight(0.5f)
+                        )
+
                     }
                 }
             }
@@ -1071,7 +1101,6 @@ fun AnimatedFullScreenDialog(
 fun HomeScreen(navController: NavHostController) {
     var menuExpanded by remember { mutableStateOf(false) }
     var showEditDialog by rememberSaveable { mutableStateOf(false) }
-    var animatingDialog by remember { mutableStateOf(false) }
 
     // TODO: I added this Surface by analogy with the one in SettingsScreen, but it appears to have
     // no real effect - even if I set its color to Red or primary, nothing shows.
@@ -1205,10 +1234,15 @@ fun HomeScreen(navController: NavHostController) {
                             topBar = {
                                 TopAppBar(
                                     navigationIcon = {
-                                        IconButton(onClick = { showEditDialog = false; animatingDialog = true }) {
+                                        IconButton(onClick = { showEditDialog = false }) {
                                             Icon(Icons.Default.Close, contentDescription = "Close") } },
-                                    title = { Text("Dialog Title") },
-                                    // TODO: There should be a "Save" or other kind of "Yes, accept changes" button at the right
+                                    title = { Text("TODO: Dialog Title") },
+                                    actions = {
+                                        // TODO: Can/should there be an icon with this textbutton?
+                                        TextButton(onClick = { showEditDialog = false }) {
+                                            Text("Save") // TODO: arbitrary, not thought about wording
+                                        }
+                                    },
                                 )
                             },
                         ) { innerPadding ->
@@ -1217,14 +1251,8 @@ fun HomeScreen(navController: NavHostController) {
                             Box(modifier = Modifier.padding(innerPadding)) {
                                 FullScreenDialog(
                                     // TODO: onDismiss notused any more, has moved to above inline
-                                    onDismiss = { showEditDialog = false; animatingDialog = true }
+                                    onDismiss = { showEditDialog = false }
                                 )
-
-                                DisposableEffect(Unit) {
-                                    onDispose {
-                                        animatingDialog = false
-                                    }
-                                }
                             }
                         }
                     }
