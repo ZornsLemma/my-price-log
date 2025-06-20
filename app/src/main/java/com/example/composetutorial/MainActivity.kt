@@ -1000,8 +1000,21 @@ fun AnimatedFullScreenDialog(
                 // Semi-transparent scrim - optional
                 .background(Color.Black.copy(alpha = 0.5f))
                 */
-                    // Consume pointer input so clicks don't pass through
-                    .pointerInput(Unit) {}
+                    // Consume pointer input so clicks don't pass through. This is AI-derived voodoo
+                    // and I never saw any problems with an apparently broken version of this code
+                    // earlier. However, if the AI claims are correct, this *in combination with*
+                    // our Popup (which gives us priority on receiving pointer input here), avoids
+                    // problems where something on the part of the screen we've covered up does
+                    // receive some kind of pointer input. I don't think this does any harm and I
+                    // did have both ChatGPT and Grok tell me the same thing without overtly leading
+                    // questions.
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope {
+                            while (true) {
+                                awaitPointerEvent()
+                            }
+                        }
+                    }
                     // Accessibility: announce as a dialog
                     .semantics { dialog() }
             ) {
