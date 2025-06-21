@@ -1143,7 +1143,7 @@ fun HomeScreen(navController: NavHostController) {
     // Surface(modifier = Modifier.fillMaxSize()/*, color=MaterialTheme.colorScheme.surface */) {
 
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().imePadding(),
             topBar = {
                 TopAppBar(
                     title = { Text("My App Name Here") },
@@ -1179,11 +1179,11 @@ fun HomeScreen(navController: NavHostController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(androidx.compose.foundation.rememberScrollState())
                     .padding(innerPadding)
                     .padding(horizontal = screenBorder)
                     .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
 
-                .verticalScroll(androidx.compose.foundation.rememberScrollState())
             ) {
                 MainScreen() // TODO: rename this
 
