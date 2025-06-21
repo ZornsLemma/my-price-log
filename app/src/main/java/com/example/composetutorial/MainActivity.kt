@@ -191,7 +191,10 @@ import kotlinx.coroutines.launch
 // database, which I will retrofit later. I have no idea if the code is actually correct, although
 // it seems simple enough that I don't think it hides too many nasty surprises.
 
-data class UnitX(val id: Long, val name: String) // TODO: very hacky, not sure how will represent this
+data class UnitX(
+    val id: Long,
+    val name: String
+) // TODO: very hacky, not sure how will represent this
 
 data class Category(val id: Long, val name: String)
 
@@ -208,18 +211,22 @@ data class Price(
 
 // TODO: This is part way through being converted to use Flow
 class PriceTrackerRepository {
-    private val categories = MutableStateFlow<List<Category>>(mutableListOf(
-        Category(1, "Demo"),
-        Category(2, "Groceries (home)"),
-        Category(3, "Groceries (Manchester)"))
+    private val categories = MutableStateFlow<List<Category>>(
+        mutableListOf(
+            Category(1, "Demo"),
+            Category(2, "Groceries (home)"),
+            Category(3, "Groceries (Manchester)")
+        )
     )
-    private val products = MutableStateFlow<List<Product>>(mutableListOf(
-        Product(1, "Milk"),
-        Product(2, "Bread"))
+    private val products = MutableStateFlow<List<Product>>(
+        mutableListOf(
+            Product(1, "Milk"), Product(2, "Bread")
+        )
     )
-    private val stores = MutableStateFlow<List<Store>>(mutableListOf(
-        Store(1, "Walmart"),
-        Store(2, "Target"))
+    private val stores = MutableStateFlow<List<Store>>(
+        mutableListOf(
+            Store(1, "Walmart"), Store(2, "Target")
+        )
     )
     private val _prices = mutableListOf(
         Price(1, 1, 3.99, "Organic milk at Walmart"),
@@ -335,7 +342,7 @@ fun MainScreen(selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Un
     // everywhere, even if it's rare, because the user *could* go and delete every single item in
     // the database in theory. TODO: We should make sure we have the same behaviour for Source,
     // because that actually *should* allow the user to easily set it to empty/none.
-    var selectedCategoryId:Long? by remember { mutableStateOf(null) } // TODO: do we actually allow nulls for category?
+    var selectedCategoryId: Long? by remember { mutableStateOf(null) } // TODO: do we actually allow nulls for category?
     var showProductSheet by remember { mutableStateOf(false) }
     //val categories = listOf("Demo", "Groceries (home)", "Groceries (Manchester)")
     //val products = listOf("Beans", "Milk", "Bread", "Chicken" /* ... */)
@@ -408,9 +415,9 @@ fun MainScreen(selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Un
                             )
                         })
                     LazyColumn {
-                                                items(products.filter {
-                                                        it.name.contains(searchQuery, ignoreCase = true)
-                                                    }) { product ->
+                        items(products.filter {
+                            it.name.contains(searchQuery, ignoreCase = true)
+                        }) { product ->
                             ListItem(
                                 headlineContent = { Text(product.name) },
                                 modifier = Modifier
@@ -456,7 +463,8 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     var indicatorColor by remember { mutableStateOf(unfocusedColor) } // TODO: ALL THIS STUFF ISN'T WORKING, I SUSPECT THE *FOCUS* ISN'T HITTING THE CONTROL AS IT'S DISABLED, BUT *SOMETHING* IS HITTING IT AND TOGGLING ITS COLOUR BUT IT ISN'T THIS, NOT SURE
     */
     var textFieldWidth by remember { mutableStateOf(0) }
-    val itemMap = items.associateBy { getId( it ) } // TODO: inefficient? should we make caller supply use with this so viewmodel can be caching it?
+    val itemMap =
+        items.associateBy { getId(it) } // TODO: inefficient? should we make caller supply use with this so viewmodel can be caching it?
     val PULLEDOUT: String = if (selectedId == null) "" else {
         val item = itemMap[selectedId]
         if (item != null) getLabel(item) else "Invalid ID"
@@ -608,7 +616,7 @@ fun ItemSourceInfo(selectedProductId: Long?, onClickEdit: () -> Unit) {
                 .padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)
         ) {
             // TODO: We need to allow this to be set to empty/None by the user - how best to do that? And if it is empty, we need to collapse all the stuff below it and replace it with a brief instructional string roughly "Select a store to see and edit product details" - check the ChatGPT discussion I saved for some wording
-            MyExposedDropdownMenuBox( // TODO: EXPLCIIT TYPES TEMP FOR DEBUG
+            MyExposedDropdownMenuBox(
                 modifier = Modifier
                     .padding(bottom = 8.dp)
                     .fillMaxWidth(),
@@ -624,7 +632,10 @@ fun ItemSourceInfo(selectedProductId: Long?, onClickEdit: () -> Unit) {
             )
             if (selectedSourceId != null) {
                 // TODO: DEFAULTING TO PRODUCT ID 1 IS A MASSIVE HACK BUT I DON'T WANT TO GET SIDETRACKED THINKING ABOUT NULL CASE RIGHT NOW
-                val priceList by vm.getPriceDetailsForProductAndStore(productId = if (selectedProductId == null) 1 else selectedProductId, storeId = selectedSourceId!!).collectAsStateWithLifecycle(initialValue = emptyList())
+                val priceList by vm.getPriceDetailsForProductAndStore(
+                    productId = if (selectedProductId == null) 1 else selectedProductId,
+                    storeId = selectedSourceId!!
+                ).collectAsStateWithLifecycle(initialValue = emptyList())
                 check(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
 
                 if (priceList.isEmpty()) {
@@ -700,7 +711,7 @@ fun ItemSourceInfo(selectedProductId: Long?, onClickEdit: () -> Unit) {
                     // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
                     Row(modifier = Modifier.padding(vertical = 4.dp)) {
                         LabeledItem("Notes") {
-                            Text(priceList[0].details )
+                            Text(priceList[0].details)
                         }
                         //Text("TODO DUMMY TO FILL SPACE", modifier=Modifier.padding(vertical=130.dp))
                     }
@@ -729,8 +740,7 @@ fun ItemSourceInfo(selectedProductId: Long?, onClickEdit: () -> Unit) {
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             FilledTonalButton(
-                                onClick = onClickEdit,
-                                shape = MaterialTheme.shapes.small
+                                onClick = onClickEdit, shape = MaterialTheme.shapes.small
                             ) {
                                 Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
                             }
@@ -1106,10 +1116,6 @@ fun Modifier.clearFocusOnTapOutside() = composed {
 //✅ Looks modern, but stays “out of the way”
 
 
-
-
-
-
 // Utility to get Activity window
 @Composable
 private fun Context.getActivityWindow(): Window? {
@@ -1204,8 +1210,7 @@ fun AnimatedFullScreenDialog(
     // if we are idling in the non-visible state.
     if (visibleState.currentState || visibleState.targetState) {
         Dialog(
-            onDismissRequest = onDismiss,
-            properties = DialogProperties(
+            onDismissRequest = onDismiss, properties = DialogProperties(
                 usePlatformDefaultWidth = false, // Makes dialog full-width
                 decorFitsSystemWindows = false, // TODO: to make imepadding work!?
                 /* TODO!? Probably not needed now
@@ -1224,101 +1229,93 @@ fun AnimatedFullScreenDialog(
                     WindowCompat.setDecorFitsSystemWindows(window, false)
                     ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
                         // Consume system insets to prevent automatic adjustments
-                        WindowInsetsCompat.Builder(insets)
-                            .setInsets(WindowInsetsCompat.Type.systemBars(), Insets.NONE) // Use androidx.core.graphics.Insets
+                        WindowInsetsCompat.Builder(insets).setInsets(
+                                WindowInsetsCompat.Type.systemBars(),
+                                Insets.NONE
+                            ) // Use androidx.core.graphics.Insets
                             .build()
                     }
                 }
             }
 
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .consumeWindowInsets(WindowInsets.ime)
-                .windowInsetsPadding(WindowInsets.systemBars))
-            {
-            // Get the window to control system bars
-            val dialogWindow = (LocalView.current.parent as? DialogWindowProvider)?.window
-            val activityWindow = LocalView.current.context.getActivityWindow()
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .consumeWindowInsets(WindowInsets.ime)
+                    .windowInsetsPadding(WindowInsets.systemBars)
+            ) {
+                // Get the window to control system bars
+                val dialogWindow = (LocalView.current.parent as? DialogWindowProvider)?.window
+                val activityWindow = LocalView.current.context.getActivityWindow()
 
-            // Without the code in this SideEffect block, the Dialog appears to effectively invert
-            // the status bar colours. This is readable but looks ugly for our full screen dialog.
-            SideEffect {
-                dialogWindow?.let { window ->
-                    // Disable the dialog scrim; we don't want this for our full screen dialog,
-                    // especially since we are sliding it in from the bottom and having the screen
-                    // go dim first looks ugly.
-                    window.setDimAmount(0f)
+                // Without the code in this SideEffect block, the Dialog appears to effectively invert
+                // the status bar colours. This is readable but looks ugly for our full screen dialog.
+                SideEffect {
+                    dialogWindow?.let { window ->
+                        // Disable the dialog scrim; we don't want this for our full screen dialog,
+                        // especially since we are sliding it in from the bottom and having the screen
+                        // go dim first looks ugly.
+                        window.setDimAmount(0f)
 
-                    // Absolute Grok (I think?) voodoo which avoids the status bar (at the top of
-                    // the screen) going white-on-white as a result of the previous line disabling
-                    // the scrim.
-                    activityWindow?.let { actWindow ->
-                        // Copy activity window flags for consistent behavior
-                        window.setFlags(
-                            actWindow.attributes.flags,
-                            actWindow.attributes.flags
-                        )
-                        // Use WindowCompat for system bar transparency and cutout support
-                        WindowCompat.setDecorFitsSystemWindows(window, false)
-                        // Match system bar appearance (light/dark icons) to activity
-                        val controller = WindowCompat.getInsetsController(window, window.decorView)
-                        val activityController =
-                            WindowCompat.getInsetsController(actWindow, actWindow.decorView)
-                        controller.isAppearanceLightStatusBars =
-                            activityController.isAppearanceLightStatusBars
-                        controller.isAppearanceLightNavigationBars =
-                            activityController.isAppearanceLightNavigationBars
+                        // Absolute Grok (I think?) voodoo which avoids the status bar (at the top of
+                        // the screen) going white-on-white as a result of the previous line disabling
+                        // the scrim.
+                        activityWindow?.let { actWindow ->
+                            // Copy activity window flags for consistent behavior
+                            window.setFlags(
+                                actWindow.attributes.flags, actWindow.attributes.flags
+                            )
+                            // Use WindowCompat for system bar transparency and cutout support
+                            WindowCompat.setDecorFitsSystemWindows(window, false)
+                            // Match system bar appearance (light/dark icons) to activity
+                            val controller =
+                                WindowCompat.getInsetsController(window, window.decorView)
+                            val activityController =
+                                WindowCompat.getInsetsController(actWindow, actWindow.decorView)
+                            controller.isAppearanceLightStatusBars =
+                                activityController.isAppearanceLightStatusBars
+                            controller.isAppearanceLightNavigationBars =
+                                activityController.isAppearanceLightNavigationBars
+                        }
                     }
                 }
-            }
 
-            // Animate visibility for dialog content sliding vertically
-            AnimatedVisibility(
-                visibleState,
-                enter = slideInVertically(
+                // Animate visibility for dialog content sliding vertically
+                AnimatedVisibility(
+                    visibleState, enter = slideInVertically(
                     animationSpec = tween(
-                        durationMillis = enterDurationMillis,
-                        easing = LinearOutSlowInEasing
-                    ),
-                    initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
+                    durationMillis = enterDurationMillis, easing = LinearOutSlowInEasing
+                ), initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
                 ) + fadeIn(
                     animationSpec = tween(
-                        durationMillis = enterDurationMillis,
-                        easing = LinearOutSlowInEasing
+                        durationMillis = enterDurationMillis, easing = LinearOutSlowInEasing
                     )
-                ),
-                exit = slideOutVertically(
-                    animationSpec = tween(
-                        durationMillis = exitDurationMillis,
-                        easing = FastOutLinearInEasing
-                    ),
-                    targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
+                ), exit = slideOutVertically(
+                        animationSpec = tween(
+                    durationMillis = exitDurationMillis, easing = FastOutLinearInEasing
+                ), targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
                 ) + fadeOut(
                     animationSpec = tween(
-                        durationMillis = exitDurationMillis,
-                        easing = FastOutLinearInEasing
+                        durationMillis = exitDurationMillis, easing = FastOutLinearInEasing
                     )
                 ),
 
-                modifier = modifier
-                    .fillMaxSize()
-                /* TODO!? These were probably added when we were trying to emulate Dialog and we may well not need them now we *are* using Dialog, but I'll keep them around just in case for a bit
+                    modifier = modifier.fillMaxSize()/* TODO!? These were probably added when we were trying to emulate Dialog and we may well not need them now we *are* using Dialog, but I'll keep them around just in case for a bit
                         // Handle system bars & keyboard insets
                         // .consumeWindowInsets(WindowInsets.systemBars) - probably don't need this, but it will not prevent insets from propagating, whether that is a bad thing or not is utterly beyond me of course - but hey, full screen dialogs are advanced ninja-level magic
                         .windowInsetsPadding(WindowInsets.systemBars)
                         .windowInsetsPadding(WindowInsets.ime)
-                        */
-            ) {
-                // The actual dialog content container (can be Scaffold, etc)
-                Surface(
-                    color = MaterialTheme.colorScheme.background,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    content()
+                        */) {
+                    // The actual dialog content container (can be Scaffold, etc)
+                    Surface(
+                        color = MaterialTheme.colorScheme.background,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        content()
+                    }
                 }
             }
         }
-    }
     }
 }
 
@@ -1328,7 +1325,7 @@ fun HomeScreen(navController: NavHostController) {
     var showEditDialog by rememberSaveable { mutableStateOf(false) }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
-    var selectedProductId:Long by rememberSaveable { mutableStateOf( 1) } // TODO: massive hack defaulting to hardcoded, we need a genuine ID from somewhere and/or support for null
+    var selectedProductId: Long by rememberSaveable { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, we need a genuine ID from somewhere and/or support for null
 
 
     // TODO: I added this Surface by analogy with the one in SettingsScreen, but it appears to have
@@ -1338,134 +1335,130 @@ fun HomeScreen(navController: NavHostController) {
     // No - it is there, but even if I remove this surface it is still there. I will have to experiment further. Part of the issue may be that it's the top-level Nav thing which is responsible.
     // Surface(modifier = Modifier.fillMaxSize()/*, color=MaterialTheme.colorScheme.surface */) {
 
-        Scaffold(
-            modifier = Modifier.fillMaxSize().background(Color.Red /* TODO DEBUG HACK */),
-            topBar = {
-                TopAppBar(
-                    title = { Text("My App Name Here") },
-                    actions = {
-                        IconButton(onClick = { menuExpanded = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                        }
+    Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Red /* TODO DEBUG HACK */),
+        topBar = {
+            TopAppBar(title = { Text("My App Name Here") }, actions = {
+                IconButton(onClick = { menuExpanded = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                }
 
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false }) {
-                            // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
-                            DropdownMenuItem(
-                                text = { Text("Edit product list") },
-                                onClick = {
-                                    menuExpanded = false
-                                    // Handle navigation or action
-                                })
-                            DropdownMenuItem(
-                                text = { Text("Edit categories") },
-                                onClick = {
-                                    menuExpanded = false
-                                })
-                            DropdownMenuItem(text = { Text("Settings") }, onClick = {
-                                menuExpanded = false
-                                navController.navigate("settings")
-                            })
-                        }
-                    }
-                )
-            },
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(androidx.compose.foundation.rememberScrollState())
-                    .padding(innerPadding)
-                    .padding(horizontal = screenBorder)
-                    .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
+                DropdownMenu(
+                    expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
+                    DropdownMenuItem(text = { Text("Edit product list") }, onClick = {
+                        menuExpanded = false
+                        // Handle navigation or action
+                    })
+                    DropdownMenuItem(text = { Text("Edit categories") }, onClick = {
+                        menuExpanded = false
+                    })
+                    DropdownMenuItem(text = { Text("Settings") }, onClick = {
+                        menuExpanded = false
+                        navController.navigate("settings")
+                    })
+                }
+            })
+        },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(androidx.compose.foundation.rememberScrollState())
+                .padding(innerPadding)
+                .padding(horizontal = screenBorder)
+                .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
 
-            ) {
-                MainScreen(selectedProductId = selectedProductId, onSelectedProductIdChange = { selectedProductId = it } ) // TODO: rename this
+        ) {
+            MainScreen(
+                selectedProductId = selectedProductId,
+                onSelectedProductIdChange = { selectedProductId = it }) // TODO: rename this
 
-                /*
-                // TODO TEMP HACK FOR KEYBOARD/SCROLLING EXPERIMENTS
-                Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
-                var packSize by remember { mutableStateOf("123") }
-                TextField(
-                    label = { Text("Pack size") },
-                    value = packSize,
-                    onValueChange = { packSize = it },
-                    // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth().bringIntoViewRequester(bringIntoViewRequester)
-                        .onFocusChanged {
-                            if (it.isFocused) {
-                                coroutineScope.launch {
-                                    bringIntoViewRequester.bringIntoView()
-                                }
+            /*
+            // TODO TEMP HACK FOR KEYBOARD/SCROLLING EXPERIMENTS
+            Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
+            var packSize by remember { mutableStateOf("123") }
+            TextField(
+                label = { Text("Pack size") },
+                value = packSize,
+                onValueChange = { packSize = it },
+                // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth().bringIntoViewRequester(bringIntoViewRequester)
+                    .onFocusChanged {
+                        if (it.isFocused) {
+                            coroutineScope.launch {
+                                bringIntoViewRequester.bringIntoView()
                             }
-                        })
-                        */
+                        }
+                    })
+                    */
 
-                androidx.compose.foundation.layout.Spacer(
-                    modifier = androidx.compose.ui.Modifier.height(
-                        8.dp
+            androidx.compose.foundation.layout.Spacer(
+                modifier = androidx.compose.ui.Modifier.height(
+                    8.dp
+                )
+            )
+
+            ItemSourceInfo(
+                selectedProductId = selectedProductId,
+                onClickEdit = { /* showEditDialog = true  */ navController.navigate("fullScreenDialog") })
+
+            androidx.compose.foundation.layout.Spacer(
+                modifier = androidx.compose.ui.Modifier.height(
+                    8.dp
+                )
+            )
+
+            // TODO: This mock data shows some questions:
+            // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
+            // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
+            // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
+            // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
+            // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
+            // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
+            // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
+            // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
+            // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
+            // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
+            // but things are slightly different if we go with this approach.
+            // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
+            val header = kotlin.collections.listOf("Source", "£/100g", "Notes")
+            // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
+            val data = kotlin.collections.listOf(
+                kotlin.collections.listOf(
+                    "Tesco", "£2.13", "Tesco Finest is actually cheapest"
+                ),
+                kotlin.collections.listOf("Sainsbury's Local", "£2.94", ""),
+                kotlin.collections.listOf("Asda", "£2.08", "KTC brand"),
+                kotlin.collections.listOf("Iceland", "£2.38", ""),
+                // …
+            )
+
+            // TODO: Price column should be right-aligned, of course
+            androidx.compose.material3.Card(
+                modifier = androidx.compose.ui.Modifier
+                    //.weight(1f, fill=false) // only component with weight, so fills all remaining space
+                    .fillMaxWidth(),
+                colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainer)
+            ) {
+                androidx.compose.foundation.layout.Box(
+                    modifier = androidx.compose.ui.Modifier.padding(
+                        horizontal = 8.dp, vertical = 12.dp
                     )
-                )
-
-                ItemSourceInfo(selectedProductId = selectedProductId, onClickEdit = { /* showEditDialog = true  */ navController.navigate("fullScreenDialog") } )
-
-                androidx.compose.foundation.layout.Spacer(
-                    modifier = androidx.compose.ui.Modifier.height(
-                        8.dp
-                    )
-                )
-
-                // TODO: This mock data shows some questions:
-                // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
-                // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
-                // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
-                // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
-                // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
-                // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
-                // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
-                // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
-                // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
-                // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
-                // but things are slightly different if we go with this approach.
-                // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
-                val header = kotlin.collections.listOf("Source", "£/100g", "Notes")
-                // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
-                val data = kotlin.collections.listOf(
-                    kotlin.collections.listOf(
-                        "Tesco",
-                        "£2.13",
-                        "Tesco Finest is actually cheapest"
-                    ),
-                    kotlin.collections.listOf("Sainsbury's Local", "£2.94", ""),
-                    kotlin.collections.listOf("Asda", "£2.08", "KTC brand"),
-                    kotlin.collections.listOf("Iceland", "£2.38", ""),
-                    // …
-                )
-
-                // TODO: Price column should be right-aligned, of course
-                androidx.compose.material3.Card(
-                    modifier = androidx.compose.ui.Modifier
-                        //.weight(1f, fill=false) // only component with weight, so fills all remaining space
-                        .fillMaxWidth(),
-                    colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainer)
                 ) {
-                    androidx.compose.foundation.layout.Box(
-                        modifier = androidx.compose.ui.Modifier.padding(
-                            horizontal = 8.dp, vertical = 12.dp
-                        )
-                    ) {
-                        DataTable(
-                            header = header, rows = data,
-                            // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
-                            columnWeights = kotlin.collections.listOf(1.6f, 1f, 2.2f)
-                        )
-                    }
+                    DataTable(
+                        header = header, rows = data,
+                        // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
+                        columnWeights = kotlin.collections.listOf(1.6f, 1f, 2.2f)
+                    )
                 }
             }
-
         }
+
+    }
 
     /* TODO
     // MD3 spec sort of says that on Android we should be using an "expand" transition to
@@ -1481,7 +1474,7 @@ fun HomeScreen(navController: NavHostController) {
     AnimatedFullScreenDialog(visible = showEditDialog, onDismiss = { showEditDialog = false }) {
                         OuterFullScreenDialog()
                     } */
-                }
+}
 
 // https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/
 @ReadOnlyComposable
@@ -1499,7 +1492,9 @@ fun OuterFullScreenDialog() {
             TopAppBar(
                 navigationIcon = {
                     IconButton(onClick = { showEditDialog = false }) {
-                        Icon(Icons.Default.Close, contentDescription = "Close") } },
+                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    }
+                },
                 title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price", you can also eg edit pack size and probably a free text notes field etc
                 actions = {
                     // TODO: Can/should there be an icon with this textbutton?
@@ -1512,81 +1507,95 @@ fun OuterFullScreenDialog() {
     ) { innerPadding ->
 
         // TODO: We could probably just pass innerPadding through to FullScreenDialog, that may or may not be clearer
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = screenBorder).background(MaterialTheme.colorScheme.primary /* TODO DEBUG HACK SHOULD BE SOMETHING ELSE MAYBE NOT NEEDED TO BE SPEC EXPLICITLY */).verticalScroll(rememberScrollState())) {
-                var packSize by remember { mutableStateOf("123") }
-                var selectedUnitId: Long by remember { mutableStateOf(1 ) }
-                var packPrice by remember { mutableStateOf("2.98") }
-                var notes by remember { mutableStateOf("Aldi price match; don't know how long this will last.") }
-                    // TODO: Product and Store should maybe be in a row. Just hacking up a rough
-                    // dialog here for testing of my dialog box code (esp focus stuff) for now.
-                    LabeledItem(label = "Product") {
-                        Text("Ground coffee")
-                    }
-                    Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
-                    LabeledItem(label = "Store") {
-                        Text("Tesco")
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    val units = mutableListOf(UnitX(1, "g"), UnitX(2, "kg"), UnitX(3, "oz"), UnitX(4, "ml"), UnitX(5, "l"))
-                    Row {
-                        // TODO: Don't really like this way of showing pack size and unit etc, but
-                        // this is just a quick hack to get some "realistic-ish" content on the
-                        // dialog for testing
-                        // TODO: Using weight to size the components is also sucky, since we really
-                        // just want "a reasonable fixed size" for the unit with
-                        // the product taking whatever's left, but this will do for now.
-                        // TODO: This TextField will *not* show a cursor or let the value be changed
-                        // - I don't know if this is because my dialog code is breaking it, or I've
-                        // done something wrong here. OK, if I copy this code to HomeScreen() it
-                        // works, so it is probably dialog related. Yay!
-                        // TODO: Should I use OutlinedTextFields here? If so, for the drop down too.
-                        // TODO: Note that "Pack size" is blue only when the field is selected, but
-                        // "Unit" is always blue. This may be a localised colour tweak or it may be
-                        // a systemic glitch e.g. with my dropdown menu. FWIW the background of the
-                        // two fields appears to change differenly as I navigate around with cursor
-                        // keys too, although this *might* be normal - but worth trying to
-                        // investigate.
-                        // TODO: When the onscreen keyboard is up for "pack size", clicking on unit
-                        // opens the dropdown and hides the keyboard but the dropdown gets
-                        // positioned "to avoid" the keyboard - this might be normal/OK, but
-                        // check/read/think
-                        TextField(
-                            label = { Text("Pack size") },
-                            value = packSize,
-                            onValueChange = { packSize = it },
-                            // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            modifier = Modifier.weight(1f))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
-                        MyExposedDropdownMenuBox(
-                            selectedId = selectedUnitId,
-                            onValueChange = { selectedUnitId = it },
-                            label = { Text("Unit") },
-                            items = units,
-                            modifier = Modifier.weight(0.5f),
-                            getId = { it.id },
-                            getLabel = { it.name },
-                        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = screenBorder)
+                .background(MaterialTheme.colorScheme.primary /* TODO DEBUG HACK SHOULD BE SOMETHING ELSE MAYBE NOT NEEDED TO BE SPEC EXPLICITLY */)
+                .verticalScroll(rememberScrollState())
+        ) {
+            var packSize by remember { mutableStateOf("123") }
+            var selectedUnitId: Long by remember { mutableStateOf(1) }
+            var packPrice by remember { mutableStateOf("2.98") }
+            var notes by remember { mutableStateOf("Aldi price match; don't know how long this will last.") }
+            // TODO: Product and Store should maybe be in a row. Just hacking up a rough
+            // dialog here for testing of my dialog box code (esp focus stuff) for now.
+            LabeledItem(label = "Product") {
+                Text("Ground coffee")
+            }
+            Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
+            LabeledItem(label = "Store") {
+                Text("Tesco")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            val units = mutableListOf(
+                UnitX(1, "g"),
+                UnitX(2, "kg"),
+                UnitX(3, "oz"),
+                UnitX(4, "ml"),
+                UnitX(5, "l")
+            )
+            Row {
+                // TODO: Don't really like this way of showing pack size and unit etc, but
+                // this is just a quick hack to get some "realistic-ish" content on the
+                // dialog for testing
+                // TODO: Using weight to size the components is also sucky, since we really
+                // just want "a reasonable fixed size" for the unit with
+                // the product taking whatever's left, but this will do for now.
+                // TODO: This TextField will *not* show a cursor or let the value be changed
+                // - I don't know if this is because my dialog code is breaking it, or I've
+                // done something wrong here. OK, if I copy this code to HomeScreen() it
+                // works, so it is probably dialog related. Yay!
+                // TODO: Should I use OutlinedTextFields here? If so, for the drop down too.
+                // TODO: Note that "Pack size" is blue only when the field is selected, but
+                // "Unit" is always blue. This may be a localised colour tweak or it may be
+                // a systemic glitch e.g. with my dropdown menu. FWIW the background of the
+                // two fields appears to change differenly as I navigate around with cursor
+                // keys too, although this *might* be normal - but worth trying to
+                // investigate.
+                // TODO: When the onscreen keyboard is up for "pack size", clicking on unit
+                // opens the dropdown and hides the keyboard but the dropdown gets
+                // positioned "to avoid" the keyboard - this might be normal/OK, but
+                // check/read/think
+                TextField(
+                    label = { Text("Pack size") },
+                    value = packSize,
+                    onValueChange = { packSize = it },
+                    // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
+                MyExposedDropdownMenuBox(
+                    selectedId = selectedUnitId,
+                    onValueChange = { selectedUnitId = it },
+                    label = { Text("Unit") },
+                    items = units,
+                    modifier = Modifier.weight(0.5f),
+                    getId = { it.id },
+                    getLabel = { it.name },
+                )
 
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute max)
-                    TextField(
-                        label = { Text("Pack price") },
-                        prefix = { Text("£") },
-                        value = packPrice,
-                        onValueChange = { packPrice = it },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                    )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute max)
+            TextField(
+                label = { Text("Pack price") },
+                prefix = { Text("£") },
+                value = packPrice,
+                onValueChange = { packPrice = it },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-                    // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
-                    TextField(
-                        label = { Text( "Notes") },
-                        value = notes,
-                        onValueChange = { notes = it },
-                    )
+            Spacer(modifier = Modifier.height(8.dp))
+            // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
+            TextField(
+                label = { Text("Notes") },
+                value = notes,
+                onValueChange = { notes = it },
+            )
             //}
         }
     }
@@ -1597,17 +1606,15 @@ fun SettingsScreen(navController: NavHostController) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                title = { Text("Settings") },
-                navigationIcon = {
+            TopAppBar(title = { Text("Settings") }, navigationIcon = {
 
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                })
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+            })
         },
     ) { innerPadding ->
         Column(
@@ -1617,11 +1624,11 @@ fun SettingsScreen(navController: NavHostController) {
                 .padding(horizontal = screenBorder)
                 .background(MaterialTheme.colorScheme.primary) // TODO: debug hack
 
-                // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
+            // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
-                Text("TODO SETTINGS")
-            }
+            Text("TODO SETTINGS")
         }
+    }
     //}
 }
 
@@ -1659,15 +1666,16 @@ class MainActivity : ComponentActivity() {
                 // the individual screens. Honestly don't know any more. There might be some slightly odd colours on the O6 but maybe
                 // they are just its theme. I will have to play around with this and maybe it will become clearer as I write more code
                 // etc. fillMaxHeight() is perhaps a bit unusual here but I was experimenting and thought I'd leave it in for now.
-                Surface(modifier = Modifier
-                    .fillMaxSize()
-                    /* .safeDrawingPadding() */.imePadding(), color = Color.Green /* MaterialTheme.colorScheme.background */) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()/* .safeDrawingPadding() */.imePadding(),
+                    color = Color.Green /* MaterialTheme.colorScheme.background */
+                ) {
                     Box(modifier = Modifier.safeDrawingPadding()) {
                         AppNavigation()
                     }
                 }
-            }
-            /* TODO
+            }/* TODO
             // 1) Set up NavController
             val navController = rememberNavController()
             // 2) Observe the current entry; this is a State<NavBackStackEntry?>.
@@ -1768,7 +1776,8 @@ fun AppNavigation() {
         // and does actually seem to more-or-less behave (and consistently too). I didn't want to force 700ms, this feels a smidge fast at the (I think) default 300 but I think it is OK.
         // No, no, it isn't consistent. Sometimes the back animation is much faster than others. Not a clue. Not a f* clue.
 
-        composable("home",
+        composable(
+            "home",
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
             /*
@@ -1802,16 +1811,17 @@ fun AppNavigation() {
         val tweenDurationMillisEnter = 700; // TODO: should probably be 300 in final version
         val tweenDurationMillisExit = 700; // TODO: should probably be 250 in final version
         composable(
-            "settings",
-            enterTransition = {
+            "settings", enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
 
-                    animationSpec = tween(durationMillis = tweenDurationMillisEnter, easing = LinearOutSlowInEasing),
+                    animationSpec = tween(
+                        durationMillis = tweenDurationMillisEnter,
+                        easing = LinearOutSlowInEasing
+                    ),
                 )
 
-            },
-            /* TODO This is probably not used as this is a "leaf" screen
+            },/* TODO This is probably not used as this is a "leaf" screen
             exitTransition = {
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
@@ -1828,10 +1838,12 @@ fun AppNavigation() {
             popExitTransition = {
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(durationMillis = tweenDurationMillisExit, easing=FastOutLinearInEasing)
+                    animationSpec = tween(
+                        durationMillis = tweenDurationMillisExit,
+                        easing = FastOutLinearInEasing
+                    )
                 )
-            }
-        ) {
+            }) {
             SettingsScreen(navController)
         }
         // TODO: This needs the correct vertical transitions, but let's not fuss with that for now
@@ -1860,7 +1872,6 @@ fun AppNavigation() {
 // TODO: There is an ugly animation glitch where the "T" of "TODO" on SettingsScreen hangs around far too long when transitioning between home and settings. This wasn't visible before I added the previously-lost border at the left and right of the main activity. It feels like this might be a clue to some problem with the animations but I am far from sure. In practice this will probably not be an issue if we add the same border to settings, but I am not sure that's a "fix" even if it does happen.
 
 // TODO: In final version make sure e.g. going from home to settings to back doesn't lose category/product/source - I think it does now, but since it's all hacky that is fine in short term
-
 
 
 // General note type comments to put somewhere appropriate in long term:
