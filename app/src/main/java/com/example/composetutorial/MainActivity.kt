@@ -307,7 +307,6 @@ fun MainScreen() {
 
     var vm: PriceTrackerViewModel = viewModel()
     var products = vm.products.collectAsStateWithLifecycle(initialValue = emptyList())
-    // TODO: WTAFF with this "nullnss"? I have to jump through hoops because for a few milliseconds we may not have data but we "have" to display our screen?
     val productMap by vm.productMap.collectAsStateWithLifecycle(initialValue = emptyMap())
 
     Column(
