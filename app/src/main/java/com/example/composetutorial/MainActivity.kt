@@ -1150,7 +1150,7 @@ fun HomeScreen(navController: NavHostController) {
     // Surface(modifier = Modifier.fillMaxSize()/*, color=MaterialTheme.colorScheme.surface */) {
 
         Scaffold(
-            modifier = Modifier.fillMaxSize().imePadding(),
+            modifier = Modifier.fillMaxSize().imePadding().background(Color.Red /* TODO DEBUG HACK */),
             topBar = {
                 TopAppBar(
                     title = { Text("My App Name Here") },
@@ -1212,6 +1212,7 @@ fun HomeScreen(navController: NavHostController) {
                             }
                         })
 
+                /* TODO TEMP COMMENTED OUT
                 androidx.compose.foundation.layout.Spacer(
                     modifier = androidx.compose.ui.Modifier.height(
                         8.dp
@@ -1272,6 +1273,7 @@ fun HomeScreen(navController: NavHostController) {
                         )
                     }
                 }
+                */
             }
 
         }
@@ -1468,7 +1470,7 @@ class MainActivity : ComponentActivity() {
                 // etc. fillMaxHeight() is perhaps a bit unusual here but I was experimenting and thought I'd leave it in for now.
                 Surface(modifier = Modifier
                     .fillMaxSize()
-                    /* .safeDrawingPadding() */, color = /* Color.Red */ MaterialTheme.colorScheme.background) {
+                    /* .safeDrawingPadding() */, color = Color.Green /* MaterialTheme.colorScheme.background */) {
                     Box(modifier = Modifier.safeDrawingPadding()) {
                         AppNavigation()
                     }
