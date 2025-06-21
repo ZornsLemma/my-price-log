@@ -273,12 +273,15 @@ class PriceTrackerViewModel : ViewModel() {
     val products: Flow<List<Product>> = repository.getAllProducts()
 
     // Optional: Map for efficient lookups, computed as a Flow
-    // TODO: Is it actually correct that this will not recalculate unless products changes? If that isn't true, this is inefficient. I think I was told it was smart, but who knows.
     val productMap: Flow<Map<Long, Product>> = products.map { list ->
         list.associateBy { it.id }
     }
 
     val stores: Flow<List<Store>> = repository.getAllStores()
+
+    val storeMap: Flow<Map<Long, Store>> = stores.map { list ->
+        list.associateBy { it.id }
+    }
 
     val categories: Flow<List<Category>> = repository.getAllCategories()
 
@@ -1490,6 +1493,8 @@ fun OuterFullScreenDialog(navController: NavHostController, productId: Long, sto
     // TODO: Should we just have the caller pass the product name through so we don't have to do this lookup? the viewmodel should have the data cached, but we still have to through the collectstatewithlifecycle overhead?
     val productMap by vm.productMap.collectAsStateWithLifecycle(initialValue = emptyMap())
     val productName = productMap[productId]?.name ?: "Invalid product ID $productId"
+    val storeMap by vm.storeMap.collectAsStateWithLifecycle(initialValue = emptyMap())
+    val storeName = storeMap[storeId]?.name ?: "Invalid store ID $storeId"
     var showEditDialog by rememberSaveable { mutableStateOf(false) } // TODO PROB WRONG BUT HACKILY REFACTORING
 
     Scaffold(
@@ -1532,7 +1537,7 @@ fun OuterFullScreenDialog(navController: NavHostController, productId: Long, sto
             }
             // Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
             LabeledItem(label = "Store") {
-                Text("Tesco")
+                Text(storeName)
             }
             Spacer(modifier = Modifier.height(8.dp))
             val units = mutableListOf(
