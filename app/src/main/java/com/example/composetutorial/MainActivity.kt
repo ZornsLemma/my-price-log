@@ -375,7 +375,7 @@ fun MainScreen(selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Un
 
         // Product Selector
         TextField(
-            value = productMap.get(selectedProductId)?.name ?: "Invalid product ID",
+            value = productMap[selectedProductId]?.name ?: "Invalid product ID $selectedProductId",
             onValueChange = { /* No-op, read-only */ },
             label = { Text("Product") },
             enabled = false, // TODO: this is necessary to make "clickable" work, it looks wrong but this is all an experimental hack anyway
@@ -468,7 +468,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
         items.associateBy { getId(it) } // TODO: inefficient? should we make caller supply use with this so viewmodel can be caching it?
     val PULLEDOUT: String = if (selectedId == null) "" else {
         val item = itemMap[selectedId]
-        if (item != null) getLabel(item) else "Invalid ID"
+        if (item != null) getLabel(item) else "Invalid ID $selectedId"
     }
     Box(modifier = modifier) {
         TextField(
@@ -1489,8 +1489,7 @@ fun OuterFullScreenDialog(navController: NavHostController, productId: Long, sto
     var vm: PriceTrackerViewModel = viewModel()
     // TODO: Should we just have the caller pass the product name through so we don't have to do this lookup? the viewmodel should have the data cached, but we still have to through the collectstatewithlifecycle overhead?
     val productMap by vm.productMap.collectAsStateWithLifecycle(initialValue = emptyMap())
-    val product = productMap[productId]
-    val productName = if (product != null) product.name else "Invalid product ID"
+    val productName = productMap[productId]?.name ?: "Invalid product ID $productId"
     var showEditDialog by rememberSaveable { mutableStateOf(false) } // TODO PROB WRONG BUT HACKILY REFACTORING
 
     Scaffold(
