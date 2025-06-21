@@ -328,7 +328,7 @@ val screenBorder = 8.dp
 
 // Start Grok chunk
 @Composable
-fun MainScreen() {
+fun MainScreen(selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Unit) {
     // TODO: Note that because category and product use a TextField, they have the (I think) nice
     // property that the label expands into a sort of big hint when they are empty. We should
     // probably take advantage of this where having them empty makes sense - and it probably does
@@ -336,7 +336,6 @@ fun MainScreen() {
     // the database in theory. TODO: We should make sure we have the same behaviour for Source,
     // because that actually *should* allow the user to easily set it to empty/none.
     var selectedCategoryId:Long? by remember { mutableStateOf(null) } // TODO: do we actually allow nulls for category?
-    var selectedProductId:Long by rememberSaveable { mutableStateOf( 1) } // TODO: massive hack defaulting to hardcoded, we need a genuine ID from somewhere and/or support for null
     var showProductSheet by remember { mutableStateOf(false) }
     //val categories = listOf("Demo", "Groceries (home)", "Groceries (Manchester)")
     //val products = listOf("Beans", "Milk", "Bread", "Chicken" /* ... */)
@@ -417,7 +416,7 @@ fun MainScreen() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        selectedProductId = product.id
+                                        onSelectedProductIdChange(product.id)
                                         showProductSheet = false
                                     })
                         }
@@ -1329,6 +1328,8 @@ fun HomeScreen(navController: NavHostController) {
     var showEditDialog by rememberSaveable { mutableStateOf(false) }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
+    var selectedProductId:Long by rememberSaveable { mutableStateOf( 1) } // TODO: massive hack defaulting to hardcoded, we need a genuine ID from somewhere and/or support for null
+
 
     // TODO: I added this Surface by analogy with the one in SettingsScreen, but it appears to have
     // no real effect - even if I set its color to Red or primary, nothing shows.
@@ -1380,7 +1381,7 @@ fun HomeScreen(navController: NavHostController) {
                     .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
 
             ) {
-                MainScreen() // TODO: rename this
+                MainScreen(selectedProductId = selectedProductId, onSelectedProductIdChange = { selectedProductId = it } ) // TODO: rename this
 
                 /*
                 // TODO TEMP HACK FOR KEYBOARD/SCROLLING EXPERIMENTS
@@ -1408,8 +1409,7 @@ fun HomeScreen(navController: NavHostController) {
                     )
                 )
 
-                // TODO: Hard-coding selectedProductId is a hack but I don't want to refactor to make this "available" when it is currently living inside MainScreen()
-                ItemSourceInfo(selectedProductId = 1, onClickEdit = { /* showEditDialog = true  */ navController.navigate("fullScreenDialog") } )
+                ItemSourceInfo(selectedProductId = selectedProductId, onClickEdit = { /* showEditDialog = true  */ navController.navigate("fullScreenDialog") } )
 
                 androidx.compose.foundation.layout.Spacer(
                     modifier = androidx.compose.ui.Modifier.height(
