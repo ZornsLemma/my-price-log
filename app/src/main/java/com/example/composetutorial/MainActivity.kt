@@ -180,6 +180,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -220,12 +221,14 @@ class PriceTrackerRepository {
         Store(1, "Walmart"),
         Store(2, "Target"))
     )
-    private val prices = mutableListOf<Price>(
+    private val _prices = mutableListOf(
         Price(1, 1, 3.99, "Organic milk at Walmart"),
         Price(1, 2, 4.29, "Organic milk at Target"),
         Price(2, 1, 2.49, "Whole wheat bread at Walmart"),
         Price(2, 2, 2.79, "Whole wheat bread at Target")
     )
+
+    private val prices = MutableStateFlow<List<Price>>(_prices)
 
     fun getAllCategories(): Flow<List<Category>> = categories
 
@@ -237,11 +240,24 @@ class PriceTrackerRepository {
 
     fun getAllStores(): Flow<List<Store>> = stores
 
+    /* TODO
     fun getPricesForProduct(productId: Long): List<Price> =
         prices.filter { it.productId == productId }
+        */
 
-    fun getPriceForProductAndStore(productId: Long, storeId: Long): Price? =
-        prices.find { it.productId == productId && it.storeId == storeId }
+
+    // We expect the returned list to have 0 or 1 items
+    fun getPriceForProductAndStore(productId: Long, storeId: Long): Flow<List<Price>> {
+        // TODO: I assume we use find() here to avoid duplicating data, but in a db-backed version
+        // this would be an actual SELECT. I suspect this code might *work* without writing a
+        // SELECT and we'd end up doing an in memory join after pulling in the entire tables.
+        val result = _prices.find { it.productId == productId && it.storeId == storeId }
+        if (result == null) {
+            return flowOf(listOf())
+        } else {
+            return flowOf(listOf(result))
+        }
+    }
 }
 
 class PriceTrackerViewModel : ViewModel() {
@@ -272,13 +288,16 @@ class PriceTrackerViewModel : ViewModel() {
         */
 
 
+    /* TODO
     // Prices for selected product (external to ViewModel)
     fun getPricesForProduct(productId: Long): List<Price> {
         return repository.getPricesForProduct(productId)
     }
+    */
 
     // Price details for selected product and store (external to ViewModel)
-    fun getPriceDetailsForProductAndStore(productId: Long, storeId: Long): Price? {
+    @Composable // TODO!?
+    fun getPriceDetailsForProductAndStore(productId: Long, storeId: Long): Flow<List<Price>> {
         return repository.getPriceForProductAndStore(productId, storeId)
     }
 }
@@ -323,6 +342,7 @@ fun MainScreen() {
     //val products = listOf("Beans", "Milk", "Bread", "Chicken" /* ... */)
     var searchQuery by remember { mutableStateOf("") }
 
+    // TODO: I suspect in general (not just here) I should be passing viewmodel *into* these functions rather than getting it from "global", to allow for dependency injection. but in practice it wouldn't be hard to rework this after and i am not sure this ui stuff is testable - I really don't know how it works.
     var vm: PriceTrackerViewModel = viewModel()
     val categories by vm.categories.collectAsStateWithLifecycle(initialValue = emptyList())
     val products by vm.products.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -553,7 +573,7 @@ fun MyFullScreenDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
-fun ItemSourceInfo(onClickEdit: () -> Unit) {
+fun ItemSourceInfo(selectedProductId: Long?, onClickEdit: () -> Unit) {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
     var expanded by remember { mutableStateOf(false) }
     var currentUnit by remember { mutableStateOf("100g") }
@@ -604,62 +624,74 @@ fun ItemSourceInfo(onClickEdit: () -> Unit) {
                 getLabel = { it.name },
             )
             if (selectedSourceId != null) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+                // TODO: DEFAULTING TO PRODUCT ID 1 IS A MASSIVE HACK BUT I DON'T WANT TO GET SIDETRACKED THINKING ABOUT NULL CASE RIGHT NOW
+                val priceList by vm.getPriceDetailsForProductAndStore(productId = if (selectedProductId == null) 1 else selectedProductId, storeId = selectedSourceId!!).collectAsStateWithLifecycle(initialValue = emptyList())
+                check(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
 
-                    LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Price as sold"
-                    ) { // TODO: quite like this, but maybe "Shelf price"?
-                        Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
-                    }
-                    LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Last checked") {
-                        Text("5 days ago") // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
-                    }
-                    LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Unit price") {
-                        Row() {
-                            Text("£2.30/")
-                            Box {
-                                Row(
-                                    modifier = Modifier.clickable { expanded = true },
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
+                if (priceList.isEmpty()) {
+                    // TODO: Very quick hack
+                    Text("TODO: No price, do something useful here")
+                } else {
 
-                                    Text(
-                                        text = currentUnit,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        modifier = Modifier.alignBy(LastBaseline)
-                                    )
-                                    Icon(
-                                        imageVector = Icons.Default.ArrowDropDown,
-                                        contentDescription = "Select unit",
-                                        modifier = Modifier.size(iconSize /* 16.dp */)
-                                    )
-                                }
-                                // TODO: I probably actually don't want this dropdown. It just *might* make sense to allow
-                                // the unit to be temporarily changed here (some slightly contrived situation where we're
-                                // looking at a new product on shelf and want to see if it's potentially cheaper but it
-                                // uses a different unit price as shown on shelf, for example - but we're already not
-                                // doing that well, if anything we want a "check new product" option which lets us enter
-                                // its pack size and shelf price and compute unit price ourself, there may not be a unit
-                                // price on shelf or it may not be correct if there's an offer), but it's far from clear,
-                                // and if anything it might make more sense to have a screen-wide "temporarily use X as
-                                // the unit price unit" setting which also affects the card with the cross-store prices
-                                // on. I won't rip this out of the UI yet, but I suspect in a finished first version of
-                                // the app this code will be gone, at least from specifically here.
-                                DropdownMenu(
-                                    expanded = expanded, onDismissRequest = { expanded = false }) {
-                                    var availableUnits = listOf("100g", "kg", "oz")
-                                    availableUnits.forEach { selectionOption ->
-                                        DropdownMenuItem(
-                                            text = { Text(selectionOption) },
-                                            onClick = {
-                                                currentUnit = selectionOption
-                                                expanded = false
-                                            })
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+
+                        LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Price as sold"
+                        ) { // TODO: quite like this, but maybe "Shelf price"?
+                            Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
+                        }
+                        LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Last checked") {
+                            Text("5 days ago") // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
+                        }
+                        LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Unit price") {
+                            Row() {
+                                Text("£2.30/")
+                                Box {
+                                    Row(
+                                        modifier = Modifier.clickable { expanded = true },
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+
+                                        Text(
+                                            text = currentUnit,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.alignBy(LastBaseline)
+                                        )
+                                        Icon(
+                                            imageVector = Icons.Default.ArrowDropDown,
+                                            contentDescription = "Select unit",
+                                            modifier = Modifier.size(iconSize /* 16.dp */)
+                                        )
+                                    }
+                                    // TODO: I probably actually don't want this dropdown. It just *might* make sense to allow
+                                    // the unit to be temporarily changed here (some slightly contrived situation where we're
+                                    // looking at a new product on shelf and want to see if it's potentially cheaper but it
+                                    // uses a different unit price as shown on shelf, for example - but we're already not
+                                    // doing that well, if anything we want a "check new product" option which lets us enter
+                                    // its pack size and shelf price and compute unit price ourself, there may not be a unit
+                                    // price on shelf or it may not be correct if there's an offer), but it's far from clear,
+                                    // and if anything it might make more sense to have a screen-wide "temporarily use X as
+                                    // the unit price unit" setting which also affects the card with the cross-store prices
+                                    // on. I won't rip this out of the UI yet, but I suspect in a finished first version of
+                                    // the app this code will be gone, at least from specifically here.
+                                    DropdownMenu(
+                                        expanded = expanded,
+                                        onDismissRequest = { expanded = false }) {
+                                        var availableUnits = listOf("100g", "kg", "oz")
+                                        availableUnits.forEach { selectionOption ->
+                                            DropdownMenuItem(
+                                                text = { Text(selectionOption) },
+                                                onClick = {
+                                                    currentUnit = selectionOption
+                                                    expanded = false
+                                                })
+                                        }
                                     }
                                 }
                             }
@@ -1372,7 +1404,8 @@ fun HomeScreen(navController: NavHostController) {
                     )
                 )
 
-                ItemSourceInfo(onClickEdit = { /* showEditDialog = true  */ navController.navigate("fullScreenDialog") } )
+                // TODO: Hard-coding selectedProductId is a hack but I don't want to refactor to make this "available" when it is currently living inside MainScreen()
+                ItemSourceInfo(selectedProductId = 1, onClickEdit = { /* showEditDialog = true  */ navController.navigate("fullScreenDialog") } )
 
                 androidx.compose.foundation.layout.Spacer(
                     modifier = androidx.compose.ui.Modifier.height(
