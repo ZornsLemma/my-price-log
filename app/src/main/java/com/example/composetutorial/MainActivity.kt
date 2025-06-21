@@ -131,6 +131,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -176,6 +177,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 // TODO: This is boilerplate *in memory* viewmodel stuff which I got from Grok. The idea is that I
@@ -196,10 +200,11 @@ data class Price(
     val details: String // Additional price details
 )
 
+// TODO: This is part way through being converted to use Flow
 class PriceTrackerRepository {
-    private val products = mutableListOf<Product>(
+    private val products = MutableStateFlow<List<Product>>(mutableListOf(
         Product(1, "Milk"),
-        Product(2, "Bread")
+        Product(2, "Bread"))
     )
     private val stores = mutableListOf<Store>(
         Store(1, "Walmart"),
@@ -212,7 +217,11 @@ class PriceTrackerRepository {
         Price(2, 2, 2.79, "Whole wheat bread at Target")
     )
 
-    fun getAllProducts(): List<Product> = products
+    fun getAllProducts(): Flow<List<Product>> = products
+
+    fun addProduct(product: Product) {
+        products.value = products.value + product
+    }
 
     fun getAllStores(): List<Store> = stores
 
@@ -223,53 +232,17 @@ class PriceTrackerRepository {
         prices.find { it.productId == productId && it.storeId == storeId }
 }
 
-class PriceTrackerViewModelBad : ViewModel() {
-    private val repository = PriceTrackerRepository() // For prototyping, instantiate directly
-
-    // State
-    private var selectedProductId: Long? = null
-    private var selectedStoreId: Long? = null
-
-    // Data exposed to UI
-    val products: List<Product> get() = repository.getAllProducts()
-    val stores: List<Store> get() = repository.getAllStores()
-
-    // Prices for selected product
-    val prices: List<Price>
-        get() = selectedProductId?.let { repository.getPricesForProduct(it) } ?: emptyList()
-
-    // Price details for selected product and store
-    val priceDetails: Price?
-        get() = selectedProductId?.let { productId ->
-            selectedStoreId?.let { storeId ->
-                repository.getPriceForProductAndStore(productId, storeId)
-            }
-        }
-
-    fun selectProduct(productId: Long) {
-        selectedProductId = productId
-        // Optionally reset store selection
-        selectedStoreId = null
-    }
-
-    fun selectStore(storeId: Long?) {
-        selectedStoreId = storeId
-    }
-}
-
 class PriceTrackerViewModel : ViewModel() {
     private val repository = PriceTrackerRepository()
 
-    // Data exposed to UI
-    private val _products = MutableLiveData<List<Product>>()
-    val products: LiveData<List<Product>> = _products
+    val products: Flow<List<Product>> = repository.getAllProducts()
 
-    // Automatically recompute the map when the products list changes
-    // TODO: ChatGPT magic here. I get the basic idea but it got this wrong (using something other than Transformations first) so this may well not be right or weird-but-works
-    val productMap: LiveData<Map<Long, Product>> = products.map { list ->
+    // Optional: Map for efficient lookups, computed as a Flow
+    val productMap: Flow<Map<Long, Product>> = products.map { list ->
         list.associateBy { it.id }
     }
 
+    /* TODO!?
     init {
         _products.postValue(repository.getAllProducts())
     }
@@ -278,6 +251,7 @@ class PriceTrackerViewModel : ViewModel() {
     fun updateProducts(newProducts: List<Product>) {
         _products.value = newProducts
     }
+    */
 
     val stores: List<Store> get() = repository.getAllStores()
 
@@ -331,9 +305,9 @@ fun MainScreen() {
     var searchQuery by remember { mutableStateOf("") }
 
     var vm: PriceTrackerViewModel = viewModel()
-    var productsLiveData = vm.products // TODO: redundant copy?! no idea how this works in Kotlin
+    var products = vm.products.collectAsState(initial = emptyList()) // TODO WTF?
     // TODO: WTAFF with this "nullnss"? I have to jump through hoops because for a few milliseconds we may not have data but we "have" to display our screen?
-    val productMap by vm.productMap.observeAsState()
+    val productMap by vm.productMap.collectAsState(initial = emptyMap()) // TODO: WTF?
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -378,11 +352,7 @@ fun MainScreen() {
         // Product Modal Bottom Sheet
         if (showProductSheet) {
             ModalBottomSheet(onDismissRequest = { showProductSheet = false }) {
-                val products by productsLiveData.observeAsState(initial = emptyList()) // TODO WTAF!?!?!
-                Log.d("MyApp", "FFS:" + products.joinToString(","))
-                val filteredProducts = products.filter {
-                    it.name.contains(searchQuery, ignoreCase = true)
-                }
+                //Log.d("MyApp", "FFS:" + items(products).joinToString(","))
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -399,7 +369,9 @@ fun MainScreen() {
                             )
                         })
                     LazyColumn {
-                        items(filteredProducts) { product ->
+                                                items(products.value.filter {
+                                                        it.name.contains(searchQuery, ignoreCase = true)
+                                                    }) { product ->
                             ListItem(
                                 headlineContent = { Text(product.name) },
                                 modifier = Modifier
