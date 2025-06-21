@@ -1346,6 +1346,7 @@ fun HomeScreen(navController: NavHostController) {
             ) {
                 MainScreen() // TODO: rename this
 
+                /*
                 // TODO TEMP HACK FOR KEYBOARD/SCROLLING EXPERIMENTS
                 Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
                 var packSize by remember { mutableStateOf("123") }
@@ -1363,6 +1364,7 @@ fun HomeScreen(navController: NavHostController) {
                                 }
                             }
                         })
+                        */
 
                 androidx.compose.foundation.layout.Spacer(
                     modifier = androidx.compose.ui.Modifier.height(
