@@ -580,7 +580,7 @@ fun MyFullScreenDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
-fun ItemSourceInfo(selectedProductId: Long?, onClickEdit: () -> Unit) {
+fun ItemSourceInfo(navController: NavHostController, selectedProductId: Long?) {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
     var expanded by remember { mutableStateOf(false) }
     var currentUnit by remember { mutableStateOf("100g") }
@@ -740,7 +740,8 @@ fun ItemSourceInfo(selectedProductId: Long?, onClickEdit: () -> Unit) {
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             FilledTonalButton(
-                                onClick = onClickEdit, shape = MaterialTheme.shapes.small
+                                onClick = { navController.navigate("fullScreenDialog/$selectedProductId/$selectedSourceId") },
+                                shape = MaterialTheme.shapes.small
                             ) {
                                 Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
                             }
@@ -1403,8 +1404,8 @@ fun HomeScreen(navController: NavHostController) {
             )
 
             ItemSourceInfo(
-                selectedProductId = selectedProductId,
-                onClickEdit = { /* showEditDialog = true  */ navController.navigate("fullScreenDialog") })
+                navController = navController,
+                selectedProductId = selectedProductId)
 
             androidx.compose.foundation.layout.Spacer(
                 modifier = androidx.compose.ui.Modifier.height(
@@ -1483,7 +1484,7 @@ fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvi
 
 
 @Composable
-fun OuterFullScreenDialog() {
+fun OuterFullScreenDialog(navController: NavHostController, productId: Long, storeId: Long) {
     var showEditDialog by rememberSaveable { mutableStateOf(false) } // TODO PROB WRONG BUT HACKILY REFACTORING
 
     Scaffold(
@@ -1847,8 +1848,11 @@ fun AppNavigation() {
             SettingsScreen(navController)
         }
         // TODO: This needs the correct vertical transitions, but let's not fuss with that for now
-        composable("fullScreenDialog") {
-            OuterFullScreenDialog()
+        composable("fullScreenDialog/{productId}/{storeId}") {
+            backStackEntry ->
+            val productId = backStackEntry.arguments?.getString("productId")?.toLong() ?: 0
+            val storeId = backStackEntry.arguments?.getString("storeId")?.toLong() ?: 0
+            OuterFullScreenDialog(navController, productId, storeId)
         }
     }
 }
