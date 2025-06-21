@@ -190,6 +190,10 @@ import kotlinx.coroutines.launch
 // database, which I will retrofit later. I have no idea if the code is actually correct, although
 // it seems simple enough that I don't think it hides too many nasty surprises.
 
+data class UnitX(val id: Long, val name: String) // TODO: very hacky, not sure how will represent this
+
+data class Category(val id: Long, val name: String)
+
 data class Product(val id: Long, val name: String)
 
 data class Store(val id: Long, val name: String)
@@ -203,13 +207,18 @@ data class Price(
 
 // TODO: This is part way through being converted to use Flow
 class PriceTrackerRepository {
+    private val categories = MutableStateFlow<List<Category>>(mutableListOf(
+        Category(1, "Demo"),
+        Category(2, "Groceries (home)"),
+        Category(3, "Groceries (Manchester)"))
+    )
     private val products = MutableStateFlow<List<Product>>(mutableListOf(
         Product(1, "Milk"),
         Product(2, "Bread"))
     )
-    private val stores = mutableListOf<Store>(
+    private val stores = MutableStateFlow<List<Store>>(mutableListOf(
         Store(1, "Walmart"),
-        Store(2, "Target")
+        Store(2, "Target"))
     )
     private val prices = mutableListOf<Price>(
         Price(1, 1, 3.99, "Organic milk at Walmart"),
@@ -218,13 +227,15 @@ class PriceTrackerRepository {
         Price(2, 2, 2.79, "Whole wheat bread at Target")
     )
 
+    fun getAllCategories(): Flow<List<Category>> = categories
+
     fun getAllProducts(): Flow<List<Product>> = products
 
     fun addProduct(product: Product) {
         products.value = products.value + product
     }
 
-    fun getAllStores(): List<Store> = stores
+    fun getAllStores(): Flow<List<Store>> = stores
 
     fun getPricesForProduct(productId: Long): List<Price> =
         prices.filter { it.productId == productId }
@@ -243,6 +254,10 @@ class PriceTrackerViewModel : ViewModel() {
         list.associateBy { it.id }
     }
 
+    val stores: Flow<List<Store>> = repository.getAllStores()
+
+    val categories: Flow<List<Category>> = repository.getAllCategories()
+
     /* TODO!?
     init {
         _products.postValue(repository.getAllProducts())
@@ -252,9 +267,10 @@ class PriceTrackerViewModel : ViewModel() {
     fun updateProducts(newProducts: List<Product>) {
         _products.value = newProducts
     }
-    */
 
     val stores: List<Store> get() = repository.getAllStores()
+        */
+
 
     // Prices for selected product (external to ViewModel)
     fun getPricesForProduct(productId: Long): List<Price> {
@@ -267,6 +283,7 @@ class PriceTrackerViewModel : ViewModel() {
     }
 }
 
+/* TODO
 class StoreEditorViewModel : ViewModel() {
     private val repository = PriceTrackerRepository()
 
@@ -282,6 +299,7 @@ class StoreEditorViewModel : ViewModel() {
         // Later, call repository.deleteStore()
     }
 }
+*/
 
 enum class ThemePreference {
     LIGHT, DARK, SYSTEM
@@ -298,14 +316,15 @@ fun MainScreen() {
     // everywhere, even if it's rare, because the user *could* go and delete every single item in
     // the database in theory. TODO: We should make sure we have the same behaviour for Source,
     // because that actually *should* allow the user to easily set it to empty/none.
-    var selectedCategory by remember { mutableStateOf("" /* "Dairy" */) }
+    var selectedCategoryId:Long? by remember { mutableStateOf(null) } // TODO: do we actually allow nulls for category?
     var selectedProductId:Long by rememberSaveable { mutableStateOf( 1) } // TODO: massive hack defaulting to hardcoded, we need a genuine ID from somewhere and/or support for null
     var showProductSheet by remember { mutableStateOf(false) }
-    val categories = listOf("Demo", "Groceries (home)", "Groceries (Manchester)")
+    //val categories = listOf("Demo", "Groceries (home)", "Groceries (Manchester)")
     //val products = listOf("Beans", "Milk", "Bread", "Chicken" /* ... */)
     var searchQuery by remember { mutableStateOf("") }
 
     var vm: PriceTrackerViewModel = viewModel()
+    val categories by vm.categories.collectAsStateWithLifecycle(initialValue = emptyList())
     val products by vm.products.collectAsStateWithLifecycle(initialValue = emptyList())
     val productMap by vm.productMap.collectAsStateWithLifecycle(initialValue = emptyMap())
 
@@ -315,14 +334,16 @@ fun MainScreen() {
         // Category Selector
         // TODO: I am starting to think this is the best drop down menu implementation (needs renaming to avoid confusion). We probably don't *want* the primary colour underline highlight here, given that e.g. "buttons" get highlighted by an overall colour change as this does rather than an "underline" - TextFields obviously *do* get this underline for whatever reason known only to MD3 specs, but our TextField is not a "real" TextField so this "darken whole thing" approach is probably consistent
         // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
-        ExposedDropdownMenuBox(
+        MyExposedDropdownMenuBox(
             modifier = Modifier
                 .padding(bottom = 8.dp)
                 .fillMaxWidth(),
-            value = selectedCategory,
-            onValueChange = { selectedCategory = it },
+            selectedId = selectedCategoryId,
+            onValueChange = { selectedCategoryId = it },
             label = { Text("Category") },
-            items = categories
+            items = categories,
+            getId = { it.id },
+            getLabel = { it.name },
         )
 
         // Product Selector
@@ -398,13 +419,16 @@ fun myTextFieldColors() = TextFieldDefaults.colors(
 // focusedIndicatorColor = MaterialTheme.colorScheme.primary, // TODO NOT WORKING
 )
 
+// TODO: THis needs support for selecting "None" - maybe we just make the user pass it in the input with a null ID, actually?
 @Composable
-fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly with the m3 component
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: @Composable () -> Unit,
+fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
+    selectedId: ID?,
+    onValueChange: (ID) -> Unit, // TODO: rename onItemSelected? is there a "standard" for e.g. the crappy MD3 experimental dropdown?
+    label: @Composable () -> Unit, // TODO: rename to distinguish from getLabel type use?
     supportingText: @Composable (() -> Unit)? = null,
-    items: List<String>,
+    items: List<T>,
+    getId: (T) -> ID,
+    getLabel: (T) -> String,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }/*
@@ -413,9 +437,14 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
     var indicatorColor by remember { mutableStateOf(unfocusedColor) } // TODO: ALL THIS STUFF ISN'T WORKING, I SUSPECT THE *FOCUS* ISN'T HITTING THE CONTROL AS IT'S DISABLED, BUT *SOMETHING* IS HITTING IT AND TOGGLING ITS COLOUR BUT IT ISN'T THIS, NOT SURE
     */
     var textFieldWidth by remember { mutableStateOf(0) }
+    val itemMap = items.associateBy { getId( it ) } // TODO: inefficient? should we make caller supply use with this so viewmodel can be caching it?
+    val PULLEDOUT: String = if (selectedId == null) "" else {
+        val item = itemMap[selectedId]
+        if (item != null) getLabel(item) else "Invalid ID"
+    }
     Box(modifier = modifier) {
         TextField(
-            value = value,
+            value = PULLEDOUT,
             onValueChange = { /* No-op, handled by dropdown */ },
             label = label,
             supportingText = supportingText,
@@ -448,12 +477,12 @@ fun ExposedDropdownMenuBox( // TODO: Rename this if keep, it clashes confusingly
                 // TODO: THE TEXT IN THIS DROPDOWN DOESN'T LEFT-ALIGN WITH THE PARENT TEXTFIELD
                 DropdownMenuItem(text = {
                     Text(
-                        item,
+                        getLabel(item),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }, contentPadding = PaddingValues(start = 16.dp), onClick = {
-                    onValueChange(item)
+                    onValueChange(getId(item))
                     expanded = false
                 })
             }
@@ -529,14 +558,17 @@ fun ItemSourceInfo(onClickEdit: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     var currentUnit by remember { mutableStateOf("100g") }
 
+    var vm: PriceTrackerViewModel = viewModel()
+    val sources by vm.stores.collectAsStateWithLifecycle(initialValue = emptyList())
+
     // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
     // changes the system font size. (Even if we didn't do this, we'd still want to use a fixed
     // size() Modifier (16.dp works quite nicely at the default settings on my current emulator) to
     // improve the appearance, but it's nicer to take font size into account.)
     val fontSize = MaterialTheme.typography.bodyLarge.fontSize
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
-    var selectedSource by rememberSaveable { mutableStateOf("") }
-    val sources = listOf("None", "Tesco", "Asda", "Sainsbury's Local", "Iceland")
+    var selectedSourceId: Long? by rememberSaveable { mutableStateOf(null) }
+    //val sources = listOf("None", "Tesco", "Asda", "Sainsbury's Local", "Iceland")
     // TODO: Will we have a free-form text field on item-at-source? For eg things like noting the specific product to help find it again.
     // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective, it's not as if the offer duration is usually clearly stated, free text note probably can be used for this among other things
     // TODO: Should we show free-form text or special offer information here?
@@ -557,18 +589,21 @@ fun ItemSourceInfo(onClickEdit: () -> Unit) {
                 .padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)
         ) {
             // TODO: We need to allow this to be set to empty/None by the user - how best to do that? And if it is empty, we need to collapse all the stuff below it and replace it with a brief instructional string roughly "Select a store to see and edit product details" - check the ChatGPT discussion I saved for some wording
-            ExposedDropdownMenuBox(
+            MyExposedDropdownMenuBox( // TODO: EXPLCIIT TYPES TEMP FOR DEBUG
                 modifier = Modifier
                     .padding(bottom = 8.dp)
                     .fillMaxWidth(),
-                value = selectedSource,
-                onValueChange = { selectedSource = if (it != "None") it else "" },
+                selectedId = selectedSourceId,
+                onValueChange = { selectedSourceId = it },
                 label = { Text("Source") },
-                supportingText = if (selectedSource != "") null else {
+                supportingText = if (selectedSourceId != null) null else {
                     { Text("Select a source to view or change the price there") }
                 },
-                items = sources)
-            if (selectedSource != "") {
+                items = sources,
+                getId = { it.id },
+                getLabel = { it.name },
+            )
+            if (selectedSourceId != null) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1440,7 +1475,7 @@ fun OuterFullScreenDialog() {
         // TODO: We could probably just pass innerPadding through to FullScreenDialog, that may or may not be clearer
         Column(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = screenBorder).background(MaterialTheme.colorScheme.primary /* TODO DEBUG HACK SHOULD BE SOMETHING ELSE MAYBE NOT NEEDED TO BE SPEC EXPLICITLY */).verticalScroll(rememberScrollState())) {
                 var packSize by remember { mutableStateOf("123") }
-                var selectedUnit by remember { mutableStateOf("g") }
+                var selectedUnitId: Long by remember { mutableStateOf(1 ) }
                 var packPrice by remember { mutableStateOf("2.98") }
                 var notes by remember { mutableStateOf("Aldi price match; don't know how long this will last.") }
                     // TODO: Product and Store should maybe be in a row. Just hacking up a rough
@@ -1453,7 +1488,7 @@ fun OuterFullScreenDialog() {
                         Text("Tesco")
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    val units = listOf("g", "kg", "oz", "ml", "l")
+                    val units = mutableListOf(UnitX(1, "g"), UnitX(2, "kg"), UnitX(3, "oz"), UnitX(4, "ml"), UnitX(5, "l"))
                     Row {
                         // TODO: Don't really like this way of showing pack size and unit etc, but
                         // this is just a quick hack to get some "realistic-ish" content on the
@@ -1485,12 +1520,14 @@ fun OuterFullScreenDialog() {
                             modifier = Modifier.weight(1f))
                         Spacer(modifier = Modifier.width(8.dp))
                         // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
-                        ExposedDropdownMenuBox(
-                            value = selectedUnit,
-                            onValueChange = { selectedUnit = it },
+                        MyExposedDropdownMenuBox(
+                            selectedId = selectedUnitId,
+                            onValueChange = { selectedUnitId = it },
                             label = { Text("Unit") },
                             items = units,
-                            modifier = Modifier.weight(0.5f)
+                            modifier = Modifier.weight(0.5f),
+                            getId = { it.id },
+                            getLabel = { it.name },
                         )
 
                     }
