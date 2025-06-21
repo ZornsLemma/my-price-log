@@ -167,6 +167,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -217,7 +218,7 @@ class PriceTrackerRepository {
         prices.find { it.productId == productId && it.storeId == storeId }
 }
 
-class PriceTrackerViewModel : ViewModel() {
+class PriceTrackerViewModelBad : ViewModel() {
     private val repository = PriceTrackerRepository() // For prototyping, instantiate directly
 
     // State
@@ -248,6 +249,24 @@ class PriceTrackerViewModel : ViewModel() {
 
     fun selectStore(storeId: Long?) {
         selectedStoreId = storeId
+    }
+}
+
+class PriceTrackerViewModel : ViewModel() {
+    private val repository = PriceTrackerRepository()
+
+    // Data exposed to UI
+    val products: List<Product> get() = repository.getAllProducts()
+    val stores: List<Store> get() = repository.getAllStores()
+
+    // Prices for selected product (external to ViewModel)
+    fun getPricesForProduct(productId: Long): List<Price> {
+        return repository.getPricesForProduct(productId)
+    }
+
+    // Price details for selected product and store (external to ViewModel)
+    fun getPriceDetailsForProductAndStore(productId: Long, storeId: Long): Price? {
+        return repository.getPriceForProductAndStore(productId, storeId)
     }
 }
 
@@ -288,6 +307,8 @@ fun MainScreen() {
     val categories = listOf("Demo", "Groceries (home)", "Groceries (Manchester)")
     val products = listOf("Beans", "Milk", "Bread", "Chicken" /* ... */)
     var searchQuery by remember { mutableStateOf("") }
+
+    var vm: PriceTrackerViewModel = viewModel()
 
     Column(
         modifier = Modifier.fillMaxWidth()
