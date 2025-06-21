@@ -1505,7 +1505,34 @@ fun OuterFullScreenDialog(navController: NavHostController, productId: Long, sto
     check(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
     // TODO: Create empty price like this feels crap, and it's also not right that the price defaults to 0.0 - it needs to be nullable, and possibly the price should be a string not a double at least in this context, not sure about db
     // TODO: price probably needs rememberSaveable
-    var price by rememberSaveable { mutableStateOf ( if (priceList.isEmpty()) Price(productId = productId, storeId = storeId, price = 0.0, details = "") else priceList[0])}
+    //var price by rememberSaveable { mutableStateOf ( if (priceList.isEmpty()) Price(productId = productId, storeId = storeId, price = 0.0, details = "") else priceList[0])}
+
+    // Initialize price with a default value
+    var price by rememberSaveable {
+        mutableStateOf(Price(productId = productId, storeId = storeId, price = 0.0, details = ""))
+    }
+
+    // Update price only once when (if) priceList's actual data is first available
+    var isPriceInitialized by rememberSaveable { mutableStateOf(false) }
+    /* TODO: This is Grok's code, I don't like it and it won't compile
+    LaunchedEffect(priceList) {
+        if (!isPriceInitialized && priceList !== emptyList()) { // TODO: why not !priceList.isEmpty()? what's "!=="?
+            price = if (priceList.isEmpty()) {
+                Price(productId = productId, storeId = storeId, price = 0.0, details = "")
+            } else {
+                priceList[0]
+            }
+            isPriceInitialized = true
+        }
+    }
+    */
+    LaunchedEffect(priceList) {
+        if (!isPriceInitialized && !priceList.isEmpty()) {
+            price = priceList[0]
+            isPriceInitialized = true
+        }
+    }
+
     var showEditDialog by rememberSaveable { mutableStateOf(false) } // TODO PROB WRONG BUT HACKILY REFACTORING
 
     Scaffold(
