@@ -1188,6 +1188,7 @@ fun HomeScreen(navController: NavHostController) {
                 MainScreen() // TODO: rename this
 
                 // TODO TEMP HACK FOR KEYBOARD/SCROLLING EXPERIMENTS
+                Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
                 var packSize by remember { mutableStateOf("123") }
                 TextField(
                     label = { Text("Pack size") },
@@ -1311,7 +1312,6 @@ fun OuterFullScreenDialog() {
                 var selectedUnit by remember { mutableStateOf("g") }
                 var packPrice by remember { mutableStateOf("2.98") }
                 var notes by remember { mutableStateOf("Aldi price match; don't know how long this will last.") }
-                Column() {
                     // TODO: Product and Store should maybe be in a row. Just hacking up a rough
                     // dialog here for testing of my dialog box code (esp focus stuff) for now.
                     LabeledItem(label = "Product") {
@@ -1380,7 +1380,6 @@ fun OuterFullScreenDialog() {
                         value = notes,
                         onValueChange = { notes = it },
                     )
-                }
             //}
         }
     }
