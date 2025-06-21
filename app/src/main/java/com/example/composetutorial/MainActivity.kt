@@ -299,7 +299,7 @@ fun MainScreen() {
     // the database in theory. TODO: We should make sure we have the same behaviour for Source,
     // because that actually *should* allow the user to easily set it to empty/none.
     var selectedCategory by remember { mutableStateOf("" /* "Dairy" */) }
-    var selectedProductId:Long by rememberSaveable { mutableStateOf( 0) } // TODO: massive hack defaulting to 0, we need a genuine ID from somewhere and/or support for null
+    var selectedProductId:Long by rememberSaveable { mutableStateOf( 1) } // TODO: massive hack defaulting to hardcoded, we need a genuine ID from somewhere and/or support for null
     var showProductSheet by remember { mutableStateOf(false) }
     val categories = listOf("Demo", "Groceries (home)", "Groceries (Manchester)")
     //val products = listOf("Beans", "Milk", "Bread", "Chicken" /* ... */)
@@ -327,9 +327,8 @@ fun MainScreen() {
         )
 
         // Product Selector
-        val wtf1: Product? = productMap?.get(selectedProductId)
         TextField(
-            value = wtf1?.name?:"TODO",
+            value = productMap.get(selectedProductId)?.name ?: "Invalid product ID",
             onValueChange = { /* No-op, read-only */ },
             label = { Text("Product") },
             enabled = false, // TODO: this is necessary to make "clickable" work, it looks wrong but this is all an experimental hack anyway
