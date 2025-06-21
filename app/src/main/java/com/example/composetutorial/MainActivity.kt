@@ -917,96 +917,6 @@ fun Modifier.clearFocusOnTapOutside() = composed {
 
 
 
-@Composable
-fun FullScreenDialog(onDismiss: () -> Unit) {
-    /*
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) { */
-            // TODO: THis dialog has no padding round the edges, not sure if it should but it maybe should, think about it anyway
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface)
-            ) {
-                var packSize by remember { mutableStateOf("123") }
-                var selectedUnit by remember { mutableStateOf("g") }
-                var packPrice by remember { mutableStateOf("2.98") }
-                var notes by remember { mutableStateOf("Aldi price match; don't know how long this will last.") }
-                Column() {
-                    // TODO: Product and Store should maybe be in a row. Just hacking up a rough
-                    // dialog here for testing of my dialog box code (esp focus stuff) for now.
-                    LabeledItem(label = "Product") {
-                        Text("Ground coffee")
-                    }
-                    Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
-                    LabeledItem(label = "Store") {
-                        Text("Tesco")
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    val units = listOf("g", "kg", "oz", "ml", "l")
-                    Row {
-                        // TODO: Don't really like this way of showing pack size and unit etc, but
-                        // this is just a quick hack to get some "realistic-ish" content on the
-                        // dialog for testing
-                        // TODO: Using weight to size the components is also sucky, since we really
-                        // just want "a reasonable fixed size" for the unit with
-                        // the product taking whatever's left, but this will do for now.
-                        // TODO: This TextField will *not* show a cursor or let the value be changed
-                        // - I don't know if this is because my dialog code is breaking it, or I've
-                        // done something wrong here. OK, if I copy this code to HomeScreen() it
-                        // works, so it is probably dialog related. Yay!
-                        // TODO: Should I use OutlinedTextFields here? If so, for the drop down too.
-                        // TODO: Note that "Pack size" is blue only when the field is selected, but
-                        // "Unit" is always blue. This may be a localised colour tweak or it may be
-                        // a systemic glitch e.g. with my dropdown menu. FWIW the background of the
-                        // two fields appears to change differenly as I navigate around with cursor
-                        // keys too, although this *might* be normal - but worth trying to
-                        // investigate.
-                        // TODO: When the onscreen keyboard is up for "pack size", clicking on unit
-                        // opens the dropdown and hides the keyboard but the dropdown gets
-                        // positioned "to avoid" the keyboard - this might be normal/OK, but
-                        // check/read/think
-                        TextField(
-                            label = { Text("Pack size") },
-                            value = packSize,
-                            onValueChange = { packSize = it },
-                            // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                            modifier = Modifier.weight(1f))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
-                        ExposedDropdownMenuBox(
-                            value = selectedUnit,
-                            onValueChange = { selectedUnit = it },
-                            label = { Text("Unit") },
-                            items = units,
-                            modifier = Modifier.weight(0.5f)
-                        )
-
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute max)
-                    TextField(
-                        label = { Text("Pack price") },
-                        prefix = { Text("£") },
-                        value = packPrice,
-                        onValueChange = { packPrice = it },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                    )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-                    // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
-                    TextField(
-                        label = { Text( "Notes") },
-                        value = notes,
-                        onValueChange = { notes = it },
-                    )
-                }
-            }
-    //}
-}
 
 // Utility to get Activity window
 @Composable
@@ -1293,7 +1203,7 @@ fun HomeScreen(navController: NavHostController) {
                     )
                 )
 
-                ItemSourceInfo(onClickEdit = { showEditDialog = true } )
+                ItemSourceInfo(onClickEdit = { /* showEditDialog = true  */ navController.navigate("fullScreenDialog") } )
 
                 androidx.compose.foundation.layout.Spacer(
                     modifier = androidx.compose.ui.Modifier.height(
@@ -1351,6 +1261,7 @@ fun HomeScreen(navController: NavHostController) {
 
         }
 
+    /* TODO
     // MD3 spec sort of says that on Android we should be using an "expand" transition to
     // show this dialog, but after much discussion with an AI (because I can't find any
     // other source of advice), it might be better to slide in vertically from the bottom
@@ -1362,33 +1273,8 @@ fun HomeScreen(navController: NavHostController) {
     // TODO: https://github.com/JetBrains/compose-multiplatform/issues/4431
     // https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ is linked to from issue 4431, suggesting it's "reputable"
     AnimatedFullScreenDialog(visible = showEditDialog, onDismiss = { showEditDialog = false }) {
-                        Scaffold(
-                            modifier = Modifier.fillMaxSize(),
-                            topBar = {
-                                TopAppBar(
-                                    navigationIcon = {
-                                        IconButton(onClick = { showEditDialog = false }) {
-                                            Icon(Icons.Default.Close, contentDescription = "Close") } },
-                                    title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price", you can also eg edit pack size and probably a free text notes field etc
-                                    actions = {
-                                        // TODO: Can/should there be an icon with this textbutton?
-                                        TextButton(onClick = { showEditDialog = false }) {
-                                            Text("Save") // TODO: arbitrary, not thought about wording
-                                        }
-                                    },
-                                )
-                            },
-                        ) { innerPadding ->
-
-                            // TODO: We could probably just pass innerPadding through to FullScreenDialog, that may or may not be clearer
-                            Box(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = screenBorder).verticalScroll(rememberScrollState()).imePadding()) {
-                                FullScreenDialog(
-                                    // TODO: onDismiss notused any more, has moved to above inline
-                                    onDismiss = { showEditDialog = false }
-                                )
-                            }
-                        }
-                    }
+                        OuterFullScreenDialog()
+                    } */
                 }
 
 // https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/
@@ -1396,6 +1282,109 @@ fun HomeScreen(navController: NavHostController) {
 @Composable
 fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvider)?.window
 
+
+@Composable
+fun OuterFullScreenDialog() {
+    var showEditDialog by rememberSaveable { mutableStateOf(false) } // TODO PROB WRONG BUT HACKILY REFACTORING
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(onClick = { showEditDialog = false }) {
+                        Icon(Icons.Default.Close, contentDescription = "Close") } },
+                title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price", you can also eg edit pack size and probably a free text notes field etc
+                actions = {
+                    // TODO: Can/should there be an icon with this textbutton?
+                    TextButton(onClick = { showEditDialog = false }) {
+                        Text("Save") // TODO: arbitrary, not thought about wording
+                    }
+                },
+            )
+        },
+    ) { innerPadding ->
+
+        // TODO: We could probably just pass innerPadding through to FullScreenDialog, that may or may not be clearer
+        Column(modifier = Modifier.fillMaxSize().padding(innerPadding).padding(horizontal = screenBorder).background(MaterialTheme.colorScheme.primary /* TODO DEBUG HACK SHOULD BE SOMETHING ELSE MAYBE NOT NEEDED TO BE SPEC EXPLICITLY */).verticalScroll(rememberScrollState())) {
+                var packSize by remember { mutableStateOf("123") }
+                var selectedUnit by remember { mutableStateOf("g") }
+                var packPrice by remember { mutableStateOf("2.98") }
+                var notes by remember { mutableStateOf("Aldi price match; don't know how long this will last.") }
+                Column() {
+                    // TODO: Product and Store should maybe be in a row. Just hacking up a rough
+                    // dialog here for testing of my dialog box code (esp focus stuff) for now.
+                    LabeledItem(label = "Product") {
+                        Text("Ground coffee")
+                    }
+                    Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
+                    LabeledItem(label = "Store") {
+                        Text("Tesco")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    val units = listOf("g", "kg", "oz", "ml", "l")
+                    Row {
+                        // TODO: Don't really like this way of showing pack size and unit etc, but
+                        // this is just a quick hack to get some "realistic-ish" content on the
+                        // dialog for testing
+                        // TODO: Using weight to size the components is also sucky, since we really
+                        // just want "a reasonable fixed size" for the unit with
+                        // the product taking whatever's left, but this will do for now.
+                        // TODO: This TextField will *not* show a cursor or let the value be changed
+                        // - I don't know if this is because my dialog code is breaking it, or I've
+                        // done something wrong here. OK, if I copy this code to HomeScreen() it
+                        // works, so it is probably dialog related. Yay!
+                        // TODO: Should I use OutlinedTextFields here? If so, for the drop down too.
+                        // TODO: Note that "Pack size" is blue only when the field is selected, but
+                        // "Unit" is always blue. This may be a localised colour tweak or it may be
+                        // a systemic glitch e.g. with my dropdown menu. FWIW the background of the
+                        // two fields appears to change differenly as I navigate around with cursor
+                        // keys too, although this *might* be normal - but worth trying to
+                        // investigate.
+                        // TODO: When the onscreen keyboard is up for "pack size", clicking on unit
+                        // opens the dropdown and hides the keyboard but the dropdown gets
+                        // positioned "to avoid" the keyboard - this might be normal/OK, but
+                        // check/read/think
+                        TextField(
+                            label = { Text("Pack size") },
+                            value = packSize,
+                            onValueChange = { packSize = it },
+                            // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier.weight(1f))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
+                        ExposedDropdownMenuBox(
+                            value = selectedUnit,
+                            onValueChange = { selectedUnit = it },
+                            label = { Text("Unit") },
+                            items = units,
+                            modifier = Modifier.weight(0.5f)
+                        )
+
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute max)
+                    TextField(
+                        label = { Text("Pack price") },
+                        prefix = { Text("£") },
+                        value = packPrice,
+                        onValueChange = { packPrice = it },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
+                    TextField(
+                        label = { Text( "Notes") },
+                        value = notes,
+                        onValueChange = { notes = it },
+                    )
+                }
+            //}
+        }
+    }
+}
 
 @Composable
 fun SettingsScreen(navController: NavHostController) {
@@ -1638,6 +1627,10 @@ fun AppNavigation() {
             }
         ) {
             SettingsScreen(navController)
+        }
+        // TODO: This needs the correct vertical transitions, but let's not fuss with that for now
+        composable("fullScreenDialog") {
+            OuterFullScreenDialog()
         }
     }
 }
