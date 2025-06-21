@@ -172,6 +172,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.map
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -305,9 +306,9 @@ fun MainScreen() {
     var searchQuery by remember { mutableStateOf("") }
 
     var vm: PriceTrackerViewModel = viewModel()
-    var products = vm.products.collectAsState(initial = emptyList()) // TODO WTF?
+    var products = vm.products.collectAsStateWithLifecycle(initialValue = emptyList()) // TODO WTF?
     // TODO: WTAFF with this "nullnss"? I have to jump through hoops because for a few milliseconds we may not have data but we "have" to display our screen?
-    val productMap by vm.productMap.collectAsState(initial = emptyMap()) // TODO: WTF?
+    val productMap by vm.productMap.collectAsStateWithLifecycle(initialValue = emptyMap()) // TODO: WTF?
 
     Column(
         modifier = Modifier.fillMaxWidth()
