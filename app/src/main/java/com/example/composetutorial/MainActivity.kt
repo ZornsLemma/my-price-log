@@ -5,7 +5,7 @@ package com.example.composetutorial
 //import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-
+import kotlinx.parcelize.Parcelize
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -31,6 +31,7 @@ import androidx.compose.material3.Button
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
+import android.os.Parcelable
 import android.util.Log
 import android.view.View
 import android.view.Window
@@ -202,12 +203,14 @@ data class Product(val id: Long, val name: String)
 
 data class Store(val id: Long, val name: String)
 
+// TODO: Should Price have a price_id on it? If it does, it will need to be nullable (I think) so we can use it in-memory when adding a brand new price, before the db layer assigns an id
+@Parcelize
 data class Price(
     val productId: Long,
     val storeId: Long,
     val price: Double,
     val details: String // Additional price details
-)
+) : Parcelable
 
 // TODO: This is part way through being converted to use Flow
 class PriceTrackerRepository {
@@ -1495,6 +1498,14 @@ fun OuterFullScreenDialog(navController: NavHostController, productId: Long, sto
     val productName = productMap[productId]?.name ?: "Invalid product ID $productId"
     val storeMap by vm.storeMap.collectAsStateWithLifecycle(initialValue = emptyMap())
     val storeName = storeMap[storeId]?.name ?: "Invalid store ID $storeId"
+    val priceList by vm.getPriceDetailsForProductAndStore(
+        productId = productId,
+        storeId = storeId
+    ).collectAsStateWithLifecycle(initialValue = emptyList())
+    check(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
+    // TODO: Create empty price like this feels crap, and it's also not right that the price defaults to 0.0 - it needs to be nullable, and possibly the price should be a string not a double at least in this context, not sure about db
+    // TODO: price probably needs rememberSaveable
+    var price by rememberSaveable { mutableStateOf ( if (priceList.isEmpty()) Price(productId = productId, storeId = storeId, price = 0.0, details = "") else priceList[0])}
     var showEditDialog by rememberSaveable { mutableStateOf(false) } // TODO PROB WRONG BUT HACKILY REFACTORING
 
     Scaffold(
@@ -1529,7 +1540,7 @@ fun OuterFullScreenDialog(navController: NavHostController, productId: Long, sto
             var packSize by remember { mutableStateOf("123") }
             var selectedUnitId: Long by remember { mutableStateOf(1) }
             var packPrice by remember { mutableStateOf("2.98") }
-            var notes by remember { mutableStateOf("Aldi price match; don't know how long this will last.") }
+            //var notes by remember { mutableStateOf("My cool notes") }
             // TODO: Product and Store should maybe be in a row. Just hacking up a rough
             // dialog here for testing of my dialog box code (esp focus stuff) for now.
             LabeledItem(label = "Product") {
@@ -1604,8 +1615,8 @@ fun OuterFullScreenDialog(navController: NavHostController, productId: Long, sto
             // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
             TextField(
                 label = { Text("Notes") },
-                value = notes,
-                onValueChange = { notes = it },
+                value = price.details,
+                onValueChange = { price = price.copy(details = it) },
             )
             //}
         }
