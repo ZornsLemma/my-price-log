@@ -183,6 +183,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 // TODO: This is boilerplate *in memory* viewmodel stuff which I got from Grok. The idea is that I
@@ -268,6 +269,24 @@ class PriceTrackerRepository {
             return flowOf(listOf(result))
         }
     }
+
+    fun updateOrInsertPrice(price: Price) {
+        // TODO: perplexity.ai code
+        prices.update { currentPrices ->
+            val index = currentPrices.indexOfFirst {
+                it.productId == price.productId && it.storeId == price.storeId
+            }
+            if (index >= 0) {
+                // Update existing
+                currentPrices.toMutableList().apply {
+                    set(index, price)
+                }
+            } else {
+                // Insert new
+                currentPrices + price
+            }
+        }
+    }
 }
 
 class PriceTrackerViewModel : ViewModel() {
@@ -310,9 +329,16 @@ class PriceTrackerViewModel : ViewModel() {
     */
 
     // Price details for selected product and store (external to ViewModel)
-    @Composable // TODO!?
+    //@Composable // TODO!?
     fun getPriceDetailsForProductAndStore(productId: Long, storeId: Long): Flow<List<Price>> {
         return repository.getPriceForProductAndStore(productId, storeId)
+    }
+
+    // TODO: I don't think this will insert correctly yet, as Price has no price_id primary key to
+    // allow us to indicate to this function when it is an insert rather than an update, but let's
+    // worry about that later.
+    fun updateOrInsertPrice(price: Price) {
+        repository.updateOrInsertPrice(price)
     }
 }
 
@@ -1533,21 +1559,22 @@ fun OuterFullScreenDialog(navController: NavHostController, productId: Long, sto
         }
     }
 
-    var showEditDialog by rememberSaveable { mutableStateOf(false) } // TODO PROB WRONG BUT HACKILY REFACTORING
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(onClick = { showEditDialog = false }) {
+                    // TODO: We need to check for unsaved changes here before blindly going back, I think
+                    // TODO: We probably also need to do something to intercept back button clicks/back gestures and do the same validation?
+                    IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 },
                 title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price", you can also eg edit pack size and probably a free text notes field etc
                 actions = {
                     // TODO: Can/should there be an icon with this textbutton?
-                    TextButton(onClick = { showEditDialog = false }) {
+                    // TODO: WHen/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
+                    TextButton(onClick = { vm.updateOrInsertPrice(price); navController.popBackStack() }) {
                         Text("Save") // TODO: arbitrary, not thought about wording
                     }
                 },
