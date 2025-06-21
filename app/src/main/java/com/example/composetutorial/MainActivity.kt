@@ -39,6 +39,7 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.collection.emptyLongSet
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -131,6 +132,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -166,7 +168,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.map
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -256,7 +261,24 @@ class PriceTrackerViewModel : ViewModel() {
     private val repository = PriceTrackerRepository()
 
     // Data exposed to UI
-    val products: List<Product> get() = repository.getAllProducts()
+    private val _products = MutableLiveData<List<Product>>()
+    val products: LiveData<List<Product>> = _products
+
+    // Automatically recompute the map when the products list changes
+    // TODO: ChatGPT magic here. I get the basic idea but it got this wrong (using something other than Transformations first) so this may well not be right or weird-but-works
+    val productMap: LiveData<Map<Long, Product>> = products.map { list ->
+        list.associateBy { it.id }
+    }
+
+    init {
+        _products.postValue(repository.getAllProducts())
+    }
+
+    // Example of updating products
+    fun updateProducts(newProducts: List<Product>) {
+        _products.value = newProducts
+    }
+
     val stores: List<Store> get() = repository.getAllStores()
 
     // Prices for selected product (external to ViewModel)
@@ -302,13 +324,16 @@ fun MainScreen() {
     // the database in theory. TODO: We should make sure we have the same behaviour for Source,
     // because that actually *should* allow the user to easily set it to empty/none.
     var selectedCategory by remember { mutableStateOf("" /* "Dairy" */) }
-    var selectedProduct by remember { mutableStateOf("" /* "Beans" */) }
+    var selectedProductId:Long by rememberSaveable { mutableStateOf( 0) } // TODO: massive hack defaulting to 0, we need a genuine ID from somewhere and/or support for null
     var showProductSheet by remember { mutableStateOf(false) }
     val categories = listOf("Demo", "Groceries (home)", "Groceries (Manchester)")
-    val products = listOf("Beans", "Milk", "Bread", "Chicken" /* ... */)
+    //val products = listOf("Beans", "Milk", "Bread", "Chicken" /* ... */)
     var searchQuery by remember { mutableStateOf("") }
 
     var vm: PriceTrackerViewModel = viewModel()
+    var productsLiveData = vm.products // TODO: redundant copy?! no idea how this works in Kotlin
+    // TODO: WTAFF with this "nullnss"? I have to jump through hoops because for a few milliseconds we may not have data but we "have" to display our screen?
+    val productMap by vm.productMap.observeAsState()
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -327,8 +352,9 @@ fun MainScreen() {
         )
 
         // Product Selector
+        val wtf1: Product? = productMap?.get(selectedProductId)
         TextField(
-            value = selectedProduct,
+            value = wtf1?.name?:"TODO",
             onValueChange = { /* No-op, read-only */ },
             label = { Text("Product") },
             enabled = false, // TODO: this is necessary to make "clickable" work, it looks wrong but this is all an experimental hack anyway
@@ -352,6 +378,11 @@ fun MainScreen() {
         // Product Modal Bottom Sheet
         if (showProductSheet) {
             ModalBottomSheet(onDismissRequest = { showProductSheet = false }) {
+                val products by productsLiveData.observeAsState(initial = emptyList()) // TODO WTAF!?!?!
+                Log.d("MyApp", "FFS:" + products.joinToString(","))
+                val filteredProducts = products.filter {
+                    it.name.contains(searchQuery, ignoreCase = true)
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -368,15 +399,13 @@ fun MainScreen() {
                             )
                         })
                     LazyColumn {
-                        items(products.filter {
-                            it.contains(searchQuery, ignoreCase = true)
-                        }) { product ->
+                        items(filteredProducts) { product ->
                             ListItem(
-                                headlineContent = { Text(product) },
+                                headlineContent = { Text(product.name) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        selectedProduct = product
+                                        selectedProductId = product.id
                                         showProductSheet = false
                                     })
                         }

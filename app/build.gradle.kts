@@ -54,6 +54,10 @@ dependencies {
     //implementation(libs.androidx.compose.ui.window) // TODO: for Dialog!?
     implementation(libs.compose.foundation)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.lifecycle.livedata)
+    implementation(libs.lifecycle.livedata.ktx)
+    implementation(libs.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.runtime.livedata)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
