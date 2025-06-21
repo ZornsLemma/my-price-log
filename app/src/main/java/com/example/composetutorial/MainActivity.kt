@@ -306,7 +306,7 @@ fun MainScreen() {
     var searchQuery by remember { mutableStateOf("") }
 
     var vm: PriceTrackerViewModel = viewModel()
-    var products = vm.products.collectAsStateWithLifecycle(initialValue = emptyList())
+    val products by vm.products.collectAsStateWithLifecycle(initialValue = emptyList())
     val productMap by vm.productMap.collectAsStateWithLifecycle(initialValue = emptyMap())
 
     Column(
@@ -368,7 +368,7 @@ fun MainScreen() {
                             )
                         })
                     LazyColumn {
-                                                items(products.value.filter {
+                                                items(products.filter {
                                                         it.name.contains(searchQuery, ignoreCase = true)
                                                     }) { product ->
                             ListItem(
