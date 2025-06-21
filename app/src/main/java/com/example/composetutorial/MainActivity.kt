@@ -697,40 +697,44 @@ fun ItemSourceInfo(selectedProductId: Long?, onClickEdit: () -> Unit) {
                             }
                         }
                     }
-                }
-                // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
-                // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
-                Row(modifier = Modifier.padding(vertical = 4.dp)) {
-                    LabeledItem("Notes") {
-                        Text("Special offer price")
-                    }
-                    //Text("TODO DUMMY TO FILL SPACE", modifier=Modifier.padding(vertical=130.dp))
-                }
-                // TODO: Vertical spacing probably poor with or without notes field - needs tweaking/better "plan" for how to specify it - that said, the vertical space above this final row probably should be "a bit" larger than the space between the two "reporting our status" rows - the following row is a "summary plus action" row and does want some visual distinction
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Row() {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Checked",
-                            modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        ) // TODO: probably "primary"=good, default text color=neutral, "error"=bad
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Good price")
-                    }
-                    // TODO: *If* we consider "Confirm" to be the primary action (potentially users
-                    // click it every time they buy this item), it should probably get the bottom
-                    // right position, i.e. we should swap its position with "Edit".
-                    Row(
-                        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End
-                    ) {
-                        // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
-                        FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
-                            Text("Confirm")
+                    // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
+                    // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
+                    Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                        LabeledItem("Notes") {
+                            Text(priceList[0].details )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        FilledTonalButton(onClick = onClickEdit, shape = MaterialTheme.shapes.small) {
-                            Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
+                        //Text("TODO DUMMY TO FILL SPACE", modifier=Modifier.padding(vertical=130.dp))
+                    }
+                    // TODO: Vertical spacing probably poor with or without notes field - needs tweaking/better "plan" for how to specify it - that said, the vertical space above this final row probably should be "a bit" larger than the space between the two "reporting our status" rows - the following row is a "summary plus action" row and does want some visual distinction
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row() {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = "Checked",
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            ) // TODO: probably "primary"=good, default text color=neutral, "error"=bad
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Good price")
+                        }
+                        // TODO: *If* we consider "Confirm" to be the primary action (potentially users
+                        // click it every time they buy this item), it should probably get the bottom
+                        // right position, i.e. we should swap its position with "Edit".
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
+                            FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
+                                Text("Confirm")
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            FilledTonalButton(
+                                onClick = onClickEdit,
+                                shape = MaterialTheme.shapes.small
+                            ) {
+                                Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
+                            }
                         }
                     }
                 }
