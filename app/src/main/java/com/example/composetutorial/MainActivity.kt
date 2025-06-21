@@ -166,10 +166,106 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.ViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import kotlinx.coroutines.launch
+
+// TODO: This is boilerplate *in memory* viewmodel stuff which I got from Grok. The idea is that I
+// can try to start using viewmodels and passing data back and forth between eg my home screen and
+// my notional full screen dialog and have it flow round and update rather than being hardcoded (to
+// prove communication is working) without getting into the additional worries of having an actual
+// database, which I will retrofit later. I have no idea if the code is actually correct, although
+// it seems simple enough that I don't think it hides too many nasty surprises.
+
+data class Product(val id: Long, val name: String)
+
+data class Store(val id: Long, val name: String)
+
+data class Price(
+    val productId: Long,
+    val storeId: Long,
+    val price: Double,
+    val details: String // Additional price details
+)
+
+class PriceTrackerRepository {
+    private val products = mutableListOf<Product>(
+        Product(1, "Milk"),
+        Product(2, "Bread")
+    )
+    private val stores = mutableListOf<Store>(
+        Store(1, "Walmart"),
+        Store(2, "Target")
+    )
+    private val prices = mutableListOf<Price>(
+        Price(1, 1, 3.99, "Organic milk at Walmart"),
+        Price(1, 2, 4.29, "Organic milk at Target"),
+        Price(2, 1, 2.49, "Whole wheat bread at Walmart"),
+        Price(2, 2, 2.79, "Whole wheat bread at Target")
+    )
+
+    fun getAllProducts(): List<Product> = products
+
+    fun getAllStores(): List<Store> = stores
+
+    fun getPricesForProduct(productId: Long): List<Price> =
+        prices.filter { it.productId == productId }
+
+    fun getPriceForProductAndStore(productId: Long, storeId: Long): Price? =
+        prices.find { it.productId == productId && it.storeId == storeId }
+}
+
+class PriceTrackerViewModel : ViewModel() {
+    private val repository = PriceTrackerRepository() // For prototyping, instantiate directly
+
+    // State
+    private var selectedProductId: Long? = null
+    private var selectedStoreId: Long? = null
+
+    // Data exposed to UI
+    val products: List<Product> get() = repository.getAllProducts()
+    val stores: List<Store> get() = repository.getAllStores()
+
+    // Prices for selected product
+    val prices: List<Price>
+        get() = selectedProductId?.let { repository.getPricesForProduct(it) } ?: emptyList()
+
+    // Price details for selected product and store
+    val priceDetails: Price?
+        get() = selectedProductId?.let { productId ->
+            selectedStoreId?.let { storeId ->
+                repository.getPriceForProductAndStore(productId, storeId)
+            }
+        }
+
+    fun selectProduct(productId: Long) {
+        selectedProductId = productId
+        // Optionally reset store selection
+        selectedStoreId = null
+    }
+
+    fun selectStore(storeId: Long?) {
+        selectedStoreId = storeId
+    }
+}
+
+class StoreEditorViewModel : ViewModel() {
+    private val repository = PriceTrackerRepository()
+
+    val stores: List<Store> get() = repository.getAllStores()
+
+    fun addStore(name: String) {
+        // For prototyping, add to repository directly
+        // Later, call repository.insertStore()
+    }
+
+    fun deleteStore(storeId: Long) {
+        // For prototyping, remove from repository directly
+        // Later, call repository.deleteStore()
+    }
+}
 
 enum class ThemePreference {
     LIGHT, DARK, SYSTEM
