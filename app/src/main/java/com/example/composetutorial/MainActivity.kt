@@ -273,6 +273,7 @@ class PriceTrackerViewModel : ViewModel() {
     val products: Flow<List<Product>> = repository.getAllProducts()
 
     // Optional: Map for efficient lookups, computed as a Flow
+    // TODO: Is it actually correct that this will not recalculate unless products changes? If that isn't true, this is inefficient. I think I was told it was smart, but who knows.
     val productMap: Flow<Map<Long, Product>> = products.map { list ->
         list.associateBy { it.id }
     }
@@ -1485,6 +1486,11 @@ fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvi
 
 @Composable
 fun OuterFullScreenDialog(navController: NavHostController, productId: Long, storeId: Long) {
+    var vm: PriceTrackerViewModel = viewModel()
+    // TODO: Should we just have the caller pass the product name through so we don't have to do this lookup? the viewmodel should have the data cached, but we still have to through the collectstatewithlifecycle overhead?
+    val productMap by vm.productMap.collectAsStateWithLifecycle(initialValue = emptyMap())
+    val product = productMap[productId]
+    val productName = if (product != null) product.name else "Invalid product ID"
     var showEditDialog by rememberSaveable { mutableStateOf(false) } // TODO PROB WRONG BUT HACKILY REFACTORING
 
     Scaffold(
@@ -1523,9 +1529,9 @@ fun OuterFullScreenDialog(navController: NavHostController, productId: Long, sto
             // TODO: Product and Store should maybe be in a row. Just hacking up a rough
             // dialog here for testing of my dialog box code (esp focus stuff) for now.
             LabeledItem(label = "Product") {
-                Text("Ground coffee")
+                Text(productName)
             }
-            Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
+            // Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
             LabeledItem(label = "Store") {
                 Text("Tesco")
             }
