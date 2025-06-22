@@ -1580,6 +1580,21 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         }
     }
 
+    fun onCloseRequest() {
+        val unsavedChanges =
+            true // TODO: should compare old and new Price data class to determine this
+        if (unsavedChanges) {
+            // TODO
+        } else {
+            navController.popBackStack()
+        }
+    }
+
+
+    BackHandler {
+        onCloseRequest()
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -1587,7 +1602,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
                 navigationIcon = {
                     // TODO: We need to check for unsaved changes here before blindly going back, I think
                     // TODO: We probably also need to do something to intercept back button clicks/back gestures and do the same validation?
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { onCloseRequest() }) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 },
