@@ -109,6 +109,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -1580,11 +1581,13 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         }
     }
 
+    var showConfirmDialog by rememberSaveable { mutableStateOf( false ) }
+
     fun onCloseRequest() {
         val unsavedChanges =
             true // TODO: should compare old and new Price data class to determine this
         if (unsavedChanges) {
-            // TODO
+            showConfirmDialog = true
         } else {
             navController.popBackStack()
         }
@@ -1709,6 +1712,16 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
                 onValueChange = { price = price.copy(details = it) },
             )
             //}
+        }
+
+        if (showConfirmDialog) {
+            AlertDialog(
+                title = { Text("Discard unsaved changes?") },
+                text = { Text("You have changes that won't be saved if you close.") },
+                onDismissRequest = { showConfirmDialog = false },
+                dismissButton = { TextButton(onClick = { showConfirmDialog = false }) { Text("Keep editing") } },
+                confirmButton = { TextButton(onClick = { navController.popBackStack() }) { Text("Discard") } },
+            )
         }
     }
 }
