@@ -183,6 +183,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -262,12 +263,21 @@ class PriceTrackerRepository {
         // TODO: I assume we use find() here to avoid duplicating data, but in a db-backed version
         // this would be an actual SELECT. I suspect this code might *work* without writing a
         // SELECT and we'd end up doing an in memory join after pulling in the entire tables.
+        /* TODO: Old broken code
         val result = _prices.find { it.productId == productId && it.storeId == storeId }
         if (result == null) {
             return flowOf(listOf())
         } else {
             return flowOf(listOf(result))
         }
+        */
+        Log.d("MyApp", "repository getPriceForProductAndStore")
+        return prices.map { list ->
+            list.filter { it.productId == productId && it.storeId == storeId }
+        }
+            .onEach { filteredList ->
+                Log.d("MyApp", "Flow emitted for $productId/$storeId: $filteredList")
+            }
     }
 
     fun updateOrInsertPrice(price: Price) {
@@ -286,6 +296,8 @@ class PriceTrackerRepository {
                 currentPrices + price
             }
         }
+        Log.d("MyApp", "after updateorinsert: $prices")
+
     }
 }
 
@@ -669,6 +681,7 @@ fun ItemSourceInfo(navController: NavHostController, selectedProductId: Long?) {
                     productId = if (selectedProductId == null) 1 else selectedProductId,
                     storeId = selectedSourceId!!
                 ).collectAsStateWithLifecycle(initialValue = emptyList())
+                Log.d("MyApp", "Recomposed with priceList: $priceList")
                 check(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
 
                 if (priceList.isEmpty()) {
