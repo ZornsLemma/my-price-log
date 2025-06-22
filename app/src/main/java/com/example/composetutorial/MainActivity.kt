@@ -233,14 +233,12 @@ class PriceTrackerRepository {
             Store(1, "Walmart"), Store(2, "Target")
         )
     )
-    private val _prices = mutableListOf(
+    private val prices = MutableStateFlow<List<Price>>(mutableListOf(
         Price(1, 1, 3.99, "Organic milk at Walmart"),
         Price(1, 2, 4.29, "Organic milk at Target"),
         Price(2, 1, 2.49, "Whole wheat bread at Walmart"),
-        Price(2, 2, 2.79, "Whole wheat bread at Target")
+        Price(2, 2, 2.79, "Whole wheat bread at Target"))
     )
-
-    private val prices = MutableStateFlow<List<Price>>(_prices)
 
     fun getAllCategories(): Flow<List<Category>> = categories
 
@@ -296,7 +294,7 @@ class PriceTrackerRepository {
                 currentPrices + price
             }
         }
-        Log.d("MyApp", "after updateorinsert: $prices")
+        Log.d("MyApp", "after updateorinsert: ${prices.value}")
 
     }
 }
