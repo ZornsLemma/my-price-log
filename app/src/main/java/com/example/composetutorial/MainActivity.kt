@@ -1597,7 +1597,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         // doesn't work with a Box either, I haven't tested that. (Perplexity.ai says this semantics modifier won't truly flag it
         // as a dialog, but the link it gives doesn't actually say that. It doesn't have a better option, short of actually
         // using Dialog, which I know to my cost is utterly impractical or I'd already be using it. Perplexity does say I can
-        // attach the modifier to the Scaffold no problem.
+        // attach the modifier to the Scaffold no problem. Perplexity also suggests the liveRegion thing is not necessary or appropriate here - it (I haven't tried to read up on this myself) is sort of related to visual things like scrims, and for a full screen dialog it's not appropriate.
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
