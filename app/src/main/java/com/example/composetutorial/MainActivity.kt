@@ -216,6 +216,7 @@ data class Price(
 
 // TODO: This is part way through being converted to use Flow
 class PriceTrackerRepository {
+    // TODO: listOf may be more correct than mutableListOf everywhere, not just here, but I really don't understand this.
     private val categories = MutableStateFlow<List<Category>>(
         mutableListOf(
             Category(1, "Demo"),
@@ -233,7 +234,7 @@ class PriceTrackerRepository {
             Store(1, "Walmart"), Store(2, "Target")
         )
     )
-    private val prices = MutableStateFlow<List<Price>>(mutableListOf(
+    private val prices = MutableStateFlow<List<Price>>(listOf(
         Price(1, 1, 3.99, "Organic milk at Walmart"),
         Price(1, 2, 4.29, "Organic milk at Target"),
         Price(2, 1, 2.49, "Whole wheat bread at Walmart"),
@@ -317,6 +318,9 @@ class PriceTrackerViewModel : ViewModel() {
 
     val categories: Flow<List<Category>> = repository.getAllCategories()
 
+    init {
+        Log.d("MyApp", "PriceTrackerViewModel created: $this")
+    }
     /* TODO!?
     init {
         _products.postValue(repository.getAllProducts())
