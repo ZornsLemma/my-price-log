@@ -382,7 +382,7 @@ val screenBorder = 8.dp
 
 // Start Grok chunk
 @Composable
-fun MainScreen(selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Unit) {
+fun MainScreen(vm: PriceTrackerViewModel, selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Unit) {
     // TODO: Note that because category and product use a TextField, they have the (I think) nice
     // property that the label expands into a sort of big hint when they are empty. We should
     // probably take advantage of this where having them empty makes sense - and it probably does
@@ -396,7 +396,7 @@ fun MainScreen(selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Un
     var searchQuery by remember { mutableStateOf("") }
 
     // TODO: I suspect in general (not just here) I should be passing viewmodel *into* these functions rather than getting it from "global", to allow for dependency injection. but in practice it wouldn't be hard to rework this after and i am not sure this ui stuff is testable - I really don't know how it works.
-    var vm: PriceTrackerViewModel = viewModel()
+    //var vm: PriceTrackerViewModel = viewModel()
     val categories by vm.categories.collectAsStateWithLifecycle(initialValue = emptyList())
     val products by vm.products.collectAsStateWithLifecycle(initialValue = emptyList())
     val productMap by vm.productMap.collectAsStateWithLifecycle(initialValue = emptyMap())
@@ -627,12 +627,12 @@ fun MyFullScreenDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
-fun ItemSourceInfo(navController: NavHostController, selectedProductId: Long?) {
+fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, selectedProductId: Long?) {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
     var expanded by remember { mutableStateOf(false) }
     var currentUnit by remember { mutableStateOf("100g") }
 
-    var vm: PriceTrackerViewModel = viewModel()
+    //var vm: PriceTrackerViewModel = viewModel()
     val sources by vm.stores.collectAsStateWithLifecycle(initialValue = emptyList())
 
     // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
@@ -1369,7 +1369,8 @@ fun AnimatedFullScreenDialog(
 }
 
 @Composable
-fun HomeScreen(navController: NavHostController) {
+fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
+
     var menuExpanded by remember { mutableStateOf(false) }
     var showEditDialog by rememberSaveable { mutableStateOf(false) }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
@@ -1422,6 +1423,7 @@ fun HomeScreen(navController: NavHostController) {
 
         ) {
             MainScreen(
+                vm = vm,
                 selectedProductId = selectedProductId,
                 onSelectedProductIdChange = { selectedProductId = it }) // TODO: rename this
 
@@ -1452,6 +1454,7 @@ fun HomeScreen(navController: NavHostController) {
             )
 
             ItemSourceInfo(
+                vm = vm,
                 navController = navController,
                 selectedProductId = selectedProductId)
 
@@ -1532,8 +1535,8 @@ fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvi
 
 
 @Composable
-fun OuterFullScreenDialog(navController: NavHostController, productId: Long, storeId: Long) {
-    var vm: PriceTrackerViewModel = viewModel()
+fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostController, productId: Long, storeId: Long) {
+    //var vm: PriceTrackerViewModel = viewModel()
     // TODO: Should we just have the caller pass the product name through so we don't have to do this lookup? the viewmodel should have the data cached, but we still have to through the collectstatewithlifecycle overhead?
     val productMap by vm.productMap.collectAsStateWithLifecycle(initialValue = emptyMap())
     val productName = productMap[productId]?.name ?: "Invalid product ID $productId"
@@ -1857,6 +1860,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigation() {
+    var vm: PriceTrackerViewModel = viewModel()
     val navController = rememberNavController()
     NavHost(
         navController = navController,
@@ -1897,7 +1901,7 @@ fun AppNavigation() {
                 )
             } */
         ) {
-            HomeScreen(navController)
+            HomeScreen(vm, navController)
         }
         val tweenDurationMillisEnter = 700; // TODO: should probably be 300 in final version
         val tweenDurationMillisExit = 700; // TODO: should probably be 250 in final version
@@ -1942,7 +1946,7 @@ fun AppNavigation() {
             backStackEntry ->
             val productId = backStackEntry.arguments?.getString("productId")?.toLong() ?: 0
             val storeId = backStackEntry.arguments?.getString("storeId")?.toLong() ?: 0
-            OuterFullScreenDialog(navController, productId, storeId)
+            OuterFullScreenDialog(vm, navController, productId, storeId)
         }
     }
 }
