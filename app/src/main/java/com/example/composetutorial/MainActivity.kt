@@ -1534,6 +1534,9 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvider)?.window
 
 
+// TODO: Do we need to do anything like make a call to tell the system this "screen" is a dialog for accessibility type stuff? I
+// think in all other respects it just functions like one and that is absolutely fine, but just possibly there is a simple call
+// we can make so it will be announced as a dialog to screen readers or something. No idea how this works.
 @Composable
 fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostController, productId: Long, storeId: Long) {
     //var vm: PriceTrackerViewModel = viewModel()
