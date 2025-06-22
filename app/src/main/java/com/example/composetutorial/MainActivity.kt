@@ -1546,42 +1546,33 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
     val productName = productMap[productId]?.name ?: "Invalid product ID $productId"
     val storeMap by vm.storeMap.collectAsStateWithLifecycle(initialValue = emptyMap())
     val storeName = storeMap[storeId]?.name ?: "Invalid store ID $storeId"
-    val priceList by vm.getPriceDetailsForProductAndStore(
+    val nullablePriceList: List<Price>? by vm.getPriceDetailsForProductAndStore(
         productId = productId,
         storeId = storeId
-    ).collectAsStateWithLifecycle(initialValue = emptyList())
-    check(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
+    ).collectAsStateWithLifecycle(initialValue = null)
+
+    if (nullablePriceList == null) {
+        // This will almost certainly never be seen - we will likely get the query results back and
+        // be recomposed before the first frame.
+        Text("Loading...")
+    } else {
+        val priceList = nullablePriceList!!
+    check(  priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
     // TODO: Create empty price like this feels crap, and it's also not right that the price defaults to 0.0 - it needs to be nullable, and possibly the price should be a string not a double at least in this context, not sure about db
     // TODO: price probably needs rememberSaveable
     //var price by rememberSaveable { mutableStateOf ( if (priceList.isEmpty()) Price(productId = productId, storeId = storeId, price = 0.0, details = "") else priceList[0])}
 
     // Initialize price with a default value
     var price by rememberSaveable {
-        mutableStateOf(Price(productId = productId, storeId = storeId, price = 0.0, details = ""))
-    }
-    var originalPrice by rememberSaveable { mutableStateOf(price) }
-
-    // Update price only once when (if) priceList's actual data is first available
-    var isPriceInitialized by rememberSaveable { mutableStateOf(false) }
-    /* TODO: This is Grok's code, I don't like it and it won't compile
-    LaunchedEffect(priceList) {
-        if (!isPriceInitialized && priceList !== emptyList()) { // TODO: why not !priceList.isEmpty()? what's "!=="?
-            price = if (priceList.isEmpty()) {
+        mutableStateOf(
+            if (priceList.isEmpty()) {
                 Price(productId = productId, storeId = storeId, price = 0.0, details = "")
             } else {
                 priceList[0]
             }
-            isPriceInitialized = true
-        }
+        )
     }
-    */
-    LaunchedEffect(priceList) {
-        if (!isPriceInitialized && !priceList.isEmpty()) {
-            price = priceList[0]
-            originalPrice = price
-            isPriceInitialized = true
-        }
-    }
+    var originalPrice by rememberSaveable { mutableStateOf(price) }
 
     var showConfirmDialog by rememberSaveable { mutableStateOf( false ) }
 
@@ -1724,6 +1715,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
             )
         }
     }
+}
 }
 
 @Composable
