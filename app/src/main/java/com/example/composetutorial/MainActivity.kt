@@ -1559,6 +1559,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
     var price by rememberSaveable {
         mutableStateOf(Price(productId = productId, storeId = storeId, price = 0.0, details = ""))
     }
+    var originalPrice by rememberSaveable { mutableStateOf(price) }
 
     // Update price only once when (if) priceList's actual data is first available
     var isPriceInitialized by rememberSaveable { mutableStateOf(false) }
@@ -1577,6 +1578,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
     LaunchedEffect(priceList) {
         if (!isPriceInitialized && !priceList.isEmpty()) {
             price = priceList[0]
+            originalPrice = price
             isPriceInitialized = true
         }
     }
@@ -1584,9 +1586,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
     var showConfirmDialog by rememberSaveable { mutableStateOf( false ) }
 
     fun onCloseRequest() {
-        val unsavedChanges =
-            true // TODO: should compare old and new Price data class to determine this
-        if (unsavedChanges) {
+        if (price != originalPrice) {
             showConfirmDialog = true
         } else {
             navController.popBackStack()
