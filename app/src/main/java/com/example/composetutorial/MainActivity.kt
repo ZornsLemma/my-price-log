@@ -2008,3 +2008,9 @@ fun AppNavigation() {
 //
 
 // TODO: It is just possible that we should be using somethnig like animateContentSize on the column containing the "cards" on the home screen, so that if (most likely because the Notes field appears/disappears/occupies more or less lines because text is longer or shorter) the card showing price-at-store changes size, the card show price-across-stores below it "animates" discreetly into its new position instead of jumping. With the current test data stuff, the upper card tends to be fixed size so this isn't too noticeable yet.
+
+// TODO: Terminology:
+// - "shop" may be better than "store", it is more UK-ish anyway but even in the US we can have a "barber shop" but not a "barber store", so it's slightly more generic
+// - "item" is fairly nicely generic and almost works as well as "product" in a supermarket context anyway
+// - we could offer (probably not in v1) a "pedant mode" toggle which switches shop->"source" and (if we go that way) "product"->"item", then users can toggle it if they want but they won't be misled on first opening the app
+// - not too sure what to do in source code, I have already mixed this up quite a lot but will need to standarise on item+source or product+shop for variable names etc at some point
