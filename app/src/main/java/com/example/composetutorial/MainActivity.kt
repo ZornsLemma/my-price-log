@@ -196,6 +196,10 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Update
+import androidx.room.withTransaction
+import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -244,7 +248,26 @@ abstract class InventoryDatabase : RoomDatabase() {
         fun getDatabase(context: Context): InventoryDatabase {
             // if the Instance is not null, return it, otherwise create a new database instance.
             return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context, InventoryDatabase::class.java, "item_database")
+                Room.databaseBuilder(context, InventoryDatabase::class.java, "item_database") // TODO: item_database is wrong, as is InventoryDatabase
+                    .addCallback(object : RoomDatabase.Callback() {
+                        override fun onCreate(db: SupportSQLiteDatabase)
+                        {
+                            super.onCreate(db)
+                            CoroutineScope(Dispatchers.IO).launch {
+                                val db = InventoryDatabase.getDatabase(context)
+                                db.withTransaction {
+                                    val productIdGroundCoffee = db.productDao().insert(Product(name = "Ground coffee"))
+                                    val productIdWholeMilk = db.productDao().insert(Product(name = "Whole milk"))
+                                    /*
+                                    db.productDao().insert(Product(name = "Demo Product"))
+                                    db.itemDao().insert(Item(name = "Demo Item"))
+                                    // ...insert into other DAOs as needed
+                                    */
+                                }
+                            }
+                            // TODO INSERT HERE USING COROUTINE OR BACKGROUND THREAD
+                        }
+                    })
                     .build()
                     .also { Instance = it }
             }
@@ -253,6 +276,7 @@ abstract class InventoryDatabase : RoomDatabase() {
 }
 
 interface PriceTrackerRepository {
+    fun getAllProducts(): Flow<List<Product>>
 }
 
 /**
@@ -318,6 +342,8 @@ class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val 
 
     override suspend fun updateItem(item: Item) = itemDao.update(item)
     */
+
+    override fun getAllProducts(): Flow<List<Product>> = productDao.getAllProducts()
 }
 
 class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewModel() {
@@ -396,7 +422,7 @@ interface ProductDao {
 
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
     @Query("SELECT * from product ORDER BY name ASC")
-    fun getAllItems(): Flow<List<Product>>
+    fun getAllProducts(): Flow<List<Product>>
 }
 
 
@@ -502,7 +528,8 @@ class PriceTrackerRepositoryOldTODO {
 class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository) : ViewModel() {
     private val repository = PriceTrackerRepositoryOldTODO()
 
-    val products: Flow<List<Product>> = repository.getAllProducts()
+    // val products: Flow<List<Product>> = repository.getAllProducts()
+    val products: Flow<List<Product>> = priceTrackerRepository.getAllProducts()
 
     // Optional: Map for efficient lookups, computed as a Flow
     val productMap: Flow<Map<Long, Product>> = products.map { list ->
