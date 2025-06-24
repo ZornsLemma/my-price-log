@@ -165,11 +165,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
-@Database(entities = [Category::class, Item::class], version = 1, exportSchema = false)
+@Database(entities = [Category::class, Item::class, Source::class], version = 1, exportSchema = false)
+// TODO: Should not be called *Inventory*Database
 abstract class InventoryDatabase : RoomDatabase() {
 
     abstract fun dataSetDao(): DataSetDao
     abstract fun productDao(): ItemDao
+    abstract fun sourceDao(): SourceDao
 
     companion object {
         @Volatile
@@ -187,8 +189,11 @@ abstract class InventoryDatabase : RoomDatabase() {
                                 val db = InventoryDatabase.getDatabase(context)
                                 db.withTransaction {
                                     val dataSetId = db.dataSetDao().insert(Category(name ="Demo"))
-                                    val itemIdGroundCoffee = db.productDao().insert(Item(dataSetId = dataSetId, name = "Ground coffee"))
-                                    val itemIdWholeMilk = db.productDao().insert(Item(dataSetId = dataSetId, name = "Whole milk"))
+                                    val itemIdGroundCoffee = db.productDao().insert(Item(dataSetId = dataSetId, name = "Coffee (ground)"))
+                                    val itemIdWholeMilk = db.productDao().insert(Item(dataSetId = dataSetId, name = "Milk (whole)"))
+                                    val itemIdTeabags = db.productDao().insert(Item(dataSetId = dataSetId, name = "Teabags"))
+                                    val sourceIdValueMart = db.sourceDao().insert(Source(dataSetId = dataSetId, name = "ValueMart"))
+                                    val sourceIdSuperiorStore = db.sourceDao().insert(Source(dataSetId = dataSetId, name = "SuperiorStore"))
                                     /*
                                     db.productDao().insert(Product(name = "Demo Product"))
                                     db.itemDao().insert(Item(name = "Demo Item"))
@@ -208,6 +213,7 @@ abstract class InventoryDatabase : RoomDatabase() {
 
 interface PriceTrackerRepository {
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
+    fun getAllSources(dataSetId: Long): Flow<List<Source>>
 }
 
 /* TODO!?
@@ -233,7 +239,7 @@ class AppDataContainer(private val context: Context) : AppContainer {
 }
 */
 
-class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val itemDao: ItemDao) : PriceTrackerRepository {
+class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val itemDao: ItemDao, private val sourceDao: SourceDao) : PriceTrackerRepository {
     /* TODO
     override fun getAllItemsStream(): Flow<List<Item>> = itemDao.getAllItems()
 
@@ -247,6 +253,8 @@ class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val 
     */
 
     override fun getAllItems(dataSetId: Long): Flow<List<Item>> = itemDao.getAllItems(dataSetId)
+
+    override fun getAllSources(dataSetId: Long): Flow<List<Source>> = sourceDao.getAllSources(dataSetId)
 }
 
 /* TODO
@@ -286,7 +294,7 @@ class MyApplication : Application() {
     */
     val priceTrackerRepository: PriceTrackerRepositoryImpl by lazy {
         val db = InventoryDatabase.getDatabase(this)
-        PriceTrackerRepositoryImpl(db.productDao())
+        PriceTrackerRepositoryImpl(db.productDao(), db.sourceDao())
     }
 }
 
@@ -329,6 +337,23 @@ data class Item(
     val name: String
 )
 
+@Entity(
+    tableName = "source", foreignKeys = [
+        ForeignKey(
+            entity = Category::class,
+            parentColumns = ["id"],
+            childColumns = ["data_set_id"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
+data class Source(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    @ColumnInfo(name = "data_set_id") val dataSetId : Long,
+    val name: String
+)
+
 @Dao
 interface DataSetDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -351,8 +376,16 @@ interface ItemDao {
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
 }
 
+@Dao
+interface SourceDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(dataSet: Source): Long
 
-data class Source(val id: Long, val name: String)
+    // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
+    @Query("SELECT * FROM source WHERE data_set_id = :dataSetId ORDER BY name ASC")
+    fun getAllSources(dataSetId: Long): Flow<List<Source>>
+}
+
 
 // TODO: Should Price have a price_id on it? If it does, it will need to be nullable (I think) so we can use it in-memory when adding a brand new price, before the db layer assigns an id
 @Parcelize
@@ -379,12 +412,12 @@ class PriceTrackerRepositoryOldTODO {
             Item(1, "Milk"), Item(2, "Bread")
         )
     )
-    */
     private val stores = MutableStateFlow<List<Source>>(
         mutableListOf(
             Source(1, "Walmart"), Source(2, "Target")
         )
     )
+    */
     private val prices = MutableStateFlow<List<Price>>(listOf(
         Price(1, 1, 3.99, "Organic milk at Walmart"),
         Price(1, 2, 4.29, "Organic milk at Target"),
@@ -400,9 +433,9 @@ class PriceTrackerRepositoryOldTODO {
     fun addProduct(item: Item) {
         products.value = products.value + item
     }
-    */
 
     fun getAllStores(): Flow<List<Source>> = stores
+    */
 
     /* TODO
     fun getPricesForProduct(productId: Long): List<Price> =
@@ -465,11 +498,12 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             list.associateBy { it.id }
     }
 
-    val stores: Flow<List<Source>> = repository.getAllStores()
+    fun getAllSources(dataSetId: Long): Flow<List<Source>> = priceTrackerRepository.getAllSources(dataSetId)
 
-    val sourceMap: Flow<Map<Long, Source>> = stores.map { list ->
-        list.associateBy { it.id }
-    }
+    fun getSourceMap(dataSetId: Long): Flow<Map<Long, Source>> =
+        getAllSources(dataSetId).map { list ->
+            list.associateBy { it.id }
+        }
 
     val categories: Flow<List<Category>> = repository.getAllCategories()
 
@@ -797,7 +831,7 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
     var currentUnit by remember { mutableStateOf("100g") }
 
     //var vm: PriceTrackerViewModel = viewModel()
-    val sources by vm.stores.collectAsStateWithLifecycle(initialValue = emptyList())
+    val sources by vm.getAllSources(selectedDataSetId).collectAsStateWithLifecycle(initialValue = emptyList())
 
     // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
     // changes the system font size. (Even if we didn't do this, we'd still want to use a fixed
@@ -1709,7 +1743,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
     // TODO: Should we just have the caller pass the product name through so we don't have to do this lookup? the viewmodel should have the data cached, but we still have to through the collectstatewithlifecycle overhead?
     val productMap by vm.getItemMap(dataSetId).collectAsStateWithLifecycle(initialValue = emptyMap())
     val productName = productMap[productId]?.name ?: "Invalid product ID $productId"
-    val storeMap by vm.sourceMap.collectAsStateWithLifecycle(initialValue = emptyMap())
+    val storeMap by vm.getSourceMap(dataSetId).collectAsStateWithLifecycle(initialValue = emptyMap())
     val storeName = storeMap[storeId]?.name ?: "Invalid store ID $storeId"
     val nullablePriceList: List<Price>? by vm.getPriceDetailsForProductAndStore(
         productId = productId,
