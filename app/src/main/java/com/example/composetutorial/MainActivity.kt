@@ -163,7 +163,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -566,6 +568,21 @@ class PriceTrackerRepositoryOldTODO {
     */
 }
 
+// ChatGPT magic
+class SingleEventState<T>(initialState: T) {
+
+    private val _state = MutableStateFlow(initialState)
+    val state: StateFlow<T> = _state
+
+    private val _events = MutableSharedFlow<T>()
+    val events: SharedFlow<T> = _events
+
+    suspend fun update(value: T) {
+        _state.value = value
+        _events.emit(value)
+    }
+}
+
 class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository) : ViewModel() {
     private val repository = PriceTrackerRepositoryOldTODO()
 
@@ -622,25 +639,23 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
 
     enum class SaveStatus { Idle, Saving, Success, Error }
+    private val _saveStatus = SingleEventState(SaveStatus.Idle)
+    val saveStatus: StateFlow<SaveStatus> = _saveStatus.state
+    val saveEvents: SharedFlow<SaveStatus> = _saveStatus.events
 
-    private val _saveStatus = MutableStateFlow(SaveStatus.Idle) // TODO: can we use "by"?
-    val saveStatus: StateFlow<SaveStatus> = _saveStatus
 
     // TODO: I don't think this will insert correctly yet, as Price has no price_id primary key to
     // allow us to indicate to this function when it is an insert rather than an update, but let's
     // worry about that later.
     // TODO: Use upsert in name?
     fun updateOrInsertPrice(price: Price) {
-        // TODO: I am far from clear there isn't a race condition here of some kind, but we'll just have
-        // to see how it goes. Once I have something working it may be clearer what the "proper" sane way (of course there might not be one) to handle this is.
-        _saveStatus.value = SaveStatus.Idle
         viewModelScope.launch {
-            _saveStatus.value = SaveStatus.Saving
+            _saveStatus.update(SaveStatus.Saving)
             try {
                 priceTrackerRepository.updateOrInsertPrice(price)
-                _saveStatus.value = SaveStatus.Success
+                _saveStatus.update(SaveStatus.Success)
             } catch (e: Exception) {
-                _saveStatus.value = SaveStatus.Error // TODO: how can we preserve e and show it to user in UI?
+                _saveStatus.update(SaveStatus.Error) // TODO: how can we preserve e and show it to user in UI?
             }
         }
     }
@@ -1885,6 +1900,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         }
         var originalPrice by rememberSaveable { mutableStateOf(price) }
 
+        // TODO: Can I get rid of saveInitiated and instead set the state inside the viewmodel to "idle" when we are not saving? The frequency with which we check it suggests it might be more painful to get rid of it. but if we track this, the distinction between idle and saving is mostly meainingless (the state never gets set back to idle) and we should maybe merge those states into a vague "meh" state.
         var saveInitiated by rememberSaveable { mutableStateOf(false) }
         var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
         var showErrorDialog by rememberSaveable { mutableStateOf(false) }
@@ -1930,16 +1946,24 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         }
 
         val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
-        LaunchedEffect(saveStatus) {
-            if (saveInitiated) {
-                if (saveStatus == PriceTrackerViewModel.SaveStatus.Success) {
-                    popBackStackWithReset()
-                } else if (saveStatus == PriceTrackerViewModel.SaveStatus.Error) {
-                    saveInitiated = false;
-                    showErrorDialog = true;
+        // ChatGPT magic more or less
+        LaunchedEffect(Unit) {
+            vm.saveEvents.collect { event ->
+                when (event) {
+                    PriceTrackerViewModel.SaveStatus.Success -> {
+                        popBackStackWithReset()
+                    }
+
+                    PriceTrackerViewModel.SaveStatus.Error -> {
+                        saveInitiated = false;
+                        showErrorDialog = true;
+                    }
+
+                    else -> {}
                 }
             }
         }
+
 
         // TODO: Grok suggests wrapping a Box with:
         //Modifier.semantics {
