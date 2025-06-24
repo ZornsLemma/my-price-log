@@ -1867,6 +1867,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         //var price by rememberSaveable { mutableStateOf ( if (priceList.isEmpty()) Price(productId = productId, storeId = storeId, price = 0.0, details = "") else priceList[0])}
 
         // Initialize price with a default value
+        // TODO: THIS AND ORIGINALPRICE ARE LIKELY BADLY BROKEN BY THE "RE-ENTRY IS NOT ACTUALLY A FRESH OBJECT" PROBLEM WHICH I WORK AROUND WITH RESETSAVEABLES FOR saveInitiated, BUT THAT PROBABLY *WON'T* WORK IN THIS CONTEXT
         var price by rememberSaveable {
             mutableStateOf(
                 if (priceList.isEmpty()) {
@@ -1891,11 +1892,31 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         var scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
 
+        // Using popBackStack() to leave this "screen" and then coming back in later *preserves* the
+        // rememberSaveable things. This means that (as the most relevant example), if saveInitiated
+        // is still true, we will be unable to save on re-entry. We work around this by always
+        // leaving via popBackStackWithReset(), which resets things in readiness for the next use of
+        // this composable. For consistency, we also perform the same reset on the very first
+        // composition via LaunchedEffect(Unit).
+        fun resetSaveables() {
+            saveInitiated = false
+            showConfirmDialog = false
+            showErrorDialog = false
+            // TODO: others?
+        }
+        LaunchedEffect(Unit) {
+            resetSaveables()
+        }
+        fun popBackStackWithReset() {
+            resetSaveables()
+            navController.popBackStack()
+        }
+
         fun onCloseRequest() {
             if (price != originalPrice) {
                 showConfirmDialog = true
             } else {
-                navController.popBackStack()
+                popBackStackWithReset()
             }
         }
 
@@ -1912,7 +1933,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         LaunchedEffect(saveStatus) {
             if (saveInitiated) {
                 if (saveStatus == PriceTrackerViewModel.SaveStatus.Success) {
-                    navController.popBackStack()
+                    popBackStackWithReset()
                 } else if (saveStatus == PriceTrackerViewModel.SaveStatus.Error) {
                     saveInitiated = false;
                     showErrorDialog = true;
@@ -2064,7 +2085,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
                         }) { Text("Keep editing") }
                     },
                     confirmButton = {
-                        TextButton(onClick = { navController.popBackStack() }) {
+                        TextButton(onClick = { popBackStackWithReset() }) {
                             Text(
                                 "Discard"
                             )
@@ -2089,6 +2110,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
             if (showSavingSnackbar) {
                 scope.launch {
                     snackbarHostState.showSnackbar("Saving, please wait...")
+                    showSavingSnackbar = false
                 }
             }
         }
