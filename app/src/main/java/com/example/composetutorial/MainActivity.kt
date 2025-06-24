@@ -175,6 +175,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.map
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -230,10 +231,11 @@ interface ItemDao {
     fun getAllItems(): Flow<List<Item>>
 }
 
-@Database(entities = [Item::class], version = 1, exportSchema = false)
+@Database(entities = [Item::class, Product::class], version = 1, exportSchema = false)
 abstract class InventoryDatabase : RoomDatabase() {
 
     abstract fun itemDao(): ItemDao
+    abstract fun productDao(): ProductDao
 
     companion object {
         @Volatile
@@ -248,6 +250,9 @@ abstract class InventoryDatabase : RoomDatabase() {
             }
         }
     }
+}
+
+interface PriceTrackerRepository {
 }
 
 /**
@@ -287,6 +292,7 @@ interface AppContainer {
     val itemsRepository: ItemsRepository
 }
 
+/* TODO!?
 /**
  * [AppContainer] implementation that provides instance of [OfflineItemsRepository]
  */
@@ -298,8 +304,10 @@ class AppDataContainer(private val context: Context) : AppContainer {
         OfflineItemsRepository(InventoryDatabase.getDatabase(context).itemDao())
     }
 }
+*/
 
-class OfflineItemsRepository(private val itemDao: ItemDao) : ItemsRepository {
+class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val productDao: ProductDao) : PriceTrackerRepository {
+    /* TODO
     override fun getAllItemsStream(): Flow<List<Item>> = itemDao.getAllItems()
 
     override fun getItemStream(id: Int): Flow<Item?> = itemDao.getItem(id)
@@ -309,6 +317,7 @@ class OfflineItemsRepository(private val itemDao: ItemDao) : ItemsRepository {
     override suspend fun deleteItem(item: Item) = itemDao.delete(item)
 
     override suspend fun updateItem(item: Item) = itemDao.update(item)
+    */
 }
 
 class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewModel() {
@@ -327,7 +336,10 @@ object AppViewModelProvider {
         // Other Initializers
         // Initializer for ItemEntryViewModel
         initializer {
-            ItemEntryViewModel(MyApplication().itemsRepository)
+            // TODO: Extra special AI voodoo which wasn't in the codelab but caused startup crashes without it
+            val app = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
+            // TODO ItemEntryViewModel(MyApplication().itemsRepository)
+            PriceTrackerViewModel(app.priceTrackerRepository)
         }
         //...
     }
@@ -335,9 +347,15 @@ object AppViewModelProvider {
 
 // TODO: WTF? AI hints, complete voodoo
 class MyApplication : Application() {
+    /* TODO
     val itemsRepository: OfflineItemsRepository by lazy {
         val db = InventoryDatabase.getDatabase(this)
         OfflineItemsRepository(db.itemDao())
+    }
+    */
+    val priceTrackerRepository: PriceTrackerRepositoryImpl by lazy {
+        val db = InventoryDatabase.getDatabase(this)
+        PriceTrackerRepositoryImpl(db.productDao())
     }
 }
 
@@ -355,7 +373,34 @@ data class UnitX(
 
 data class Category(val id: Long, val name: String)
 
-data class Product(val id: Long, val name: String)
+@Entity(tableName = "product")
+data class Product(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0, // TODO: product_id in database?
+    val name: String,
+)
+
+@Dao
+interface ProductDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(product: Product)
+
+    @Update
+    suspend fun update(product: Product)
+
+    @Delete
+    suspend fun delete(product: Product)
+
+    @Query("SELECT * from product WHERE id = :id")
+    fun getProduct(id: Int): Flow<Product>
+
+    // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
+    @Query("SELECT * from product ORDER BY name ASC")
+    fun getAllItems(): Flow<List<Product>>
+}
+
+
+// TODO data class Product(val id: Long, val name: String)
 
 data class Store(val id: Long, val name: String)
 
@@ -369,7 +414,7 @@ data class Price(
 ) : Parcelable
 
 // TODO: This is part way through being converted to use Flow
-class PriceTrackerRepository {
+class PriceTrackerRepositoryOldTODO {
     // TODO: listOf may be more correct than mutableListOf everywhere, not just here, but I really don't understand this.
     private val categories = MutableStateFlow<List<Category>>(
         mutableListOf(
@@ -454,8 +499,8 @@ class PriceTrackerRepository {
     }
 }
 
-class PriceTrackerViewModel : ViewModel() {
-    private val repository = PriceTrackerRepository()
+class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository) : ViewModel() {
+    private val repository = PriceTrackerRepositoryOldTODO()
 
     val products: Flow<List<Product>> = repository.getAllProducts()
 
@@ -2045,7 +2090,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigation() {
-    var vm: PriceTrackerViewModel = viewModel()
+    var vm: PriceTrackerViewModel = viewModel(factory = AppViewModelProvider.Factory)
     val navController = rememberNavController()
     NavHost(
         navController = navController,
