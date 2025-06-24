@@ -352,9 +352,7 @@ interface ItemDao {
 }
 
 
-// TODO data class Product(val id: Long, val name: String)
-
-data class Store(val id: Long, val name: String)
+data class Source(val id: Long, val name: String)
 
 // TODO: Should Price have a price_id on it? If it does, it will need to be nullable (I think) so we can use it in-memory when adding a brand new price, before the db layer assigns an id
 @Parcelize
@@ -382,9 +380,9 @@ class PriceTrackerRepositoryOldTODO {
         )
     )
     */
-    private val stores = MutableStateFlow<List<Store>>(
+    private val stores = MutableStateFlow<List<Source>>(
         mutableListOf(
-            Store(1, "Walmart"), Store(2, "Target")
+            Source(1, "Walmart"), Source(2, "Target")
         )
     )
     private val prices = MutableStateFlow<List<Price>>(listOf(
@@ -404,7 +402,7 @@ class PriceTrackerRepositoryOldTODO {
     }
     */
 
-    fun getAllStores(): Flow<List<Store>> = stores
+    fun getAllStores(): Flow<List<Source>> = stores
 
     /* TODO
     fun getPricesForProduct(productId: Long): List<Price> =
@@ -467,9 +465,9 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             list.associateBy { it.id }
     }
 
-    val stores: Flow<List<Store>> = repository.getAllStores()
+    val stores: Flow<List<Source>> = repository.getAllStores()
 
-    val storeMap: Flow<Map<Long, Store>> = stores.map { list ->
+    val sourceMap: Flow<Map<Long, Source>> = stores.map { list ->
         list.associateBy { it.id }
     }
 
@@ -1711,7 +1709,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
     // TODO: Should we just have the caller pass the product name through so we don't have to do this lookup? the viewmodel should have the data cached, but we still have to through the collectstatewithlifecycle overhead?
     val productMap by vm.getItemMap(dataSetId).collectAsStateWithLifecycle(initialValue = emptyMap())
     val productName = productMap[productId]?.name ?: "Invalid product ID $productId"
-    val storeMap by vm.storeMap.collectAsStateWithLifecycle(initialValue = emptyMap())
+    val storeMap by vm.sourceMap.collectAsStateWithLifecycle(initialValue = emptyMap())
     val storeName = storeMap[storeId]?.name ?: "Invalid store ID $storeId"
     val nullablePriceList: List<Price>? by vm.getPriceDetailsForProductAndStore(
         productId = productId,
