@@ -139,10 +139,12 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Delete
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
@@ -156,15 +158,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
-@Database(entities = [Item::class], version = 1, exportSchema = false)
+@Database(entities = [Category::class, Item::class], version = 1, exportSchema = false)
 abstract class InventoryDatabase : RoomDatabase() {
 
+    abstract fun dataSetDao(): DataSetDao
     abstract fun productDao(): ItemDao
 
     companion object {
@@ -182,8 +186,9 @@ abstract class InventoryDatabase : RoomDatabase() {
                             CoroutineScope(Dispatchers.IO).launch {
                                 val db = InventoryDatabase.getDatabase(context)
                                 db.withTransaction {
-                                    val itemIdGroundCoffee = db.productDao().insert(Item(name = "Ground coffee"))
-                                    val itemIdWholeMilk = db.productDao().insert(Item(name = "Whole milk"))
+                                    val dataSetId = db.dataSetDao().insert(Category(name ="Demo"))
+                                    val itemIdGroundCoffee = db.productDao().insert(Item(dataSetId = dataSetId, name = "Ground coffee"))
+                                    val itemIdWholeMilk = db.productDao().insert(Item(dataSetId = dataSetId, name = "Whole milk"))
                                     /*
                                     db.productDao().insert(Product(name = "Demo Product"))
                                     db.itemDao().insert(Item(name = "Demo Item"))
@@ -202,7 +207,7 @@ abstract class InventoryDatabase : RoomDatabase() {
 }
 
 interface PriceTrackerRepository {
-    fun getAllItems(): Flow<List<Item>>
+    fun getAllItems(dataSetId: Long): Flow<List<Item>>
 }
 
 /* TODO!?
@@ -241,7 +246,7 @@ class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val 
     override suspend fun updateItem(item: Item) = itemDao.update(item)
     */
 
-    override fun getAllItems(): Flow<List<Item>> = itemDao.getAllItems()
+    override fun getAllItems(dataSetId: Long): Flow<List<Item>> = itemDao.getAllItems(dataSetId)
 }
 
 /* TODO
@@ -292,24 +297,48 @@ class MyApplication : Application() {
 // database, which I will retrofit later. I have no idea if the code is actually correct, although
 // it seems simple enough that I don't think it hides too many nasty surprises.
 
+// TODO: I need to make sure I have the right indexes on all these tables, not sure what if any might get auto-created (and I may want to inhibit some auto-creation if there is any)
+
 data class UnitX(
     val id: Long,
     val name: String
 ) // TODO: very hacky, not sure how will represent this
 
-data class Category(val id: Long, val name: String)
+@Entity(tableName = "data_set")
+// TODO: Rename class DataSet - and BTW the UI terms should probably be "Collection"
+data class Category(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val name: String
+)
 
-@Entity(tableName = "item")
+@Entity(
+    tableName = "item", foreignKeys = [
+        ForeignKey(
+            entity = Category::class,
+            parentColumns = ["id"],
+            childColumns = ["data_set_id"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
 data class Item(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = 0, // TODO: product_id in database?
-    val name: String,
+    val id: Long = 0,
+    @ColumnInfo(name = "data_set_id") val dataSetId : Long,
+    val name: String
 )
+
+@Dao
+interface DataSetDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(dataSet: Category): Long
+}
 
 @Dao
 interface ItemDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(item: Item)
+    suspend fun insert(item: Item): Long
 
     @Update
     suspend fun update(item: Item)
@@ -317,12 +346,9 @@ interface ItemDao {
     @Delete
     suspend fun delete(item: Item)
 
-    @Query("SELECT * FROM item WHERE id = :id")
-    fun getItem(id: Int): Flow<Item>
-
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
-    @Query("SELECT * FROM item ORDER BY name ASC")
-    fun getAllItems(): Flow<List<Item>>
+    @Query("SELECT * FROM item WHERE data_set_id = :dataSetId ORDER BY name ASC")
+    fun getAllItems(dataSetId: Long): Flow<List<Item>>
 }
 
 
@@ -349,11 +375,13 @@ class PriceTrackerRepositoryOldTODO {
             Category(3, "Groceries (Manchester)")
         )
     )
+    /*
     private val products = MutableStateFlow<List<Item>>(
         mutableListOf(
             Item(1, "Milk"), Item(2, "Bread")
         )
     )
+    */
     private val stores = MutableStateFlow<List<Store>>(
         mutableListOf(
             Store(1, "Walmart"), Store(2, "Target")
@@ -368,11 +396,13 @@ class PriceTrackerRepositoryOldTODO {
 
     fun getAllCategories(): Flow<List<Category>> = categories
 
+    /*
     fun getAllProducts(): Flow<List<Item>> = products
 
     fun addProduct(item: Item) {
         products.value = products.value + item
     }
+    */
 
     fun getAllStores(): Flow<List<Store>> = stores
 
@@ -429,11 +459,12 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     private val repository = PriceTrackerRepositoryOldTODO()
 
     // val products: Flow<List<Product>> = repository.getAllProducts()
-    val items: Flow<List<Item>> = priceTrackerRepository.getAllItems()
+    // val items: Flow<List<Item>> = priceTrackerRepository.getAllItems()
+    fun getAllItems(dataSetId: Long) = priceTrackerRepository.getAllItems(dataSetId)
 
-    // Optional: Map for efficient lookups, computed as a Flow
-    val itemMap: Flow<Map<Long, Item>> = items.map { list ->
-        list.associateBy { it.id }
+    fun getItemMap(dataSetId: Long): Flow<Map<Long, Item>> =
+        getAllItems(dataSetId).map { list ->
+            list.associateBy { it.id }
     }
 
     val stores: Flow<List<Store>> = repository.getAllStores()
@@ -508,14 +539,14 @@ val screenBorder = 8.dp
 
 // Start Grok chunk
 @Composable
-fun MainScreen(vm: PriceTrackerViewModel, selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Unit) {
+fun MainScreen(vm: PriceTrackerViewModel, selectedDataSetId: Long?, onSelectedDataSetIdChange: (Long) -> Unit,
+               selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Unit) {
     // TODO: Note that because category and product use a TextField, they have the (I think) nice
     // property that the label expands into a sort of big hint when they are empty. We should
     // probably take advantage of this where having them empty makes sense - and it probably does
     // everywhere, even if it's rare, because the user *could* go and delete every single item in
     // the database in theory. TODO: We should make sure we have the same behaviour for Source,
     // because that actually *should* allow the user to easily set it to empty/none.
-    var selectedCategoryId: Long? by remember { mutableStateOf(null) } // TODO: do we actually allow nulls for category?
     var showProductSheet by remember { mutableStateOf(false) }
     //val categories = listOf("Demo", "Groceries (home)", "Groceries (Manchester)")
     //val products = listOf("Beans", "Milk", "Bread", "Chicken" /* ... */)
@@ -524,8 +555,16 @@ fun MainScreen(vm: PriceTrackerViewModel, selectedProductId: Long?, onSelectedPr
     // TODO: I suspect in general (not just here) I should be passing viewmodel *into* these functions rather than getting it from "global", to allow for dependency injection. but in practice it wouldn't be hard to rework this after and i am not sure this ui stuff is testable - I really don't know how it works.
     //var vm: PriceTrackerViewModel = viewModel()
     val categories by vm.categories.collectAsStateWithLifecycle(initialValue = emptyList())
-    val products by vm.items.collectAsStateWithLifecycle(initialValue = emptyList())
-    val productMap by vm.itemMap.collectAsStateWithLifecycle(initialValue = emptyMap())
+    val products by if (selectedDataSetId != null ) {
+        vm.getAllItems(selectedDataSetId!!).collectAsStateWithLifecycle(initialValue = emptyList())
+    } else {
+        flowOf(emptyList<Item>()).collectAsStateWithLifecycle(initialValue = emptyList())
+    }
+    val productMap by if (selectedDataSetId != null) {
+        vm.getItemMap(selectedDataSetId!!).collectAsStateWithLifecycle(initialValue = emptyMap())
+    } else {
+        flowOf(emptyMap<Long, Item>()).collectAsStateWithLifecycle(initialValue = emptyMap())
+    }
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -537,8 +576,8 @@ fun MainScreen(vm: PriceTrackerViewModel, selectedProductId: Long?, onSelectedPr
             modifier = Modifier
                 .padding(bottom = 8.dp)
                 .fillMaxWidth(),
-            selectedId = selectedCategoryId,
-            onValueChange = { selectedCategoryId = it },
+            selectedId = selectedDataSetId,
+            onValueChange = { onSelectedDataSetIdChange(it) },
             label = { Text("Category") },
             items = categories,
             getId = { it.id },
@@ -753,7 +792,8 @@ fun MyFullScreenDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
-fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, selectedProductId: Long?) {
+// TODO: Arguably we should have selected{DataSet,Product}Id not allow nulls here - our parent should just not be composing us if these are not set
+fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, selectedDataSetId: Long, selectedProductId: Long?) {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
     var expanded by remember { mutableStateOf(false) }
     var currentUnit by remember { mutableStateOf("100g") }
@@ -914,7 +954,7 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             FilledTonalButton(
-                                onClick = { navController.navigate("fullScreenDialog/$selectedProductId/$selectedSourceId") },
+                                onClick = { navController.navigate("fullScreenDialog/$selectedDataSetId/$selectedProductId/$selectedSourceId") },
                                 shape = MaterialTheme.shapes.small
                             ) {
                                 Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
@@ -1501,6 +1541,8 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     var showEditDialog by rememberSaveable { mutableStateOf(false) }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
+    var selectedDataSetId: Long by remember { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, need to cope with null in some way probably
+
     var selectedProductId: Long by rememberSaveable { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, we need a genuine ID from somewhere and/or support for null
 
 
@@ -1550,6 +1592,8 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
         ) {
             MainScreen(
                 vm = vm,
+                selectedDataSetId = selectedDataSetId,
+                onSelectedDataSetIdChange = { selectedDataSetId = it },
                 selectedProductId = selectedProductId,
                 onSelectedProductIdChange = { selectedProductId = it }) // TODO: rename this
 
@@ -1582,6 +1626,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
             ItemSourceInfo(
                 vm = vm,
                 navController = navController,
+                selectedDataSetId = selectedDataSetId,
                 selectedProductId = selectedProductId)
 
             androidx.compose.foundation.layout.Spacer(
@@ -1661,10 +1706,10 @@ fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvi
 
 
 @Composable
-fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostController, productId: Long, storeId: Long) {
+fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostController, dataSetId: Long, productId: Long, storeId: Long) {
     //var vm: PriceTrackerViewModel = viewModel()
     // TODO: Should we just have the caller pass the product name through so we don't have to do this lookup? the viewmodel should have the data cached, but we still have to through the collectstatewithlifecycle overhead?
-    val productMap by vm.itemMap.collectAsStateWithLifecycle(initialValue = emptyMap())
+    val productMap by vm.getItemMap(dataSetId).collectAsStateWithLifecycle(initialValue = emptyMap())
     val productName = productMap[productId]?.name ?: "Invalid product ID $productId"
     val storeMap by vm.storeMap.collectAsStateWithLifecycle(initialValue = emptyMap())
     val storeName = storeMap[storeId]?.name ?: "Invalid store ID $storeId"
@@ -2099,11 +2144,12 @@ fun AppNavigation() {
             SettingsScreen(navController)
         }
         // TODO: This needs the correct vertical transitions, but let's not fuss with that for now
-        composable("fullScreenDialog/{productId}/{storeId}") {
+        composable("fullScreenDialog/{dataSetId}/{productId}/{storeId}") {
             backStackEntry ->
+            val dataSetId = backStackEntry.arguments?.getString("dataSetId")?.toLong() ?: 0
             val productId = backStackEntry.arguments?.getString("productId")?.toLong() ?: 0
             val storeId = backStackEntry.arguments?.getString("storeId")?.toLong() ?: 0
-            OuterFullScreenDialog(vm, navController, productId, storeId)
+            OuterFullScreenDialog(vm, navController, dataSetId, productId, storeId)
         }
     }
 }
