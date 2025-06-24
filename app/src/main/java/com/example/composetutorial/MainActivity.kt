@@ -165,7 +165,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
-@Database(entities = [Category::class, Item::class, Source::class], version = 1, exportSchema = false)
+@Database(entities = [DataSet::class, Item::class, Source::class], version = 1, exportSchema = false)
 // TODO: Should not be called *Inventory*Database
 abstract class InventoryDatabase : RoomDatabase() {
 
@@ -188,7 +188,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                             CoroutineScope(Dispatchers.IO).launch {
                                 val db = InventoryDatabase.getDatabase(context)
                                 db.withTransaction {
-                                    val dataSetId = db.dataSetDao().insert(Category(name ="Demo"))
+                                    val dataSetId = db.dataSetDao().insert(DataSet(name ="Demo"))
                                     val itemIdGroundCoffee = db.productDao().insert(Item(dataSetId = dataSetId, name = "Coffee (ground)"))
                                     val itemIdWholeMilk = db.productDao().insert(Item(dataSetId = dataSetId, name = "Milk (whole)"))
                                     val itemIdTeabags = db.productDao().insert(Item(dataSetId = dataSetId, name = "Teabags"))
@@ -212,7 +212,7 @@ abstract class InventoryDatabase : RoomDatabase() {
 }
 
 interface PriceTrackerRepository {
-    fun getAllDataSets(): Flow<List<Category>>
+    fun getAllDataSets(): Flow<List<DataSet>>
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
 }
@@ -253,7 +253,7 @@ class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val 
     override suspend fun updateItem(item: Item) = itemDao.update(item)
     */
 
-    override fun getAllDataSets(): Flow<List<Category>> = dataSetDao.getAllDataSets()
+    override fun getAllDataSets(): Flow<List<DataSet>> = dataSetDao.getAllDataSets()
 
     override fun getAllItems(dataSetId: Long): Flow<List<Item>> = itemDao.getAllItems(dataSetId)
 
@@ -316,8 +316,8 @@ data class UnitX(
 ) // TODO: very hacky, not sure how will represent this
 
 @Entity(tableName = "data_set")
-// TODO: Rename class DataSet - and BTW the UI terms should probably be "Collection"
-data class Category(
+// TODO: UI term should probably be "Collection" ("category" sounds a bit like categorising products and we don't want to confuse things)
+data class DataSet(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String
@@ -326,7 +326,7 @@ data class Category(
 @Entity(
     tableName = "item", foreignKeys = [
         ForeignKey(
-            entity = Category::class,
+            entity = DataSet::class,
             parentColumns = ["id"],
             childColumns = ["data_set_id"],
             onDelete = ForeignKey.CASCADE
@@ -343,7 +343,7 @@ data class Item(
 @Entity(
     tableName = "source", foreignKeys = [
         ForeignKey(
-            entity = Category::class,
+            entity = DataSet::class,
             parentColumns = ["id"],
             childColumns = ["data_set_id"],
             onDelete = ForeignKey.CASCADE
@@ -360,11 +360,11 @@ data class Source(
 @Dao
 interface DataSetDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(dataSet: Category): Long
+    suspend fun insert(dataSet: DataSet): Long
 
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
     @Query("SELECT * FROM data_set  ORDER BY name ASC")
-    fun getAllDataSets(): Flow<List<Category>>
+    fun getAllDataSets(): Flow<List<DataSet>>
 }
 
 @Dao
@@ -514,7 +514,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             list.associateBy { it.id }
         }
 
-    val categories: Flow<List<Category>> = priceTrackerRepository.getAllDataSets()
+    val categories: Flow<List<DataSet>> = priceTrackerRepository.getAllDataSets()
 
     init {
         Log.d("MyApp", "PriceTrackerViewModel created: $this")
