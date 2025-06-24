@@ -208,37 +208,10 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@Entity(tableName = "items")
-data class Item(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-    val name: String,
-    val price: Double,
-    val quantity: Int
-)
 
-@Dao
-interface ItemDao {
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(item: Item)
-
-    @Update
-    suspend fun update(item: Item)
-
-    @Delete
-    suspend fun delete(item: Item)
-
-    @Query("SELECT * from items WHERE id = :id")
-    fun getItem(id: Int): Flow<Item>
-
-    @Query("SELECT * from items ORDER BY name ASC")
-    fun getAllItems(): Flow<List<Item>>
-}
-
-@Database(entities = [Item::class, Product::class], version = 1, exportSchema = false)
+@Database(entities = [Product::class], version = 1, exportSchema = false)
 abstract class InventoryDatabase : RoomDatabase() {
 
-    abstract fun itemDao(): ItemDao
     abstract fun productDao(): ProductDao
 
     companion object {
@@ -248,7 +221,7 @@ abstract class InventoryDatabase : RoomDatabase() {
         fun getDatabase(context: Context): InventoryDatabase {
             // if the Instance is not null, return it, otherwise create a new database instance.
             return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context, InventoryDatabase::class.java, "item_database") // TODO: item_database is wrong, as is InventoryDatabase
+                Room.databaseBuilder(context, InventoryDatabase::class.java, "main.db")
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase)
                         {
@@ -279,42 +252,14 @@ interface PriceTrackerRepository {
     fun getAllProducts(): Flow<List<Product>>
 }
 
-/**
- * Repository that provides insert, update, delete, and retrieve of [Item] from a given data source.
- */
-interface ItemsRepository {
-    /**
-     * Retrieve all the items from the the given data source.
-     */
-    fun getAllItemsStream(): Flow<List<Item>>
-
-    /**
-     * Retrieve an item from the given data source that matches with the [id].
-     */
-    fun getItemStream(id: Int): Flow<Item?>
-
-    /**
-     * Insert item in the data source
-     */
-    suspend fun insertItem(item: Item)
-
-    /**
-     * Delete item from the data source
-     */
-    suspend fun deleteItem(item: Item)
-
-    /**
-     * Update item in the data source
-     */
-    suspend fun updateItem(item: Item)
-}
-
+/* TODO!?
 /**
  * App container for Dependency injection.
  */
 interface AppContainer {
     val itemsRepository: ItemsRepository
 }
+*/
 
 /* TODO!?
 /**
@@ -346,6 +291,7 @@ class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val 
     override fun getAllProducts(): Flow<List<Product>> = productDao.getAllProducts()
 }
 
+/* TODO
 class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewModel() {
     /*
     suspend fun saveItem() {
@@ -355,6 +301,7 @@ class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewMod
     }
 */
 }
+*/
 
 // TODO: WTF?
 object AppViewModelProvider {
