@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import android.app.Activity
+import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Build
@@ -177,9 +178,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.map
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Database
+import androidx.room.Delete
+import androidx.room.Entity
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
@@ -187,6 +202,144 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+@Entity(tableName = "items")
+data class Item(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val name: String,
+    val price: Double,
+    val quantity: Int
+)
+
+@Dao
+interface ItemDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(item: Item)
+
+    @Update
+    suspend fun update(item: Item)
+
+    @Delete
+    suspend fun delete(item: Item)
+
+    @Query("SELECT * from items WHERE id = :id")
+    fun getItem(id: Int): Flow<Item>
+
+    @Query("SELECT * from items ORDER BY name ASC")
+    fun getAllItems(): Flow<List<Item>>
+}
+
+@Database(entities = [Item::class], version = 1, exportSchema = false)
+abstract class InventoryDatabase : RoomDatabase() {
+
+    abstract fun itemDao(): ItemDao
+
+    companion object {
+        @Volatile
+        private var Instance: InventoryDatabase? = null
+
+        fun getDatabase(context: Context): InventoryDatabase {
+            // if the Instance is not null, return it, otherwise create a new database instance.
+            return Instance ?: synchronized(this) {
+                Room.databaseBuilder(context, InventoryDatabase::class.java, "item_database")
+                    .build()
+                    .also { Instance = it }
+            }
+        }
+    }
+}
+
+/**
+ * Repository that provides insert, update, delete, and retrieve of [Item] from a given data source.
+ */
+interface ItemsRepository {
+    /**
+     * Retrieve all the items from the the given data source.
+     */
+    fun getAllItemsStream(): Flow<List<Item>>
+
+    /**
+     * Retrieve an item from the given data source that matches with the [id].
+     */
+    fun getItemStream(id: Int): Flow<Item?>
+
+    /**
+     * Insert item in the data source
+     */
+    suspend fun insertItem(item: Item)
+
+    /**
+     * Delete item from the data source
+     */
+    suspend fun deleteItem(item: Item)
+
+    /**
+     * Update item in the data source
+     */
+    suspend fun updateItem(item: Item)
+}
+
+/**
+ * App container for Dependency injection.
+ */
+interface AppContainer {
+    val itemsRepository: ItemsRepository
+}
+
+/**
+ * [AppContainer] implementation that provides instance of [OfflineItemsRepository]
+ */
+class AppDataContainer(private val context: Context) : AppContainer {
+    /**
+     * Implementation for [ItemsRepository]
+     */
+    override val itemsRepository: ItemsRepository by lazy {
+        OfflineItemsRepository(InventoryDatabase.getDatabase(context).itemDao())
+    }
+}
+
+class OfflineItemsRepository(private val itemDao: ItemDao) : ItemsRepository {
+    override fun getAllItemsStream(): Flow<List<Item>> = itemDao.getAllItems()
+
+    override fun getItemStream(id: Int): Flow<Item?> = itemDao.getItem(id)
+
+    override suspend fun insertItem(item: Item) = itemDao.insert(item)
+
+    override suspend fun deleteItem(item: Item) = itemDao.delete(item)
+
+    override suspend fun updateItem(item: Item) = itemDao.update(item)
+}
+
+class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewModel() {
+    /*
+    suspend fun saveItem() {
+        if (validateInput()) {
+            itemsRepository.insertItem(itemUiState.itemDetails.toItem())
+        }
+    }
+*/
+}
+
+// TODO: WTF?
+object AppViewModelProvider {
+    val Factory = viewModelFactory {
+        // Other Initializers
+        // Initializer for ItemEntryViewModel
+        initializer {
+            ItemEntryViewModel(MyApplication().itemsRepository)
+        }
+        //...
+    }
+}
+
+// TODO: WTF? AI hints, complete voodoo
+class MyApplication : Application() {
+    val itemsRepository: OfflineItemsRepository by lazy {
+        val db = InventoryDatabase.getDatabase(this)
+        OfflineItemsRepository(db.itemDao())
+    }
+}
 
 // TODO: This is boilerplate *in memory* viewmodel stuff which I got from Grok. The idea is that I
 // can try to start using viewmodels and passing data back and forth between eg my home screen and
