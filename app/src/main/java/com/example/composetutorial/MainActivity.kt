@@ -9,39 +9,23 @@ import kotlinx.parcelize.Parcelize
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
-import android.os.Build
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.ui.semantics.dialog
-import androidx.compose.ui.semantics.semantics
-import kotlinx.coroutines.delay
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.material3.Button
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.Log
-import android.view.View
 import android.view.Window
-import android.view.WindowInsetsController
-import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.collection.emptyLongSet
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -49,15 +33,11 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -67,7 +47,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Scaffold
@@ -81,28 +60,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -130,13 +100,10 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -144,17 +111,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource.Companion.SideEffect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -164,27 +126,19 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
-import androidx.compose.ui.zIndex
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.map
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Delete
@@ -202,17 +156,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
-@Database(entities = [Product::class], version = 1, exportSchema = false)
+@Database(entities = [Item::class], version = 1, exportSchema = false)
 abstract class InventoryDatabase : RoomDatabase() {
 
-    abstract fun productDao(): ProductDao
+    abstract fun productDao(): ItemDao
 
     companion object {
         @Volatile
@@ -229,8 +182,8 @@ abstract class InventoryDatabase : RoomDatabase() {
                             CoroutineScope(Dispatchers.IO).launch {
                                 val db = InventoryDatabase.getDatabase(context)
                                 db.withTransaction {
-                                    val productIdGroundCoffee = db.productDao().insert(Product(name = "Ground coffee"))
-                                    val productIdWholeMilk = db.productDao().insert(Product(name = "Whole milk"))
+                                    val itemIdGroundCoffee = db.productDao().insert(Item(name = "Ground coffee"))
+                                    val itemIdWholeMilk = db.productDao().insert(Item(name = "Whole milk"))
                                     /*
                                     db.productDao().insert(Product(name = "Demo Product"))
                                     db.itemDao().insert(Item(name = "Demo Item"))
@@ -249,7 +202,7 @@ abstract class InventoryDatabase : RoomDatabase() {
 }
 
 interface PriceTrackerRepository {
-    fun getAllProducts(): Flow<List<Product>>
+    fun getAllItems(): Flow<List<Item>>
 }
 
 /* TODO!?
@@ -275,7 +228,7 @@ class AppDataContainer(private val context: Context) : AppContainer {
 }
 */
 
-class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val productDao: ProductDao) : PriceTrackerRepository {
+class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val itemDao: ItemDao) : PriceTrackerRepository {
     /* TODO
     override fun getAllItemsStream(): Flow<List<Item>> = itemDao.getAllItems()
 
@@ -288,7 +241,7 @@ class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val 
     override suspend fun updateItem(item: Item) = itemDao.update(item)
     */
 
-    override fun getAllProducts(): Flow<List<Product>> = productDao.getAllProducts()
+    override fun getAllItems(): Flow<List<Item>> = itemDao.getAllItems()
 }
 
 /* TODO
@@ -346,30 +299,30 @@ data class UnitX(
 
 data class Category(val id: Long, val name: String)
 
-@Entity(tableName = "product")
-data class Product(
+@Entity(tableName = "item")
+data class Item(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0, // TODO: product_id in database?
     val name: String,
 )
 
 @Dao
-interface ProductDao {
+interface ItemDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(product: Product)
+    suspend fun insert(item: Item)
 
     @Update
-    suspend fun update(product: Product)
+    suspend fun update(item: Item)
 
     @Delete
-    suspend fun delete(product: Product)
+    suspend fun delete(item: Item)
 
-    @Query("SELECT * from product WHERE id = :id")
-    fun getProduct(id: Int): Flow<Product>
+    @Query("SELECT * FROM item WHERE id = :id")
+    fun getItem(id: Int): Flow<Item>
 
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
-    @Query("SELECT * from product ORDER BY name ASC")
-    fun getAllProducts(): Flow<List<Product>>
+    @Query("SELECT * FROM item ORDER BY name ASC")
+    fun getAllItems(): Flow<List<Item>>
 }
 
 
@@ -396,9 +349,9 @@ class PriceTrackerRepositoryOldTODO {
             Category(3, "Groceries (Manchester)")
         )
     )
-    private val products = MutableStateFlow<List<Product>>(
+    private val products = MutableStateFlow<List<Item>>(
         mutableListOf(
-            Product(1, "Milk"), Product(2, "Bread")
+            Item(1, "Milk"), Item(2, "Bread")
         )
     )
     private val stores = MutableStateFlow<List<Store>>(
@@ -415,10 +368,10 @@ class PriceTrackerRepositoryOldTODO {
 
     fun getAllCategories(): Flow<List<Category>> = categories
 
-    fun getAllProducts(): Flow<List<Product>> = products
+    fun getAllProducts(): Flow<List<Item>> = products
 
-    fun addProduct(product: Product) {
-        products.value = products.value + product
+    fun addProduct(item: Item) {
+        products.value = products.value + item
     }
 
     fun getAllStores(): Flow<List<Store>> = stores
@@ -476,10 +429,10 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     private val repository = PriceTrackerRepositoryOldTODO()
 
     // val products: Flow<List<Product>> = repository.getAllProducts()
-    val products: Flow<List<Product>> = priceTrackerRepository.getAllProducts()
+    val items: Flow<List<Item>> = priceTrackerRepository.getAllItems()
 
     // Optional: Map for efficient lookups, computed as a Flow
-    val productMap: Flow<Map<Long, Product>> = products.map { list ->
+    val itemMap: Flow<Map<Long, Item>> = items.map { list ->
         list.associateBy { it.id }
     }
 
@@ -571,8 +524,8 @@ fun MainScreen(vm: PriceTrackerViewModel, selectedProductId: Long?, onSelectedPr
     // TODO: I suspect in general (not just here) I should be passing viewmodel *into* these functions rather than getting it from "global", to allow for dependency injection. but in practice it wouldn't be hard to rework this after and i am not sure this ui stuff is testable - I really don't know how it works.
     //var vm: PriceTrackerViewModel = viewModel()
     val categories by vm.categories.collectAsStateWithLifecycle(initialValue = emptyList())
-    val products by vm.products.collectAsStateWithLifecycle(initialValue = emptyList())
-    val productMap by vm.productMap.collectAsStateWithLifecycle(initialValue = emptyMap())
+    val products by vm.items.collectAsStateWithLifecycle(initialValue = emptyList())
+    val productMap by vm.itemMap.collectAsStateWithLifecycle(initialValue = emptyMap())
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -1711,7 +1664,7 @@ fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvi
 fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostController, productId: Long, storeId: Long) {
     //var vm: PriceTrackerViewModel = viewModel()
     // TODO: Should we just have the caller pass the product name through so we don't have to do this lookup? the viewmodel should have the data cached, but we still have to through the collectstatewithlifecycle overhead?
-    val productMap by vm.productMap.collectAsStateWithLifecycle(initialValue = emptyMap())
+    val productMap by vm.itemMap.collectAsStateWithLifecycle(initialValue = emptyMap())
     val productName = productMap[productId]?.name ?: "Invalid product ID $productId"
     val storeMap by vm.storeMap.collectAsStateWithLifecycle(initialValue = emptyMap())
     val storeName = storeMap[storeId]?.name ?: "Invalid store ID $storeId"
