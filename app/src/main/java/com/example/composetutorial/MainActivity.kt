@@ -212,6 +212,7 @@ abstract class InventoryDatabase : RoomDatabase() {
 }
 
 interface PriceTrackerRepository {
+    fun getAllDataSets(): Flow<List<Category>>
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
 }
@@ -239,7 +240,7 @@ class AppDataContainer(private val context: Context) : AppContainer {
 }
 */
 
-class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val itemDao: ItemDao, private val sourceDao: SourceDao) : PriceTrackerRepository {
+class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val dataSetDao: DataSetDao, private val itemDao: ItemDao, private val sourceDao: SourceDao) : PriceTrackerRepository {
     /* TODO
     override fun getAllItemsStream(): Flow<List<Item>> = itemDao.getAllItems()
 
@@ -251,6 +252,8 @@ class PriceTrackerRepositoryImpl(/* private val itemDao: ItemDao */ private val 
 
     override suspend fun updateItem(item: Item) = itemDao.update(item)
     */
+
+    override fun getAllDataSets(): Flow<List<Category>> = dataSetDao.getAllDataSets()
 
     override fun getAllItems(dataSetId: Long): Flow<List<Item>> = itemDao.getAllItems(dataSetId)
 
@@ -294,7 +297,7 @@ class MyApplication : Application() {
     */
     val priceTrackerRepository: PriceTrackerRepositoryImpl by lazy {
         val db = InventoryDatabase.getDatabase(this)
-        PriceTrackerRepositoryImpl(db.productDao(), db.sourceDao())
+        PriceTrackerRepositoryImpl(db.dataSetDao(), db.productDao(), db.sourceDao())
     }
 }
 
@@ -358,6 +361,10 @@ data class Source(
 interface DataSetDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(dataSet: Category): Long
+
+    // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
+    @Query("SELECT * FROM data_set  ORDER BY name ASC")
+    fun getAllDataSets(): Flow<List<Category>>
 }
 
 @Dao
@@ -398,6 +405,7 @@ data class Price(
 
 // TODO: This is part way through being converted to use Flow
 class PriceTrackerRepositoryOldTODO {
+    /*
     // TODO: listOf may be more correct than mutableListOf everywhere, not just here, but I really don't understand this.
     private val categories = MutableStateFlow<List<Category>>(
         mutableListOf(
@@ -406,6 +414,7 @@ class PriceTrackerRepositoryOldTODO {
             Category(3, "Groceries (Manchester)")
         )
     )
+    */
     /*
     private val products = MutableStateFlow<List<Item>>(
         mutableListOf(
@@ -425,9 +434,9 @@ class PriceTrackerRepositoryOldTODO {
         Price(2, 2, 2.79, "Whole wheat bread at Target"))
     )
 
+    /*
     fun getAllCategories(): Flow<List<Category>> = categories
 
-    /*
     fun getAllProducts(): Flow<List<Item>> = products
 
     fun addProduct(item: Item) {
@@ -505,7 +514,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             list.associateBy { it.id }
         }
 
-    val categories: Flow<List<Category>> = repository.getAllCategories()
+    val categories: Flow<List<Category>> = priceTrackerRepository.getAllDataSets()
 
     init {
         Log.d("MyApp", "PriceTrackerViewModel created: $this")
