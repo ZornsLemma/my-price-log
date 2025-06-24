@@ -1882,7 +1882,10 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         //var price by rememberSaveable { mutableStateOf ( if (priceList.isEmpty()) Price(productId = productId, storeId = storeId, price = 0.0, details = "") else priceList[0])}
 
         // Initialize price with a default value
-        // TODO: THIS AND ORIGINALPRICE ARE LIKELY BADLY BROKEN BY THE "RE-ENTRY IS NOT ACTUALLY A FRESH OBJECT" PROBLEM WHICH I WORK AROUND WITH RESETSAVEABLES FOR saveInitiated, BUT THAT PROBABLY *WON'T* WORK IN THIS CONTEXT
+        // TODO: THIS AND ORIGINALPRICE ARE LIKELY BADLY BROKEN BY THE "RE-ENTRY IS NOT ACTUALLY A
+        // FRESH OBJECT" PROBLEM WHICH I WORK AROUND WITH RESETSAVEABLES FOR saveInitiated, BUT THAT
+        // PROBABLY *WON'T* WORK IN THIS CONTEXT, AS WE DON'T HAVE THE "RESET VALUES" UNTIL WE START
+        // EDITING THE NEXT TIME.
         var price by rememberSaveable {
             mutableStateOf(
                 if (priceList.isEmpty()) {
