@@ -20,7 +20,6 @@ import androidx.compose.material3.Button
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
-import android.os.MessageQueue.IdleHandler
 import android.os.Parcelable
 import android.util.Log
 import android.view.Window
@@ -97,7 +96,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TextButton
@@ -172,6 +170,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 
 @Database(entities = [DataSet::class, Item::class, Source::class, Price::class], version = 1, exportSchema = false)
@@ -1106,7 +1105,7 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             FilledTonalButton(
-                                onClick = { navController.navigate("fullScreenDialog/$selectedDataSetId/$selectedProductId/$selectedSourceId") },
+                                onClick = { navController.navigate("fullScreenDialog/$selectedDataSetId/$selectedProductId/$selectedSourceId/${UUID.randomUUID()}") },
                                 shape = MaterialTheme.shapes.small
                             ) {
                                 Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
@@ -1858,9 +1857,6 @@ fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvi
 
 
 @Composable
-// TODO: Could we "work round" - and in fact this may fix or at least "hide" some of the problems I've anticipated - some of the "a new visit is not a new recomposition" problems because the productid+storeid are parameters and they *do* make us unique when they change?
-// TODO: Using popUpTo("route") to exit by going back to our (known) parent may sidestep some of the fresh recomposition stuff as well, but I am not sure. Even if ChatGPT's description is right, it sort of half seems to suggest this is something you do "to yourself" in the parent and it's just an utterly confusing mess.
-// TODO: It may well be that the "uuid hack" of passing a uuid (frankly I'd just suggest an incrementing int) as a fake parameter to force every composition to be "fresh" when we enter is actually fine, and this would probably avoid some of the shit with resetSaveables(). While it's *probably* fine given SSOT and observables and the fact we are parameterised by product/store ID, it would also avoid the price/oldprice worries completely.
 // TODO: https://m3.material.io/components/dialogs/specs says (near bottom) top/left/right padding on a full screen dialog should be 24.dp - I am probably not doing that, should I? Should I use similar padding on "non-dialog full screens" to match??
 fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostController, dataSetId: Long, productId: Long, storeId: Long) {
     //var vm: PriceTrackerViewModel = viewModel()
@@ -1889,10 +1885,6 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         //var price by rememberSaveable { mutableStateOf ( if (priceList.isEmpty()) Price(productId = productId, storeId = storeId, price = 0.0, details = "") else priceList[0])}
 
         // Initialize price with a default value
-        // TODO: THIS AND ORIGINALPRICE ARE LIKELY BADLY BROKEN BY THE "RE-ENTRY IS NOT ACTUALLY A
-        // FRESH OBJECT" PROBLEM WHICH I WORK AROUND WITH RESETSAVEABLES FOR saveInitiated, BUT THAT
-        // PROBABLY *WON'T* WORK IN THIS CONTEXT, AS WE DON'T HAVE THE "RESET VALUES" UNTIL WE START
-        // EDITING THE NEXT TIME.
         var price by rememberSaveable {
             mutableStateOf(
                 if (priceList.isEmpty()) {
@@ -1915,7 +1907,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         var showSaveProgressIndicator by rememberSaveable { mutableStateOf( false ) }
         var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
         var showErrorDialog by rememberSaveable { mutableStateOf(false) }
-        var showSavingSnackbar by remember { mutableStateOf( false) }
+        var showSavingSnackbar by rememberSaveable { mutableStateOf( false) }
         var scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
         // TODO: ChatGPT magic. This idea here is that a) currentBackStackEntry reflects the actual
@@ -1925,25 +1917,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
             mutableStateOf(false)
         }
 
-        // Using popBackStack() to leave this "screen" and then coming back in later *preserves* the
-        // rememberSaveable things. This means that (as the most relevant example), if saveInitiated
-        // is still true, we will be unable to save on re-entry. We work around this by always
-        // leaving via popBackStackWithReset(), which resets things in readiness for the next use of
-        // this composable. For consistency, we also perform the same reset on the very first
-        // composition via LaunchedEffect(Unit).
-        fun resetSaveables() {
-            saveInitiated = false
-            showSaveProgressIndicator = false
-            showConfirmDialog = false
-            showErrorDialog = false
-            // TODO: others?
-        }
-        LaunchedEffect(Unit) {
-            resetSaveables()
-        }
-        fun popBackStackWithReset() {
-            // TODO: When the dialog is dismissed and (at least) if a progress spinner appears, we see it recompose briefly to have a save button again. this is ugly. i suspect it's this hack which is causing it.
-            resetSaveables()
+        fun popBackStack() {
             // We need isNavigating to de-bounce the close button so we don't do a double pop if
             // the user double taps the close button quickly. (We may not need this for other ways
             // of going back, but it shouldn't hurt and is probably safer.)
@@ -1957,21 +1931,25 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
             if (price != originalPrice) {
                 showConfirmDialog = true
             } else {
-                popBackStackWithReset()
+                popBackStack()
             }
         }
-
 
         BackHandler {
             if (!saveInitiated) {
                 onCloseRequest()
             } else {
+                // I've discussed this with LLMs and it's not clear if we should do this or not, but
+                // I'll go with it for now.
                 showSavingSnackbar = true;
             }
         }
 
         LaunchedEffect(saveInitiated) {
             if (saveInitiated) {
+                // We expect the save to complete quickly so we don't want the visual distraction
+                // of a progress indicator appearing straight away. Let the progress indicator kick
+                // in after a short delay if we're still here waiting for the save to complete.
                 delay(150L)
                 showSaveProgressIndicator = true
             }
@@ -1985,7 +1963,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
             vm.saveEvents.collect { event ->
                 when (event) {
                     PriceTrackerViewModel.SaveStatus.Success -> {
-                        popBackStackWithReset()
+                        popBackStack()
                     }
 
                     PriceTrackerViewModel.SaveStatus.Error -> {
@@ -2016,15 +1994,12 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
             topBar = {
                 TopAppBar(
                     navigationIcon = {
-                        // TODO: We need to check for unsaved changes here before blindly going back, I think
-                        // TODO: We probably also need to do something to intercept back button clicks/back gestures and do the same validation?
                         IconButton(enabled = !saveInitiated, onClick = { onCloseRequest() }) {
                             Icon(Icons.Default.Close, contentDescription = "Close")
                         }
                     },
                     title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price", you can also eg edit pack size and probably a free text notes field etc
                     actions = {
-                            // TODO: Can/should there be an icon with this textbutton?
                             // TODO: When/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
                             TextButton(enabled = !saveInitiated, onClick = {
                                 saveInitiated = true; vm.updateOrInsertPrice(price)
@@ -2055,6 +2030,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
                     .background(MaterialTheme.colorScheme.primary /* TODO DEBUG HACK SHOULD BE SOMETHING ELSE MAYBE NOT NEEDED TO BE SPEC EXPLICITLY */)
                     .verticalScroll(rememberScrollState())
             ) {
+                // TODO: I think the use of "remember" here is far too weak, but this is basically old hacky code and converting to the viewmodel approach will automatically fix this
                 var packSize by remember { mutableStateOf("123") }
                 var selectedUnitId: Long by remember { mutableStateOf(1) }
                 var packPrice by remember { mutableStateOf("2.98") }
@@ -2140,6 +2116,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
             }
 
             if (showConfirmDialog) {
+                // I copied the wording of this dialog directly from a screenshot in the M3 documentaion.
                 AlertDialog(
                     title = { Text("Discard unsaved changes?") },
                     text = { Text("You have changes that won't be saved if you close.") },
@@ -2150,7 +2127,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
                         }) { Text("Keep editing") }
                     },
                     confirmButton = {
-                        TextButton(onClick = { popBackStackWithReset() }) {
+                        TextButton(onClick = { popBackStack() }) {
                             Text(
                                 "Discard"
                             )
@@ -2436,10 +2413,11 @@ fun AppNavigation() {
             SettingsScreen(navController)
         }
         // TODO: This needs the correct vertical transitions, but let's not fuss with that for now
-        composable("fullScreenDialog/{dataSetId}/{productId}/{storeId}") { backStackEntry ->
+        composable("fullScreenDialog/{dataSetId}/{productId}/{storeId}/{randomUUID}") { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")?.toLong() ?: 0
             val productId = backStackEntry.arguments?.getString("productId")?.toLong() ?: 0
             val storeId = backStackEntry.arguments?.getString("storeId")?.toLong() ?: 0
+            // TODO: DELETE - NOT NEEDED val randomUUID = backStackEntry.arguments?.getString("randomUUID")
             OuterFullScreenDialog(vm, navController, dataSetId, productId, storeId)
         }
     }
