@@ -179,7 +179,7 @@ import java.util.UUID
 // be varied much more freely.
 enum class QuantityType(val value: Int) {
     ITEM(1),
-    WEIGHT(2),
+    WEIGHT(2), // technically mass but everyone says "price per weight"
     VOLUME(3);
 
     companion object {
