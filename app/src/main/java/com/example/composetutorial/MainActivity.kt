@@ -2126,6 +2126,13 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
             }
 
             if (showErrorDialog) {
+                // We use an AlertDialog not a snackbar here. This is a local database save which is
+                // failing so it is very unlikely to be transient. We also don't want the user
+                // missing the snackbar, thinking the app is buggy ("I already saved, why didn't the
+                // dialog close?") and then tapping the close icon without realising their changes
+                // have not been saved. (If transient failure was a possibility - e.g. we needed to
+                // perform network activity - there might be value in showing a snackbar, maybe with
+                // a fallback to an AlertDialog if things keep failing.)
                 AlertDialog(
                     title = { Text("Unable to save changes") },
                     text = { Text("An error occurred while saving the changes.") },
