@@ -490,6 +490,14 @@ data class Price(
     val price: Double,
     val measure: Double,
 
+    // TODO: we need a "confirmed date" - even once we add the historical valid_{from,to} columns,
+    // we still need this, because a record can be edited in all sorts of ways (especially a tweak
+    // to the notes field, which might just be moting a question to address next time we are at the
+    // store) without that indicating a confirmation (although that raises the perhaps thorny point
+    // of how we decide when an edit counts as a confirmation - perhaps if the price or pack size
+    // changed, we treat that as a confirmation, otherwise we don't - and the user can always click
+    // confirm explicitly on the main screen if they want to)
+
     val details: String // Additional price details TODO: rename "notes"?
 ) : Parcelable
 
