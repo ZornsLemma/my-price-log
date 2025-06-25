@@ -654,7 +654,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         viewModelScope.launch {
             _saveStatus.update(SaveStatus.Saving)
             try {
-                //delay(700); // TODO TEMP FOR DEBUGGING
+                delay(3700); // TODO TEMP FOR DEBUGGING
                 priceTrackerRepository.updateOrInsertPrice(price)
                 _saveStatus.update(SaveStatus.Success)
             } catch (e: Exception) {
@@ -1858,7 +1858,6 @@ fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvi
 
 
 @Composable
-// TODO: Should we e.g. put a circular "spinner" in the save icon when we are saving? the md3 guidance is to do nothing if expected time is <200ms, but OTOH for a *save* where we are actively "sitting there" after the user clicked save, it may well be clearer to show one. this would be instead of greying the button out I guess. (we'd still disable both the "save" button and the close icon, since we can't do anything until the operation finishes.)
 // TODO: Could we "work round" - and in fact this may fix or at least "hide" some of the problems I've anticipated - some of the "a new visit is not a new recomposition" problems because the productid+storeid are parameters and they *do* make us unique when they change?
 // TODO: Using popUpTo("route") to exit by going back to our (known) parent may sidestep some of the fresh recomposition stuff as well, but I am not sure. Even if ChatGPT's description is right, it sort of half seems to suggest this is something you do "to yourself" in the parent and it's just an utterly confusing mess.
 // TODO: It may well be that the "uuid hack" of passing a uuid (frankly I'd just suggest an incrementing int) as a fake parameter to force every composition to be "fresh" when we enter is actually fine, and this would probably avoid some of the shit with resetSaveables(). While it's *probably* fine given SSOT and observables and the fact we are parameterised by product/store ID, it would also avoid the price/oldprice worries completely.
@@ -1938,6 +1937,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         }
         fun popBackStackWithReset() {
             resetSaveables()
+            // TODO: If you double click the close button (possibly other ways too), I *think* we end up trigger two back actions and we end up with a solid (green, given debug colours) screen. Is there a standard way to deal with this? I guess we can set a bool flag to tell us to ignore subsequent clicks.
             navController.popBackStack()
         }
 
@@ -2012,20 +2012,20 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
                     },
                     title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price", you can also eg edit pack size and probably a free text notes field etc
                     actions = {
-                        if (showSaveProgressIndicator) {
-                            CircularProgressIndicator(
-                                // TODO!? modifier = Modifier.size(24.dp),
-                                // TODO!? strokeWidth = 2.dp
-                            )
-                        } else {
                             // TODO: Can/should there be an icon with this textbutton?
-                            // TODO: WHen/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
+                            // TODO: When/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
                             TextButton(enabled = !saveInitiated, onClick = {
                                 saveInitiated = true; vm.updateOrInsertPrice(price)
                             }) {
-                                Text("Save") // TODO: arbitrary, not thought about wording
+                                if (showSaveProgressIndicator) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(16.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                } else {
+                                    Text("Save") // TODO: arbitrary, not thought about wording
+                                }
                             }
-                        }
                     },
                 )
             },
