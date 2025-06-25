@@ -219,12 +219,12 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     val itemIdTeabags = db.productDao().insert(Item(dataSetId = dataSetId, name = "Teabags", quantityType = QuantityType.ITEM))
                                     val sourceIdValueMart = db.sourceDao().insert(Source(dataSetId = dataSetId, name = "ValueMart"))
                                     val sourceIdSuperiorStore = db.sourceDao().insert(Source(dataSetId = dataSetId, name = "SuperiorStore"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdValueMart, price=2.03, details = "Large pack own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdSuperiorStore, price=1.50, details = "Own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdValueMart, price=1.99, details = ""))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdSuperiorStore, price=2.86, details = ""))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdValueMart, price=0.76, details = "Soft pack own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdSuperiorStore, price=1.08, details = ""))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdValueMart, price=2.03, measure=500.0, details = "Large pack own brand"))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdSuperiorStore, price=1.50, measure=227.0, details = "Own brand"))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdValueMart, price=1.99, measure=4*568.0, details = ""))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdSuperiorStore, price=2.86, measure=2000.0, details = ""))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdValueMart, price=0.76, measure=40.0, details = "Soft pack own brand"))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdSuperiorStore, price=0.60, measure=20.0, details = ""))
                                     /*
                                     db.productDao().insert(Product(name = "Demo Product"))
                                     db.itemDao().insert(Item(name = "Demo Item"))
@@ -471,14 +471,25 @@ data class Price(
     @ColumnInfo(name = "data_set_id") val dataSetId : Long,
     @ColumnInfo(name = "item_id") val itemId: Long,
     @ColumnInfo(name = "source_id") val sourceId: Long,
+
+    // The item is sold for "price" per "measure", e.g. £1.42 for 500g.
+    //
     // We use floating point for the price - it saves worrying about storing in pence or the
     // currency's equivalent and then getting in a mess if somehow the conventional number of
     // decimal places changes. For the kinds of prices we are representing and the limited amount of
     // calculation we are doing on them, there should in practice be no problems at all, as long as
     // we round to the relevant number of decimal places on display.
-    val price: Double, // TODO: this is the "pack price", named generically
-    //  TODO: val measure: Double - this is a generic term for the "pack size", in the product's quantity_type's internal base unit
-    val details: String // Additional price details
+    //
+    // "measure" will always be stored in the metric base unit associated with the item_id's
+    // quantity_type. This avoids having to do bulk database updates if the user wants to change
+    // unit conventions - this could happen even within a measurement system if shops switch to
+    // marking pack sizes in ounces instead of lbs, for example. We use floating point for "measure"
+    // because it allows us to round-trip non-metric measures perfectly (provided we round them for
+    // display), and it doesn't seem to have any real downside in practice.
+    val price: Double,
+    val measure: Double,
+
+    val details: String // Additional price details TODO: rename "notes"?
 ) : Parcelable
 
 
@@ -1963,6 +1974,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
                         itemId = productId,
                         sourceId = storeId,
                         price = 0.0,
+                        measure = 0.0,
                         details = ""
                     )
                 } else {
