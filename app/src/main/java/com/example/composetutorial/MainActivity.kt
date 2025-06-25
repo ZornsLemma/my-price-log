@@ -346,8 +346,10 @@ data class DataSet(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String
+    // TODO: This will have a currency on - probably a three letter currency code. We will need to know the number of decimal places for display purposes, if we can't rely on getting this from the OS it should probably be store on this table.
 )
 
+// TODO: item should have a "quantity_type" column which is an enum indicating "by mass", "by volume" or "by item". I am undecided if this will just be an integer which the code interprets or if we have a "quantity_type" table, although I lean towards the former - the extra table just provides a string in the database, which is useful for user explanations but doesn't significantly make the code more generic and does make it more complex.
 @Entity(
     tableName = "item", foreignKeys = [
         ForeignKey(
@@ -363,6 +365,8 @@ data class Item(
     val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId : Long,
     val name: String
+    // TODO: quantity_type - an enum which says "by item"/"by mass"/"by volume" - the GUI probably *should* allow editing this (not sure though), but wern that editing it will mess up old data (so maybe just don't allow it?)
+    // TODO: default_unit - g/kg/oz/floz/litre/etc - this must be consistent with quantity_type (and we may want to let it imply quantity_type rather than storing it explicitly)
 )
 
 @Entity(
@@ -416,6 +420,8 @@ data class Source(
 // We want the "banana" case to be first class - if the shelf says £1.20 for 6 bananas, we don't
 // want to force the user to convert this to a unit price themselves. This will probably just fall
 // out naturally, but be careful to support it.
+//
+// The measure will be in a hard-coded "base" unit suitable to the unit type
 @Parcelize
 data class Price(
     @PrimaryKey(autoGenerate = true)
@@ -423,7 +429,13 @@ data class Price(
     @ColumnInfo(name = "data_set_id") val dataSetId : Long,
     @ColumnInfo(name = "item_id") val itemId: Long,
     @ColumnInfo(name = "source_id") val sourceId: Long,
-    val price: Double,
+    // We use floating point for the price - it saves worrying about storing in pence or the
+    // currency's equivalent and then getting in a mess if somehow the conventional number of
+    // decimal places changes. For the kinds of prices we are representing and the limited amount of
+    // calculation we are doing on them, there should in practice be no problems at all, as long as
+    // we round to the relevant number of decimal places on display.
+    val price: Double, // TODO: this is the "pack price", named generically
+    //  TODO: val measure: Double - this is a generic term for the "pack size", in the product's quantity_type's internal base unit
     val details: String // Additional price details
 ) : Parcelable
 
