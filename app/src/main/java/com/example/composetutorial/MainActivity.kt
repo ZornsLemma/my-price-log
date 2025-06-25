@@ -1936,6 +1936,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
             resetSaveables()
         }
         fun popBackStackWithReset() {
+            // TODO: When the dialog is dismissed and (at least) if a progress spinner appears, we see it recompose briefly to have a save button again. this is ugly. i suspect it's this hack which is causing it.
             resetSaveables()
             // TODO: If you double click the close button (possibly other ways too), I *think* we end up trigger two back actions and we end up with a solid (green, given debug colours) screen. Is there a standard way to deal with this? I guess we can set a bool flag to tell us to ignore subsequent clicks.
             navController.popBackStack()
