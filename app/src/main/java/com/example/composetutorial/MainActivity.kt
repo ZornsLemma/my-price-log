@@ -84,6 +84,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -162,6 +163,7 @@ import androidx.room.withTransaction
 import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -652,6 +654,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         viewModelScope.launch {
             _saveStatus.update(SaveStatus.Saving)
             try {
+                //delay(700); // TODO TEMP FOR DEBUGGING
                 priceTrackerRepository.updateOrInsertPrice(price)
                 _saveStatus.update(SaveStatus.Success)
             } catch (e: Exception) {
@@ -1909,6 +1912,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
 
         // TODO: Can I get rid of saveInitiated and instead set the state inside the viewmodel to "idle" when we are not saving? The frequency with which we check it suggests it might be more painful to get rid of it. but if we track this, the distinction between idle and saving is mostly meainingless (the state never gets set back to idle) and we should maybe merge those states into a vague "meh" state.
         var saveInitiated by rememberSaveable { mutableStateOf(false) }
+        var showSaveProgressIndicator by rememberSaveable { mutableStateOf( false ) }
         var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
         var showErrorDialog by rememberSaveable { mutableStateOf(false) }
         var showSavingSnackbar by remember { mutableStateOf( false) }
@@ -1923,6 +1927,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         // composition via LaunchedEffect(Unit).
         fun resetSaveables() {
             saveInitiated = false
+            showSaveProgressIndicator = false
             showConfirmDialog = false
             showErrorDialog = false
             // TODO: others?
@@ -1950,6 +1955,15 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
             } else {
                 showSavingSnackbar = true;
             }
+        }
+
+        LaunchedEffect(saveInitiated) {
+            if (saveInitiated) {
+                delay(150L)
+                showSaveProgressIndicator = true
+            }
+            // TODO: I don't think we need to set it back to false in else, but maybe revise all
+            // this later.
         }
 
         val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
@@ -1997,12 +2011,19 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
                     },
                     title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price", you can also eg edit pack size and probably a free text notes field etc
                     actions = {
-                        // TODO: Can/should there be an icon with this textbutton?
-                        // TODO: WHen/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
-                        TextButton(enabled = !saveInitiated, onClick = {
-                            saveInitiated = true; vm.updateOrInsertPrice(price)
-                        }) {
-                            Text("Save") // TODO: arbitrary, not thought about wording
+                        if (showSaveProgressIndicator) {
+                            CircularProgressIndicator(
+                                // TODO!? modifier = Modifier.size(24.dp),
+                                // TODO!? strokeWidth = 2.dp
+                            )
+                        } else {
+                            // TODO: Can/should there be an icon with this textbutton?
+                            // TODO: WHen/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
+                            TextButton(enabled = !saveInitiated, onClick = {
+                                saveInitiated = true; vm.updateOrInsertPrice(price)
+                            }) {
+                                Text("Save") // TODO: arbitrary, not thought about wording
+                            }
                         }
                     },
                 )
