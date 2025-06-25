@@ -1855,6 +1855,7 @@ fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvi
 
 
 @Composable
+// TODO: Should we e.g. put a circular "spinner" in the save icon when we are saving? the md3 guidance is to do nothing if expected time is <200ms, but OTOH for a *save* where we are actively "sitting there" after the user clicked save, it may well be clearer to show one. this would be instead of greying the button out I guess. (we'd still disable both the "save" button and the close icon, since we can't do anything until the operation finishes.)
 fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostController, dataSetId: Long, productId: Long, storeId: Long) {
     //var vm: PriceTrackerViewModel = viewModel()
     // TODO: Should we just have the caller pass the product name through so we don't have to do this lookup? the viewmodel should have the data cached, but we still have to through the collectstatewithlifecycle overhead?
