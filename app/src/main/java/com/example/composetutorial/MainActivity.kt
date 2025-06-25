@@ -1918,6 +1918,12 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         var showSavingSnackbar by remember { mutableStateOf( false) }
         var scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
+        // TODO: ChatGPT magic. This idea here is that a) currentBackStackEntry reflects the actual
+        // back stack, not merely "we have popped but it hasn't come into effect yet" b) this will force
+        // isNavigating to be initialised to false when we are re-entered "fresh" but not if e.g. a rotation occurs.
+        var isNavigating by remember(navController.currentBackStackEntry) {
+            mutableStateOf(false)
+        }
 
         // Using popBackStack() to leave this "screen" and then coming back in later *preserves* the
         // rememberSaveable things. This means that (as the most relevant example), if saveInitiated
@@ -1938,8 +1944,13 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         fun popBackStackWithReset() {
             // TODO: When the dialog is dismissed and (at least) if a progress spinner appears, we see it recompose briefly to have a save button again. this is ugly. i suspect it's this hack which is causing it.
             resetSaveables()
-            // TODO: If you double click the close button (possibly other ways too), I *think* we end up trigger two back actions and we end up with a solid (green, given debug colours) screen. Is there a standard way to deal with this? I guess we can set a bool flag to tell us to ignore subsequent clicks.
-            navController.popBackStack()
+            // We need isNavigating to de-bounce the close button so we don't do a double pop if
+            // the user double taps the close button quickly. (We may not need this for other ways
+            // of going back, but it shouldn't hurt and is probably safer.)
+            if (!isNavigating) {
+                isNavigating = true;
+                navController.popBackStack()
+            }
         }
 
         fun onCloseRequest() {
