@@ -2501,3 +2501,11 @@ fun AppNavigation() {
 // required to make this work anywhere).
 //
 // TODO: Review/revise this comment later
+
+// TODO: Move this?
+//
+// Note to self: Rotations are the canonical example of activities being destroyed and re-created
+// fairly casually, but I need to remember they are not the *only* way this happens. In particular,
+// a light/dark theme toggle (which might happen at an arbitrary point because battery saver kicks
+// in, for example) also does this. So even if the app eventually disables rotations for layout
+// reasons, don't assume this gets rid of the need to handle being destroyed and re-created.
