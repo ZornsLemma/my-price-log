@@ -155,6 +155,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverter
 import androidx.room.Update
 import androidx.room.Upsert
 import androidx.room.withTransaction
@@ -172,6 +173,17 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+enum class QuantityType(val value: Int) {
+    ITEM(1),
+    WEIGHT(2),
+    VOLUME(3);
+
+    companion object {
+        fun fromValue(value: Int): QuantityType? {
+            return entries.find { it.value == value }
+        }
+    }
+}
 
 @Database(entities = [DataSet::class, Item::class, Source::class, Price::class], version = 1, exportSchema = false)
 // TODO: Should not be called *Inventory*Database
@@ -198,9 +210,9 @@ abstract class InventoryDatabase : RoomDatabase() {
                                 val db = InventoryDatabase.getDatabase(context)
                                 db.withTransaction {
                                     val dataSetId = db.dataSetDao().insert(DataSet(name ="Demo"))
-                                    val itemIdGroundCoffee = db.productDao().insert(Item(dataSetId = dataSetId, name = "Coffee (ground)"))
-                                    val itemIdWholeMilk = db.productDao().insert(Item(dataSetId = dataSetId, name = "Milk (whole)"))
-                                    val itemIdTeabags = db.productDao().insert(Item(dataSetId = dataSetId, name = "Teabags"))
+                                    val itemIdGroundCoffee = db.productDao().insert(Item(dataSetId = dataSetId, name = "Coffee (ground)", quantityType= QuantityType.WEIGHT))
+                                    val itemIdWholeMilk = db.productDao().insert(Item(dataSetId = dataSetId, name = "Milk (whole)", quantityType = QuantityType.VOLUME))
+                                    val itemIdTeabags = db.productDao().insert(Item(dataSetId = dataSetId, name = "Teabags", quantityType = QuantityType.ITEM))
                                     val sourceIdValueMart = db.sourceDao().insert(Source(dataSetId = dataSetId, name = "ValueMart"))
                                     val sourceIdSuperiorStore = db.sourceDao().insert(Source(dataSetId = dataSetId, name = "SuperiorStore"))
                                     db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdValueMart, price=2.03, details = "Large pack own brand"))
@@ -333,6 +345,19 @@ class MyApplication : Application() {
 // database, which I will retrofit later. I have no idea if the code is actually correct, although
 // it seems simple enough that I don't think it hides too many nasty surprises.
 
+// TODO: Grok magic, although it seems logical enough - but read up
+class Converters {
+    @TypeConverter
+    fun fromQuantityType(quantityType: QuantityType?): Int? {
+        return quantityType?.value
+    }
+
+    @TypeConverter
+    fun toQuantityType(value: Int?): QuantityType? {
+        return value?.let { QuantityType.fromValue(it) }
+    }
+}
+
 // TODO: I need to make sure I have the right indexes on all these tables, not sure what if any might get auto-created (and I may want to inhibit some auto-creation if there is any)
 
 data class UnitX(
@@ -364,7 +389,8 @@ data class Item(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId : Long,
-    val name: String
+    val name: String,
+    @ColumnInfo(name = "quantity_type") val quantityType : QuantityType,
     // TODO: quantity_type - an enum which says "by item"/"by mass"/"by volume" - the GUI probably *should* allow editing this (not sure though), but wern that editing it will mess up old data (so maybe just don't allow it?)
     // TODO: default_unit - g/kg/oz/floz/litre/etc - this must be consistent with quantity_type (and we may want to let it imply quantity_type rather than storing it explicitly)
 )
