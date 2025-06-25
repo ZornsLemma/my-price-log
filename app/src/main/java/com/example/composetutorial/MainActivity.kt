@@ -406,6 +406,16 @@ data class Source(
         )
     ]
 )
+// TODO: A record here needs to store:
+// - the "pack price" (need to think of generic word for "pack")
+// - the "pack measure" (ditto)
+// When designing this, think of:
+// - £1.20 for 6 bananas
+// - £3.00 for 250g
+// - £2.00 for 500ml
+// We want the "banana" case to be first class - if the shelf says £1.20 for 6 bananas, we don't
+// want to force the user to convert this to a unit price themselves. This will probably just fall
+// out naturally, but be careful to support it.
 @Parcelize
 data class Price(
     @PrimaryKey(autoGenerate = true)
