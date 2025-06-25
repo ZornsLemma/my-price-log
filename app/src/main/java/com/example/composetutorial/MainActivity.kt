@@ -653,7 +653,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         viewModelScope.launch {
             _saveStatus.update(SaveStatus.Saving)
             try {
-                delay(3700); // TODO TEMP FOR DEBUGGING
+                //delay(3700); // TODO TEMP FOR DEBUGGING
                 priceTrackerRepository.updateOrInsertPrice(price)
                 _saveStatus.update(SaveStatus.Success)
             } catch (e: Exception) {
