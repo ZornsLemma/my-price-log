@@ -173,6 +173,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.UUID
 
+// Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
+// weight or volume. This is fundamental as we make no effort to convert between them using some
+// sort of density estimate or whatever. Actual units (kg, oz, etc) of the same quantity type can
+// be varied much more freely.
 enum class QuantityType(val value: Int) {
     ITEM(1),
     WEIGHT(2),
@@ -374,7 +378,6 @@ data class DataSet(
     // TODO: This will have a currency on - probably a three letter currency code. We will need to know the number of decimal places for display purposes, if we can't rely on getting this from the OS it should probably be store on this table.
 )
 
-// TODO: item should have a "quantity_type" column which is an enum indicating "by mass", "by volume" or "by item". I am undecided if this will just be an integer which the code interprets or if we have a "quantity_type" table, although I lean towards the former - the extra table just provides a string in the database, which is useful for user explanations but doesn't significantly make the code more generic and does make it more complex.
 @Entity(
     tableName = "item", foreignKeys = [
         ForeignKey(
@@ -394,6 +397,19 @@ data class Item(
     // TODO: quantity_type - an enum which says "by item"/"by mass"/"by volume" - the GUI probably *should* allow editing this (not sure though), but wern that editing it will mess up old data (so maybe just don't allow it?)
     // TODO: default_unit - g/kg/oz/floz/litre/etc - this must be consistent with quantity_type (and we may want to let it imply quantity_type rather than storing it explicitly)
 )
+// TODO: Will temporarily make a note here - I may simply (especially in v1) refuse to allow changes
+// of quantity_type in the product edit screen. There is no trivial way to convert. If the user gets
+// it wrong and cares, they will notice pretty quickly so having to delete and recreate the product
+// shouldn't a huge loss. If the user doesn't notice and doesn't care (and things will mostly "just
+// work"), e.g. if the quantity type should be weight but they choose volume and we end up with
+// default unit ml but they just type in pack sizes in grammes, things will work as long as they are
+// consistent and don't try to do any conversions (which are not a major feature of the current
+// design). Fixing this up properly would require a fairly sophisticated and unintuitive GUI where
+// we ask the user "what they thought they were entering" so we can apply a suitable correction
+// factor (imagine they entered oz weights but the system recorded them as ml, we need to convert
+// the "fake" ml values via an oz->gramme conversion to fix up the prices in the database, as
+// weights are stored as grammes in there). Not saying a fix it up option won't ever appear if there
+// is any demand for it, but even if it exists we probably don't want to over-encourage its use.
 
 @Entity(
     tableName = "source", foreignKeys = [
