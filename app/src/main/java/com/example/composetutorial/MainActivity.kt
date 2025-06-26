@@ -489,7 +489,7 @@ data class Price(
     // because it allows us to round-trip non-metric measures perfectly (provided we round them for
     // display), and it doesn't seem to have any real downside in practice.
     val price: Double,
-    val measure: Double, // TODO: would "amount" be a much simpler yet still generic name??
+    val measure: Double, // TODO: would "amount" be a much simpler yet still generic name?? hmm, maybe not - "amount" cost also be a monetary amount - but maybe "quantity" would work? I am cooling on "measure" somewhat right now
 
     // TODO: we need a "confirmed date" - even once we add the historical valid_{from,to} columns,
     // we still need this, because a record can be edited in all sorts of ways (especially a tweak
