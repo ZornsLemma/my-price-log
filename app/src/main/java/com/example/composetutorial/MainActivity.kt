@@ -2,6 +2,7 @@
 
 package com.example.composetutorial
 
+import java.time.Duration
 //import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -295,9 +296,9 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     val now = Instant.now()
                                     db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdValueMart, price=2.03, measure=500.0, originalUnit=MeasureUnit.G, confirmed = now.minus(2, ChronoUnit.MINUTES), details = "Large pack own brand"))
                                     db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdSuperiorStore, price=1.50, measure=227.0, originalUnit=MeasureUnit.G, confirmed = now.minus(4, ChronoUnit.DAYS), details = "Own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdValueMart, price=1.99, measure=4*568.0, originalUnit=MeasureUnit.PINT, confirmed = now.minus(7, ChronoUnit.DAYS), details = ""))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdValueMart, price=1.99, measure=4*568.0, originalUnit=MeasureUnit.PINT, confirmed = now, details = ""))
                                     db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdSuperiorStore, price=2.86, measure=2000.0, originalUnit=MeasureUnit.L, confirmed = now.minus(63, ChronoUnit.DAYS), details = ""))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdValueMart, price=0.76, measure=40.0, originalUnit=MeasureUnit.EACH, confirmed = now.minus(1, ChronoUnit.DAYS), details = "Soft pack own brand"))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdValueMart, price=0.76, measure=40.0, originalUnit=MeasureUnit.EACH, confirmed = now.minus(7, ChronoUnit.DAYS), details = "Soft pack own brand"))
                                     db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdSuperiorStore, price=0.60, measure=20.0, originalUnit=MeasureUnit.EACH, confirmed = now.minus(4, ChronoUnit.HOURS), details = ""))
                                     /*
                                     db.productDao().insert(Product(name = "Demo Product"))
@@ -1198,6 +1199,30 @@ fun MyFullScreenDialog(
     }
 }
 
+// TODO: ChatGPT magic, though I do mostly understand it
+@Composable
+fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's OK
+    var now by remember { mutableStateOf(Instant.now()) }
+    var ageInSeconds = Duration.between(instant, now).seconds
+    val secondsPerDay = 24 * 60 * 60
+
+    if (ageInSeconds < secondsPerDay) {
+        LaunchedEffect(Unit) {
+            while (true) {
+                delay(if (ageInSeconds < 60) 1_000 else 60_000) // TODO: OK? fine tune?
+                now = Instant.now()
+            }
+        }
+    }
+    val relativeTime = DateUtils.getRelativeTimeSpanString(
+        instant.toEpochMilli(),
+        System.currentTimeMillis(),
+        DateUtils.MINUTE_IN_MILLIS,
+        DateUtils.FORMAT_ABBREV_RELATIVE
+    ).toString()
+    Text(relativeTime)
+}
+
 // This composable provides the at-a-glance status of an item at a particular source. It won't always be visible because we may not have a current source, but when we do this should provide "most" of what a user wants to know:
 // - is the item well-priced?
 // - do we have an up-to-date price for this item?
@@ -1290,15 +1315,10 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                             // containing "for", don't let this put me off sticking with it.
                             Text("£${priceList[0].price} for ${priceList[0].measure.to(priceList[0].originalUnit).toDisplayString(2)}" /*, color = MaterialTheme.colorScheme.onSurface*/)
                         }
-                        // TODO: If the timestamp is recent (a minute or two ago?) should I be periodically refreshing it to avoid very minor confusion/add a touch of attention to detail?
-                        val relativeTime = DateUtils.getRelativeTimeSpanString( // TODO: ChatGPT mild magic
-                            priceList[0].confirmed.toEpochMilli(),
-                            System.currentTimeMillis(),
-                            DateUtils.MINUTE_IN_MILLIS,
-                            DateUtils.FORMAT_ABBREV_RELATIVE
-                        ).toString()
+
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Last checked") {
-                            Text(relativeTime ) // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
+                            RelativeTimeText(priceList[0].confirmed)
+                            // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
                         }
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Unit price") {
                             Row() {
