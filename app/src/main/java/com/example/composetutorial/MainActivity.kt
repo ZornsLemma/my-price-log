@@ -312,7 +312,6 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     */
                                 }
                             }
-                            // TODO INSERT HERE USING COROUTINE OR BACKGROUND THREAD
                         }
                     })
                     .build()
