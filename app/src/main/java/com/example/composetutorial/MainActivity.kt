@@ -566,6 +566,17 @@ data class NicePrice( // TODO: probably rename just "Price" once we rename the e
     val details: String // Additional price details TODO: rename "notes"?
 ) // TODO : Parcelable
 
+fun Price.toDomain(measureUnit: MeasureUnit): NicePrice =
+    NicePrice(
+        id = id,
+        dataSetId = dataSetId,
+        itemId = itemId,
+        sourceId = sourceId,
+        price = price,
+        measure = MeasuredValue(measure, measureUnit),
+        details = details
+    )
+
 // TODO: Whiff of ChatGPT magic
 fun PriceWithItem.toDomain(): NicePrice {
     val baseUnit = when (quantityType) {
@@ -573,15 +584,7 @@ fun PriceWithItem.toDomain(): NicePrice {
         QuantityType.VOLUME -> MeasureUnit.ML
         QuantityType.ITEM -> MeasureUnit.EACH
     }
-    return NicePrice(
-        id = price.id,
-        dataSetId = price.dataSetId,
-        itemId = price.itemId,
-        sourceId = price.sourceId,
-        price = price.price,
-        measure = MeasuredValue(price.measure, baseUnit),
-        details = price.details
-    )
+    return price.toDomain(baseUnit)
 }
 
 @Dao
