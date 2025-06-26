@@ -216,8 +216,8 @@ enum class MeasureUnit(val measureUnitId : Int, val quantityType: QuantityType, 
     PINT( 205, QuantityType.VOLUME, "pt", 568.26125),
 
     // Countable items
-    // TODO: Should symbol be empty string or something else here? feeling my way
-    EACH(301, QuantityType.ITEM, "item", 1.0); // TODO: RENAME "EACH" TO "ITEM"?
+    // TODO: Should symbol be empty string or something else here? feeling my way. I suspect "" looks best, it may lead to strings like "for 20 " with a trailing space but that's probably not a big deal in practice. (We could also just make a point of trimming strings generated using symbol.)
+    EACH(301, QuantityType.ITEM, "", 1.0); // TODO: RENAME "EACH" TO "ITEM"?
 
     companion object {
         fun fromValue(measureUnitId: Int): MeasureUnit? {
