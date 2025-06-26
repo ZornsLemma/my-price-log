@@ -574,6 +574,7 @@ data class NicePrice( // TODO: probably rename just "Price" once we rename the e
     val originalQuantityType: QuantityType,
 ) // TODO : Parcelable
 
+// TODO: I suspect we should actually be using the item's "default unit" not its quantityType here - although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the display unit for display, to avoid "oh, it happened to work for me in metric with grams but now I'm in imperial it's displaying badly" concerns
 fun Price.toDomain(measureUnit: MeasureUnit): NicePrice =
     NicePrice(
         id = id,
