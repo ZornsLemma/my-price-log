@@ -21,6 +21,8 @@ import androidx.compose.material3.Button
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.Parcelable
 import android.os.StrictMode
 import android.text.format.DateUtils
@@ -182,6 +184,7 @@ import java.time.temporal.ChronoUnit
 import java.util.Currency
 import java.util.Locale
 import java.util.UUID
+import kotlin.system.exitProcess
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
 // weight or volume. This is fundamental as we make no effort to convert between them using some
@@ -426,6 +429,49 @@ class MyApplication : Application() {
         val db = InventoryDatabase.getDatabase(this)
         PriceTrackerRepositoryImpl(db.dataSetDao(), db.productDao(), db.sourceDao(), db.priceDao())
     }
+
+    // TODO: ChatGPT magic, needs checking. May also be worth investigating ACRA/Cockroach/SimpleCrashReport open source libraries.
+    // I am fairly sure this specific code is utterly useless anyway. Oddly enough it appears to *hide* a failing check() and
+    // commenting it out again restores the crash, but when this code is in place I *don't* seem to get the GlobalExceptionHandler
+    // logcat entry. So it seems doubly useless, in that it *hides* crashes somehow!? Really confused.
+    /*
+    override fun onCreate() {
+        super.onCreate()
+
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            Log.e("GlobalExceptionHandler", "Uncaught exception", throwable)
+
+            val exceptionMessage = throwable.message ?: "No details"
+            val stackTrace = throwable.stackTrace.joinToString("\n").take(500) // limit length
+
+            Handler(Looper.getMainLooper()).post {
+                val message = "The app crashed:\n$exceptionMessage\n\n" +
+                        "Stack trace:\n$stackTrace\n\n" +
+                        "Please take a screenshot or copy this info."
+
+                // You need a way to get current activity or fallback context
+                /* TODO: I need to define CurrentActivityHolder myself!? Seems complex and I'll just hack this for now and check those libraries out later
+                val activity = CurrentActivityHolder.currentActivity
+                if (activity != null) {
+                    AlertDialog.Builder(activity)
+                        .setTitle("Unexpected error")
+                        .setMessage(message)
+                        .setPositiveButton("OK") { _, _ ->
+                            android.os.Process.killProcess(android.os.Process.myPid())
+                            exitProcess(1)
+                        }
+                        .setCancelable(false)
+                        .show()
+                } else { */
+                    // fallback: just kill app
+                    android.os.Process.killProcess(android.os.Process.myPid())
+                    exitProcess(1)
+                /* }*/
+            }
+        }
+    }
+    */
+
 }
 
 // TODO: This is boilerplate *in memory* viewmodel stuff which I got from Grok. The idea is that I
@@ -1293,12 +1339,14 @@ fun formatPrice(amount: Double, dataSet: DataSet): String {
 @Composable
 // TODO: Arguably we should have selected{DataSet,Product}Id not allow nulls here - our parent should just not be composing us if these are not set
 fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, dataSet: DataSet, selectedProductId: Long?) {
+    Log.d("MyApp", "TODO0")
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
     var expanded by remember { mutableStateOf(false) }
     var currentUnit by remember { mutableStateOf("100g") }
 
     //var vm: PriceTrackerViewModel = viewModel()
     val selectedDataSetId = dataSet.id // TODO: maybe a temp hack?
+    Log.d("MyApp", "TODO1")
     val sources by vm.getAllSources(selectedDataSetId).collectAsStateWithLifecycle(initialValue = emptyList())
 
     // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
@@ -1308,6 +1356,7 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
     val fontSize = MaterialTheme.typography.bodyLarge.fontSize
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
     var selectedSourceId: Long? by rememberSaveable { mutableStateOf(null) }
+    Log.d("MyApp", "TODO2")
     //val sources = listOf("None", "Tesco", "Asda", "Sainsbury's Local", "Iceland")
     // TODO: Will we have a free-form text field on item-at-source? For eg things like noting the specific product to help find it again.
     // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective, it's not as if the offer duration is usually clearly stated, free text note probably can be used for this among other things
@@ -1328,6 +1377,7 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                 .animateContentSize()
                 .padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)
         ) {
+            Log.d("MyApp", "TODO3")
             // TODO: We need to allow this to be set to empty/None by the user - how best to do that? And if it is empty, we need to collapse all the stuff below it and replace it with a brief instructional string roughly "Select a store to see and edit product details" - check the ChatGPT discussion I saved for some wording
             MyExposedDropdownMenuBox(
                 modifier = Modifier
@@ -1343,6 +1393,7 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                 getId = { it.id },
                 getLabel = { it.name },
             )
+            Log.d("MyApp", "TODO4")
             if (selectedSourceId != null) {
                 // TODO: DEFAULTING TO PRODUCT ID 1 IS A MASSIVE HACK BUT I DON'T WANT TO GET SIDETRACKED THINKING ABOUT NULL CASE RIGHT NOW
                 val priceList by vm.getNicePriceForProductAndStore(
@@ -1477,6 +1528,8 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                     }
                 }
             }
+            Log.d("MyApp", "TODO5")
+
         }
     }
 }
@@ -2055,6 +2108,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     var showEditDialog by rememberSaveable { mutableStateOf(false) }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
+    // TODONOW: I THINK IT MIGHT BE THESE NEXT TWO LINES AND THEIR MASSIVE HACK WHICH CAUSE PROBLEMS WHEN WE ARE RUN AND HAVE TO CREATE THE DB AS WE GO
     var selectedDataSetId: Long by remember { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, need to cope with null in some way probably
 
     var selectedProductId: Long by rememberSaveable { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, we need a genuine ID from somewhere and/or support for null
@@ -2141,21 +2195,30 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
                     )
                 )
 
+            Log.d("Myapp", "BeforeItemSourceInfo0")
             val dataSetListNullable by vm.getDataSet(selectedDataSetId).collectAsStateWithLifecycle(initialValue = null)
+            Log.d("Myapp", "BeforeItemSourceInfo0a")
             // TODO: HACK - we should probably be pulling this kind of mandatory non-null data out in one place, showing "Loading
             if (dataSetListNullable != null) {
+                Log.d("Myapp", "BeforeItemSourceInfo0b")
                 val dataSetList = dataSetListNullable!!
+                Log.d("Myapp", "BeforeItemSourceInfo0c")
                 check(dataSetList.size == 1) { "Expected one data set with ID $selectedDataSetId but got ${dataSetList.size}" }
 
+                Log.d("Myapp", "BeforeItemSourceInfo0d")
 
-                ItemSourceInfo(
-                    vm = vm,
-                    navController = navController,
-                    dataSet = dataSetList[0],
-                    // selectedDataSetId = selectedDataSetId,
-                    selectedProductId = selectedProductId
-                )
-            }
+                Log.d("Myapp", "BeforeItemSourceInfo")
+                    ItemSourceInfo( // TODO: COMMENTING OUT THIS FIXES THE CRASH ON FIRS RUN AFTER DELETE AND REINSTALL
+                        vm = vm,
+                        navController = navController,
+                        dataSet = dataSetList[0],
+                        // selectedDataSetId = selectedDataSetId,
+                        selectedProductId = selectedProductId
+                    )
+                Log.d("Myapp", "AfterItemSourceInfo")
+
+                }
+            Log.d("Myapp", "AfterItemSourceInfo1")
 
                 androidx.compose.foundation.layout.Spacer(
                     modifier = androidx.compose.ui.Modifier.height(
