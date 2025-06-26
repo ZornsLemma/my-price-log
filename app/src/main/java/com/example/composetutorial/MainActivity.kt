@@ -177,6 +177,7 @@ import java.util.UUID
 // weight or volume. This is fundamental as we make no effort to convert between them using some
 // sort of density estimate or whatever. Actual units (kg, oz, etc) of the same quantity type can
 // be varied much more freely.
+// TODO: Just possibly rename this "MeasureType"? ChatGPT suggestion, maybe has a point, "QuantityType" is definitely not a terrible name though.
 enum class QuantityType(val value: Int) {
     ITEM(1),
     WEIGHT(2), // technically mass but everyone says "price per weight"
@@ -488,7 +489,7 @@ data class Price(
     // because it allows us to round-trip non-metric measures perfectly (provided we round them for
     // display), and it doesn't seem to have any real downside in practice.
     val price: Double,
-    val measure: Double,
+    val measure: Double, // TODO: would "amount" be a much simpler yet still generic name??
 
     // TODO: we need a "confirmed date" - even once we add the historical valid_{from,to} columns,
     // we still need this, because a record can be edited in all sorts of ways (especially a tweak
