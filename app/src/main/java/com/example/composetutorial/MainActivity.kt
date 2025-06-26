@@ -14,6 +14,7 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
+import android.os.Build
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Button
@@ -22,6 +23,7 @@ import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
 import android.os.Parcelable
 import android.os.StrictMode
+import android.text.format.DateUtils
 import android.util.Log
 import android.view.Window
 import androidx.activity.ComponentActivity
@@ -158,6 +160,7 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
+import androidx.room.TypeConverters
 import androidx.room.Update
 import androidx.room.Upsert
 import androidx.room.withTransaction
@@ -174,6 +177,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 import java.util.UUID
 
@@ -255,6 +260,7 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) {
 }
 
 @Database(entities = [DataSet::class, Item::class, Source::class, Price::class], version = 1, exportSchema = false)
+@TypeConverters(Converters::class)
 // TODO: Should not be called *Inventory*Database
 abstract class InventoryDatabase : RoomDatabase() {
 
@@ -286,12 +292,13 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     val itemIdTeabags = db.productDao().insert(Item(dataSetId = dataSetId, name = "Teabags", quantityType = QuantityType.ITEM))
                                     val sourceIdValueMart = db.sourceDao().insert(Source(dataSetId = dataSetId, name = "ValueMart"))
                                     val sourceIdSuperiorStore = db.sourceDao().insert(Source(dataSetId = dataSetId, name = "SuperiorStore"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdValueMart, price=2.03, measure=500.0, originalUnit=MeasureUnit.G, details = "Large pack own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdSuperiorStore, price=1.50, measure=227.0, originalUnit=MeasureUnit.G, details = "Own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdValueMart, price=1.99, measure=4*568.0, originalUnit=MeasureUnit.PINT, details = ""))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdSuperiorStore, price=2.86, measure=2000.0, originalUnit=MeasureUnit.L, details = ""))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdValueMart, price=0.76, measure=40.0, originalUnit=MeasureUnit.EACH, details = "Soft pack own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdSuperiorStore, price=0.60, measure=20.0, originalUnit=MeasureUnit.EACH, details = ""))
+                                    val now = Instant.now()
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdValueMart, price=2.03, measure=500.0, originalUnit=MeasureUnit.G, confirmed = now.minus(2, ChronoUnit.MINUTES), details = "Large pack own brand"))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdSuperiorStore, price=1.50, measure=227.0, originalUnit=MeasureUnit.G, confirmed = now.minus(4, ChronoUnit.DAYS), details = "Own brand"))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdValueMart, price=1.99, measure=4*568.0, originalUnit=MeasureUnit.PINT, confirmed = now.minus(7, ChronoUnit.DAYS), details = ""))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdSuperiorStore, price=2.86, measure=2000.0, originalUnit=MeasureUnit.L, confirmed = now.minus(63, ChronoUnit.DAYS), details = ""))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdValueMart, price=0.76, measure=40.0, originalUnit=MeasureUnit.EACH, confirmed = now.minus(1, ChronoUnit.DAYS), details = "Soft pack own brand"))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdSuperiorStore, price=0.60, measure=20.0, originalUnit=MeasureUnit.EACH, confirmed = now.minus(4, ChronoUnit.HOURS), details = ""))
                                     /*
                                     db.productDao().insert(Product(name = "Demo Product"))
                                     db.itemDao().insert(Item(name = "Demo Item"))
@@ -421,8 +428,8 @@ class MyApplication : Application() {
 // database, which I will retrofit later. I have no idea if the code is actually correct, although
 // it seems simple enough that I don't think it hides too many nasty surprises.
 
-// TODO: Grok magic, although it seems logical enough - but read up
 class Converters {
+    // TODO: Grok magic, although it seems logical enough - but read up
     @TypeConverter
     fun fromQuantityType(quantityType: QuantityType?): Int? {
         return quantityType?.value
@@ -431,6 +438,17 @@ class Converters {
     @TypeConverter
     fun toQuantityType(value: Int?): QuantityType? {
         return value?.let { QuantityType.fromValue(it) }
+    }
+
+    // ChatGPT magic
+    @TypeConverter
+    fun fromInstant(value: Long?): Instant? {
+        return value?.let { Instant.ofEpochMilli(it) }
+    }
+
+    @TypeConverter
+    fun toInstant(instant: Instant?): Long? {
+        return instant?.toEpochMilli()
     }
 }
 
@@ -583,6 +601,7 @@ data class Price(
     // of how we decide when an edit counts as a confirmation - perhaps if the price or pack size
     // changed, we treat that as a confirmation, otherwise we don't - and the user can always click
     // confirm explicitly on the main screen if they want to)
+    val confirmed: Instant,
 
     val details: String // Additional price details TODO: rename "notes"?
 ) : Parcelable
@@ -605,6 +624,7 @@ data class NicePrice( // TODO: probably rename just "Price" once we rename the e
     val price: Double,
     val measure: MeasuredValue,
     val originalUnit: MeasureUnit,
+    val confirmed: Instant,
     val details: String, // Additional price details TODO: rename "notes"?
     // originalQuantityType is a record of the originalQuantityType on measure. It is intended to
     // allow a best effort (protecting against buggy code, not malicious code) validation that when
@@ -623,6 +643,7 @@ fun Price.toDomain(measureUnit: MeasureUnit): NicePrice =
         price = price,
         measure = MeasuredValue(measure, measureUnit),
         originalUnit = originalUnit,
+        confirmed = confirmed,
         details = details,
         originalQuantityType = measureUnit.quantityType,
     )
@@ -1269,8 +1290,15 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                             // containing "for", don't let this put me off sticking with it.
                             Text("£${priceList[0].price} for ${priceList[0].measure.to(priceList[0].originalUnit).toDisplayString(2)}" /*, color = MaterialTheme.colorScheme.onSurface*/)
                         }
+                        // TODO: If the timestamp is recent (a minute or two ago?) should I be periodically refreshing it to avoid very minor confusion/add a touch of attention to detail?
+                        val relativeTime = DateUtils.getRelativeTimeSpanString( // TODO: ChatGPT mild magic
+                            priceList[0].confirmed.toEpochMilli(),
+                            System.currentTimeMillis(),
+                            DateUtils.MINUTE_IN_MILLIS,
+                            DateUtils.FORMAT_ABBREV_RELATIVE
+                        ).toString()
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Last checked") {
-                            Text("5 days ago") // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
+                            Text(relativeTime ) // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
                         }
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Unit price") {
                             Row() {
@@ -2149,6 +2177,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
                         price = 0.0,
                         measure = 0.0,
                         originalUnit = MeasureUnit.ML, // TODO MASSIVE HACK
+                        confirmed = Instant.now(), // TODO MASSIVE HACK
                         details = ""
                     )
                 } else {
@@ -2770,3 +2799,5 @@ fun AppNavigation() {
 
 // TODO: Do I have to do anything special to accommodate e.g. use of "," as a decimal separator on
 // input and/or output, or will the relevant libraries just take care of this for me?
+
+// TODO: I just may need to enable Java desugaring to support older Android versions - this is probably just a one-off config.

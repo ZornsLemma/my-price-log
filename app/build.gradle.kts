@@ -33,6 +33,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true // TODO: ChatGPT magic
     }
     kotlinOptions {
         jvmTarget = "11"
@@ -43,7 +44,7 @@ android {
 }
 
 dependencies {
-
+    coreLibraryDesugaring(libs.desugar.jdk.libs) // TODO: ChatGPT magic
     implementation(platform(libs.compose.bom))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

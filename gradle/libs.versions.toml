@@ -41,7 +41,7 @@ room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-compiler-ksp = { module = "androidx.room:room-compiler", version.ref = "room" }
-
+desugar-jdk-libs = "com.android.tools:desugar_jdk_libs:2.0.4" # TODO: ChatGPT magic
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
