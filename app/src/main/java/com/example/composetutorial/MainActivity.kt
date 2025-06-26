@@ -563,7 +563,12 @@ data class NicePrice( // TODO: probably rename just "Price" once we rename the e
     val sourceId: Long,
     val price: Double,
     val measure: MeasuredValue,
-    val details: String // Additional price details TODO: rename "notes"?
+    val details: String, // Additional price details TODO: rename "notes"?
+    // originalQuantityType is a record of the originalQuantityType on measure. It is intended to
+    // allow a best effort (protecting against buggy code, not malicious code) validation that when
+    // we write back to the database, measure hasn't somehow mutated into a different QuantityType.
+    // TODO: NEED TO MAKE SURE I ACTUALLY USE THIS WHEN DOING INSERT/UPDATE
+    val originalQuantityType: QuantityType,
 ) // TODO : Parcelable
 
 fun Price.toDomain(measureUnit: MeasureUnit): NicePrice =
@@ -574,7 +579,8 @@ fun Price.toDomain(measureUnit: MeasureUnit): NicePrice =
         sourceId = sourceId,
         price = price,
         measure = MeasuredValue(measure, measureUnit),
-        details = details
+        details = details,
+        originalQuantityType = measureUnit.quantityType,
     )
 
 // TODO: Whiff of ChatGPT magic
