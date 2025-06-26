@@ -21,6 +21,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
 import android.os.Parcelable
+import android.os.StrictMode
 import android.util.Log
 import android.view.Window
 import androidx.activity.ComponentActivity
@@ -2344,6 +2345,14 @@ class MainActivity : ComponentActivity() {
         // Target SDK >=35 directly enables edge-to-edge (see e.g. https://stackoverflow.com/questions/79018063/trying-to-understand-edge-to-edge-in-android). We don't particularly want this, but we can work with it so we don't try to fight it.
         // We call it here to be explicit. TODO: I am far from clear but you can pass some arguments to enableEdgeToEdge(), which may have some relevant effect on older and/or newer platforms. For now I will keep it simple but if there are nightmarish inconsistencies on older versions of Android this might be part of the puzzle.
         enableEdgeToEdge()
+
+        // TODO: ChatGPT suggestion. Correct? Do I need to make this debug-build-only somehow?
+        StrictMode.setThreadPolicy(
+            StrictMode.ThreadPolicy.Builder()
+                .detectAll()
+                .penaltyDeath() // TODO .penaltyLog()  // logs violations; you can also add .penaltyDeath() to crash on violation
+                .build()
+        )
 
         // TODO: Experiment with adding a Settings activity and make the dark/light/follow system available and grey out (with some text saying why) follow system on Android < 10
         val isDarkTheme = true /* TODO when (userThemePref) {
