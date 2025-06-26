@@ -1326,6 +1326,11 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                         }
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Unit price") {
                             Row() {
+                                // TODO: FWIW a quick discussion with ChatGPT suggests it is
+                                // reasonable for i18n to have some kind of format substitition to
+                                // generate a unit price string analogous to the one I'm using here.
+                                // So having a single "Unit price" field is probably reasonable, and
+                                // it does feel like the clearest way to express it.
                                 Text("£2.30/")
                                 Box {
                                     Row(
