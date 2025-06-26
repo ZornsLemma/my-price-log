@@ -193,22 +193,29 @@ enum class QuantityType(val value: Int) {
 }
 
 // TODO: CHECK ALL THE MULTIPLIERS HERE - THIS IS CHATGPT CODE, AND WE MAY ALSO NEED TO ADDRESS IMPERIAL VS US OR WHATEVER TERMINOLOGY IS
-enum class MeasureUnit(val quantityType: QuantityType, val symbol: String, val toBase: Double) {
+enum class MeasureUnit(val measureUnitId : Int, val quantityType: QuantityType, val symbol: String, val toBase: Double) {
     // Weight
-    G( QuantityType.WEIGHT,  "g", 1.0),
-    KG(QuantityType.WEIGHT, "kg", 1000.0),
-    OZ(QuantityType.WEIGHT, "oz", 28.3495),
-    LB(QuantityType.WEIGHT, "lb", 453.592),
+    G( 101, QuantityType.WEIGHT,  "g", 1.0),
+    KG(102, QuantityType.WEIGHT, "kg", 1000.0),
+    OZ(103, QuantityType.WEIGHT, "oz", 28.3495),
+    LB(104, QuantityType.WEIGHT, "lb", 453.592),
 
     // Volume
-    ML(  QuantityType.VOLUME, "ml",   1.0),
-    L(   QuantityType.VOLUME, "l",    1000.0),
-    FLOZ(QuantityType.VOLUME, "floz",29.5735),
-    GAL( QuantityType.VOLUME, "gal", 3785.41),
+    ML(  201, QuantityType.VOLUME, "ml",   1.0),
+    L(   202, QuantityType.VOLUME, "l",    1000.0),
+    FLOZ(203, QuantityType.VOLUME, "floz", 29.5735),
+    GAL( 204, QuantityType.VOLUME, "gal",  3785.41),
+    PINT( 205, QuantityType.VOLUME, "pt", 568.26125),
 
     // Countable items
     // TODO: Should symbol be empty string or something else here? feeling my way
-    EACH(QuantityType.ITEM, "item", 1.0) // TODO: RENAME "EACH" TO "ITEM"?
+    EACH(301, QuantityType.ITEM, "item", 1.0); // TODO: RENAME "EACH" TO "ITEM"?
+
+    companion object {
+        fun fromValue(measureUnitId: Int): MeasureUnit? {
+            return MeasureUnit.entries.find { it.measureUnitId == measureUnitId }
+        }
+    }
 }
 
 data class MeasuredValue(val value: Double, val unit: MeasureUnit) {
@@ -232,6 +239,7 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) {
 
     fun asValue(unit: MeasureUnit): Double = this.to(unit).value
 
+    // TODO: Our precision should probably be a max, not a max-and-min (so 4.0 displays as 4 even if precision is 1)
     fun toDisplayString(precision: Int): String = "%.${precision}f".format(value) + " " + unit.symbol
 }
 
@@ -266,12 +274,12 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     val itemIdTeabags = db.productDao().insert(Item(dataSetId = dataSetId, name = "Teabags", quantityType = QuantityType.ITEM))
                                     val sourceIdValueMart = db.sourceDao().insert(Source(dataSetId = dataSetId, name = "ValueMart"))
                                     val sourceIdSuperiorStore = db.sourceDao().insert(Source(dataSetId = dataSetId, name = "SuperiorStore"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdValueMart, price=2.03, measure=500.0, details = "Large pack own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdSuperiorStore, price=1.50, measure=227.0, details = "Own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdValueMart, price=1.99, measure=4*568.0, details = ""))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdSuperiorStore, price=2.86, measure=2000.0, details = ""))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdValueMart, price=0.76, measure=40.0, details = "Soft pack own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdSuperiorStore, price=0.60, measure=20.0, details = ""))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdValueMart, price=2.03, measure=500.0, originalUnit=MeasureUnit.G, details = "Large pack own brand"))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdSuperiorStore, price=1.50, measure=227.0, originalUnit=MeasureUnit.G, details = "Own brand"))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdValueMart, price=1.99, measure=4*568.0, originalUnit=MeasureUnit.PINT, details = ""))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdSuperiorStore, price=2.86, measure=2000.0, originalUnit=MeasureUnit.L, details = ""))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdValueMart, price=0.76, measure=40.0, originalUnit=MeasureUnit.EACH, details = "Soft pack own brand"))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdSuperiorStore, price=0.60, measure=20.0, originalUnit=MeasureUnit.EACH, details = ""))
                                     /*
                                     db.productDao().insert(Product(name = "Demo Product"))
                                     db.itemDao().insert(Item(name = "Demo Item"))
@@ -414,6 +422,13 @@ class Converters {
     }
 }
 
+// TODO: General naming note for databases - both Perplexity and ChatGPT agreed that "_id" suffix on
+// colun names implies a foreign key - so even if (just as an example - but I need to consider this
+// on all tables) we might *later* have a unit table but for now our units are just represented by
+// hard-coded in application IDs, columns which store a unit should be called "unit" not "unit_id".
+// I am not 100% sure I agree but I do need to at least consider naming for consistency at some
+// point, and I wanted to note this opinion.
+
 // TODO: I need to make sure I have the right indexes on all these tables, not sure what if any might get auto-created (and I may want to inhibit some auto-creation if there is any)
 
 data class UnitX(
@@ -541,6 +556,13 @@ data class Price(
     // display), and it doesn't seem to have any real downside in practice.
     val price: Double,
     val measure: Double, // TODO: would "amount" be a much simpler yet still generic name?? hmm, maybe not - "amount" cost also be a monetary amount - but maybe "quantity" would work? I am cooling on "measure" somewhat right now
+    // Although measure is stored in the base unit, we also record the actual unit the user entered
+    // the price in. This allows us to show it back to them in the most natural form when they are
+    // e.g. comparing the database price with the current shelf price. We do have a default unit
+    // stored on the item, but tracking it per actual price allows us to handle situations where
+    // supermarket A sells milk in pint multiples (even if the pack still has litres shown, the user
+    // may think of this in pints) while supermarket B sells it in litre multiples.
+    @ColumnInfo(name = "original_unit") val originalUnit: MeasureUnit,
 
     // TODO: we need a "confirmed date" - even once we add the historical valid_{from,to} columns,
     // we still need this, because a record can be edited in all sorts of ways (especially a tweak
@@ -553,6 +575,10 @@ data class Price(
     val details: String // Additional price details TODO: rename "notes"?
 ) : Parcelable
 
+// TODO: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
+// that effectively tells us the quantity type implicitly and we don't need to join to item to get
+// it. However, I suspect it still has some value because it allows us to do a bit of extra
+// validation which may catch bugs. Probably worth thinking about this again later.
 data class PriceWithItem( // TODO: should be PriceWithItemEntity eventually
     @Embedded val price: Price,
     @ColumnInfo(name = "quantity_type") val quantityType : QuantityType,
@@ -566,6 +592,7 @@ data class NicePrice( // TODO: probably rename just "Price" once we rename the e
     val sourceId: Long,
     val price: Double,
     val measure: MeasuredValue,
+    val originalUnit: MeasureUnit,
     val details: String, // Additional price details TODO: rename "notes"?
     // originalQuantityType is a record of the originalQuantityType on measure. It is intended to
     // allow a best effort (protecting against buggy code, not malicious code) validation that when
@@ -583,6 +610,7 @@ fun Price.toDomain(measureUnit: MeasureUnit): NicePrice =
         sourceId = sourceId,
         price = price,
         measure = MeasuredValue(measure, measureUnit),
+        originalUnit = originalUnit,
         details = details,
         originalQuantityType = measureUnit.quantityType,
     )
@@ -1222,7 +1250,7 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Price as sold"
                         ) { // TODO: quite like this, but maybe "Shelf price"?
                             // TODO: hard coding 2 dp is hacky
-                            Text("£${priceList[0].price} for ${priceList[0].measure.toDisplayString(2)}" /*, color = MaterialTheme.colorScheme.onSurface*/)
+                            Text("£${priceList[0].price} for ${priceList[0].measure.to(priceList[0].originalUnit).toDisplayString(2)}" /*, color = MaterialTheme.colorScheme.onSurface*/)
                         }
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Last checked") {
                             Text("5 days ago") // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
@@ -2096,12 +2124,14 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         var price by rememberSaveable {
             mutableStateOf(
                 if (priceList.isEmpty()) {
+                    // TODO: We may need to allow nulls in some way to accommodate this case properly - I don't yet have any UI for adding a first price
                     Price(
                         dataSetId = dataSetId,
                         itemId = productId,
                         sourceId = storeId,
                         price = 0.0,
                         measure = 0.0,
+                        originalUnit = MeasureUnit.ML, // TODO MASSIVE HACK
                         details = ""
                     )
                 } else {
