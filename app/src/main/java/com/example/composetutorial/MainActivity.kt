@@ -2325,10 +2325,10 @@ fun SettingsScreen(navController: NavHostController) {
     ) { innerPadding ->
         Column(
             modifier = Modifier
+                .background(MaterialTheme.colorScheme.primary) // TODO: debug hack
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = screenBorder)
-                .background(MaterialTheme.colorScheme.primary) // TODO: debug hack
 
             // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
