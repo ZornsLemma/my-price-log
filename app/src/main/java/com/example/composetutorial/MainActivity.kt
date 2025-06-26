@@ -190,6 +190,46 @@ enum class QuantityType(val value: Int) {
     }
 }
 
+// TODO: CHECK ALL THE MULTIPLIERS HERE - THIS IS CHATGPT CODE, AND WE MAY ALSO NEED TO ADDRESS IMPERIAL VS US OR WHATEVER TERMINOLOGY IS
+enum class MeasureUnit(val quantityType: QuantityType, val toBase: Double) {
+    // Weight
+    G(QuantityType.WEIGHT, 1.0),
+    KG(QuantityType.WEIGHT, 1000.0),
+    OZ(QuantityType.WEIGHT, 28.3495),
+    LB(QuantityType.WEIGHT, 453.592),
+
+    // Volume
+    ML(QuantityType.VOLUME, 1.0),
+    L(QuantityType.VOLUME, 1000.0),
+    FLOZ(QuantityType.VOLUME, 29.5735),
+    GAL(QuantityType.VOLUME, 3785.41),
+
+    // Countable items
+    EACH(QuantityType.ITEM, 1.0)
+}
+
+data class MeasuredValue(val value: Double, val unit: MeasureUnit) {
+    val quantityType: QuantityType get() = unit.quantityType
+
+    fun to(unit: MeasureUnit): MeasuredValue {
+        require(this.quantityType == unit.quantityType) {
+            "Cannot convert between different quantity types: trying to convert $this (${this.quantityType}) to ${unit.quantityType}"
+        }
+        val baseValue = this.value * this.unit.toBase
+        return MeasuredValue(baseValue / unit.toBase, unit)
+    }
+
+    operator fun plus(other: MeasuredValue): MeasuredValue {
+        require(this.quantityType == other.quantityType) {
+            "Cannot add values of different quantity types (this: $this, other: $other)"
+        }
+        val otherInThis = other.to(this.unit)
+        return MeasuredValue(this.value + otherInThis.value, this.unit)
+    }
+
+    fun asValue(unit: MeasureUnit): Double = this.to(unit).value
+}
+
 @Database(entities = [DataSet::class, Item::class, Source::class, Price::class], version = 1, exportSchema = false)
 // TODO: Should not be called *Inventory*Database
 abstract class InventoryDatabase : RoomDatabase() {
@@ -778,6 +818,14 @@ val fullScreenDialogBorder = 24.dp // MD3 specification
 @Composable
 fun MainScreen(vm: PriceTrackerViewModel, selectedDataSetId: Long?, onSelectedDataSetIdChange: (Long) -> Unit,
                selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Unit) {
+    /* TODO TEMP TEST CODE FOR MEASUREDVALUE
+    val foo = MeasuredValue(5.0, MeasureUnit.KG)
+    val bar = MeasuredValue(2.3, MeasureUnit.ML)
+    val quux = bar.to(MeasureUnit.FLOZ)
+    Log.d("MyApp", quux.toString())
+    var baz = foo + bar
+    Log.d("MyApp", baz.toString())
+    */
     // TODO: Note that because category and product use a TextField, they have the (I think) nice
     // property that the label expands into a sort of big hint when they are empty. We should
     // probably take advantage of this where having them empty makes sense - and it probably does
