@@ -15,7 +15,6 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
-import android.os.Build
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Button
@@ -180,6 +179,7 @@ import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import java.util.Currency
 import java.util.Locale
 import java.util.UUID
 
@@ -287,7 +287,10 @@ abstract class InventoryDatabase : RoomDatabase() {
                                 // TODO: I may want to add multiple demo data sets - if so, given them all names of the form "Demo (foo)", probably. I may at the very least want to do an imperial unit demo set, so new potential users don't assume the app is metric only. This might be overkill but it may not hurt. We could just use imperial with the metric-ish data set (i.e. just configure the display units to be the user's current regional ones by default when we set the database up), and that might well be reasonable - it would give "odd" pack sizes (e.g. nominally imperial demo data selling 2 litre cartons of milk which the shops call a 3.52 pint pack) but for demo purposes it is probably fine.
                                 // TODO: We should have some cases in the demo data set where there is no price for a store+product combination
                                 db.withTransaction {
-                                    val dataSetId = db.dataSetDao().insert(DataSet(name ="Demo"))
+                                    // TODO: It's probably smart to default the demo data to the local currency, since that will look most natural to our new user, but do rethink this afterwards. (It's also just possible, remember, that they will start editing the demo dataset for their own use, rather than starting again with a fresh dataset.)
+                                    // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
+                                    // TODO: App crashes on first install after uninstall! I *wonder* if it's something to do with this next line, not experimented yet.
+                                    val dataSetId = db.dataSetDao().insert(DataSet(name ="Demo", currencyCode = Currency.getInstance(Locale.getDefault()).currencyCode))
                                     val itemIdGroundCoffee = db.productDao().insert(Item(dataSetId = dataSetId, name = "Coffee (ground)", quantityType= QuantityType.WEIGHT))
                                     val itemIdWholeMilk = db.productDao().insert(Item(dataSetId = dataSetId, name = "Milk (whole)", quantityType = QuantityType.VOLUME))
                                     val itemIdTeabags = db.productDao().insert(Item(dataSetId = dataSetId, name = "Teabags", quantityType = QuantityType.ITEM))
@@ -319,6 +322,7 @@ abstract class InventoryDatabase : RoomDatabase() {
 
 interface PriceTrackerRepository {
     fun getAllDataSets(): Flow<List<DataSet>>
+    fun getDataSet(dataSetId: Long): Flow<List<DataSet>>
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
     fun getPriceForProductAndStore(dataSetId: Long, productId: Long, storeId: Long): Flow<List<Price>>
@@ -367,6 +371,8 @@ class PriceTrackerRepositoryImpl(
     */
 
     override fun getAllDataSets(): Flow<List<DataSet>> = dataSetDao.getAllDataSets()
+
+    override fun getDataSet(dataSetId: Long): Flow<List<DataSet>> = dataSetDao.getDataSet(dataSetId)
 
     override fun getAllItems(dataSetId: Long): Flow<List<Item>> = itemDao.getAllItems(dataSetId)
 
@@ -472,8 +478,14 @@ data class UnitX(
 data class DataSet(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val name: String
-    // TODO: This will have a currency on - probably a three letter currency code. We will need to know the number of decimal places for display purposes, if we can't rely on getting this from the OS it should probably be store on this table.
+    val name: String,
+    @ColumnInfo(name = "currency_code") val currencyCode: String,
+    // TODO: For now, I think I will ask the system to format currencies using the currency_code. Later on we may want to add
+    // a flag "use system formatting" and some parameters (currency prefix/suffix/decimal places) which the user can specify to
+    // override the system formatting. I think it may be that e.g. the system formatting of USD when in a GBP locale may be a bit
+    // annoying ("US$ 123.00" instead of "$123.00" perhaps - not tested though) so this extension is not necessarily ridiculous,
+    // but let's keep it simple for now. Having the option to use system formatting is good, and that will probably always be the
+    // default.
 )
 
 @Entity(
@@ -665,8 +677,11 @@ interface DataSetDao {
     suspend fun insert(dataSet: DataSet): Long
 
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
-    @Query("SELECT * FROM data_set  ORDER BY name ASC")
+    @Query("SELECT * FROM data_set ORDER BY name ASC")
     fun getAllDataSets(): Flow<List<DataSet>>
+
+    @Query("SELECT * FROM data_set WHERE id = :dataSetId")
+    fun getDataSet(dataSetId: Long): Flow<List<DataSet>>
 }
 
 @Dao
@@ -833,7 +848,9 @@ class SingleEventState<T>(initialState: T) {
 }
 
 class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository) : ViewModel() {
-    private val repository = PriceTrackerRepositoryOldTODO()
+    // TODO DELETE private val repository = PriceTrackerRepositoryOldTODO()
+
+    fun getDataSet(dataSetId: Long) = priceTrackerRepository.getDataSet(dataSetId)
 
     // val products: Flow<List<Product>> = repository.getAllProducts()
     // val items: Flow<List<Item>> = priceTrackerRepository.getAllItems()
@@ -1227,6 +1244,36 @@ fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's O
     Text(relativeTime)
 }
 
+fun formatPrice(amount: Double, dataSet: DataSet): String {
+    // TODO: ChatGPT magic, hacked up
+    val currency = Currency.getInstance(dataSet.currencyCode)
+
+    try {
+        // Find a locale that uses this currency
+        // TODO: Is this immensely inefficient? Should we be building up some kind of cache of locales for currencies we are interested in at the whole-app level?
+        val locale = Locale.getAvailableLocales().find {
+            // Not all locales have a currency defined, so we need to catch the exceptions from those and ignore them.
+            try {
+                Currency.getInstance(it) == currency
+            } catch (e: IllegalArgumentException) {
+                false
+            }
+        }
+
+        val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
+            this.currency = currency
+        }
+        return numberFormat.format(amount)
+    }
+    // TODO: Are we catching too broadly here? This Java-ish stuff seems to just be able throw anything at any time
+    catch (e: Exception) {
+        // TODO: Eventually we might want to see if there's any useful data in a currency prefix/suffix/decimal places set of fields in dataSet, but we don't have those yet.
+        val numberFormat =  NumberFormat.getNumberInstance()
+        numberFormat.isGroupingUsed = true // TODO: reasonable? probably mostly irrelevant in most currencies for our type of data
+        return "TODO" + numberFormat.format(amount)
+    }
+}
+
 // This composable provides the at-a-glance status of an item at a particular source. It won't always be visible because we may not have a current source, but when we do this should provide "most" of what a user wants to know:
 // - is the item well-priced?
 // - do we have an up-to-date price for this item?
@@ -1236,12 +1283,13 @@ fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's O
 @Preview(showBackground = true)
 @Composable
 // TODO: Arguably we should have selected{DataSet,Product}Id not allow nulls here - our parent should just not be composing us if these are not set
-fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, selectedDataSetId: Long, selectedProductId: Long?) {
+fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, dataSet: DataSet, selectedProductId: Long?) {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
     var expanded by remember { mutableStateOf(false) }
     var currentUnit by remember { mutableStateOf("100g") }
 
     //var vm: PriceTrackerViewModel = viewModel()
+    val selectedDataSetId = dataSet.id // TODO: maybe a temp hack?
     val sources by vm.getAllSources(selectedDataSetId).collectAsStateWithLifecycle(initialValue = emptyList())
 
     // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
@@ -1317,7 +1365,7 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                             // issues of "for", which is *probably* tractable but might be a
                             // problem. If I really prefer the UI with a single text string
                             // containing "for", don't let this put me off sticking with it.
-                            Text("£${priceList[0].price} for ${priceList[0].measure.to(priceList[0].originalUnit).toDisplayString(2)}" /*, color = MaterialTheme.colorScheme.onSurface*/)
+                            Text("${formatPrice(priceList[0].price, dataSet)} for ${priceList[0].measure.to(priceList[0].originalUnit).toDisplayString(2)}" /*, color = MaterialTheme.colorScheme.onSurface*/)
                         }
 
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Last checked") {
@@ -2084,12 +2132,21 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
                     )
                 )
 
+            val dataSetListNullable by vm.getDataSet(selectedDataSetId).collectAsStateWithLifecycle(initialValue = null)
+            // TODO: HACK - we should probably be pulling this kind of mandatory non-null data out in one place, showing "Loading
+            if (dataSetListNullable != null) {
+                val dataSetList = dataSetListNullable!!
+                check(dataSetList.size == 1) { "Expected one data set with ID $selectedDataSetId but got ${dataSetList.size}" }
+
+
                 ItemSourceInfo(
                     vm = vm,
                     navController = navController,
-                    selectedDataSetId = selectedDataSetId,
+                    dataSet = dataSetList[0],
+                    // selectedDataSetId = selectedDataSetId,
                     selectedProductId = selectedProductId
                 )
+            }
 
                 androidx.compose.foundation.layout.Spacer(
                     modifier = androidx.compose.ui.Modifier.height(
