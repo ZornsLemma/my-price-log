@@ -148,6 +148,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Delete
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Insert
@@ -290,6 +291,7 @@ interface PriceTrackerRepository {
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
     fun getPriceForProductAndStore(dataSetId: Long, productId: Long, storeId: Long): Flow<List<Price>>
+    fun getNicePriceForProductAndStore(dataSetId: Long, productId: Long, storeId: Long): Flow<List<NicePrice>>
     suspend fun updateOrInsertPrice(price: Price)
 }
 
@@ -340,6 +342,10 @@ class PriceTrackerRepositoryImpl(
     override fun getAllSources(dataSetId: Long): Flow<List<Source>> = sourceDao.getAllSources(dataSetId)
 
     override fun getPriceForProductAndStore(dataSetId: Long, productId: Long, storeId: Long): Flow<List<Price>> = priceDao.getPriceForProductAndStore(dataSetId, productId, storeId)
+
+    // TODO: Some ChatGPT magic here, though I am mostly understanding
+    override fun getNicePriceForProductAndStore(dataSetId: Long, productId: Long, storeId: Long): Flow<List<NicePrice>> =
+        priceDao.getPriceWithItemForProductAndStore(dataSetId, productId, storeId).map { list -> list.map { it.toDomain() } }
 
     override suspend fun updateOrInsertPrice(price: Price) = priceDao.upsert(price)
 }
@@ -436,7 +442,7 @@ data class Item(
     val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId : Long,
     val name: String,
-    @ColumnInfo(name = "quantity_type") val quantityType : QuantityType,
+    @ColumnInfo(name = "quantity_type") val quantityType : QuantityType, // TODO: quantity_type*_id* in db?? or is that only for fks?
     // TODO: quantity_type - an enum which says "by item"/"by mass"/"by volume" - the GUI probably *should* allow editing this (not sure though), but wern that editing it will mess up old data (so maybe just don't allow it?)
     // TODO: default_unit - g/kg/oz/floz/litre/etc - this must be consistent with quantity_type (and we may want to let it imply quantity_type rather than storing it explicitly)
 )
@@ -508,6 +514,7 @@ data class Source(
 //
 // The measure will be in a hard-coded "base" unit suitable to the unit type
 @Parcelize
+// TODO: This should probably be renamed PriceEntity (conventional I believe) or something if my experiment works (I want to make it obvious if this is used, as it normally shouldn't be)
 data class Price(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -543,6 +550,39 @@ data class Price(
     val details: String // Additional price details TODO: rename "notes"?
 ) : Parcelable
 
+data class PriceWithItem( // TODO: should be PriceWithItemEntity eventually
+    @Embedded val price: Price,
+    @ColumnInfo(name = "quantity_type") val quantityType : QuantityType,
+)
+
+//@Parcelize // TODO: probably want this, but check later
+data class NicePrice( // TODO: probably rename just "Price" once we rename the existing "Price"
+    val id: Long = 0,
+    val dataSetId : Long,
+    val itemId: Long,
+    val sourceId: Long,
+    val price: Double,
+    val measure: MeasuredValue,
+    val details: String // Additional price details TODO: rename "notes"?
+) // TODO : Parcelable
+
+// TODO: Whiff of ChatGPT magic
+fun PriceWithItem.toDomain(): NicePrice {
+    val baseUnit = when (quantityType) {
+        QuantityType.WEIGHT -> MeasureUnit.G
+        QuantityType.VOLUME -> MeasureUnit.ML
+        QuantityType.ITEM -> MeasureUnit.EACH
+    }
+    return NicePrice(
+        id = price.id,
+        dataSetId = price.dataSetId,
+        itemId = price.itemId,
+        sourceId = price.sourceId,
+        price = price.price,
+        measure = MeasuredValue(price.measure, baseUnit),
+        details = price.details
+    )
+}
 
 @Dao
 interface DataSetDao {
@@ -595,6 +635,13 @@ interface PriceDao {
         productId: Long,
         storeId: Long
     ): Flow<List<Price>>
+
+    @Query("SELECT price.*, item.quantity_type FROM price JOIN item ON price.item_id = item.id WHERE price.data_set_id = :dataSetId AND price.item_id = :productId AND price.source_id = :storeId")
+    fun getPriceWithItemForProductAndStore(
+        dataSetId: Long,
+        productId: Long,
+        storeId: Long
+    ): Flow<List<PriceWithItem>>
 }
 
     // TODO: This is part way through being converted to use Flow
@@ -762,6 +809,13 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             priceTrackerRepository.getPriceForProductAndStore(dataSetId, productId, storeId)
         return priceForProductAndStore
     }
+
+    fun getNicePriceForProductAndStore(dataSetId: Long, productId: Long, storeId: Long): Flow<List<NicePrice>> {
+        val priceForProductAndStore =
+            priceTrackerRepository.getNicePriceForProductAndStore(dataSetId, productId, storeId)
+        return priceForProductAndStore
+    }
+
 
     // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
 
