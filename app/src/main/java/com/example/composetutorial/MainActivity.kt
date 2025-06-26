@@ -173,6 +173,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
+import java.util.Locale
 import java.util.UUID
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
@@ -218,6 +220,15 @@ enum class MeasureUnit(val measureUnitId : Int, val quantityType: QuantityType, 
     }
 }
 
+// TODO: ChatGPT magic, is this really the best way?
+fun formatDoubleLocaleAware(value: Double, maxDecimals: Int, locale: Locale = Locale.getDefault()): String {
+    val nf = NumberFormat.getNumberInstance(locale)
+    nf.maximumFractionDigits = maxDecimals
+    nf.minimumFractionDigits = 0 // Avoid trailing zeros
+    nf.isGroupingUsed = false    // Optional: disable thousands separator
+    return nf.format(value)
+}
+
 data class MeasuredValue(val value: Double, val unit: MeasureUnit) {
     val quantityType: QuantityType get() = unit.quantityType
 
@@ -239,8 +250,8 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) {
 
     fun asValue(unit: MeasureUnit): Double = this.to(unit).value
 
-    // TODO: Our precision should probably be a max, not a max-and-min (so 4.0 displays as 4 even if precision is 1)
-    fun toDisplayString(precision: Int): String = "%.${precision}f".format(value) + " " + unit.symbol
+    // precision is a maximum number of decimal places; we will not pad with trailing zeroes.
+    fun toDisplayString(precision: Int): String = "${formatDoubleLocaleAware(value, precision)} ${unit.symbol}"
 }
 
 @Database(entities = [DataSet::class, Item::class, Source::class, Price::class], version = 1, exportSchema = false)
