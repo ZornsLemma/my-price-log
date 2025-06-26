@@ -1250,6 +1250,11 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Price as sold"
                         ) { // TODO: quite like this, but maybe "Shelf price"?
                             // TODO: hard coding 2 dp is hacky
+                            // TODO: There might be an argument for designing the UI to separate the
+                            // price and quantity here, then we side-step the internationalisation
+                            // issues of "for", which is *probably* tractable but might be a
+                            // problem. If I really prefer the UI with a single text string
+                            // containing "for", don't let this put me off sticking with it.
                             Text("£${priceList[0].price} for ${priceList[0].measure.to(priceList[0].originalUnit).toDisplayString(2)}" /*, color = MaterialTheme.colorScheme.onSurface*/)
                         }
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Last checked") {
