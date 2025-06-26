@@ -2199,7 +2199,11 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
             val dataSetListNullable by vm.getDataSet(selectedDataSetId).collectAsStateWithLifecycle(initialValue = null)
             Log.d("Myapp", "BeforeItemSourceInfo0a")
             // TODO: HACK - we should probably be pulling this kind of mandatory non-null data out in one place, showing "Loading
-            if (dataSetListNullable != null) {
+            // TODO: Note that we must check size > 0 here to cope with the case where we don't have any data sets (e.g. on
+            // first install when the database is being populated by a txn which may not have finished yet). In general there is
+            // an awful lot of hackery in this area (because I was learning as I wrote the code) and we need to be better about
+            // this sort of thing.
+            if (dataSetListNullable != null && dataSetListNullable!!.size > 0) {
                 Log.d("Myapp", "BeforeItemSourceInfo0b")
                 val dataSetList = dataSetListNullable!!
                 Log.d("Myapp", "BeforeItemSourceInfo0c")
