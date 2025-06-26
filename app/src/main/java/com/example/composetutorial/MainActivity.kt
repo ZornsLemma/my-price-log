@@ -2720,3 +2720,6 @@ fun AppNavigation() {
 // a light/dark theme toggle (which might happen at an arbitrary point because battery saver kicks
 // in, for example) also does this. So even if the app eventually disables rotations for layout
 // reasons, don't assume this gets rid of the need to handle being destroyed and re-created.
+
+// TODO: Do I have to do anything special to accommodate e.g. use of "," as a decimal separator on
+// input and/or output, or will the relevant libraries just take care of this for me?
