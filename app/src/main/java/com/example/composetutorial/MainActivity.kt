@@ -292,7 +292,6 @@ abstract class InventoryDatabase : RoomDatabase() {
                                 db.withTransaction {
                                     // TODO: It's probably smart to default the demo data to the local currency, since that will look most natural to our new user, but do rethink this afterwards. (It's also just possible, remember, that they will start editing the demo dataset for their own use, rather than starting again with a fresh dataset.)
                                     // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
-                                    // TODO: App crashes on first install after uninstall! It is *not* the next line's Currency.getInstance() stuff.
                                     val dataSetId = db.dataSetDao().insert(DataSet(name ="Demo", currencyCode = Currency.getInstance(Locale.getDefault()).currencyCode))
                                     val itemIdGroundCoffee = db.productDao().insert(Item(dataSetId = dataSetId, name = "Coffee (ground)", quantityType= QuantityType.WEIGHT))
                                     val itemIdWholeMilk = db.productDao().insert(Item(dataSetId = dataSetId, name = "Milk (whole)", quantityType = QuantityType.VOLUME))
