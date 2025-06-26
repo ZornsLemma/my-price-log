@@ -1214,7 +1214,11 @@ fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's O
             }
         }
     }
-    val relativeTime = DateUtils.getRelativeTimeSpanString(
+    // getRelativeTimeSpanString() returns "0 min. ago" in English for ages under 60 seconds, and
+    // presumably similar in other languages, so even at the cost of adding another string we'll
+    // need to translate, this feels nicer. TODO: Do think about this more, maybe "0 min. ago" is
+    // better?
+    val relativeTime = if (ageInSeconds < 60) "now" else DateUtils.getRelativeTimeSpanString(
         instant.toEpochMilli(),
         System.currentTimeMillis(),
         DateUtils.MINUTE_IN_MILLIS,
