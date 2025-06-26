@@ -193,21 +193,22 @@ enum class QuantityType(val value: Int) {
 }
 
 // TODO: CHECK ALL THE MULTIPLIERS HERE - THIS IS CHATGPT CODE, AND WE MAY ALSO NEED TO ADDRESS IMPERIAL VS US OR WHATEVER TERMINOLOGY IS
-enum class MeasureUnit(val quantityType: QuantityType, val toBase: Double) {
+enum class MeasureUnit(val quantityType: QuantityType, val symbol: String, val toBase: Double) {
     // Weight
-    G(QuantityType.WEIGHT, 1.0),
-    KG(QuantityType.WEIGHT, 1000.0),
-    OZ(QuantityType.WEIGHT, 28.3495),
-    LB(QuantityType.WEIGHT, 453.592),
+    G( QuantityType.WEIGHT,  "g", 1.0),
+    KG(QuantityType.WEIGHT, "kg", 1000.0),
+    OZ(QuantityType.WEIGHT, "oz", 28.3495),
+    LB(QuantityType.WEIGHT, "lb", 453.592),
 
     // Volume
-    ML(QuantityType.VOLUME, 1.0),
-    L(QuantityType.VOLUME, 1000.0),
-    FLOZ(QuantityType.VOLUME, 29.5735),
-    GAL(QuantityType.VOLUME, 3785.41),
+    ML(  QuantityType.VOLUME, "ml",   1.0),
+    L(   QuantityType.VOLUME, "l",    1000.0),
+    FLOZ(QuantityType.VOLUME, "floz",29.5735),
+    GAL( QuantityType.VOLUME, "gal", 3785.41),
 
     // Countable items
-    EACH(QuantityType.ITEM, 1.0) // TODO: RENAME "EACH" TO "ITEM"?
+    // TODO: Should symbol be empty string or something else here? feeling my way
+    EACH(QuantityType.ITEM, "item", 1.0) // TODO: RENAME "EACH" TO "ITEM"?
 }
 
 data class MeasuredValue(val value: Double, val unit: MeasureUnit) {
@@ -230,6 +231,8 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) {
     }
 
     fun asValue(unit: MeasureUnit): Double = this.to(unit).value
+
+    fun toDisplayString(precision: Int): String = "%.${precision}f".format(value) + " " + unit.symbol
 }
 
 @Database(entities = [DataSet::class, Item::class, Source::class, Price::class], version = 1, exportSchema = false)
@@ -1194,7 +1197,7 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
             )
             if (selectedSourceId != null) {
                 // TODO: DEFAULTING TO PRODUCT ID 1 IS A MASSIVE HACK BUT I DON'T WANT TO GET SIDETRACKED THINKING ABOUT NULL CASE RIGHT NOW
-                val priceList by vm.getPriceForProductAndStore(
+                val priceList by vm.getNicePriceForProductAndStore(
                     dataSetId = selectedDataSetId,
                     productId = if (selectedProductId == null) 1 else selectedProductId,
                     storeId = selectedSourceId!!
@@ -1217,7 +1220,8 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
 
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Price as sold"
                         ) { // TODO: quite like this, but maybe "Shelf price"?
-                            Text("£5.75 for 250g" /*, color = MaterialTheme.colorScheme.onSurface*/)
+                            // TODO: hard coding 2 dp is hacky
+                            Text("£${priceList[0].price} for ${priceList[0].measure.toDisplayString(2)}" /*, color = MaterialTheme.colorScheme.onSurface*/)
                         }
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Last checked") {
                             Text("5 days ago") // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
