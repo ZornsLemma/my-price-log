@@ -205,7 +205,7 @@ enum class MeasureUnit(val quantityType: QuantityType, val toBase: Double) {
     GAL(QuantityType.VOLUME, 3785.41),
 
     // Countable items
-    EACH(QuantityType.ITEM, 1.0)
+    EACH(QuantityType.ITEM, 1.0) // TODO: RENAME "EACH" TO "ITEM"?
 }
 
 data class MeasuredValue(val value: Double, val unit: MeasureUnit) {
