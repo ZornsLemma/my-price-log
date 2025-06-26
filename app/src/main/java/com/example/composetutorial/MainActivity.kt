@@ -267,6 +267,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                             CoroutineScope(Dispatchers.IO).launch {
                                 val db = InventoryDatabase.getDatabase(context)
                                 // TODO: I may want to add multiple demo data sets - if so, given them all names of the form "Demo (foo)", probably. I may at the very least want to do an imperial unit demo set, so new potential users don't assume the app is metric only. This might be overkill but it may not hurt. We could just use imperial with the metric-ish data set (i.e. just configure the display units to be the user's current regional ones by default when we set the database up), and that might well be reasonable - it would give "odd" pack sizes (e.g. nominally imperial demo data selling 2 litre cartons of milk which the shops call a 3.52 pint pack) but for demo purposes it is probably fine.
+                                // TODO: We should have some cases in the demo data set where there is no price for a store+product combination
                                 db.withTransaction {
                                     val dataSetId = db.dataSetDao().insert(DataSet(name ="Demo"))
                                     val itemIdGroundCoffee = db.productDao().insert(Item(dataSetId = dataSetId, name = "Coffee (ground)", quantityType= QuantityType.WEIGHT))
