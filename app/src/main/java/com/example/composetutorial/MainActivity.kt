@@ -289,7 +289,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                 db.withTransaction {
                                     // TODO: It's probably smart to default the demo data to the local currency, since that will look most natural to our new user, but do rethink this afterwards. (It's also just possible, remember, that they will start editing the demo dataset for their own use, rather than starting again with a fresh dataset.)
                                     // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
-                                    // TODO: App crashes on first install after uninstall! I *wonder* if it's something to do with this next line, not experimented yet.
+                                    // TODO: App crashes on first install after uninstall! It is *not* the next line's Currency.getInstance() stuff.
                                     val dataSetId = db.dataSetDao().insert(DataSet(name ="Demo", currencyCode = Currency.getInstance(Locale.getDefault()).currencyCode))
                                     val itemIdGroundCoffee = db.productDao().insert(Item(dataSetId = dataSetId, name = "Coffee (ground)", quantityType= QuantityType.WEIGHT))
                                     val itemIdWholeMilk = db.productDao().insert(Item(dataSetId = dataSetId, name = "Milk (whole)", quantityType = QuantityType.VOLUME))
@@ -1244,6 +1244,15 @@ fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's O
     Text(relativeTime)
 }
 
+// TODO: It may be normal, but it may be that ChatGPT is giving me a weird implementation here. My
+// emulated phone think it's in the US, and if I force the default database to use EUR currency, it
+// formats prices as "1,50 €". That *is* probably correct within some/all of the EUR-using locales
+// (based on speaking with ChatGPT about currency conventions), *but* I am not clear it is the
+// "right" way to format a EUR price when we're in the US - at the very least the comma instead of
+// decimal point feels wrong, and I suspect the € sign should appear at the front. It may be that
+// there is no system-defined way of getting this format, but if there is we should use it. The
+// basic approach of finding a local which defaults to the currency feels wrong - we want *our*
+// locale to format the other currency. I suspect the code is a bit silly.
 fun formatPrice(amount: Double, dataSet: DataSet): String {
     // TODO: ChatGPT magic, hacked up
     val currency = Currency.getInstance(dataSet.currencyCode)
