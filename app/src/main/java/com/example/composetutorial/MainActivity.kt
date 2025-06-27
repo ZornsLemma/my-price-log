@@ -1311,6 +1311,11 @@ enum class ThemePreference {
 val screenBorder = 8.dp
 val fullScreenDialogBorder = 24.dp // MD3 specification
 
+// MD3 says 12.dp but MyExposedDropdownMenuBox's dropdown item text doesn't line up with the parent
+// TextField text with that. TODO: We could override it for that specific case and use 12.dp for
+// other menus?
+val menuLeftPadding = 16.dp
+
 
 // Start Grok chunk
 @Composable
@@ -1499,7 +1504,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
         // and the dropdown appears below the supportingText, whereas we want it to drop down over
         // it, "from" the main TextField text box. So we jump through far too many hoops to display
         // it ourselves here.
-        Box(modifier = Modifier.padding(start = 16.dp, top = 4.dp)) {
+        Box(modifier = Modifier.padding(start = menuLeftPadding, top = 4.dp)) {
             ProvideTextStyle(MaterialTheme.typography.bodySmall) {
                 CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
                     supportingText?.invoke()
@@ -1770,7 +1775,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
                 // time, but I'm fairly sure it makes no sense to have a divider at the very top
                 // of the menu anyway.
                 if (previousItem != null && getDividerBetween?.invoke(previousItem!!, item) == true) {
-                    HorizontalDivider()
+                    HorizontalDivider(modifier = Modifier.padding(vertical=8.dp))
                 }
                 previousItem = item
 
@@ -1782,7 +1787,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     },
-                    contentPadding = PaddingValues(start = 16.dp), // TODO CHECK SPEC
+                    contentPadding = PaddingValues(start = menuLeftPadding), // TODO CHECK SPEC
                     onClick = {
                         onValueChange(getId(item))
                         expanded = false
