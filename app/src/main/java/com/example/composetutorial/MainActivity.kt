@@ -1678,10 +1678,17 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet): String {
     return "${formatPrice(unitPrice.numerator, dataSet)}/${unitPrice.denominator.symbol}"
 }
 
+// TODO: Could this be merged with MyExposedDropdownMenuBox by pulling the always-visible part out
+// into a child composable? But let's just do it standalone first.
 @Composable
-fun LabeledItemWithDropdown(
+fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
+    selectedId: ID?,
     label: String,
     text: String,
+    onValueChange: (ID) -> Unit, // TODO: follow naming convention of MyExposedDropdownMenUBox
+    items: List<T>,
+    getId: (T) -> ID,
+    getLabel: (T) -> String,
 ) {
     // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
     // changes the system font size. (Even if we didn't do this, we'd still want to use a fixed
@@ -1734,14 +1741,11 @@ fun LabeledItemWithDropdown(
                 DropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }) {
-                    var availableUnits = listOf("100g", "kg", "oz")
-                    availableUnits.forEach { selectionOption ->
+                    items.forEach { item ->
                         DropdownMenuItem(
-                            text = { Text(selectionOption) },
+                            text = { Text(getLabel(item)) }, // TODO: font probably wrong, think I have a TODO about this elsewhere but not sure
                             onClick = {
-                                /* TODO!
-                                currentUnit = selectionOption
-                                */
+                                onValueChange(getId(item))
                                 expanded = false
                             })
                     }
@@ -1886,7 +1890,12 @@ fun ItemSourceInfo(
                                 Log.d("MyApp", "FOO4")
                                 // Text("TODO") // Text(formatUnitPrice(priceList[0].price, priceList[0].measure, TODOHINT?))
                                 */
-                        LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price", text = "TODO/TODO")
+                        var items = MeasureUnit.entries.filter { true }
+                        var todoSelected: Long? by rememberSaveable { mutableStateOf(null) }
+                        LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price", text = "TODO/${todoSelected}",
+                            items =items /* TODO HACK */, getId = { it.id }, getLabel = { it.symbol },
+                            selectedId = priceList[0].originalUnit.id /* TODO HACK NEEDS TO BE VARIABLE AND THOUGHT GIVEN TO INITIAL */,
+                            onValueChange = { todoSelected = it } )
                     }
                     // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
                     // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
