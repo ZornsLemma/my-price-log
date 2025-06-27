@@ -109,7 +109,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -125,7 +124,6 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -1685,6 +1683,37 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet): String {
 // TODO: Could this be merged with MyExposedDropdownMenuBox by pulling the always-visible part out
 // into a child composable? But let's just do it standalone first.
 @Composable
+fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
+    selectedId: ID?,
+    onValueChange: (ID) -> Unit, // TODO: follow naming convention of MyExposedDropdownMenUBox
+    items: List<T>,
+    getId: (T) -> ID,
+    getLabel: (T) -> String,
+    content: @Composable () -> Unit,
+) {
+    // TODO: rememberSaveable? A simple dark mode toggle could lose this otherwise.
+    var expanded by remember { mutableStateOf(false) }
+
+    // TODO: WE SHOULD ALLOW CALLER TO PASS THEIR OWN MODIFIER TOO
+    Box(modifier = Modifier.clickable { expanded = true },) {
+        content()
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }) {
+            items.forEach { item ->
+                DropdownMenuItem(
+                    text = { Text(getLabel(item)) }, // TODO: font probably wrong, think I have a TODO about this elsewhere but not sure
+                    onClick = {
+                        onValueChange(getId(item))
+                        expanded = false
+                    })
+            }
+        }
+    }
+}
+
+@Composable
 fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     selectedId: ID?,
     label: String,
@@ -1701,10 +1730,12 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     val fontSize = MaterialTheme.typography.bodyLarge.fontSize
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
 
-    // TODO: rememberSaveable? A simple dark mode toggle could lose this otherwise.
-    var expanded by remember { mutableStateOf(false) }
-
-    Box(/* TODO PARAM DOESN'T EXIST YET modifier = modifier */) {
+    ItemWithDropdown(selectedId = selectedId,
+        onValueChange = onValueChange,
+        items = items,
+        getId = getId,
+        getLabel = getLabel,
+        ) {
         LabeledItem(label = label) {
             Row() {
                 // TODO: FWIW a quick discussion with ChatGPT suggests it is
@@ -1714,18 +1745,18 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
                 // it does feel like the clearest way to express it.
                 Box {
                     Row(
-                        modifier = Modifier.clickable { expanded = true },
+                        // TODO DELETE? modifier = Modifier.clickable { expanded = true },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         /*
-                    Text("£2.30/")
+            Text("£2.30/")
 
-                    Text(
-                        text = currentUnit,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        // modifier = Modifier.alignBy(LastBaseline)
-                    )*/
+            Text(
+                text = currentUnit,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                // modifier = Modifier.alignBy(LastBaseline)
+            )*/
                         Text(text)
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
@@ -1734,19 +1765,6 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
                         )
                     }
                 }
-            }
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }) {
-            items.forEach { item ->
-                DropdownMenuItem(
-                    text = { Text(getLabel(item)) }, // TODO: font probably wrong, think I have a TODO about this elsewhere but not sure
-                    onClick = {
-                        onValueChange(getId(item))
-                        expanded = false
-                    })
             }
         }
     }
@@ -1912,6 +1930,7 @@ fun ItemSourceInfo(
                             items = relevantUnitList, getId = { it }, getLabel = { it.symbol },
                             selectedId = todoSelected,
                             onValueChange = { todoSelected = it } )
+
                     }
                     // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
                     // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
