@@ -1684,6 +1684,7 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet): String {
 // into a child composable? But let's just do it standalone first.
 @Composable
 fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
+    modifier: Modifier = Modifier,
     selectedId: ID?,
     onValueChange: (ID) -> Unit, // TODO: follow naming convention of MyExposedDropdownMenUBox
     items: List<T>,
@@ -1694,8 +1695,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
     // TODO: rememberSaveable? A simple dark mode toggle could lose this otherwise.
     var expanded by remember { mutableStateOf(false) }
 
-    // TODO: WE SHOULD ALLOW CALLER TO PASS THEIR OWN MODIFIER TOO
-    Box(modifier = Modifier.clickable { expanded = true },) {
+    Box(modifier = modifier.clickable { expanded = true },) {
         content()
 
         DropdownMenu(
