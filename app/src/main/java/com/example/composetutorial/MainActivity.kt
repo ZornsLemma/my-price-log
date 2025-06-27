@@ -1443,8 +1443,6 @@ fun myTextFieldColors() = TextFieldDefaults.colors(
 )
 
 // TODO: THis needs support for selecting "None" - maybe we just make the user pass it in the input with a null ID, actually?
-// TODO: VERY NEARLY WORKS WITH THE REFACTOR TO USE ITEMWITHDROPBOX, EXCEPT THE COLOURS MIGHT HAVE CHANGED (LOOKS GREYED OUT?) AND THERE IS SOME SORT OF VERTICAL DROPDOWN POSITION GLITCH WITH "SOURCE" BEING EMPTY WHICH I SUSPECT HAS VAGUE NUll-RELATED ASPECT
-// - OK, THE SUPPORTINGTEXT IS CAUSING THE VERTICAL POSITION GLITCH, NEED TO FIGURE OUT HOW/WHY AND FIX IT - YES, AND FWIW THIS WAS *ALWAYS* BROKEN EVEN BEFORE THE REFACTOR, I CHECKED OUT CODE FROM YESTERDAY - SO WHILE I DO WANT TO FIX IT, THE REFACTOR DIDN'T CAUSE IT
 @Composable
 fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     selectedId: ID?,
@@ -1467,8 +1465,9 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             getId = getId,
             getLabel = getLabel,
         ) {
+            // TODO: Hacky and probably unnecessary now I am a bit less learning/prototyping
             val itemMap =
-                items.associateBy { getId(it) } // TODO: inefficient? should we make caller supply use with this so viewmodel can be caching it?
+                items.associateBy { getId(it) } // TODO: inefficient? should we make caller supply use with this so viewmodel can be caching it
             val PULLEDOUT: String = if (selectedId == null) "" else {
                 val item = itemMap[selectedId]
                 if (item != null) getLabel(item) else "Invalid ID $selectedId"
