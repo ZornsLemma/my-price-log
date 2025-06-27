@@ -21,8 +21,6 @@ import androidx.compose.material3.Button
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.os.Parcelable
 import android.os.StrictMode
 import android.text.format.DateUtils
@@ -126,7 +124,6 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -186,7 +183,6 @@ import java.util.Locale
 import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.log10
-import kotlin.system.exitProcess
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
 // weight or volume. This is fundamental as we make no effort to convert between them using some
@@ -206,24 +202,22 @@ enum class QuantityType(val value: Int) {
 }
 
 enum class UnitFamily {
-    METRIC_WEIGHT,
-    METRIC_VOLUME,
-    OZLB_WEIGHT, // common imperial/US customary units for weight
-    IMPERIAL_VOLUME, // as used in UK
-    US_CUSTOMARY_VOLUME, // as used in US
+    METRIC,
+    IMPERIAL, // as used in UK
+    US_CUSTOMARY, // as used in US
     ITEM, // TODO: not sure if we need this
 }
 
 // TODO: CHECK ALL THE MULTIPLIERS HERE - THIS IS CHATGPT CODE, AND WE MAY ALSO NEED TO ADDRESS IMPERIAL VS US OR WHATEVER TERMINOLOGY IS
 // TODO: IDS SHOULD PROBABLY BE TIDIED UP IF WE KEEP EG G100
 // TODO: IF WE KEEP G100 AND ML100, WE MAY NEED A FLAG TO INDICATE THESE ARE SECOND-CLASS CITIZENS AND ONLY ELIGIBLE FOR UNIT PRICE DENOMINATOR NOT GENERATE UNIT SELECTION
-enum class MeasureUnit(val measureUnitId : Int, val unitFamily: UnitFamily, val quantityType: QuantityType, val symbol: String, val toBase: Double) {
+enum class MeasureUnit(val id : Long, val unitFamilies: Set<UnitFamily>, val quantityType: QuantityType, val symbol: String, val toBase: Double, val displayOnly: Boolean) {
     // Weight
-    G( 101, UnitFamily.METRIC_WEIGHT, QuantityType.WEIGHT,  "g", 1.0),
-    G100( 1001, UnitFamily.METRIC_WEIGHT, QuantityType.WEIGHT, "100 g", 100.0), // TODO: experimental
-    KG(102, UnitFamily.METRIC_WEIGHT, QuantityType.WEIGHT, "kg", 1000.0),
-    OZ(103, UnitFamily.OZLB_WEIGHT, QuantityType.WEIGHT, "oz", 28.3495),
-    LB(104, UnitFamily.OZLB_WEIGHT, QuantityType.WEIGHT, "lb", 453.592),
+    G( 101, setOf(UnitFamily.METRIC), QuantityType.WEIGHT,  "g", 1.0, false),
+    G100( 1001, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "100 g", 100.0, true), // TODO: experimental
+    KG(102, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "kg", 1000.0, false),
+    OZ(103, setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY), QuantityType.WEIGHT, "oz", 28.3495, false),
+    LB(104, setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY), QuantityType.WEIGHT, "lb", 453.592, false),
 
     // TODO: The (US) etc suffixes on here are a nuisance when displaying as they look ugly. We probably want some kind of concept of
     // eliding these for display purposes. My fully fleshed out mental design is that for each data set, the user gets to
@@ -234,27 +228,41 @@ enum class MeasureUnit(val measureUnitId : Int, val unitFamily: UnitFamily, val 
     // Maybe the simple but relatively clean option would be a "imperial volume vs US customary volume" toggle at the data set
     // level.
     // Volume
-    ML(  201, UnitFamily.METRIC_VOLUME, QuantityType.VOLUME, "ml",   1.0),
-    ML100 (2001, UnitFamily.METRIC_VOLUME, QuantityType.VOLUME, "100 ml", 100.0), // TODO: experimental
-    L(   202, UnitFamily.METRIC_VOLUME, QuantityType.VOLUME, "l",    1000.0),
-    US_CUSTOMARY_FLOZ(203, UnitFamily.US_CUSTOMARY_VOLUME, QuantityType.VOLUME, "floz (US)", 29.5735),
-    US_CUSTOMARY_PINT(2033, UnitFamily.US_CUSTOMARY_VOLUME, QuantityType.VOLUME, "pt (US)", 473.176473),
-    US_CUSTOMARY_GAL( 204, UnitFamily.US_CUSTOMARY_VOLUME, QuantityType.VOLUME, "gal (US)",  3785.41),
-    IMPERIAL_FLOZ(2041, UnitFamily.IMPERIAL_VOLUME, QuantityType.VOLUME, "floz (imp)", 28.4130625),
-    IMPERIAL_PINT( 205,UnitFamily.IMPERIAL_VOLUME, QuantityType.VOLUME, "pt (imp)", 568.26125),
-    IMPERIAL_GAL(206, UnitFamily.IMPERIAL_VOLUME, QuantityType.VOLUME, "gal (imp)", 4546.09),
+    ML(  201, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml",   1.0, false),
+    ML100 (2001, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "100 ml", 100.0, true), // TODO: experimental
+    L(   202, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "l",    1000.0, false),
+    US_CUSTOMARY_FLOZ(203, setOf(UnitFamily.US_CUSTOMARY), QuantityType.VOLUME, "floz (US)", 29.5735, false),
+    US_CUSTOMARY_PINT(2033, setOf(UnitFamily.US_CUSTOMARY), QuantityType.VOLUME, "pt (US)", 473.176473, false),
+    US_CUSTOMARY_GAL( 204, setOf(UnitFamily.US_CUSTOMARY), QuantityType.VOLUME, "gal (US)",  3785.41, false),
+    IMPERIAL_FLOZ(2041, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "floz (imp)", 28.4130625, false),
+    IMPERIAL_PINT( 205, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "pt (imp)", 568.26125, false),
+    IMPERIAL_GAL(206, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "gal (imp)", 4546.09, false),
 
     // Countable items
     // TODO: Should symbol be empty string or something else here? feeling my way. I suspect "" looks best, it may lead to strings like "for 20 " with a trailing space but that's probably not a big deal in practice. (We could also just make a point of trimming strings generated using symbol.) We sort of might want "1" for the unit price denominator stuff though.
-    EACH(301, UnitFamily.ITEM, QuantityType.ITEM, "", 1.0), // TODO: RENAME "EACH" TO "ITEM"?
-    EACH10(302, UnitFamily.ITEM, QuantityType.ITEM, "10", 10.0),
-    EACH100(303, UnitFamily.ITEM, QuantityType.ITEM, "100", 100.0);
+    EACH(301, setOf(UnitFamily.ITEM), QuantityType.ITEM, "", 1.0, false), // TODO: RENAME "EACH" TO "ITEM"?
+    EACH10(302, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", 10.0, true),
+    EACH100(303, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", 100.0, true);
 
     companion object {
-        fun fromValue(measureUnitId: Int): MeasureUnit? {
-            return MeasureUnit.entries.find { it.measureUnitId == measureUnitId }
+        fun fromValue(measureUnitId: Long): MeasureUnit? {
+            return MeasureUnit.entries.find { it.id == measureUnitId }
         }
     }
+}
+
+// TODO: Should this live in the "companion object" on MeasureUnit??
+// TODO: Not just here, it may be better to have single high-level unit families metric/US/imperial and use those in combination with quantitytype. This would at least be a purely internal change so I can see how/if it cleans up the code without needing to redo the database.
+fun getRelevantMeasureUnits(dataSet: DataSet, quantityType: QuantityType, includeDisplayOnly : Boolean): List<MeasureUnit> {
+    val relevantUnitFamilies = setOfNotNull(
+        if (dataSet.allowMetric) UnitFamily.METRIC else null,
+        if (dataSet.allowImperial) UnitFamily.IMPERIAL else null,
+        if (dataSet.allowUSCustomary) UnitFamily.US_CUSTOMARY else null,
+        UnitFamily.ITEM,
+    )
+    devCheck(relevantUnitFamilies.isNotEmpty()) { "Data set ID ${dataSet.id} has no unit families enabled" }
+    devCheck(!(dataSet.allowImperial && dataSet.allowUSCustomary)) { "Data set ID ${dataSet.id} has both imperial and US Customary unit families enabled" }
+    return MeasureUnit.entries.filter { it.quantityType == quantityType && it.unitFamilies.any { it in relevantUnitFamilies } && (!it.displayOnly || includeDisplayOnly) }
 }
 
 // TODO: ChatGPT magic, is this really the best way?
@@ -320,7 +328,8 @@ abstract class InventoryDatabase : RoomDatabase() {
                                 db.withTransaction {
                                     // TODO: It's probably smart to default the demo data to the local currency, since that will look most natural to our new user, but do rethink this afterwards. (It's also just possible, remember, that they will start editing the demo dataset for their own use, rather than starting again with a fresh dataset.)
                                     // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
-                                    val dataSetId = db.dataSetDao().insert(DataSet(name ="Demo", currencyCode = Currency.getInstance(Locale.getDefault()).currencyCode))
+                                    // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current locale (and make sure any non-metric units in the data below are changed accordingly)
+                                    val dataSetId = db.dataSetDao().insert(DataSet(name ="Demo", currencyCode = Currency.getInstance(Locale.getDefault()).currencyCode, allowMetric = true, allowImperial = true, allowUSCustomary = false))
                                     val itemIdGroundCoffee = db.productDao().insert(Item(dataSetId = dataSetId, name = "Coffee (ground)", quantityType= QuantityType.WEIGHT))
                                     val itemIdWholeMilk = db.productDao().insert(Item(dataSetId = dataSetId, name = "Milk (whole)", quantityType = QuantityType.VOLUME))
                                     val itemIdTeabags = db.productDao().insert(Item(dataSetId = dataSetId, name = "Teabags", quantityType = QuantityType.ITEM))
@@ -569,6 +578,9 @@ data class DataSet(
     // annoying ("US$ 123.00" instead of "$123.00" perhaps - not tested though) so this extension is not necessarily ridiculous,
     // but let's keep it simple for now. Having the option to use system formatting is good, and that will probably always be the
     // default.
+    @ColumnInfo(name = "allow_metric") val allowMetric: Boolean,
+    @ColumnInfo(name = "allow_imperial") val allowImperial: Boolean,
+    @ColumnInfo(name = "allow_us_customary") val allowUSCustomary: Boolean
 )
 
 @Entity(
@@ -1374,12 +1386,6 @@ fun unitPriceDenominatorCandidates(
 }
 */
 
-// TODO: POOR NAME?
-// TODO: I suspect this is grossly inefficient with repeatedly iterating over the entries every time this is called but let's just get something that works first
-fun unitRelatives(measureUnit: MeasureUnit) : List<MeasureUnit> {
-    return MeasureUnit.entries.filter { it.unitFamily == measureUnit.unitFamily }
-}
-
 // TODO: EXPERIMENTAL
 // TODO: HOW WILL WE HANDLE "/100G" ETC? WILL WE MAKE THESE FIRST CLASS MEASUREUNITS BUT FLAG THEM AS "MULTIPLES" SO WE OMIT THEM FROM MANY CASES, OR WILL WE MAKE IT A LIST<PAIR<MULT,MEASUREUNIT>>?
 // TODO: RENAME THIS? "friendlyUnitPrice"???
@@ -1570,7 +1576,7 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                                 // TODO: It is wrong to use pricelist[0].originalUnit for unitRelatives - well, not necessarily wrong, especially if we maybe offer a selection via a dropdown - but the "primary" unit family should probably be the default unit on the item - but we don't have that yet
                                 // TODO:Rename "up" to unitPrice, after renaming unitPrice() function to free the name up? Ditto "ur"?
                                 Log.d("MyApp", "FOO1")
-                                val ur = unitRelatives(priceList[0].originalUnit)
+                                val ur = getRelevantMeasureUnits(dataSet, priceList[0].originalUnit.quantityType, includeDisplayOnly = true)
                                 Log.d("MyApp", "FOO2")
                                 val up = getFriendlyUnitPrice(priceList[0].price, priceList[0].measure, ur)
                                 Log.d("MyApp", "FOO3")
@@ -2398,6 +2404,7 @@ fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvi
 fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostController, dataSetId: Long, productId: Long, storeId: Long) {
     //var vm: PriceTrackerViewModel = viewModel()
     // TODO: Should we just have the caller pass the product name through so we don't have to do this lookup? the viewmodel should have the data cached, but we still have to through the collectstatewithlifecycle overhead?
+    // TODO: Are we needlessly getting *all* items here when we could just get the one we are interested in?
     val productMap by vm.getItemMap(dataSetId)
         .collectAsStateWithLifecycle(initialValue = emptyMap())
     val productName = productMap[productId]?.name ?: "Invalid product ID $productId"
@@ -2409,17 +2416,23 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         productId = productId,
         storeId = storeId
     ).collectAsStateWithLifecycle(initialValue = null)
+    val nullableDataSetList: List<DataSet>? by vm.getDataSet(dataSetId).collectAsStateWithLifecycle(initialValue = null)
 
-    if (nullablePriceList == null) {
+    if (nullablePriceList == null || nullableDataSetList == null || !(productId in productMap)) {
         // This will almost certainly never be seen - we will likely get the query results back and
         // be recomposed before the first frame.
         Text("Loading...")
     } else {
         val priceList = nullablePriceList!!
         devCheck(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
+
+        devCheck(nullableDataSetList!!.size == 1) { "Expected 1 data set with ID ${dataSetId}, but got ${nullableDataSetList!!.size}" }
+        val dataSet = nullableDataSetList!![0]
         // TODO: Create empty price like this feels crap, and it's also not right that the price defaults to 0.0 - it needs to be nullable, and possibly the price should be a string not a double at least in this context, not sure about db
         // TODO: price probably needs rememberSaveable
         //var price by rememberSaveable { mutableStateOf ( if (priceList.isEmpty()) Price(productId = productId, storeId = storeId, price = 0.0, details = "") else priceList[0])}
+
+        val product = productMap[productId]!!
 
         // Initialize price with a default value
         var price by rememberSaveable {
@@ -2574,7 +2587,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
             ) {
                 // TODO: I think the use of "remember" here is far too weak, but this is basically old hacky code and converting to the viewmodel approach will automatically fix this
                 var packSize by remember { mutableStateOf("123") }
-                var selectedUnitId: Long by remember { mutableStateOf(1) }
+                var selectedUnitId by remember { mutableStateOf(price.originalUnit.id) }
                 var packPrice by remember { mutableStateOf("2.98") }
                 //var notes by remember { mutableStateOf("My cool notes") }
                 // TODO: Product and Store should maybe be in a row. Just hacking up a rough
@@ -2587,13 +2600,8 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
                     Text(storeName)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                val units = mutableListOf(
-                    UnitX(1, "g"),
-                    UnitX(2, "kg"),
-                    UnitX(3, "oz"),
-                    UnitX(4, "ml"),
-                    UnitX(5, "l")
-                )
+                // TODO: WE PROBABLY WANT SOME remember+derivedStateOf HERE BUT LET'S DO IT WITHOUT FIRST
+                val units: List<MeasureUnit> = getRelevantMeasureUnits(dataSet, product.quantityType, includeDisplayOnly=false)
                 Row {
                     // TODO: Don't really like this way of showing pack size and unit etc, but
                     // this is just a quick hack to get some "realistic-ish" content on the
@@ -2633,7 +2641,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
                         items = units,
                         modifier = Modifier.weight(0.5f),
                         getId = { it.id },
-                        getLabel = { it.name },
+                        getLabel = { it.symbol },
                     )
 
                 }
