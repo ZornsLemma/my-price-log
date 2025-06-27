@@ -1441,6 +1441,7 @@ fun myTextFieldColors() = TextFieldDefaults.colors(
 )
 
 // TODO: THis needs support for selecting "None" - maybe we just make the user pass it in the input with a null ID, actually?
+// TODO: VERY NEARLY WORKS WITH THE REFACTOR TO USE ITEMWITHDROPBOX, EXCEPT THE COLOURS MIGHT HAVE CHANGED (LOOKS GREYED OUT?) AND THERE IS SOME SORT OF VERTICAL DROPDOWN POSITION GLITCH WITH "SOURCE" BEING EMPTY WHICH I SUSPECT HAS VAGUE NUll-RELATED ASPECT
 @Composable
 fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     selectedId: ID?,
