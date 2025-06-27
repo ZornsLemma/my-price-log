@@ -1703,11 +1703,19 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
             onDismissRequest = { expanded = false }) {
             items.forEach { item ->
                 DropdownMenuItem(
-                    text = { Text(getLabel(item)) }, // TODO: font probably wrong, think I have a TODO about this elsewhere but not sure
+                    text = {
+                        Text(
+                            text = getLabel(item),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    },
+                    contentPadding = PaddingValues(start = 16.dp), // TODO CHECK SPEC
                     onClick = {
                         onValueChange(getId(item))
                         expanded = false
-                    })
+                    }
+                )
             }
         }
     }
