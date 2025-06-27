@@ -69,6 +69,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.MaterialTheme
@@ -99,6 +100,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.TextButton
@@ -1456,43 +1458,56 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
 ) {
     var textFieldWidth by remember { mutableStateOf(0) }
 
-    ItemWithDropdown(
-        modifier = modifier,
-        dropdownModifier = Modifier.width(with(LocalDensity.current) { textFieldWidth.toDp() }),
-        selectedId = selectedId,
-        onValueChange = onValueChange,
-        items = items,
-        getId = getId,
-        getLabel = getLabel,
-    ) {
-        val itemMap =
-            items.associateBy { getId(it) } // TODO: inefficient? should we make caller supply use with this so viewmodel can be caching it?
-        val PULLEDOUT: String = if (selectedId == null) "" else {
-            val item = itemMap[selectedId]
-            if (item != null) getLabel(item) else "Invalid ID $selectedId"
-        }
-        TextField(
-            value = PULLEDOUT,
-            onValueChange = { /* No-op, handled by dropdown */ },
-            label = label,
-            supportingText = supportingText,
-            readOnly = true,
-            enabled = false, // TODO HACK
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Expand",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    /* TODO modifier = Modifier.rotate(if (expanded) 180f else 0f) */
-                )
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .onGloballyPositioned { coordinates ->
-                    textFieldWidth = coordinates.size.width
+    Column(modifier = modifier) {
+        ItemWithDropdown(
+            dropdownModifier = Modifier.width(with(LocalDensity.current) { textFieldWidth.toDp() }),
+            selectedId = selectedId,
+            onValueChange = onValueChange,
+            items = items,
+            getId = getId,
+            getLabel = getLabel,
+        ) {
+            val itemMap =
+                items.associateBy { getId(it) } // TODO: inefficient? should we make caller supply use with this so viewmodel can be caching it?
+            val PULLEDOUT: String = if (selectedId == null) "" else {
+                val item = itemMap[selectedId]
+                if (item != null) getLabel(item) else "Invalid ID $selectedId"
+            }
+            TextField(
+                value = PULLEDOUT,
+                onValueChange = { /* No-op, handled by dropdown */ },
+                label = label,
+                // TODO: DELETE - WE DO THIS OURSELVES BELOW supportingText = supportingText,
+                readOnly = true,
+                enabled = false, // TODO HACK
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Expand",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        /* TODO modifier = Modifier.rotate(if (expanded) 180f else 0f) */
+                    )
                 },
-            colors = myTextFieldColors() // TODO: not sure this is right, need to think about MD3 etc
-        )
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { coordinates ->
+                        textFieldWidth = coordinates.size.width
+                    },
+                colors = myTextFieldColors() // TODO: not sure this is right, need to think about MD3 etc
+            )
+        }
+        // If we let TextField display supportingText itself, it gets included in the bounding box
+        // and the dropdown appears below the supportingText, whereas we want it to drop down over
+        // it, "from" the main TextField text box. So we jump through far too many hoops to display
+        // it ourselves here.
+        Box(modifier = Modifier.padding(start = 16.dp, top = 4.dp)) {
+            ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
+                    supportingText?.invoke()
+                }
+            }
+        }
+
     }
 
         /* TODO OLD CODE REF
