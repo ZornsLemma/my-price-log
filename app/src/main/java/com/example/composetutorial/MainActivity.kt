@@ -1745,7 +1745,6 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
                 // it does feel like the clearest way to express it.
                 Box {
                     Row(
-                        // TODO DELETE? modifier = Modifier.clickable { expanded = true },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         /*
@@ -1760,7 +1759,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
                         Text(text)
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Select unit",
+                            contentDescription = "Select unit", // TODO: needs to be passed in by caller
                             modifier = Modifier.size(iconSize /* 16.dp */)
                         )
                     }
