@@ -1731,6 +1731,11 @@ fun getFriendlyUnitPrice(
         // We compute a score (lower is better) for candidateUnitPrice which measures how far away
         // it is in "decimal place" terms from having a numerator of 1. In other words, we are trying
         // to get as close to a single digit before the decimal point as we can.
+        // TODO: I'm not sure this score is right - e.g. looking at ground coffee at SuperiorStore,
+        // it chooses $0.66/100g but $6.61/kg is probably better. This code could maybe try to
+        // down-weight "display only" units, but I'm not sure - anyway, that isn't the issue here.
+        // I think we sort of don't want a 0 before the decimal point if we can help it, but our
+        // score doesn't take this into account.
         val log10Of1 = 0.0
         val candidateScore = abs(log10(candidateUnitPrice.numerator) - log10Of1) // lower is better
         if (bestScore == null || candidateScore < bestScore) {
