@@ -341,6 +341,13 @@ fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {
 
 // TODO: Should this live in the "companion object" on MeasureUnit??
 // TODO: Not just here, it may be better to have single high-level unit families metric/US/imperial and use those in combination with quantitytype. This would at least be a purely internal change so I can see how/if it cleans up the code without needing to redo the database.
+// TODO: The results from this will probably be shown to the user so order matters. We should maybe
+// sort them and/or rely on MeasureUnit.entities having some order. We may want some way for the
+// caller to indicate that if there are multiple unit families in the results, they prefer a
+// particularly family (e.g. the one the user last used to enter a price) at the top. Within a unit
+// family, we should probably order by smallest to largest (which we can do by relying on
+// MeasureUnit.entities being in that order, or by sorting on base - probably nicer just to go with
+// the baked-in order for now
 fun getRelevantMeasureUnits(
     dataSet: DataSet,
     quantityType: QuantityType,
@@ -354,6 +361,7 @@ fun getRelevantMeasureUnits(
 }
 
 // TODO: Note that this regards measureUnit as its own sibling
+// TODO: This is *probably* only used internally to generate some units which we pick among automatically and we don't care about the order of the results.
 fun getSiblingMeasureUnits(
     dataSet: DataSet,
     measureUnit: MeasureUnit,
@@ -365,7 +373,7 @@ fun getSiblingMeasureUnits(
         MeasureUnit.entries.filter { it.quantityType == measureUnit.quantityType && unitFamily.single() in it.unitFamilies }
     devCheck(siblingMeasureUnits.isNotEmpty()) { "Expected at least one sibling measure unit for MeasureUnit ${measureUnit.id} in the context of data set ID ${dataSet.id} but found none" }
     // TODO: We could verify that measureUnit is a member of the returned list, but it feels a bad
-    // idea to do a linear search just to do this.
+    // idea to do a linear search just for a check.
     return siblingMeasureUnits
 }
 
