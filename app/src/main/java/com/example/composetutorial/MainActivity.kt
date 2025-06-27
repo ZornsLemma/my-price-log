@@ -1490,6 +1490,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
                     .onGloballyPositioned { coordinates ->
                         textFieldWidth = coordinates.size.width
                     },
+                colors = myTextFieldColors() // TODO: not sure this is right, need to think about MD3 etc
             )
         }
 
