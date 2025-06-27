@@ -1650,6 +1650,9 @@ fun unitPriceDenominatorCandidates(
 // TODO: RENAME THIS? "friendlyUnitPrice"???
 data class UnitPrice(val numerator: Double, val denominator: MeasureUnit)
 
+fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUnit) : UnitPrice =
+    UnitPrice(amount / measure.asValue(denominator), denominator)
+
 fun getFriendlyUnitPrice(
     amount: Double,
     measure: MeasuredValue,
@@ -1660,8 +1663,7 @@ fun getFriendlyUnitPrice(
     var bestScore: Double? = null
     var bestUnitPrice: UnitPrice? = null
     for (candidateDenominator in candidateDenominators) {
-        val measureWithCandidate = measure.asValue(candidateDenominator)
-        val candidateUnitPrice = UnitPrice(amount / measureWithCandidate, candidateDenominator)
+        val candidateUnitPrice = getUnitPrice(amount, measure, candidateDenominator)
         // We compute a score (lower is better) for candidateUnitPrice which measures how far away
         // it is in "decimal place" terms from having a numerator of 1. In other words, we are trying
         // to get as close to a single digit before the decimal point as we can.
@@ -1908,10 +1910,10 @@ fun ItemSourceInfo(
                         // TODO: I suspect relevantUnitList can and should be using remember but let's not worry about efficiency right now
                         val relevantUnitList = getRelevantMeasureUnits(dataSet, priceList[0].originalUnit.quantityType, includeDisplayOnly = true)
                         // var items = MeasureUnit.entries.filter { true }
-                        var todoSelected: Long? by rememberSaveable { mutableStateOf(up.denominator.id) }
-                        LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price", text = "TODO/${todoSelected}",
-                            items = relevantUnitList, getId = { it.id }, getLabel = { it.symbol },
-                            selectedId = priceList[0].originalUnit.id /* TODO HACK NEEDS TO BE VARIABLE AND THOUGHT GIVEN TO INITIAL */,
+                        var todoSelected by rememberSaveable { mutableStateOf(up.denominator) }
+                        LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price", text = "TODO/${todoSelected.symbol}",
+                            items = relevantUnitList, getId = { it }, getLabel = { it.symbol },
+                            selectedId = todoSelected,
                             onValueChange = { todoSelected = it } )
                     }
                     // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
