@@ -1751,6 +1751,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
     items: List<T>,
     getId: (T) -> ID,
     getLabel: (T) -> String,
+    getDividerBetween: ((T, T) -> Boolean)? = null,
     content: @Composable () -> Unit,
 ) {
     // TODO: rememberSaveable? A simple dark mode toggle could lose this otherwise.
@@ -1759,11 +1760,20 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
     Box(modifier = modifier.clickable { expanded = true },) {
         content()
 
+        var previousItem: T? = null
         DropdownMenu(
             modifier = dropdownModifier,
             expanded = expanded,
             onDismissRequest = { expanded = false }) {
             items.forEach { item ->
+                // We could make the first argument of getDividerBetween take null and call it every
+                // time, but I'm fairly sure it makes no sense to have a divider at the very top
+                // of the menu anyway.
+                if (previousItem != null && getDividerBetween?.invoke(previousItem!!, item) == true) {
+                    HorizontalDivider()
+                }
+                previousItem = item
+
                 DropdownMenuItem(
                     text = {
                         Text(
@@ -1792,6 +1802,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     items: List<T>,
     getId: (T) -> ID,
     getLabel: (T) -> String,
+    getDividerBetween: ((T, T) -> Boolean)? = null,
 ) {
     // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
     // changes the system font size. (Even if we didn't do this, we'd still want to use a fixed
@@ -1805,6 +1816,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
         items = items,
         getId = getId,
         getLabel = getLabel,
+        getDividerBetween = getDividerBetween,
         ) {
         LabeledItem(label = label) {
             Row() {
@@ -1974,6 +1986,9 @@ fun ItemSourceInfo(
                                 // Text("TODO") // Text(formatUnitPrice(priceList[0].price, priceList[0].measure, TODOHINT?))
                                 */
 
+                        // TODO: remember/derivedStateOf?
+                        val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
+
                         // TODO: It might be more elegant if the parent could pass us a Product and we use the quantity type off that, but except for minor recomposition efficiency concerns, this doesn't matter - the quantity type is absolutely fixed wherever it comes from (units can change, not the quantity type)
                         // TODO: I suspect relevantUnitList can and should be using remember but let's not worry about efficiency right now
                         val relevantUnitList = getRelevantMeasureUnits(dataSet, priceList[0].originalUnit.quantityType, includeDisplayOnly = true)
@@ -1995,8 +2010,12 @@ fun ItemSourceInfo(
                         // TODO: If the user selects "g" for a product sold in relative bulk, the standard decimal places on the currency is a bit misleading. This isn't a bug as such, but can/should we try to increase the decimal places on the currency in this case? Does the stanmdard formatting stuff we are using have any concept of "not a shelf price so smaller fractions make sense than usual"? Maybe at the very least we should always round prices *up* when showing with official dp - although we are not doing the conversion ourselves, maybe the standard function has an option to do this?
                         val unitPriceString = formatUnitPrice(getUnitPrice(priceList[0].price, priceList[0].measure, todoSelected), dataSet)
                         LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price", text = unitPriceString,
-                            //  TODO: Possibly getLabel should add a "/" prefix to the symbol in this context.
-                            items = relevantUnitList, getId = { it }, getLabel = { it.symbol },
+                            //  TODO: Mixed feelings about the "/" prefix in this menu.
+                            items = relevantUnitList, getId = { it }, getLabel = { "/${it.symbol}" },
+                            getDividerBetween = { previousItem, item ->
+                                var previousItemUnitFamily = previousItem.unitFamilies.intersect(relevantUnitFamilies)
+                                var itemUnitFamily         =         item.unitFamilies.intersect(relevantUnitFamilies)
+                                previousItemUnitFamily != itemUnitFamily },
                             selectedId = todoSelected,
                             onValueChange = { todoSelected = it } )
 
