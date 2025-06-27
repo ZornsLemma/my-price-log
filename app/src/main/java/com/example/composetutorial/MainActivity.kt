@@ -270,7 +270,7 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) {
     val quantityType: QuantityType get() = unit.quantityType
 
     fun to(unit: MeasureUnit): MeasuredValue {
-        require(this.quantityType == unit.quantityType) {
+        devRequire(this.quantityType == unit.quantityType) {
             "Cannot convert between different quantity types: trying to convert $this (${this.quantityType}) to ${unit.quantityType}"
         }
         val baseValue = this.value * this.unit.toBase
@@ -278,7 +278,7 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) {
     }
 
     operator fun plus(other: MeasuredValue): MeasuredValue {
-        require(this.quantityType == other.quantityType) {
+        devRequire(this.quantityType == other.quantityType) {
             "Cannot add values of different quantity types (this: $this, other: $other)"
         }
         val otherInThis = other.to(this.unit)
@@ -495,6 +495,16 @@ class MyApplication : Application() {
                     exitProcess(1)
                 /* }*/
             }
+        }
+    }
+    */
+    /*
+    // TODO: Simpler ChatGPT magic
+    override fun onCreate() {
+        super.onCreate()
+
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            Log.e("UncaughtException", "Uncaught exception in thread ${thread.name}", throwable)
         }
     }
     */
@@ -1375,7 +1385,7 @@ fun unitRelatives(measureUnit: MeasureUnit) : List<MeasureUnit> {
 // TODO: RENAME THIS? "friendlyUnitPrice"???
 data class UnitPrice(val numerator: Double, val denominator: MeasureUnit)
 fun getFriendlyUnitPrice(amount: Double, measure: MeasuredValue, candidateDenominators: List<MeasureUnit>) : UnitPrice {
-    check(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
+    devCheck(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
     // TODO: We should sanity check to avoid division by zero, log10(0) etc
     var bestScore: Double? = null
     var bestUnitPrice: UnitPrice? = null
@@ -1472,7 +1482,7 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                     storeId = selectedSourceId!!
                 ).collectAsStateWithLifecycle(initialValue = emptyList())
                 Log.d("MyApp", "Recomposed with priceList: $priceList")
-                check(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
+                devCheck(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
 
                 if (priceList.isEmpty()) {
                     // TODO: Very quick hack
@@ -2291,7 +2301,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
                 Log.d("Myapp", "BeforeItemSourceInfo0b")
                 val dataSetList = dataSetListNullable!!
                 Log.d("Myapp", "BeforeItemSourceInfo0c")
-                check(dataSetList.size == 1) { "Expected one data set with ID $selectedDataSetId but got ${dataSetList.size}" }
+                devCheck(dataSetList.size == 1) { "Expected one data set with ID $selectedDataSetId but got ${dataSetList.size}" }
 
                 Log.d("Myapp", "BeforeItemSourceInfo0d")
 
@@ -2406,7 +2416,7 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         Text("Loading...")
     } else {
         val priceList = nullablePriceList!!
-        check(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
+        devCheck(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
         // TODO: Create empty price like this feels crap, and it's also not right that the price defaults to 0.0 - it needs to be nullable, and possibly the price should be a string not a double at least in this context, not sure about db
         // TODO: price probably needs rememberSaveable
         //var price by rememberSaveable { mutableStateOf ( if (priceList.isEmpty()) Price(productId = productId, storeId = storeId, price = 0.0, details = "") else priceList[0])}
@@ -3047,3 +3057,15 @@ fun AppNavigation() {
 // input and/or output, or will the relevant libraries just take care of this for me?
 
 // TODO: I just may need to enable Java desugaring to support older Android versions - this is probably just a one-off config.
+
+// TODO: ChatGPT magic. I sort of get this. For some bizarre reason beyond my comprehension, check() sometimes kills the app but without leaving a clear logcat trace, which makes it very hard to figure out what went wrong.
+inline fun devCheck(condition: Boolean, lazyMessage: () -> String) {
+    if (!condition) {
+        val msg = lazyMessage()
+        Log.e("DevCheck", "FAILED CHECK: $msg", Throwable())
+        throw IllegalStateException(msg) // same as check()
+    }
+}
+
+// TODO: Technically this should throw IllegalArgumentException but I don't care. Using the two names allows me to preserve the distinction in the code FWIW but without duplicating the body of devCheck.
+inline fun devRequire(condition: Boolean, lazyMessage: () -> String) = devCheck(condition, lazyMessage)
