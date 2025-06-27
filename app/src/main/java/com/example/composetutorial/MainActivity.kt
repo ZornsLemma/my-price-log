@@ -1452,6 +1452,44 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     getLabel: (T) -> String,
     modifier: Modifier = Modifier
 ) {
+    ItemWithDropdown(
+        modifier = modifier,
+        selectedId = selectedId,
+        onValueChange = onValueChange,
+        items = items,
+        getId = getId,
+        getLabel = getLabel,
+    ) {
+        val itemMap =
+            items.associateBy { getId(it) } // TODO: inefficient? should we make caller supply use with this so viewmodel can be caching it?
+            val PULLEDOUT: String = if (selectedId == null) "" else {
+                val item = itemMap[selectedId]
+                if (item != null) getLabel(item) else "Invalid ID $selectedId" }
+            var textFieldWidth by remember { mutableStateOf(0) }
+            TextField(
+                value = PULLEDOUT,
+                onValueChange = { /* No-op, handled by dropdown */ },
+                label = label,
+                supportingText = supportingText,
+                readOnly = true,
+                enabled = false, // TODO HACK
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Expand",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        /* TODO modifier = Modifier.rotate(if (expanded) 180f else 0f) */
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { coordinates ->
+                        textFieldWidth = coordinates.size.width
+                    },
+            )
+        }
+
+        /* TODO OLD CODE REF
     // TODO: rememberSaveable()? a dark mode toddle will lose expanded otherwise
     var expanded by remember { mutableStateOf(false) }/*
     val focusedColor   = MaterialTheme.colorScheme.error
@@ -1511,7 +1549,9 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             }
         }
     }
+    */
 }
+
 // End Grok chunk
 
 // LabeledItem() attempts to mimic the label style of a TextField but for "read-only" content. It
