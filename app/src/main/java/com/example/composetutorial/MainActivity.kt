@@ -256,9 +256,7 @@ enum class MeasureUnit(val id : Long, val unitFamilies: Set<UnitFamily>, val qua
     }
 }
 
-// TODO: Should this live in the "companion object" on MeasureUnit??
-// TODO: Not just here, it may be better to have single high-level unit families metric/US/imperial and use those in combination with quantitytype. This would at least be a purely internal change so I can see how/if it cleans up the code without needing to redo the database.
-fun getRelevantMeasureUnits(dataSet: DataSet, quantityType: QuantityType, includeDisplayOnly : Boolean): List<MeasureUnit> {
+fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {
     val relevantUnitFamilies = setOfNotNull(
         if (dataSet.allowMetric) UnitFamily.METRIC else null,
         if (dataSet.allowImperial) UnitFamily.IMPERIAL else null,
@@ -267,7 +265,27 @@ fun getRelevantMeasureUnits(dataSet: DataSet, quantityType: QuantityType, includ
     )
     devCheck(relevantUnitFamilies.isNotEmpty()) { "Data set ID ${dataSet.id} has no unit families enabled" }
     devCheck(!(dataSet.allowImperial && dataSet.allowUSCustomary)) { "Data set ID ${dataSet.id} has both imperial and US Customary unit families enabled" }
-    return MeasureUnit.entries.filter { it.quantityType == quantityType && it.unitFamilies.any { it in relevantUnitFamilies } && (!it.displayOnly || includeDisplayOnly) }
+    return relevantUnitFamilies
+}
+
+// TODO: Should this live in the "companion object" on MeasureUnit??
+// TODO: Not just here, it may be better to have single high-level unit families metric/US/imperial and use those in combination with quantitytype. This would at least be a purely internal change so I can see how/if it cleans up the code without needing to redo the database.
+fun getRelevantMeasureUnits(dataSet: DataSet, quantityType: QuantityType, includeDisplayOnly : Boolean): List<MeasureUnit> {
+    val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
+    val relevantMeasureUnits = MeasureUnit.entries.filter { it.quantityType == quantityType && it.unitFamilies.any { it in relevantUnitFamilies } && (!it.displayOnly || includeDisplayOnly) }
+    devCheck(relevantMeasureUnits.isNotEmpty()) { "Expected at least one relevant measure unit for QuantityType ${quantityType.name} in the context of data set ID ${dataSet.id} but found none" }
+    return relevantMeasureUnits
+}
+
+// TODO: Note that this regards measureUnit as its own sibling
+fun getSiblingMeasureUnits(dataSet: DataSet, measureUnit: MeasureUnit, includeDisplayOnly: Boolean) : List<MeasureUnit> {
+    val unitFamily = measureUnit.unitFamilies.intersect(getRelevantUnitFamilies(dataSet))
+    devCheck(unitFamily.size == 1) { "Expected MeasureUnit ID ${measureUnit.id} to be a member of exactly one unit family in the context of data set ID ${dataSet.id} but got ${unitFamily.size}" }
+    val siblingMeasureUnits = MeasureUnit.entries.filter { it.quantityType == measureUnit.quantityType && unitFamily.single() in it.unitFamilies }
+    devCheck(siblingMeasureUnits.isNotEmpty()) { "Expected at least one sibling measure unit for MeasureUnit ${measureUnit.id} in the context of data set ID ${dataSet.id} but found none" }
+    // TODO: We could verify that measureUnit is a member of the returned list, but it feels a bad
+    // idea to do a linear search just to do this.
+    return siblingMeasureUnits
 }
 
 // TODO: ChatGPT magic, is this really the best way?
@@ -1581,7 +1599,7 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                                 // TODO: It is wrong to use pricelist[0].originalUnit for unitRelatives - well, not necessarily wrong, especially if we maybe offer a selection via a dropdown - but the "primary" unit family should probably be the default unit on the item - but we don't have that yet
                                 // TODO:Rename "up" to unitPrice, after renaming unitPrice() function to free the name up? Ditto "ur"?
                                 Log.d("MyApp", "FOO1")
-                                val ur = getRelevantMeasureUnits(dataSet, priceList[0].originalUnit.quantityType, includeDisplayOnly = true)
+                                val ur = getSiblingMeasureUnits(dataSet, priceList[0].originalUnit, includeDisplayOnly = true)
                                 Log.d("MyApp", "FOO2")
                                 val up = getFriendlyUnitPrice(priceList[0].price, priceList[0].measure, ur)
                                 Log.d("MyApp", "FOO3")
