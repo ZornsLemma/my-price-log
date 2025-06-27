@@ -1452,8 +1452,11 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     getLabel: (T) -> String,
     modifier: Modifier = Modifier
 ) {
+    var textFieldWidth by remember { mutableStateOf(0) }
+
     ItemWithDropdown(
         modifier = modifier,
+        dropdownModifier = Modifier.width(with(LocalDensity.current) { textFieldWidth.toDp() }),
         selectedId = selectedId,
         onValueChange = onValueChange,
         items = items,
@@ -1465,7 +1468,6 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             val PULLEDOUT: String = if (selectedId == null) "" else {
                 val item = itemMap[selectedId]
                 if (item != null) getLabel(item) else "Invalid ID $selectedId" }
-            var textFieldWidth by remember { mutableStateOf(0) }
             TextField(
                 value = PULLEDOUT,
                 onValueChange = { /* No-op, handled by dropdown */ },
@@ -1725,6 +1727,7 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet): String {
 @Composable
 fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
     modifier: Modifier = Modifier,
+    dropdownModifier: Modifier = Modifier, // TODO: OK!?
     selectedId: ID?,
     onValueChange: (ID) -> Unit, // TODO: follow naming convention of MyExposedDropdownMenUBox
     items: List<T>,
@@ -1739,6 +1742,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
         content()
 
         DropdownMenu(
+            modifier = dropdownModifier,
             expanded = expanded,
             onDismissRequest = { expanded = false }) {
             items.forEach { item ->
