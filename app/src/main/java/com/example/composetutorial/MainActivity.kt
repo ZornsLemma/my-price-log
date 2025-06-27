@@ -1454,6 +1454,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     getLabel: (T) -> String,
     modifier: Modifier = Modifier
 ) {
+    // TODO: rememberSaveable()? a dark mode toddle will lose expanded otherwise
     var expanded by remember { mutableStateOf(false) }/*
     val focusedColor   = MaterialTheme.colorScheme.error
     val unfocusedColor = MaterialTheme.colorScheme.tertiary //     onSurfaceVariant
