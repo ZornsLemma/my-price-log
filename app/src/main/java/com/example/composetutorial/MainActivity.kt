@@ -231,12 +231,17 @@ enum class MeasureUnit(val id : Long, val unitFamilies: Set<UnitFamily>, val qua
     ML(  201, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml",   1.0, false),
     ML100 (2001, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "100 ml", 100.0, true), // TODO: experimental
     L(   202, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "l",    1000.0, false),
-    US_CUSTOMARY_FLOZ(203, setOf(UnitFamily.US_CUSTOMARY), QuantityType.VOLUME, "floz (US)", 29.5735, false),
-    US_CUSTOMARY_PINT(2033, setOf(UnitFamily.US_CUSTOMARY), QuantityType.VOLUME, "pt (US)", 473.176473, false),
-    US_CUSTOMARY_GAL( 204, setOf(UnitFamily.US_CUSTOMARY), QuantityType.VOLUME, "gal (US)",  3785.41, false),
-    IMPERIAL_FLOZ(2041, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "floz (imp)", 28.4130625, false),
-    IMPERIAL_PINT( 205, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "pt (imp)", 568.26125, false),
-    IMPERIAL_GAL(206, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "gal (imp)", 4546.09, false),
+    // TODO: As a massive hack to help me notice problems during debugging, I have replaced the space in "fl oz" with a U or I to
+    // let me see which type is in use. I don't seriously expect subtle bugs here (if we do mess up our unit family handling, we
+    // will probably end up with duplicated values in dropdowns which will be fairly obvious), but might as well keep an eye on it.
+    // I don't want to add a suffix " (US)" or whatever just for debugging as it will mean the unit sizes aren't realistic in
+    // layouts.
+    US_CUSTOMARY_FLOZ(203, setOf(UnitFamily.US_CUSTOMARY), QuantityType.VOLUME, "flUoz", 29.5735, false),
+    US_CUSTOMARY_PINT(2033, setOf(UnitFamily.US_CUSTOMARY), QuantityType.VOLUME, "pt", 473.176473, false),
+    US_CUSTOMARY_GAL( 204, setOf(UnitFamily.US_CUSTOMARY), QuantityType.VOLUME, "gal",  3785.41, false),
+    IMPERIAL_FLOZ(2041, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "flIoz", 28.4130625, false),
+    IMPERIAL_PINT( 205, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "pt", 568.26125, false),
+    IMPERIAL_GAL(206, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "gal", 4546.09, false),
 
     // Countable items
     // TODO: Should symbol be empty string or something else here? feeling my way. I suspect "" looks best, it may lead to strings like "for 20 " with a trailing space but that's probably not a big deal in practice. (We could also just make a point of trimming strings generated using symbol.) We sort of might want "1" for the unit price denominator stuff though.
