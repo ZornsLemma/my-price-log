@@ -1700,6 +1700,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     val fontSize = MaterialTheme.typography.bodyLarge.fontSize
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
 
+    // TODO: rememberSaveable? A simple dark mode toggle could lose this otherwise.
     var expanded by remember { mutableStateOf(false) }
 
     LabeledItem(label = label) {
@@ -1775,7 +1776,6 @@ fun ItemSourceInfo(
 ) {
     Log.d("MyApp", "TODO0")
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
-    var currentUnit by remember { mutableStateOf("100g") }
 
     //var vm: PriceTrackerViewModel = viewModel()
     val selectedDataSetId = dataSet.id // TODO: maybe a temp hack?
