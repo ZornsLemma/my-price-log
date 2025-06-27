@@ -211,13 +211,41 @@ enum class UnitFamily {
 // TODO: CHECK ALL THE MULTIPLIERS HERE - THIS IS CHATGPT CODE, AND WE MAY ALSO NEED TO ADDRESS IMPERIAL VS US OR WHATEVER TERMINOLOGY IS
 // TODO: IDS SHOULD PROBABLY BE TIDIED UP IF WE KEEP EG G100
 // TODO: IF WE KEEP G100 AND ML100, WE MAY NEED A FLAG TO INDICATE THESE ARE SECOND-CLASS CITIZENS AND ONLY ELIGIBLE FOR UNIT PRICE DENOMINATOR NOT GENERATE UNIT SELECTION
-enum class MeasureUnit(val id : Long, val unitFamilies: Set<UnitFamily>, val quantityType: QuantityType, val symbol: String, val toBase: Double, val displayOnly: Boolean) {
+enum class MeasureUnit(
+    val id: Long,
+    val unitFamilies: Set<UnitFamily>,
+    val quantityType: QuantityType,
+    val symbol: String,
+    val toBase: Double,
+    val displayOnly: Boolean
+) {
     // Weight
-    G( 101, setOf(UnitFamily.METRIC), QuantityType.WEIGHT,  "g", 1.0, false),
-    G100( 1001, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "100 g", 100.0, true), // TODO: experimental
+    G(101, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "g", 1.0, false),
+    G100(
+        1001,
+        setOf(UnitFamily.METRIC),
+        QuantityType.WEIGHT,
+        "100 g",
+        100.0,
+        true
+    ), // TODO: experimental
     KG(102, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "kg", 1000.0, false),
-    OZ(103, setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY), QuantityType.WEIGHT, "oz", 28.3495, false),
-    LB(104, setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY), QuantityType.WEIGHT, "lb", 453.592, false),
+    OZ(
+        103,
+        setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
+        QuantityType.WEIGHT,
+        "oz",
+        28.3495,
+        false
+    ),
+    LB(
+        104,
+        setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
+        QuantityType.WEIGHT,
+        "lb",
+        453.592,
+        false
+    ),
 
     // TODO: The (US) etc suffixes on here are a nuisance when displaying as they look ugly. We probably want some kind of concept of
     // eliding these for display purposes. My fully fleshed out mental design is that for each data set, the user gets to
@@ -228,24 +256,67 @@ enum class MeasureUnit(val id : Long, val unitFamilies: Set<UnitFamily>, val qua
     // Maybe the simple but relatively clean option would be a "imperial volume vs US customary volume" toggle at the data set
     // level.
     // Volume
-    ML(  201, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml",   1.0, false),
-    ML100 (2001, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "100 ml", 100.0, true), // TODO: experimental
-    L(   202, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "l",    1000.0, false),
+    ML(201, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml", 1.0, false),
+    ML100(
+        2001,
+        setOf(UnitFamily.METRIC),
+        QuantityType.VOLUME,
+        "100 ml",
+        100.0,
+        true
+    ), // TODO: experimental
+    L(202, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "l", 1000.0, false),
+
     // TODO: As a massive hack to help me notice problems during debugging, I have replaced the space in "fl oz" with a U or I to
     // let me see which type is in use. I don't seriously expect subtle bugs here (if we do mess up our unit family handling, we
     // will probably end up with duplicated values in dropdowns which will be fairly obvious), but might as well keep an eye on it.
     // I don't want to add a suffix " (US)" or whatever just for debugging as it will mean the unit sizes aren't realistic in
     // layouts.
-    US_CUSTOMARY_FLOZ(203, setOf(UnitFamily.US_CUSTOMARY), QuantityType.VOLUME, "flUoz", 29.5735, false),
-    US_CUSTOMARY_PINT(2033, setOf(UnitFamily.US_CUSTOMARY), QuantityType.VOLUME, "pt", 473.176473, false),
-    US_CUSTOMARY_GAL( 204, setOf(UnitFamily.US_CUSTOMARY), QuantityType.VOLUME, "gal",  3785.41, false),
-    IMPERIAL_FLOZ(2041, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "flIoz", 28.4130625, false),
-    IMPERIAL_PINT( 205, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "pt", 568.26125, false),
+    US_CUSTOMARY_FLOZ(
+        203,
+        setOf(UnitFamily.US_CUSTOMARY),
+        QuantityType.VOLUME,
+        "flUoz",
+        29.5735,
+        false
+    ),
+    US_CUSTOMARY_PINT(
+        2033,
+        setOf(UnitFamily.US_CUSTOMARY),
+        QuantityType.VOLUME,
+        "pt",
+        473.176473,
+        false
+    ),
+    US_CUSTOMARY_GAL(
+        204,
+        setOf(UnitFamily.US_CUSTOMARY),
+        QuantityType.VOLUME,
+        "gal",
+        3785.41,
+        false
+    ),
+    IMPERIAL_FLOZ(
+        2041,
+        setOf(UnitFamily.IMPERIAL),
+        QuantityType.VOLUME,
+        "flIoz",
+        28.4130625,
+        false
+    ),
+    IMPERIAL_PINT(205, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "pt", 568.26125, false),
     IMPERIAL_GAL(206, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "gal", 4546.09, false),
 
     // Countable items
     // TODO: Should symbol be empty string or something else here? feeling my way. I suspect "" looks best, it may lead to strings like "for 20 " with a trailing space but that's probably not a big deal in practice. (We could also just make a point of trimming strings generated using symbol.) We sort of might want "1" for the unit price denominator stuff though.
-    EACH(301, setOf(UnitFamily.ITEM), QuantityType.ITEM, "", 1.0, false), // TODO: RENAME "EACH" TO "ITEM"?
+    EACH(
+        301,
+        setOf(UnitFamily.ITEM),
+        QuantityType.ITEM,
+        "",
+        1.0,
+        false
+    ), // TODO: RENAME "EACH" TO "ITEM"?
     EACH10(302, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", 10.0, true),
     EACH100(303, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", 100.0, true);
 
@@ -270,18 +341,28 @@ fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {
 
 // TODO: Should this live in the "companion object" on MeasureUnit??
 // TODO: Not just here, it may be better to have single high-level unit families metric/US/imperial and use those in combination with quantitytype. This would at least be a purely internal change so I can see how/if it cleans up the code without needing to redo the database.
-fun getRelevantMeasureUnits(dataSet: DataSet, quantityType: QuantityType, includeDisplayOnly : Boolean): List<MeasureUnit> {
+fun getRelevantMeasureUnits(
+    dataSet: DataSet,
+    quantityType: QuantityType,
+    includeDisplayOnly: Boolean
+): List<MeasureUnit> {
     val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
-    val relevantMeasureUnits = MeasureUnit.entries.filter { it.quantityType == quantityType && it.unitFamilies.any { it in relevantUnitFamilies } && (!it.displayOnly || includeDisplayOnly) }
+    val relevantMeasureUnits =
+        MeasureUnit.entries.filter { it.quantityType == quantityType && it.unitFamilies.any { it in relevantUnitFamilies } && (!it.displayOnly || includeDisplayOnly) }
     devCheck(relevantMeasureUnits.isNotEmpty()) { "Expected at least one relevant measure unit for QuantityType ${quantityType.name} in the context of data set ID ${dataSet.id} but found none" }
     return relevantMeasureUnits
 }
 
 // TODO: Note that this regards measureUnit as its own sibling
-fun getSiblingMeasureUnits(dataSet: DataSet, measureUnit: MeasureUnit, includeDisplayOnly: Boolean) : List<MeasureUnit> {
+fun getSiblingMeasureUnits(
+    dataSet: DataSet,
+    measureUnit: MeasureUnit,
+    includeDisplayOnly: Boolean
+): List<MeasureUnit> {
     val unitFamily = measureUnit.unitFamilies.intersect(getRelevantUnitFamilies(dataSet))
     devCheck(unitFamily.size == 1) { "Expected MeasureUnit ID ${measureUnit.id} to be a member of exactly one unit family in the context of data set ID ${dataSet.id} but got ${unitFamily.size}" }
-    val siblingMeasureUnits = MeasureUnit.entries.filter { it.quantityType == measureUnit.quantityType && unitFamily.single() in it.unitFamilies }
+    val siblingMeasureUnits =
+        MeasureUnit.entries.filter { it.quantityType == measureUnit.quantityType && unitFamily.single() in it.unitFamilies }
     devCheck(siblingMeasureUnits.isNotEmpty()) { "Expected at least one sibling measure unit for MeasureUnit ${measureUnit.id} in the context of data set ID ${dataSet.id} but found none" }
     // TODO: We could verify that measureUnit is a member of the returned list, but it feels a bad
     // idea to do a linear search just to do this.
@@ -289,7 +370,11 @@ fun getSiblingMeasureUnits(dataSet: DataSet, measureUnit: MeasureUnit, includeDi
 }
 
 // TODO: ChatGPT magic, is this really the best way?
-fun formatDoubleLocaleAware(value: Double, maxDecimals: Int, locale: Locale = Locale.getDefault()): String {
+fun formatDoubleLocaleAware(
+    value: Double,
+    maxDecimals: Int,
+    locale: Locale = Locale.getDefault()
+): String {
     val nf = NumberFormat.getNumberInstance(locale)
     nf.maximumFractionDigits = maxDecimals
     nf.minimumFractionDigits = 0 // Avoid trailing zeros
@@ -319,10 +404,15 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) {
     fun asValue(unit: MeasureUnit): Double = this.to(unit).value
 
     // precision is a maximum number of decimal places; we will not pad with trailing zeroes.
-    fun toDisplayString(precision: Int): String = "${formatDoubleLocaleAware(value, precision)} ${unit.symbol}"
+    fun toDisplayString(precision: Int): String =
+        "${formatDoubleLocaleAware(value, precision)} ${unit.symbol}"
 }
 
-@Database(entities = [DataSet::class, Item::class, Source::class, Price::class], version = 1, exportSchema = false)
+@Database(
+    entities = [DataSet::class, Item::class, Source::class, Price::class],
+    version = 1,
+    exportSchema = false
+)
 @TypeConverters(Converters::class)
 // TODO: Should not be called *Inventory*Database
 abstract class InventoryDatabase : RoomDatabase() {
@@ -341,8 +431,7 @@ abstract class InventoryDatabase : RoomDatabase() {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, InventoryDatabase::class.java, "main.db")
                     .addCallback(object : RoomDatabase.Callback() {
-                        override fun onCreate(db: SupportSQLiteDatabase)
-                        {
+                        override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
                             CoroutineScope(Dispatchers.IO).launch {
                                 val db = InventoryDatabase.getDatabase(context)
@@ -352,20 +441,118 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     // TODO: It's probably smart to default the demo data to the local currency, since that will look most natural to our new user, but do rethink this afterwards. (It's also just possible, remember, that they will start editing the demo dataset for their own use, rather than starting again with a fresh dataset.)
                                     // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
                                     // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current locale (and make sure any non-metric units in the data below are changed accordingly)
-                                    val dataSetId = db.dataSetDao().insert(DataSet(name ="Demo", currencyCode = Currency.getInstance(Locale.getDefault()).currencyCode, allowMetric = true, allowImperial = true, allowUSCustomary = false))
-                                    val itemIdGroundCoffee = db.productDao().insert(Item(dataSetId = dataSetId, name = "Coffee (ground)", quantityType= QuantityType.WEIGHT))
-                                    val itemIdWholeMilk = db.productDao().insert(Item(dataSetId = dataSetId, name = "Milk (whole)", quantityType = QuantityType.VOLUME))
-                                    val itemIdTeabags = db.productDao().insert(Item(dataSetId = dataSetId, name = "Teabags", quantityType = QuantityType.ITEM))
+                                    val dataSetId = db.dataSetDao().insert(
+                                        DataSet(
+                                            name = "Demo",
+                                            currencyCode = Currency.getInstance(Locale.getDefault()).currencyCode,
+                                            allowMetric = true,
+                                            allowImperial = true,
+                                            allowUSCustomary = false
+                                        )
+                                    )
+                                    val itemIdGroundCoffee = db.productDao().insert(
+                                        Item(
+                                            dataSetId = dataSetId,
+                                            name = "Coffee (ground)",
+                                            quantityType = QuantityType.WEIGHT
+                                        )
+                                    )
+                                    val itemIdWholeMilk = db.productDao().insert(
+                                        Item(
+                                            dataSetId = dataSetId,
+                                            name = "Milk (whole)",
+                                            quantityType = QuantityType.VOLUME
+                                        )
+                                    )
+                                    val itemIdTeabags = db.productDao().insert(
+                                        Item(
+                                            dataSetId = dataSetId,
+                                            name = "Teabags",
+                                            quantityType = QuantityType.ITEM
+                                        )
+                                    )
                                     // TODO: Do some web searches and confirm these are not real supermarket names
-                                    val sourceIdValueMart = db.sourceDao().insert(Source(dataSetId = dataSetId, name = "ValueMart"))
-                                    val sourceIdSuperiorStore = db.sourceDao().insert(Source(dataSetId = dataSetId, name = "SuperiorStore"))
+                                    val sourceIdValueMart = db.sourceDao()
+                                        .insert(Source(dataSetId = dataSetId, name = "ValueMart"))
+                                    val sourceIdSuperiorStore = db.sourceDao().insert(
+                                        Source(
+                                            dataSetId = dataSetId,
+                                            name = "SuperiorStore"
+                                        )
+                                    )
                                     val now = Instant.now()
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdValueMart, price=2.03, measure=500.0, originalUnit=MeasureUnit.G, confirmed = now.minus(2, ChronoUnit.MINUTES), details = "Large pack own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdSuperiorStore, price=1.50, measure=227.0, originalUnit=MeasureUnit.G, confirmed = now.minus(4, ChronoUnit.DAYS), details = "Own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdValueMart, price=1.99, measure=4*568.0, originalUnit=MeasureUnit.IMPERIAL_PINT, confirmed = now, details = ""))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdSuperiorStore, price=2.86, measure=2000.0, originalUnit=MeasureUnit.L, confirmed = now.minus(63, ChronoUnit.DAYS), details = ""))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdValueMart, price=0.76, measure=40.0, originalUnit=MeasureUnit.EACH, confirmed = now.minus(7, ChronoUnit.DAYS), details = "Soft pack own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdSuperiorStore, price=0.60, measure=20.0, originalUnit=MeasureUnit.EACH, confirmed = now.minus(4, ChronoUnit.HOURS), details = ""))
+                                    db.priceDao().insert(
+                                        Price(
+                                            dataSetId = dataSetId,
+                                            itemId = itemIdGroundCoffee,
+                                            sourceId = sourceIdValueMart,
+                                            price = 2.03,
+                                            measure = 500.0,
+                                            originalUnit = MeasureUnit.G,
+                                            confirmed = now.minus(2, ChronoUnit.MINUTES),
+                                            details = "Large pack own brand"
+                                        )
+                                    )
+                                    db.priceDao().insert(
+                                        Price(
+                                            dataSetId = dataSetId,
+                                            itemId = itemIdGroundCoffee,
+                                            sourceId = sourceIdSuperiorStore,
+                                            price = 1.50,
+                                            measure = 227.0,
+                                            originalUnit = MeasureUnit.G,
+                                            confirmed = now.minus(4, ChronoUnit.DAYS),
+                                            details = "Own brand"
+                                        )
+                                    )
+                                    db.priceDao().insert(
+                                        Price(
+                                            dataSetId = dataSetId,
+                                            itemId = itemIdWholeMilk,
+                                            sourceId = sourceIdValueMart,
+                                            price = 1.99,
+                                            measure = 4 * 568.0,
+                                            originalUnit = MeasureUnit.IMPERIAL_PINT,
+                                            confirmed = now,
+                                            details = ""
+                                        )
+                                    )
+                                    db.priceDao().insert(
+                                        Price(
+                                            dataSetId = dataSetId,
+                                            itemId = itemIdWholeMilk,
+                                            sourceId = sourceIdSuperiorStore,
+                                            price = 2.86,
+                                            measure = 2000.0,
+                                            originalUnit = MeasureUnit.L,
+                                            confirmed = now.minus(63, ChronoUnit.DAYS),
+                                            details = ""
+                                        )
+                                    )
+                                    db.priceDao().insert(
+                                        Price(
+                                            dataSetId = dataSetId,
+                                            itemId = itemIdTeabags,
+                                            sourceId = sourceIdValueMart,
+                                            price = 0.76,
+                                            measure = 40.0,
+                                            originalUnit = MeasureUnit.EACH,
+                                            confirmed = now.minus(7, ChronoUnit.DAYS),
+                                            details = "Soft pack own brand"
+                                        )
+                                    )
+                                    db.priceDao().insert(
+                                        Price(
+                                            dataSetId = dataSetId,
+                                            itemId = itemIdTeabags,
+                                            sourceId = sourceIdSuperiorStore,
+                                            price = 0.60,
+                                            measure = 20.0,
+                                            originalUnit = MeasureUnit.EACH,
+                                            confirmed = now.minus(4, ChronoUnit.HOURS),
+                                            details = ""
+                                        )
+                                    )
                                     /*
                                     db.productDao().insert(Product(name = "Demo Product"))
                                     db.itemDao().insert(Item(name = "Demo Item"))
@@ -387,8 +574,18 @@ interface PriceTrackerRepository {
     fun getDataSet(dataSetId: Long): Flow<List<DataSet>>
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
-    fun getPriceForProductAndStore(dataSetId: Long, productId: Long, storeId: Long): Flow<List<Price>>
-    fun getNicePriceForProductAndStore(dataSetId: Long, productId: Long, storeId: Long): Flow<List<NicePrice>>
+    fun getPriceForProductAndStore(
+        dataSetId: Long,
+        productId: Long,
+        storeId: Long
+    ): Flow<List<Price>>
+
+    fun getNicePriceForProductAndStore(
+        dataSetId: Long,
+        productId: Long,
+        storeId: Long
+    ): Flow<List<NicePrice>>
+
     suspend fun updateOrInsertPrice(price: Price)
 }
 
@@ -419,7 +616,8 @@ class PriceTrackerRepositoryImpl(
     private val dataSetDao: DataSetDao,
     private val itemDao: ItemDao,
     private val sourceDao: SourceDao,
-    private val priceDao: PriceDao) : PriceTrackerRepository {
+    private val priceDao: PriceDao
+) : PriceTrackerRepository {
     /* TODO
     override fun getAllItemsStream(): Flow<List<Item>> = itemDao.getAllItems()
 
@@ -438,13 +636,23 @@ class PriceTrackerRepositoryImpl(
 
     override fun getAllItems(dataSetId: Long): Flow<List<Item>> = itemDao.getAllItems(dataSetId)
 
-    override fun getAllSources(dataSetId: Long): Flow<List<Source>> = sourceDao.getAllSources(dataSetId)
+    override fun getAllSources(dataSetId: Long): Flow<List<Source>> =
+        sourceDao.getAllSources(dataSetId)
 
-    override fun getPriceForProductAndStore(dataSetId: Long, productId: Long, storeId: Long): Flow<List<Price>> = priceDao.getPriceForProductAndStore(dataSetId, productId, storeId)
+    override fun getPriceForProductAndStore(
+        dataSetId: Long,
+        productId: Long,
+        storeId: Long
+    ): Flow<List<Price>> = priceDao.getPriceForProductAndStore(dataSetId, productId, storeId)
 
     // TODO: Some ChatGPT magic here, though I am mostly understanding
-    override fun getNicePriceForProductAndStore(dataSetId: Long, productId: Long, storeId: Long): Flow<List<NicePrice>> =
-        priceDao.getPriceWithItemForProductAndStore(dataSetId, productId, storeId).map { list -> list.map { it.toDomain() } }
+    override fun getNicePriceForProductAndStore(
+        dataSetId: Long,
+        productId: Long,
+        storeId: Long
+    ): Flow<List<NicePrice>> =
+        priceDao.getPriceWithItemForProductAndStore(dataSetId, productId, storeId)
+            .map { list -> list.map { it.toDomain() } }
 
     override suspend fun updateOrInsertPrice(price: Price) = priceDao.upsert(price)
 }
@@ -468,7 +676,8 @@ object AppViewModelProvider {
         // Initializer for ItemEntryViewModel
         initializer {
             // TODO: Extra special AI voodoo which wasn't in the codelab but caused startup crashes without it
-            val app = (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
+            val app =
+                (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
             // TODO ItemEntryViewModel(MyApplication().itemsRepository)
             PriceTrackerViewModel(app.priceTrackerRepository)
         }
@@ -619,9 +828,9 @@ data class DataSet(
 data class Item(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    @ColumnInfo(name = "data_set_id") val dataSetId : Long,
+    @ColumnInfo(name = "data_set_id") val dataSetId: Long,
     val name: String,
-    @ColumnInfo(name = "quantity_type") val quantityType : QuantityType, // TODO: quantity_type*_id* in db?? or is that only for fks?
+    @ColumnInfo(name = "quantity_type") val quantityType: QuantityType, // TODO: quantity_type*_id* in db?? or is that only for fks?
     // TODO: quantity_type - an enum which says "by item"/"by mass"/"by volume" - the GUI probably *should* allow editing this (not sure though), but wern that editing it will mess up old data (so maybe just don't allow it?)
     // TODO: default_unit - g/kg/oz/floz/litre/etc - this must be consistent with quantity_type (and we may want to let it imply quantity_type rather than storing it explicitly)
 )
@@ -652,7 +861,7 @@ data class Item(
 data class Source(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    @ColumnInfo(name = "data_set_id") val dataSetId : Long,
+    @ColumnInfo(name = "data_set_id") val dataSetId: Long,
     val name: String
 )
 
@@ -697,7 +906,7 @@ data class Source(
 data class Price(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    @ColumnInfo(name = "data_set_id") val dataSetId : Long,
+    @ColumnInfo(name = "data_set_id") val dataSetId: Long,
     @ColumnInfo(name = "item_id") val itemId: Long,
     @ColumnInfo(name = "source_id") val sourceId: Long,
 
@@ -741,15 +950,17 @@ data class Price(
 // that effectively tells us the quantity type implicitly and we don't need to join to item to get
 // it. However, I suspect it still has some value because it allows us to do a bit of extra
 // validation which may catch bugs. Probably worth thinking about this again later.
-data class PriceWithItem( // TODO: should be PriceWithItemEntity eventually
+data class PriceWithItem(
+    // TODO: should be PriceWithItemEntity eventually
     @Embedded val price: Price,
-    @ColumnInfo(name = "quantity_type") val quantityType : QuantityType,
+    @ColumnInfo(name = "quantity_type") val quantityType: QuantityType,
 )
 
 //@Parcelize // TODO: probably want this, but check later
-data class NicePrice( // TODO: probably rename just "Price" once we rename the existing "Price"
+data class NicePrice(
+    // TODO: probably rename just "Price" once we rename the existing "Price"
     val id: Long = 0,
-    val dataSetId : Long,
+    val dataSetId: Long,
     val itemId: Long,
     val sourceId: Long,
     val price: Double,
@@ -852,7 +1063,7 @@ interface PriceDao {
     ): Flow<List<PriceWithItem>>
 }
 
-    // TODO: This is part way through being converted to use Flow
+// TODO: This is part way through being converted to use Flow
 class PriceTrackerRepositoryOldTODO {
     /*
     // TODO: listOf may be more correct than mutableListOf everywhere, not just here, but I really don't understand this.
@@ -965,7 +1176,8 @@ class SingleEventState<T>(initialState: T) {
     }
 }
 
-class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository) : ViewModel() {
+class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository) :
+    ViewModel() {
     // TODO DELETE private val repository = PriceTrackerRepositoryOldTODO()
 
     fun getDataSet(dataSetId: Long) = priceTrackerRepository.getDataSet(dataSetId)
@@ -977,9 +1189,10 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     fun getItemMap(dataSetId: Long): Flow<Map<Long, Item>> =
         getAllItems(dataSetId).map { list ->
             list.associateBy { it.id }
-    }
+        }
 
-    fun getAllSources(dataSetId: Long): Flow<List<Source>> = priceTrackerRepository.getAllSources(dataSetId)
+    fun getAllSources(dataSetId: Long): Flow<List<Source>> =
+        priceTrackerRepository.getAllSources(dataSetId)
 
     fun getSourceMap(dataSetId: Long): Flow<Map<Long, Source>> =
         getAllSources(dataSetId).map { list ->
@@ -1014,13 +1227,21 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
     // Price details for selected product and store (external to ViewModel)
     //@Composable // TODO!?
-    fun getPriceForProductAndStore(dataSetId: Long, productId: Long, storeId: Long): Flow<List<Price>> {
+    fun getPriceForProductAndStore(
+        dataSetId: Long,
+        productId: Long,
+        storeId: Long
+    ): Flow<List<Price>> {
         val priceForProductAndStore =
             priceTrackerRepository.getPriceForProductAndStore(dataSetId, productId, storeId)
         return priceForProductAndStore
     }
 
-    fun getNicePriceForProductAndStore(dataSetId: Long, productId: Long, storeId: Long): Flow<List<NicePrice>> {
+    fun getNicePriceForProductAndStore(
+        dataSetId: Long,
+        productId: Long,
+        storeId: Long
+    ): Flow<List<NicePrice>> {
         val priceForProductAndStore =
             priceTrackerRepository.getNicePriceForProductAndStore(dataSetId, productId, storeId)
         return priceForProductAndStore
@@ -1030,6 +1251,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
 
     enum class SaveStatus { Idle, Saving, Success, Error }
+
     private val _saveStatus = SingleEventState(SaveStatus.Idle)
     val saveStatus: StateFlow<SaveStatus> = _saveStatus.state
     val saveEvents: SharedFlow<SaveStatus> = _saveStatus.events
@@ -1081,8 +1303,10 @@ val fullScreenDialogBorder = 24.dp // MD3 specification
 
 // Start Grok chunk
 @Composable
-fun MainScreen(vm: PriceTrackerViewModel, selectedDataSetId: Long?, onSelectedDataSetIdChange: (Long) -> Unit,
-               selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Unit) {
+fun MainScreen(
+    vm: PriceTrackerViewModel, selectedDataSetId: Long?, onSelectedDataSetIdChange: (Long) -> Unit,
+    selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Unit
+) {
     /* TODO TEMP TEST CODE FOR MEASUREDVALUE
     val foo = MeasuredValue(5.0, MeasureUnit.KG)
     val bar = MeasuredValue(2.3, MeasureUnit.ML)
@@ -1105,7 +1329,7 @@ fun MainScreen(vm: PriceTrackerViewModel, selectedDataSetId: Long?, onSelectedDa
     // TODO: I suspect in general (not just here) I should be passing viewmodel *into* these functions rather than getting it from "global", to allow for dependency injection. but in practice it wouldn't be hard to rework this after and i am not sure this ui stuff is testable - I really don't know how it works.
     //var vm: PriceTrackerViewModel = viewModel()
     val categories by vm.categories.collectAsStateWithLifecycle(initialValue = emptyList())
-    val products by if (selectedDataSetId != null ) {
+    val products by if (selectedDataSetId != null) {
         vm.getAllItems(selectedDataSetId!!).collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
         flowOf(emptyList<Item>()).collectAsStateWithLifecycle(initialValue = emptyList())
@@ -1395,8 +1619,9 @@ fun formatPrice(amount: Double, dataSet: DataSet): String {
     // TODO: Are we catching too broadly here? This Java-ish stuff seems to just be able throw anything at any time
     catch (e: Exception) {
         // TODO: Eventually we might want to see if there's any useful data in a currency prefix/suffix/decimal places set of fields in dataSet, but we don't have those yet.
-        val numberFormat =  NumberFormat.getNumberInstance()
-        numberFormat.isGroupingUsed = true // TODO: reasonable? probably mostly irrelevant in most currencies for our type of data
+        val numberFormat = NumberFormat.getNumberInstance()
+        numberFormat.isGroupingUsed =
+            true // TODO: reasonable? probably mostly irrelevant in most currencies for our type of data
         return "TODO" + numberFormat.format(amount)
     }
 }
@@ -1413,7 +1638,12 @@ fun unitPriceDenominatorCandidates(
 // TODO: HOW WILL WE HANDLE "/100G" ETC? WILL WE MAKE THESE FIRST CLASS MEASUREUNITS BUT FLAG THEM AS "MULTIPLES" SO WE OMIT THEM FROM MANY CASES, OR WILL WE MAKE IT A LIST<PAIR<MULT,MEASUREUNIT>>?
 // TODO: RENAME THIS? "friendlyUnitPrice"???
 data class UnitPrice(val numerator: Double, val denominator: MeasureUnit)
-fun getFriendlyUnitPrice(amount: Double, measure: MeasuredValue, candidateDenominators: List<MeasureUnit>) : UnitPrice {
+
+fun getFriendlyUnitPrice(
+    amount: Double,
+    measure: MeasuredValue,
+    candidateDenominators: List<MeasureUnit>
+): UnitPrice {
     devCheck(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
     // TODO: We should sanity check to avoid division by zero, log10(0) etc
     var bestScore: Double? = null
@@ -1434,7 +1664,7 @@ fun getFriendlyUnitPrice(amount: Double, measure: MeasuredValue, candidateDenomi
     return bestUnitPrice!!
 }
 
-fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet) : String {
+fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet): String {
     return "${formatPrice(unitPrice.numerator, dataSet)}/${unitPrice.denominator.symbol}"
 }
 
@@ -1447,7 +1677,12 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet) : String {
 @Preview(showBackground = true)
 @Composable
 // TODO: Arguably we should have selected{DataSet,Product}Id not allow nulls here - our parent should just not be composing us if these are not set
-fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, dataSet: DataSet, selectedProductId: Long?) {
+fun ItemSourceInfo(
+    vm: PriceTrackerViewModel,
+    navController: NavHostController,
+    dataSet: DataSet,
+    selectedProductId: Long?
+) {
     Log.d("MyApp", "TODO0")
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
     var expanded by remember { mutableStateOf(false) }
@@ -1456,7 +1691,8 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
     //var vm: PriceTrackerViewModel = viewModel()
     val selectedDataSetId = dataSet.id // TODO: maybe a temp hack?
     Log.d("MyApp", "TODO1")
-    val sources by vm.getAllSources(selectedDataSetId).collectAsStateWithLifecycle(initialValue = emptyList())
+    val sources by vm.getAllSources(selectedDataSetId)
+        .collectAsStateWithLifecycle(initialValue = emptyList())
 
     // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
     // changes the system font size. (Even if we didn't do this, we'd still want to use a fixed
@@ -1534,7 +1770,17 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                             // issues of "for", which is *probably* tractable but might be a
                             // problem. If I really prefer the UI with a single text string
                             // containing "for", don't let this put me off sticking with it.
-                            Text("${formatPrice(priceList[0].price, dataSet)} for ${priceList[0].measure.to(priceList[0].originalUnit).toDisplayString(2)}" /*, color = MaterialTheme.colorScheme.onSurface*/)
+                            Text(
+                                "${
+                                    formatPrice(
+                                        priceList[0].price,
+                                        dataSet
+                                    )
+                                } for ${
+                                    priceList[0].measure.to(priceList[0].originalUnit)
+                                        .toDisplayString(2)
+                                }" /*, color = MaterialTheme.colorScheme.onSurface*/
+                            )
                         }
 
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Last checked") {
@@ -1599,9 +1845,17 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                                 // TODO: It is wrong to use pricelist[0].originalUnit for unitRelatives - well, not necessarily wrong, especially if we maybe offer a selection via a dropdown - but the "primary" unit family should probably be the default unit on the item - but we don't have that yet
                                 // TODO:Rename "up" to unitPrice, after renaming unitPrice() function to free the name up? Ditto "ur"?
                                 Log.d("MyApp", "FOO1")
-                                val ur = getSiblingMeasureUnits(dataSet, priceList[0].originalUnit, includeDisplayOnly = true)
+                                val ur = getSiblingMeasureUnits(
+                                    dataSet,
+                                    priceList[0].originalUnit,
+                                    includeDisplayOnly = true
+                                )
                                 Log.d("MyApp", "FOO2")
-                                val up = getFriendlyUnitPrice(priceList[0].price, priceList[0].measure, ur)
+                                val up = getFriendlyUnitPrice(
+                                    priceList[0].price,
+                                    priceList[0].measure,
+                                    ur
+                                )
                                 Log.d("MyApp", "FOO3")
                                 Text(formatUnitPrice(up, dataSet))
                                 Log.d("MyApp", "FOO4")
@@ -2135,9 +2389,9 @@ fun AnimatedFullScreenDialog(
                     ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
                         // Consume system insets to prevent automatic adjustments
                         WindowInsetsCompat.Builder(insets).setInsets(
-                                WindowInsetsCompat.Type.systemBars(),
-                                Insets.NONE
-                            ) // Use androidx.core.graphics.Insets
+                            WindowInsetsCompat.Type.systemBars(),
+                            Insets.NONE
+                        ) // Use androidx.core.graphics.Insets
                             .build()
                     }
                 }
@@ -2188,22 +2442,22 @@ fun AnimatedFullScreenDialog(
                 // Animate visibility for dialog content sliding vertically
                 AnimatedVisibility(
                     visibleState, enter = slideInVertically(
-                    animationSpec = tween(
-                    durationMillis = enterDurationMillis, easing = LinearOutSlowInEasing
-                ), initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = enterDurationMillis, easing = LinearOutSlowInEasing
-                    )
-                ), exit = slideOutVertically(
                         animationSpec = tween(
-                    durationMillis = exitDurationMillis, easing = FastOutLinearInEasing
-                ), targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = exitDurationMillis, easing = FastOutLinearInEasing
-                    )
-                ),
+                            durationMillis = enterDurationMillis, easing = LinearOutSlowInEasing
+                        ), initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
+                    ) + fadeIn(
+                        animationSpec = tween(
+                            durationMillis = enterDurationMillis, easing = LinearOutSlowInEasing
+                        )
+                    ), exit = slideOutVertically(
+                        animationSpec = tween(
+                            durationMillis = exitDurationMillis, easing = FastOutLinearInEasing
+                        ), targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
+                    ) + fadeOut(
+                        animationSpec = tween(
+                            durationMillis = exitDurationMillis, easing = FastOutLinearInEasing
+                        )
+                    ),
 
                     modifier = modifier.fillMaxSize()/* TODO!? These were probably added when we were trying to emulate Dialog and we may well not need them now we *are* using Dialog, but I'll keep them around just in case for a bit
                         // Handle system bars & keyboard insets
@@ -2249,7 +2503,8 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
             .fillMaxSize()
             .background(Color.Red /* TODO DEBUG HACK */),
         topBar = {
-            TopAppBar(title = { Text("My App Name Here") }, actions = {
+            TopAppBar(
+                title = { Text("My App Name Here") }, actions = {
                 IconButton(onClick = { menuExpanded = true }) {
                     Icon(Icons.Default.MoreVert, contentDescription = "Menu")
                 }
@@ -2270,7 +2525,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
                     })
                 }
             },
-            modifier= Modifier.background(MaterialTheme.colorScheme.surface /* TODO? */)
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface /* TODO? */)
             )
         },
     ) { innerPadding ->
@@ -2285,41 +2540,42 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 
         ) {
 
-                MainScreen(
-                    vm = vm,
-                    selectedDataSetId = selectedDataSetId,
-                    onSelectedDataSetIdChange = { selectedDataSetId = it },
-                    selectedProductId = selectedProductId,
-                    onSelectedProductIdChange = { selectedProductId = it }) // TODO: rename this
+            MainScreen(
+                vm = vm,
+                selectedDataSetId = selectedDataSetId,
+                onSelectedDataSetIdChange = { selectedDataSetId = it },
+                selectedProductId = selectedProductId,
+                onSelectedProductIdChange = { selectedProductId = it }) // TODO: rename this
 
-                /*
-            // TODO TEMP HACK FOR KEYBOARD/SCROLLING EXPERIMENTS
-            Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
-            var packSize by remember { mutableStateOf("123") }
-            TextField(
-                label = { Text("Pack size") },
-                value = packSize,
-                onValueChange = { packSize = it },
-                // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.fillMaxWidth().bringIntoViewRequester(bringIntoViewRequester)
-                    .onFocusChanged {
-                        if (it.isFocused) {
-                            coroutineScope.launch {
-                                bringIntoViewRequester.bringIntoView()
-                            }
+            /*
+        // TODO TEMP HACK FOR KEYBOARD/SCROLLING EXPERIMENTS
+        Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
+        var packSize by remember { mutableStateOf("123") }
+        TextField(
+            label = { Text("Pack size") },
+            value = packSize,
+            onValueChange = { packSize = it },
+            // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            modifier = Modifier.fillMaxWidth().bringIntoViewRequester(bringIntoViewRequester)
+                .onFocusChanged {
+                    if (it.isFocused) {
+                        coroutineScope.launch {
+                            bringIntoViewRequester.bringIntoView()
                         }
-                    })
-                    */
+                    }
+                })
+                */
 
-                androidx.compose.foundation.layout.Spacer(
-                    modifier = androidx.compose.ui.Modifier.height(
-                        8.dp
-                    )
+            androidx.compose.foundation.layout.Spacer(
+                modifier = androidx.compose.ui.Modifier.height(
+                    8.dp
                 )
+            )
 
             Log.d("Myapp", "BeforeItemSourceInfo0")
-            val dataSetListNullable by vm.getDataSet(selectedDataSetId).collectAsStateWithLifecycle(initialValue = null)
+            val dataSetListNullable by vm.getDataSet(selectedDataSetId)
+                .collectAsStateWithLifecycle(initialValue = null)
             Log.d("Myapp", "BeforeItemSourceInfo0a")
             // TODO: HACK - we should probably be pulling this kind of mandatory non-null data out in one place, showing "Loading
             // TODO: Note that we must check size > 0 here to cope with the case where we don't have any data sets (e.g. on
@@ -2335,69 +2591,69 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
                 Log.d("Myapp", "BeforeItemSourceInfo0d")
 
                 Log.d("Myapp", "BeforeItemSourceInfo")
-                    ItemSourceInfo( // TODO: COMMENTING OUT THIS FIXES THE CRASH ON FIRS RUN AFTER DELETE AND REINSTALL
-                        vm = vm,
-                        navController = navController,
-                        dataSet = dataSetList[0],
-                        // selectedDataSetId = selectedDataSetId,
-                        selectedProductId = selectedProductId
-                    )
+                ItemSourceInfo( // TODO: COMMENTING OUT THIS FIXES THE CRASH ON FIRS RUN AFTER DELETE AND REINSTALL
+                    vm = vm,
+                    navController = navController,
+                    dataSet = dataSetList[0],
+                    // selectedDataSetId = selectedDataSetId,
+                    selectedProductId = selectedProductId
+                )
                 Log.d("Myapp", "AfterItemSourceInfo")
 
-                }
+            }
             Log.d("Myapp", "AfterItemSourceInfo1")
 
-                androidx.compose.foundation.layout.Spacer(
-                    modifier = androidx.compose.ui.Modifier.height(
-                        8.dp
+            androidx.compose.foundation.layout.Spacer(
+                modifier = androidx.compose.ui.Modifier.height(
+                    8.dp
+                )
+            )
+
+            // TODO: This mock data shows some questions:
+            // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
+            // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
+            // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
+            // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
+            // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
+            // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
+            // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
+            // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
+            // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
+            // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
+            // but things are slightly different if we go with this approach.
+            // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
+            val header = kotlin.collections.listOf("Source", "£/100g", "Notes")
+            // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
+            val data = kotlin.collections.listOf(
+                kotlin.collections.listOf(
+                    "Tesco", "£2.13", "Tesco Finest is actually cheapest"
+                ),
+                kotlin.collections.listOf("Sainsbury's Local", "£2.94", ""),
+                kotlin.collections.listOf("Asda", "£2.08", "KTC brand"),
+                kotlin.collections.listOf("Iceland", "£2.38", ""),
+                // …
+            )
+
+            // TODO: Price column should be right-aligned, of course
+            androidx.compose.material3.Card(
+                modifier = androidx.compose.ui.Modifier
+                    //.weight(1f, fill=false) // only component with weight, so fills all remaining space
+                    .fillMaxWidth(),
+                colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainer)
+            ) {
+                androidx.compose.foundation.layout.Box(
+                    modifier = androidx.compose.ui.Modifier.padding(
+                        horizontal = 8.dp, vertical = 12.dp
                     )
-                )
-
-                // TODO: This mock data shows some questions:
-                // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
-                // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
-                // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
-                // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
-                // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
-                // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
-                // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
-                // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
-                // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
-                // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
-                // but things are slightly different if we go with this approach.
-                // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
-                val header = kotlin.collections.listOf("Source", "£/100g", "Notes")
-                // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
-                val data = kotlin.collections.listOf(
-                    kotlin.collections.listOf(
-                        "Tesco", "£2.13", "Tesco Finest is actually cheapest"
-                    ),
-                    kotlin.collections.listOf("Sainsbury's Local", "£2.94", ""),
-                    kotlin.collections.listOf("Asda", "£2.08", "KTC brand"),
-                    kotlin.collections.listOf("Iceland", "£2.38", ""),
-                    // …
-                )
-
-                // TODO: Price column should be right-aligned, of course
-                androidx.compose.material3.Card(
-                    modifier = androidx.compose.ui.Modifier
-                        //.weight(1f, fill=false) // only component with weight, so fills all remaining space
-                        .fillMaxWidth(),
-                    colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainer)
                 ) {
-                    androidx.compose.foundation.layout.Box(
-                        modifier = androidx.compose.ui.Modifier.padding(
-                            horizontal = 8.dp, vertical = 12.dp
-                        )
-                    ) {
-                        DataTable(
-                            header = header, rows = data,
-                            // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
-                            columnWeights = kotlin.collections.listOf(1.6f, 1f, 2.2f)
-                        )
-                    }
+                    DataTable(
+                        header = header, rows = data,
+                        // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
+                        columnWeights = kotlin.collections.listOf(1.6f, 1f, 2.2f)
+                    )
                 }
             }
+        }
     }
 
     /* TODO
@@ -2424,7 +2680,13 @@ fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvi
 
 @Composable
 // TODO: https://m3.material.io/components/dialogs/specs says (near bottom) top/left/right padding on a full screen dialog should be 24.dp - I am probably not doing that, should I? Should I use similar padding on "non-dialog full screens" to match??
-fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostController, dataSetId: Long, productId: Long, storeId: Long) {
+fun OuterFullScreenDialog(
+    vm: PriceTrackerViewModel,
+    navController: NavHostController,
+    dataSetId: Long,
+    productId: Long,
+    storeId: Long
+) {
     //var vm: PriceTrackerViewModel = viewModel()
     // TODO: Should we just have the caller pass the product name through so we don't have to do this lookup? the viewmodel should have the data cached, but we still have to through the collectstatewithlifecycle overhead?
     // TODO: Are we needlessly getting *all* items here when we could just get the one we are interested in?
@@ -2439,7 +2701,8 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
         productId = productId,
         storeId = storeId
     ).collectAsStateWithLifecycle(initialValue = null)
-    val nullableDataSetList: List<DataSet>? by vm.getDataSet(dataSetId).collectAsStateWithLifecycle(initialValue = null)
+    val nullableDataSetList: List<DataSet>? by vm.getDataSet(dataSetId)
+        .collectAsStateWithLifecycle(initialValue = null)
 
     if (nullablePriceList == null || nullableDataSetList == null || !(productId in productMap)) {
         // This will almost certainly never be seen - we will likely get the query results back and
@@ -2481,10 +2744,10 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
 
         // TODO: Can I get rid of saveInitiated and instead set the state inside the viewmodel to "idle" when we are not saving? The frequency with which we check it suggests it might be more painful to get rid of it. but if we track this, the distinction between idle and saving is mostly meainingless (the state never gets set back to idle) and we should maybe merge those states into a vague "meh" state.
         var saveInitiated by rememberSaveable { mutableStateOf(false) }
-        var showSaveProgressIndicator by rememberSaveable { mutableStateOf( false ) }
+        var showSaveProgressIndicator by rememberSaveable { mutableStateOf(false) }
         var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
         var showErrorDialog by rememberSaveable { mutableStateOf(false) }
-        var showSavingSnackbar by rememberSaveable { mutableStateOf( false) }
+        var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
         var scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
         // TODO: ChatGPT magic. This idea here is that a) currentBackStackEntry reflects the actual
@@ -2577,19 +2840,19 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
                     },
                     title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price", you can also eg edit pack size and probably a free text notes field etc
                     actions = {
-                            // TODO: When/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
-                            TextButton(enabled = !saveInitiated, onClick = {
-                                saveInitiated = true; vm.updateOrInsertPrice(price)
-                            }) {
-                                if (showSaveProgressIndicator) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(16.dp),
-                                        strokeWidth = 2.dp,
-                                    )
-                                } else {
-                                    Text("Save") // TODO: arbitrary, not thought about wording
-                                }
+                        // TODO: When/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
+                        TextButton(enabled = !saveInitiated, onClick = {
+                            saveInitiated = true; vm.updateOrInsertPrice(price)
+                        }) {
+                            if (showSaveProgressIndicator) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                )
+                            } else {
+                                Text("Save") // TODO: arbitrary, not thought about wording
                             }
+                        }
                     },
                 )
             },
@@ -2624,7 +2887,11 @@ fun OuterFullScreenDialog(vm: PriceTrackerViewModel, navController: NavHostContr
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 // TODO: WE PROBABLY WANT SOME remember+derivedStateOf HERE BUT LET'S DO IT WITHOUT FIRST
-                val units: List<MeasureUnit> = getRelevantMeasureUnits(dataSet, product.quantityType, includeDisplayOnly=false)
+                val units: List<MeasureUnit> = getRelevantMeasureUnits(
+                    dataSet,
+                    product.quantityType,
+                    includeDisplayOnly = false
+                )
                 Row {
                     // TODO: Don't really like this way of showing pack size and unit etc, but
                     // this is just a quick hack to get some "realistic-ish" content on the
@@ -3099,4 +3366,5 @@ inline fun devCheck(condition: Boolean, lazyMessage: () -> String) {
 }
 
 // TODO: Technically this should throw IllegalArgumentException but I don't care. Using the two names allows me to preserve the distinction in the code FWIW but without duplicating the body of devCheck.
-inline fun devRequire(condition: Boolean, lazyMessage: () -> String) = devCheck(condition, lazyMessage)
+inline fun devRequire(condition: Boolean, lazyMessage: () -> String) =
+    devCheck(condition, lazyMessage)
