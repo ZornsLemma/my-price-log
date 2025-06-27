@@ -1894,24 +1894,27 @@ fun ItemSourceInfo(
                                 // Text("TODO") // Text(formatUnitPrice(priceList[0].price, priceList[0].measure, TODOHINT?))
                                 */
 
-                        val foozle by remember { mutableStateOf(0) }
-                        val up: UnitPrice by remember /* (dataSet, priceList) */ { derivedStateOf{
+                        // TODO: It might be more elegant if the parent could pass us a Product and we use the quantity type off that, but except for minor recomposition efficiency concerns, this doesn't matter - the quantity type is absolutely fixed wherever it comes from (units can change, not the quantity type)
+                        // TODO: I suspect relevantUnitList can and should be using remember but let's not worry about efficiency right now
+                        val relevantUnitList = getRelevantMeasureUnits(dataSet, priceList[0].originalUnit.quantityType, includeDisplayOnly = true)
+                        // var items = MeasureUnit.entries.filter { true }
+                        var todoSelected by rememberSaveable {
                             val ur = getSiblingMeasureUnits(
                                 dataSet,
                                 priceList[0].originalUnit,
                                 includeDisplayOnly = true
                             )
-                            getFriendlyUnitPrice(
-                            priceList[0].price,
-                            priceList[0].measure,
-                            ur
-                        )} }
-                        // TODO: It might be more elegant if the parent could pass us a Product and we use the quantity type off that, but except for minor recomposition efficiency concerns, this doesn't matter - the quantity type is absolutely fixed wherever it comes from (units can change, not the quantity type)
-                        // TODO: I suspect relevantUnitList can and should be using remember but let's not worry about efficiency right now
-                        val relevantUnitList = getRelevantMeasureUnits(dataSet, priceList[0].originalUnit.quantityType, includeDisplayOnly = true)
-                        // var items = MeasureUnit.entries.filter { true }
-                        var todoSelected by rememberSaveable { mutableStateOf(up.denominator) }
-                        LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price", text = "TODO/${todoSelected.symbol}",
+                            // TODO: Note that we don't actually use the numerator of up - this might be fine, but it maybe suggests we could simplify the return type. OTOH, we've got to *calculate* the numerators anyway, so maybe we might as well pass it back in case it's handy in some other case?
+                            val up = getFriendlyUnitPrice(
+                                priceList[0].price,
+                                priceList[0].measure,
+                                ur
+                            )
+                            mutableStateOf(up.denominator)
+                        }
+                        // TODO: If the user selects "g" for a product sold in relative bulk, the standard decimal places on the currency is a bit misleading. This isn't a bug as such, but can/should we try to increase the decimal places on the currency in this case? Does the stanmdard formatting stuff we are using have any concept of "not a shelf price so smaller fractions make sense than usual"?
+                        val unitPriceString = formatUnitPrice(getUnitPrice(priceList[0].price, priceList[0].measure, todoSelected), dataSet)
+                        LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price", text = unitPriceString,
                             items = relevantUnitList, getId = { it }, getLabel = { it.symbol },
                             selectedId = todoSelected,
                             onValueChange = { todoSelected = it } )
