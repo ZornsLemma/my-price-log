@@ -109,6 +109,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -1890,10 +1891,26 @@ fun ItemSourceInfo(
                                 Log.d("MyApp", "FOO4")
                                 // Text("TODO") // Text(formatUnitPrice(priceList[0].price, priceList[0].measure, TODOHINT?))
                                 */
-                        var items = MeasureUnit.entries.filter { true }
-                        var todoSelected: Long? by rememberSaveable { mutableStateOf(null) }
+
+                        val foozle by remember { mutableStateOf(0) }
+                        val up: UnitPrice by remember /* (dataSet, priceList) */ { derivedStateOf{
+                            val ur = getSiblingMeasureUnits(
+                                dataSet,
+                                priceList[0].originalUnit,
+                                includeDisplayOnly = true
+                            )
+                            getFriendlyUnitPrice(
+                            priceList[0].price,
+                            priceList[0].measure,
+                            ur
+                        )} }
+                        // TODO: It might be more elegant if the parent could pass us a Product and we use the quantity type off that, but except for minor recomposition efficiency concerns, this doesn't matter - the quantity type is absolutely fixed wherever it comes from (units can change, not the quantity type)
+                        // TODO: I suspect relevantUnitList can and should be using remember but let's not worry about efficiency right now
+                        val relevantUnitList = getRelevantMeasureUnits(dataSet, priceList[0].originalUnit.quantityType, includeDisplayOnly = true)
+                        // var items = MeasureUnit.entries.filter { true }
+                        var todoSelected: Long? by rememberSaveable { mutableStateOf(up.denominator.id) }
                         LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price", text = "TODO/${todoSelected}",
-                            items =items /* TODO HACK */, getId = { it.id }, getLabel = { it.symbol },
+                            items = relevantUnitList, getId = { it.id }, getLabel = { it.symbol },
                             selectedId = priceList[0].originalUnit.id /* TODO HACK NEEDS TO BE VARIABLE AND THOUGHT GIVEN TO INITIAL */,
                             onValueChange = { todoSelected = it } )
                     }
