@@ -124,6 +124,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -1677,6 +1678,79 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet): String {
     return "${formatPrice(unitPrice.numerator, dataSet)}/${unitPrice.denominator.symbol}"
 }
 
+@Composable
+fun LabeledItemWithDropdown(
+    label: String,
+    text: String,
+) {
+    // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
+    // changes the system font size. (Even if we didn't do this, we'd still want to use a fixed
+    // size() Modifier (16.dp works quite nicely at the default settings on my current emulator) to
+    // improve the appearance, but it's nicer to take font size into account.)
+    val fontSize = MaterialTheme.typography.bodyLarge.fontSize
+    val iconSize = with(LocalDensity.current) { fontSize.toDp() }
+
+    var expanded by remember { mutableStateOf(false) }
+
+    LabeledItem(label = label) {
+        Row() {
+            // TODO: FWIW a quick discussion with ChatGPT suggests it is
+            // reasonable for i18n to have some kind of format substitition to
+            // generate a unit price string analogous to the one I'm using here.
+            // So having a single "Unit price" field is probably reasonable, and
+            // it does feel like the clearest way to express it.
+            Box {
+                Row(
+                    modifier = Modifier.clickable { expanded = true },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    /*
+                    Text("£2.30/")
+
+                    Text(
+                        text = currentUnit,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        // modifier = Modifier.alignBy(LastBaseline)
+                    )*/
+                    Text(text)
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Select unit",
+                        modifier = Modifier.size(iconSize /* 16.dp */)
+                    )
+                }
+                // TODO: I probably actually don't want this dropdown. It just *might* make sense to allow
+                // the unit to be temporarily changed here (some slightly contrived situation where we're
+                // looking at a new product on shelf and want to see if it's potentially cheaper but it
+                // uses a different unit price as shown on shelf, for example - but we're already not
+                // doing that well, if anything we want a "check new product" option which lets us enter
+                // its pack size and shelf price and compute unit price ourself, there may not be a unit
+                // price on shelf or it may not be correct if there's an offer), but it's far from clear,
+                // and if anything it might make more sense to have a screen-wide "temporarily use X as
+                // the unit price unit" setting which also affects the card with the cross-store prices
+                // on. I won't rip this out of the UI yet, but I suspect in a finished first version of
+                // the app this code will be gone, at least from specifically here.
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }) {
+                    var availableUnits = listOf("100g", "kg", "oz")
+                    availableUnits.forEach { selectionOption ->
+                        DropdownMenuItem(
+                            text = { Text(selectionOption) },
+                            onClick = {
+                                /* TODO!
+                                currentUnit = selectionOption
+                                */
+                                expanded = false
+                            })
+                    }
+                }
+            }
+        }
+    }
+}
+
 // This composable provides the at-a-glance status of an item at a particular source. It won't always be visible because we may not have a current source, but when we do this should provide "most" of what a user wants to know:
 // - is the item well-priced?
 // - do we have an up-to-date price for this item?
@@ -1694,7 +1768,6 @@ fun ItemSourceInfo(
 ) {
     Log.d("MyApp", "TODO0")
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
-    var expanded by remember { mutableStateOf(false) }
     var currentUnit by remember { mutableStateOf("100g") }
 
     //var vm: PriceTrackerViewModel = viewModel()
@@ -1703,12 +1776,6 @@ fun ItemSourceInfo(
     val sources by vm.getAllSources(selectedDataSetId)
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
-    // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
-    // changes the system font size. (Even if we didn't do this, we'd still want to use a fixed
-    // size() Modifier (16.dp works quite nicely at the default settings on my current emulator) to
-    // improve the appearance, but it's nicer to take font size into account.)
-    val fontSize = MaterialTheme.typography.bodyLarge.fontSize
-    val iconSize = with(LocalDensity.current) { fontSize.toDp() }
     var selectedSourceId: Long? by rememberSaveable { mutableStateOf(null) }
     Log.d("MyApp", "TODO2")
     //val sources = listOf("None", "Tesco", "Asda", "Sainsbury's Local", "Iceland")
@@ -1796,59 +1863,8 @@ fun ItemSourceInfo(
                             RelativeTimeText(priceList[0].confirmed)
                             // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
                         }
-                        LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Unit price") {
-                            Row() {
-                                // TODO: FWIW a quick discussion with ChatGPT suggests it is
-                                // reasonable for i18n to have some kind of format substitition to
-                                // generate a unit price string analogous to the one I'm using here.
-                                // So having a single "Unit price" field is probably reasonable, and
-                                // it does feel like the clearest way to express it.
-                                /* TODO: Old code
-                                Text("£2.30/")
-                                Box {
-                                    Row(
-                                        modifier = Modifier.clickable { expanded = true },
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
 
-                                        Text(
-                                            text = currentUnit,
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier.alignBy(LastBaseline)
-                                        )
-                                        Icon(
-                                            imageVector = Icons.Default.ArrowDropDown,
-                                            contentDescription = "Select unit",
-                                            modifier = Modifier.size(iconSize /* 16.dp */)
-                                        )
-                                    }
-                                    // TODO: I probably actually don't want this dropdown. It just *might* make sense to allow
-                                    // the unit to be temporarily changed here (some slightly contrived situation where we're
-                                    // looking at a new product on shelf and want to see if it's potentially cheaper but it
-                                    // uses a different unit price as shown on shelf, for example - but we're already not
-                                    // doing that well, if anything we want a "check new product" option which lets us enter
-                                    // its pack size and shelf price and compute unit price ourself, there may not be a unit
-                                    // price on shelf or it may not be correct if there's an offer), but it's far from clear,
-                                    // and if anything it might make more sense to have a screen-wide "temporarily use X as
-                                    // the unit price unit" setting which also affects the card with the cross-store prices
-                                    // on. I won't rip this out of the UI yet, but I suspect in a finished first version of
-                                    // the app this code will be gone, at least from specifically here.
-                                    DropdownMenu(
-                                        expanded = expanded,
-                                        onDismissRequest = { expanded = false }) {
-                                        var availableUnits = listOf("100g", "kg", "oz")
-                                        availableUnits.forEach { selectionOption ->
-                                            DropdownMenuItem(
-                                                text = { Text(selectionOption) },
-                                                onClick = {
-                                                    currentUnit = selectionOption
-                                                    expanded = false
-                                                })
-                                        }
-                                    }
-                                }
-                                */
+                                /* TODO NEW CODE TEMP DISABLED
                                 // TODO: I am rather thinking given how close we are (we already ahve it half implemented), if the product's default unit and the originalUnit on this price are different, we should default to using something in the originalUnit family here but also offer a dropdown with the friendly choice from the default unit family.
                                 // TODO: We may want to use remember() here to avoid redoing the unit price formatting all the time - although it's possible the outer composable "key-caching" will take care of this, I can't think straight about it right now
                                 // TODO: It is wrong to use pricelist[0].originalUnit for unitRelatives - well, not necessarily wrong, especially if we maybe offer a selection via a dropdown - but the "primary" unit family should probably be the default unit on the item - but we don't have that yet
@@ -1869,8 +1885,8 @@ fun ItemSourceInfo(
                                 Text(formatUnitPrice(up, dataSet))
                                 Log.d("MyApp", "FOO4")
                                 // Text("TODO") // Text(formatUnitPrice(priceList[0].price, priceList[0].measure, TODOHINT?))
-                            }
-                        }
+                                */
+                        LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price", text = "TODO/TODO")
                     }
                     // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
                     // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
