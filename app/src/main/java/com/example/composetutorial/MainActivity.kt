@@ -1915,6 +1915,7 @@ fun ItemSourceInfo(
                         // TODO: If the user selects "g" for a product sold in relative bulk, the standard decimal places on the currency is a bit misleading. This isn't a bug as such, but can/should we try to increase the decimal places on the currency in this case? Does the stanmdard formatting stuff we are using have any concept of "not a shelf price so smaller fractions make sense than usual"? Maybe at the very least we should always round prices *up* when showing with official dp - although we are not doing the conversion ourselves, maybe the standard function has an option to do this?
                         val unitPriceString = formatUnitPrice(getUnitPrice(priceList[0].price, priceList[0].measure, todoSelected), dataSet)
                         LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price", text = unitPriceString,
+                            //  TODO: Possibly getLabel should add a "/" prefix to the symbol in this context.
                             items = relevantUnitList, getId = { it }, getLabel = { it.symbol },
                             selectedId = todoSelected,
                             onValueChange = { todoSelected = it } )
