@@ -1747,6 +1747,10 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet): String {
 
 // TODO: Could this be merged with MyExposedDropdownMenuBox by pulling the always-visible part out
 // into a child composable? But let's just do it standalone first.
+// TODO: Note that selectedId is not used. I would like to use this to focus the previously
+// selected item when expanding the dropdown usig a D-pad, instead of defaulting to the first
+// item. However, this appears to be ninja-grade level development and I tried tweaking multiple
+// AI-suggested solutions and got nothing but crashes.
 @Composable
 fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
     modifier: Modifier = Modifier,
