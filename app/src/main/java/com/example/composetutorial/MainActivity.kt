@@ -184,6 +184,8 @@ import java.time.temporal.ChronoUnit
 import java.util.Currency
 import java.util.Locale
 import java.util.UUID
+import kotlin.math.abs
+import kotlin.math.log10
 import kotlin.system.exitProcess
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
@@ -203,24 +205,50 @@ enum class QuantityType(val value: Int) {
     }
 }
 
-// TODO: CHECK ALL THE MULTIPLIERS HERE - THIS IS CHATGPT CODE, AND WE MAY ALSO NEED TO ADDRESS IMPERIAL VS US OR WHATEVER TERMINOLOGY IS
-enum class MeasureUnit(val measureUnitId : Int, val quantityType: QuantityType, val symbol: String, val toBase: Double) {
-    // Weight
-    G( 101, QuantityType.WEIGHT,  "g", 1.0),
-    KG(102, QuantityType.WEIGHT, "kg", 1000.0),
-    OZ(103, QuantityType.WEIGHT, "oz", 28.3495),
-    LB(104, QuantityType.WEIGHT, "lb", 453.592),
+enum class UnitFamily {
+    METRIC_WEIGHT,
+    METRIC_VOLUME,
+    OZLB_WEIGHT, // common imperial/US customary units for weight
+    IMPERIAL_VOLUME, // as used in UK
+    US_CUSTOMARY_VOLUME, // as used in US
+    ITEM, // TODO: not sure if we need this
+}
 
+// TODO: CHECK ALL THE MULTIPLIERS HERE - THIS IS CHATGPT CODE, AND WE MAY ALSO NEED TO ADDRESS IMPERIAL VS US OR WHATEVER TERMINOLOGY IS
+// TODO: IDS SHOULD PROBABLY BE TIDIED UP IF WE KEEP EG G100
+// TODO: IF WE KEEP G100 AND ML100, WE MAY NEED A FLAG TO INDICATE THESE ARE SECOND-CLASS CITIZENS AND ONLY ELIGIBLE FOR UNIT PRICE DENOMINATOR NOT GENERATE UNIT SELECTION
+enum class MeasureUnit(val measureUnitId : Int, val unitFamily: UnitFamily, val quantityType: QuantityType, val symbol: String, val toBase: Double) {
+    // Weight
+    G( 101, UnitFamily.METRIC_WEIGHT, QuantityType.WEIGHT,  "g", 1.0),
+    G100( 1001, UnitFamily.METRIC_WEIGHT, QuantityType.WEIGHT, "100 g", 100.0), // TODO: experimental
+    KG(102, UnitFamily.METRIC_WEIGHT, QuantityType.WEIGHT, "kg", 1000.0),
+    OZ(103, UnitFamily.OZLB_WEIGHT, QuantityType.WEIGHT, "oz", 28.3495),
+    LB(104, UnitFamily.OZLB_WEIGHT, QuantityType.WEIGHT, "lb", 453.592),
+
+    // TODO: The (US) etc suffixes on here are a nuisance when displaying as they look ugly. We probably want some kind of concept of
+    // eliding these for display purposes. My fully fleshed out mental design is that for each data set, the user gets to
+    // opt in to either an arbitrary set of weight units or a group of unit families or something, then there is no practical
+    // ambiguity and we can (maybe optionally) trim off the bracketed suffix in most contexts. But this may be overkill to start
+    // with, and it may be best just to redesign to allow space for the (US) type suffix, or to have a global setting which
+    // picks metric/imperial/US customary for everything. But we do probably (even I, now) want "metric+imperial" to be an option.
+    // Maybe the simple but relatively clean option would be a "imperial volume vs US customary volume" toggle at the data set
+    // level.
     // Volume
-    ML(  201, QuantityType.VOLUME, "ml",   1.0),
-    L(   202, QuantityType.VOLUME, "l",    1000.0),
-    FLOZ(203, QuantityType.VOLUME, "floz", 29.5735),
-    GAL( 204, QuantityType.VOLUME, "gal",  3785.41),
-    PINT( 205, QuantityType.VOLUME, "pt", 568.26125),
+    ML(  201, UnitFamily.METRIC_VOLUME, QuantityType.VOLUME, "ml",   1.0),
+    ML100 (2001, UnitFamily.METRIC_VOLUME, QuantityType.VOLUME, "100 ml", 100.0), // TODO: experimental
+    L(   202, UnitFamily.METRIC_VOLUME, QuantityType.VOLUME, "l",    1000.0),
+    US_CUSTOMARY_FLOZ(203, UnitFamily.US_CUSTOMARY_VOLUME, QuantityType.VOLUME, "floz (US)", 29.5735),
+    US_CUSTOMARY_PINT(2033, UnitFamily.US_CUSTOMARY_VOLUME, QuantityType.VOLUME, "pt (US)", 473.176473),
+    US_CUSTOMARY_GAL( 204, UnitFamily.US_CUSTOMARY_VOLUME, QuantityType.VOLUME, "gal (US)",  3785.41),
+    IMPERIAL_FLOZ(2041, UnitFamily.IMPERIAL_VOLUME, QuantityType.VOLUME, "floz (imp)", 28.4130625),
+    IMPERIAL_PINT( 205,UnitFamily.IMPERIAL_VOLUME, QuantityType.VOLUME, "pt (imp)", 568.26125),
+    IMPERIAL_GAL(206, UnitFamily.IMPERIAL_VOLUME, QuantityType.VOLUME, "gal (imp)", 4546.09),
 
     // Countable items
-    // TODO: Should symbol be empty string or something else here? feeling my way. I suspect "" looks best, it may lead to strings like "for 20 " with a trailing space but that's probably not a big deal in practice. (We could also just make a point of trimming strings generated using symbol.)
-    EACH(301, QuantityType.ITEM, "", 1.0); // TODO: RENAME "EACH" TO "ITEM"?
+    // TODO: Should symbol be empty string or something else here? feeling my way. I suspect "" looks best, it may lead to strings like "for 20 " with a trailing space but that's probably not a big deal in practice. (We could also just make a point of trimming strings generated using symbol.) We sort of might want "1" for the unit price denominator stuff though.
+    EACH(301, UnitFamily.ITEM, QuantityType.ITEM, "", 1.0), // TODO: RENAME "EACH" TO "ITEM"?
+    EACH10(302, UnitFamily.ITEM, QuantityType.ITEM, "10", 10.0),
+    EACH100(303, UnitFamily.ITEM, QuantityType.ITEM, "100", 100.0);
 
     companion object {
         fun fromValue(measureUnitId: Int): MeasureUnit? {
@@ -301,7 +329,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     val now = Instant.now()
                                     db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdValueMart, price=2.03, measure=500.0, originalUnit=MeasureUnit.G, confirmed = now.minus(2, ChronoUnit.MINUTES), details = "Large pack own brand"))
                                     db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdGroundCoffee, sourceId = sourceIdSuperiorStore, price=1.50, measure=227.0, originalUnit=MeasureUnit.G, confirmed = now.minus(4, ChronoUnit.DAYS), details = "Own brand"))
-                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdValueMart, price=1.99, measure=4*568.0, originalUnit=MeasureUnit.PINT, confirmed = now, details = ""))
+                                    db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdValueMart, price=1.99, measure=4*568.0, originalUnit=MeasureUnit.IMPERIAL_PINT, confirmed = now, details = ""))
                                     db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdWholeMilk, sourceId = sourceIdSuperiorStore, price=2.86, measure=2000.0, originalUnit=MeasureUnit.L, confirmed = now.minus(63, ChronoUnit.DAYS), details = ""))
                                     db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdValueMart, price=0.76, measure=40.0, originalUnit=MeasureUnit.EACH, confirmed = now.minus(7, ChronoUnit.DAYS), details = "Soft pack own brand"))
                                     db.priceDao().insert(Price(dataSetId = dataSetId, itemId = itemIdTeabags, sourceId = sourceIdSuperiorStore, price=0.60, measure=20.0, originalUnit=MeasureUnit.EACH, confirmed = now.minus(4, ChronoUnit.HOURS), details = ""))
@@ -1327,6 +1355,49 @@ fun formatPrice(amount: Double, dataSet: DataSet): String {
     }
 }
 
+/*
+// TODO: FEELING MY WAY HERE, V EXPERIMENTAL
+fun unitPriceDenominatorCandidates(
+    amount: Double, measure: MeasuredValue, defaultUnit: MeasureUnit, extraUnit: MeasureUnit?) : List<TODO> {
+    // TODO!
+}
+*/
+
+// TODO: POOR NAME?
+// TODO: I suspect this is grossly inefficient with repeatedly iterating over the entries every time this is called but let's just get something that works first
+fun unitRelatives(measureUnit: MeasureUnit) : List<MeasureUnit> {
+    return MeasureUnit.entries.filter { it.unitFamily == measureUnit.unitFamily }
+}
+
+// TODO: EXPERIMENTAL
+// TODO: HOW WILL WE HANDLE "/100G" ETC? WILL WE MAKE THESE FIRST CLASS MEASUREUNITS BUT FLAG THEM AS "MULTIPLES" SO WE OMIT THEM FROM MANY CASES, OR WILL WE MAKE IT A LIST<PAIR<MULT,MEASUREUNIT>>?
+// TODO: RENAME THIS? "friendlyUnitPrice"???
+data class UnitPrice(val numerator: Double, val denominator: MeasureUnit)
+fun getFriendlyUnitPrice(amount: Double, measure: MeasuredValue, candidateDenominators: List<MeasureUnit>) : UnitPrice {
+    check(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
+    // TODO: We should sanity check to avoid division by zero, log10(0) etc
+    var bestScore: Double? = null
+    var bestUnitPrice: UnitPrice? = null
+    for (candidateDenominator in candidateDenominators) {
+        val measureWithCandidate = measure.asValue(candidateDenominator)
+        val candidateUnitPrice = UnitPrice(amount / measureWithCandidate, candidateDenominator)
+        // We compute a score (lower is better) for candidateUnitPrice which measures how far away
+        // it is in "decimal place" terms from having a numerator of 1. In other words, we are trying
+        // to get as close to a single digit before the decimal point as we can.
+        val log10Of1 = 0.0
+        val candidateScore = abs(log10(candidateUnitPrice.numerator) - log10Of1) // lower is better
+        if (bestScore == null || candidateScore < bestScore) {
+            bestScore = candidateScore
+            bestUnitPrice = candidateUnitPrice
+        }
+    }
+    return bestUnitPrice!!
+}
+
+fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet) : String {
+    return "${formatPrice(unitPrice.numerator, dataSet)}/${unitPrice.denominator.symbol}"
+}
+
 // This composable provides the at-a-glance status of an item at a particular source. It won't always be visible because we may not have a current source, but when we do this should provide "most" of what a user wants to know:
 // - is the item well-priced?
 // - do we have an up-to-date price for this item?
@@ -1437,6 +1508,7 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                                 // generate a unit price string analogous to the one I'm using here.
                                 // So having a single "Unit price" field is probably reasonable, and
                                 // it does feel like the clearest way to express it.
+                                /* TODO: Old code
                                 Text("£2.30/")
                                 Box {
                                     Row(
@@ -1481,6 +1553,19 @@ fun ItemSourceInfo(vm: PriceTrackerViewModel, navController: NavHostController, 
                                         }
                                     }
                                 }
+                                */
+                                // TODO: I am rather thinking given how close we are (we already ahve it half implemented), if the product's default unit and the originalUnit on this price are different, we should default to using something in the originalUnit family here but also offer a dropdown with the friendly choice from the default unit family.
+                                // TODO: We may want to use remember() here to avoid redoing the unit price formatting all the time - although it's possible the outer composable "key-caching" will take care of this, I can't think straight about it right now
+                                // TODO: It is wrong to use pricelist[0].originalUnit for unitRelatives - well, not necessarily wrong, especially if we maybe offer a selection via a dropdown - but the "primary" unit family should probably be the default unit on the item - but we don't have that yet
+                                // TODO:Rename "up" to unitPrice, after renaming unitPrice() function to free the name up? Ditto "ur"?
+                                Log.d("MyApp", "FOO1")
+                                val ur = unitRelatives(priceList[0].originalUnit)
+                                Log.d("MyApp", "FOO2")
+                                val up = getFriendlyUnitPrice(priceList[0].price, priceList[0].measure, ur)
+                                Log.d("MyApp", "FOO3")
+                                Text(formatUnitPrice(up, dataSet))
+                                Log.d("MyApp", "FOO4")
+                                // Text("TODO") // Text(formatUnitPrice(priceList[0].price, priceList[0].measure, TODOHINT?))
                             }
                         }
                     }
