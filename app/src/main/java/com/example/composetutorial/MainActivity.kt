@@ -441,6 +441,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     // TODO: It's probably smart to default the demo data to the local currency, since that will look most natural to our new user, but do rethink this afterwards. (It's also just possible, remember, that they will start editing the demo dataset for their own use, rather than starting again with a fresh dataset.)
                                     // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
                                     // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current locale (and make sure any non-metric units in the data below are changed accordingly)
+                                    // TODO: We should have some demo products which are (fake) "branded" products, so get the idea across that this is another way to do things if you are brand-sensitive on a particular item
                                     val dataSetId = db.dataSetDao().insert(
                                         DataSet(
                                             name = "Demo",
