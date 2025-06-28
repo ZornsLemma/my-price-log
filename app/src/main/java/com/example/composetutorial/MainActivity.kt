@@ -764,13 +764,6 @@ class MyApplication : Application() {
 
 }
 
-// TODO: This is boilerplate *in memory* viewmodel stuff which I got from Grok. The idea is that I
-// can try to start using viewmodels and passing data back and forth between eg my home screen and
-// my notional full screen dialog and have it flow round and update rather than being hardcoded (to
-// prove communication is working) without getting into the additional worries of having an actual
-// database, which I will retrofit later. I have no idea if the code is actually correct, although
-// it seems simple enough that I don't think it hides too many nasty surprises.
-
 // TODO: The database inspector used to show the quantity_type as a string but it seems to have
 // stopped working. Not sure why and not the end of the world, but would be nice if that would work
 // again.
@@ -799,7 +792,7 @@ class Converters {
 }
 
 // TODO: General naming note for databases - both Perplexity and ChatGPT agreed that "_id" suffix on
-// colun names implies a foreign key - so even if (just as an example - but I need to consider this
+// column names implies a foreign key - so even if (just as an example - but I need to consider this
 // on all tables) we might *later* have a unit table but for now our units are just represented by
 // hard-coded in application IDs, columns which store a unit should be called "unit" not "unit_id".
 // I am not 100% sure I agree but I do need to at least consider naming for consistency at some
@@ -1078,104 +1071,6 @@ interface PriceDao {
     ): Flow<List<PriceWithItem>>
 }
 
-// TODO: This is part way through being converted to use Flow
-class PriceTrackerRepositoryOldTODO {
-    /*
-    // TODO: listOf may be more correct than mutableListOf everywhere, not just here, but I really don't understand this.
-    private val categories = MutableStateFlow<List<Category>>(
-        mutableListOf(
-            Category(1, "Demo"),
-            Category(2, "Groceries (home)"),
-            Category(3, "Groceries (Manchester)")
-        )
-    )
-    */
-    /*
-    private val products = MutableStateFlow<List<Item>>(
-        mutableListOf(
-            Item(1, "Milk"), Item(2, "Bread")
-        )
-    )
-    private val stores = MutableStateFlow<List<Source>>(
-        mutableListOf(
-            Source(1, "Walmart"), Source(2, "Target")
-        )
-    )
-    */
-    /*
-    private val prices = MutableStateFlow<List<Price>>(listOf(
-        Price(1, 1, 3.99, "Organic milk at Walmart"),
-        Price(1, 2, 4.29, "Organic milk at Target"),
-        Price(2, 1, 2.49, "Whole wheat bread at Walmart"),
-        Price(2, 2, 2.79, "Whole wheat bread at Target"))
-    )
-    */
-
-    /*
-    fun getAllCategories(): Flow<List<Category>> = categories
-
-    fun getAllProducts(): Flow<List<Item>> = products
-
-    fun addProduct(item: Item) {
-        products.value = products.value + item
-    }
-
-    fun getAllStores(): Flow<List<Source>> = stores
-    */
-
-    /* TODO
-    fun getPricesForProduct(productId: Long): List<Price> =
-        prices.filter { it.productId == productId }
-        */
-
-
-    /*
-    // We expect the returned list to have 0 or 1 items
-    fun getPriceForProductAndStore(productId: Long, storeId: Long): Flow<List<Price>> {
-        // TODO: I assume we use find() here to avoid duplicating data, but in a db-backed version
-        // this would be an actual SELECT. I suspect this code might *work* without writing a
-        // SELECT and we'd end up doing an in memory join after pulling in the entire tables.
-        /* TODO: Old broken code
-        val result = _prices.find { it.productId == productId && it.storeId == storeId }
-        if (result == null) {
-            return flowOf(listOf())
-        } else {
-            return flowOf(listOf(result))
-        }
-        */
-        Log.d("MyApp", "repository getPriceForProductAndStore")
-        return prices.map { list ->
-            list.filter { it.productId == productId && it.storeId == storeId }
-        }
-            .onEach { filteredList ->
-                Log.d("MyApp", "Flow emitted for $productId/$storeId: $filteredList")
-            }
-    }
-    */
-
-    /*
-    fun updateOrInsertPrice(price: Price) {
-        // TODO: perplexity.ai code
-        prices.update { currentPrices ->
-            val index = currentPrices.indexOfFirst {
-                it.productId == price.productId && it.storeId == price.storeId
-            }
-            if (index >= 0) {
-                // Update existing
-                currentPrices.toMutableList().apply {
-                    set(index, price)
-                }
-            } else {
-                // Insert new
-                currentPrices + price
-            }
-        }
-        Log.d("MyApp", "after updateorinsert: ${prices.value}")
-
-    }
-    */
-}
-
 // ChatGPT magic
 class SingleEventState<T>(initialState: T) {
 
@@ -1193,7 +1088,6 @@ class SingleEventState<T>(initialState: T) {
 
 class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository) :
     ViewModel() {
-    // TODO DELETE private val repository = PriceTrackerRepositoryOldTODO()
 
     fun getDataSet(dataSetId: Long) = priceTrackerRepository.getDataSet(dataSetId)
 
