@@ -1791,15 +1791,10 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
                 }
                 previousItem = item
 
-                DropdownMenuItem(
+                MyDropdownMenuItem(
                     text = {
-                        Text(
-                            text = getLabel(item),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        Text(getLabel(item))
                     },
-                    contentPadding = PaddingValues(start = menuLeftPadding), // TODO CHECK SPEC
                     onClick = {
                         onValueChange(getId(item))
                         expanded = false
