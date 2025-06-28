@@ -2051,19 +2051,21 @@ fun onProductSelected(newId: Long) {
 
 // TODO: Perplexity magic
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
-val FIRST_LONG_KEY = longPreferencesKey("first_long")
-fun getFirstLong(context: Context): Flow<Long?> =
-    context.dataStore.data.map { prefs -> prefs[FIRST_LONG_KEY] }
-suspend fun saveFirstLong(context: Context, value: Long?) {
+
+fun getLongPreference(context: Context, key: String): Flow<Long?> =
+    context.dataStore.data.map { prefs -> prefs[longPreferencesKey(key)] }
+
+suspend fun saveLongPreference(context: Context, key: String, value: Long?) {
     context.dataStore.edit { prefs ->
-        if (value != null) prefs[FIRST_LONG_KEY] = value else prefs.remove(FIRST_LONG_KEY)
+        val prefKey = longPreferencesKey(key)
+        if (value != null) prefs[prefKey] = value else prefs.remove(prefKey)
     }
 }
 
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope() // TODO MAGIC
-    val dataSetId by getFirstLong(LocalContext.current).collectAsStateWithLifecycle(initialValue = null)
+    val dataSetId by getLongPreference(LocalContext.current, "selected_data_set_id").collectAsStateWithLifecycle(initialValue = null)
 
     // We don't need rememberSaveable here because these are backed by SharedPreferences.
     // TODO: It is tempting to try to pull out the mild boilerplate here, but although an AI told
@@ -2088,7 +2090,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     //@Composable // TODO!?
     fun setDataSetId(context: Context, newDataSetId: Long?) {
         coroutineScope.launch {
-            saveFirstLong(context, newDataSetId)
+            saveLongPreference(context, "selected_data_set_id", newDataSetId)
         }
     }
 
