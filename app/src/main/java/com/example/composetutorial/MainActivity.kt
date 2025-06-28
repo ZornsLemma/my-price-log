@@ -1172,7 +1172,7 @@ val menuRightPadding = menuLeftPadding
 @Composable
 fun MainScreen(
     vm: PriceTrackerViewModel, dataSet: DataSet?, dataSetList: List<DataSet>?, onSelectedDataSetIdChange: (Long) -> Unit,
-    item: Item?, onSelectedProductIdChange: (Long) -> Unit
+    item: Item?, itemList: List<Item>?, onSelectedProductIdChange: (Long) -> Unit
 ) {
     val selectedDataSetId = dataSet?.id // TODO SEMI TEMP HACK WHILE REFACTORING
     val selectedProductId = item?.id // TODO DITTO
@@ -1197,7 +1197,7 @@ fun MainScreen(
 
     // TODO: I suspect in general (not just here) I should be passing viewmodel *into* these functions rather than getting it from "global", to allow for dependency injection. but in practice it wouldn't be hard to rework this after and i am not sure this ui stuff is testable - I really don't know how it works.
     //var vm: PriceTrackerViewModel = viewModel()
-    val categories by vm.getAllDataSets().collectAsStateWithLifecycle(initialValue = emptyList())
+    //val categories by vm.getAllDataSets().collectAsStateWithLifecycle(initialValue = emptyList())
     val products by if (selectedDataSetId != null) {
         vm.getAllItems(selectedDataSetId!!).collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
@@ -1222,7 +1222,7 @@ fun MainScreen(
             selectedId = selectedDataSetId,
             onValueChange = { onSelectedDataSetIdChange(it) },
             label = { Text("Category") },
-            items = categories,
+            items = itemList ?: emptyList(),
             getId = { it.id },
             getLabel = { it.name },
         )
@@ -2195,6 +2195,7 @@ fun HomeScreenScaffold(
                 dataSetList = dataSetList,
                 onSelectedDataSetIdChange = onSelectedDataSetIdChange,
                 item = item,
+                itemList = itemList,
                 onSelectedProductIdChange = { /* TODO PASS UP selectedProductId = it */ }) // TODO: rename this
 
             androidx.compose.foundation.layout.Spacer(
