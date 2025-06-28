@@ -250,14 +250,6 @@ enum class MeasureUnit(
         false
     ),
 
-    // TODO: The (US) etc suffixes on here are a nuisance when displaying as they look ugly. We probably want some kind of concept of
-    // eliding these for display purposes. My fully fleshed out mental design is that for each data set, the user gets to
-    // opt in to either an arbitrary set of weight units or a group of unit families or something, then there is no practical
-    // ambiguity and we can (maybe optionally) trim off the bracketed suffix in most contexts. But this may be overkill to start
-    // with, and it may be best just to redesign to allow space for the (US) type suffix, or to have a global setting which
-    // picks metric/imperial/US customary for everything. But we do probably (even I, now) want "metric+imperial" to be an option.
-    // Maybe the simple but relatively clean option would be a "imperial volume vs US customary volume" toggle at the data set
-    // level.
     // Volume
     ML(201, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml", 1.0, false),
     ML100(
@@ -601,29 +593,6 @@ interface PriceTrackerRepository {
     suspend fun updateOrInsertPrice(price: Price)
 }
 
-/* TODO!?
-/**
- * App container for Dependency injection.
- */
-interface AppContainer {
-    val itemsRepository: ItemsRepository
-}
-*/
-
-/* TODO!?
-/**
- * [AppContainer] implementation that provides instance of [OfflineItemsRepository]
- */
-class AppDataContainer(private val context: Context) : AppContainer {
-    /**
-     * Implementation for [ItemsRepository]
-     */
-    override val itemsRepository: ItemsRepository by lazy {
-        OfflineItemsRepository(InventoryDatabase.getDatabase(context).itemDao())
-    }
-}
-*/
-
 class PriceTrackerRepositoryImpl(
     private val dataSetDao: DataSetDao,
     private val itemDao: ItemDao,
@@ -668,18 +637,6 @@ class PriceTrackerRepositoryImpl(
 
     override suspend fun updateOrInsertPrice(price: Price) = priceDao.upsert(price)
 }
-
-/* TODO
-class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewModel() {
-    /*
-    suspend fun saveItem() {
-        if (validateInput()) {
-            itemsRepository.insertItem(itemUiState.itemDetails.toItem())
-        }
-    }
-*/
-}
-*/
 
 // TODO: WTF?
 object AppViewModelProvider {
@@ -799,11 +756,6 @@ class Converters {
 // point, and I wanted to note this opinion.
 
 // TODO: I need to make sure I have the right indexes on all these tables, not sure what if any might get auto-created (and I may want to inhibit some auto-creation if there is any)
-
-data class UnitX(
-    val id: Long,
-    val name: String
-) // TODO: very hacky, not sure how will represent this
 
 @Entity(tableName = "data_set")
 // TODO: UI term should probably be "Collection" ("category" sounds a bit like categorising products and we don't want to confuse things)
