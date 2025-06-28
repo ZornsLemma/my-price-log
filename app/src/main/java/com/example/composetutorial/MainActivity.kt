@@ -2,6 +2,7 @@
 
 package com.example.composetutorial
 
+import androidx.compose.runtime.MutableState
 import java.time.Duration
 //import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,6 +16,7 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.SharedPreferences
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Button
@@ -128,6 +130,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
@@ -177,6 +180,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.time.Instant
@@ -186,6 +190,7 @@ import java.util.Locale
 import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.log10
+import androidx.core.content.edit
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
 // weight or volume. This is fundamental as we make no effort to convert between them using some
@@ -1040,6 +1045,8 @@ class SingleEventState<T>(initialState: T) {
 
 class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository) :
     ViewModel() {
+
+    fun getAllDataSets() = priceTrackerRepository.getAllDataSets()
 
     fun getDataSet(dataSetId: Long) = priceTrackerRepository.getDataSet(dataSetId)
 
@@ -2017,10 +2024,97 @@ fun MyDropdownMenuItem(
     )
 }
 
+/* TODO: TEMP COPY OF PERPLEXITY FRAGMENT:
+
+// In your ViewModel or Composable
+val context = LocalContext.current
+val sharedPref = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+val initialProductId = sharedPref.getLong("last_selected_product_id", -1L)
+var currentProductId by rememberSaveable { mutableStateOf(initialProductId) }
+
+// When user selects a new product:
+fun onProductSelected(newId: Long) {
+    currentProductId = newId
+    sharedPref.edit().putLong("last_selected_product_id", newId).apply()
+}
+
+*/
+
+// TODO: Sanity check the two hard-coded arguments here - this is LLM code
+@Composable
+fun getSharedPreferences() = LocalContext.current.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
+    // We don't need rememberSaveable here because these are backed by SharedPreferences.
+    // TODO: It is tempting to try to pull out the mild boilerplate here, but although an AI told
+    // me I could do it with an *inline fun*, I am far from confident this is safe or reliable and
+    // I'm getting confusing answers about whether remember has to be qualified with the key if we
+    // pull this into a separate function. Maybe come back to this later, if only for educational
+    // value.
+    val sharedPreferences = getSharedPreferences()
+    var dataSetId: Long? by remember {
+        mutableStateOf(sharedPreferences.getLong("selected_data_set_id", -1).takeIf { it != -1L })
+    }
 
+    // TODO: This feels like it ought to be something that can be wrapped up so dataSetId is a Long?-like value which
+    // transparently reads/writes sharedPreferences but with caching so we don't call getLong() on every read. However,
+    // especially with remember() in the mix (albeit we could arguably do without remember), this feels like it's going
+    // to be a source of all sorts of horrible subtleties. Let's be crude for now and maybe refactor later.
+    fun setDataSetId(newDataSetId: Long?) {
+        dataSetId = newDataSetId
+        sharedPreferences.edit { putLong("selected_data_set_id", newDataSetId ?: -1) }
+    }
+
+    var itemId: Long? by remember {
+        mutableStateOf(sharedPreferences.getLong("selected_item_id", -1).takeIf { it != -1L })
+    }
+
+    fun setItemId(newItemId: Long?) {
+        itemId = newItemId
+        sharedPreferences.edit { putLong("selected_item_id", newItemId ?: -1) }
+    }
+
+    // TODO: I seem to be repeatedly told that the "elegant" way to do this is with a sealed class,
+    // but every time I try it appears to turn into a nightmare of complexity and nonsense AI
+    // advice. It may be worth coming back to this later with more experience under my belt, I don't
+    // think it should change the fundamental code structure.
+    val dataSetListRaw: List<DataSet>? by vm.getAllDataSets()
+        .collectAsStateWithLifecycle(initialValue = null)
+    /*
+    val dataSetListLoaded = dataSetListRaw != null
+    val dataSetList: List<DataSet> = if (dataSetListLoaded) dataSetListRaw!! else emptyList<DataSet>()
+    */
+    val dataSet = dataSetListRaw?.find { it.id == dataSetId }
+
+    /*
+    // If we have a known-invalid dataSetId, revert to nothing being selected.
+    if (dataSetListLoaded && dataSetList.none { it.id == dataSetId } ) {
+        setDataSetId(null)
+    }
+    */
+
+    // TODO: WIP NOTES AS I REFACTOR
+    // What do we *need* for this screen?
+    // - list of data set/source/item - these populate our drop downs
+    // - specific price record when we have all three of the above selected (subset of next item anyway)
+    // - all prices across sources when we have data set and product
+    //
+    // As a usability thing, we probably want to come back to the screen even after hours/days with
+    // *the same stuff* selected automatically. This probably gets stored in a shared preference or
+    // similar, *not* the database. Is this good/bad/neutral with our initial composition? As long
+    // as we don't actually crash if our assumptions are violated, we can probably reasonably assume
+    // that since only we change the database, any such saved values *are* still present in tbe db.
+
+    HomeScreenScaffold(vm, navController)
+}
+
+@Composable fun HomeScreenScaffold(vm: PriceTrackerViewModel, navController: NavHostController) {
     var menuExpanded by remember { mutableStateOf(false) }
+
+
+
+
     // TODONOW: I THINK IT MIGHT BE THESE NEXT TWO LINES AND THEIR MASSIVE HACK WHICH CAUSE PROBLEMS WHEN WE ARE RUN AND HAVE TO CREATE THE DB AS WE GO
     var selectedDataSetId: Long by remember { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, need to cope with null in some way probably
 
