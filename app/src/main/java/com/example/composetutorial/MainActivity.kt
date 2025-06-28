@@ -2048,7 +2048,7 @@ data class ParameterizedResult<T, P>(
 
 // TODO: THIS MAY ACTUALLY BE WORKING!
 // TODO: Perplexity+Grok magic
-fun <T, P> parameterizedFlow(
+fun <T, P> parameterizedFlow( // TODO: SWAP ARGUMENTS? (CAREFULLY)
     parameter: P,
     flowProvider: (P) -> Flow<T>,
 ): Flow<ParameterizedResult<T, P>> = flow {
@@ -2057,6 +2057,7 @@ fun <T, P> parameterizedFlow(
     }
 }
 
+// TODO: Perplexity magic
 @Composable
 fun <Param, T> collectParameterizedFlowWithLifecycle(
     parameter: Param,
@@ -2068,6 +2069,21 @@ fun <Param, T> collectParameterizedFlowWithLifecycle(
         initialValue = ParameterizedResult(initialValue, parameter)
     )
     return result
+}
+
+// TODO: My attempted magic
+@Composable
+fun <Param, T> collectFlowWithLifecycleAndReset(
+    flowProvider: (Param) -> Flow<List<T>>,
+    parameter: Param,
+    initialValue: List<T> = emptyList()
+): List<T> {
+    val parameterizedResult = collectParameterizedFlowWithLifecycle(flowProvider = flowProvider, parameter = parameter, initialValue = initialValue)
+    return if (parameterizedResult.parameter == parameter) {
+        parameterizedResult.data
+    } else {
+        initialValue
+    }
 }
 
 // TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
@@ -2110,11 +2126,15 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val resultX by itemsFlowX.collectAsStateWithLifecycle(initialValue = ParameterizedResult(emptyList(), TODOdataSetId))
     */
 
+    /*
     val resultX = collectParameterizedFlowWithLifecycle(
         parameter = TODOdataSetId,
         flowProvider = vm::getAllItems
     )
     Log.d("MyApp", "TODOPARAMLIST ${resultX.parameter} ${resultX.data}")
+    */
+    val resultX = collectFlowWithLifecycleAndReset(vm::getAllItems, TODOdataSetId)
+    Log.d("MyApp", "TODOPARAMLIST ${resultX}")
 
     val TODODEBUGITEMLISTRAW: List<Item> by vm.getAllItems(dataSetId ?: 3).collectAsStateWithLifecycle(initialValue = emptyList())
     val itemListRaw: List<Item>? by if (dataSetId != null) { vm.getAllItems(dataSetId!!).collectAsStateWithLifecycle(initialValue = null) } else { mutableStateOf(null) }
