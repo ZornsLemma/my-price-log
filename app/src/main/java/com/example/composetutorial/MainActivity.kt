@@ -2,6 +2,10 @@
 
 package com.example.composetutorial
 
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.compose.runtime.MutableState
 import java.time.Duration
 //import androidx.compose.foundation.layout.*
@@ -191,6 +195,7 @@ import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.log10
 import androidx.core.content.edit
+import androidx.datastore.preferences.core.edit
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
 // weight or volume. This is fundamental as we make no effort to convert between them using some
@@ -2044,35 +2049,50 @@ fun onProductSelected(newId: Long) {
 
 */
 
-// TODO: Sanity check the two hard-coded arguments here - this is LLM code
-@Composable
-fun getSharedPreferences(): SharedPreferences? = LocalContext.current.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+// TODO: Perplexity magic
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+val FIRST_LONG_KEY = longPreferencesKey("first_long")
+fun getFirstLong(context: Context): Flow<Long?> =
+    context.dataStore.data.map { prefs -> prefs[FIRST_LONG_KEY] }
+suspend fun saveFirstLong(context: Context, value: Long?) {
+    context.dataStore.edit { prefs ->
+        if (value != null) prefs[FIRST_LONG_KEY] = value else prefs.remove(FIRST_LONG_KEY)
+    }
+}
 
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
+    val coroutineScope = rememberCoroutineScope() // TODO MAGIC
+    val dataSetId by getFirstLong(LocalContext.current).collectAsStateWithLifecycle(initialValue = null)
+
     // We don't need rememberSaveable here because these are backed by SharedPreferences.
     // TODO: It is tempting to try to pull out the mild boilerplate here, but although an AI told
     // me I could do it with an *inline fun*, I am far from confident this is safe or reliable and
     // I'm getting confusing answers about whether remember has to be qualified with the key if we
     // pull this into a separate function. Maybe come back to this later, if only for educational
     // value.
+    /* TODO
     val TODO91 = LocalContext.current
     val TODO92 = TODO91.getSharedPreferences("prefs", Context.MODE_PRIVATE)
     val sharedPreferences2 = getSharedPreferences()
     val sharedPreferences = sharedPreferences2!!
-    var dataSetId: Long? by remember {
+    var dataSetIdTODOOLD: Long? by remember {
         mutableStateOf(sharedPreferences.getLong("selected_data_set_id", -1).takeIf { it != -1L })
     }
+    */
 
     // TODO: This feels like it ought to be something that can be wrapped up so dataSetId is a Long?-like value which
     // transparently reads/writes sharedPreferences but with caching so we don't call getLong() on every read. However,
     // especially with remember() in the mix (albeit we could arguably do without remember), this feels like it's going
     // to be a source of all sorts of horrible subtleties. Let's be crude for now and maybe refactor later.
-    fun setDataSetId(newDataSetId: Long?) {
-        dataSetId = newDataSetId
-        sharedPreferences.edit { putLong("selected_data_set_id", newDataSetId ?: -1) }
+    //@Composable // TODO!?
+    fun setDataSetId(context: Context, newDataSetId: Long?) {
+        coroutineScope.launch {
+            saveFirstLong(context, newDataSetId)
+        }
     }
 
+    /* TODO: Fighting with one data set preference is enough for now, let's just fake this
     var itemId: Long? by remember {
         mutableStateOf(sharedPreferences.getLong("selected_item_id", -1).takeIf { it != -1L })
     }
@@ -2081,6 +2101,8 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
         itemId = newItemId
         sharedPreferences.edit { putLong("selected_item_id", newItemId ?: -1) }
     }
+    */
+    var itemId: Long? = null
 
     // TODO: I seem to be repeatedly told that the "elegant" way to do this is with a sealed class,
     // but every time I try it appears to turn into a nightmare of complexity and nonsense AI

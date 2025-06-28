@@ -64,6 +64,7 @@ dependencies {
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.datastore.preferences)
     ksp(libs.room.compiler.ksp)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
