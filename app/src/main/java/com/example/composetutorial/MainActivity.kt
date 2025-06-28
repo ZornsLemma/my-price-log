@@ -2563,9 +2563,6 @@ fun MyDropdownMenuItem(
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 
     var menuExpanded by remember { mutableStateOf(false) }
-    var showEditDialog by rememberSaveable { mutableStateOf(false) }
-    val bringIntoViewRequester = remember { BringIntoViewRequester() }
-    val coroutineScope = rememberCoroutineScope()
     // TODONOW: I THINK IT MIGHT BE THESE NEXT TWO LINES AND THEIR MASSIVE HACK WHICH CAUSE PROBLEMS WHEN WE ARE RUN AND HAVE TO CREATE THE DB AS WE GO
     var selectedDataSetId: Long by remember { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, need to cope with null in some way probably
 
@@ -2627,26 +2624,6 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
                 onSelectedDataSetIdChange = { selectedDataSetId = it },
                 selectedProductId = selectedProductId,
                 onSelectedProductIdChange = { selectedProductId = it }) // TODO: rename this
-
-            /*
-        // TODO TEMP HACK FOR KEYBOARD/SCROLLING EXPERIMENTS
-        Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
-        var packSize by remember { mutableStateOf("123") }
-        TextField(
-            label = { Text("Pack size") },
-            value = packSize,
-            onValueChange = { packSize = it },
-            // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth().bringIntoViewRequester(bringIntoViewRequester)
-                .onFocusChanged {
-                    if (it.isFocused) {
-                        coroutineScope.launch {
-                            bringIntoViewRequester.bringIntoView()
-                        }
-                    }
-                })
-                */
 
             androidx.compose.foundation.layout.Spacer(
                 modifier = androidx.compose.ui.Modifier.height(
@@ -2736,27 +2713,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
             }
         }
     }
-
-    /* TODO
-    // MD3 spec sort of says that on Android we should be using an "expand" transition to
-    // show this dialog, but after much discussion with an AI (because I can't find any
-    // other source of advice), it might be better to slide in vertically from the bottom
-    // and then out the same way. We do this vertically not horizontally because it is a
-    // full screen dialog not a screen. TODO: I half wonder if I should try the expand.
-    // TODO: No idea what proper MD3 animations should be here, just trying to get this to work at all for now
-    // TODO: As the dialog will probably contain its own scaffold and topappbar, this animatedvisibility component should probably be outside our scaffold
-    // TODO: If this two-bool approach works, maybe switch to a three-state enum type thing
-    // TODO: https://github.com/JetBrains/compose-multiplatform/issues/4431
-    // https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ is linked to from issue 4431, suggesting it's "reputable"
-    AnimatedFullScreenDialog(visible = showEditDialog, onDismiss = { showEditDialog = false }) {
-                        OuterFullScreenDialog()
-                    } */
 }
-
-// https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/
-@ReadOnlyComposable
-@Composable
-fun getDialogWindow(): Window? = (LocalView.current.parent as? DialogWindowProvider)?.window
 
 
 @Composable
