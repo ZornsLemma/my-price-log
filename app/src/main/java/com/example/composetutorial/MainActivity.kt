@@ -2046,16 +2046,12 @@ data class ParameterizedResult<T, P>(
     val parameter: P
 )
 
-// TODO: THIS VERY NEARLY SEEMS TO KIND OF WORK, BUT IT MAY -OR IT MAY BE SOMETHING UNRELATED - CAUSE "ENDLESS" EMISSIONS WHEN THERE IS DATA. THIS MAY BE EASILY FIXABLE IF SO . I HAVE TO BREAK OFF FOR NOW.
+// TODO: THIS MAY ACTUALLY BE WORKING!
+// TODO: Perplexity+Grok magic
 fun <T, P> parameterizedFlow(
     parameter: P,
     flowProvider: (P) -> Flow<T>,
-    emitInitial: Boolean = true,
-    initialValue: T? = null
 ): Flow<ParameterizedResult<T, P>> = flow {
-    if (emitInitial && initialValue != null) {
-        emit(ParameterizedResult(initialValue, parameter))
-    }
     flowProvider(parameter).collect { data ->
         emit(ParameterizedResult(data, parameter))
     }
@@ -2096,8 +2092,6 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val itemsFlowX = parameterizedFlow(
         parameter = TODOdataSetId,
         flowProvider = { id -> vm.getAllItems(id) },
-        emitInitial = true,
-        initialValue = emptyList()
     )
     val resultX by itemsFlowX.collectAsStateWithLifecycle(initialValue = ParameterizedResult(emptyList(), TODOdataSetId))
     Log.d("MyApp", "TODOPARAMLIST ${resultX.parameter} ${resultX.data}")
