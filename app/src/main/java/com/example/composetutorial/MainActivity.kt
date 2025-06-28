@@ -2,10 +2,10 @@
 
 package com.example.composetutorial
 
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.compose.runtime.MutableState
 import java.time.Duration
 //import androidx.compose.foundation.layout.*
@@ -2051,21 +2051,21 @@ fun onProductSelected(newId: Long) {
 
 // TODO: Perplexity magic
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+val SELECTED_DATA_SET_ID_KEY = longPreferencesKey("selected_data_set_id")
 
-fun getLongPreference(context: Context, key: String): Flow<Long?> =
-    context.dataStore.data.map { prefs -> prefs[longPreferencesKey(key)] }
+fun <T> getPreference(context: Context, key: Preferences.Key<T>): Flow<T?> =
+    context.dataStore.data.map { prefs -> prefs[key] }
 
-suspend fun saveLongPreference(context: Context, key: String, value: Long?) {
+suspend fun <T> savePreference(context: Context, key: Preferences.Key<T>, value: T?) {
     context.dataStore.edit { prefs ->
-        val prefKey = longPreferencesKey(key)
-        if (value != null) prefs[prefKey] = value else prefs.remove(prefKey)
+        if (value != null) prefs[key] = value else prefs.remove(key)
     }
 }
 
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope() // TODO MAGIC
-    val dataSetId by getLongPreference(LocalContext.current, "selected_data_set_id").collectAsStateWithLifecycle(initialValue = null)
+    val dataSetId by getPreference(LocalContext.current, SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
 
     // We don't need rememberSaveable here because these are backed by SharedPreferences.
     // TODO: It is tempting to try to pull out the mild boilerplate here, but although an AI told
@@ -2090,7 +2090,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     //@Composable // TODO!?
     fun setDataSetId(context: Context, newDataSetId: Long?) {
         coroutineScope.launch {
-            saveLongPreference(context, "selected_data_set_id", newDataSetId)
+            savePreference(context, SELECTED_DATA_SET_ID_KEY, newDataSetId)
         }
     }
 
