@@ -99,6 +99,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SnackbarHost
@@ -1315,6 +1316,8 @@ val fullScreenDialogBorder = 24.dp // MD3 specification
 // TextField text with that. TODO: We could override it for that specific case and use 12.dp for
 // other menus?
 val menuLeftPadding = 16.dp
+// Seems best to make the right padding symmetrical.
+val menuRightPadding = menuLeftPadding
 
 
 // Start Grok chunk
@@ -2649,6 +2652,26 @@ fun AnimatedFullScreenDialog(
     }
 }
 
+// A simple wrapper around DropdownMenuItem applying MD3 formatting.
+// TODO: This isn't fully general as I don't want to add stuff that isn't going to get tested; I can
+// always expand it later.
+@Composable
+fun MyDropdownMenuItem(
+    text: @Composable () -> Unit,
+    onClick: () -> Unit,
+): Unit {
+    DropdownMenuItem(
+        text = {
+            ProvideTextStyle(MaterialTheme.typography.bodyLarge) {
+                // Default colour seems to be correct so don't fiddle with it.
+                text()
+            }
+        },
+        contentPadding = PaddingValues(start = menuLeftPadding, end = menuRightPadding),
+        onClick = onClick,
+    )
+}
+
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 
@@ -2683,14 +2706,14 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
                 DropdownMenu(
                     expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                     // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
-                    DropdownMenuItem(text = { Text("Edit product list") }, onClick = {
+                    MyDropdownMenuItem(text = { Text("Edit product list") }, onClick = {
                         menuExpanded = false
                         // Handle navigation or action
                     })
-                    DropdownMenuItem(text = { Text("Edit categories") }, onClick = {
+                    MyDropdownMenuItem(text = { Text("Edit categories") }, onClick = {
                         menuExpanded = false
                     })
-                    DropdownMenuItem(text = { Text("Settings") }, onClick = {
+                    MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
                         menuExpanded = false
                         navController.navigate("settings")
                     })
