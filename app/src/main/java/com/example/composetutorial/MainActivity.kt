@@ -1164,6 +1164,7 @@ fun MainScreen(
             getId = { it.id },
             getLabel = { it.name },
         )
+        // TODO: If we have no data sets, we should (analogous to how the source dropdown works) show a supportingText about selecting one *and hide the rest of the UI*. Nothing makes sense without a dataset, there is no way to pick a product or source. This probably means we need support from our parent (or this needs moving up into the parent) to do that.
 
         // Item selector
         TextField(
@@ -1657,13 +1658,9 @@ fun ItemSourceInfo(
     dataSet: DataSet,
     item: Item?,
 ) {
-    val selectedProductId = item?.id // TODO TEMP HACK FOR REFACTOR
-    Log.d("MyApp", "TODO0")
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
 
-    //var vm: PriceTrackerViewModel = viewModel()
     val selectedDataSetId = dataSet.id // TODO: maybe a temp hack?
-    Log.d("MyApp", "TODO1")
     val sources by vm.getAllSources(selectedDataSetId)
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
@@ -1671,8 +1668,6 @@ fun ItemSourceInfo(
     // rather ugly artefact as the card below this one animates down "as if" this card is expanding, although I don't see any visual
     // effect of this card itself expanding. Need to investigate.
     var selectedSourceId: Long? by rememberSaveable { mutableStateOf(null) }
-    Log.d("MyApp", "TODO2")
-    //val sources = listOf("None", "Tesco", "Asda", "Sainsbury's Local", "Iceland")
     // TODO: Will we have a free-form text field on item-at-source? For eg things like noting the specific product to help find it again.
     // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective, it's not as if the offer duration is usually clearly stated, free text note probably can be used for this among other things
     // TODO: Should we show free-form text or special offer information here?
@@ -1692,8 +1687,8 @@ fun ItemSourceInfo(
                 .animateContentSize()
                 .padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)
         ) {
-            Log.d("MyApp", "TODO3")
             // TODO: We need to allow this to be set to empty/None by the user - how best to do that? And if it is empty, we need to collapse all the stuff below it and replace it with a brief instructional string roughly "Select a store to see and edit product details" - check the ChatGPT discussion I saved for some wording
+            val haveItemAndSource = item != null && selectedSourceId != null
             MyExposedDropdownMenuBox(
                 modifier = Modifier
                     .padding(bottom = 8.dp)
@@ -1701,22 +1696,19 @@ fun ItemSourceInfo(
                 selectedId = selectedSourceId,
                 onValueChange = { selectedSourceId = it },
                 label = { Text("Source") },
-                supportingText = if (selectedSourceId != null) null else {
-                    { Text("Select a source to view or change the price there") }
+                supportingText = if (haveItemAndSource) null else {
+                    { Text("Select a product and source to view or change the price there") } // TODO: poor wording
                 },
                 items = sources,
                 getId = { it.id },
                 getLabel = { it.name },
             )
-            Log.d("MyApp", "TODO4")
-            if (selectedSourceId != null) {
-                // TODO: DEFAULTING TO PRODUCT ID 1 IS A MASSIVE HACK BUT I DON'T WANT TO GET SIDETRACKED THINKING ABOUT NULL CASE RIGHT NOW
+            if (haveItemAndSource) {
                 val priceList by vm.getNicePriceForProductAndStore(
                     dataSetId = selectedDataSetId,
-                    productId = if (selectedProductId == null) 1 else selectedProductId,
+                    productId = item!!.id,
                     storeId = selectedSourceId!!
                 ).collectAsStateWithLifecycle(initialValue = emptyList())
-                Log.d("MyApp", "Recomposed with priceList: $priceList")
                 devCheck(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
 
                 if (priceList.isEmpty()) {
@@ -1841,7 +1833,7 @@ fun ItemSourceInfo(
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             FilledTonalButton(
-                                onClick = { navController.navigate("fullScreenDialog/$selectedDataSetId/$selectedProductId/$selectedSourceId/${UUID.randomUUID()}") },
+                                onClick = { navController.navigate("fullScreenDialog/$selectedDataSetId/$item.id/$selectedSourceId/${UUID.randomUUID()}") },
                                 shape = MaterialTheme.shapes.small
                             ) {
                                 Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
@@ -2148,20 +2140,12 @@ fun HomeScreenScaffold(
             )
 
             val dataSetListNullable = dataSetList // TODO TEMP INTERMEDIATE?
-            Log.d("Myapp", "BeforeItemSourceInfo0a")
-            // TODO: HACK - we should probably be pulling this kind of mandatory non-null data out in one place, showing "Loading
-            // TODO: Note that we must check size > 0 here to cope with the case where we don't have any data sets (e.g. on
-            // first install when the database is being populated by a txn which may not have finished yet). In general there is
-            // an awful lot of hackery in this area (because I was learning as I wrote the code) and we need to be better about
-            // this sort of thing.
             if (dataSet != null) {
-                ItemSourceInfo( // TODO: COMMENTING OUT THIS FIXES THE CRASH ON FIRS RUN AFTER DELETE AND REINSTALL
+                ItemSourceInfo(
                     vm = vm,
                     navController = navController,
                     dataSet = dataSet,
                     item = item,
-                    // selectedDataSetId = selectedDataSetId,
-                    // selectedProductId = selectedProductId
                 )
             }
 
