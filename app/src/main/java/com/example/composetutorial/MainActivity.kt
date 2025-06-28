@@ -1853,7 +1853,13 @@ fun ItemSourceInfo(
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             FilledTonalButton(
-                                onClick = { navController.navigate("fullScreenDialog/${dataSet.id}/${item.id}/${source.id}}/${UUID.randomUUID()}") },
+                                // TODO: I accidentally wrote a double "}}" at the end of"${source.id}" and it triggered a strict mode
+                                // violation. Turning strict mode penaltyDeath off showed a simple NumberFormatException, I fixed the
+                                // problem and strict mode penaltyDeath no longer crashes. This is a bit worrying - I do not understand
+                                // why this could ever cause a strict mode failure. But there doesn't seem to be much I can do about
+                                // it right now. The NumberFormatException was not AFAICS present in logcat on the run where
+                                // penaltyDeath killed it.
+                                onClick = { navController.navigate("fullScreenDialog/${dataSet.id}/${item.id}/${source.id}/${UUID.randomUUID()}") },
                                 shape = MaterialTheme.shapes.small
                             ) {
                                 Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
