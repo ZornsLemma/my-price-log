@@ -1201,7 +1201,7 @@ fun MainScreen(
             selectedId = selectedDataSetId,
             onValueChange = { onSelectedDataSetIdChange(it) },
             label = { Text("Category") },
-            items = itemList ?: emptyList(),
+            items = dataSetList ?: emptyList(),
             getId = { it.id },
             getLabel = { it.name },
         )
@@ -2091,6 +2091,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     HomeScreenScaffold(
         vm, navController, dataSet, dataSetListRaw, onSelectedDataSetIdChange = {
             coroutineScope.launch { // TODO: can I use viewmodel's scope?! should I? would it help?
+                // TODO: If this *has* changed (the user hasn't reselected the same ID) there might be value in setting the product/source to null - not sure
                 savePreference(context, SELECTED_DATA_SET_ID_KEY, it)
             }
         },
