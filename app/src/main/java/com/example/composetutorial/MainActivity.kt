@@ -1213,6 +1213,7 @@ val fullScreenDialogBorder = 24.dp // MD3 specification
 // TextField text with that. TODO: We could override it for that specific case and use 12.dp for
 // other menus?
 val menuLeftPadding = 16.dp
+
 // Seems best to make the right padding symmetrical.
 val menuRightPadding = menuLeftPadding
 
@@ -1414,67 +1415,67 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
 
     }
 
-        /* TODO OLD CODE REF
-    // TODO: rememberSaveable()? a dark mode toddle will lose expanded otherwise
-    var expanded by remember { mutableStateOf(false) }/*
-    val focusedColor   = MaterialTheme.colorScheme.error
-    val unfocusedColor = MaterialTheme.colorScheme.tertiary //     onSurfaceVariant
-    var indicatorColor by remember { mutableStateOf(unfocusedColor) } // TODO: ALL THIS STUFF ISN'T WORKING, I SUSPECT THE *FOCUS* ISN'T HITTING THE CONTROL AS IT'S DISABLED, BUT *SOMETHING* IS HITTING IT AND TOGGLING ITS COLOUR BUT IT ISN'T THIS, NOT SURE
-    */
-    var textFieldWidth by remember { mutableStateOf(0) }
-    val itemMap =
-        items.associateBy { getId(it) } // TODO: inefficient? should we make caller supply use with this so viewmodel can be caching it?
-    val PULLEDOUT: String = if (selectedId == null) "" else {
-        val item = itemMap[selectedId]
-        if (item != null) getLabel(item) else "Invalid ID $selectedId"
-    }
-    Box(modifier = modifier) {
-        TextField(
-            value = PULLEDOUT,
-            onValueChange = { /* No-op, handled by dropdown */ },
-            label = label,
-            supportingText = supportingText,
-            readOnly = true,
-            enabled = false, // TODO HACK
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Expand",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    /* TODO modifier = Modifier.rotate(if (expanded) 180f else 0f) */
+    /* TODO OLD CODE REF
+// TODO: rememberSaveable()? a dark mode toddle will lose expanded otherwise
+var expanded by remember { mutableStateOf(false) }/*
+val focusedColor   = MaterialTheme.colorScheme.error
+val unfocusedColor = MaterialTheme.colorScheme.tertiary //     onSurfaceVariant
+var indicatorColor by remember { mutableStateOf(unfocusedColor) } // TODO: ALL THIS STUFF ISN'T WORKING, I SUSPECT THE *FOCUS* ISN'T HITTING THE CONTROL AS IT'S DISABLED, BUT *SOMETHING* IS HITTING IT AND TOGGLING ITS COLOUR BUT IT ISN'T THIS, NOT SURE
+*/
+var textFieldWidth by remember { mutableStateOf(0) }
+val itemMap =
+    items.associateBy { getId(it) } // TODO: inefficient? should we make caller supply use with this so viewmodel can be caching it?
+val PULLEDOUT: String = if (selectedId == null) "" else {
+    val item = itemMap[selectedId]
+    if (item != null) getLabel(item) else "Invalid ID $selectedId"
+}
+Box(modifier = modifier) {
+    TextField(
+        value = PULLEDOUT,
+        onValueChange = { /* No-op, handled by dropdown */ },
+        label = label,
+        supportingText = supportingText,
+        readOnly = true,
+        enabled = false, // TODO HACK
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.ArrowDropDown,
+                contentDescription = "Expand",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                /* TODO modifier = Modifier.rotate(if (expanded) 180f else 0f) */
+            )
+        },
+        modifier = Modifier
+            .clickable { Log.d("MyApp", "CATCLICK"); expanded = true }
+            //.onFocusChanged { Log.d("MyApp", if (it.isFocused) "Foc" else "Unfoc"); indicatorColor = if (it.isFocused) focusedColor else unfocusedColor  }
+            .fillMaxWidth()
+            .onGloballyPositioned { coordinates -> textFieldWidth = coordinates.size.width },/* colors = TextFieldDefaults.colors(
+        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+        focusedContainerColor = MaterialTheme.colorScheme.surface
+    ) */
+        colors = myTextFieldColors()
+    )
+    DropdownMenu(
+        modifier = Modifier
+            .width(with(LocalDensity.current) { textFieldWidth.toDp() })
+            .background(MaterialTheme.colorScheme.surfaceContainer), // TODO: REDUNDANT?
+        expanded = expanded, onDismissRequest = { expanded = false }) {
+        items.forEach { item ->
+            // TODO: THE TEXT IN THIS DROPDOWN DOESN'T LEFT-ALIGN WITH THE PARENT TEXTFIELD
+            DropdownMenuItem(text = {
+                Text(
+                    getLabel(item),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-            },
-            modifier = Modifier
-                .clickable { Log.d("MyApp", "CATCLICK"); expanded = true }
-                //.onFocusChanged { Log.d("MyApp", if (it.isFocused) "Foc" else "Unfoc"); indicatorColor = if (it.isFocused) focusedColor else unfocusedColor  }
-                .fillMaxWidth()
-                .onGloballyPositioned { coordinates -> textFieldWidth = coordinates.size.width },/* colors = TextFieldDefaults.colors(
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            focusedContainerColor = MaterialTheme.colorScheme.surface
-        ) */
-            colors = myTextFieldColors()
-        )
-        DropdownMenu(
-            modifier = Modifier
-                .width(with(LocalDensity.current) { textFieldWidth.toDp() })
-                .background(MaterialTheme.colorScheme.surfaceContainer), // TODO: REDUNDANT?
-            expanded = expanded, onDismissRequest = { expanded = false }) {
-            items.forEach { item ->
-                // TODO: THE TEXT IN THIS DROPDOWN DOESN'T LEFT-ALIGN WITH THE PARENT TEXTFIELD
-                DropdownMenuItem(text = {
-                    Text(
-                        getLabel(item),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }, contentPadding = PaddingValues(start = 16.dp), onClick = {
-                    onValueChange(getId(item))
-                    expanded = false
-                })
-            }
+            }, contentPadding = PaddingValues(start = 16.dp), onClick = {
+                onValueChange(getId(item))
+                expanded = false
+            })
         }
     }
-    */
+}
+*/
 }
 
 // End Grok chunk
@@ -1614,7 +1615,7 @@ fun unitPriceDenominatorCandidates(
 // TODO: RENAME THIS? "friendlyUnitPrice"???
 data class UnitPrice(val numerator: Double, val denominator: MeasureUnit)
 
-fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUnit) : UnitPrice =
+fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUnit): UnitPrice =
     UnitPrice(amount / measure.asValue(denominator), denominator)
 
 fun getFriendlyUnitPrice(
@@ -1657,7 +1658,8 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet): String {
 // item. However, this appears to be ninja-grade level development and I tried tweaking multiple
 // AI-suggested solutions and got nothing but crashes.
 @Composable
-fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
+fun <T, ID : Comparable<ID>> ItemWithDropdown(
+    // TODO: RENAME?
     modifier: Modifier = Modifier,
     dropdownModifier: Modifier = Modifier, // TODO: OK!?
     selectedId: ID?,
@@ -1671,7 +1673,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
     // TODO: rememberSaveable? A simple dark mode toggle could lose this otherwise.
     var expanded by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.clickable { expanded = true },) {
+    Box(modifier = modifier.clickable { expanded = true }) {
         content()
 
         var previousItem: T? = null
@@ -1683,8 +1685,12 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown( // TODO: RENAME?
                 // We could make the first argument of getDividerBetween take null and call it every
                 // time, but I'm fairly sure it makes no sense to have a divider at the very top
                 // of the menu anyway.
-                if (previousItem != null && getDividerBetween?.invoke(previousItem!!, item) == true) {
-                    HorizontalDivider(modifier = Modifier.padding(vertical=8.dp))
+                if (previousItem != null && getDividerBetween?.invoke(
+                        previousItem!!,
+                        item
+                    ) == true
+                ) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 }
                 previousItem = item
 
@@ -1720,13 +1726,14 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     val fontSize = MaterialTheme.typography.bodyLarge.fontSize
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
 
-    ItemWithDropdown(selectedId = selectedId,
+    ItemWithDropdown(
+        selectedId = selectedId,
         onValueChange = onValueChange,
         items = items,
         getId = getId,
         getLabel = getLabel,
         getDividerBetween = getDividerBetween,
-        ) {
+    ) {
         LabeledItem(label = label) {
             Row() {
                 // TODO: FWIW a quick discussion with ChatGPT suggests it is
@@ -1872,7 +1879,11 @@ fun ItemSourceInfo(
 
                         // TODO: It might be more elegant if the parent could pass us a Product and we use the quantity type off that, but except for minor recomposition efficiency concerns, this doesn't matter - the quantity type is absolutely fixed wherever it comes from (units can change, not the quantity type)
                         // TODO: I suspect relevantUnitList can and should be using remember but let's not worry about efficiency right now
-                        val relevantUnitList = getRelevantMeasureUnits(dataSet, priceList[0].originalUnit.quantityType, includeDisplayOnly = true)
+                        val relevantUnitList = getRelevantMeasureUnits(
+                            dataSet,
+                            priceList[0].originalUnit.quantityType,
+                            includeDisplayOnly = true
+                        )
                         // var items = MeasureUnit.entries.filter { true }
                         var todoSelected by rememberSaveable(dataSet, priceList) {
                             val ur = getSiblingMeasureUnits(
@@ -1889,16 +1900,28 @@ fun ItemSourceInfo(
                             mutableStateOf(up.denominator)
                         }
                         // TODO: If the user selects "g" for a product sold in relative bulk, the standard decimal places on the currency is a bit misleading. This isn't a bug as such, but can/should we try to increase the decimal places on the currency in this case? Does the stanmdard formatting stuff we are using have any concept of "not a shelf price so smaller fractions make sense than usual"? Maybe at the very least we should always round prices *up* when showing with official dp - although we are not doing the conversion ourselves, maybe the standard function has an option to do this?
-                        val unitPriceString = formatUnitPrice(getUnitPrice(priceList[0].price, priceList[0].measure, todoSelected), dataSet)
-                        LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price", text = unitPriceString,
+                        val unitPriceString = formatUnitPrice(
+                            getUnitPrice(
+                                priceList[0].price,
+                                priceList[0].measure,
+                                todoSelected
+                            ), dataSet
+                        )
+                        LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price",
+                            text = unitPriceString,
                             //  TODO: Mixed feelings about the "/" prefix in this menu.
-                            items = relevantUnitList, getId = { it }, getLabel = { "/${it.symbol}" },
+                            items = relevantUnitList,
+                            getId = { it },
+                            getLabel = { "/${it.symbol}" },
                             getDividerBetween = { previousItem, item ->
-                                var previousItemUnitFamily = previousItem.unitFamilies.intersect(relevantUnitFamilies)
-                                var itemUnitFamily         =         item.unitFamilies.intersect(relevantUnitFamilies)
-                                previousItemUnitFamily != itemUnitFamily },
+                                var previousItemUnitFamily =
+                                    previousItem.unitFamilies.intersect(relevantUnitFamilies)
+                                var itemUnitFamily =
+                                    item.unitFamilies.intersect(relevantUnitFamilies)
+                                previousItemUnitFamily != itemUnitFamily
+                            },
                             selectedId = todoSelected,
-                            onValueChange = { todoSelected = it } )
+                            onValueChange = { todoSelected = it })
 
                     }
                     // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
@@ -2563,26 +2586,26 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
         topBar = {
             TopAppBar(
                 title = { Text("My App Name Here") }, actions = {
-                IconButton(onClick = { menuExpanded = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                }
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                    }
 
-                DropdownMenu(
-                    expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                    // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
-                    MyDropdownMenuItem(text = { Text("Edit product list") }, onClick = {
-                        menuExpanded = false
-                        // Handle navigation or action
-                    })
-                    MyDropdownMenuItem(text = { Text("Edit categories") }, onClick = {
-                        menuExpanded = false
-                    })
-                    MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
-                        menuExpanded = false
-                        navController.navigate("settings")
-                    })
-                }
-            },
+                    DropdownMenu(
+                        expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
+                        MyDropdownMenuItem(text = { Text("Edit product list") }, onClick = {
+                            menuExpanded = false
+                            // Handle navigation or action
+                        })
+                        MyDropdownMenuItem(text = { Text("Edit categories") }, onClick = {
+                            menuExpanded = false
+                        })
+                        MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
+                            menuExpanded = false
+                            navController.navigate("settings")
+                        })
+                    }
+                },
                 modifier = Modifier.background(MaterialTheme.colorScheme.surface /* TODO? */)
             )
         },
@@ -3321,8 +3344,8 @@ fun AppNavigation() {
             }) {
             SettingsScreen(navController)
         }
-        composable("fullScreenDialog/{dataSetId}/{productId}/{storeId}/{randomUUID}"
-            , enterTransition = {
+        composable(
+            "fullScreenDialog/{dataSetId}/{productId}/{storeId}/{randomUUID}", enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Up,
 
