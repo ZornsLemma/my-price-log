@@ -2064,6 +2064,7 @@ suspend fun <T> savePreference(context: Context, key: Preferences.Key<T>, value:
 
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope() // TODO MAGIC
     val dataSetId by getPreference(LocalContext.current, SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
 
@@ -2137,10 +2138,10 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // as we don't actually crash if our assumptions are violated, we can probably reasonably assume
     // that since only we change the database, any such saved values *are* still present in tbe db.
 
-    HomeScreenScaffold(vm, navController, dataSet, dataSetListRaw)
+    HomeScreenScaffold(vm, navController, dataSet, dataSetListRaw, onSelectedDataSetIdChange = { setDataSetId(context, it) /* TODO JUST INLINE THIS */ })
 }
 
-@Composable fun HomeScreenScaffold(vm: PriceTrackerViewModel, navController: NavHostController, dataSet: DataSet?, dataSetList: List<DataSet>?) {
+@Composable fun HomeScreenScaffold(vm: PriceTrackerViewModel, navController: NavHostController, dataSet: DataSet?, dataSetList: List<DataSet>?, onSelectedDataSetIdChange: (Long) -> Unit) {
     var menuExpanded by remember { mutableStateOf(false) }
 
 
@@ -2205,7 +2206,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
                 vm = vm,
                 dataSet = dataSet,
                 dataSetList = dataSetList,
-                onSelectedDataSetIdChange = { /* TODO PROB NEED TO FORWARD TO PARENT!? selectedDataSetId = it */},
+                onSelectedDataSetIdChange = onSelectedDataSetIdChange,
                 selectedProductId = selectedProductId,
                 onSelectedProductIdChange = { selectedProductId = it }) // TODO: rename this
 
