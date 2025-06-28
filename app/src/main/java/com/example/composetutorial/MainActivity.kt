@@ -1172,9 +1172,10 @@ val menuRightPadding = menuLeftPadding
 @Composable
 fun MainScreen(
     vm: PriceTrackerViewModel, dataSet: DataSet?, dataSetList: List<DataSet>?, onSelectedDataSetIdChange: (Long) -> Unit,
-    selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Unit
+    item: Item?, onSelectedProductIdChange: (Long) -> Unit
 ) {
     val selectedDataSetId = dataSet?.id // TODO SEMI TEMP HACK WHILE REFACTORING
+    val selectedProductId = item?.id // TODO DITTO
     /* TODO TEMP TEST CODE FOR MEASUREDVALUE
     val foo = MeasuredValue(5.0, MeasureUnit.KG)
     val bar = MeasuredValue(2.3, MeasureUnit.ML)
@@ -1711,12 +1712,14 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 @Preview(showBackground = true)
 @Composable
 // TODO: Arguably we should have selected{DataSet,Product}Id not allow nulls here - our parent should just not be composing us if these are not set
+// TODO: This should probably work with no selected item and it should show itself but with the variant supporting text "choose a product and store to..."
 fun ItemSourceInfo(
     vm: PriceTrackerViewModel,
     navController: NavHostController,
     dataSet: DataSet,
-    selectedProductId: Long?
+    item: Item?,
 ) {
+    val selectedProductId = item?.id // TODO TEMP HACK FOR REFACTOR
     Log.d("MyApp", "TODO0")
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
 
@@ -2053,6 +2056,7 @@ fun onProductSelected(newId: Long) {
 // TODO: The amount of having to explicitly specify coroutinescopes and contexts in order to be able to run these functions is utterly batshit insane.
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 val SELECTED_DATA_SET_ID_KEY = longPreferencesKey("selected_data_set_id")
+val SELECTED_ITEM_ID_KEY = longPreferencesKey( "selected_item_id")
 
 fun <T> getPreference(context: Context, key: Preferences.Key<T>): Flow<T?> =
     context.dataStore.data.map { prefs -> prefs[key] }
@@ -2068,45 +2072,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope() // TODO MAGIC
     val dataSetId by getPreference(context, SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
-
-    // We don't need rememberSaveable here because these are backed by SharedPreferences.
-    // TODO: It is tempting to try to pull out the mild boilerplate here, but although an AI told
-    // me I could do it with an *inline fun*, I am far from confident this is safe or reliable and
-    // I'm getting confusing answers about whether remember has to be qualified with the key if we
-    // pull this into a separate function. Maybe come back to this later, if only for educational
-    // value.
-    /* TODO
-    val TODO91 = LocalContext.current
-    val TODO92 = TODO91.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-    val sharedPreferences2 = getSharedPreferences()
-    val sharedPreferences = sharedPreferences2!!
-    var dataSetIdTODOOLD: Long? by remember {
-        mutableStateOf(sharedPreferences.getLong("selected_data_set_id", -1).takeIf { it != -1L })
-    }
-    */
-
-    // TODO: This feels like it ought to be something that can be wrapped up so dataSetId is a Long?-like value which
-    // transparently reads/writes sharedPreferences but with caching so we don't call getLong() on every read. However,
-    // especially with remember() in the mix (albeit we could arguably do without remember), this feels like it's going
-    // to be a source of all sorts of horrible subtleties. Let's be crude for now and maybe refactor later.
-    //@Composable // TODO!?
-    fun setDataSetId(context: Context, newDataSetId: Long?) {
-        coroutineScope.launch {
-            savePreference(context, SELECTED_DATA_SET_ID_KEY, newDataSetId)
-        }
-    }
-
-    /* TODO: Fighting with one data set preference is enough for now, let's just fake this
-    var itemId: Long? by remember {
-        mutableStateOf(sharedPreferences.getLong("selected_item_id", -1).takeIf { it != -1L })
-    }
-
-    fun setItemId(newItemId: Long?) {
-        itemId = newItemId
-        sharedPreferences.edit { putLong("selected_item_id", newItemId ?: -1) }
-    }
-    */
-    var itemId: Long? = null
+    val itemId by getPreference(context, SELECTED_ITEM_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
 
     // TODO: I seem to be repeatedly told that the "elegant" way to do this is with a sealed class,
     // but every time I try it appears to turn into a nightmare of complexity and nonsense AI
@@ -2127,6 +2093,9 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     }
     */
 
+    val itemListRaw: List<Item>? by if (dataSetId != null) { vm.getAllItems(dataSetId!!).collectAsStateWithLifecycle(initialValue = null) } else { mutableStateOf(null) }
+    val item = itemListRaw?.find { it.id == itemId }
+
     // TODO: WIP NOTES AS I REFACTOR
     // What do we *need* for this screen?
     // - list of data set/source/item - these populate our drop downs
@@ -2139,16 +2108,27 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // as we don't actually crash if our assumptions are violated, we can probably reasonably assume
     // that since only we change the database, any such saved values *are* still present in tbe db.
 
-    HomeScreenScaffold(vm, navController, dataSet, dataSetListRaw, onSelectedDataSetIdChange = {
-        coroutineScope.launch { // TODO: can I use viewmodel's scope?! should I? would it help?
-            savePreference(context, SELECTED_DATA_SET_ID_KEY, it)
-        }
-    }
+    HomeScreenScaffold(
+        vm, navController, dataSet, dataSetListRaw, onSelectedDataSetIdChange = {
+            coroutineScope.launch { // TODO: can I use viewmodel's scope?! should I? would it help?
+                savePreference(context, SELECTED_DATA_SET_ID_KEY, it)
+            }
+        },
+        item, itemListRaw
     )
 
 }
 
-@Composable fun HomeScreenScaffold(vm: PriceTrackerViewModel, navController: NavHostController, dataSet: DataSet?, dataSetList: List<DataSet>?, onSelectedDataSetIdChange: (Long) -> Unit) {
+@Composable
+fun HomeScreenScaffold(
+    vm: PriceTrackerViewModel,
+    navController: NavHostController,
+    dataSet: DataSet?,
+    dataSetList: List<DataSet>?,
+    onSelectedDataSetIdChange: (Long) -> Unit,
+    item: Item?,
+    itemList: List<Item>?,
+) {
     var menuExpanded by remember { mutableStateOf(false) }
 
 
@@ -2157,7 +2137,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // TODONOW: I THINK IT MIGHT BE THESE NEXT TWO LINES AND THEIR MASSIVE HACK WHICH CAUSE PROBLEMS WHEN WE ARE RUN AND HAVE TO CREATE THE DB AS WE GO
     // var selectedDataSetId: Long by remember { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, need to cope with null in some way probably
 
-    var selectedProductId: Long by rememberSaveable { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, we need a genuine ID from somewhere and/or support for null
+    //var selectedProductId: Long by rememberSaveable { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, we need a genuine ID from somewhere and/or support for null
 
 
     // TODO: I added this Surface by analogy with the one in SettingsScreen, but it appears to have
@@ -2214,8 +2194,8 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
                 dataSet = dataSet,
                 dataSetList = dataSetList,
                 onSelectedDataSetIdChange = onSelectedDataSetIdChange,
-                selectedProductId = selectedProductId,
-                onSelectedProductIdChange = { selectedProductId = it }) // TODO: rename this
+                item = item,
+                onSelectedProductIdChange = { /* TODO PASS UP selectedProductId = it */ }) // TODO: rename this
 
             androidx.compose.foundation.layout.Spacer(
                 modifier = androidx.compose.ui.Modifier.height(
@@ -2235,8 +2215,9 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
                     vm = vm,
                     navController = navController,
                     dataSet = dataSet,
+                    item = item,
                     // selectedDataSetId = selectedDataSetId,
-                    selectedProductId = selectedProductId
+                    // selectedProductId = selectedProductId
                 )
             }
 
