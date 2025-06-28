@@ -1176,14 +1176,7 @@ fun MainScreen(
 ) {
     val selectedDataSetId = dataSet?.id // TODO SEMI TEMP HACK WHILE REFACTORING
     val selectedProductId = item?.id // TODO DITTO
-    /* TODO TEMP TEST CODE FOR MEASUREDVALUE
-    val foo = MeasuredValue(5.0, MeasureUnit.KG)
-    val bar = MeasuredValue(2.3, MeasureUnit.ML)
-    val quux = bar.to(MeasureUnit.FLOZ)
-    Log.d("MyApp", quux.toString())
-    var baz = foo + bar
-    Log.d("MyApp", baz.toString())
-    */
+
     // TODO: Note that because category and product use a TextField, they have the (I think) nice
     // property that the label expands into a sort of big hint when they are empty. We should
     // probably take advantage of this where having them empty makes sense - and it probably does
@@ -1194,24 +1187,6 @@ fun MainScreen(
     //val categories = listOf("Demo", "Groceries (home)", "Groceries (Manchester)")
     //val products = listOf("Beans", "Milk", "Bread", "Chicken" /* ... */)
     var searchQuery by remember { mutableStateOf("") }
-
-    // TODO: I suspect in general (not just here) I should be passing viewmodel *into* these functions rather than getting it from "global", to allow for dependency injection. but in practice it wouldn't be hard to rework this after and i am not sure this ui stuff is testable - I really don't know how it works.
-    //var vm: PriceTrackerViewModel = viewModel()
-    //val categories by vm.getAllDataSets().collectAsStateWithLifecycle(initialValue = emptyList())
-    /*
-    val products by if (selectedDataSetId != null) {
-        vm.getAllItems(selectedDataSetId!!).collectAsStateWithLifecycle(initialValue = emptyList())
-    } else {
-        flowOf(emptyList<Item>()).collectAsStateWithLifecycle(initialValue = emptyList())
-    }*/
-    val products = itemList ?: emptyList() // TODO: TEMP HACK DURING REFACTOR
-    /*
-    val productMap by if (selectedDataSetId != null) {
-        vm.getItemMap(selectedDataSetId!!).collectAsStateWithLifecycle(initialValue = emptyMap())
-    } else {
-        flowOf(emptyMap<Long, Item>()).collectAsStateWithLifecycle(initialValue = emptyMap())
-    }
-    */
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -1274,15 +1249,16 @@ fun MainScreen(
                             )
                         })
                     LazyColumn {
-                        items(products.filter {
+                        val itemListNonNull = itemList ?: emptyList()
+                        items(itemListNonNull.filter {
                             it.name.contains(searchQuery, ignoreCase = true)
-                        }) { product ->
+                        }) { listItem ->
                             ListItem(
-                                headlineContent = { Text(product.name) },
+                                headlineContent = { Text(listItem.name) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        onSelectedProductIdChange(product.id)
+                                        onSelectedProductIdChange(listItem.id)
                                         showProductSheet = false
                                     })
                         }
@@ -2879,3 +2855,12 @@ inline fun devCheck(condition: Boolean, lazyMessage: () -> String) {
 // TODO: Technically this should throw IllegalArgumentException but I don't care. Using the two names allows me to preserve the distinction in the code FWIW but without duplicating the body of devCheck.
 inline fun devRequire(condition: Boolean, lazyMessage: () -> String) =
     devCheck(condition, lazyMessage)
+
+/* TODO TEMP TEST CODE FOR MEASUREDVALUE
+val foo = MeasuredValue(5.0, MeasureUnit.KG)
+val bar = MeasuredValue(2.3, MeasureUnit.ML)
+val quux = bar.to(MeasureUnit.FLOZ)
+Log.d("MyApp", quux.toString())
+var baz = foo + bar
+Log.d("MyApp", baz.toString())
+*/
