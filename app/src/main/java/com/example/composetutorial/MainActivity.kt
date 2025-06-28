@@ -1660,8 +1660,7 @@ fun ItemSourceInfo(
 ) {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
 
-    val selectedDataSetId = dataSet.id // TODO: maybe a temp hack?
-    val sources by vm.getAllSources(selectedDataSetId)
+    val sources by vm.getAllSources(dataSet.id)
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
     // TODO: It might just be the emulator, but right now when the settings screen slides out if source was non-null when we entered settings, there is a visible and
@@ -1705,7 +1704,7 @@ fun ItemSourceInfo(
             )
             if (haveItemAndSource) {
                 val priceList by vm.getNicePriceForProductAndStore(
-                    dataSetId = selectedDataSetId,
+                    dataSetId = dataSet.id,
                     productId = item!!.id,
                     storeId = selectedSourceId!!
                 ).collectAsStateWithLifecycle(initialValue = emptyList())
@@ -1833,7 +1832,7 @@ fun ItemSourceInfo(
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             FilledTonalButton(
-                                onClick = { navController.navigate("fullScreenDialog/$selectedDataSetId/$item.id/$selectedSourceId/${UUID.randomUUID()}") },
+                                onClick = { navController.navigate("fullScreenDialog/${dataSet.id}/${item.id}/$selectedSourceId/${UUID.randomUUID()}") },
                                 shape = MaterialTheme.shapes.small
                             ) {
                                 Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
