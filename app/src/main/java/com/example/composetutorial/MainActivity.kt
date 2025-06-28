@@ -1657,18 +1657,15 @@ fun ItemSourceInfo(
     navController: NavHostController,
     dataSet: DataSet,
     item: Item?,
-    sourceList: List<Source>?
+    source: Source?,
+    sourceList: List<Source>?,
+    onSelectedSourceIdChange: (Long) -> Unit
 ) {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
-
-    /*
-    val sources by vm.getAllSources(dataSet.id)
-        .collectAsStateWithLifecycle(initialValue = emptyList()) */
 
     // TODO: It might just be the emulator, but right now when the settings screen slides out if source was non-null when we entered settings, there is a visible and
     // rather ugly artefact as the card below this one animates down "as if" this card is expanding, although I don't see any visual
     // effect of this card itself expanding. Need to investigate.
-    var selectedSourceId: Long? by rememberSaveable { mutableStateOf(null) }
     // TODO: Will we have a free-form text field on item-at-source? For eg things like noting the specific product to help find it again.
     // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective, it's not as if the offer duration is usually clearly stated, free text note probably can be used for this among other things
     // TODO: Should we show free-form text or special offer information here?
@@ -1689,13 +1686,13 @@ fun ItemSourceInfo(
                 .padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)
         ) {
             // TODO: We need to allow this to be set to empty/None by the user - how best to do that? And if it is empty, we need to collapse all the stuff below it and replace it with a brief instructional string roughly "Select a store to see and edit product details" - check the ChatGPT discussion I saved for some wording
-            val haveItemAndSource = item != null && selectedSourceId != null
+            val haveItemAndSource = item != null && source != null
             MyExposedDropdownMenuBox(
                 modifier = Modifier
                     .padding(bottom = 8.dp)
                     .fillMaxWidth(),
-                selectedId = selectedSourceId,
-                onValueChange = { selectedSourceId = it },
+                selectedId = source?.id,
+                onValueChange = onSelectedSourceIdChange,
                 label = { Text("Source") },
                 supportingText = if (haveItemAndSource) null else {
                     { Text("Select a product and source to view or change the price there") } // TODO: poor wording
@@ -1708,7 +1705,7 @@ fun ItemSourceInfo(
                 val priceList by vm.getNicePriceForProductAndStore(
                     dataSetId = dataSet.id,
                     productId = item!!.id,
-                    storeId = selectedSourceId!!
+                    storeId = source!!.id
                 ).collectAsStateWithLifecycle(initialValue = emptyList())
                 devCheck(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
 
@@ -1834,7 +1831,7 @@ fun ItemSourceInfo(
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             FilledTonalButton(
-                                onClick = { navController.navigate("fullScreenDialog/${dataSet.id}/${item.id}/$selectedSourceId/${UUID.randomUUID()}") },
+                                onClick = { navController.navigate("fullScreenDialog/${dataSet.id}/${item.id}/${source.id}}/${UUID.randomUUID()}") },
                                 shape = MaterialTheme.shapes.small
                             ) {
                                 Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
@@ -1988,6 +1985,7 @@ fun onProductSelected(newId: Long) {
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 val SELECTED_DATA_SET_ID_KEY = longPreferencesKey("selected_data_set_id")
 val SELECTED_ITEM_ID_KEY = longPreferencesKey( "selected_item_id")
+val SELECTED_SOURCE_ID_KEY = longPreferencesKey( "selected_source_id")
 
 fun <T> getPreference(context: Context, key: Preferences.Key<T>): Flow<T?> =
     context.dataStore.data.map { prefs -> prefs[key] }
@@ -2005,6 +2003,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val coroutineScope = rememberCoroutineScope() // TODO MAGIC
     val dataSetId by getPreference(context, SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
     val itemId by getPreference(context, SELECTED_ITEM_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
+    val sourceId by getPreference(context, SELECTED_SOURCE_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
 
 
     // TODO: I seem to be repeatedly told that the "elegant" way to do this is with a sealed class,
@@ -2030,6 +2029,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val item = itemListRaw?.find { it.id == itemId }
 
     val sourceListRaw: List<Source>? by if (dataSetId != null) { vm.getAllSources(dataSetId!!).collectAsStateWithLifecycle(initialValue = null) } else { mutableStateOf( null ) }
+    val source = sourceListRaw?.find { it.id == sourceId }
 
     // TODO: WIP NOTES AS I REFACTOR
     // What do we *need* for this screen?
@@ -2055,7 +2055,13 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
                 savePreference(context, SELECTED_ITEM_ID_KEY, it)
             }
         },
-        sourceListRaw
+        source,
+        sourceListRaw,
+        onSelectedSourceIdChange = {
+            coroutineScope.launch {
+                savePreference(context, SELECTED_SOURCE_ID_KEY, it)
+            }
+        }
     )
 
 }
@@ -2070,7 +2076,9 @@ fun HomeScreenScaffold(
     item: Item?,
     itemList: List<Item>?,
     onSelectedItemIdChange: (Long) -> Unit,
-    sourceListRaw: List<Source>?
+    source: Source?,
+    sourceListRaw: List<Source>?,
+    onSelectedSourceIdChange: (Long) -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -2153,7 +2161,9 @@ fun HomeScreenScaffold(
                     navController = navController,
                     dataSet = dataSet,
                     item = item,
+                    source = source,
                     sourceList = sourceListRaw,
+                    onSelectedSourceIdChange = onSelectedSourceIdChange
                 )
             }
 
