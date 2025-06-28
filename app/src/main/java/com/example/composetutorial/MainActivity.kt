@@ -556,6 +556,8 @@ interface PriceTrackerRepository {
         storeId: Long
     ): Flow<List<Price>>
 
+    fun getNicePricesForItem(dataSetId: Long, itemId: Long): Flow<List<NicePrice>>
+
     fun getNicePriceForProductAndStore(
         dataSetId: Long,
         productId: Long,
@@ -598,7 +600,14 @@ class PriceTrackerRepositoryImpl(
         storeId: Long
     ): Flow<List<Price>> = priceDao.getPriceForProductAndStore(dataSetId, productId, storeId)
 
+    override fun getNicePricesForItem(dataSetId: Long, itemId: Long): Flow<List<NicePrice>> =
+        priceDao.getPriceWithItemForItem(dataSetId= dataSetId, itemId = itemId)
+            .map { list -> list.map { it.toDomain() } }
+
+
+
     // TODO: Some ChatGPT magic here, though I am mostly understanding
+    // TODO: Use of this function *may* be a red flag now, since I suspect our caller will have data for all stores via getNicePricesForItem
     override fun getNicePriceForProductAndStore(
         dataSetId: Long,
         productId: Long,
@@ -987,6 +996,12 @@ interface PriceDao {
         storeId: Long
     ): Flow<List<Price>>
 
+    @Query("SELECT price.*, item.quantity_type FROM price JOIN item ON price.item_id = item.id WHERE price.data_set_id = :dataSetId AND price.item_id = :itemId")
+    fun getPriceWithItemForItem(
+        dataSetId: Long,
+        itemId: Long,
+    ): Flow<List<PriceWithItem>>
+
     @Query("SELECT price.*, item.quantity_type FROM price JOIN item ON price.item_id = item.id WHERE price.data_set_id = :dataSetId AND price.item_id = :productId AND price.source_id = :storeId")
     fun getPriceWithItemForProductAndStore(
         dataSetId: Long,
@@ -1072,6 +1087,10 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             priceTrackerRepository.getPriceForProductAndStore(dataSetId, productId, storeId)
         return priceForProductAndStore
     }
+
+    fun getNicePricesForItem(
+        dataSetId: Long,
+        itemId: Long): Flow<List<NicePrice>> = priceTrackerRepository.getNicePricesForItem(dataSetId = dataSetId, itemId = itemId)
 
     fun getNicePriceForProductAndStore(
         dataSetId: Long,
@@ -1659,7 +1678,8 @@ fun ItemSourceInfo(
     item: Item?,
     source: Source?,
     sourceList: List<Source>?,
-    onSelectedSourceIdChange: (Long) -> Unit
+    onSelectedSourceIdChange: (Long) -> Unit,
+    itemPriceList: List<NicePrice>?,
 ) {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
 
@@ -1702,18 +1722,20 @@ fun ItemSourceInfo(
                 getLabel = { it.name },
             )
             if (haveItemAndSource) {
+                /*
                 val priceList by vm.getNicePriceForProductAndStore(
                     dataSetId = dataSet.id,
                     productId = item!!.id,
                     storeId = source!!.id
                 ).collectAsStateWithLifecycle(initialValue = emptyList())
-                devCheck(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
+                */
+                val priceList = itemPriceList?.filter { it.sourceId == source!!.id }
 
-                if (priceList.isEmpty()) {
-                    // TODO: Very quick hack
-                    Text("TODO: No price, do something useful here")
+                if (priceList.isNullOrEmpty()) {
+                    // TODO: Very quick hack - remember if it matters (not decided what we ought to do) we can distinguish "still loading" or "loaded but not data" via nullness of itemPriceList
+                    Text("TODO: No price, do something useful here - this may be transient during db load or it may reflect reality")
                 } else {
-
+                    devCheck(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
 
                     Row(
                         modifier = Modifier
@@ -2004,7 +2026,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val dataSetId by getPreference(context, SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
     val itemId by getPreference(context, SELECTED_ITEM_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
     val sourceId by getPreference(context, SELECTED_SOURCE_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
-
+    // TODO: This code is a bit inconsistent about fooId vs foo.Id - it *probably* doesn't matter in practice, but we should be clear and consistent.
 
     // TODO: I seem to be repeatedly told that the "elegant" way to do this is with a sealed class,
     // but every time I try it appears to turn into a nightmare of complexity and nonsense AI
@@ -2030,6 +2052,13 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 
     val sourceListRaw: List<Source>? by if (dataSetId != null) { vm.getAllSources(dataSetId!!).collectAsStateWithLifecycle(initialValue = null) } else { mutableStateOf( null ) }
     val source = sourceListRaw?.find { it.id == sourceId }
+
+    val itemPriceListRaw: List<NicePrice>? by if (dataSetId != null && item?.id != null) {
+        vm.getNicePricesForItem(dataSetId = dataSetId!!, itemId = item.id)
+            .collectAsStateWithLifecycle(initialValue = null)
+    } else {
+        mutableStateOf(null)
+    }
 
     // TODO: WIP NOTES AS I REFACTOR
     // What do we *need* for this screen?
@@ -2061,7 +2090,8 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
             coroutineScope.launch {
                 savePreference(context, SELECTED_SOURCE_ID_KEY, it)
             }
-        }
+        },
+        itemPriceListRaw
     )
 
 }
@@ -2079,6 +2109,7 @@ fun HomeScreenScaffold(
     source: Source?,
     sourceListRaw: List<Source>?,
     onSelectedSourceIdChange: (Long) -> Unit,
+    itemPriceListRaw: List<NicePrice>?
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -2163,7 +2194,8 @@ fun HomeScreenScaffold(
                     item = item,
                     source = source,
                     sourceList = sourceListRaw,
-                    onSelectedSourceIdChange = onSelectedSourceIdChange
+                    onSelectedSourceIdChange = onSelectedSourceIdChange,
+                    itemPriceList = itemPriceListRaw,
                 )
             }
 
