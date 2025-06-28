@@ -1996,197 +1996,6 @@ private fun Context.getActivityWindow(): Window? {
     return null
 }
 
-// TODO: ChatGPT magic plus my hackery to fix bugs
-// TODO: Even if this seems OK and I decide to keep/use it, giving it a thorough manual code review alongside https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ would likely be a good idea.
-// TODO: I got Grok to do a code review on this. Frankly it seemed to miss the point somewhat but it made some comments that *might* be relevant, so probably ought to go over its feedback again once I have studied this code and tried to simplify (if possible) the state handling, which may well be over-complex as a result of ChatGPT and/or my incompetence and/or an interaction between the two. (grok-full-screen-dialog-code-review-iffy...)
-// TODO: It might of course be worth asking ChatGPT to do a code review, especially if it approaches the code "fresh" (tell it Grok wrote it) it might find problems
-// TODO: Perplexity.ai says "9. Focus Management
-//
-//    Focus Trap:
-//    Platform dialogs trap focus within themselves; your implementation does not.
-//    Landmine: If your dialog contains text fields or focusable elements, users could tab out of the dialog into the underlying screen. Consider using FocusRequester to ensure initial focus, and possibly a custom focus trap if accessibility is a concern."
-// I am not sure if this is a problem, using the cursor keys to move round doesn't seem to obviously be moving off the dialog (but it is very primitive), but pressing the tab key does seem to "lose" focus for a while, which suggests it might be floating behind. May be worth looking into this and/or asking ChatGPT for advice/tweaks on this.
-// TODO: o4-mini says: Definitive Bugs / Behavioral Surprises
-//– pointerInput( Unit ) {} does not actually consume all touches.
-//• You’ve seen that it blocks clicks “often,” but on a lot of devices / Compose versions touches will actually fall through.
-//• If you want to fully block taps behind your “dialog,” you need something like:
-//
-//kotlin
-//
-//.pointerInput(Unit) {
-//  awaitPointerEventScope {
-//    while (true) {
-//      // we just loop forever, consuming every event
-//      awaitPointerEvent()
-//    }
-//  }
-//}
-// • Alternatively, a zero‐visual Modifier.clickable(...) with indication = null + interactionSource = remember { MutableInteractionSource() } will also reliably eat taps.
-//
-//– zIndex might not be high enough in more complex layouts.
-//
-// • As soon as your dialog appears, you should move focus into it.
-//
-//• You can call bringIntoViewRequester on a known focusable, or use a FocusRequester on your first input or button inside.
-// • You have .semantics { dialog() } which is great. You should also move accessibility focus into your dialog container when it opens, which you can do with LaunchedEffect(visible) { focusManager.moveFocus(FocusDirection.In) }.
-//
-//– WindowInsets stacking
-//
-//• Chaining .windowInsetsPadding(WindowInsets.systemBars) and .windowInsetsPadding(WindowInsets.ime) will add navBar/inset space twice in overlapping areas (e.g. bottom).
-//• A better pattern is:
-//
-//kotlin     val combined = WindowInsets.systemBars.union(WindowInsets.ime)     Modifier.windowInsetsPadding(combined)
-//
-//    Nice-to-Haves / Hardening
-//    – BackHandler placement
-//    • You register the BackHandler only when isComposed. That’s correct, but if you inverted your AnimatedVisibility logic you could move it inside your AnimatedVisibility block so you don’t have to manage isComposed at all.
-
-// This is a mash-up of some ChatGPT-written code with
-// https://www.sinasamaki.com/custom-dialog-animation-in-jetpack-compose/ and some of my own
-// tweaking and experience from earlier implementation efforts, plus trying to investigate and
-// address points raised by code reviews from all the AIs I could get my hands on. It attempts to be
-// an MD3-compliant implementation of a full-screen dialog box, including animation (sliding in
-// vertically to distinguish it from a full-fledged screen which slides in horizontally). Note that
-// it does *not* use the standard Dialog class - I was ultimately advised not to use this and to try
-// to take care of things myself. If I remember correctly, using Dialog caused weird colour changes
-// on the status bar and although I could have hacked around that further, I decided to take
-// ChatGPT's advice and sample code and get rid of Dialog. It feels like MD3-compliant full-screen
-// dialogs on Android are a black art. I would have preferred not to take so much AI advice but I
-// really struggled to find any concrete, recent human-written advice - the amount of blogs turning
-// up in web searches which are probably just AI slop doesn't help, of course. I am concerned there
-// will be a lingering landmine here ("this crashes if you have an Android 10 device with a hardware
-// keyboard attached and use D-pad navigation during the exit animation") but I can only hope most
-// cases are covered. The AI code reviews certainly raised some things (like focus trapping in a
-// dialog) that I might have missed otherwise.
-@Composable
-fun AnimatedFullScreenDialog(
-    visible: Boolean,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-    enterDurationMillis: Int = 300,
-    exitDurationMillis: Int = 250, // was 300,
-    content: @Composable () -> Unit
-) {
-    // The parent holds the source of truth for whether the dialog is visible or not across things
-    // like rotations. We just need to be aware that we may be visible on our first composition in
-    // that case, so we must initialise visibleState using visible and not hard-code it to false.
-    // (We don't want the dialog to animate in if it is visible on first composition.)
-    var visibleState = remember { MutableTransitionState(visible) }
-    visibleState.targetState = visible
-
-    // The actual content needs to be present in the compose tree during enter and exit animations
-    // as well as (obviously) when it is supposed to be visible. The only time we don't need it is
-    // if we are idling in the non-visible state.
-    if (visibleState.currentState || visibleState.targetState) {
-        Dialog(
-            onDismissRequest = onDismiss, properties = DialogProperties(
-                usePlatformDefaultWidth = false, // Makes dialog full-width
-                decorFitsSystemWindows = false, // TODO: to make imepadding work!?
-                /* TODO!? Probably not needed now
-                dismissOnBackPress = true, // Handles back button
-                dismissOnClickOutside = true // Allows dismissal by clicking outside
-                */
-            )
-        ) {
-// Get the view to manage insets
-            val view = LocalView.current
-            LaunchedEffect(view) {
-                // Get the Activity and its Window
-                val activity = view.context as? android.app.Activity
-                activity?.window?.let { window ->
-                    // Ensure content is drawn behind system bars
-                    WindowCompat.setDecorFitsSystemWindows(window, false)
-                    ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
-                        // Consume system insets to prevent automatic adjustments
-                        WindowInsetsCompat.Builder(insets).setInsets(
-                            WindowInsetsCompat.Type.systemBars(),
-                            Insets.NONE
-                        ) // Use androidx.core.graphics.Insets
-                            .build()
-                    }
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .consumeWindowInsets(WindowInsets.ime)
-                    .windowInsetsPadding(WindowInsets.systemBars)
-            ) {
-                // Get the window to control system bars
-                val dialogWindow = (LocalView.current.parent as? DialogWindowProvider)?.window
-                val activityWindow = LocalView.current.context.getActivityWindow()
-
-                // Without the code in this SideEffect block, the Dialog appears to effectively invert
-                // the status bar colours. This is readable but looks ugly for our full screen dialog.
-                SideEffect {
-                    dialogWindow?.let { window ->
-                        // Disable the dialog scrim; we don't want this for our full screen dialog,
-                        // especially since we are sliding it in from the bottom and having the screen
-                        // go dim first looks ugly.
-                        window.setDimAmount(0f)
-
-                        // Absolute Grok (I think?) voodoo which avoids the status bar (at the top of
-                        // the screen) going white-on-white as a result of the previous line disabling
-                        // the scrim.
-                        activityWindow?.let { actWindow ->
-                            // Copy activity window flags for consistent behavior
-                            window.setFlags(
-                                actWindow.attributes.flags, actWindow.attributes.flags
-                            )
-                            // Use WindowCompat for system bar transparency and cutout support
-                            WindowCompat.setDecorFitsSystemWindows(window, false)
-                            // Match system bar appearance (light/dark icons) to activity
-                            val controller =
-                                WindowCompat.getInsetsController(window, window.decorView)
-                            val activityController =
-                                WindowCompat.getInsetsController(actWindow, actWindow.decorView)
-                            controller.isAppearanceLightStatusBars =
-                                activityController.isAppearanceLightStatusBars
-                            controller.isAppearanceLightNavigationBars =
-                                activityController.isAppearanceLightNavigationBars
-                        }
-                    }
-                }
-
-                // Animate visibility for dialog content sliding vertically
-                AnimatedVisibility(
-                    visibleState, enter = slideInVertically(
-                        animationSpec = tween(
-                            durationMillis = enterDurationMillis, easing = LinearOutSlowInEasing
-                        ), initialOffsetY = { fullHeight -> fullHeight } // Slide from bottom
-                    ) + fadeIn(
-                        animationSpec = tween(
-                            durationMillis = enterDurationMillis, easing = LinearOutSlowInEasing
-                        )
-                    ), exit = slideOutVertically(
-                        animationSpec = tween(
-                            durationMillis = exitDurationMillis, easing = FastOutLinearInEasing
-                        ), targetOffsetY = { fullHeight -> fullHeight } // Exit to bottom
-                    ) + fadeOut(
-                        animationSpec = tween(
-                            durationMillis = exitDurationMillis, easing = FastOutLinearInEasing
-                        )
-                    ),
-
-                    modifier = modifier.fillMaxSize()/* TODO!? These were probably added when we were trying to emulate Dialog and we may well not need them now we *are* using Dialog, but I'll keep them around just in case for a bit
-                        // Handle system bars & keyboard insets
-                        // .consumeWindowInsets(WindowInsets.systemBars) - probably don't need this, but it will not prevent insets from propagating, whether that is a bad thing or not is utterly beyond me of course - but hey, full screen dialogs are advanced ninja-level magic
-                        .windowInsetsPadding(WindowInsets.systemBars)
-                        .windowInsetsPadding(WindowInsets.ime)
-                        */) {
-                    // The actual dialog content container (can be Scaffold, etc)
-                    Surface(
-                        color = MaterialTheme.colorScheme.background,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        content()
-                    }
-                }
-            }
-        }
-    }
-}
 
 // A simple wrapper around DropdownMenuItem applying MD3 formatting.
 // TODO: This isn't fully general as I don't want to add stuff that isn't going to get tested; I can
@@ -2776,88 +2585,7 @@ class MainActivity : ComponentActivity() {
                         AppNavigation()
                     }
                 }
-            }/* TODO
-            // 1) Set up NavController
-            val navController = rememberNavController()
-            // 2) Observe the current entry; this is a State<NavBackStackEntry?>.
-            //    Any time you navigate, Compose will recompose here.
-            // TODO: This back stack stuff works *BUT* it is probably wrong, because in order to get
-            // decent animation appearance I probably need TopAppBar to be part of each individual Screen composable,
-            // *not* a single shared TopAppBar which is context-sensitive.
-            val currentBackStackEntry by navController.currentBackStackEntryAsState()
-            val currentDestination = currentBackStackEntry?.destination?.route
-            val showBackButton = currentDestination != "todorenameme"
-            val title = when (currentDestination) {
-                "todorenameme" -> "My App Name Here"
-                "settings" -> "Settings"
-                else -> "MISSING TITLE"
             }
-
-
-            var menuExpanded by remember { mutableStateOf(false) }
-            val focusManager = LocalFocusManager.current
-            //val navBackStackEntry by navController.currentBackStackEntryAsState()
-            //val canNavigateBack = navBackStackEntry?.previousBackStackEntry != null
-            Box(Modifier.safeDrawingPadding()) {
-                ComposeTutorialTheme(/* darkTheme = isDarkTheme */) {
-                    Scaffold(
-                        modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars),
-                        // TODO: Probably need to apply MD colors to topBar, just poss also font size but it may default to something sensible
-                        topBar = {
-                            TopAppBar(title = { Text(title) }, navigationIcon = {
-                                // TODO: This is absolute 4o-mini voodoo, but it does seem to work,
-                                // unlike just about every other solution I found on the web or which
-                                // an AI gave me. Note that we also probably actually need to change the title according to the activity. I do wonder if I'm doing something massively wrong. One random code sample I saw on the web actually changed the TopAppBar each time.
-                                if (showBackButton) {
-                                    IconButton(onClick = { navController.navigateUp() }) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                            contentDescription = "Back"
-                                        )
-                                    }
-                                }
-                            }, actions = {
-                                IconButton(onClick = { menuExpanded = true }) {
-                                    Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                                }
-
-                                DropdownMenu(
-                                    expanded = menuExpanded,
-                                    onDismissRequest = { menuExpanded = false }) {
-                                    // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
-                                    DropdownMenuItem(
-                                        text = { Text("Edit product list") },
-                                        onClick = {
-                                            menuExpanded = false
-                                            // Handle navigation or action
-                                        })
-                                    DropdownMenuItem(
-                                        text = { Text("Edit categories") },
-                                        onClick = {
-                                            menuExpanded = false
-                                        })
-                                    DropdownMenuItem(text = { Text("Settings") }, onClick = {
-                                        menuExpanded = false
-                                        navController.navigate("settings")
-                                    })
-                                }
-
-                            })
-                        }) { innerPadding ->
-                        NavHost(
-                            navController = navController,
-                            startDestination = "todorenameme",
-                            modifier = Modifier.padding(innerPadding)
-                        ) {
-                            composable("todorenameme") { TodoRenameMe(navController) }
-                            composable(
-                                "settings",
-                                enterTransition = { slideInHorizontally(initialOffsetX = { fullWidth -> fullWidth }) },
-                                exitTransition = { slideOutHorizontally(targetOffsetX = { fullWidth -> fullWidth }) }) { SettingsScreen(navController) }
-                        }
-                    }
-                }
-            }*/
         }
     }
 }
@@ -2882,31 +2610,6 @@ fun AppNavigation() {
             "home",
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
-            /*
-            enterTransition = {
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(700)
-                )
-            },
-            exitTransition = {
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(700)
-                )
-            },
-            popEnterTransition = {
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(700)
-                )
-            },
-            popExitTransition = {
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(700)
-                )
-            } */
         ) {
             HomeScreen(vm, navController)
         }
@@ -2925,20 +2628,7 @@ fun AppNavigation() {
                     ),
                 )
 
-            },/* TODO This is probably not used as this is a "leaf" screen
-            exitTransition = {
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                    animationSpec = tween(2000)
-                )
             },
-            popEnterTransition = {
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(2000)
-                )
-            },
-            */
             popExitTransition = {
                 slideOutOfContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Right,
@@ -2984,11 +2674,6 @@ fun AppNavigation() {
         }
     }
 }
-
-// TODO: ChatGPT-inspired (and maybe do my own searches too) libraries that may solve the ComboBox issue:
-// https://github.com/Breens-Mbaka/Searchable-Dropdown-Menu-Jetpack-Compose
-// https://composablehorizons.github.io/ComposeTheme/
-// https://github.com/szeweq/desktopose combo-box (last commit three years ago though, but maybe it's perfect...)
 
 // TODO: ~/pc-sync/ai-chat-misc-to-move/grok-combo-box-and-alternate-ui.txt is a potentially
 // valuable discussion, touching on some implementation ideas, design ideas (small tweaks and
