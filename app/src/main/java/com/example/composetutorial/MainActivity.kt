@@ -2048,8 +2048,8 @@ fun onProductSelected(newId: Long) {
 }
 
 */
-
 // TODO: Perplexity magic
+// TODO: The amount of having to explicitly specify coroutinescopes and contexts in order to be able to run these functions is utterly batshit insane.
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 val SELECTED_DATA_SET_ID_KEY = longPreferencesKey("selected_data_set_id")
 
@@ -2066,7 +2066,7 @@ suspend fun <T> savePreference(context: Context, key: Preferences.Key<T>, value:
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope() // TODO MAGIC
-    val dataSetId by getPreference(LocalContext.current, SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
+    val dataSetId by getPreference(context, SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
 
     // We don't need rememberSaveable here because these are backed by SharedPreferences.
     // TODO: It is tempting to try to pull out the mild boilerplate here, but although an AI told
@@ -2138,7 +2138,13 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // as we don't actually crash if our assumptions are violated, we can probably reasonably assume
     // that since only we change the database, any such saved values *are* still present in tbe db.
 
-    HomeScreenScaffold(vm, navController, dataSet, dataSetListRaw, onSelectedDataSetIdChange = { setDataSetId(context, it) /* TODO JUST INLINE THIS */ })
+    HomeScreenScaffold(vm, navController, dataSet, dataSetListRaw, onSelectedDataSetIdChange = {
+        coroutineScope.launch { // TODO: can I use viewmodel's scope?! should I? would it help?
+            savePreference(context, SELECTED_DATA_SET_ID_KEY, it)
+        }
+    }
+    )
+
 }
 
 @Composable fun HomeScreenScaffold(vm: PriceTrackerViewModel, navController: NavHostController, dataSet: DataSet?, dataSetList: List<DataSet>?, onSelectedDataSetIdChange: (Long) -> Unit) {
