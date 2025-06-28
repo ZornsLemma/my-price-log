@@ -1043,6 +1043,7 @@ class SingleEventState<T>(initialState: T) {
     }
 }
 
+// TODO: Should things in here be "val dataSets: Flow<List<DataSet>> = repository.getAllDataSets()" rather than "getAllDataSets()" functions?
 class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository) :
     ViewModel() {
 
@@ -1067,7 +1068,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             list.associateBy { it.id }
         }
 
-    val categories: Flow<List<DataSet>> = priceTrackerRepository.getAllDataSets()
+    // TODO: DELETE val categories: Flow<List<DataSet>> = priceTrackerRepository.getAllDataSets()
 
     init {
         Log.d("MyApp", "PriceTrackerViewModel created: $this")
@@ -1160,11 +1161,14 @@ val menuRightPadding = menuLeftPadding
 
 
 // Start Grok chunk
+// TODO: This may *not* want to take the viewmodel eventually once refactoring done?
+// TODO: RENAME THIS IF IT SURVIVES REFACTORING
 @Composable
 fun MainScreen(
-    vm: PriceTrackerViewModel, selectedDataSetId: Long?, onSelectedDataSetIdChange: (Long) -> Unit,
+    vm: PriceTrackerViewModel, dataSet: DataSet?, dataSetList: List<DataSet>?, onSelectedDataSetIdChange: (Long) -> Unit,
     selectedProductId: Long?, onSelectedProductIdChange: (Long) -> Unit
 ) {
+    val selectedDataSetId = dataSet?.id // TODO SEMI TEMP HACK WHILE REFACTORING
     /* TODO TEMP TEST CODE FOR MEASUREDVALUE
     val foo = MeasuredValue(5.0, MeasureUnit.KG)
     val bar = MeasuredValue(2.3, MeasureUnit.ML)
@@ -1186,7 +1190,7 @@ fun MainScreen(
 
     // TODO: I suspect in general (not just here) I should be passing viewmodel *into* these functions rather than getting it from "global", to allow for dependency injection. but in practice it wouldn't be hard to rework this after and i am not sure this ui stuff is testable - I really don't know how it works.
     //var vm: PriceTrackerViewModel = viewModel()
-    val categories by vm.categories.collectAsStateWithLifecycle(initialValue = emptyList())
+    val categories by vm.getAllDataSets().collectAsStateWithLifecycle(initialValue = emptyList())
     val products by if (selectedDataSetId != null) {
         vm.getAllItems(selectedDataSetId!!).collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
@@ -2042,7 +2046,7 @@ fun onProductSelected(newId: Long) {
 
 // TODO: Sanity check the two hard-coded arguments here - this is LLM code
 @Composable
-fun getSharedPreferences() = LocalContext.current.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+fun getSharedPreferences(): SharedPreferences? = LocalContext.current.getSharedPreferences("prefs", Context.MODE_PRIVATE)
 
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
@@ -2052,7 +2056,10 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // I'm getting confusing answers about whether remember has to be qualified with the key if we
     // pull this into a separate function. Maybe come back to this later, if only for educational
     // value.
-    val sharedPreferences = getSharedPreferences()
+    val TODO91 = LocalContext.current
+    val TODO92 = TODO91.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+    val sharedPreferences2 = getSharedPreferences()
+    val sharedPreferences = sharedPreferences2!!
     var dataSetId: Long? by remember {
         mutableStateOf(sharedPreferences.getLong("selected_data_set_id", -1).takeIf { it != -1L })
     }
@@ -2106,17 +2113,17 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // as we don't actually crash if our assumptions are violated, we can probably reasonably assume
     // that since only we change the database, any such saved values *are* still present in tbe db.
 
-    HomeScreenScaffold(vm, navController)
+    HomeScreenScaffold(vm, navController, dataSet, dataSetListRaw)
 }
 
-@Composable fun HomeScreenScaffold(vm: PriceTrackerViewModel, navController: NavHostController) {
+@Composable fun HomeScreenScaffold(vm: PriceTrackerViewModel, navController: NavHostController, dataSet: DataSet?, dataSetList: List<DataSet>?) {
     var menuExpanded by remember { mutableStateOf(false) }
 
 
 
 
     // TODONOW: I THINK IT MIGHT BE THESE NEXT TWO LINES AND THEIR MASSIVE HACK WHICH CAUSE PROBLEMS WHEN WE ARE RUN AND HAVE TO CREATE THE DB AS WE GO
-    var selectedDataSetId: Long by remember { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, need to cope with null in some way probably
+    // var selectedDataSetId: Long by remember { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, need to cope with null in some way probably
 
     var selectedProductId: Long by rememberSaveable { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, we need a genuine ID from somewhere and/or support for null
 
@@ -2172,8 +2179,9 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 
             MainScreen(
                 vm = vm,
-                selectedDataSetId = selectedDataSetId,
-                onSelectedDataSetIdChange = { selectedDataSetId = it },
+                dataSet = dataSet,
+                dataSetList = dataSetList,
+                onSelectedDataSetIdChange = { /* TODO PROB NEED TO FORWARD TO PARENT!? selectedDataSetId = it */},
                 selectedProductId = selectedProductId,
                 onSelectedProductIdChange = { selectedProductId = it }) // TODO: rename this
 
@@ -2183,35 +2191,22 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
                 )
             )
 
-            Log.d("Myapp", "BeforeItemSourceInfo0")
-            val dataSetListNullable by vm.getDataSet(selectedDataSetId)
-                .collectAsStateWithLifecycle(initialValue = null)
+            val dataSetListNullable = dataSetList // TODO TEMP INTERMEDIATE?
             Log.d("Myapp", "BeforeItemSourceInfo0a")
             // TODO: HACK - we should probably be pulling this kind of mandatory non-null data out in one place, showing "Loading
             // TODO: Note that we must check size > 0 here to cope with the case where we don't have any data sets (e.g. on
             // first install when the database is being populated by a txn which may not have finished yet). In general there is
             // an awful lot of hackery in this area (because I was learning as I wrote the code) and we need to be better about
             // this sort of thing.
-            if (dataSetListNullable != null && dataSetListNullable!!.size > 0) {
-                Log.d("Myapp", "BeforeItemSourceInfo0b")
-                val dataSetList = dataSetListNullable!!
-                Log.d("Myapp", "BeforeItemSourceInfo0c")
-                devCheck(dataSetList.size == 1) { "Expected one data set with ID $selectedDataSetId but got ${dataSetList.size}" }
-
-                Log.d("Myapp", "BeforeItemSourceInfo0d")
-
-                Log.d("Myapp", "BeforeItemSourceInfo")
+            if (dataSet != null) {
                 ItemSourceInfo( // TODO: COMMENTING OUT THIS FIXES THE CRASH ON FIRS RUN AFTER DELETE AND REINSTALL
                     vm = vm,
                     navController = navController,
-                    dataSet = dataSetList[0],
+                    dataSet = dataSet,
                     // selectedDataSetId = selectedDataSetId,
                     selectedProductId = selectedProductId
                 )
-                Log.d("Myapp", "AfterItemSourceInfo")
-
             }
-            Log.d("Myapp", "AfterItemSourceInfo1")
 
             androidx.compose.foundation.layout.Spacer(
                 modifier = androidx.compose.ui.Modifier.height(
