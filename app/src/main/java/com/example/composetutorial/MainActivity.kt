@@ -771,6 +771,9 @@ class MyApplication : Application() {
 // database, which I will retrofit later. I have no idea if the code is actually correct, although
 // it seems simple enough that I don't think it hides too many nasty surprises.
 
+// TODO: The database inspector used to show the quantity_type as a string but it seems to have
+// stopped working. Not sure why and not the end of the world, but would be nice if that would work
+// again.
 class Converters {
     // TODO: Grok magic, although it seems logical enough - but read up
     @TypeConverter
