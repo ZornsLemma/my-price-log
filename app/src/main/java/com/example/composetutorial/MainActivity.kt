@@ -1841,15 +1841,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        /*
-            Text("£2.30/")
-
-            Text(
-                text = currentUnit,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                // modifier = Modifier.alignBy(LastBaseline)
-            )*/
+                        // TODO: I am starting to wonder if this down arrow should be vertically centred wrt the textfield as a whole (including its label-above) not just the text, despite working very hard to get it to be lined up with just the "text content" before - probably arguments both ways, but think about it
                         Text(text)
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
