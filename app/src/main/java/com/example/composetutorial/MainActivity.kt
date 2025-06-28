@@ -1198,16 +1198,20 @@ fun MainScreen(
     // TODO: I suspect in general (not just here) I should be passing viewmodel *into* these functions rather than getting it from "global", to allow for dependency injection. but in practice it wouldn't be hard to rework this after and i am not sure this ui stuff is testable - I really don't know how it works.
     //var vm: PriceTrackerViewModel = viewModel()
     //val categories by vm.getAllDataSets().collectAsStateWithLifecycle(initialValue = emptyList())
+    /*
     val products by if (selectedDataSetId != null) {
         vm.getAllItems(selectedDataSetId!!).collectAsStateWithLifecycle(initialValue = emptyList())
     } else {
         flowOf(emptyList<Item>()).collectAsStateWithLifecycle(initialValue = emptyList())
-    }
+    }*/
+    val products = itemList ?: emptyList() // TODO: TEMP HACK DURING REFACTOR
+    /*
     val productMap by if (selectedDataSetId != null) {
         vm.getItemMap(selectedDataSetId!!).collectAsStateWithLifecycle(initialValue = emptyMap())
     } else {
         flowOf(emptyMap<Long, Item>()).collectAsStateWithLifecycle(initialValue = emptyMap())
     }
+    */
 
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -1229,7 +1233,7 @@ fun MainScreen(
 
         // Product Selector
         TextField(
-            value = productMap[selectedProductId]?.name ?: "Invalid product ID $selectedProductId",
+            value = item?.name ?: "TODOPROBEMPTYSTRING",
             onValueChange = { /* No-op, read-only */ },
             label = { Text("Product") },
             enabled = false, // TODO: this is necessary to make "clickable" work, it looks wrong but this is all an experimental hack anyway
@@ -2114,7 +2118,11 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
                 savePreference(context, SELECTED_DATA_SET_ID_KEY, it)
             }
         },
-        item, itemListRaw
+        item, itemListRaw, onSelectedItemIdChange = {
+            coroutineScope.launch {
+                savePreference(context, SELECTED_ITEM_ID_KEY, it)
+            }
+        }
     )
 
 }
@@ -2128,6 +2136,7 @@ fun HomeScreenScaffold(
     onSelectedDataSetIdChange: (Long) -> Unit,
     item: Item?,
     itemList: List<Item>?,
+    onSelectedItemIdChange: (Long) -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -2196,7 +2205,7 @@ fun HomeScreenScaffold(
                 onSelectedDataSetIdChange = onSelectedDataSetIdChange,
                 item = item,
                 itemList = itemList,
-                onSelectedProductIdChange = { /* TODO PASS UP selectedProductId = it */ }) // TODO: rename this
+                onSelectedProductIdChange = onSelectedItemIdChange) // TODO: rename this
 
             androidx.compose.foundation.layout.Spacer(
                 modifier = androidx.compose.ui.Modifier.height(
