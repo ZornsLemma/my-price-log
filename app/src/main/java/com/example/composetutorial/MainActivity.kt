@@ -2041,26 +2041,6 @@ suspend fun <T> savePreference(context: Context, key: Preferences.Key<T>, value:
     }
 }
 
-// TODO: Perplexity magic (if it works, that is)
-@Composable
-fun <T, K> collectAsStateWithResetOnKeyChange(
-    key: K,
-    flowProvider: (K) -> Flow<T>,
-    initialValue: T
-): State<T> {
-    var state by remember { mutableStateOf(initialValue) }
-
-    // This effect will run every time 'key' changes
-    LaunchedEffect(key) {
-        state = initialValue // Reset immediately on key change
-        flowProvider(key).collect { value ->
-            state = value
-        }
-    }
-
-    return remember { derivedStateOf { state } }
-}
-
 data class ParameterizedResult<T, P>(
     val data: T,
     val parameter: P
@@ -2111,57 +2091,21 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
         setDataSetId(null)
     }
     */
+
     val TODOdataSetId = dataSetId ?: 3
-    /*
-key(TODOdataSetId) {
-val itemsFlow3 = remember(TODOdataSetId) {
-    Log.d("MyApp", "remember ${TODOdataSetId}"); vm.getAllItems(TODOdataSetId)
-}
-    Log.d("MyApp", "TODOdataSetId ${TODOdataSetId}")
-    Log.d("MyApp", "${sourceId}")
-    itemsFlow3 = emptyList()
-}
-*/
-
-    val TODOdataSetId2 = dataSetId ?: 3
-    var items6 by remember { mutableStateOf<List<Item>>(emptyList()) }
-    LaunchedEffect(TODOdataSetId2) {
-        items6 = emptyList()
-        vm.getAllItems(TODOdataSetId2).collect { newItems ->
-            items6 = newItems
-        }
-
-    }
     val itemsFlowX = parameterizedFlow(
-        parameter = TODOdataSetId2,
+        parameter = TODOdataSetId,
         flowProvider = { id -> vm.getAllItems(id) },
         emitInitial = true,
         initialValue = emptyList()
     )
-    val resultX by itemsFlowX.collectAsStateWithLifecycle(initialValue = ParameterizedResult(emptyList(), TODOdataSetId2))
+    val resultX by itemsFlowX.collectAsStateWithLifecycle(initialValue = ParameterizedResult(emptyList(), TODOdataSetId))
+    Log.d("MyApp", "TODOPARAMLIST ${resultX.parameter} ${resultX.data}")
 
-    key(TODOdataSetId) {
-        Log.d("MyApp", "TODOdataSetId ${TODOdataSetId}")
-        Log.d("MyApp", "${sourceId}")
-        val itemsFlow = remember(TODOdataSetId) {
-            Log.d("MyApp", "remember ${TODOdataSetId}"); vm.getAllItems(TODOdataSetId)
-        }
-    val TODODEBUGITEMLISTRAW2 by itemsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
-
-    Log.d("MyApp", "TODODEBUGITEMLISTRAW2 ${TODODEBUGITEMLISTRAW2}")
-    }
     val TODODEBUGITEMLISTRAW: List<Item> by vm.getAllItems(dataSetId ?: 3).collectAsStateWithLifecycle(initialValue = emptyList())
-    val TODODEBUGITEMLISTRAW88  by collectAsStateWithResetOnKeyChange(
-        key = TODOdataSetId2,
-        flowProvider = { id -> vm.getAllItems(TODOdataSetId2) },
-        initialValue = emptyList()
-    )
     val itemListRaw: List<Item>? by if (dataSetId != null) { vm.getAllItems(dataSetId!!).collectAsStateWithLifecycle(initialValue = null) } else { mutableStateOf(null) }
     val item = itemListRaw?.find { it.id == itemId }
     Log.d("MyApp", "TODODEBUGITEMLISTRAW ${TODODEBUGITEMLISTRAW}")
-    Log.d("MyApp", "TODODEBUGITEMLISTRAW88 ${TODODEBUGITEMLISTRAW88}")
-    Log.d("MyApp", "TODOPARAMLIST ${resultX.parameter} ${resultX.data}")
-    Log.d("MyApp", "items6 ${items6}")
     Log.d("MyApp", "item ${item}")
     Log.d("MyApp", "itemListRaw ${itemListRaw}")
 
