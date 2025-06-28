@@ -464,6 +464,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                             allowUSCustomary = false
                                         )
                                     )
+                                    val dataSetId2 = db.dataSetDao().insert(DataSet(name = "Demo 2", currencyCode = "AUD", allowMetric = true, allowImperial = false, allowUSCustomary = true)) // TODO TEMP HACK
                                     val itemIdGroundCoffee = db.productDao().insert(
                                         Item(
                                             dataSetId = dataSetId,
