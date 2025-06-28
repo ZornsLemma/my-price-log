@@ -1887,6 +1887,9 @@ fun ItemSourceInfo(
     val sources by vm.getAllSources(selectedDataSetId)
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
+    // TODO: It might just be the emulator, but right now when the settings screen slides out if source was non-null when we entered settings, there is a visible and
+    // rather ugly artefact as the card below this one animates down "as if" this card is expanding, although I don't see any visual
+    // effect of this card itself expanding. Need to investigate.
     var selectedSourceId: Long? by rememberSaveable { mutableStateOf(null) }
     Log.d("MyApp", "TODO2")
     //val sources = listOf("None", "Tesco", "Asda", "Sainsbury's Local", "Iceland")
@@ -1974,29 +1977,6 @@ fun ItemSourceInfo(
                             RelativeTimeText(priceList[0].confirmed)
                             // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
                         }
-
-                                /* TODO NEW CODE TEMP DISABLED
-                                // TODO: I am rather thinking given how close we are (we already ahve it half implemented), if the product's default unit and the originalUnit on this price are different, we should default to using something in the originalUnit family here but also offer a dropdown with the friendly choice from the default unit family.
-                                // TODO: We may want to use remember() here to avoid redoing the unit price formatting all the time - although it's possible the outer composable "key-caching" will take care of this, I can't think straight about it right now
-                                // TODO: It is wrong to use pricelist[0].originalUnit for unitRelatives - well, not necessarily wrong, especially if we maybe offer a selection via a dropdown - but the "primary" unit family should probably be the default unit on the item - but we don't have that yet
-                                // TODO:Rename "up" to unitPrice, after renaming unitPrice() function to free the name up? Ditto "ur"?
-                                Log.d("MyApp", "FOO1")
-                                val ur = getSiblingMeasureUnits(
-                                    dataSet,
-                                    priceList[0].originalUnit,
-                                    includeDisplayOnly = true
-                                )
-                                Log.d("MyApp", "FOO2")
-                                val up = getFriendlyUnitPrice(
-                                    priceList[0].price,
-                                    priceList[0].measure,
-                                    ur
-                                )
-                                Log.d("MyApp", "FOO3")
-                                Text(formatUnitPrice(up, dataSet))
-                                Log.d("MyApp", "FOO4")
-                                // Text("TODO") // Text(formatUnitPrice(priceList[0].price, priceList[0].measure, TODOHINT?))
-                                */
 
                         // TODO: remember/derivedStateOf?
                         val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
@@ -2896,6 +2876,7 @@ fun OuterFullScreenDialog(
     if (nullablePriceList == null || nullableDataSetList == null || !(productId in productMap)) {
         // This will almost certainly never be seen - we will likely get the query results back and
         // be recomposed before the first frame.
+        // TODO: AT LEAST ON EMULATOR, THIS IS SHOWING UP IN A VERY UGLY WAY DURING SLIDE UP OF "EDIT" SCREEN
         Text("Loading...")
     } else {
         val priceList = nullablePriceList!!
@@ -3413,6 +3394,8 @@ fun AppNavigation() {
         }
         val tweenDurationMillisEnter = 700; // TODO: should probably be 300 in final version
         val tweenDurationMillisExit = 700; // TODO: should probably be 250 in final version
+        // TODO: If possible (probably is) we should factor out the "full screen" and "full screen dialog"
+        // transitions into helper functions/variables to avoid duplication.
         composable(
             "settings", enterTransition = {
                 slideIntoContainer(
@@ -3449,8 +3432,32 @@ fun AppNavigation() {
             }) {
             SettingsScreen(navController)
         }
-        // TODO: This needs the correct vertical transitions, but let's not fuss with that for now
-        composable("fullScreenDialog/{dataSetId}/{productId}/{storeId}/{randomUUID}") { backStackEntry ->
+        composable("fullScreenDialog/{dataSetId}/{productId}/{storeId}/{randomUUID}"
+            , enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Up,
+
+                    animationSpec = tween(
+                        durationMillis = tweenDurationMillisEnter,
+                        easing = LinearOutSlowInEasing
+                    ),
+                ) /* TODO DELETE? + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = tweenDurationMillisEnter, easing = LinearOutSlowInEasing
+                    )
+                ) */
+
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                    animationSpec = tween(
+                        durationMillis = tweenDurationMillisExit,
+                        easing = FastOutLinearInEasing
+                    )
+                )
+            }
+        ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")?.toLong() ?: 0
             val productId = backStackEntry.arguments?.getString("productId")?.toLong() ?: 0
             val storeId = backStackEntry.arguments?.getString("storeId")?.toLong() ?: 0
