@@ -1672,7 +1672,6 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 // TODO: Arguably we should have selected{DataSet,Product}Id not allow nulls here - our parent should just not be composing us if these are not set
 // TODO: This should probably work with no selected item and it should show itself but with the variant supporting text "choose a product and store to..."
 fun ItemSourceInfo(
-    vm: PriceTrackerViewModel,
     navController: NavHostController,
     dataSet: DataSet,
     item: Item?,
@@ -1706,6 +1705,9 @@ fun ItemSourceInfo(
                 .padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)
         ) {
             // TODO: We need to allow this to be set to empty/None by the user - how best to do that? And if it is empty, we need to collapse all the stuff below it and replace it with a brief instructional string roughly "Select a store to see and edit product details" - check the ChatGPT discussion I saved for some wording
+            Log.d("MyApp", "ISI dataset ${dataSet}")
+            Log.d("MyApp", "ISI item ${item}")
+            Log.d("MyApp", "ISI source ${item}")
             val haveItemAndSource = item != null && source != null
             MyExposedDropdownMenuBox(
                 modifier = Modifier
@@ -2032,6 +2034,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val dataSetId by getPreference(context, SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
     val itemId by getPreference(context, SELECTED_ITEM_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
     val sourceId by getPreference(context, SELECTED_SOURCE_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
+    Log.d("MyApp", "HomeScreen dataSetId $dataSetId, itemId $itemId, sourceId $sourceId")
     // TODO: This code is a bit inconsistent about fooId vs foo.Id - it *probably* doesn't matter in practice, but we should be clear and consistent.
 
     // TODO: I seem to be repeatedly told that the "elegant" way to do this is with a sealed class,
@@ -2045,6 +2048,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val dataSetList: List<DataSet> = if (dataSetListLoaded) dataSetListRaw!! else emptyList<DataSet>()
     */
     val dataSet = dataSetListRaw?.find { it.id == dataSetId }
+    Log.d("MyApp", "dataSet ${dataSet}")
 
     /*
     // If we have a known-invalid dataSetId, revert to nothing being selected.
@@ -2055,6 +2059,8 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 
     val itemListRaw: List<Item>? by if (dataSetId != null) { vm.getAllItems(dataSetId!!).collectAsStateWithLifecycle(initialValue = null) } else { mutableStateOf(null) }
     val item = itemListRaw?.find { it.id == itemId }
+    Log.d("MyApp", "item ${item}")
+    Log.d("MyApp", "itemListRaw ${itemListRaw}")
 
     val sourceListRaw: List<Source>? by if (dataSetId != null) { vm.getAllSources(dataSetId!!).collectAsStateWithLifecycle(initialValue = null) } else { mutableStateOf( null ) }
     val source = sourceListRaw?.find { it.id == sourceId }
@@ -2193,8 +2199,9 @@ fun HomeScreenScaffold(
 
             val dataSetListNullable = dataSetList // TODO TEMP INTERMEDIATE?
             if (dataSet != null) {
+                Log.d("MyApp", "HSS dataSet ${dataSet}")
+                Log.d("MyApp", "HSS item ${item}")
                 ItemSourceInfo(
-                    vm = vm,
                     navController = navController,
                     dataSet = dataSet,
                     item = item,
@@ -2631,7 +2638,8 @@ class MainActivity : ComponentActivity() {
         StrictMode.setThreadPolicy(
             StrictMode.ThreadPolicy.Builder()
                 .detectAll()
-                .penaltyDeath() // TODO .penaltyLog()  // logs violations; you can also add .penaltyDeath() to crash on violation
+                // TODO: This should be reverted to penaltyDeath()
+                .penaltyLog() // .penaltyDeath() // TODO .penaltyLog()  // logs violations; you can also add .penaltyDeath() to crash on violation
                 .build()
         )
 
