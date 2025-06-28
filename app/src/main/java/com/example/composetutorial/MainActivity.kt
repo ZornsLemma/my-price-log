@@ -1047,9 +1047,9 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     fun getAllItems(dataSetId: Long) = priceTrackerRepository.getAllItems(dataSetId)
     */
     fun getAllItems(dataSetId: Long): Flow<List<Item>> {
-        return priceTrackerRepository.getAllItems(dataSetId).onEach { items ->
+        return priceTrackerRepository.getAllItems(dataSetId) /*.onEach { items ->
             Log.d("MyApp", "Emitted items: $items")
-        }
+        } */
     }
 
     fun getItemMap(dataSetId: Long): Flow<Map<Long, Item>> =
@@ -2057,6 +2057,19 @@ fun <T, P> parameterizedFlow(
     }
 }
 
+@Composable
+fun <Param, T> collectParameterizedFlowWithLifecycle(
+    parameter: Param,
+    flowProvider: (Param) -> Flow<List<T>>,
+    initialValue: List<T> = emptyList()
+): ParameterizedResult<List<T>, Param> {
+    val flow = remember(parameter, flowProvider) { parameterizedFlow(parameter, flowProvider) }
+    val result by flow.collectAsStateWithLifecycle(
+        initialValue = ParameterizedResult(initialValue, parameter)
+    )
+    return result
+}
+
 // TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
@@ -2089,11 +2102,18 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     */
 
     val TODOdataSetId = dataSetId ?: 3
+    /*
     val itemsFlowX = parameterizedFlow(
         parameter = TODOdataSetId,
         flowProvider = { id -> vm.getAllItems(id) },
     )
     val resultX by itemsFlowX.collectAsStateWithLifecycle(initialValue = ParameterizedResult(emptyList(), TODOdataSetId))
+    */
+
+    val resultX = collectParameterizedFlowWithLifecycle(
+        parameter = TODOdataSetId,
+        flowProvider = vm::getAllItems
+    )
     Log.d("MyApp", "TODOPARAMLIST ${resultX.parameter} ${resultX.data}")
 
     val TODODEBUGITEMLISTRAW: List<Item> by vm.getAllItems(dataSetId ?: 3).collectAsStateWithLifecycle(initialValue = emptyList())
