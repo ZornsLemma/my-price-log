@@ -6,22 +6,16 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.compose.runtime.MutableState
 import java.time.Duration
 //import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import kotlinx.parcelize.Parcelize
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
-import android.content.SharedPreferences
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Button
 import androidx.compose.ui.window.Dialog
@@ -36,19 +30,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -75,13 +63,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -97,15 +82,12 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SnackbarHost
@@ -116,35 +98,17 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.composed
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.window.DialogWindowProvider
-import androidx.core.graphics.Insets
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -182,9 +146,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.time.Instant
@@ -194,7 +156,6 @@ import java.util.Locale
 import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.log10
-import androidx.core.content.edit
 import androidx.datastore.preferences.core.edit
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
@@ -1171,8 +1132,8 @@ val menuRightPadding = menuLeftPadding
 // TODO: RENAME THIS IF IT SURVIVES REFACTORING
 @Composable
 fun MainScreen(
-    vm: PriceTrackerViewModel, dataSet: DataSet?, dataSetList: List<DataSet>?, onSelectedDataSetIdChange: (Long) -> Unit,
-    item: Item?, itemList: List<Item>?, onSelectedProductIdChange: (Long) -> Unit
+    dataSet: DataSet?, dataSetList: List<DataSet>?, onSelectedDataSetIdChange: (Long) -> Unit,
+    item: Item?, itemList: List<Item>?, onSelectedItemIdChange: (Long) -> Unit
 ) {
     val selectedDataSetId = dataSet?.id // TODO SEMI TEMP HACK WHILE REFACTORING
     val selectedProductId = item?.id // TODO DITTO
@@ -1183,9 +1144,7 @@ fun MainScreen(
     // everywhere, even if it's rare, because the user *could* go and delete every single item in
     // the database in theory. TODO: We should make sure we have the same behaviour for Source,
     // because that actually *should* allow the user to easily set it to empty/none.
-    var showProductSheet by remember { mutableStateOf(false) }
-    //val categories = listOf("Demo", "Groceries (home)", "Groceries (Manchester)")
-    //val products = listOf("Beans", "Milk", "Bread", "Chicken" /* ... */)
+    var showItemSheet by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
 
     Column(
@@ -1206,15 +1165,15 @@ fun MainScreen(
             getLabel = { it.name },
         )
 
-        // Product Selector
+        // Item selector
         TextField(
-            value = item?.name ?: "TODOPROBEMPTYSTRING",
+            value = item?.name ?: "",
             onValueChange = { /* No-op, read-only */ },
             label = { Text("Product") },
             enabled = false, // TODO: this is necessary to make "clickable" work, it looks wrong but this is all an experimental hack anyway
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { Log.d("MyApp", "SPS"); showProductSheet = true },
+                .clickable { Log.d("MyApp", "SPS"); showItemSheet = true },
             readOnly = true,
             trailingIcon = {
                 Icon(
@@ -1229,10 +1188,9 @@ fun MainScreen(
             colors = myTextFieldColors()
         )
 
-        // Product Modal Bottom Sheet
-        if (showProductSheet) {
-            ModalBottomSheet(onDismissRequest = { showProductSheet = false }) {
-                //Log.d("MyApp", "FFS:" + items(products).joinToString(","))
+        // Item Modal Bottom Sheet
+        if (showItemSheet) {
+            ModalBottomSheet(onDismissRequest = { showItemSheet = false }) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1258,8 +1216,8 @@ fun MainScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        onSelectedProductIdChange(listItem.id)
-                                        showProductSheet = false
+                                        onSelectedItemIdChange(listItem.id)
+                                        showItemSheet = false
                                     })
                         }
                     }
@@ -2176,13 +2134,12 @@ fun HomeScreenScaffold(
         ) {
 
             MainScreen(
-                vm = vm,
                 dataSet = dataSet,
                 dataSetList = dataSetList,
                 onSelectedDataSetIdChange = onSelectedDataSetIdChange,
                 item = item,
                 itemList = itemList,
-                onSelectedProductIdChange = onSelectedItemIdChange) // TODO: rename this
+                onSelectedItemIdChange = onSelectedItemIdChange) // TODO: rename this
 
             androidx.compose.foundation.layout.Spacer(
                 modifier = androidx.compose.ui.Modifier.height(
