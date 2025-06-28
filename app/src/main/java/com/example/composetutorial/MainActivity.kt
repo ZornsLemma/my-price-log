@@ -1657,11 +1657,13 @@ fun ItemSourceInfo(
     navController: NavHostController,
     dataSet: DataSet,
     item: Item?,
+    sourceList: List<Source>?
 ) {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
 
+    /*
     val sources by vm.getAllSources(dataSet.id)
-        .collectAsStateWithLifecycle(initialValue = emptyList())
+        .collectAsStateWithLifecycle(initialValue = emptyList()) */
 
     // TODO: It might just be the emulator, but right now when the settings screen slides out if source was non-null when we entered settings, there is a visible and
     // rather ugly artefact as the card below this one animates down "as if" this card is expanding, although I don't see any visual
@@ -1698,7 +1700,7 @@ fun ItemSourceInfo(
                 supportingText = if (haveItemAndSource) null else {
                     { Text("Select a product and source to view or change the price there") } // TODO: poor wording
                 },
-                items = sources,
+                items = sourceList ?: emptyList(),
                 getId = { it.id },
                 getLabel = { it.name },
             )
@@ -1996,12 +1998,14 @@ suspend fun <T> savePreference(context: Context, key: Preferences.Key<T>, value:
     }
 }
 
+// TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope() // TODO MAGIC
     val dataSetId by getPreference(context, SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
     val itemId by getPreference(context, SELECTED_ITEM_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
+
 
     // TODO: I seem to be repeatedly told that the "elegant" way to do this is with a sealed class,
     // but every time I try it appears to turn into a nightmare of complexity and nonsense AI
@@ -2024,6 +2028,8 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 
     val itemListRaw: List<Item>? by if (dataSetId != null) { vm.getAllItems(dataSetId!!).collectAsStateWithLifecycle(initialValue = null) } else { mutableStateOf(null) }
     val item = itemListRaw?.find { it.id == itemId }
+
+    val sourceListRaw: List<Source>? by if (dataSetId != null) { vm.getAllSources(dataSetId!!).collectAsStateWithLifecycle(initialValue = null) } else { mutableStateOf( null ) }
 
     // TODO: WIP NOTES AS I REFACTOR
     // What do we *need* for this screen?
@@ -2048,7 +2054,8 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
             coroutineScope.launch {
                 savePreference(context, SELECTED_ITEM_ID_KEY, it)
             }
-        }
+        },
+        sourceListRaw
     )
 
 }
@@ -2063,6 +2070,7 @@ fun HomeScreenScaffold(
     item: Item?,
     itemList: List<Item>?,
     onSelectedItemIdChange: (Long) -> Unit,
+    sourceListRaw: List<Source>?
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -2145,6 +2153,7 @@ fun HomeScreenScaffold(
                     navController = navController,
                     dataSet = dataSet,
                     item = item,
+                    sourceList = sourceListRaw,
                 )
             }
 
