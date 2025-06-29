@@ -2,8 +2,6 @@
 
 package com.example.composetutorial
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.key
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.datastore.core.DataStore
@@ -100,12 +98,10 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -162,9 +158,7 @@ import kotlin.math.abs
 import kotlin.math.log10
 import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
@@ -2205,27 +2199,30 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // that since only we change the database, any such saved values *are* still present in tbe db.
 
     val newUIState = UIState(dataSet, dataSetListRaw, item, itemListRaw, source, sourceListRaw, itemPriceListRaw)
-    // In order to minimise jank, we want the old UI state to be available to us on the very first
-    // composition as we are re-entered after a transition (e.g. coming back from another screen).
-    // (Even if we manage to recompose with real data before that first recomposition makes it into
-    // a frame, there can still be jank introduced as animated components within this composable
-    // animate themselves from their initial "null" size to their "non-null" size. If the very first
-    // composition of those animated components is the non-null state, there is nothing to animate.
-    // This is the desired behaviour when we are just being "revealed" after a back navigation -
-    // where we have been notionally there all the time, just hidden by the new top screen - as
-    // opposed to appearing for the first time or reflecting a user-initiated change.)
+    // In order to minimise jank, we want the previous UI state to be available during the *very
+    // first composition* when this screen is re-entered (e.g. after navigating back from another
+    // screen).
     //
-    // We could use rememberSaveable to do this, but instead we use remember plus a cache in
-    // ViewModel to avoids the need for UIState to be serializable (the main practical benefit) and
-    // (a maybe-useful micro-optimisation) avoids the overhead of actually (de)serialising.
-    var oldUIState by remember { mutableStateOf( vm.cachedUIState ?: newUIState ) }
-    Log.d("MyApp", "oldUIState dataSetListRaw ${oldUIState.dataSetList}")
+    // If the first composition is based on null data, even if we manage to recompose with
+    // up-to-date data before the first frame, there can still be visual jank: animated components
+    // may animate themselves from their initial "null" size to a "non-null" layout. If the very
+    // first composition sees non-null data, there's no animation - which is what we want.
+    //
+    // This is particularly important when returning from a screen that was overlaid on top of this
+    // one (via Navigation's backstack), where the user expects this screen to "still be there" —
+    // not to visibly reinitialise.
+    //
+    // We could use rememberSaveable(), but instead we use remember with a ViewModel cache. This
+    // avoids needing UIState to be serialisable (a practical win) and also avoids the minor
+    // overhead of serialisation and deserialisation (a micro-optimisation).
+    var displayedUIState by remember { mutableStateOf( vm.cachedUIState ?: newUIState ) }
+    Log.d("MyApp", "oldUIState dataSetListRaw ${displayedUIState.dataSetList}")
 
     var todoWTF by rememberSaveable { mutableStateOf( 0 ) }
     Log.d("MyApp", "todoWTF $todoWTF")
 
     if (newUIState.importantThingsNonNull()) {
-        oldUIState = newUIState
+        displayedUIState = newUIState
         vm.saveUIState(newUIState)
     }
 
@@ -2235,18 +2232,18 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 
         // TODO: We should probably show the *new* dataSet ASAP rather than holding back updates for that, and related to that we may want to show a spinner overlaying the UI if dataSetId has changed but we still have old data
         HomeScreenScaffold(
-            navController, oldUIState.dataSet, oldUIState.dataSetList, onSelectedDataSetIdChange = {
+            navController, displayedUIState.dataSet, displayedUIState.dataSetList, onSelectedDataSetIdChange = {
                 vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
             },
-            oldUIState.item, oldUIState.itemList, onSelectedItemIdChange = {
+            displayedUIState.item, displayedUIState.itemList, onSelectedItemIdChange = {
                 vm.savePreference(SELECTED_ITEM_ID_KEY, it)
             },
-            oldUIState.source,
-            oldUIState.sourceListRaw,
+            displayedUIState.source,
+            displayedUIState.sourceListRaw,
             onSelectedSourceIdChange = {
                 vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
             },
-            oldUIState.itemPriceListRaw
+            displayedUIState.itemPriceListRaw
         )
     }
 
