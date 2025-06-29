@@ -2188,9 +2188,9 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // as we don't actually crash if our assumptions are violated, we can probably reasonably assume
     // that since only we change the database, any such saved values *are* still present in tbe db.
 
-    var oldUIState by rememberSaveable { mutableStateOf( UIState(dataSet, dataSetListRaw, item, itemListRaw, source, sourceListRaw, itemPriceListRaw) ) }
-    Log.d("MyApp", "oldUIState dataSetListRaw ${oldUIState.dataSetList}")
     val newUIState = UIState(dataSet, dataSetListRaw, item, itemListRaw, source, sourceListRaw, itemPriceListRaw)
+    var oldUIState by rememberSaveable { mutableStateOf( newUIState ) }
+    Log.d("MyApp", "oldUIState dataSetListRaw ${oldUIState.dataSetList}")
 
     var todoWTF by rememberSaveable { mutableStateOf( 0 ) }
     Log.d("MyApp", "todoWTF $todoWTF")
