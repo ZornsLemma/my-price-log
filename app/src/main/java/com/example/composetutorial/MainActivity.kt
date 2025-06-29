@@ -22,6 +22,7 @@ import androidx.compose.material3.Button
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
+import android.os.Parcelable
 import android.os.StrictMode
 import android.text.format.DateUtils
 import android.util.Log
@@ -157,6 +158,7 @@ import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.log10
 import androidx.datastore.preferences.core.edit
+import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -862,6 +864,7 @@ data class Source(
 //
 // The measure will be in a hard-coded "base" unit suitable to the unit type
 // TODO: This should probably be renamed PriceEntity (conventional I believe) or something if my experiment works (I want to make it obvious if this is used, as it normally shouldn't be)
+@Parcelize // TODO: probably won't need this once the edit dialog is written to use new style viewmodel data stuff
 data class Price(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -903,7 +906,7 @@ data class Price(
     val confirmed: Instant,
 
     val details: String // Additional price details TODO: rename "notes"?
-)
+) : Parcelable
 
 // TODO: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
 // that effectively tells us the quantity type implicitly and we don't need to join to item to get
@@ -2719,7 +2722,7 @@ class MainActivity : ComponentActivity() {
         StrictMode.setThreadPolicy(
             StrictMode.ThreadPolicy.Builder()
                 .detectAll()
-                .penaltyDeath() // TODO .penaltyLog()  // logs violations; you can also add .penaltyDeath() to crash on violation
+                .penaltyLog() // TODO .penaltyDeath() // TODO .penaltyLog()  // logs violations; you can also add .penaltyDeath() to crash on violation
                 .build()
         )
 
