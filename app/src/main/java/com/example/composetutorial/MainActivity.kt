@@ -2,6 +2,8 @@
 
 package com.example.composetutorial
 
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.combine
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.datastore.core.DataStore
@@ -158,6 +160,9 @@ import kotlin.math.abs
 import kotlin.math.log10
 import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 
@@ -1048,6 +1053,59 @@ class SingleEventState<T>(initialState: T) {
 class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository, application: Application) :
     ViewModel() {
 
+
+    private val _uiState = MutableStateFlow<UIState?>(null)
+    val uiState: StateFlow<UIState?> = _uiState.asStateFlow()
+
+    private var lastValidUIState: UIState? = null
+    val cachedUIState: UIState? get() = lastValidUIState
+
+    init {
+        viewModelScope.launch(Dispatchers.Default) {
+            combine(
+                getPreference(SELECTED_DATA_SET_ID_KEY),
+                getPreference(SELECTED_ITEM_ID_KEY),
+                getPreference(SELECTED_SOURCE_ID_KEY),
+                ::Triple
+            ).flatMapLatest { (dataSetId, itemId, sourceId) ->
+                if (dataSetId == null) return@flatMapLatest flowOf(null)
+
+                val dataSetFlow = priceTrackerRepository.getAllDataSets()
+                val itemListFlow = priceTrackerRepository.getAllItems(dataSetId)
+                val sourceListFlow = priceTrackerRepository.getAllSources(dataSetId)
+                val itemPriceListFlow = if (itemId != null)
+                    priceTrackerRepository.getNicePricesForItem(dataSetId = dataSetId, itemId = itemId)
+                else flowOf(null)
+
+                combine(
+                    dataSetFlow,
+                    itemListFlow,
+                    sourceListFlow,
+                    itemPriceListFlow
+                ) { dataSetList, itemList, sourceList, priceList ->
+                    val dataSet = dataSetList.find { it.id == dataSetId }
+                    val item = itemList.find { it.id == itemId }
+                    val source = sourceList.find { it.id == sourceId }
+
+                    UIState(dataSet, dataSetList, item, itemList, source, sourceList, priceList)
+                }
+            }.collectLatest { newUIState ->
+                _uiState.value = newUIState
+                if (newUIState?.importantThingsNonNull() == true) {
+                    lastValidUIState = newUIState
+                }
+            }
+        }
+    }
+
+    fun saveUIState(state: UIState) {
+        lastValidUIState = state
+    }
+
+
+
+
+    /*
     // Note to self (as a noob): Two separate AIs have convinced me this "private set" approach is
     // more conventional than just having cachedUIState and removing "private set". From a personal
     // point of view, I can see value in that even though our set function doesn't do any
@@ -1060,17 +1118,19 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     fun saveUIState(state: UIState) {
         cachedUIState = state
     }
+    */
 
         // TODO: Perplexity magic, hacked on
-        private val dataStore = application.dataStore
+       // TODO: "too early" for the init coroutine stuff private val dataStore = application.dataStore
+    private val app = application // TODO?
     fun<T> getPreference(key: Preferences.Key<T>): StateFlow<T?> {
-        return dataStore.data
+        return app.dataStore.data
             .map { prefs -> prefs[key] }
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     }
     fun<T> savePreference(key: Preferences.Key<T>, value: T?) {
         viewModelScope.launch {
-            dataStore.edit { prefs ->
+            app.dataStore.edit { prefs ->
                 if (value != null) prefs[key] = value else prefs.remove(key)
             }
         }
@@ -2155,6 +2215,7 @@ data class UIState(
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // val coroutineScope = rememberCoroutineScope() // TODO MAGIC
+    /* TODO OLD
     val dataSetId by vm.getPreference(SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
     val itemId by vm.getPreference(SELECTED_ITEM_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
     val sourceId by vm.getPreference(SELECTED_SOURCE_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
@@ -2245,7 +2306,57 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
             displayedUIState.itemPriceListRaw
         )
     }
+*/
 
+    val newUIState by vm.uiState.collectAsStateWithLifecycle()
+    // In order to minimise jank, we want the previous UI state to be available during the *very
+    // first composition* when this screen is re-entered (e.g. after navigating back from another
+    // screen).
+    //
+    // If the first composition is based on null data, even if we manage to recompose with
+    // up-to-date data before the first frame, there can still be visual jank: animated components
+    // may animate themselves from their initial "null" size to a "non-null" layout. If the very
+    // first composition sees non-null data, there's no animation - which is what we want.
+    //
+    // This is particularly important when returning from a screen that was overlaid on top of this
+    // one (via Navigation's backstack), where the user expects this screen to "still be there" —
+    // not to visibly reinitialise.
+    //
+    // We could use rememberSaveable(), but instead we use remember with a ViewModel cache. This
+    // avoids needing UIState to be serialisable (a practical win) and also avoids the minor
+    // overhead of serialisation and deserialisation (a micro-optimisation).
+    var displayedUIState by remember { mutableStateOf(vm.cachedUIState ?: newUIState)}
+
+    if (newUIState?.importantThingsNonNull() == true) {
+        displayedUIState = newUIState
+        vm.saveUIState(newUIState!!) // TODO: clearer to save displayedUIState? effect is same of course
+    }
+
+    // TODO: We should probably show the *new* dataSet ASAP rather than holding back updates for that, and related to that we may want to show a spinner overlaying the UI if dataSetId has changed but we still have old data
+    // TODO: Unlike my older version, UIState itself is nullable. This might work well, giving us a chance to show a clean loading screen in the unlikely event it's necessary. Or we could turn it into a UIState(withnullsinside). Just hack it for the moment while I'm trying out this new approach.
+    if (displayedUIState == null) {
+        Text("TODO LOADING")
+    } else {
+        HomeScreenScaffold(
+            navController,
+            displayedUIState!!.dataSet,
+            displayedUIState!!.dataSetList,
+            onSelectedDataSetIdChange = {
+                vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
+            },
+            displayedUIState!!.item,
+            displayedUIState!!.itemList,
+            onSelectedItemIdChange = {
+                vm.savePreference(SELECTED_ITEM_ID_KEY, it)
+            },
+            displayedUIState!!.source,
+            displayedUIState!!.sourceListRaw,
+            onSelectedSourceIdChange = {
+                vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
+            },
+            displayedUIState!!.itemPriceListRaw
+        )
+    }
 }
 
 @Composable
