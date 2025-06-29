@@ -1068,6 +1068,13 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         // but we don't update correctly, or we *can* - despite ChatGPT assuring me this can't
         // happen - get "mixed" flows with inconsistent results escaping through to the UI with
         // this.
+        // TODO: Note that this will (according to convincing discussion I had with ChatGPT - I
+        // haven't tried to find the query execution monitoring tools to confirm it yet) re-execute
+        // the queries which depend only on dataSetId even if itemId changes. ChatGPT sketched out
+        // how you'd fix this and I think it's reasonable to say that given the size of our tables,
+        // this simpler code is on balance preferable - but it could be tweaked if performance is a
+        // concern in the future. A bit more concerningly, it will also re-query everything if
+        // sourceId changes, even though *no* queries take sourceId as a parameter.
         viewModelScope.launch(Dispatchers.Default) {
             combine(
                 getPreference(SELECTED_DATA_SET_ID_KEY),
