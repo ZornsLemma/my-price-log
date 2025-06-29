@@ -1489,68 +1489,6 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
         }
 
     }
-
-    /* TODO OLD CODE REF
-// TODO: rememberSaveable()? a dark mode toddle will lose expanded otherwise
-var expanded by remember { mutableStateOf(false) }/*
-val focusedColor   = MaterialTheme.colorScheme.error
-val unfocusedColor = MaterialTheme.colorScheme.tertiary //     onSurfaceVariant
-var indicatorColor by remember { mutableStateOf(unfocusedColor) } // TODO: ALL THIS STUFF ISN'T WORKING, I SUSPECT THE *FOCUS* ISN'T HITTING THE CONTROL AS IT'S DISABLED, BUT *SOMETHING* IS HITTING IT AND TOGGLING ITS COLOUR BUT IT ISN'T THIS, NOT SURE
-*/
-var textFieldWidth by remember { mutableStateOf(0) }
-val itemMap =
-    items.associateBy { getId(it) } // TODO: inefficient? should we make caller supply use with this so viewmodel can be caching it?
-val PULLEDOUT: String = if (selectedId == null) "" else {
-    val item = itemMap[selectedId]
-    if (item != null) getLabel(item) else "Invalid ID $selectedId"
-}
-Box(modifier = modifier) {
-    TextField(
-        value = PULLEDOUT,
-        onValueChange = { /* No-op, handled by dropdown */ },
-        label = label,
-        supportingText = supportingText,
-        readOnly = true,
-        enabled = false, // TODO HACK
-        trailingIcon = {
-            Icon(
-                imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = "Expand",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                /* TODO modifier = Modifier.rotate(if (expanded) 180f else 0f) */
-            )
-        },
-        modifier = Modifier
-            .clickable { Log.d("MyApp", "CATCLICK"); expanded = true }
-            //.onFocusChanged { Log.d("MyApp", if (it.isFocused) "Foc" else "Unfoc"); indicatorColor = if (it.isFocused) focusedColor else unfocusedColor  }
-            .fillMaxWidth()
-            .onGloballyPositioned { coordinates -> textFieldWidth = coordinates.size.width },/* colors = TextFieldDefaults.colors(
-        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-        focusedContainerColor = MaterialTheme.colorScheme.surface
-    ) */
-        colors = myTextFieldColors()
-    )
-    DropdownMenu(
-        modifier = Modifier
-            .width(with(LocalDensity.current) { textFieldWidth.toDp() })
-            .background(MaterialTheme.colorScheme.surfaceContainer), // TODO: REDUNDANT?
-        expanded = expanded, onDismissRequest = { expanded = false }) {
-        items.forEach { item ->
-            // TODO: THE TEXT IN THIS DROPDOWN DOESN'T LEFT-ALIGN WITH THE PARENT TEXTFIELD
-            DropdownMenuItem(text = {
-                Text(
-                    getLabel(item),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }, contentPadding = PaddingValues(start = 16.dp), onClick = {
-                onValueChange(getId(item))
-                expanded = false
-            })
-        }
-    }
-}
-*/
 }
 
 // End Grok chunk
