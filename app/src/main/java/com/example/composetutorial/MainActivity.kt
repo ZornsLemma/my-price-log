@@ -2226,7 +2226,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 
     if (newUIState.importantThingsNonNull()) {
         oldUIState = newUIState
-        vm.cachedUIState = newUIState
+        vm.saveUIState(newUIState)
     }
 
     Column {
