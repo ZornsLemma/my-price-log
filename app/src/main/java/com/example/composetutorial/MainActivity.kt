@@ -566,6 +566,8 @@ interface PriceTrackerRepository {
 
     fun getNicePricesForItem(dataSetId: Long, itemId: Long): Flow<List<NicePrice>>
 
+    fun getNicePricesForItem2(pair: Pair<Long, Long>): Flow<List<NicePrice>>
+
     fun getNicePriceForProductAndStore(
         dataSetId: Long,
         productId: Long,
@@ -611,6 +613,10 @@ class PriceTrackerRepositoryImpl(
     override fun getNicePricesForItem(dataSetId: Long, itemId: Long): Flow<List<NicePrice>> =
         priceDao.getPriceWithItemForItem(dataSetId= dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
+
+    // TODO: Poor name
+    override fun getNicePricesForItem2(pair: Pair<Long, Long>): Flow<List<NicePrice>> =
+        getNicePricesForItem(pair.first, pair.second)
 
 
 
@@ -1106,6 +1112,8 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     fun getNicePricesForItem(
         dataSetId: Long,
         itemId: Long): Flow<List<NicePrice>> = priceTrackerRepository.getNicePricesForItem(dataSetId = dataSetId, itemId = itemId)
+
+    fun getNicePricesForItem2(pair: Pair<Long, Long>) = getNicePricesForItem(pair.first, pair.second)
 
     fun getNicePriceForProductAndStore(
         dataSetId: Long,
@@ -2114,12 +2122,8 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     Log.d("MyApp", "source ${source}")
     Log.d("MyApp", "sourceListRaw ${sourceListRaw}")
 
-    val itemPriceListRaw: List<NicePrice>? by if (dataSetId != null && item?.id != null) {
-        vm.getNicePricesForItem(dataSetId = dataSetId!!, itemId = item.id)
-            .collectAsStateWithLifecycle(initialValue = null)
-    } else {
-        mutableStateOf(null)
-    }
+    val itemPriceListRaw =  if (dataSetId != null && item?.id != null) collectFlowWithLifecycleAndReset(vm::getNicePricesForItem2, Pair(dataSetId!!, item.id)) else null
+    Log.d("MyApp", "itemPriceListRaw ${itemPriceListRaw}")
 
     // TODO: WIP NOTES AS I REFACTOR
     // What do we *need* for this screen?
