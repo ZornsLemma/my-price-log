@@ -1061,6 +1061,8 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     val cachedUIState: UIState? get() = lastValidUIState
 
     init {
+        // TODO: we could move val dataSetFlow = blah to here
+
         // TODO: ChatGPT magic. I really need to understand what's going on and see if there are any
         // lurking bugs or fundamental problems around some "data dependencies" (dropdown X changes
         // but we don't update correctly, or we *can* - despite ChatGPT assuring me this can't
@@ -1075,7 +1077,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             ).flatMapLatest { (dataSetId, itemId, sourceId) ->
                 if (dataSetId == null) return@flatMapLatest flowOf(null)
 
-                val dataSetFlow = priceTrackerRepository.getAllDataSets()
+                val dataSetFlow = priceTrackerRepository.getAllDataSets() // TODO: could pull this out as no parameters, but it isn't actually running a query here so it *may* not matter
                 val itemListFlow = priceTrackerRepository.getAllItems(dataSetId)
                 val sourceListFlow = priceTrackerRepository.getAllSources(dataSetId)
                 val itemPriceListFlow = if (itemId != null)
