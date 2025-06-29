@@ -1537,7 +1537,7 @@ fun MyFullScreenDialog(
 
 // TODO: ChatGPT magic, though I do mostly understand it
 // TODO: Does this "do the right thing" with the user's current timezone? If I'm in Australia, an
-// Instant of 23:59 2nd March isn't "yesterday" just because it's now 00:01 3rd March. It probably
+// Instant of UTC 23:59 2nd March isn't "yesterday" just because it's now 00:01 3rd March. It probably
 // does, but it would be good to check.
 @Composable
 fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's OK
