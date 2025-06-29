@@ -1739,6 +1739,10 @@ fun ItemSourceInfo(
         // and these have "touchable but background colour" space around them to meet the minimum touch size (and we don't want to make them visually
         // larger), if we use 12.dp at the bottom we actually get a bit more because of that extra space "around" the buttons. So we manually
         // adjust the bottom padding to visually compensate for this while allowing the buttons to have their natural touch region.
+        // TODO: Can we avoid doing the animation if we are being "freshly composed", e.g. if we are returning here from another
+        // screen? I suspect this causes some animation ugliness. The problem is probably that because we start off with null data
+        // because async, we start off small and then grow once we get our data back and so this (formerly) "underlying" screen
+        // appears to be changing as the old screen slides off, even though it's supposedly been there unchanged all the time.
         Column(
             modifier = Modifier
                 .animateContentSize()
