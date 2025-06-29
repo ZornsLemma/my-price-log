@@ -2220,7 +2220,7 @@ data class UIState(
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // val coroutineScope = rememberCoroutineScope() // TODO MAGIC
-    /* TODO OLD
+    /* TODO OLD - BEFORE DELETING THIS, MAKE SURE NO VALUABLE COMMENTS ARE IN HERE BUT NOT OUTSIDE
     val dataSetId by vm.getPreference(SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
     val itemId by vm.getPreference(SELECTED_ITEM_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
     val sourceId by vm.getPreference(SELECTED_SOURCE_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
