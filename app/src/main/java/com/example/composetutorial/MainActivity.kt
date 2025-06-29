@@ -165,6 +165,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
+import java.util.concurrent.Executors
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
 // weight or volume. This is fundamental as we make no effort to convert between them using some
@@ -416,6 +417,10 @@ abstract class InventoryDatabase : RoomDatabase() {
             // if the Instance is not null, return it, otherwise create a new database instance.
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, InventoryDatabase::class.java, "main.db")
+                    // TODO: Disable query logging in final version of course
+                    .setQueryCallback(RoomDatabase.QueryCallback { sqlQuery, bindArgs ->
+                            Log.d("MyApp", "SQL Query: $sqlQuery SQL Args: $bindArgs")
+                        }, Executors.newSingleThreadExecutor())
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
@@ -1116,8 +1121,9 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         // the queries which depend only on dataSetId even if itemId changes. ChatGPT sketched out
         // how you'd fix this and I think it's reasonable to say that given the size of our tables,
         // this simpler code is on balance preferable - but it could be tweaked if performance is a
-        // concern in the future. A bit more concerningly, it will also re-query everything if
-        // sourceId changes, even though *no* queries take sourceId as a parameter.
+        // concern in the future. TBH, after re-working this to avoid re-querying the database at
+        // all when sourceId changes, I am feeling it might be interesting to rework this further
+        // and see how complex it is.
         viewModelScope.launch(Dispatchers.Default) {
             combine(
                 getPreference(SELECTED_SOURCE_ID_KEY),
