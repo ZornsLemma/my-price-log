@@ -1061,6 +1061,11 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     val cachedUIState: UIState? get() = lastValidUIState
 
     init {
+        // TODO: ChatGPT magic. I really need to understand what's going on and see if there are any
+        // lurking bugs or fundamental problems around some "data dependencies" (dropdown X changes
+        // but we don't update correctly, or we *can* - despite ChatGPT assuring me this can't
+        // happen - get "mixed" flows with inconsistent results escaping through to the UI with
+        // this.
         viewModelScope.launch(Dispatchers.Default) {
             combine(
                 getPreference(SELECTED_DATA_SET_ID_KEY),
