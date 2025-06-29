@@ -1079,16 +1079,9 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             // This forces the delegate to initialize safely on the main thread TODO: VOODOO
             val unused = application.dataStore
 
-            data class DatabaseFlows(
-                val dataSetFlow: Flow<List<DataSet>>,
-                val itemListFlow: Flow<List<Item>>,
-                val sourceListFlow: Flow<List<Source>>,
-                val itemPriceListFlow: Flow<List<NicePrice>?>
-            )
-
             data class Ids(val dataSetId: Long?, val itemId: Long?)
             data class DatabaseResults(
-                // TODO A BIT MISNAMED NOW IT HAS IDS TOO
+                // TODO A BIT MISNAMED NOW IT HAS IDS TOO - ChatGPT's version has a PartialUIModel instead, maybe a better name
                 val ids: Ids,
                 val dataSetList: List<DataSet>,
                 val itemList: List<Item>,
@@ -1096,6 +1089,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
                 val itemPriceList: List<NicePrice>?,
             )
 
+            // TODO: Maybe rename this partialUiFlow
             val databaseResultsFlow = combine(
                 getPreference(SELECTED_DATA_SET_ID_KEY),
                 getPreference(SELECTED_ITEM_ID_KEY),
