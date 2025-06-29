@@ -1052,6 +1052,7 @@ class SingleEventState<T>(initialState: T) {
 // TODO: Should things in here be "val dataSets: Flow<List<DataSet>> = repository.getAllDataSets()" rather than "getAllDataSets()" functions?
 class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository, application: Application) :
     ViewModel() {
+    private val app = application // TODO?
 
 
     private val _uiState = MutableStateFlow<UIState?>(null)
@@ -1061,7 +1062,47 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     val cachedUIState: UIState? get() = lastValidUIState
 
     init {
+        // This forces the delegate to initialize safely on the main thread TODO: VOODOO
+        val unused = app.dataStore
+
         // TODO: we could move val dataSetFlow = blah to here
+        data class Ids(val dataSetId: Long?, val itemId: Long?)
+        data class DatabaseResults(
+            // TODO A BIT MISNAMED NOW IT HAS IDS TOO - ChatGPT's version has a PartialUIModel instead, maybe a better name
+            val ids: Ids,
+            val dataSetList: List<DataSet>,
+            val itemList: List<Item>,
+            val sourceList: List<Source>,
+            val itemPriceList: List<NicePrice>?,
+        )
+
+        // TODO: Maybe rename this partialUiFlow
+        val databaseResultsFlow = combine(
+            getPreference(SELECTED_DATA_SET_ID_KEY),
+            getPreference(SELECTED_ITEM_ID_KEY),
+            ::Pair
+        ).flatMapLatest { (dataSetId, itemId) ->
+            if (dataSetId == null) return@flatMapLatest flowOf(null)
+
+            val dataSetFlow =
+                priceTrackerRepository.getAllDataSets() // TODO: could pull this out as no parameters, but it isn't actually running a query here so it *may* not matter
+            val itemListFlow = priceTrackerRepository.getAllItems(dataSetId)
+            val sourceListFlow = priceTrackerRepository.getAllSources(dataSetId)
+            val itemPriceListFlow = if (itemId != null)
+                priceTrackerRepository.getNicePricesForItem(
+                    dataSetId = dataSetId,
+                    itemId = itemId
+                )
+            else flowOf(null)
+
+            val TODO9 = combine(
+                flowOf(Ids(dataSetId, itemId)),
+                dataSetFlow,
+                itemListFlow, sourceListFlow, itemPriceListFlow,
+                ::DatabaseResults
+            )
+            TODO9
+        }
 
         // TODO: ChatGPT magic. I really need to understand what's going on and see if there are any
         // lurking bugs or fundamental problems around some "data dependencies" (dropdown X changes
@@ -1076,47 +1117,6 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         // concern in the future. A bit more concerningly, it will also re-query everything if
         // sourceId changes, even though *no* queries take sourceId as a parameter.
         viewModelScope.launch(Dispatchers.Default) {
-            // This forces the delegate to initialize safely on the main thread TODO: VOODOO
-            val unused = application.dataStore
-
-            data class Ids(val dataSetId: Long?, val itemId: Long?)
-            data class DatabaseResults(
-                // TODO A BIT MISNAMED NOW IT HAS IDS TOO - ChatGPT's version has a PartialUIModel instead, maybe a better name
-                val ids: Ids,
-                val dataSetList: List<DataSet>,
-                val itemList: List<Item>,
-                val sourceList: List<Source>,
-                val itemPriceList: List<NicePrice>?,
-            )
-
-            // TODO: Maybe rename this partialUiFlow
-            val databaseResultsFlow = combine(
-                getPreference(SELECTED_DATA_SET_ID_KEY),
-                getPreference(SELECTED_ITEM_ID_KEY),
-                ::Pair
-            ).flatMapLatest { (dataSetId, itemId) ->
-                if (dataSetId == null) return@flatMapLatest flowOf(null)
-
-                val dataSetFlow =
-                    priceTrackerRepository.getAllDataSets() // TODO: could pull this out as no parameters, but it isn't actually running a query here so it *may* not matter
-                val itemListFlow = priceTrackerRepository.getAllItems(dataSetId)
-                val sourceListFlow = priceTrackerRepository.getAllSources(dataSetId)
-                val itemPriceListFlow = if (itemId != null)
-                    priceTrackerRepository.getNicePricesForItem(
-                        dataSetId = dataSetId,
-                        itemId = itemId
-                    )
-                else flowOf(null)
-
-                val TODO9 = combine(
-                    flowOf(Ids(dataSetId, itemId)),
-                    dataSetFlow,
-                    itemListFlow, sourceListFlow, itemPriceListFlow,
-                    ::DatabaseResults
-                )
-                TODO9
-            }
-
             combine(
                 getPreference(SELECTED_SOURCE_ID_KEY),
                 databaseResultsFlow,
@@ -1177,7 +1177,6 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
         // TODO: Perplexity magic, hacked on
        // TODO: "too early" for the init coroutine stuff private val dataStore = application.dataStore
-    private val app = application // TODO?
     fun<T> getPreference(key: Preferences.Key<T>): StateFlow<T?> {
         return app.dataStore.data
             .map { prefs -> prefs[key] }
