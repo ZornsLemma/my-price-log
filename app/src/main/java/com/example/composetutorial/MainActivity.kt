@@ -2116,6 +2116,22 @@ fun <Param, T> collectFlowWithLifecycleAndReset(
     }
 }
 
+// TODO: inconsistent mix of "List" and "ListRaw"
+data class UIState(
+    val dataSet: DataSet?,
+    val dataSetList: List<DataSet>?,
+    val item: Item?,
+    val itemList: List<Item>?,
+    val source: Source?,
+    val sourceListRaw: List<Source>?,
+    val itemPriceListRaw: List<NicePrice>?,
+) {
+    // TODO: Poor naming - but the idea is that things like item and source can legitimately be null (there can be no item selected due to data set changes or no source due to no selection in drop down) while database results being null shows a fetch in progress, as even if there is no data we get an empty list back when the fetch has been done
+    fun importantThingsNonNull(): Boolean {
+        return dataSet != null && dataSetList != null && itemList != null && sourceListRaw != null && itemPriceListRaw != null
+    }
+}
+
 // TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
 // TODO: It may just be the emulator but right now despite all my apparently sensible refactoring changes, I am seeing *massive* jank just playing around in the UI (partly but not only when returning from the "edit" full screen dialog)
 @Composable
@@ -2147,7 +2163,9 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     Log.d("MyApp", "source ${source}")
     Log.d("MyApp", "sourceListRaw ${sourceListRaw}")
 
-    val itemPriceListRaw =  if (dataSetId != null && item?.id != null) collectFlowWithLifecycleAndReset(vm::getNicePricesForItem2, Pair(dataSetId!!, item.id)) else null
+    // TODO: As part of "atomic UI update" experiment I have hacked this to generate an empty list not null in the else clause - i think this is fine, but "lower" code still checks for null and if we do keep an empty list here we should make the lower code non-null aware
+    //val itemPriceListRaw =  if (dataSetId != null && item?.id != null) collectFlowWithLifecycleAndReset(vm::getNicePricesForItem2, Pair(dataSetId!!, item.id)) else null
+    val itemPriceListRaw =  if (dataSetId != null && item?.id != null) collectFlowWithLifecycleAndReset(vm::getNicePricesForItem2, Pair(dataSetId!!, item.id)) else emptyList()
     Log.d("MyApp", "itemPriceListRaw ${itemPriceListRaw}")
 
     // TODO: WIP NOTES AS I REFACTOR
@@ -2162,19 +2180,26 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // as we don't actually crash if our assumptions are violated, we can probably reasonably assume
     // that since only we change the database, any such saved values *are* still present in tbe db.
 
+    var oldUIState by remember { mutableStateOf( UIState(dataSet, dataSetListRaw, item, itemListRaw, source, sourceListRaw, itemPriceListRaw) ) }
+    val newUIState = UIState(dataSet, dataSetListRaw, item, itemListRaw, source, sourceListRaw, itemPriceListRaw)
+
+    if (newUIState.importantThingsNonNull()) {
+        oldUIState = newUIState
+    }
+
     HomeScreenScaffold(
-        navController, dataSet, dataSetListRaw, onSelectedDataSetIdChange = {
+        navController, oldUIState.dataSet, oldUIState.dataSetList, onSelectedDataSetIdChange = {
             vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
         },
-        item, itemListRaw, onSelectedItemIdChange = {
+        oldUIState.item, oldUIState.itemList, onSelectedItemIdChange = {
                 vm.savePreference(SELECTED_ITEM_ID_KEY, it)
         },
-        source,
-        sourceListRaw,
+        oldUIState.source,
+        oldUIState.sourceListRaw,
         onSelectedSourceIdChange = {
                 vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
         },
-        itemPriceListRaw
+        oldUIState.itemPriceListRaw
     )
 
 }
