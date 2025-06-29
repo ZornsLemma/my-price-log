@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.lifecycle.livedata.ktx)
     implementation(libs.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.androidx.runtime.saveable)
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     implementation(libs.datastore.preferences)

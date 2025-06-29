@@ -105,6 +105,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
@@ -364,7 +365,8 @@ fun formatDoubleLocaleAware(
     return nf.format(value)
 }
 
-data class MeasuredValue(val value: Double, val unit: MeasureUnit) {
+@Parcelize
+data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable {
     val quantityType: QuantityType get() = unit.quantityType
 
     fun to(unit: MeasureUnit): MeasuredValue {
@@ -756,6 +758,7 @@ class Converters {
 
 @Entity(tableName = "data_set")
 // TODO: UI term should probably be "Collection" ("category" sounds a bit like categorising products and we don't want to confuse things)
+@Parcelize
 data class DataSet(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -770,7 +773,7 @@ data class DataSet(
     @ColumnInfo(name = "allow_metric") val allowMetric: Boolean,
     @ColumnInfo(name = "allow_imperial") val allowImperial: Boolean,
     @ColumnInfo(name = "allow_us_customary") val allowUSCustomary: Boolean
-)
+) : Parcelable
 
 @Entity(
     tableName = "item", foreignKeys = [
@@ -782,6 +785,7 @@ data class DataSet(
         )
     ]
 )
+@Parcelize
 data class Item(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -790,7 +794,7 @@ data class Item(
     @ColumnInfo(name = "quantity_type") val quantityType: QuantityType, // TODO: quantity_type*_id* in db?? or is that only for fks?
     // TODO: quantity_type - an enum which says "by item"/"by mass"/"by volume" - the GUI probably *should* allow editing this (not sure though), but wern that editing it will mess up old data (so maybe just don't allow it?)
     // TODO: default_unit - g/kg/oz/floz/litre/etc - this must be consistent with quantity_type (and we may want to let it imply quantity_type rather than storing it explicitly)
-)
+) : Parcelable
 // TODO: Will temporarily make a note here - I may simply (especially in v1) refuse to allow changes
 // of quantity_type in the product edit screen. There is no trivial way to convert. If the user gets
 // it wrong and cares, they will notice pretty quickly so having to delete and recreate the product
@@ -815,12 +819,14 @@ data class Item(
         )
     ]
 )
+@Parcelize
 data class Source(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId: Long,
     val name: String
 )
+    : Parcelable
 
 // TODO: Should Price have a price_id on it? If it does, it will need to be nullable (I think) so we can use it in-memory when adding a brand new price, before the db layer assigns an id
 // TODO: This needs lots more fields, including the history tracking stuff, but let's start simple
@@ -913,7 +919,7 @@ data class PriceWithItem(
     @ColumnInfo(name = "quantity_type") val quantityType: QuantityType,
 )
 
-//@Parcelize // TODO: probably want this, but check later
+@Parcelize // TODO: probably want this, but check later
 data class NicePrice(
     // TODO: probably rename just "Price" once we rename the existing "Price"
     val id: Long = 0,
@@ -930,7 +936,7 @@ data class NicePrice(
     // we write back to the database, measure hasn't somehow mutated into a different QuantityType.
     // TODO: NEED TO MAKE SURE I ACTUALLY USE THIS WHEN DOING INSERT/UPDATE
     val originalQuantityType: QuantityType,
-) // TODO : Parcelable
+) : Parcelable
 
 // TODO: I suspect we should actually be using the item's "default unit" not its quantityType here - although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the display unit for display, to avoid "oh, it happened to work for me in metric with grams but now I'm in imperial it's displaying badly" concerns
 fun Price.toDomain(measureUnit: MeasureUnit): NicePrice =
@@ -2117,6 +2123,7 @@ fun <Param, T> collectFlowWithLifecycleAndReset(
 }
 
 // TODO: inconsistent mix of "List" and "ListRaw"
+@Parcelize
 data class UIState(
     val dataSet: DataSet?,
     val dataSetList: List<DataSet>?,
@@ -2125,12 +2132,13 @@ data class UIState(
     val source: Source?,
     val sourceListRaw: List<Source>?,
     val itemPriceListRaw: List<NicePrice>?,
-) {
+): Parcelable {
     // TODO: Poor naming - but the idea is that things like item and source can legitimately be null (there can be no item selected due to data set changes or no source due to no selection in drop down) while database results being null shows a fetch in progress, as even if there is no data we get an empty list back when the fetch has been done
     fun importantThingsNonNull(): Boolean {
         return dataSet != null && dataSetList != null && itemList != null && sourceListRaw != null && itemPriceListRaw != null
     }
 }
+
 
 // TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
 // TODO: It may just be the emulator but right now despite all my apparently sensible refactoring changes, I am seeing *massive* jank just playing around in the UI (partly but not only when returning from the "edit" full screen dialog)
@@ -2180,7 +2188,8 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // as we don't actually crash if our assumptions are violated, we can probably reasonably assume
     // that since only we change the database, any such saved values *are* still present in tbe db.
 
-    var oldUIState by remember { mutableStateOf( UIState(dataSet, dataSetListRaw, item, itemListRaw, source, sourceListRaw, itemPriceListRaw) ) }
+    var oldUIState by rememberSaveable { mutableStateOf( UIState(dataSet, dataSetListRaw, item, itemListRaw, source, sourceListRaw, itemPriceListRaw) ) }
+    Log.d("MyApp", "oldUIState dataSetListRaw ${dataSetListRaw}")
     val newUIState = UIState(dataSet, dataSetListRaw, item, itemListRaw, source, sourceListRaw, itemPriceListRaw)
 
     if (newUIState.importantThingsNonNull()) {
@@ -2798,8 +2807,11 @@ fun AppNavigation() {
             "home",
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
-        ) {
-            HomeScreen(vm, navController)
+        ) { backStackEntry ->
+            val saveableStateHolder = rememberSaveableStateHolder()
+            saveableStateHolder.SaveableStateProvider(backStackEntry.id) {
+                HomeScreen(vm, navController)
+            }
         }
         val tweenDurationMillisEnter = 700; // TODO: should probably be 300 in final version
         val tweenDurationMillisExit = 700; // TODO: should probably be 250 in final version
