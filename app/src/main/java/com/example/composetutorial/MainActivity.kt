@@ -2189,27 +2189,35 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // that since only we change the database, any such saved values *are* still present in tbe db.
 
     var oldUIState by rememberSaveable { mutableStateOf( UIState(dataSet, dataSetListRaw, item, itemListRaw, source, sourceListRaw, itemPriceListRaw) ) }
-    Log.d("MyApp", "oldUIState dataSetListRaw ${dataSetListRaw}")
+    Log.d("MyApp", "oldUIState dataSetListRaw ${oldUIState.dataSetList}")
     val newUIState = UIState(dataSet, dataSetListRaw, item, itemListRaw, source, sourceListRaw, itemPriceListRaw)
+
+    var todoWTF by rememberSaveable { mutableStateOf( 0 ) }
+    Log.d("MyApp", "todoWTF $todoWTF")
 
     if (newUIState.importantThingsNonNull()) {
         oldUIState = newUIState
     }
 
-    HomeScreenScaffold(
-        navController, oldUIState.dataSet, oldUIState.dataSetList, onSelectedDataSetIdChange = {
-            vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
-        },
-        oldUIState.item, oldUIState.itemList, onSelectedItemIdChange = {
+    Column {
+        TextButton(onClick = { todoWTF += 1 }) { Text("TODO") }
+
+
+        HomeScreenScaffold(
+            navController, oldUIState.dataSet, oldUIState.dataSetList, onSelectedDataSetIdChange = {
+                vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
+            },
+            oldUIState.item, oldUIState.itemList, onSelectedItemIdChange = {
                 vm.savePreference(SELECTED_ITEM_ID_KEY, it)
-        },
-        oldUIState.source,
-        oldUIState.sourceListRaw,
-        onSelectedSourceIdChange = {
+            },
+            oldUIState.source,
+            oldUIState.sourceListRaw,
+            onSelectedSourceIdChange = {
                 vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
-        },
-        oldUIState.itemPriceListRaw
-    )
+            },
+            oldUIState.itemPriceListRaw
+        )
+    }
 
 }
 
@@ -2794,6 +2802,7 @@ class MainActivity : ComponentActivity() {
 fun AppNavigation() {
     var vm: PriceTrackerViewModel = viewModel(factory = AppViewModelProvider.Factory)
     val navController = rememberNavController()
+    val saveableStateHolder = rememberSaveableStateHolder()
     NavHost(
         navController = navController,
         startDestination = "home",
@@ -2808,7 +2817,8 @@ fun AppNavigation() {
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
         ) { backStackEntry ->
-            val saveableStateHolder = rememberSaveableStateHolder()
+            Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
+            // TODO: I ACTUALLY THINK I DON'T NEED SAVEABLESTATEHOLDER AND HAVE BEEN CHASING THE WRONG PROBLEM BUT LET'S KEEP IT FOR NOW ANYWAY
             saveableStateHolder.SaveableStateProvider(backStackEntry.id) {
                 HomeScreen(vm, navController)
             }
