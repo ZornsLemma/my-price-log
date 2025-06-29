@@ -1641,7 +1641,9 @@ fun getFriendlyUnitPrice(
         // it chooses $0.66/100g but $6.61/kg is probably better. This code could maybe try to
         // down-weight "display only" units, but I'm not sure - anyway, that isn't the issue here.
         // I think we sort of don't want a 0 before the decimal point if we can help it, but our
-        // score doesn't take this into account.
+        // score doesn't take this into account. Off the top of my head, maybe something where we
+        // fairly heavily penalise for "more decimal places than our currency display format" and lightly penalise
+        // for every extra digit more significant than the units digit?!
         val log10Of1 = 0.0
         val candidateScore = abs(log10(candidateUnitPrice.numerator) - log10Of1) // lower is better
         if (bestScore == null || candidateScore < bestScore) {
@@ -2102,21 +2104,6 @@ fun MyDropdownMenuItem(
     )
 }
 
-/* TODO: TEMP COPY OF PERPLEXITY FRAGMENT:
-
-// In your ViewModel or Composable
-val context = LocalContext.current
-val sharedPref = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-val initialProductId = sharedPref.getLong("last_selected_product_id", -1L)
-var currentProductId by rememberSaveable { mutableStateOf(initialProductId) }
-
-// When user selects a new product:
-fun onProductSelected(newId: Long) {
-    currentProductId = newId
-    sharedPref.edit().putLong("last_selected_product_id", newId).apply()
-}
-
-*/
 // TODO: Perplexity magic
 // TODO: The amount of having to explicitly specify coroutinescopes and contexts in order to be able to run these functions is utterly batshit insane.
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -2135,50 +2122,6 @@ suspend fun <T> savePreference(context: Context, key: Preferences.Key<T>, value:
 }
 */
 
-data class ParameterizedResult<T, P>(
-    val data: T,
-    val parameter: P
-)
-
-// TODO: THIS MAY ACTUALLY BE WORKING!
-// TODO: Perplexity+Grok magic
-fun <T, P> parameterizedFlow( // TODO: SWAP ARGUMENTS? (CAREFULLY)
-    parameter: P,
-    flowProvider: (P) -> Flow<T>,
-): Flow<ParameterizedResult<T, P>> = flow {
-    flowProvider(parameter).collect { data ->
-        emit(ParameterizedResult(data, parameter))
-    }
-}
-
-// TODO: Perplexity magic - earlier versions of this would return an empty list instead of null but I think this is more useful for me
-@Composable
-fun <Param, T> collectParameterizedFlowWithLifecycle(
-    flowProvider: (Param) -> Flow<List<T>>,
-    parameter: Param
-): ParameterizedResult<out List<T>?, Param> {
-    val flow = remember(parameter, flowProvider) { parameterizedFlow(parameter, flowProvider) }
-    val result by flow.collectAsStateWithLifecycle(
-        initialValue = ParameterizedResult(null, parameter)
-    )
-    return result
-}
-
-// TODO: My attempted magic - this could of course return an empty list on reset but null carries more information so let's go with that for now
-// TODO: proper comment somewhere later - but the point of all this is that by default, when a parameterised Room query's parameter changes (e.g. dataSetId updating in HomeScreen), it kicks off another query but does *not* let you see that it's happening - you are just left with the previously collected values until the new query completes. This means you see a nice mix of new and old data, and have no way to know what's what. By attaching a tag to the results each time, we are able to distinguish when they have been regenerated or when they are out of date. We use that to return a null (could be an empty list if we wanted) which makes this "things have changed" situation like the initial "nothing has been read yet, do the best you can until the restults turn up" situation (which while annoying is at least vaguely logical) rather than having data for the wrong parameter (data set ID or whatever) and things going badly wrong or the UI displaying inconsistent nonsense.
-@Composable
-fun <Param, T> collectFlowWithLifecycleAndReset(
-    flowProvider: (Param) -> Flow<List<T>>,
-    parameter: Param
-): List<T>? {
-    val parameterizedResult = collectParameterizedFlowWithLifecycle(flowProvider = flowProvider, parameter = parameter)
-    return if (parameterizedResult.parameter == parameter) {
-        parameterizedResult.data
-    } else {
-        null
-    }
-}
-
 // TODO: inconsistent mix of "List" and "ListRaw"
 data class UIState(
     val dataSet: DataSet?,
@@ -2195,105 +2138,10 @@ data class UIState(
     }
 }
 
-
 // TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
 // TODO: It may just be the emulator but right now despite all my apparently sensible refactoring changes, I am seeing *massive* jank just playing around in the UI (partly but not only when returning from the "edit" full screen dialog)
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
-    // val coroutineScope = rememberCoroutineScope() // TODO MAGIC
-    /* TODO OLD - BEFORE DELETING THIS, MAKE SURE NO VALUABLE COMMENTS ARE IN HERE BUT NOT OUTSIDE
-    val dataSetId by vm.getPreference(SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
-    val itemId by vm.getPreference(SELECTED_ITEM_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
-    val sourceId by vm.getPreference(SELECTED_SOURCE_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
-    Log.d("MyApp", "HomeScreen dataSetId $dataSetId, itemId $itemId, sourceId $sourceId")
-    // TODO: This code is a bit inconsistent about fooId vs foo.Id - it *probably* doesn't matter in practice, but we should be clear and consistent.
-
-    // TODO: I seem to be repeatedly told that the "elegant" way to do this is with a sealed class,
-    // but every time I try it appears to turn into a nightmare of complexity and nonsense AI
-    // advice. It may be worth coming back to this later with more experience under my belt, I don't
-    // think it should change the fundamental code structure.
-    val dataSetListRaw: List<DataSet>? by vm.getAllDataSets()
-        .collectAsStateWithLifecycle(initialValue = null)
-    val dataSet = dataSetListRaw?.find { it.id == dataSetId }
-    Log.d("MyApp", "dataSet ${dataSet}")
-
-    val itemListRaw = if (dataSetId != null) collectFlowWithLifecycleAndReset(vm::getAllItems, dataSetId!!) else null
-    val item = itemListRaw?.find { it.id == itemId }
-    Log.d("MyApp", "item ${item}")
-    Log.d("MyApp", "itemListRaw ${itemListRaw}")
-
-    val sourceListRaw= if (dataSetId != null) collectFlowWithLifecycleAndReset(vm::getAllSources, dataSetId!!) else null
-    val source = sourceListRaw?.find { it.id == sourceId }
-    Log.d("MyApp", "source ${source}")
-    Log.d("MyApp", "sourceListRaw ${sourceListRaw}")
-
-    // TODO: As part of "atomic UI update" experiment I have hacked this to generate an empty list not null in the else clause - i think this is fine, but "lower" code still checks for null and if we do keep an empty list here we should make the lower code non-null aware
-    //val itemPriceListRaw =  if (dataSetId != null && item?.id != null) collectFlowWithLifecycleAndReset(vm::getNicePricesForItem2, Pair(dataSetId!!, item.id)) else null
-    val itemPriceListRaw =  if (dataSetId != null && item?.id != null) collectFlowWithLifecycleAndReset(vm::getNicePricesForItem2, Pair(dataSetId!!, item.id)) else emptyList()
-    Log.d("MyApp", "itemPriceListRaw ${itemPriceListRaw}")
-
-    // TODO: WIP NOTES AS I REFACTOR
-    // What do we *need* for this screen?
-    // - list of data set/source/item - these populate our drop downs
-    // - specific price record when we have all three of the above selected (subset of next item anyway)
-    // - all prices across sources when we have data set and product
-    //
-    // As a usability thing, we probably want to come back to the screen even after hours/days with
-    // *the same stuff* selected automatically. This probably gets stored in a shared preference or
-    // similar, *not* the database. Is this good/bad/neutral with our initial composition? As long
-    // as we don't actually crash if our assumptions are violated, we can probably reasonably assume
-    // that since only we change the database, any such saved values *are* still present in tbe db.
-
-    val newUIState = UIState(dataSet, dataSetListRaw, item, itemListRaw, source, sourceListRaw, itemPriceListRaw)
-    // In order to minimise jank, we want the previous UI state to be available during the *very
-    // first composition* when this screen is re-entered (e.g. after navigating back from another
-    // screen).
-    //
-    // If the first composition is based on null data, even if we manage to recompose with
-    // up-to-date data before the first frame, there can still be visual jank: animated components
-    // may animate themselves from their initial "null" size to a "non-null" layout. If the very
-    // first composition sees non-null data, there's no animation - which is what we want.
-    //
-    // This is particularly important when returning from a screen that was overlaid on top of this
-    // one (via Navigation's backstack), where the user expects this screen to "still be there" —
-    // not to visibly reinitialise.
-    //
-    // We could use rememberSaveable(), but instead we use remember with a ViewModel cache. This
-    // avoids needing UIState to be serialisable (a practical win) and also avoids the minor
-    // overhead of serialisation and deserialisation (a micro-optimisation).
-    var displayedUIState by remember { mutableStateOf( vm.cachedUIState ?: newUIState ) }
-    Log.d("MyApp", "oldUIState dataSetListRaw ${displayedUIState.dataSetList}")
-
-    var todoWTF by rememberSaveable { mutableStateOf( 0 ) }
-    Log.d("MyApp", "todoWTF $todoWTF")
-
-    if (newUIState.importantThingsNonNull()) {
-        displayedUIState = newUIState
-        vm.saveUIState(newUIState)
-    }
-
-    Column {
-        TextButton(onClick = { todoWTF += 1 }) { Text("TODO") }
-
-
-        // TODO: We should probably show the *new* dataSet ASAP rather than holding back updates for that, and related to that we may want to show a spinner overlaying the UI if dataSetId has changed but we still have old data
-        HomeScreenScaffold(
-            navController, displayedUIState.dataSet, displayedUIState.dataSetList, onSelectedDataSetIdChange = {
-                vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
-            },
-            displayedUIState.item, displayedUIState.itemList, onSelectedItemIdChange = {
-                vm.savePreference(SELECTED_ITEM_ID_KEY, it)
-            },
-            displayedUIState.source,
-            displayedUIState.sourceListRaw,
-            onSelectedSourceIdChange = {
-                vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
-            },
-            displayedUIState.itemPriceListRaw
-        )
-    }
-*/
-
     val newUIState by vm.uiState.collectAsStateWithLifecycle()
     // In order to minimise jank, we want the previous UI state to be available during the *very
     // first composition* when this screen is re-entered (e.g. after navigating back from another
@@ -2327,6 +2175,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     if (displayedUIState == null) {
         Text("TODO LOADING")
     } else {
+        // TODO: There may be excessive allowance for nulls in the code below here - it kind of depends how the data fetches have mutated. Should review this and remove any redundant null checks and nullable types in parameter lists of child composables.
         HomeScreenScaffold(
             navController,
             displayedUIState!!.dataSet,
