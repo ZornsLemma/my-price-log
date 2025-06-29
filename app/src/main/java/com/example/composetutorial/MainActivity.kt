@@ -2098,6 +2098,7 @@ fun <Param, T> collectParameterizedFlowWithLifecycle(
 }
 
 // TODO: My attempted magic - this could of course return an empty list on reset but null carries more information so let's go with that for now
+// TODO: proper comment somewhere later - but the point of all this is that by default, when a parameterised Room query's parameter changes (e.g. dataSetId updating in HomeScreen), it kicks off another query but does *not* let you see that it's happening - you are just left with the previously collected values until the new query completes. This means you see a nice mix of new and old data, and have no way to know what's what. By attaching a tag to the results each time, we are able to distinguish when they have been regenerated or when they are out of date. We use that to return a null (could be an empty list if we wanted) which makes this "things have changed" situation like the initial "nothing has been read yet, do the best you can until the restults turn up" situation (which while annoying is at least vaguely logical) rather than having data for the wrong parameter (data set ID or whatever) and things going badly wrong or the UI displaying inconsistent nonsense.
 @Composable
 fun <Param, T> collectFlowWithLifecycleAndReset(
     flowProvider: (Param) -> Flow<List<T>>,
