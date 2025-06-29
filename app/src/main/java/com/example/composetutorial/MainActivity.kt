@@ -2117,7 +2117,7 @@ fun <Param, T> collectFlowWithLifecycleAndReset(
 }
 
 // TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
-i// TODO: It may just be the emulator but right now despite all my apparently sensible refactoring changes, I am seeing *massive* jank just playing around in the UI (partly but not only when returning from the "edit" full screen dialog)
+// TODO: It may just be the emulator but right now despite all my apparently sensible refactoring changes, I am seeing *massive* jank just playing around in the UI (partly but not only when returning from the "edit" full screen dialog)
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val context = LocalContext.current
@@ -2163,7 +2163,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // that since only we change the database, any such saved values *are* still present in tbe db.
 
     HomeScreenScaffold(
-        vm, navController, dataSet, dataSetListRaw, onSelectedDataSetIdChange = {
+        navController, dataSet, dataSetListRaw, onSelectedDataSetIdChange = {
             vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
         },
         item, itemListRaw, onSelectedItemIdChange = {
@@ -2181,7 +2181,6 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 
 @Composable
 fun HomeScreenScaffold(
-    vm: PriceTrackerViewModel,
     navController: NavHostController,
     dataSet: DataSet?,
     dataSetList: List<DataSet>?,
