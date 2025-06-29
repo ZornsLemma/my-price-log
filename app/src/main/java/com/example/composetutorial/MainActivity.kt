@@ -1631,7 +1631,12 @@ fun getFriendlyUnitPrice(
         // I think we sort of don't want a 0 before the decimal point if we can help it, but our
         // score doesn't take this into account. Off the top of my head, maybe something where we
         // fairly heavily penalise for "more decimal places than our currency display format" and lightly penalise
-        // for every extra digit more significant than the units digit?!
+        // for every extra digit more significant than the units digit?! Actually what might work
+        // is using log10 with integer truncation to calculate the "index" of the most significant
+        // digit (0 for 1s place, 2 for 10s place, -1 for 0.1s place, etc), then scoring (low is good)
+        // by the index but with negative ones multipled by 2 to discourage them - given we have
+        // limited dp (because of currency display settings), we want to make full use of the space
+        // we have.
         val log10Of1 = 0.0
         val candidateScore = abs(log10(candidateUnitPrice.numerator) - log10Of1) // lower is better
         if (bestScore == null || candidateScore < bestScore) {
