@@ -2057,32 +2057,30 @@ fun <T, P> parameterizedFlow( // TODO: SWAP ARGUMENTS? (CAREFULLY)
     }
 }
 
-// TODO: Perplexity magic
+// TODO: Perplexity magic - earlier versions of this would return an empty list instead of null but I think this is more useful for me
 @Composable
 fun <Param, T> collectParameterizedFlowWithLifecycle(
-    parameter: Param,
     flowProvider: (Param) -> Flow<List<T>>,
-    initialValue: List<T> = emptyList()
-): ParameterizedResult<List<T>, Param> {
+    parameter: Param
+): ParameterizedResult<out List<T>?, Param> {
     val flow = remember(parameter, flowProvider) { parameterizedFlow(parameter, flowProvider) }
     val result by flow.collectAsStateWithLifecycle(
-        initialValue = ParameterizedResult(initialValue, parameter)
+        initialValue = ParameterizedResult(null, parameter)
     )
     return result
 }
 
-// TODO: My attempted magic
+// TODO: My attempted magic - this could of course return an empty list on reset but null carries more information so let's go with that for now
 @Composable
 fun <Param, T> collectFlowWithLifecycleAndReset(
     flowProvider: (Param) -> Flow<List<T>>,
-    parameter: Param,
-    initialValue: List<T> = emptyList()
-): List<T> {
-    val parameterizedResult = collectParameterizedFlowWithLifecycle(flowProvider = flowProvider, parameter = parameter, initialValue = initialValue)
+    parameter: Param
+): List<T>? {
+    val parameterizedResult = collectParameterizedFlowWithLifecycle(flowProvider = flowProvider, parameter = parameter)
     return if (parameterizedResult.parameter == parameter) {
         parameterizedResult.data
     } else {
-        initialValue
+        null
     }
 }
 
