@@ -365,6 +365,9 @@ fun formatDoubleLocaleAware(
     return nf.format(value)
 }
 
+// TODO: Now we are caching the UI state in the ViewModel, (almost?) all @Parcelize annotations -
+// not just this one - can be removed. I am not doing it right now as I want to make a minimal
+// commit to show the core change first.
 @Parcelize
 data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable {
     val quantityType: QuantityType get() = unit.quantityType
@@ -1050,6 +1053,19 @@ class SingleEventState<T>(initialState: T) {
 // TODO: Should things in here be "val dataSets: Flow<List<DataSet>> = repository.getAllDataSets()" rather than "getAllDataSets()" functions?
 class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository, application: Application) :
     ViewModel() {
+
+    // Note to self (as a noob): Two separate AIs have convinced me this "private set" approach is
+    // more conventional than just having cachedUIState and removing "private set". From a personal
+    // point of view, I can see value in that even though our set function doesn't do any
+    // validation, it is easy to search for calls to the set function, whereas finding uses of the
+    // property to set via simple source code text searching would be difficult.
+
+    var cachedUIState: UIState? = null
+        private set
+
+    fun saveUIState(state: UIState) {
+        cachedUIState = state
+    }
 
         // TODO: Perplexity magic, hacked on
         private val dataStore = application.dataStore
@@ -2189,7 +2205,20 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // that since only we change the database, any such saved values *are* still present in tbe db.
 
     val newUIState = UIState(dataSet, dataSetListRaw, item, itemListRaw, source, sourceListRaw, itemPriceListRaw)
-    var oldUIState by rememberSaveable { mutableStateOf( newUIState ) }
+    // In order to minimise jank, we want the old UI state to be available to us on the very first
+    // composition as we are re-entered after a transition (e.g. coming back from another screen).
+    // (Even if we manage to recompose with real data before that first recomposition makes it into
+    // a frame, there can still be jank introduced as animated components within this composable
+    // animate themselves from their initial "null" size to their "non-null" size. If the very first
+    // composition of those animated components is the non-null state, there is nothing to animate.
+    // This is the desired behaviour when we are just being "revealed" after a back navigation -
+    // where we have been notionally there all the time, just hidden by the new top screen - as
+    // opposed to appearing for the first time or reflecting a user-initiated change.)
+    //
+    // We could use rememberSaveable to do this, but instead we use remember plus a cache in
+    // ViewModel to avoids the need for UIState to be serializable (the main practical benefit) and
+    // (a maybe-useful micro-optimisation) avoids the overhead of actually (de)serialising.
+    var oldUIState by remember { mutableStateOf( vm.cachedUIState ?: newUIState ) }
     Log.d("MyApp", "oldUIState dataSetListRaw ${oldUIState.dataSetList}")
 
     var todoWTF by rememberSaveable { mutableStateOf( 0 ) }
@@ -2197,6 +2226,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 
     if (newUIState.importantThingsNonNull()) {
         oldUIState = newUIState
+        vm.cachedUIState = newUIState
     }
 
     Column {
