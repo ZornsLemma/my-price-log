@@ -2214,15 +2214,6 @@ fun HomeScreenScaffold(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
-
-
-
-    // TODONOW: I THINK IT MIGHT BE THESE NEXT TWO LINES AND THEIR MASSIVE HACK WHICH CAUSE PROBLEMS WHEN WE ARE RUN AND HAVE TO CREATE THE DB AS WE GO
-    // var selectedDataSetId: Long by remember { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, need to cope with null in some way probably
-
-    //var selectedProductId: Long by rememberSaveable { mutableStateOf(1) } // TODO: massive hack defaulting to hardcoded, we need a genuine ID from somewhere and/or support for null
-
-
     // TODO: I added this Surface by analogy with the one in SettingsScreen, but it appears to have
     // no real effect - even if I set its color to Red or primary, nothing shows.
     // TODO: Actually it may or may not be this, but on the O6 at least there does seem to be a weird
@@ -2358,6 +2349,7 @@ fun HomeScreenScaffold(
 
 @Composable
 // TODO: https://m3.material.io/components/dialogs/specs says (near bottom) top/left/right padding on a full screen dialog should be 24.dp - I am probably not doing that, should I? Should I use similar padding on "non-dialog full screens" to match??
+// TODO: This needs converting to the new ViewModel-manages-UI-state model
 fun OuterFullScreenDialog(
     vm: PriceTrackerViewModel,
     navController: NavHostController,
