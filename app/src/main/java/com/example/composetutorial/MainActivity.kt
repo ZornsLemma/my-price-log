@@ -1144,34 +1144,20 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             }.collectLatest { newUIState ->
                 _uiState.value = newUIState
 
+                // TODO: Keeping this commented out for a bit just in case, but I don't think it's
+                // relevant any more. The concept of an invalid UI state came when I was
+                // hand-rolling my own "do not show inconsistent state while we are querying the
+                // database" code. With the above logic, we should never have a UIState which isn't
+                // valid for display. It may be invalid for some actions, but not for display, which
+                // is the concern here.
+                /*
                 if (newUIState?.importantThingsNonNull() == true) {
                     lastValidUIState = newUIState
                 }
+                */
             }
         }
     }
-
-    fun saveUIState(state: UIState) {
-        lastValidUIState = state
-    }
-
-
-
-
-    /*
-    // Note to self (as a noob): Two separate AIs have convinced me this "private set" approach is
-    // more conventional than just having cachedUIState and removing "private set". From a personal
-    // point of view, I can see value in that even though our set function doesn't do any
-    // validation, it is easy to search for calls to the set function, whereas finding uses of the
-    // property to set via simple source code text searching would be difficult.
-
-    var cachedUIState: UIState? = null
-        private set
-
-    fun saveUIState(state: UIState) {
-        cachedUIState = state
-    }
-    */
 
         // TODO: Perplexity magic, hacked on
        // TODO: "too early" for the init coroutine stuff private val dataStore = application.dataStore
@@ -2133,18 +2119,12 @@ data class UIState(
     val source: Source?,
     val sourceListRaw: List<Source>,
     val itemPriceListRaw: List<NicePrice>,
-) {
-    // TODO: Poor naming - but the idea is that things like item and source can legitimately be null (there can be no item selected due to data set changes or no source due to no selection in drop down) while database results being null shows a fetch in progress, as even if there is no data we get an empty list back when the fetch has been done
-    fun importantThingsNonNull(): Boolean {
-        return dataSet != null && dataSetList != null && itemList != null && sourceListRaw != null && itemPriceListRaw != null
-    }
-}
+)
 
 // TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
 // TODO: It may just be the emulator but right now despite all my apparently sensible refactoring changes, I am seeing *massive* jank just playing around in the UI (partly but not only when returning from the "edit" full screen dialog)
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
-    val newUIState by vm.uiState.collectAsStateWithLifecycle()
     // In order to minimise jank, we want the previous UI state to be available during the *very
     // first composition* when this screen is re-entered (e.g. after navigating back from another
     // screen).
@@ -2161,16 +2141,9 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // We could use rememberSaveable(), but instead we use remember with a ViewModel cache. This
     // avoids needing UIState to be serialisable (a practical win) and also avoids the minor
     // overhead of serialisation and deserialisation (a micro-optimisation).
+    val newUIState by vm.uiState.collectAsStateWithLifecycle()
     var displayedUIState by remember { mutableStateOf(vm.cachedUIState ?: newUIState)}
-
-    // TODO: I think something's a bit askew here. The newUIState code ends with something
-    // implementing ths logic. That may well be correct/best. However, we are doing this in two
-    // places - probably because I wrote this bit without realising the code in the ViewModel was
-    // also doing it. Need to think about this and decide where it belongs and avoid duplication.
-    if (newUIState?.importantThingsNonNull() == true) {
-        displayedUIState = newUIState
-        vm.saveUIState(newUIState!!) // TODO: clearer to save displayedUIState? effect is same of course
-    }
+    displayedUIState = newUIState
 
     // TODO: We should probably show the *new* dataSet ASAP rather than holding back updates for that, and related to that we may want to show a spinner overlaying the UI if dataSetId has changed but we still have old data
     // TODO: Unlike my older version, UIState itself is nullable. This might work well, giving us a chance to show a clean loading screen in the unlikely event it's necessary. Or we could turn it into a UIState(withnullsinside). Just hack it for the moment while I'm trying out this new approach.
