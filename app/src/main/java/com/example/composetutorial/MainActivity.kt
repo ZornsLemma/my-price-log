@@ -2203,6 +2203,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
         TextButton(onClick = { todoWTF += 1 }) { Text("TODO") }
 
 
+        // TODO: We should probably show the *new* dataSet ASAP rather than holding back updates for that, and related to that we may want to show a spinner overlaying the UI if dataSetId has changed but we still have old data
         HomeScreenScaffold(
             navController, oldUIState.dataSet, oldUIState.dataSetList, onSelectedDataSetIdChange = {
                 vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
@@ -2802,7 +2803,7 @@ class MainActivity : ComponentActivity() {
 fun AppNavigation() {
     var vm: PriceTrackerViewModel = viewModel(factory = AppViewModelProvider.Factory)
     val navController = rememberNavController()
-    val saveableStateHolder = rememberSaveableStateHolder()
+    //val saveableStateHolder = rememberSaveableStateHolder()
     NavHost(
         navController = navController,
         startDestination = "home",
@@ -2819,9 +2820,9 @@ fun AppNavigation() {
         ) { backStackEntry ->
             Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
             // TODO: I ACTUALLY THINK I DON'T NEED SAVEABLESTATEHOLDER AND HAVE BEEN CHASING THE WRONG PROBLEM BUT LET'S KEEP IT FOR NOW ANYWAY
-            saveableStateHolder.SaveableStateProvider(backStackEntry.id) {
+            //saveableStateHolder.SaveableStateProvider(backStackEntry.id) {
                 HomeScreen(vm, navController)
-            }
+            //}
         }
         val tweenDurationMillisEnter = 700; // TODO: should probably be 300 in final version
         val tweenDurationMillisExit = 700; // TODO: should probably be 250 in final version
