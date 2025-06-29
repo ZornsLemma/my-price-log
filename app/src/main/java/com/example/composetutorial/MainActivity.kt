@@ -1105,6 +1105,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
                 }
             }.collectLatest { newUIState ->
                 _uiState.value = newUIState
+
                 if (newUIState?.importantThingsNonNull() == true) {
                     lastValidUIState = newUIState
                 }
@@ -2341,6 +2342,10 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // overhead of serialisation and deserialisation (a micro-optimisation).
     var displayedUIState by remember { mutableStateOf(vm.cachedUIState ?: newUIState)}
 
+    // TODO: I think something's a bit askew here. The newUIState code ends with something
+    // implementing ths logic. That may well be correct/best. However, we are doing this in two
+    // places - probably because I wrote this bit without realising the code in the ViewModel was
+    // also doing it. Need to think about this and decide where it belongs and avoid duplication.
     if (newUIState?.importantThingsNonNull() == true) {
         displayedUIState = newUIState
         vm.saveUIState(newUIState!!) // TODO: clearer to save displayedUIState? effect is same of course
