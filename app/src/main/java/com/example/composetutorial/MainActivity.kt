@@ -1070,13 +1070,15 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         // This forces the delegate to initialize safely on the main thread TODO: VOODOO
         val unused = app.dataStore
 
-        // TODO: we could move val dataSetFlow = blah to here
+        val dataSetFlow =
+            priceTrackerRepository.getAllDataSets()
+
         Log.d("MyApp", "XFF init")
         data class Ids(val dataSetId: Long?, val itemId: Long?)
+        // TODO: WE MAY NOW HAVE LESS FLOWS AND NOT NEED DATABASERESULTS TO WORK ROUND THE <=5 LIMIT
         data class DatabaseResults(
             // TODO A BIT MISNAMED NOW IT HAS IDS TOO - ChatGPT's version has a PartialUIModel instead, maybe a better name
             val ids: Ids,
-            val dataSetList: List<DataSet>,
             val itemList: List<Item>,
             val sourceList: List<Source>,
             val itemPriceList: List<NicePrice>?,
@@ -1091,8 +1093,6 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             if (dataSetId == null) return@flatMapLatest flowOf(null)
 
             Log.d("MyApp", "XFF fml")
-            val dataSetFlow =
-                priceTrackerRepository.getAllDataSets() // TODO: could pull this out as no parameters, but it isn't actually running a query here so it *may* not matter
             val itemListFlow = priceTrackerRepository.getAllItems(dataSetId)
             val sourceListFlow = priceTrackerRepository.getAllSources(dataSetId)
             val itemPriceListFlow = if (itemId != null)
@@ -1104,7 +1104,6 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
             val TODO9 = combine(
                 flowOf(Ids(dataSetId, itemId)),
-                dataSetFlow,
                 itemListFlow, sourceListFlow, itemPriceListFlow,
                 ::DatabaseResults
             )
@@ -1127,23 +1126,23 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         viewModelScope.launch(Dispatchers.Default) {
             combine(
                 getPreference(SELECTED_SOURCE_ID_KEY),
+                dataSetFlow,
                 databaseResultsFlow,
-                ::Pair
-            ).flatMapLatest { (sourceId, databaseResultsNull) ->
+                ::Triple
+            ).flatMapLatest { (sourceId, dataSetList, databaseResultsNull) ->
                 // We can have a null here because of the dataSetId == null emission in the code
                 // above - it means we want to return a null UIState.
                 if (databaseResultsNull == null) return@flatMapLatest flowOf(null)
 
                 val databaseResults = databaseResultsNull!!
-                val dataSet =
-                    databaseResults.dataSetList.find { it.id == databaseResults.ids.dataSetId }
+                val dataSet = dataSetList.find { it.id == databaseResults.ids.dataSetId }
                 val item = databaseResults.itemList.find { it.id == databaseResults.ids.itemId }
                 val source = databaseResults.sourceList.find { it.id == sourceId }
 
                 flowOf(
                     UIState(
                         dataSet,
-                        databaseResults.dataSetList,
+                        dataSetList,
                         item,
                         databaseResults.itemList,
                         source,
