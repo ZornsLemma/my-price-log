@@ -1066,6 +1066,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         val unused = app.dataStore
 
         // TODO: we could move val dataSetFlow = blah to here
+        Log.d("MyApp", "XFF init")
         data class Ids(val dataSetId: Long?, val itemId: Long?)
         data class DatabaseResults(
             // TODO A BIT MISNAMED NOW IT HAS IDS TOO - ChatGPT's version has a PartialUIModel instead, maybe a better name
@@ -1084,6 +1085,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         ).flatMapLatest { (dataSetId, itemId) ->
             if (dataSetId == null) return@flatMapLatest flowOf(null)
 
+            Log.d("MyApp", "XFF fml")
             val dataSetFlow =
                 priceTrackerRepository.getAllDataSets() // TODO: could pull this out as no parameters, but it isn't actually running a query here so it *may* not matter
             val itemListFlow = priceTrackerRepository.getAllItems(dataSetId)
