@@ -1076,33 +1076,79 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         // concern in the future. A bit more concerningly, it will also re-query everything if
         // sourceId changes, even though *no* queries take sourceId as a parameter.
         viewModelScope.launch(Dispatchers.Default) {
-            combine(
+            // This forces the delegate to initialize safely on the main thread TODO: VOODOO
+            val unused = application.dataStore
+
+            data class DatabaseFlows(
+                val dataSetFlow: Flow<List<DataSet>>,
+                val itemListFlow: Flow<List<Item>>,
+                val sourceListFlow: Flow<List<Source>>,
+                val itemPriceListFlow: Flow<List<NicePrice>?>
+            )
+
+            data class Ids(val dataSetId: Long?, val itemId: Long?)
+            data class DatabaseResults(
+                // TODO A BIT MISNAMED NOW IT HAS IDS TOO
+                val ids: Ids,
+                val dataSetList: List<DataSet>,
+                val itemList: List<Item>,
+                val sourceList: List<Source>,
+                val itemPriceList: List<NicePrice>?,
+            )
+
+            val databaseResultsFlow = combine(
                 getPreference(SELECTED_DATA_SET_ID_KEY),
                 getPreference(SELECTED_ITEM_ID_KEY),
-                getPreference(SELECTED_SOURCE_ID_KEY),
-                ::Triple
-            ).flatMapLatest { (dataSetId, itemId, sourceId) ->
+                ::Pair
+            ).flatMapLatest { (dataSetId, itemId) ->
                 if (dataSetId == null) return@flatMapLatest flowOf(null)
 
-                val dataSetFlow = priceTrackerRepository.getAllDataSets() // TODO: could pull this out as no parameters, but it isn't actually running a query here so it *may* not matter
+                val dataSetFlow =
+                    priceTrackerRepository.getAllDataSets() // TODO: could pull this out as no parameters, but it isn't actually running a query here so it *may* not matter
                 val itemListFlow = priceTrackerRepository.getAllItems(dataSetId)
                 val sourceListFlow = priceTrackerRepository.getAllSources(dataSetId)
                 val itemPriceListFlow = if (itemId != null)
-                    priceTrackerRepository.getNicePricesForItem(dataSetId = dataSetId, itemId = itemId)
+                    priceTrackerRepository.getNicePricesForItem(
+                        dataSetId = dataSetId,
+                        itemId = itemId
+                    )
                 else flowOf(null)
 
-                combine(
+                val TODO9 = combine(
+                    flowOf(Ids(dataSetId, itemId)),
                     dataSetFlow,
-                    itemListFlow,
-                    sourceListFlow,
-                    itemPriceListFlow
-                ) { dataSetList, itemList, sourceList, priceList ->
-                    val dataSet = dataSetList.find { it.id == dataSetId }
-                    val item = itemList.find { it.id == itemId }
-                    val source = sourceList.find { it.id == sourceId }
+                    itemListFlow, sourceListFlow, itemPriceListFlow,
+                    ::DatabaseResults
+                )
+                TODO9
+            }
 
-                    UIState(dataSet, dataSetList, item, itemList, source, sourceList, priceList)
-                }
+            combine(
+                getPreference(SELECTED_SOURCE_ID_KEY),
+                databaseResultsFlow,
+                ::Pair
+            ).flatMapLatest { (sourceId, databaseResultsNull) ->
+                // We can have a null here because of the dataSetId == null emission in the code
+                // above - it means we want to return a null UIState.
+                if (databaseResultsNull == null) return@flatMapLatest flowOf(null)
+
+                val databaseResults = databaseResultsNull!!
+                val dataSet =
+                    databaseResults.dataSetList.find { it.id == databaseResults.ids.dataSetId }
+                val item = databaseResults.itemList.find { it.id == databaseResults.ids.itemId }
+                val source = databaseResults.sourceList.find { it.id == sourceId }
+
+                flowOf(
+                    UIState(
+                        dataSet,
+                        databaseResults.dataSetList,
+                        item,
+                        databaseResults.itemList,
+                        source,
+                        databaseResults.sourceList,
+                        databaseResults.itemPriceList
+                    )
+                )
             }.collectLatest { newUIState ->
                 _uiState.value = newUIState
 
