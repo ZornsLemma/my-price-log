@@ -2101,48 +2101,18 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // think it should change the fundamental code structure.
     val dataSetListRaw: List<DataSet>? by vm.getAllDataSets()
         .collectAsStateWithLifecycle(initialValue = null)
-    /*
-    val dataSetListLoaded = dataSetListRaw != null
-    val dataSetList: List<DataSet> = if (dataSetListLoaded) dataSetListRaw!! else emptyList<DataSet>()
-    */
     val dataSet = dataSetListRaw?.find { it.id == dataSetId }
     Log.d("MyApp", "dataSet ${dataSet}")
 
-    /*
-    // If we have a known-invalid dataSetId, revert to nothing being selected.
-    if (dataSetListLoaded && dataSetList.none { it.id == dataSetId } ) {
-        setDataSetId(null)
-    }
-    */
-
-    val TODOdataSetId = dataSetId ?: 3
-    /*
-    val itemsFlowX = parameterizedFlow(
-        parameter = TODOdataSetId,
-        flowProvider = { id -> vm.getAllItems(id) },
-    )
-    val resultX by itemsFlowX.collectAsStateWithLifecycle(initialValue = ParameterizedResult(emptyList(), TODOdataSetId))
-    */
-
-    /*
-    val resultX = collectParameterizedFlowWithLifecycle(
-        parameter = TODOdataSetId,
-        flowProvider = vm::getAllItems
-    )
-    Log.d("MyApp", "TODOPARAMLIST ${resultX.parameter} ${resultX.data}")
-    */
-    val resultX = collectFlowWithLifecycleAndReset(vm::getAllItems, TODOdataSetId)
-    Log.d("MyApp", "TODOPARAMLIST ${resultX}")
-
-    val TODODEBUGITEMLISTRAW: List<Item> by vm.getAllItems(dataSetId ?: 3).collectAsStateWithLifecycle(initialValue = emptyList())
-    val itemListRaw: List<Item>? by if (dataSetId != null) { vm.getAllItems(dataSetId!!).collectAsStateWithLifecycle(initialValue = null) } else { mutableStateOf(null) }
+    val itemListRaw = if (dataSetId != null) collectFlowWithLifecycleAndReset(vm::getAllItems, dataSetId!!) else null
     val item = itemListRaw?.find { it.id == itemId }
-    Log.d("MyApp", "TODODEBUGITEMLISTRAW ${TODODEBUGITEMLISTRAW}")
     Log.d("MyApp", "item ${item}")
     Log.d("MyApp", "itemListRaw ${itemListRaw}")
 
-    val sourceListRaw: List<Source>? by if (dataSetId != null) { vm.getAllSources(dataSetId!!).collectAsStateWithLifecycle(initialValue = null) } else { mutableStateOf( null ) }
+    val sourceListRaw= if (dataSetId != null) collectFlowWithLifecycleAndReset(vm::getAllSources, dataSetId!!) else null
     val source = sourceListRaw?.find { it.id == sourceId }
+    Log.d("MyApp", "source ${source}")
+    Log.d("MyApp", "sourceListRaw ${sourceListRaw}")
 
     val itemPriceListRaw: List<NicePrice>? by if (dataSetId != null && item?.id != null) {
         vm.getNicePricesForItem(dataSetId = dataSetId!!, itemId = item.id)
