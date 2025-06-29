@@ -1072,7 +1072,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             val ids: Ids,
             val itemList: List<Item>,
             val sourceList: List<Source>,
-            val itemPriceList: List<NicePrice>?,
+            val itemPriceList: List<NicePrice>,
         )
 
         // TODO: Maybe rename this partialUiFlow
@@ -1091,7 +1091,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
                     dataSetId = dataSetId,
                     itemId = itemId
                 )
-            else flowOf(null)
+            else flowOf(emptyList())
 
             val TODO9 = combine(
                 flowOf(Ids(dataSetId, itemId)),
@@ -1315,12 +1315,11 @@ val menuRightPadding = menuLeftPadding
 
 
 // Start Grok chunk
-// TODO: This may *not* want to take the viewmodel eventually once refactoring done?
 // TODO: RENAME THIS IF IT SURVIVES REFACTORING
 @Composable
 fun MainScreen(
-    dataSet: DataSet?, dataSetList: List<DataSet>?, onSelectedDataSetIdChange: (Long) -> Unit,
-    item: Item?, itemList: List<Item>?, onSelectedItemIdChange: (Long) -> Unit
+    dataSet: DataSet?, dataSetList: List<DataSet>, onSelectedDataSetIdChange: (Long) -> Unit,
+    item: Item?, itemList: List<Item>, onSelectedItemIdChange: (Long) -> Unit
 ) {
     val selectedDataSetId = dataSet?.id // TODO SEMI TEMP HACK WHILE REFACTORING
     val selectedProductId = item?.id // TODO DITTO
@@ -1784,9 +1783,9 @@ fun ItemSourceInfo(
     dataSet: DataSet,
     item: Item?,
     source: Source?,
-    sourceList: List<Source>?,
+    sourceList: List<Source>,
     onSelectedSourceIdChange: (Long) -> Unit,
-    itemPriceList: List<NicePrice>?,
+    itemPriceList: List<NicePrice>,
 ) {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
 
@@ -1843,9 +1842,9 @@ fun ItemSourceInfo(
                     storeId = source!!.id
                 ).collectAsStateWithLifecycle(initialValue = emptyList())
                 */
-                val priceList = itemPriceList?.filter { it.sourceId == source!!.id }
+                val priceList = itemPriceList.filter { it.sourceId == source!!.id }
 
-                if (priceList.isNullOrEmpty()) {
+                if (priceList.isEmpty()) {
                     // TODO: Very quick hack - remember if it matters (not decided what we ought to do) we can distinguish "still loading" or "loaded but not data" via nullness of itemPriceList
                     Text("TODO: No price, do something useful here - this may be transient during db load or it may reflect reality")
                 } else {
@@ -2128,12 +2127,12 @@ suspend fun <T> savePreference(context: Context, key: Preferences.Key<T>, value:
 // TODO: inconsistent mix of "List" and "ListRaw"
 data class UIState(
     val dataSet: DataSet?,
-    val dataSetList: List<DataSet>?,
+    val dataSetList: List<DataSet>,
     val item: Item?,
-    val itemList: List<Item>?,
+    val itemList: List<Item>,
     val source: Source?,
-    val sourceListRaw: List<Source>?,
-    val itemPriceListRaw: List<NicePrice>?,
+    val sourceListRaw: List<Source>,
+    val itemPriceListRaw: List<NicePrice>,
 ) {
     // TODO: Poor naming - but the idea is that things like item and source can legitimately be null (there can be no item selected due to data set changes or no source due to no selection in drop down) while database results being null shows a fetch in progress, as even if there is no data we get an empty list back when the fetch has been done
     fun importantThingsNonNull(): Boolean {
@@ -2205,15 +2204,15 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 fun HomeScreenScaffold(
     navController: NavHostController,
     dataSet: DataSet?,
-    dataSetList: List<DataSet>?,
+    dataSetList: List<DataSet>,
     onSelectedDataSetIdChange: (Long) -> Unit,
     item: Item?,
-    itemList: List<Item>?,
+    itemList: List<Item>,
     onSelectedItemIdChange: (Long) -> Unit,
     source: Source?,
-    sourceListRaw: List<Source>?,
+    sourceListRaw: List<Source>,
     onSelectedSourceIdChange: (Long) -> Unit,
-    itemPriceListRaw: List<NicePrice>?
+    itemPriceListRaw: List<NicePrice>
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -2280,7 +2279,6 @@ fun HomeScreenScaffold(
                 )
             )
 
-            val dataSetListNullable = dataSetList // TODO TEMP INTERMEDIATE?
             if (dataSet != null) {
                 Log.d("MyApp", "HSS dataSet ${dataSet}")
                 Log.d("MyApp", "HSS item ${item}")
