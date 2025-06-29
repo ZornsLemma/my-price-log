@@ -2154,7 +2154,6 @@ data class UIState(
 // TODO: It may just be the emulator but right now despite all my apparently sensible refactoring changes, I am seeing *massive* jank just playing around in the UI (partly but not only when returning from the "edit" full screen dialog)
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
-    val context = LocalContext.current
     // val coroutineScope = rememberCoroutineScope() // TODO MAGIC
     val dataSetId by vm.getPreference(SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
     val itemId by vm.getPreference(SELECTED_ITEM_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
