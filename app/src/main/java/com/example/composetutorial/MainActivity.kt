@@ -160,9 +160,11 @@ import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.log10
 import androidx.datastore.preferences.core.edit
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
 // weight or volume. This is fundamental as we make no effort to convert between them using some
@@ -643,7 +645,7 @@ object AppViewModelProvider {
             val app =
                 (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
             // TODO ItemEntryViewModel(MyApplication().itemsRepository)
-            PriceTrackerViewModel(app.priceTrackerRepository)
+            PriceTrackerViewModel(app.priceTrackerRepository, this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
         }
         //...
     }
@@ -1040,8 +1042,23 @@ class SingleEventState<T>(initialState: T) {
 }
 
 // TODO: Should things in here be "val dataSets: Flow<List<DataSet>> = repository.getAllDataSets()" rather than "getAllDataSets()" functions?
-class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository) :
+class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository, application: Application) :
     ViewModel() {
+
+        // TODO: Perplexity magic, hacked on
+        private val dataStore = application.dataStore
+    fun<T> getPreference(key: Preferences.Key<T>): StateFlow<T?> {
+        return dataStore.data
+            .map { prefs -> prefs[key] }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    }
+    fun<T> savePreference(key: Preferences.Key<T>, value: T?) {
+        viewModelScope.launch {
+            dataStore.edit { prefs ->
+                if (value != null) prefs[key] = value else prefs.remove(key)
+            }
+        }
+    }
 
     fun getAllDataSets() = priceTrackerRepository.getAllDataSets()
 
@@ -2040,6 +2057,7 @@ val SELECTED_DATA_SET_ID_KEY = longPreferencesKey("selected_data_set_id")
 val SELECTED_ITEM_ID_KEY = longPreferencesKey( "selected_item_id")
 val SELECTED_SOURCE_ID_KEY = longPreferencesKey( "selected_source_id")
 
+/* TODO DELETE
 fun <T> getPreference(context: Context, key: Preferences.Key<T>): Flow<T?> =
     context.dataStore.data.map { prefs -> prefs[key] }
 
@@ -2048,6 +2066,7 @@ suspend fun <T> savePreference(context: Context, key: Preferences.Key<T>, value:
         if (value != null) prefs[key] = value else prefs.remove(key)
     }
 }
+*/
 
 data class ParameterizedResult<T, P>(
     val data: T,
@@ -2096,10 +2115,10 @@ fun <Param, T> collectFlowWithLifecycleAndReset(
 @Composable
 fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope() // TODO MAGIC
-    val dataSetId by getPreference(context, SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
-    val itemId by getPreference(context, SELECTED_ITEM_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
-    val sourceId by getPreference(context, SELECTED_SOURCE_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
+    // val coroutineScope = rememberCoroutineScope() // TODO MAGIC
+    val dataSetId by vm.getPreference(SELECTED_DATA_SET_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
+    val itemId by vm.getPreference(SELECTED_ITEM_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
+    val sourceId by vm.getPreference(SELECTED_SOURCE_ID_KEY).collectAsStateWithLifecycle(initialValue = null)
     Log.d("MyApp", "HomeScreen dataSetId $dataSetId, itemId $itemId, sourceId $sourceId")
     // TODO: This code is a bit inconsistent about fooId vs foo.Id - it *probably* doesn't matter in practice, but we should be clear and consistent.
 
@@ -2139,22 +2158,15 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 
     HomeScreenScaffold(
         vm, navController, dataSet, dataSetListRaw, onSelectedDataSetIdChange = {
-            coroutineScope.launch { // TODO: can I use viewmodel's scope?! should I? would it help?
-                // TODO: If this *has* changed (the user hasn't reselected the same ID) there might be value in setting the product/source to null - not sure
-                savePreference(context, SELECTED_DATA_SET_ID_KEY, it)
-            }
+            vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
         },
         item, itemListRaw, onSelectedItemIdChange = {
-            coroutineScope.launch {
-                savePreference(context, SELECTED_ITEM_ID_KEY, it)
-            }
+                vm.savePreference(SELECTED_ITEM_ID_KEY, it)
         },
         source,
         sourceListRaw,
         onSelectedSourceIdChange = {
-            coroutineScope.launch {
-                savePreference(context, SELECTED_SOURCE_ID_KEY, it)
-            }
+                vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
         },
         itemPriceListRaw
     )
