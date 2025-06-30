@@ -2380,6 +2380,13 @@ fun HomeScreenScaffold(
         }
     }
 
+    // In an ideal world the scrim with spinner would cover only the lower two cards and leave the
+    // rest of the home screen functional. I experimented with doing this and although I think I
+    // could have made it work, it felt incredibly brittle and likely to go wrong depending on
+    // Android version and things like edge-to-edge and the SDK implementing that differently on
+    // different Android versions etc. Given how rarely we expect the spinner to appear at all (and
+    // therefore also how little testing it would get), it seemed best to go with this relatively
+    // simple full screen spinner.
     // TODO: Factor out the delay time which is 150L elsewhere
     ScrimWithSpinner(visible = true /* loading */ /*, delayMillis = 150L*/)
 }
