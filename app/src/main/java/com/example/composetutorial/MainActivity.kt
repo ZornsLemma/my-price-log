@@ -1125,6 +1125,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             combinedDatabaseFlow) {
             (dataSetId, itemId, sourceId), (dataSetList, itemListAndSourceList, priceList) ->
                 val (itemList, sourceList) = itemListAndSourceList
+            // TODO: I think this line shows we *can* emit "complete" state flows which are inconsistent - observe how (even after startup, to rule out weirdness there which might have a different cause) switching back and forth between data sets can show the same triple ID combination with different list sizes
             Log.d("MyFlow", "completeUIStateFlow dataSetId $dataSetId (list size ${dataSetList.size}), itemId $itemId (list size ${itemList.size}), sourceId $sourceId (list size ${sourceList.size})")
             val dataSet = dataSetList.find { it.id == dataSetId }
             val item = itemList.find { it.id == itemId }
