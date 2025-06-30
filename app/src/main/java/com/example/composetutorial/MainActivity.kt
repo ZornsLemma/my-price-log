@@ -2182,10 +2182,17 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     }
 }
 
-// TODO: ChatGPT/Perplexity not very magic, tweaked with help from
-// TODO: Should this have a (fairly rapid) fade in and/or fade out? I am not sure. It's not a
-// massive deal given how little I expect it to actually be visible, but I might use it in other
-// situations and it might be a nice little bit of polish.
+// TODO: ChatGPT/Perplexity not very magic, tweaked with help from TODO: Should this have a (fairly
+// rapid) fade in and/or fade out? I am not sure. It's not a massive deal given how little I expect
+// it to actually be visible, but I might use it in other situations and it might be a nice little
+// bit of polish. If we do fade, remember it probably needs to be quick, since it won't even start
+// to fade in until ~150ms has elapsed, and the query could return any millisecond now and the scrim
+// disappear before it even got to full opacity. It might be that since the scrim is translucent, it
+// looks OK to just pop in. We could also *force* the scrim to last for at least the (short, 80ms)
+// fade in time, but that feels ridiculous - especially since it is then only just visible at full
+// "intensity" for one frame maybe before disappearing, and we're adding extra slowdown to the app
+// (albeit it might *feel* smoother), and we have complex logic to deal with this already unlikely
+// case. I suspect for this specific app this is overkill.
 @Composable
 fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
     if (visible) {
@@ -3013,3 +3020,11 @@ Log.d("MyApp", quux.toString())
 var baz = foo + bar
 Log.d("MyApp", baz.toString())
 */
+
+// TODO: AI chat (ChatGPT/LLM) suggests 200ms might be a better threshold for showing spinners in
+// general - <100ms feels instanteous, 100-300ms (mixed values here) is noticeable but tolerable. I
+// suppose it actually depends whether the spinner is intrusive (like the full screen one), where we
+// want to avoid janky by popping it on briefly - so there maybe 200ms is better. But for the small
+// save button swirl spinner, which isn't intrusive, we don't want to go excessively low and risk
+// the spinner appearing briefly when we could have given a more "near instanteous" appearance, but
+// perhaps 150ms is more reasonble there. Or maybe I'm overthinking this.
