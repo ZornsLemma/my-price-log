@@ -28,6 +28,7 @@ import android.text.format.DateUtils
 import android.util.Log
 import android.view.Window
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -107,9 +108,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -163,7 +165,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import java.util.concurrent.Executors
 
@@ -2181,6 +2182,58 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     }
 }
 
+// TODO: ChatGPT/Perplexity not very magic, tweaked with help from
+@Composable
+fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
+    if (visible) {
+        var showScrim by remember { mutableStateOf( false ) }
+
+        if (delayMillis != null) {
+            LaunchedEffect(visible) {
+                if (visible) {
+                    delay(delayMillis)
+                    showScrim = true
+                } else {
+                    showScrim = false
+                }
+            }
+        } else {
+            showScrim = visible
+        }
+
+        if (showScrim) {
+
+            val dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+            Popup(
+                alignment = Alignment.Center,
+                onDismissRequest = {  Log.d("MyApp", "ODR");
+                // We are trying to emulate the user pressing the back button here.
+                // navController.popBackStack() empirically doesn't work, I think because it's for
+                // our internal back stack. The idea is that if the activity wasn't blocked by the
+                // spinner, the user could go back to some other activity (outside our app,
+                // probably), and we should still allow that while the spinner is up.
+                    dispatcher?.onBackPressed() },
+                properties = PopupProperties(
+                    focusable = true, // Prevent touches from going through
+                    dismissOnBackPress = true,
+                    dismissOnClickOutside = false
+                )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.3f)), // TODO: What would MD3 say for color and opacity?
+                    contentAlignment = Alignment.Center
+                ) {
+                    // TODO: Are the defaults here OK?
+                    CircularProgressIndicator()
+                }
+            }
+
+        }
+    }
+}
+
 @Composable
 fun HomeScreenScaffold(
     navController: NavHostController,
@@ -2326,6 +2379,9 @@ fun HomeScreenScaffold(
             }
         }
     }
+
+    // TODO: Factor out the delay time which is 150L elsewhere
+    ScrimWithSpinner(visible = true /* loading */ /*, delayMillis = 150L*/)
 }
 
 
