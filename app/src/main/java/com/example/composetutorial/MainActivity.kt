@@ -1125,6 +1125,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             combinedDatabaseFlow) {
             (dataSetId, itemId, sourceId), (dataSetList, itemListAndSourceList, priceList) ->
                 val (itemList, sourceList) = itemListAndSourceList
+            Log.d("MyFlow", "completeUIStateFlow dataSetId $dataSetId (list size ${dataSetList.size}), itemId $itemId (list size ${itemList.size}), sourceId $sourceId (list size ${sourceList.size})")
             val dataSet = dataSetList.find { it.id == dataSetId }
             val item = itemList.find { it.id == itemId }
             val source = sourceList.find { it.id == sourceId }
