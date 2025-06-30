@@ -2150,6 +2150,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // We could use rememberSaveable(), but instead we use remember with a ViewModel cache. This
     // avoids needing UIState to be serialisable (a practical win) and also avoids the minor
     // overhead of serialisation and deserialisation (a micro-optimisation).
+    // TODO: AS WRITTEN THIS IS SILLY - WE *ALWAYS* USE THE VALUE RETURNED BY COLLECTASSTATEWITHLIFECYCLE. I SUSPECT THIS WORKS IN PRACTICE, BUT THERE MAY BE A LURKING VISUAL GLITCH *OR* THIS CODE IS NEEDLESSLY COMPLICATED. I DON'T WANT TO GET SIDETRACKED INTO SORTING THIS OUT JUST NOW.
     val newUIState by vm.uiState.collectAsStateWithLifecycle()
     var displayedUIState by remember { mutableStateOf(vm.cachedUIState ?: newUIState)}
     displayedUIState = newUIState
