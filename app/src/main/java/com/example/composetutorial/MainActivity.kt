@@ -1065,6 +1065,10 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     ViewModel() {
     private val app = application // TODO?
 
+    // TODO: See comment on getPrefrence() and maybe move/copy it here
+    private val selectedDataSetFlow = getPreference(SELECTED_DATA_SET_ID_KEY)
+    private val selectedItemIdFlow = getPreference(SELECTED_ITEM_ID_KEY)
+    private val selectedSourceIdFlow = getPreference(SELECTED_SOURCE_ID_KEY)
 
     private val _uiState = MutableStateFlow<UIState?>(null)
     val uiState: StateFlow<UIState?> = _uiState.asStateFlow()
@@ -1078,7 +1082,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
         val dataSetFlow = priceTrackerRepository.getAllDataSets()
 
-        val dataSetOnlyDatabaseFlow = getPreference(SELECTED_DATA_SET_ID_KEY).flatMapLatest { dataSetId ->
+        val dataSetOnlyDatabaseFlow = selectedDataSetFlow.flatMapLatest { dataSetId ->
             // dataSetId can be null here (e.g. during startup when we haven't yet got the
             // preference yet, and maybe also if the user deletes all the data in the database) so
             // we need to deal with it. I think it would be wrong to use filterNotNull(), because we
@@ -1096,8 +1100,8 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         }
 
         val dataSetIdAndItemIdFlow = combine(
-            getPreference(SELECTED_DATA_SET_ID_KEY),
-            getPreference(SELECTED_ITEM_ID_KEY),
+            selectedDataSetFlow,
+            selectedItemIdFlow,
             ::Pair)
 
         val dataSetIdAndItemIdDatabaseFlow = dataSetIdAndItemIdFlow.flatMapLatest { (dataSetId, itemId) ->
@@ -1112,25 +1116,25 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
         // TODO: Note that it's *OK* to observe a StateFlow<T> multiple times in the hierarchy and unlike a cold flow, its value propagates atomically to all points in the hierarchy observing it with no intermediate states visible. Or so ChatGPT and Grok tell me.
         val allUserInputFlow = combine(
-            getPreference(SELECTED_DATA_SET_ID_KEY),
-            getPreference(SELECTED_ITEM_ID_KEY),
-            getPreference(SELECTED_SOURCE_ID_KEY),
+            selectedDataSetFlow,
+            selectedItemIdFlow,
+            selectedSourceIdFlow,
             ::Triple)
             .distinctUntilChanged() // TODO: just an optimisation, probably not necessary but maybe user can trigger this by tapping same item twice
 
         // completeUIStateFlow delivers complete, consistent results which reflect the user's selection. However,
         // it doesn't make any guarantees as to how long it takes to emit after allUserInputFlow emits.
-        val completeUIStateFlow = combine(
-            allUserInputFlow,
-            combinedDatabaseFlow) {
-            (dataSetId, itemId, sourceId), (dataSetList, itemListAndSourceList, priceList) ->
+        val completeUIStateFlow = combinedDatabaseFlow.flatMapLatest {
+            (dataSetList, itemListAndSourceList, priceList) ->
                 val (itemList, sourceList) = itemListAndSourceList
             // TODO: I think this line shows we *can* emit "complete" state flows which are inconsistent - observe how (even after startup, to rule out weirdness there which might have a different cause) switching back and forth between data sets can show the same triple ID combination with different list sizes
-            Log.d("MyFlow", "completeUIStateFlow dataSetId $dataSetId (list size ${dataSetList.size}), itemId $itemId (list size ${itemList.size}), sourceId $sourceId (list size ${sourceList.size})")
-            val dataSet = dataSetList.find { it.id == dataSetId }
-            val item = itemList.find { it.id == itemId }
-            val source = sourceList.find { it.id == sourceId }
-            UIState(
+            // - OK, I am hacking things round, far from sure this is sorted yet but I am maybe getting somewhere
+            // not at all sure it's OK to use these selectedFoo.value lines in the next bit, maybe it is, needs thought
+            val dataSet = dataSetList.find { it.id == selectedDataSetFlow.value }
+            val item = itemList.find { it.id == selectedItemIdFlow.value }
+            val source = sourceList.find { it.id == selectedSourceIdFlow.value }
+            Log.d("MyFlow", "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})")
+            flowOf(UIState(
                 dataSet,
                 dataSetList,
                 item,
@@ -1138,7 +1142,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
                 source,
                 sourceList,
                 priceList
-            )
+            ))
         }
 
         // TODO: ChatGPT magic. I really need to understand what's going on and see if there are any
@@ -1182,6 +1186,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
         // TODO: Perplexity magic, hacked on
        // TODO: "too early" for the init coroutine stuff private val dataStore = application.dataStore
+    // *Every time this is called* it returns a *new* StateFlow, which is probably not what I want. So we call this once and cache the result in the ViewModel and then use that everywhere. TODO: I need to be careful not to forget this and call it directly.
     fun<T> getPreference(key: Preferences.Key<T>): StateFlow<T?> {
         return app.dataStore.data
             .map { prefs -> prefs[key] }
