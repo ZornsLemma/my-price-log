@@ -166,6 +166,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -1092,11 +1093,15 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             // just might work out OK, but it feels dangerous. I think empty lists are perfect valid
             // results to emit in the null case.
             Log.d("MyFlow", "dataSetOnlyDatabaseFlow dataSetId $dataSetId")
+            // We are combining freshly-created DAO flows, so we cannot see "stale" data here, so the
+            // dataSetId we are tagging the results with will be correct. (In practice non-empty
+            // lists of results for these queries are self-tagging, but we need to handle empty lists
+            // correctly too.)
             combine(
+                flowOf(dataSetId),
                 if (dataSetId != null) priceTrackerRepository.getAllItems(dataSetId) else flowOf(emptyList()),
                 if (dataSetId != null) priceTrackerRepository.getAllSources(dataSetId) else flowOf(emptyList()),
-                ::Pair
-            )
+                ::Triple)
         }
 
         val dataSetIdAndItemIdFlow = combine(
@@ -1106,11 +1111,14 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
         val dataSetIdAndItemIdDatabaseFlow = dataSetIdAndItemIdFlow.flatMapLatest { (dataSetId, itemId) ->
             Log.d("MyFlow", "dataSetIdAndItemIdDatabaseFlow dataSetId $dataSetId, itemId $itemId")
-            if (dataSetId != null && itemId != null)
-                priceTrackerRepository.getNicePricesForItem(dataSetId = dataSetId, itemId = itemId)
-            else
-                flowOf(emptyList())
-            }
+            val priceFlow  = if (dataSetId != null && itemId != null)
+                    priceTrackerRepository.getNicePricesForItem(dataSetId = dataSetId, itemId = itemId)
+                else
+                    flowOf(emptyList())
+            // We are creating a flow based on a freshly created DAO flow, so we cannot see "stale"
+            // data here and thus the IDs we are tagging the results with will be correct.
+            priceFlow.flatMapLatest { priceList -> flowOf(Pair(Pair(dataSetId, itemId), priceList)) }
+        }
 
         val combinedDatabaseFlow = combine(dataSetFlow, dataSetOnlyDatabaseFlow, dataSetIdAndItemIdDatabaseFlow, ::Triple)
 
@@ -1120,30 +1128,52 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             selectedItemIdFlow,
             selectedSourceIdFlow,
             ::Triple)
-            .distinctUntilChanged() // TODO: just an optimisation, probably not necessary but maybe user can trigger this by tapping same item twice
 
         // completeUIStateFlow delivers complete, consistent results which reflect the user's selection. However,
         // it doesn't make any guarantees as to how long it takes to emit after allUserInputFlow emits.
-        val completeUIStateFlow = combinedDatabaseFlow.flatMapLatest {
-            (dataSetList, itemListAndSourceList, priceList) ->
-                val (itemList, sourceList) = itemListAndSourceList
-            // TODO: I think this line shows we *can* emit "complete" state flows which are inconsistent - observe how (even after startup, to rule out weirdness there which might have a different cause) switching back and forth between data sets can show the same triple ID combination with different list sizes
-            // - OK, I am hacking things round, far from sure this is sorted yet but I am maybe getting somewhere
-            // not at all sure it's OK to use these selectedFoo.value lines in the next bit, maybe it is, needs thought
-            val dataSet = dataSetList.find { it.id == selectedDataSetFlow.value }
-            val item = itemList.find { it.id == selectedItemIdFlow.value }
-            val source = sourceList.find { it.id == selectedSourceIdFlow.value }
-            Log.d("MyFlow", "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})")
-            flowOf(UIState(
-                dataSet,
-                dataSetList,
-                item,
-                itemList,
-                source,
-                sourceList,
-                priceList
-            ))
+        val completeUIStateFlow = combinedDatabaseFlow.flatMapLatest { (dataSetList, taggedItemListAndSourceList, taggedPriceList) ->
+            // We can take the "current" values here because ultimately that's all we care
+            // about; if the current flow value we're processing is older, we want to discard it
+            // anyway and because the flows are dependent on these parameters, they will emit
+            // new values once they finish querying.
+            val dataSetId = selectedDataSetFlow.value
+            val itemId = selectedItemIdFlow.value
+            val sourceId = selectedSourceIdFlow.value
+
+            if (taggedItemListAndSourceList.first != dataSetId) {
+                Log.d("MyFlow", "completeUIStateFlow discarding dataSetId ${taggedItemListAndSourceList.first}, want $dataSetId")
+                emptyFlow()
+            } else if (taggedPriceList.first != Pair(dataSetId, itemId)) {
+                Log.d("MyFlow", "completeUIStateFlow discarding (dataSetId, itemId) ${taggedPriceList.first}, want ${Pair(dataSetId, itemId)}")
+                emptyFlow()
+            } else {
+                val itemList = taggedItemListAndSourceList.second
+                val sourceList = taggedItemListAndSourceList.third
+                val priceList = taggedPriceList.second
+
+                val dataSet = dataSetList.find { it.id == dataSetId }
+                val item = itemList.find { it.id == itemId }
+                val source = sourceList.find { it.id == sourceId }
+
+                Log.d(
+                    "MyFlow",
+                    "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
+                )
+                flowOf(
+                    UIState(
+                        dataSet,
+                        dataSetList,
+                        item,
+                        itemList,
+                        source,
+                        sourceList,
+                        priceList
+                    )
+                )
+            }
         }
+
+
 
         // TODO: ChatGPT magic. I really need to understand what's going on and see if there are any
         // lurking bugs or fundamental problems around some "data dependencies" (dropdown X changes
