@@ -2205,7 +2205,6 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
         }
 
         if (showScrim) {
-
             val dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
             Popup(
                 alignment = Alignment.Center,
@@ -2215,6 +2214,9 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
                 // our internal back stack. The idea is that if the activity wasn't blocked by the
                 // spinner, the user could go back to some other activity (outside our app,
                 // probably), and we should still allow that while the spinner is up.
+                    // TODO: Do we need to debounce this? Set a flag to say we've called
+                    // onBackPressed() and don't call again if that flag is set? It probably
+                    // wouldn't hurt even if it may not actually be necessary.
                     dispatcher?.onBackPressed() },
                 properties = PopupProperties(
                     focusable = true, // Prevent touches from going through
