@@ -2183,6 +2183,9 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
 }
 
 // TODO: ChatGPT/Perplexity not very magic, tweaked with help from
+// TODO: Should this have a (fairly rapid) fade in and/or fade out? I am not sure. It's not a
+// massive deal given how little I expect it to actually be visible, but I might use it in other
+// situations and it might be a nice little bit of polish.
 @Composable
 fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
     if (visible) {
