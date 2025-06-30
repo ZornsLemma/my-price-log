@@ -1078,13 +1078,19 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
         val dataSetFlow = priceTrackerRepository.getAllDataSets()
 
-        // TODO: I AM JUST HACKING AWAY NULLS WHILE I THINK ABOUT THE HIGHER LEVEL, BUT THAT WILL NEED ADDRESSING - THERE IS A filterNotNull() thing which might be helpful in these chains, not sure
-        // TODO: I have just shoved filterNonNull in as ahack for now, *not* thought it through
-
-        val dataSetOnlyDatabaseFlow = getPreference(SELECTED_DATA_SET_ID_KEY).filterNotNull().flatMapLatest { dataSetId ->
+        val dataSetOnlyDatabaseFlow = getPreference(SELECTED_DATA_SET_ID_KEY).flatMapLatest { dataSetId ->
+            // dataSetId can be null here (e.g. during startup when we haven't yet got the
+            // preference yet, and maybe also if the user deletes all the data in the database) so
+            // we need to deal with it. I think it would be wrong to use filterNotNull(), because we
+            // do want to emit something - in particular, during startup, if datasetId is null and
+            // *stays* null (e.g. empty database and SELECTED_DATA_SET_ID_KEY has been set to null
+            // as a result), any flow that combine()s this one would never see combine() emit. This
+            // just might work out OK, but it feels dangerous. I think empty lists are perfect valid
+            // results to emit in the null case.
+            Log.d("MyFlow", "dataSetOnlyDatabaseFlow dataSetId $dataSetId")
             combine(
-                priceTrackerRepository.getAllItems(dataSetId),
-                priceTrackerRepository.getAllSources(dataSetId),
+                if (dataSetId != null) priceTrackerRepository.getAllItems(dataSetId) else flowOf(emptyList()),
+                if (dataSetId != null) priceTrackerRepository.getAllSources(dataSetId) else flowOf(emptyList()),
                 ::Pair
             )
         }
@@ -1095,9 +1101,11 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             ::Pair)
 
         val dataSetIdAndItemIdDatabaseFlow = dataSetIdAndItemIdFlow.flatMapLatest { (dataSetId, itemId) ->
-            priceTrackerRepository.getNicePricesForItem(
-                dataSetId = dataSetId ?: 1 /* TODO HACK */,
-                itemId = itemId ?: 1 /* TODO HACK */)
+            Log.d("MyFlow", "dataSetIdAndItemIdDatabaseFlow dataSetId $dataSetId, itemId $itemId")
+            if (dataSetId != null && itemId != null)
+                priceTrackerRepository.getNicePricesForItem(dataSetId = dataSetId, itemId = itemId)
+            else
+                flowOf(emptyList())
             }
 
         val combinedDatabaseFlow = combine(dataSetFlow, dataSetOnlyDatabaseFlow, dataSetIdAndItemIdDatabaseFlow, ::Triple)
