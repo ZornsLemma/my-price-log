@@ -161,9 +161,12 @@ import kotlin.math.abs
 import kotlin.math.log10
 import androidx.datastore.preferences.core.edit
 import kotlinx.android.parcel.Parcelize
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import java.util.concurrent.Executors
@@ -1046,7 +1049,18 @@ class SingleEventState<T>(initialState: T) {
     }
 }
 
+
+// TODO: Sketching out new flow:
+// - we want to try very hard to observe each database flow only once to avoid duplicate queries
+// - we want to emit transactionally consistent UI flows - either (loading=false, all-consistent-new-data) or (loading=true, all-consistent-old-data)
+// - we want to emit *nothing* for ~150ms after an input change, but if it goes on longer than that we emit a loading=true flow with the old data
+// - UI does *not* apply delays to loading indicator - we tell it to display it, it displays it
+// - we rely on thigs like "the dropdown disappeared" to provide user feedback their tap is acknowledged - we don't update the info on *just* that combo, because it can lead to double update jank and/or inconsistent confusing displays even if only briefly
+
+
+
 // TODO: Should things in here be "val dataSets: Flow<List<DataSet>> = repository.getAllDataSets()" rather than "getAllDataSets()" functions?
+@OptIn(ExperimentalCoroutinesApi::class)
 class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository, application: Application) :
     ViewModel() {
     private val app = application // TODO?
@@ -1062,44 +1076,59 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         // This forces the delegate to initialize safely on the main thread TODO: VOODOO
         val unused = app.dataStore
 
-        val dataSetFlow =
-            priceTrackerRepository.getAllDataSets()
+        val dataSetFlow = priceTrackerRepository.getAllDataSets()
 
-        Log.d("MyApp", "XFF init")
-        data class Ids(val dataSetId: Long?, val itemId: Long?)
-        // TODO: WE MAY NOW HAVE LESS FLOWS AND NOT NEED DATABASERESULTS TO WORK ROUND THE <=5 LIMIT
-        data class DatabaseResults(
-            // TODO A BIT MISNAMED NOW IT HAS IDS TOO - ChatGPT's version has a PartialUIModel instead, maybe a better name
-            val ids: Ids,
-            val itemList: List<Item>,
-            val sourceList: List<Source>,
-            val itemPriceList: List<NicePrice>,
-        )
+        // TODO: I AM JUST HACKING AWAY NULLS WHILE I THINK ABOUT THE HIGHER LEVEL, BUT THAT WILL NEED ADDRESSING - THERE IS A filterNotNull() thing which might be helpful in these chains, not sure
+        // TODO: I have just shoved filterNonNull in as ahack for now, *not* thought it through
 
-        // TODO: Maybe rename this partialUiFlow
-        val databaseResultsFlow = combine(
+        val dataSetOnlyDatabaseFlow = getPreference(SELECTED_DATA_SET_ID_KEY).filterNotNull().flatMapLatest { dataSetId ->
+            combine(
+                priceTrackerRepository.getAllItems(dataSetId),
+                priceTrackerRepository.getAllSources(dataSetId),
+                ::Pair
+            )
+        }
+
+        val dataSetIdAndItemIdFlow = combine(
             getPreference(SELECTED_DATA_SET_ID_KEY),
             getPreference(SELECTED_ITEM_ID_KEY),
-            ::Pair
-        ).flatMapLatest { (dataSetId, itemId) ->
-            if (dataSetId == null) return@flatMapLatest flowOf(null)
+            ::Pair)
 
-            Log.d("MyApp", "XFF fml")
-            val itemListFlow = priceTrackerRepository.getAllItems(dataSetId)
-            val sourceListFlow = priceTrackerRepository.getAllSources(dataSetId)
-            val itemPriceListFlow = if (itemId != null)
-                priceTrackerRepository.getNicePricesForItem(
-                    dataSetId = dataSetId,
-                    itemId = itemId
-                )
-            else flowOf(emptyList())
+        val dataSetIdAndItemIdDatabaseFlow = dataSetIdAndItemIdFlow.flatMapLatest { (dataSetId, itemId) ->
+            priceTrackerRepository.getNicePricesForItem(
+                dataSetId = dataSetId ?: 1 /* TODO HACK */,
+                itemId = itemId ?: 1 /* TODO HACK */)
+            }
 
-            val TODO9 = combine(
-                flowOf(Ids(dataSetId, itemId)),
-                itemListFlow, sourceListFlow, itemPriceListFlow,
-                ::DatabaseResults
+        val combinedDatabaseFlow = combine(dataSetFlow, dataSetOnlyDatabaseFlow, dataSetIdAndItemIdDatabaseFlow, ::Triple)
+
+        // TODO: Note that it's *OK* to observe a StateFlow<T> multiple times in the hierarchy and unlike a cold flow, its value propagates atomically to all points in the hierarchy observing it with no intermediate states visible. Or so ChatGPT and Grok tell me.
+        val allUserInputFlow = combine(
+            getPreference(SELECTED_DATA_SET_ID_KEY),
+            getPreference(SELECTED_ITEM_ID_KEY),
+            getPreference(SELECTED_SOURCE_ID_KEY),
+            ::Triple)
+            .distinctUntilChanged() // TODO: just an optimisation, probably not necessary but maybe user can trigger this by tapping same item twice
+
+        // completeUIStateFlow delivers complete, consistent results which reflect the user's selection. However,
+        // it doesn't make any guarantees as to how long it takes to emit after allUserInputFlow emits.
+        val completeUIStateFlow = combine(
+            allUserInputFlow,
+            combinedDatabaseFlow) {
+            (dataSetId, itemId, sourceId), (dataSetList, itemListAndSourceList, priceList) ->
+                val (itemList, sourceList) = itemListAndSourceList
+            val dataSet = dataSetList.find { it.id == dataSetId }
+            val item = itemList.find { it.id == itemId }
+            val source = sourceList.find { it.id == sourceId }
+            UIState(
+                dataSet,
+                dataSetList,
+                item,
+                itemList,
+                source,
+                sourceList,
+                priceList
             )
-            TODO9
         }
 
         // TODO: ChatGPT magic. I really need to understand what's going on and see if there are any
@@ -1116,33 +1145,14 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         // all when sourceId changes, I am feeling it might be interesting to rework this further
         // and see how complex it is.
         viewModelScope.launch(Dispatchers.Default) {
-            combine(
-                getPreference(SELECTED_SOURCE_ID_KEY),
-                dataSetFlow,
-                databaseResultsFlow,
-                ::Triple
-            ).flatMapLatest { (sourceId, dataSetList, databaseResultsNull) ->
-                // We can have a null here because of the dataSetId == null emission in the code
-                // above - it means we want to return a null UIState.
-                if (databaseResultsNull == null) return@flatMapLatest flowOf(null)
+            /* TODO: NO IDEA HOW TO HOOK THIS IN, LET'S IGNORE IT FOR NOW AND SEE IF THE REST WORKS
+            val timerFlow = flow {
+                delay(150)
+                emit(Pair(lastValidUIState, false))
+            }
+            */
 
-                val databaseResults = databaseResultsNull!!
-                val dataSet = dataSetList.find { it.id == databaseResults.ids.dataSetId }
-                val item = databaseResults.itemList.find { it.id == databaseResults.ids.itemId }
-                val source = databaseResults.sourceList.find { it.id == sourceId }
-
-                flowOf(
-                    UIState(
-                        dataSet,
-                        dataSetList,
-                        item,
-                        databaseResults.itemList,
-                        source,
-                        databaseResults.sourceList,
-                        databaseResults.itemPriceList
-                    )
-                )
-            }.collectLatest { newUIState ->
+            completeUIStateFlow.collectLatest { newUIState ->
                 _uiState.value = newUIState
 
                 // TODO: Keeping this commented out for a bit just in case, but I don't think it's
