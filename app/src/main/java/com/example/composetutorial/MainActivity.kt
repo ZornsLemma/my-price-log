@@ -2387,8 +2387,16 @@ fun HomeScreenScaffold(
     // different Android versions etc. Given how rarely we expect the spinner to appear at all (and
     // therefore also how little testing it would get), it seemed best to go with this relatively
     // simple full screen spinner.
-    // TODO: Factor out the delay time which is 150L elsewhere
-    ScrimWithSpinner(visible = true /* loading */ /*, delayMillis = 150L*/)
+    // TODO: Factor out the delay time which is 150L elsewhere too
+    // TODO: Actually getting a loading boolean through to this function is non-trivial given the
+    // way the viewmodel is collecting data. I am pretty sure it's possible and it's probably not
+    // rocket science, but it is too late to be starting on that now, so let's just hardcode this to
+    // off for now. (I believe what we want is to be given a UIState() with a loading boolean set to
+    // true, the changed DataSet/Item/Source single thing (not the List<Foo>) reflecting the new
+    // selection and all the other data elements to be the *old* ones, since we don't want a janky
+    // partial update - we want the data to remain unchanged underneath the scrim. But we do want
+    // the thing the user explicitly changed to change, as I say.)
+    ScrimWithSpinner(visible = false /* loading */, delayMillis = 150L)
 }
 
 
