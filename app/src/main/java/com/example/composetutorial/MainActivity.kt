@@ -1129,13 +1129,21 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             selectedSourceIdFlow,
             ::Triple)
 
+        val TODORENAMEMEFLOW = combine(
+            selectedSourceIdFlow,
+            combinedDatabaseFlow) { _, it -> it }
+
         // completeUIStateFlow delivers complete, consistent results which reflect the user's selection. However,
         // it doesn't make any guarantees as to how long it takes to emit after allUserInputFlow emits.
-        val completeUIStateFlow = combinedDatabaseFlow.flatMapLatest { (dataSetList, taggedItemListAndSourceList, taggedPriceList) ->
-            // We can take the "current" values here because ultimately that's all we care
-            // about; if the current flow value we're processing is older, we want to discard it
-            // anyway and because the flows are dependent on these parameters, they will emit
-            // new values once they finish querying.
+        val completeUIStateFlow = TODORENAMEMEFLOW.flatMapLatest {
+            (dataSetList, taggedItemListAndSourceList, taggedPriceList) ->
+            // We can take the current values here because ultimately that's all we care about; if
+            // the current flow value we're processing is older, we want to discard it anyway and
+            // because the flows are dependent on these parameters, they will emit new values once
+            // they finish querying. It feels somewhat ridiculous to have to discard stale values
+            // like this but as far as I can tell you either do something like this, accept a mixture
+            // of stale values or re-run all your queries every single time even if most of them
+            // haven't had a parameter change. Maybe I am doing something silly.
             val dataSetId = selectedDataSetFlow.value
             val itemId = selectedItemIdFlow.value
             val sourceId = selectedSourceIdFlow.value
@@ -1172,9 +1180,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
                 )
             }
         }
-
-
-
+        
         // TODO: ChatGPT magic. I really need to understand what's going on and see if there are any
         // lurking bugs or fundamental problems around some "data dependencies" (dropdown X changes
         // but we don't update correctly, or we *can* - despite ChatGPT assuring me this can't
