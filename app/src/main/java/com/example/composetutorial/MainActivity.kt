@@ -1890,9 +1890,9 @@ fun ItemSourceInfo(
                     .fillMaxWidth(),
                 selectedId = source?.id,
                 onValueChange = onSelectedSourceIdChange,
-                label = { Text("Source") },
+                label = { Text("Store") },
                 supportingText = if (haveItemAndSource) null else {
-                    { Text("Select a product and source to view or change the price there") } // TODO: poor wording
+                    { Text("Select a product and store to view or change the price there") } // TODO: poor wording
                 },
                 items = sourceList ?: emptyList(),
                 getId = { it.id },
