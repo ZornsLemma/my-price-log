@@ -1902,8 +1902,20 @@ fun ItemSourceInfo(
                 val priceList = itemPriceList.filter { it.sourceId == source!!.id }
 
                 if (priceList.isEmpty()) {
-                    // TODO: Very quick hack - remember if it matters (not decided what we ought to do) we can distinguish "still loading" or "loaded but not data" via nullness of itemPriceList
-                    Text("TODO: No price, do something useful here - this may be transient during db load or it may reflect reality")
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Text("There is no price recorded for this product at this store yet.")
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            FilledTonalButton(
+                                onClick = onEditPriceClick,
+                                shape = MaterialTheme.shapes.small
+                            ) {
+                                Text("Add") // TODO: "Edit"? "Add price"?
+                            }
+                        }
+                    }
                 } else {
                     devCheck(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
 
