@@ -1176,7 +1176,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
                     "MyFlow",
                     "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
                 )
-                //delay(500) // TODO HACK
+                delay(5000) // TODO HACK
                 flowOf(
                     UIState(
                         dataSet,
@@ -1202,23 +1202,22 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             }
             */
 
+            // Note that because we use collectLatest(), if the user changes the inputs the timeout
+            // starts again, which is what we want.
             allUserInputFlow.collectLatest { _ ->
-                val TODO2 = withTimeoutOrNull(150L) { // TODO: use named constant, maybe 200 also
-                    /*
-                    completeUIStateFlow.collect { newUIState ->
-                        _uiState.value = Pair(false /* loading */, newUIState)
-                        Unit
-                    }
-                    */
-                    val newUIState = completeUIStateFlow.first()
-                    _uiState.value = Pair(false /* loading */, newUIState)
-                    Unit // TODO: DO WE NEED THIS?
+                Log.d("MyFoo", "newUIState")
+                var newUIState = withTimeoutOrNull(3000L) { // TODO: use named constant, maybe 200 also
+                    completeUIStateFlow.first()
                 }
-                if (TODO2 == null) {
-                    _uiState.value = Pair(true /* loading */, _uiState.value.second)
-                    // TODO: NEXT TWO LINES DUPLICATED, FEELS OFF
-                    val newUIState = completeUIStateFlow.first()
+                if (newUIState != null) {
+                    // We didn't time out. Make the new state available.
                     _uiState.value = Pair(false /* loading */, newUIState)
+                } else {
+                    // We timed out. Make a new state available which is the old state but flagged
+                    // as loading.
+                    _uiState.value = Pair(true /* loading */, _uiState.value.second)
+                    // We still need to actually collect after a timeout.
+                    _uiState.value = Pair(false /* loading */, completeUIStateFlow.first())
                 }
             }
 
