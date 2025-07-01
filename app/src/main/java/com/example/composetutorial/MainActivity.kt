@@ -576,15 +576,15 @@ interface PriceTrackerRepository {
         storeId: Long
     ): Flow<List<PriceEntity>>
 
-    fun getNicePricesForItem(dataSetId: Long, itemId: Long): Flow<List<NicePrice>>
+    fun getNicePricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
 
-    fun getNicePricesForItem2(pair: Pair<Long, Long>): Flow<List<NicePrice>>
+    fun getNicePricesForItem2(pair: Pair<Long, Long>): Flow<List<Price>>
 
     fun getNicePriceForProductAndStore(
         dataSetId: Long,
         productId: Long,
         storeId: Long
-    ): Flow<List<NicePrice>>
+    ): Flow<List<Price>>
 
     suspend fun updateOrInsertPrice(price: PriceEntity)
 }
@@ -622,12 +622,12 @@ class PriceTrackerRepositoryImpl(
         storeId: Long
     ): Flow<List<PriceEntity>> = priceDao.getPriceForProductAndStore(dataSetId, productId, storeId)
 
-    override fun getNicePricesForItem(dataSetId: Long, itemId: Long): Flow<List<NicePrice>> =
+    override fun getNicePricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>> =
         priceDao.getPriceWithItemForItem(dataSetId= dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
 
     // TODO: Poor name
-    override fun getNicePricesForItem2(pair: Pair<Long, Long>): Flow<List<NicePrice>> =
+    override fun getNicePricesForItem2(pair: Pair<Long, Long>): Flow<List<Price>> =
         getNicePricesForItem(pair.first, pair.second)
 
 
@@ -638,7 +638,7 @@ class PriceTrackerRepositoryImpl(
         dataSetId: Long,
         productId: Long,
         storeId: Long
-    ): Flow<List<NicePrice>> =
+    ): Flow<List<Price>> =
         priceDao.getPriceWithItemForProductAndStore(dataSetId, productId, storeId)
             .map { list -> list.map { it.toDomain() } }
 
@@ -923,7 +923,7 @@ data class PriceWithItem(
     @ColumnInfo(name = "quantity_type") val quantityType: QuantityType,
 )
 
-data class NicePrice(
+data class Price(
     // TODO: probably rename just "Price" once we rename the existing "Price"
     val id: Long = 0,
     val dataSetId: Long,
@@ -942,8 +942,8 @@ data class NicePrice(
 )
 
 // TODO: I suspect we should actually be using the item's "default unit" not its quantityType here - although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the display unit for display, to avoid "oh, it happened to work for me in metric with grams but now I'm in imperial it's displaying badly" concerns
-fun PriceEntity.toDomain(measureUnit: MeasureUnit): NicePrice =
-    NicePrice(
+fun PriceEntity.toDomain(measureUnit: MeasureUnit): Price =
+    Price(
         id = id,
         dataSetId = dataSetId,
         itemId = itemId,
@@ -957,7 +957,7 @@ fun PriceEntity.toDomain(measureUnit: MeasureUnit): NicePrice =
     )
 
 // TODO: Whiff of ChatGPT magic
-fun PriceWithItem.toDomain(): NicePrice {
+fun PriceWithItem.toDomain(): Price {
     val baseUnit = when (quantityType) {
         QuantityType.WEIGHT -> MeasureUnit.G
         QuantityType.VOLUME -> MeasureUnit.ML
@@ -1256,7 +1256,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
     fun getNicePricesForItem(
         dataSetId: Long,
-        itemId: Long): Flow<List<NicePrice>> = priceTrackerRepository.getNicePricesForItem(dataSetId = dataSetId, itemId = itemId)
+        itemId: Long): Flow<List<Price>> = priceTrackerRepository.getNicePricesForItem(dataSetId = dataSetId, itemId = itemId)
 
     fun getNicePricesForItem2(pair: Pair<Long, Long>) = getNicePricesForItem(pair.first, pair.second)
 
@@ -1264,7 +1264,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         dataSetId: Long,
         productId: Long,
         storeId: Long
-    ): Flow<List<NicePrice>> {
+    ): Flow<List<Price>> {
         val priceForProductAndStore =
             priceTrackerRepository.getNicePriceForProductAndStore(dataSetId, productId, storeId)
         return priceForProductAndStore
@@ -1809,7 +1809,7 @@ fun ItemSourceInfo(
     source: Source?,
     sourceList: List<Source>,
     onSelectedSourceIdChange: (Long) -> Unit,
-    itemPriceList: List<NicePrice>,
+    itemPriceList: List<Price>,
 ) {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
 
@@ -2156,7 +2156,7 @@ data class UIContent(
     val itemList: List<Item>,
     val source: Source?,
     val sourceListRaw: List<Source>,
-    val itemPriceListRaw: List<NicePrice>,
+    val itemPriceListRaw: List<Price>,
 ) {
     companion object {
         fun createEmpty(): UIContent {
@@ -2296,7 +2296,7 @@ fun HomeScreenScaffold(
     source: Source?,
     sourceListRaw: List<Source>,
     onSelectedSourceIdChange: (Long) -> Unit,
-    itemPriceListRaw: List<NicePrice>
+    itemPriceListRaw: List<Price>
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
