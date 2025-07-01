@@ -2029,11 +2029,6 @@ fun ItemSourceInfo(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.End
                         ) {
-                            // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
-                            FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
-                                Text("Confirm")
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
                             FilledTonalButton(
                                 // TODO: I accidentally wrote a double "}}" at the end of"${source.id}" and it triggered a strict mode
                                 // violation. Turning strict mode penaltyDeath off showed a simple NumberFormatException, I fixed the
@@ -2045,6 +2040,11 @@ fun ItemSourceInfo(
                                 shape = MaterialTheme.shapes.small
                             ) {
                                 Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
+                            FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
+                                Text("Confirm")
                             }
                         }
                     }
