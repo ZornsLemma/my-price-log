@@ -3027,3 +3027,8 @@ Log.d("MyApp", quux.toString())
 var baz = foo + bar
 Log.d("MyApp", baz.toString())
 */
+
+// TODO: I have completely ignore "unlikely" errors (like exceptions being thrown when accessing the
+// database) in most of this code - what can/should we do about this? I suspect most such errors are
+// basically unrecoverable and it's semi-OK if the process just dies, but I'm not sure and it would
+// be good to read up on best practices.
