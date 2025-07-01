@@ -607,7 +607,7 @@ class PriceTrackerRepositoryImpl(
         sourceDao.getAllSources(dataSetId)
 
     override fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>> =
-        priceDao.getPriceWithItemForItem(dataSetId= dataSetId, itemId = itemId)
+        priceDao.getPriceWithItemEntityForItem(dataSetId= dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
 
     override suspend fun updateOrInsertPrice(price: Price) {
@@ -1022,7 +1022,7 @@ interface PriceDao {
     suspend fun upsert(price: PriceEntity)
 
     @Query("SELECT price.*, item.quantity_type FROM price JOIN item ON price.item_id = item.id WHERE price.data_set_id = :dataSetId AND price.item_id = :itemId")
-    fun getPriceWithItemForItem(
+    fun getPriceWithItemEntityForItem(
         dataSetId: Long,
         itemId: Long,
     ): Flow<List<PriceWithItemEntity>>
