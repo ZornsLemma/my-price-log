@@ -1203,7 +1203,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             */
 
             allUserInputFlow.collectLatest { _ ->
-                val TODO2 = withTimeoutOrNull(150L) {
+                val TODO2 = withTimeoutOrNull(150L) { // TODO: use named constant, maybe 200 also
                     /*
                     completeUIStateFlow.collect { newUIState ->
                         _uiState.value = Pair(false /* loading */, newUIState)
