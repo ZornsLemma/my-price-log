@@ -481,6 +481,12 @@ abstract class InventoryDatabase : RoomDatabase() {
                                             name = "SuperiorStore"
                                         )
                                     )
+                                    val sourceIdNewco = db.sourceDao().insert(
+                                        Source(
+                                            dataSetId = dataSetId,
+                                            name = "Newco"
+                                        )
+                                    )
                                     val now = Instant.now()
                                     db.priceDao().insert(
                                         PriceEntity(
