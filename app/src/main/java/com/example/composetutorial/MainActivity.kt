@@ -170,7 +170,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.Executors
 
@@ -925,7 +924,7 @@ data class PriceEntity(
 // that effectively tells us the quantity type implicitly and we don't need to join to item to get
 // it. However, I suspect it still has some value because it allows us to do a bit of extra
 // validation which may catch bugs. Probably worth thinking about this again later.
-data class PriceWithItem(
+data class PriceWithItemEntity(
     // TODO: should be PriceWithItemEntity eventually
     @Embedded val price: PriceEntity,
     @ColumnInfo(name = "quantity_type") val quantityType: QuantityType,
@@ -989,7 +988,7 @@ fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
 }
 
 // TODO: Whiff of ChatGPT magic
-fun PriceWithItem.toDomain(): Price {
+fun PriceWithItemEntity.toDomain(): Price {
     return price.toDomain(baseUnitForQuantityType(quantityType))
 }
 
@@ -1052,14 +1051,14 @@ interface PriceDao {
     fun getPriceWithItemForItem(
         dataSetId: Long,
         itemId: Long,
-    ): Flow<List<PriceWithItem>>
+    ): Flow<List<PriceWithItemEntity>>
 
     @Query("SELECT price.*, item.quantity_type FROM price JOIN item ON price.item_id = item.id WHERE price.data_set_id = :dataSetId AND price.item_id = :productId AND price.source_id = :storeId")
     fun getPriceWithItemForProductAndStore(
         dataSetId: Long,
         productId: Long,
         storeId: Long
-    ): Flow<List<PriceWithItem>>
+    ): Flow<List<PriceWithItemEntity>>
 }
 
 // ChatGPT magic
