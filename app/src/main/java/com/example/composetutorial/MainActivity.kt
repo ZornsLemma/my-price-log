@@ -168,7 +168,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.Executors
 
@@ -1176,21 +1178,29 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             // are only "triggered" on user input changes here, no database changes - which will
             // probably also break us in other ways. Yes, a simple *change* to the notes field on
             // a product is not immediately visible any more.
-            allUserInputFlow.collectLatest { _ ->
-                Log.d("MyFoo", "newUIState")
-                var newUIState = withTimeoutOrNull(spinnerDelay) {
+
+            val TODO1 = allUserInputFlow.flatMapLatest { it -> // TODO: RENAME "it"
+                var newUIContent = withTimeoutOrNull(spinnerDelay) {
                     completeUIStateFlow.first()
                 }
-                if (newUIState != null) {
-                    // We didn't time out. Make the new state available.
-                    _uiState.value = Pair(false /* loading */, newUIState)
-                } else {
-                    // We timed out. Make a new state available which is the old state but flagged
-                    // as loading.
-                    _uiState.value = Pair(true /* loading */, _uiState.value.second)
-                    // We still need to actually collect after a timeout.
-                    _uiState.value = Pair(false /* loading */, completeUIStateFlow.first())
+                if (newUIContent == null) {
+                    // We timed out. Make a new state available which is the current (old) state but
+                    // flagged as loading.
+                    flowOf(Pair(true /* loading */, _uiState.value.second))
                 }
+                else {
+                    // We didn't time out.
+                    flowOf(Pair(false /* loading */, newUIContent))
+                }
+            }
+
+            val TODO2 = completeUIStateFlow.map { Pair(false /* loading */, it) }
+
+             val TODO3 = merge(TODO1, TODO2)
+
+            TODO3.collectLatest { todoRename ->
+                Log.d("MyFoo", "newUIState")
+                _uiState.value = todoRename
             }
         }
     }
@@ -1268,6 +1278,8 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         }
     }
 }
+
+
 
 enum class ThemePreference {
     LIGHT, DARK, SYSTEM
