@@ -909,7 +909,8 @@ data class Price(
     // PriceWithItemEntity in from the database. It is intended to allow a best effort (protecting
     // against buggy code, not malicious code) validation that when we write back to the database,
     // measure hasn't somehow mutated into a different QuantityType. TODO: NEED TO MAKE SURE I
-    // ACTUALLY USE THIS WHEN DOING INSERT/UPDATE
+    // ACTUALLY USE THIS WHEN DOING INSERT/UPDATE - I THINK Price.toEntity() IS NOW DOING THIS,
+    // SEE COMMENT BELOW - BUT THINK ABOUT THIS FRESH
     val itemQuantityType: QuantityType,
 ) : Parcelable {
     fun toEntity(): PriceEntity {
@@ -919,11 +920,11 @@ data class Price(
             itemId = itemId,
             sourceId = sourceId,
             price = price,
-            // TODO: measure unit argument and originalUnit here are hacky, I am trying to get
-            // the edit dialog converted to new viewmodel style and am not thinking straight
-            // about our safeguards or the layers of conversion PriceEntity, PriceWithitem and
-            // Price. I need to come back to this later.
-            measure = measure.asValue(baseUnitForQuantityType(itemQuantityType),),
+            // Note that by using itemQuantityType - which should have come from a join to the Item
+            // table and travelled with the Price ever since it came out of the database - we get a
+            // sanity check that the measure on our Price hasn't mutated to a competely different
+            // QuantityType during its travels.
+            measure = measure.asValue(baseUnitForQuantityType(itemQuantityType)),
             originalUnit = originalUnit, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
             confirmed = confirmed,
             details = details,
