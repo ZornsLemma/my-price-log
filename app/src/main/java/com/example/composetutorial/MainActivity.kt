@@ -946,21 +946,6 @@ data class Price(
     }
 }
 
-// TODO: I suspect we should actually be using the item's "default unit" not its quantityType here - although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the display unit for display, to avoid "oh, it happened to work for me in metric with grams but now I'm in imperial it's displaying badly" concerns
-fun PriceEntity.toDomainXXX(measureUnit: MeasureUnit): Price =
-    Price(
-        id = id,
-        dataSetId = dataSetId,
-        itemId = itemId,
-        sourceId = sourceId,
-        price = price,
-        measure = MeasuredValue(measure, measureUnit),
-        originalUnit = originalUnit,
-        confirmed = confirmed,
-        details = details,
-        originalQuantityType = measureUnit.quantityType,
-    )
-
 // TODO: HACKING
 fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
     QuantityType.WEIGHT -> MeasureUnit.G
@@ -969,8 +954,21 @@ fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
 }
 
 // TODO: Whiff of ChatGPT magic
+// TODO: I suspect we should actually be using the item's "default unit" not its quantityType here - although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the display unit for display, to avoid "oh, it happened to work for me in metric with grams but now I'm in imperial it's displaying badly" concerns
 fun PriceWithItemEntity.toDomain(): Price {
-    return priceEntity.toDomainXXX(baseUnitForQuantityType(quantityType))
+    val measureUnit = baseUnitForQuantityType(quantityType)
+    return Price(
+        id = priceEntity.id,
+        dataSetId = priceEntity.dataSetId,
+        itemId = priceEntity.itemId,
+        sourceId = priceEntity.sourceId,
+        price = priceEntity.price,
+        measure = MeasuredValue(priceEntity.measure, measureUnit),
+        originalUnit = priceEntity.originalUnit,
+        confirmed = priceEntity.confirmed,
+        details = priceEntity.details,
+        originalQuantityType = measureUnit.quantityType,
+    )
 }
 
 @Dao
