@@ -2252,6 +2252,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
         // TODO: There may be excessive allowance for nulls in the code below here - it kind of depends how the data fetches have mutated. Should review this and remove any redundant null checks and nullable types in parameter lists of child composables.
         HomeScreenScaffold(
             navController,
+            newUIState.first, // loading // TODO: bit hacky using newUIState but I need to deal with the TODO re cached values etc above
             displayedUIState!!.dataSet,
             displayedUIState!!.dataSetList,
             onSelectedDataSetIdChange = {
@@ -2339,6 +2340,7 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
 @Composable
 fun HomeScreenScaffold(
     navController: NavHostController,
+    loading: Boolean,
     dataSet: DataSet?,
     dataSetList: List<DataSet>,
     onSelectedDataSetIdChange: (Long) -> Unit,
@@ -2498,7 +2500,7 @@ fun HomeScreenScaffold(
     // selection and all the other data elements to be the *old* ones, since we don't want a janky
     // partial update - we want the data to remain unchanged underneath the scrim. But we do want
     // the thing the user explicitly changed to change, as I say.)
-    ScrimWithSpinner(visible = false /* loading */, delayMillis = 150L)
+    ScrimWithSpinner(visible = loading, delayMillis = 150L)
 }
 
 
