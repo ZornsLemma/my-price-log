@@ -1170,6 +1170,12 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             // delays before the user sees any kind of response. Note that because we use
             // collectLatest(), if the user changes the inputs the timeout starts again, which is
             // what we want.
+            // TODO: I edited a product with no notes, added some and when I came out of edit this
+            // did *not* refresh. Subsequent changes of UI inputs and back did show it, but this
+            // should obviously have been immediately visible. I suspect the problem is that we
+            // are only "triggered" on user input changes here, no database changes - which will
+            // probably also break us in other ways. Yes, a simple *change* to the notes field on
+            // a product is not immediately visible any more.
             allUserInputFlow.collectLatest { _ ->
                 Log.d("MyFoo", "newUIState")
                 var newUIState = withTimeoutOrNull(spinnerDelay) {
@@ -1918,7 +1924,6 @@ fun ItemSourceInfo(
                     }
                     // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
                     // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
-                    // TODO: I edited a product with no notes, added some and when I came out of edit this did *not* refresh. Subsequent changes of UI inputs and back did show it, but this should obviously have been immediately visible.
                     Row(modifier = Modifier.padding(vertical = 4.dp)) {
                         LabeledItem("Notes") {
                             Text(priceList[0].details)
