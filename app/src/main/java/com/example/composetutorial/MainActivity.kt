@@ -2493,6 +2493,7 @@ fun OuterFullScreenDialog(
 
     // TODO: This probably won't work right for adding new entries from scratch, I will need to think about that and this may well need some reworking, but let's ignore that and hack round it for now in relevant places
 
+    // TODO: Move these into ViewModel and then I don't need rememberSaveable or the Parceilze stuff and it doesn't cost much - no state faffery, just a Price (or EditablePrice) object held in ViewModel
     var originalPrice by rememberSaveable { mutableStateOf(
         uiContent.itemPriceListRaw.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id } ?: Price.createEmpty()
     )}
