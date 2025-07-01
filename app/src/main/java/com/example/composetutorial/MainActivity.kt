@@ -447,26 +447,29 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     )
                                     val dataSetId2 = db.dataSetDao().insert(DataSet(name = "Demo 2", currencyCode = "AUD", allowMetric = true, allowImperial = false, allowUSCustomary = true)) // TODO TEMP HACK
                                     val dataSetId3 = db.dataSetDao().insert(DataSet(name = "Demo 3", currencyCode = "AUD", allowMetric = true, allowImperial = false, allowUSCustomary = true)) // TODO TEMP HACK
-                                    val item21 = db.productDao().insert(Item(dataSetId = dataSetId2, name = "Demo 2 Item", quantityType = QuantityType.WEIGHT))
+                                    val item21 = db.productDao().insert(Item(dataSetId = dataSetId2, name = "Demo 2 Item", quantityType = QuantityType.WEIGHT, defaultUnit = MeasureUnit.G))
                                     val itemIdGroundCoffee = db.productDao().insert(
                                         Item(
                                             dataSetId = dataSetId,
                                             name = "Coffee (ground)",
-                                            quantityType = QuantityType.WEIGHT
+                                            quantityType = QuantityType.WEIGHT,
+                                            defaultUnit = MeasureUnit.G
                                         )
                                     )
                                     val itemIdWholeMilk = db.productDao().insert(
                                         Item(
                                             dataSetId = dataSetId,
                                             name = "Milk (whole)",
-                                            quantityType = QuantityType.VOLUME
+                                            quantityType = QuantityType.VOLUME,
+                                            defaultUnit = MeasureUnit.L
                                         )
                                     )
                                     val itemIdTeabags = db.productDao().insert(
                                         Item(
                                             dataSetId = dataSetId,
                                             name = "Teabags",
-                                            quantityType = QuantityType.ITEM
+                                            quantityType = QuantityType.ITEM,
+                                            defaultUnit = MeasureUnit.EACH
                                         )
                                     )
                                     // TODO: Do some web searches and confirm these are not real supermarket names
@@ -577,7 +580,7 @@ interface PriceTrackerRepository {
 
     fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
 
-    suspend fun updateOrInsertPrice(price: Price)
+    suspend fun updateOrInsertPrice(price: EditablePrice)
 }
 
 class PriceTrackerRepositoryImpl(
@@ -613,7 +616,7 @@ class PriceTrackerRepositoryImpl(
         priceDao.getPriceWithItemEntityForItem(dataSetId = dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
 
-    override suspend fun updateOrInsertPrice(price: Price) {
+    override suspend fun updateOrInsertPrice(price: EditablePrice) {
         priceDao.upsert(price.toEntity())
     }
 }
@@ -770,9 +773,10 @@ data class Item(
     val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId: Long,
     val name: String,
-    @ColumnInfo(name = "quantity_type") val quantityType: QuantityType, // TODO: quantity_type*_id* in db?? or is that only for fks?
     // TODO: quantity_type - an enum which says "by item"/"by mass"/"by volume" - the GUI probably *should* allow editing this (not sure though), but wern that editing it will mess up old data (so maybe just don't allow it?)
+    @ColumnInfo(name = "quantity_type") val quantityType: QuantityType, // TODO: quantity_type*_id* in db?? or is that only for fks?
     // TODO: default_unit - g/kg/oz/floz/litre/etc - this must be consistent with quantity_type (and we may want to let it imply quantity_type rather than storing it explicitly)
+    val defaultUnit: MeasureUnit, // TODO: this is more specific than but must be consistent with quantityType, we should maybe get rid of quantityType
 )
 // TODO: Will temporarily make a note here - I may simply (especially in v1) refuse to allow changes
 // of quantity_type in the product edit screen. There is no trivial way to convert. If the user gets
@@ -883,6 +887,7 @@ data class PriceEntity(
     // confirm explicitly on the main screen if they want to)
     val confirmed: Instant,
 
+    // TODO: Should details be nullable? Or should we just use empty string?
     val details: String // Additional price details TODO: rename "notes"?
 ) : Parcelable
 
@@ -916,23 +921,6 @@ data class Price(
     // SEE COMMENT BELOW - BUT THINK ABOUT THIS FRESH
     val itemQuantityType: QuantityType,
 ) : Parcelable {
-    fun toEntity(): PriceEntity {
-        return PriceEntity(
-            id = id,
-            dataSetId = dataSetId,
-            itemId = itemId,
-            sourceId = sourceId,
-            price = price,
-            // Note that by using itemQuantityType - which should have come from a join to the Item
-            // table and travelled with the Price ever since it came out of the database - we get a
-            // sanity check that the measure on our Price hasn't mutated to a competely different
-            // QuantityType during its travels.
-            measure = measure.asValue(baseUnitForQuantityType(itemQuantityType)),
-            originalUnit = originalUnit, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
-            confirmed = confirmed,
-            details = details,
-        )
-    }
 
     companion object {
         fun createEmpty(): Price {
@@ -1231,6 +1219,37 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         }
     }
 
+    // This is only nullable to provide us with an easy initial value to use. In use
+    // setEditPriceScreenState() should always have been called before it is used.
+    private var editPriceScreenUIContent: EditPriceScreenUIContent? = null
+
+    // TODO: Inconsistent use of "State" and "Content" here - rename everything consistently
+    fun setEditPriceScreenState(uiContent: UIContent) {
+        // !! is justified because uiContent was shown on the home screen and the edit price button was visible, which can only happen if we have all three available.
+        val dataSet = uiContent.dataSet!!
+        val item = uiContent.item!!
+        val source = uiContent.source!!
+
+        val price = uiContent.itemPriceListRaw.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
+
+        val editablePrice = if (price != null) EditablePrice(price) else EditablePrice(dataSetId = dataSet.id, itemId = item.id, sourceId = source.id, itemQuantityType = item.quantityType, itemDefaultUnit = item.defaultUnit)
+        editPriceScreenUIContent = EditPriceScreenUIContent(
+            editablePrice = editablePrice,
+            originalPrice = editablePrice,
+            dataSet = dataSet,
+            item = item,
+            source = source
+        )
+    }
+
+    // TODO: Would it be more standard for the get...() here to have a different name, or be a read-only property or something?
+    fun getEditPriceScreenUIContent(): EditPriceScreenUIContent {
+        devCheck(editPriceScreenUIContent != null) {
+            "setEditPriceScreenUIContent not called before getEditPriceScreenUIContent"
+        }
+        return editPriceScreenUIContent!!
+    }
+
     // TODO: The following functions should now probably be private or removed - the UI composable gets its data from the UIState flow
 
     fun getAllDataSets() = priceTrackerRepository.getAllDataSets()
@@ -1282,9 +1301,11 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
     // TODO: I don't think this will insert correctly yet, as Price has no price_id primary key to
     // allow us to indicate to this function when it is an insert rather than an update, but let's
-    // worry about that later.
+    // worry about that later. OK, I think the solution is that this takes an EditablePrice. If we need
+    // it, we could also have an updatePrice() function which accepts a Price, as we know insert is
+    // not necessary there.
     // TODO: Use upsert in name?
-    fun updateOrInsertPrice(price: Price) {
+    fun updateOrInsertPrice(price: EditablePrice) {
         viewModelScope.launch {
             _saveStatus.update(SaveStatus.Saving)
             try {
@@ -1813,6 +1834,7 @@ fun ItemSourceInfo(
     sourceList: List<Source>,
     onSelectedSourceIdChange: (Long) -> Unit,
     itemPriceList: List<Price>,
+    onEditPriceClick: () -> Unit,
 ) {
     // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
 
@@ -1992,7 +2014,7 @@ fun ItemSourceInfo(
                                 // why this could ever cause a strict mode failure. But there doesn't seem to be much I can do about
                                 // it right now. The NumberFormatException was not AFAICS present in logcat on the run where
                                 // penaltyDeath killed it.
-                                onClick = { navController.navigate("fullScreenDialog/${dataSet.id}/${item.id}/${source.id}/${UUID.randomUUID()}") },
+                                onClick = onEditPriceClick,
                                 shape = MaterialTheme.shapes.small
                             ) {
                                 Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
@@ -2145,7 +2167,7 @@ suspend fun <T> savePreference(context: Context, key: Preferences.Key<T>, value:
 */
 
 // TODO: inconsistent mix of "List" and "ListRaw"
-data class UIContent(
+data class UIContent( // TODO: Rename "HomeScreenUIContent" or similar?
     val dataSet: DataSet?,
     val dataSetList: List<DataSet>,
     val item: Item?,
@@ -2168,6 +2190,78 @@ data class UIContent(
         }
     }
 }
+
+// TODO: Perm comment - this is basically a Price but with most fields nullable, so we can use it in an edit screen to allow adding new Prices as well as editing existing ones.
+data class EditablePrice(
+    val id: Long,
+    val dataSetId: Long,
+    val itemId: Long,
+    val sourceId: Long,
+    val price: Double?,
+    val measure: MeasuredValue?,
+    val originalUnit: MeasureUnit,
+    val confirmed: Instant?,
+    val details: String?,
+    val itemQuantityType: QuantityType,
+
+) {
+    /* TODO!?
+    constructor() : this(
+        id = 0,
+    )
+    */
+
+    constructor(dataSetId: Long, itemId: Long, sourceId: Long, itemQuantityType: QuantityType, itemDefaultUnit: MeasureUnit) : this(
+        id = 0,
+        dataSetId = dataSetId,
+        itemId = itemId,
+        sourceId = sourceId,
+        price = null,
+        measure = null,
+        originalUnit = itemDefaultUnit, // user can change this, but for a new price this is the sensible default
+        confirmed = null,
+        details = null,
+        itemQuantityType = itemQuantityType
+    )
+
+    constructor(price: Price) : this(
+        id = price.id,
+        dataSetId = price.dataSetId,
+        itemId = price.itemId,
+        sourceId = price.sourceId,
+        price = price.price,
+        measure = price.measure,
+        originalUnit = price.originalUnit,
+        confirmed = price.confirmed,
+        details = price.details,
+        itemQuantityType = price.itemQuantityType
+    )
+
+    fun toEntity() = PriceEntity(
+        // TODO: Should we "do something" if the values are null? Should we provide some kind of validation method the caller can use first? Should we throw? We can't write nulls to the database for most of these fields, they are null in EditablePrice to allow for the idea the user hasn't filled them in yet in a new entry
+        id = id,
+        dataSetId = dataSetId,
+        itemId = itemId,
+        sourceId = sourceId,
+        price = price!!,
+        // Note that by using itemQuantityType - which should have come from a join to the Item
+        // table and travelled with the Price ever since it came out of the database - we get a
+        // sanity check that the measure on our Price hasn't mutated to a competely different
+        // QuantityType during its travels.
+        measure = measure!!.asValue(baseUnitForQuantityType(itemQuantityType)),
+        originalUnit = originalUnit!!, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
+        confirmed = confirmed!!,
+        details = details!!,
+    )
+}
+
+data class EditPriceScreenUIContent(
+    val editablePrice: EditablePrice,
+    val originalPrice: EditablePrice,
+    val dataSet: DataSet,
+    val item: Item,
+    val source: Source
+)
 
 // TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
 // TODO: It may just be the emulator but right now despite all my apparently sensible refactoring changes, I am seeing *massive* jank just playing around in the UI (partly but not only when returning from the "edit" full screen dialog)
@@ -2211,7 +2305,14 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
         onSelectedSourceIdChange = {
             vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
         },
-        uiContent.itemPriceListRaw
+        uiContent.itemPriceListRaw,
+        onEditPriceClick = {
+            vm.setEditPriceScreenState(uiContent)
+            // TODO: I don't know if this random UUID is necessary or helpful or harmful any more,
+            // need to experiment/think about this once I finish re-implementing the price edit
+            // screen.
+            navController.navigate("fullScreenDialog/${UUID.randomUUID()}")
+        }
     )
 }
 
@@ -2292,7 +2393,8 @@ fun HomeScreenScaffold(
     source: Source?,
     sourceListRaw: List<Source>,
     onSelectedSourceIdChange: (Long) -> Unit,
-    itemPriceListRaw: List<Price>
+    itemPriceListRaw: List<Price>,
+    onEditPriceClick: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -2370,6 +2472,7 @@ fun HomeScreenScaffold(
                     sourceList = sourceListRaw,
                     onSelectedSourceIdChange = onSelectedSourceIdChange,
                     itemPriceList = itemPriceListRaw,
+                    onEditPriceClick = onEditPriceClick
                 )
             }
 
@@ -2439,25 +2542,21 @@ fun HomeScreenScaffold(
 
 @Composable
 // TODO: https://m3.material.io/components/dialogs/specs says (near bottom) top/left/right padding on a full screen dialog should be 24.dp - I am probably not doing that, should I? Should I use similar padding on "non-dialog full screens" to match??
-// TODO: This needs converting to the new ViewModel-manages-UI-state model
-// TODO: I maybe actually need to switch "away" from the ViewModel state thing - it does feel corner-casey. The key thing about this screen is that user inputs or database changes don't trigger redisplay - there *aren't* any. So we can probably "snapshot" the data on first entry using our own database queries and then stick with that.
 fun OuterFullScreenDialog(
     vm: PriceTrackerViewModel, // TODO: Maybe this should have its own ViewModel?
     navController: NavHostController,
-    dataSetId: Long,
-    itemId: Long,
-    sourceId: Long
 ) {
-
-    val itemList by vm.getItem(dataSetId, itemId).collectAsStateWithLifecycle(emptyList())
+    val uiContent = vm.getEditPriceScreenUIContent()
 
     // TODO: This probably won't work right for adding new entries from scratch, I will need to think about that and this may well need some reworking, but let's ignore that and hack round it for now in relevant places
 
+    /* TODO DELETE
     // TODO: Move these into ViewModel and then I don't need rememberSaveable or the Parceilze stuff and it doesn't cost much - no state faffery, just a Price (or EditablePrice) object held in ViewModel
     var originalPrice by rememberSaveable { mutableStateOf(
         uiContent.itemPriceListRaw.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id } ?: Price.createEmpty()
     )}
     var price by rememberSaveable { mutableStateOf(originalPrice) }
+    */
 
     // TODO: Can I get rid of saveInitiated and instead set the state inside the viewmodel to "idle" when we are not saving? The frequency with which we check it suggests it might be more painful to get rid of it. but if we track this, the distinction between idle and saving is mostly meainingless (the state never gets set back to idle) and we should maybe merge those states into a vague "meh" state.
     var saveInitiated by rememberSaveable { mutableStateOf(false) }
@@ -2485,7 +2584,7 @@ fun OuterFullScreenDialog(
     }
 
     fun onCloseRequest() {
-        if (price != originalPrice) {
+        if (uiContent.editablePrice != uiContent.originalPrice) {
             showConfirmDialog = true
         } else {
             popBackStack()
@@ -2559,7 +2658,7 @@ fun OuterFullScreenDialog(
                 actions = {
                     // TODO: When/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
                     TextButton(enabled = !saveInitiated, onClick = {
-                        saveInitiated = true; vm.updateOrInsertPrice(price)
+                        saveInitiated = true; vm.updateOrInsertPrice(uiContent.editablePrice)
                     }) {
                         if (showSaveProgressIndicator) {
                             CircularProgressIndicator(
@@ -2590,23 +2689,23 @@ fun OuterFullScreenDialog(
         ) {
             // TODO: I think the use of "remember" here is far too weak, but this is basically old hacky code and converting to the viewmodel approach will automatically fix this
             var packSize by remember { mutableStateOf("123") }
-            var selectedUnitId by remember { mutableStateOf(price.originalUnit.id) }
+            var selectedUnitId by remember { mutableStateOf(uiContent.editablePrice.originalUnit.id) }
             var packPrice by remember { mutableStateOf("2.98") }
             //var notes by remember { mutableStateOf("My cool notes") }
             // TODO: Product and Store should maybe be in a row. Just hacking up a rough
             // dialog here for testing of my dialog box code (esp focus stuff) for now.
             LabeledItem(label = "Product") {
-                Text(item.name)
+                Text(uiContent.item.name)
             }
             // Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
             LabeledItem(label = "Store") {
-                Text(source.name)
+                Text(uiContent.source.name)
             }
             Spacer(modifier = Modifier.height(8.dp))
             // TODO: WE PROBABLY WANT SOME remember+derivedStateOf HERE BUT LET'S DO IT WITHOUT FIRST
             val units: List<MeasureUnit> = getRelevantMeasureUnits(
-                dataSet,
-                item.quantityType,
+                uiContent.dataSet,
+                uiContent.item.quantityType,
                 includeDisplayOnly = false
             )
             Row {
@@ -2666,8 +2765,8 @@ fun OuterFullScreenDialog(
             // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
             TextField(
                 label = { Text("Notes") },
-                value = price.details,
-                onValueChange = { price = price.copy(details = it) },
+                value = uiContent.editablePrice.details ?: "",
+                onValueChange = { uiContent.editablePrice = uiContent.editablePrice.copy(details = it) },
             )
             //}
         }
@@ -2865,7 +2964,8 @@ fun AppNavigation() {
             SettingsScreen(navController)
         }
         composable(
-            "fullScreenDialog/{dataSetId}/{productId}/{storeId}/{randomUUID}", enterTransition = {
+            // TODO: OLD "fullScreenDialog/{dataSetId}/{productId}/{storeId}/{randomUUID}", enterTransition = {
+            "fullScreenDialog/{randomUUID}", enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Up,
 
@@ -2890,11 +2990,12 @@ fun AppNavigation() {
                 )
             }
         ) { backStackEntry ->
+            /* TODO DELETE
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")?.toLong() ?: 0
             val productId = backStackEntry.arguments?.getString("productId")?.toLong() ?: 0
             val storeId = backStackEntry.arguments?.getString("storeId")?.toLong() ?: 0
-            // TODO: DELETE - NOT NEEDED val randomUUID = backStackEntry.arguments?.getString("randomUUID")
-            OuterFullScreenDialog(vm, navController, dataSetId, productId, storeId)
+            */
+            OuterFullScreenDialog(vm, navController)
         }
     }
 }
