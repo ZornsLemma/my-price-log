@@ -607,7 +607,7 @@ class PriceTrackerRepositoryImpl(
         sourceDao.getAllSources(dataSetId)
 
     override fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>> =
-        priceDao.getPriceWithItemEntityForItem(dataSetId= dataSetId, itemId = itemId)
+        priceDao.getPriceWithItemEntityForItem(dataSetId = dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
 
     override suspend fun updateOrInsertPrice(price: Price) {
@@ -947,7 +947,7 @@ data class Price(
 }
 
 // TODO: I suspect we should actually be using the item's "default unit" not its quantityType here - although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the display unit for display, to avoid "oh, it happened to work for me in metric with grams but now I'm in imperial it's displaying badly" concerns
-fun PriceEntity.toDomain(measureUnit: MeasureUnit): Price =
+fun PriceEntity.toDomainXXX(measureUnit: MeasureUnit): Price =
     Price(
         id = id,
         dataSetId = dataSetId,
@@ -970,7 +970,7 @@ fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
 
 // TODO: Whiff of ChatGPT magic
 fun PriceWithItemEntity.toDomain(): Price {
-    return priceEntity.toDomain(baseUnitForQuantityType(quantityType))
+    return priceEntity.toDomainXXX(baseUnitForQuantityType(quantityType))
 }
 
 @Dao
@@ -1027,12 +1027,14 @@ interface PriceDao {
         itemId: Long,
     ): Flow<List<PriceWithItemEntity>>
 
-    @Query("SELECT price.*, item.quantity_type FROM price JOIN item ON price.item_id = item.id WHERE price.data_set_id = :dataSetId AND price.item_id = :productId AND price.source_id = :storeId")
-    fun getPriceWithItemForProductAndStore(
+    /* TODO DELETE
+    @Query("SELECT price.*, item.quantity_type FROM price JOIN item ON price.item_id = item.id WHERE price.data_set_id = :dataSetId AND price.item_id = :itemId AND price.source_id = :sourceId")
+    fun getPriceWithItemEntityForItemAndSource(
         dataSetId: Long,
-        productId: Long,
-        storeId: Long
+        itemId: Long,
+        sourceId: Long
     ): Flow<List<PriceWithItemEntity>>
+    */
 }
 
 // ChatGPT magic
