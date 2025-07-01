@@ -567,7 +567,7 @@ abstract class InventoryDatabase : RoomDatabase() {
 
 interface PriceTrackerRepository {
     fun getAllDataSets(): Flow<List<DataSet>>
-    fun getDataSet(dataSetId: Long): Flow<List<DataSet>>
+    fun getDataSet(dataSetId: Long): Flow<List<DataSet>> // TODO: I suspect this can be removed once we tidy up the edit dialog
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
     fun getPriceForProductAndStore(
@@ -576,15 +576,9 @@ interface PriceTrackerRepository {
         storeId: Long
     ): Flow<List<PriceEntity>>
 
-    fun getNicePricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
+    fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
 
-    fun getNicePricesForItem2(pair: Pair<Long, Long>): Flow<List<Price>>
-
-    fun getNicePriceForProductAndStore(
-        dataSetId: Long,
-        productId: Long,
-        storeId: Long
-    ): Flow<List<Price>>
+    fun getPricesForItem2(pair: Pair<Long, Long>): Flow<List<Price>>
 
     suspend fun updateOrInsertPrice(price: PriceEntity)
 }
@@ -622,25 +616,13 @@ class PriceTrackerRepositoryImpl(
         storeId: Long
     ): Flow<List<PriceEntity>> = priceDao.getPriceForProductAndStore(dataSetId, productId, storeId)
 
-    override fun getNicePricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>> =
+    override fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>> =
         priceDao.getPriceWithItemForItem(dataSetId= dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
 
     // TODO: Poor name
-    override fun getNicePricesForItem2(pair: Pair<Long, Long>): Flow<List<Price>> =
-        getNicePricesForItem(pair.first, pair.second)
-
-
-
-    // TODO: Some ChatGPT magic here, though I am mostly understanding
-    // TODO: Use of this function *may* be a red flag now, since I suspect our caller will have data for all stores via getNicePricesForItem
-    override fun getNicePriceForProductAndStore(
-        dataSetId: Long,
-        productId: Long,
-        storeId: Long
-    ): Flow<List<Price>> =
-        priceDao.getPriceWithItemForProductAndStore(dataSetId, productId, storeId)
-            .map { list -> list.map { it.toDomain() } }
+    override fun getPricesForItem2(pair: Pair<Long, Long>): Flow<List<Price>> =
+        getPricesForItem(pair.first, pair.second)
 
     override suspend fun updateOrInsertPrice(price: PriceEntity) = priceDao.upsert(price)
 }
@@ -1114,7 +1096,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         val dataSetIdAndItemIdDatabaseFlow = dataSetIdAndItemIdFlow.flatMapLatest { (dataSetId, itemId) ->
             Log.d("MyFlow", "dataSetIdAndItemIdDatabaseFlow dataSetId $dataSetId, itemId $itemId")
             val priceFlow  = if (dataSetId != null && itemId != null)
-                    priceTrackerRepository.getNicePricesForItem(dataSetId = dataSetId, itemId = itemId)
+                    priceTrackerRepository.getPricesForItem(dataSetId = dataSetId, itemId = itemId)
                 else
                     flowOf(emptyList())
             // We are creating a flow based on a freshly created DAO flow, so we cannot see "stale"
@@ -1254,22 +1236,6 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         return priceForProductAndStore
     }
 
-    fun getNicePricesForItem(
-        dataSetId: Long,
-        itemId: Long): Flow<List<Price>> = priceTrackerRepository.getNicePricesForItem(dataSetId = dataSetId, itemId = itemId)
-
-    fun getNicePricesForItem2(pair: Pair<Long, Long>) = getNicePricesForItem(pair.first, pair.second)
-
-    fun getNicePriceForProductAndStore(
-        dataSetId: Long,
-        productId: Long,
-        storeId: Long
-    ): Flow<List<Price>> {
-        val priceForProductAndStore =
-            priceTrackerRepository.getNicePriceForProductAndStore(dataSetId, productId, storeId)
-        return priceForProductAndStore
-    }
-
     // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
 
     enum class SaveStatus { Idle, Saving, Success, Error }
@@ -1278,11 +1244,11 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     val saveStatus: StateFlow<SaveStatus> = _saveStatus.state
     val saveEvents: SharedFlow<SaveStatus> = _saveStatus.events
 
-
     // TODO: I don't think this will insert correctly yet, as Price has no price_id primary key to
     // allow us to indicate to this function when it is an insert rather than an update, but let's
     // worry about that later.
     // TODO: Use upsert in name?
+    // TODO: Should this be taking a Price not a PriceEntity?
     fun updateOrInsertPrice(price: PriceEntity) {
         viewModelScope.launch {
             _saveStatus.update(SaveStatus.Saving)
@@ -1859,13 +1825,6 @@ fun ItemSourceInfo(
                 getLabel = { it.name },
             )
             if (haveItemAndSource) {
-                /*
-                val priceList by vm.getNicePriceForProductAndStore(
-                    dataSetId = dataSet.id,
-                    productId = item!!.id,
-                    storeId = source!!.id
-                ).collectAsStateWithLifecycle(initialValue = emptyList())
-                */
                 val priceList = itemPriceList.filter { it.sourceId == source!!.id }
 
                 if (priceList.isEmpty()) {
@@ -1959,6 +1918,7 @@ fun ItemSourceInfo(
                     }
                     // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
                     // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
+                    // TODO: I edited a product with no notes, added some and when I came out of edit this did *not* refresh. Subsequent changes of UI inputs and back did show it, but this should obviously have been immediately visible.
                     Row(modifier = Modifier.padding(vertical = 4.dp)) {
                         LabeledItem("Notes") {
                             Text(priceList[0].details)
