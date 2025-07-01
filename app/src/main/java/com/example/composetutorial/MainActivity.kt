@@ -2426,6 +2426,7 @@ fun HomeScreenScaffold(
 @Composable
 // TODO: https://m3.material.io/components/dialogs/specs says (near bottom) top/left/right padding on a full screen dialog should be 24.dp - I am probably not doing that, should I? Should I use similar padding on "non-dialog full screens" to match??
 // TODO: This needs converting to the new ViewModel-manages-UI-state model
+// TODO: I maybe actually need to switch "away" from the ViewModel state thing - it does feel corner-casey. The key thing about this screen is that user inputs or database changes don't trigger redisplay - there *aren't* any. So we can probably "snapshot" the data on first entry using our own database queries and then stick with that.
 fun OuterFullScreenDialog(
     vm: PriceTrackerViewModel,
     navController: NavHostController
