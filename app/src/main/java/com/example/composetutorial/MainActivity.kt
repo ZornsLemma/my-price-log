@@ -572,6 +572,7 @@ interface PriceTrackerRepository {
     fun getAllDataSets(): Flow<List<DataSet>>
     fun getDataSet(dataSetId: Long): Flow<List<DataSet>> // TODO: I suspect this can be removed once we tidy up the edit dialog
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
+    fun getItem(dataSetId: Long, itemId: Long): Flow<List<Item>>
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
 
     fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
@@ -602,6 +603,8 @@ class PriceTrackerRepositoryImpl(
     override fun getDataSet(dataSetId: Long): Flow<List<DataSet>> = dataSetDao.getDataSet(dataSetId)
 
     override fun getAllItems(dataSetId: Long): Flow<List<Item>> = itemDao.getAllItems(dataSetId)
+
+    override fun getItem(dataSetId: Long, itemId: Long): Flow<List<Item>> = itemDao.getItem(dataSetId, itemId)
 
     override fun getAllSources(dataSetId: Long): Flow<List<Source>> =
         sourceDao.getAllSources(dataSetId)
@@ -999,6 +1002,11 @@ interface ItemDao {
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
     @Query("SELECT * FROM item WHERE data_set_id = :dataSetId ORDER BY name ASC")
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
+
+    // TODO: The dataSetId parameter to this function is redudnant, as item.id is the primary key so there can't be more than one matching row. It isn't "wrong" to have the dataSetId parameter too, but it is unnecessary. Maybe remove it?
+    @Query("SELECT * FROM item WHERE data_set_id = :dataSetId AND id = :itemId")
+    fun getItem(dataSetId: Long, itemId: Long): Flow<List<Item>>
+
 }
 
 @Dao
@@ -1240,10 +1248,15 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         } */
     }
 
+    /* TODO DELETE?
     fun getItemMap(dataSetId: Long): Flow<Map<Long, Item>> =
         getAllItems(dataSetId).map { list ->
             list.associateBy { it.id }
         }
+        */
+
+    fun getItem(dataSetId: Long, itemId: Long) =
+        priceTrackerRepository.getItem(dataSetId, itemId)
 
     fun getAllSources(dataSetId: Long): Flow<List<Source>> =
         priceTrackerRepository.getAllSources(dataSetId)
@@ -2429,31 +2442,14 @@ fun HomeScreenScaffold(
 // TODO: This needs converting to the new ViewModel-manages-UI-state model
 // TODO: I maybe actually need to switch "away" from the ViewModel state thing - it does feel corner-casey. The key thing about this screen is that user inputs or database changes don't trigger redisplay - there *aren't* any. So we can probably "snapshot" the data on first entry using our own database queries and then stick with that.
 fun OuterFullScreenDialog(
-    vm: PriceTrackerViewModel,
-    navController: NavHostController
+    vm: PriceTrackerViewModel, // TODO: Maybe this should have its own ViewModel?
+    navController: NavHostController,
+    dataSetId: Long,
+    itemId: Long,
+    sourceId: Long
 ) {
-    val uiState by vm.uiState.collectAsStateWithLifecycle()
-    val (loading, uiContent) = uiState
-    // TODO: We should *probably* ignore "loading" here, but think about it again later. It could
-    // potentially be set to true if our database modification as we are exiting triggers a UIState
-    // update and the "slow change" detection kicks in - although maybe not, since there will be no
-    // dropdown choices to trigger it - but even if that did happen, we are *finishing* and we have
-    // our own progress spinner for our save. Maybe this is a clue that we *shouldn't* share the
-    // UIState flow, although I suspect in practice it is fine to do so.
 
-    // TODO: I don't know if this is overly simplistic or not, but gut feeling is it's OK so let's
-    // see how this goes. Given how we navigate to this screen, we should always have all three
-    // "things" non-null. I wonder if there's a theoretical case where the user clicks Edit on the
-    // home screen then superhumanly quickly changes the dropdowns (and that might include changing
-    // them in a way that makes them null). I do need to think this through later and either make
-    // sure the edge case "just works" even if it's ugly or explicitly reject it, rather than
-    // crashing, but this will do for now.
-    devCheck(uiContent.dataSet != null && uiContent.item != null && uiContent.source != null) {
-        "Null data unexpectedly received"
-    }
-    val dataSet = uiContent.dataSet!!
-    val item = uiContent.item!!
-    val source = uiContent.source!!
+    val itemList by vm.getItem(dataSetId, itemId).collectAsStateWithLifecycle(emptyList())
 
     // TODO: This probably won't work right for adding new entries from scratch, I will need to think about that and this may well need some reworking, but let's ignore that and hack round it for now in relevant places
 
@@ -2898,7 +2894,7 @@ fun AppNavigation() {
             val productId = backStackEntry.arguments?.getString("productId")?.toLong() ?: 0
             val storeId = backStackEntry.arguments?.getString("storeId")?.toLong() ?: 0
             // TODO: DELETE - NOT NEEDED val randomUUID = backStackEntry.arguments?.getString("randomUUID")
-            OuterFullScreenDialog(vm, navController /* TODO DELETE? , dataSetId, productId, storeId */)
+            OuterFullScreenDialog(vm, navController, dataSetId, productId, storeId)
         }
     }
 }
