@@ -573,15 +573,8 @@ interface PriceTrackerRepository {
     fun getDataSet(dataSetId: Long): Flow<List<DataSet>> // TODO: I suspect this can be removed once we tidy up the edit dialog
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
-    fun getPriceForProductAndStore(
-        dataSetId: Long,
-        productId: Long,
-        storeId: Long
-    ): Flow<List<PriceEntity>>
 
     fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
-
-    fun getPricesForItem2(pair: Pair<Long, Long>): Flow<List<Price>>
 
     suspend fun updateOrInsertPrice(price: Price)
 }
@@ -613,22 +606,12 @@ class PriceTrackerRepositoryImpl(
     override fun getAllSources(dataSetId: Long): Flow<List<Source>> =
         sourceDao.getAllSources(dataSetId)
 
-    override fun getPriceForProductAndStore(
-        dataSetId: Long,
-        productId: Long,
-        storeId: Long
-    ): Flow<List<PriceEntity>> = priceDao.getPriceForProductAndStore(dataSetId, productId, storeId)
-
     override fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>> =
         priceDao.getPriceWithItemForItem(dataSetId= dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
 
-    // TODO: Poor name
-    override fun getPricesForItem2(pair: Pair<Long, Long>): Flow<List<Price>> =
-        getPricesForItem(pair.first, pair.second)
-
     override suspend fun updateOrInsertPrice(price: Price) {
-        priceDao.upsert(PriceEntity.fromDomain(price))
+        priceDao.upsert(price.toEntity())
     }
 }
 
@@ -898,27 +881,7 @@ data class PriceEntity(
     val confirmed: Instant,
 
     val details: String // Additional price details TODO: rename "notes"?
-) : Parcelable {
-    companion object {
-        fun fromDomain(price: Price): PriceEntity {
-            return PriceEntity(
-                id = price.id,
-                dataSetId = price.dataSetId,
-                itemId = price.itemId,
-                sourceId = price.sourceId,
-                price = price.price,
-                // TODO: measure unit argument and originalUnit here are hacky, I am trying to get
-                // the edit dialog converted to new viewmodel style and am not thinking straight
-                // about our safeguards or the layers of conversion PriceEntity, PriceWithitem and
-                // Price. I need to come back to this later.
-                measure = price.measure.asValue(baseUnitForQuantityType(price.originalQuantityType),),
-                originalUnit = price.originalUnit, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
-                confirmed = price.confirmed,
-                details = price.details,
-            )
-        }
-    }
-}
+) : Parcelable
 
     // TODO: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
 // that effectively tells us the quantity type implicitly and we don't need to join to item to get
@@ -926,8 +889,8 @@ data class PriceEntity(
 // validation which may catch bugs. Probably worth thinking about this again later.
 data class PriceWithItemEntity(
     // TODO: should be PriceWithItemEntity eventually
-    @Embedded val price: PriceEntity,
-    @ColumnInfo(name = "quantity_type") val quantityType: QuantityType,
+        @Embedded val priceEntity: PriceEntity,
+        @ColumnInfo(name = "quantity_type") val quantityType: QuantityType,
 )
 
 @Parcelize // TODO: Can we get rid of this later!?
@@ -948,6 +911,24 @@ data class Price(
     // TODO: NEED TO MAKE SURE I ACTUALLY USE THIS WHEN DOING INSERT/UPDATE
     val originalQuantityType: QuantityType,
 ) : Parcelable {
+    fun toEntity(): PriceEntity {
+        return PriceEntity(
+            id = id,
+            dataSetId = dataSetId,
+            itemId = itemId,
+            sourceId = sourceId,
+            price = price,
+            // TODO: measure unit argument and originalUnit here are hacky, I am trying to get
+            // the edit dialog converted to new viewmodel style and am not thinking straight
+            // about our safeguards or the layers of conversion PriceEntity, PriceWithitem and
+            // Price. I need to come back to this later.
+            measure = measure.asValue(baseUnitForQuantityType(originalQuantityType),),
+            originalUnit = originalUnit, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
+            confirmed = confirmed,
+            details = details,
+        )
+    }
+
     companion object {
         fun createEmpty(): Price {
             return Price(
@@ -989,7 +970,7 @@ fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
 
 // TODO: Whiff of ChatGPT magic
 fun PriceWithItemEntity.toDomain(): Price {
-    return price.toDomain(baseUnitForQuantityType(quantityType))
+    return priceEntity.toDomain(baseUnitForQuantityType(quantityType))
 }
 
 @Dao
@@ -1039,13 +1020,6 @@ interface PriceDao {
 
     @Upsert()
     suspend fun upsert(price: PriceEntity)
-
-    @Query("SELECT * FROM price WHERE data_set_id = :dataSetId AND item_id = :productId AND source_id = :storeId")
-    fun getPriceForProductAndStore(
-        dataSetId: Long,
-        productId: Long,
-        storeId: Long
-    ): Flow<List<PriceEntity>>
 
     @Query("SELECT price.*, item.quantity_type FROM price JOIN item ON price.item_id = item.id WHERE price.data_set_id = :dataSetId AND price.item_id = :itemId")
     fun getPriceWithItemForItem(
@@ -1282,17 +1256,6 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
     init {
         Log.d("MyApp", "PriceTrackerViewModel created: $this")
-    }
-
-    // Price details for selected product and store (external to ViewModel)
-    fun getPriceForProductAndStore(
-        dataSetId: Long,
-        productId: Long,
-        storeId: Long
-    ): Flow<List<PriceEntity>> {
-        val priceForProductAndStore =
-            priceTrackerRepository.getPriceForProductAndStore(dataSetId, productId, storeId)
-        return priceForProductAndStore
     }
 
     // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
