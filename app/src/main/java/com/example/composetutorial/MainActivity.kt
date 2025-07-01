@@ -905,11 +905,12 @@ data class Price(
     val originalUnit: MeasureUnit,
     val confirmed: Instant,
     val details: String, // Additional price details TODO: rename "notes"?
-    // originalQuantityType is a record of the originalQuantityType on measure. It is intended to
-    // allow a best effort (protecting against buggy code, not malicious code) validation that when
-    // we write back to the database, measure hasn't somehow mutated into a different QuantityType.
-    // TODO: NEED TO MAKE SURE I ACTUALLY USE THIS WHEN DOING INSERT/UPDATE
-    val originalQuantityType: QuantityType,
+    // itemQuantityType is a copy of the quantityType from the Item when we originally read the
+    // PriceWithItemEntity in from the database. It is intended to allow a best effort (protecting
+    // against buggy code, not malicious code) validation that when we write back to the database,
+    // measure hasn't somehow mutated into a different QuantityType. TODO: NEED TO MAKE SURE I
+    // ACTUALLY USE THIS WHEN DOING INSERT/UPDATE
+    val itemQuantityType: QuantityType,
 ) : Parcelable {
     fun toEntity(): PriceEntity {
         return PriceEntity(
@@ -922,7 +923,7 @@ data class Price(
             // the edit dialog converted to new viewmodel style and am not thinking straight
             // about our safeguards or the layers of conversion PriceEntity, PriceWithitem and
             // Price. I need to come back to this later.
-            measure = measure.asValue(baseUnitForQuantityType(originalQuantityType),),
+            measure = measure.asValue(baseUnitForQuantityType(itemQuantityType),),
             originalUnit = originalUnit, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
             confirmed = confirmed,
             details = details,
@@ -940,7 +941,7 @@ data class Price(
                 originalUnit = MeasureUnit.ML, // TODO MASSIVE HACK
                 confirmed = Instant.now(), // TODO MASSIVE HACK
                 details = "",
-                originalQuantityType = QuantityType.WEIGHT // TODO MASSIVE HACK
+                itemQuantityType = QuantityType.WEIGHT // TODO MASSIVE HACK
             )
         }
     }
@@ -956,18 +957,17 @@ fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
 // TODO: Whiff of ChatGPT magic
 // TODO: I suspect we should actually be using the item's "default unit" not its quantityType here - although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the display unit for display, to avoid "oh, it happened to work for me in metric with grams but now I'm in imperial it's displaying badly" concerns
 fun PriceWithItemEntity.toDomain(): Price {
-    val measureUnit = baseUnitForQuantityType(itemQuantityType)
     return Price(
         id = priceEntity.id,
         dataSetId = priceEntity.dataSetId,
         itemId = priceEntity.itemId,
         sourceId = priceEntity.sourceId,
         price = priceEntity.price,
-        measure = MeasuredValue(priceEntity.measure, measureUnit),
+        measure = MeasuredValue(priceEntity.measure, baseUnitForQuantityType(itemQuantityType)),
         originalUnit = priceEntity.originalUnit,
         confirmed = priceEntity.confirmed,
         details = priceEntity.details,
-        originalQuantityType = measureUnit.quantityType,
+        itemQuantityType = itemQuantityType,
     )
 }
 
