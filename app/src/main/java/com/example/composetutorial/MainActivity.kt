@@ -372,7 +372,8 @@ fun formatDoubleLocaleAware(
     return nf.format(value)
 }
 
-data class MeasuredValue(val value: Double, val unit: MeasureUnit){
+@Parcelize // TODO: can we get rid of this later?
+data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable {
     val quantityType: QuantityType get() = unit.quantityType
 
     fun to(unit: MeasureUnit): MeasuredValue {
@@ -567,6 +568,7 @@ abstract class InventoryDatabase : RoomDatabase() {
     }
 }
 
+// TODO: Is this interface buying us anything?!
 interface PriceTrackerRepository {
     fun getAllDataSets(): Flow<List<DataSet>>
     fun getDataSet(dataSetId: Long): Flow<List<DataSet>> // TODO: I suspect this can be removed once we tidy up the edit dialog
@@ -582,7 +584,7 @@ interface PriceTrackerRepository {
 
     fun getPricesForItem2(pair: Pair<Long, Long>): Flow<List<Price>>
 
-    suspend fun updateOrInsertPrice(price: PriceEntity)
+    suspend fun updateOrInsertPrice(price: Price)
 }
 
 class PriceTrackerRepositoryImpl(
@@ -626,7 +628,9 @@ class PriceTrackerRepositoryImpl(
     override fun getPricesForItem2(pair: Pair<Long, Long>): Flow<List<Price>> =
         getPricesForItem(pair.first, pair.second)
 
-    override suspend fun updateOrInsertPrice(price: PriceEntity) = priceDao.upsert(price)
+    override suspend fun updateOrInsertPrice(price: Price) {
+        priceDao.upsert(PriceEntity.fromDomain(price))
+    }
 }
 
 // TODO: WTF?
@@ -895,9 +899,29 @@ data class PriceEntity(
     val confirmed: Instant,
 
     val details: String // Additional price details TODO: rename "notes"?
-) : Parcelable
+) : Parcelable {
+    companion object {
+        fun fromDomain(price: Price): PriceEntity {
+            return PriceEntity(
+                id = price.id,
+                dataSetId = price.dataSetId,
+                itemId = price.itemId,
+                sourceId = price.sourceId,
+                price = price.price,
+                // TODO: measure unit argument and originalUnit here are hacky, I am trying to get
+                // the edit dialog converted to new viewmodel style and am not thinking straight
+                // about our safeguards or the layers of conversion PriceEntity, PriceWithitem and
+                // Price. I need to come back to this later.
+                measure = price.measure.asValue(baseUnitForQuantityType(price.originalQuantityType),),
+                originalUnit = price.originalUnit, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
+                confirmed = price.confirmed,
+                details = price.details,
+            )
+        }
+    }
+}
 
-// TODO: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
+    // TODO: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
 // that effectively tells us the quantity type implicitly and we don't need to join to item to get
 // it. However, I suspect it still has some value because it allows us to do a bit of extra
 // validation which may catch bugs. Probably worth thinking about this again later.
@@ -907,6 +931,7 @@ data class PriceWithItem(
     @ColumnInfo(name = "quantity_type") val quantityType: QuantityType,
 )
 
+@Parcelize // TODO: Can we get rid of this later!?
 data class Price(
     // TODO: probably rename just "Price" once we rename the existing "Price"
     val id: Long = 0,
@@ -923,7 +948,23 @@ data class Price(
     // we write back to the database, measure hasn't somehow mutated into a different QuantityType.
     // TODO: NEED TO MAKE SURE I ACTUALLY USE THIS WHEN DOING INSERT/UPDATE
     val originalQuantityType: QuantityType,
-)
+) : Parcelable {
+    companion object {
+        fun createEmpty(): Price {
+            return Price(
+                dataSetId = 0, // TODO MASSIVE HACK
+                itemId = 0, // TODO MASSIVE HACK
+                sourceId = 0, // TODO MASSIVE HACK
+                price = 0.0,
+                measure = MeasuredValue(0.0, MeasureUnit.ML), // TODO MASSIVE HACK
+                originalUnit = MeasureUnit.ML, // TODO MASSIVE HACK
+                confirmed = Instant.now(), // TODO MASSIVE HACK
+                details = "",
+                originalQuantityType = QuantityType.WEIGHT // TODO MASSIVE HACK
+            )
+        }
+    }
+}
 
 // TODO: I suspect we should actually be using the item's "default unit" not its quantityType here - although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the display unit for display, to avoid "oh, it happened to work for me in metric with grams but now I'm in imperial it's displaying badly" concerns
 fun PriceEntity.toDomain(measureUnit: MeasureUnit): Price =
@@ -940,14 +981,16 @@ fun PriceEntity.toDomain(measureUnit: MeasureUnit): Price =
         originalQuantityType = measureUnit.quantityType,
     )
 
+// TODO: HACKING
+fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
+    QuantityType.WEIGHT -> MeasureUnit.G
+    QuantityType.VOLUME -> MeasureUnit.ML
+    QuantityType.ITEM -> MeasureUnit.EACH
+}
+
 // TODO: Whiff of ChatGPT magic
 fun PriceWithItem.toDomain(): Price {
-    val baseUnit = when (quantityType) {
-        QuantityType.WEIGHT -> MeasureUnit.G
-        QuantityType.VOLUME -> MeasureUnit.ML
-        QuantityType.ITEM -> MeasureUnit.EACH
-    }
-    return price.toDomain(baseUnit)
+    return price.toDomain(baseUnitForQuantityType(quantityType))
 }
 
 @Dao
@@ -1265,8 +1308,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     // allow us to indicate to this function when it is an insert rather than an update, but let's
     // worry about that later.
     // TODO: Use upsert in name?
-    // TODO: Should this be taking a Price not a PriceEntity?
-    fun updateOrInsertPrice(price: PriceEntity) {
+    fun updateOrInsertPrice(price: Price) {
         viewModelScope.launch {
             _saveStatus.update(SaveStatus.Saving)
             try {
@@ -2424,326 +2466,296 @@ fun HomeScreenScaffold(
 // TODO: This needs converting to the new ViewModel-manages-UI-state model
 fun OuterFullScreenDialog(
     vm: PriceTrackerViewModel,
-    navController: NavHostController,
-    dataSetId: Long,
-    productId: Long,
-    storeId: Long
+    navController: NavHostController
 ) {
-    //var vm: PriceTrackerViewModel = viewModel()
-    // TODO: Should we just have the caller pass the product name through so we don't have to do this lookup? the viewmodel should have the data cached, but we still have to through the collectstatewithlifecycle overhead?
-    // TODO: Are we needlessly getting *all* items here when we could just get the one we are interested in?
-    val productMap by vm.getItemMap(dataSetId)
-        .collectAsStateWithLifecycle(initialValue = emptyMap())
-    val productName = productMap[productId]?.name ?: "Invalid product ID $productId"
-    val storeMap by vm.getSourceMap(dataSetId)
-        .collectAsStateWithLifecycle(initialValue = emptyMap())
-    val storeName = storeMap[storeId]?.name ?: "Invalid store ID $storeId"
-    val nullablePriceList: List<PriceEntity>? by vm.getPriceForProductAndStore(
-        dataSetId = dataSetId,
-        productId = productId,
-        storeId = storeId
-    ).collectAsStateWithLifecycle(initialValue = null)
-    val nullableDataSetList: List<DataSet>? by vm.getDataSet(dataSetId)
-        .collectAsStateWithLifecycle(initialValue = null)
+    val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val (loading, uiContent) = uiState
+    // TODO: We should *probably* ignore "loading" here, but think about it again later. It could
+    // potentially be set to true if our database modification as we are exiting triggers a UIState
+    // update and the "slow change" detection kicks in - although maybe not, since there will be no
+    // dropdown choices to trigger it - but even if that did happen, we are *finishing* and we have
+    // our own progress spinner for our save. Maybe this is a clue that we *shouldn't* share the
+    // UIState flow, although I suspect in practice it is fine to do so.
 
-    if (nullablePriceList == null || nullableDataSetList == null || !(productId in productMap)) {
-        // This will almost certainly never be seen - we will likely get the query results back and
-        // be recomposed before the first frame.
-        // TODO: AT LEAST ON EMULATOR, THIS IS SHOWING UP IN A VERY UGLY WAY DURING SLIDE UP OF "EDIT" SCREEN
-        Text("Loading...")
-    } else {
-        val priceList = nullablePriceList!!
-        devCheck(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
+    // TODO: I don't know if this is overly simplistic or not, but gut feeling is it's OK so let's
+    // see how this goes. Given how we navigate to this screen, we should always have all three
+    // "things" non-null. I wonder if there's a theoretical case where the user clicks Edit on the
+    // home screen then superhumanly quickly changes the dropdowns (and that might include changing
+    // them in a way that makes them null). I do need to think this through later and either make
+    // sure the edge case "just works" even if it's ugly or explicitly reject it, rather than
+    // crashing, but this will do for now.
+    devCheck(uiContent.dataSet != null && uiContent.item != null && uiContent.source != null) {
+        "Null data unexpectedly received"
+    }
+    val dataSet = uiContent.dataSet!!
+    val item = uiContent.item!!
+    val source = uiContent.source!!
 
-        devCheck(nullableDataSetList!!.size == 1) { "Expected 1 data set with ID ${dataSetId}, but got ${nullableDataSetList!!.size}" }
-        val dataSet = nullableDataSetList!![0]
-        // TODO: Create empty price like this feels crap, and it's also not right that the price defaults to 0.0 - it needs to be nullable, and possibly the price should be a string not a double at least in this context, not sure about db
-        // TODO: price probably needs rememberSaveable
-        //var price by rememberSaveable { mutableStateOf ( if (priceList.isEmpty()) Price(productId = productId, storeId = storeId, price = 0.0, details = "") else priceList[0])}
+    // TODO: This probably won't work right for adding new entries from scratch, I will need to think about that and this may well need some reworking, but let's ignore that and hack round it for now in relevant places
 
-        val product = productMap[productId]!!
+    var originalPrice by rememberSaveable { mutableStateOf(
+        uiContent.itemPriceListRaw.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id } ?: Price.createEmpty()
+    )}
+    var price by rememberSaveable { mutableStateOf(originalPrice) }
 
-        // Initialize price with a default value
-        var price by rememberSaveable {
-            mutableStateOf(
-                if (priceList.isEmpty()) {
-                    // TODO: We may need to allow nulls in some way to accommodate this case properly - I don't yet have any UI for adding a first price
-                    PriceEntity(
-                        dataSetId = dataSetId,
-                        itemId = productId,
-                        sourceId = storeId,
-                        price = 0.0,
-                        measure = 0.0,
-                        originalUnit = MeasureUnit.ML, // TODO MASSIVE HACK
-                        confirmed = Instant.now(), // TODO MASSIVE HACK
-                        details = ""
-                    )
-                } else {
-                    priceList[0]
+    // TODO: Can I get rid of saveInitiated and instead set the state inside the viewmodel to "idle" when we are not saving? The frequency with which we check it suggests it might be more painful to get rid of it. but if we track this, the distinction between idle and saving is mostly meainingless (the state never gets set back to idle) and we should maybe merge those states into a vague "meh" state.
+    var saveInitiated by rememberSaveable { mutableStateOf(false) }
+    var showSaveProgressIndicator by rememberSaveable { mutableStateOf(false) }
+    var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var showErrorDialog by rememberSaveable { mutableStateOf(false) }
+    var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
+    var scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+    // TODO: ChatGPT magic. This idea here is that a) currentBackStackEntry reflects the actual
+    // back stack, not merely "we have popped but it hasn't come into effect yet" b) this will force
+    // isNavigating to be initialised to false when we are re-entered "fresh" but not if e.g. a rotation occurs.
+    var isNavigating by remember(navController.currentBackStackEntry) {
+        mutableStateOf(false)
+    }
+
+    fun popBackStack() {
+        // We need isNavigating to de-bounce the close button so we don't do a double pop if
+        // the user double taps the close button quickly. (We may not need this for other ways
+        // of going back, but it shouldn't hurt and is probably safer.)
+        if (!isNavigating) {
+            isNavigating = true;
+            navController.popBackStack()
+        }
+    }
+
+    fun onCloseRequest() {
+        if (price != originalPrice) {
+            showConfirmDialog = true
+        } else {
+            popBackStack()
+        }
+    }
+
+    BackHandler {
+        if (!saveInitiated) {
+            onCloseRequest()
+        } else {
+            // I've discussed this with LLMs and it's not clear if we should do this or not, but
+            // I'll go with it for now.
+            showSavingSnackbar = true;
+        }
+    }
+
+    LaunchedEffect(saveInitiated) {
+        if (saveInitiated) {
+            // We expect the save to complete quickly so we don't want the visual distraction
+            // of a progress indicator appearing straight away. Let the progress indicator kick
+            // in after a short delay if we're still here waiting for the save to complete.
+            delay(spinnerDelay)
+            showSaveProgressIndicator = true
+        }
+        // TODO: I don't think we need to set it back to false in else, but maybe revise all
+        // this later.
+    }
+
+    val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
+    // ChatGPT magic more or less
+    LaunchedEffect(Unit) {
+        vm.saveEvents.collect { event ->
+            when (event) {
+                PriceTrackerViewModel.SaveStatus.Success -> {
+                    popBackStack()
+                }
+
+                PriceTrackerViewModel.SaveStatus.Error -> {
+                    saveInitiated = false;
+                    showErrorDialog = true;
+                }
+
+                else -> {}
+            }
+        }
+    }
+
+
+    // TODO: Grok suggests wrapping a Box with:
+    //Modifier.semantics {
+    //    role = Role.Dialog // Marks this as a dialog for TalkBack
+    //    contentDescription = "Full-screen dialog for [task, e.g., entering details]" // Optional: describe purpose
+    //    liveRegion = LiveRegionMode.Polite // Announce when dialog opens
+    //} *around* the Scaffold. I am not entirely sure about flagging this as a dialog anyway - I sort of get the MD3 "full screen dialog" concept, but it feels very technical and not something a user (accessibility-using or not) is likely to be actively aware of. I suppose there is some argument that it clues the user in to expect (as there is) a close icon and a "confirm" type icon in the top bar.
+    // I suspect I shouldn't provide a contentDescription unless/until I do this for other screens, and at the moment I am trying not to be actively accessibility-hostile but not go out of my way to add stuff that may not be helpful. If the app is released it will be open source and I'm happy to take advice/patches if someone actually is using this.
+    // I would rather attach the modifier to the Scaffold if I can, but I don't know if that will work correctly. Maybe it
+    // doesn't work with a Box either, I haven't tested that. (Perplexity.ai says this semantics modifier won't truly flag it
+    // as a dialog, but the link it gives doesn't actually say that. It doesn't have a better option, short of actually
+    // using Dialog, which I know to my cost is utterly impractical or I'd already be using it. Perplexity does say I can
+    // attach the modifier to the Scaffold no problem. Perplexity also suggests the liveRegion thing is not necessary or appropriate here - it (I haven't tried to read up on this myself) is sort of related to visual things like scrims, and for a full screen dialog it's not appropriate.
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(enabled = !saveInitiated, onClick = { onCloseRequest() }) {
+                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    }
+                },
+                title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price", you can also eg edit pack size and probably a free text notes field etc
+                actions = {
+                    // TODO: When/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
+                    TextButton(enabled = !saveInitiated, onClick = {
+                        saveInitiated = true; vm.updateOrInsertPrice(price)
+                    }) {
+                        if (showSaveProgressIndicator) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Text("Save") // TODO: arbitrary, not thought about wording
+                        }
+                    }
+                },
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
+    ) { innerPadding ->
+
+        // TODO: We could probably just pass innerPadding through to FullScreenDialog, that may or may not be clearer
+        Column(
+            modifier = Modifier
+                // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am struggling to find any non-LLM explanations here, but *maybe* *if we have scrolled away from the top* we should change the background to the surfaceContainer
+                .background(MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = fullScreenDialogBorder) // TODO: looks ugly but I haven't actually designed the dialog properly yet, so let's try to follow recommendation for now
+                .verticalScroll(rememberScrollState())
+        ) {
+            // TODO: I think the use of "remember" here is far too weak, but this is basically old hacky code and converting to the viewmodel approach will automatically fix this
+            var packSize by remember { mutableStateOf("123") }
+            var selectedUnitId by remember { mutableStateOf(price.originalUnit.id) }
+            var packPrice by remember { mutableStateOf("2.98") }
+            //var notes by remember { mutableStateOf("My cool notes") }
+            // TODO: Product and Store should maybe be in a row. Just hacking up a rough
+            // dialog here for testing of my dialog box code (esp focus stuff) for now.
+            LabeledItem(label = "Product") {
+                Text(item.name)
+            }
+            // Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
+            LabeledItem(label = "Store") {
+                Text(source.name)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            // TODO: WE PROBABLY WANT SOME remember+derivedStateOf HERE BUT LET'S DO IT WITHOUT FIRST
+            val units: List<MeasureUnit> = getRelevantMeasureUnits(
+                dataSet,
+                item.quantityType,
+                includeDisplayOnly = false
+            )
+            Row {
+                // TODO: Don't really like this way of showing pack size and unit etc, but
+                // this is just a quick hack to get some "realistic-ish" content on the
+                // dialog for testing
+                // TODO: Using weight to size the components is also sucky, since we really
+                // just want "a reasonable fixed size" for the unit with
+                // the product taking whatever's left, but this will do for now.
+                // TODO: This TextField will *not* show a cursor or let the value be changed
+                // - I don't know if this is because my dialog code is breaking it, or I've
+                // done something wrong here. OK, if I copy this code to HomeScreen() it
+                // works, so it is probably dialog related. Yay!
+                // TODO: Should I use OutlinedTextFields here? If so, for the drop down too.
+                // TODO: Note that "Pack size" is blue only when the field is selected, but
+                // "Unit" is always blue. This may be a localised colour tweak or it may be
+                // a systemic glitch e.g. with my dropdown menu. FWIW the background of the
+                // two fields appears to change differenly as I navigate around with cursor
+                // keys too, although this *might* be normal - but worth trying to
+                // investigate.
+                // TODO: When the onscreen keyboard is up for "pack size", clicking on unit
+                // opens the dropdown and hides the keyboard but the dropdown gets
+                // positioned "to avoid" the keyboard - this might be normal/OK, but
+                // check/read/think
+                TextField(
+                    label = { Text("Pack size") },
+                    value = packSize,
+                    onValueChange = { packSize = it },
+                    // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
+                MyExposedDropdownMenuBox(
+                    selectedId = selectedUnitId,
+                    onValueChange = { selectedUnitId = it },
+                    label = { Text("Unit") },
+                    items = units,
+                    modifier = Modifier.weight(0.5f),
+                    getId = { it.id },
+                    getLabel = { it.symbol },
+                )
+
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute max)
+            TextField(
+                label = { Text("Pack price") },
+                prefix = { Text("£") },
+                value = packPrice,
+                onValueChange = { packPrice = it },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+            // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
+            TextField(
+                label = { Text("Notes") },
+                value = price.details,
+                onValueChange = { price = price.copy(details = it) },
+            )
+            //}
+        }
+
+        if (showConfirmDialog) {
+            // I copied the wording of this dialog directly from a screenshot in the M3 documentaion.
+            AlertDialog(
+                title = { Text("Discard unsaved changes?") },
+                text = { Text("You have changes that won't be saved if you close.") },
+                onDismissRequest = { showConfirmDialog = false },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showConfirmDialog = false
+                    }) { Text("Keep editing") }
+                },
+                confirmButton = {
+                    TextButton(onClick = { popBackStack() }) {
+                        Text(
+                            "Discard"
+                        )
+                    }
+                },
+            )
+        }
+
+        if (showErrorDialog) {
+            // We use an AlertDialog not a snackbar here. This is a local database save which is
+            // failing so it is very unlikely to be transient. We also don't want the user
+            // missing the snackbar, thinking the app is buggy ("I already saved, why didn't the
+            // dialog close?") and then tapping the close icon without realising their changes
+            // have not been saved. (If transient failure was a possibility - e.g. we needed to
+            // perform network activity - there might be value in showing a snackbar, maybe with
+            // a fallback to an AlertDialog if things keep failing.)
+            AlertDialog(
+                title = { Text("Unable to save changes") },
+                text = { Text("An error occurred while saving the changes.") },
+                onDismissRequest = { showErrorDialog = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showErrorDialog = false;
+                    }) { Text("OK") }
                 }
             )
         }
-        var originalPrice by rememberSaveable { mutableStateOf(price) }
 
-        // TODO: Can I get rid of saveInitiated and instead set the state inside the viewmodel to "idle" when we are not saving? The frequency with which we check it suggests it might be more painful to get rid of it. but if we track this, the distinction between idle and saving is mostly meainingless (the state never gets set back to idle) and we should maybe merge those states into a vague "meh" state.
-        var saveInitiated by rememberSaveable { mutableStateOf(false) }
-        var showSaveProgressIndicator by rememberSaveable { mutableStateOf(false) }
-        var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
-        var showErrorDialog by rememberSaveable { mutableStateOf(false) }
-        var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
-        var scope = rememberCoroutineScope()
-        val snackbarHostState = remember { SnackbarHostState() }
-        // TODO: ChatGPT magic. This idea here is that a) currentBackStackEntry reflects the actual
-        // back stack, not merely "we have popped but it hasn't come into effect yet" b) this will force
-        // isNavigating to be initialised to false when we are re-entered "fresh" but not if e.g. a rotation occurs.
-        var isNavigating by remember(navController.currentBackStackEntry) {
-            mutableStateOf(false)
-        }
-
-        fun popBackStack() {
-            // We need isNavigating to de-bounce the close button so we don't do a double pop if
-            // the user double taps the close button quickly. (We may not need this for other ways
-            // of going back, but it shouldn't hurt and is probably safer.)
-            if (!isNavigating) {
-                isNavigating = true;
-                navController.popBackStack()
-            }
-        }
-
-        fun onCloseRequest() {
-            if (price != originalPrice) {
-                showConfirmDialog = true
-            } else {
-                popBackStack()
-            }
-        }
-
-        BackHandler {
-            if (!saveInitiated) {
-                onCloseRequest()
-            } else {
-                // I've discussed this with LLMs and it's not clear if we should do this or not, but
-                // I'll go with it for now.
-                showSavingSnackbar = true;
-            }
-        }
-
-        LaunchedEffect(saveInitiated) {
-            if (saveInitiated) {
-                // We expect the save to complete quickly so we don't want the visual distraction
-                // of a progress indicator appearing straight away. Let the progress indicator kick
-                // in after a short delay if we're still here waiting for the save to complete.
-                delay(spinnerDelay)
-                showSaveProgressIndicator = true
-            }
-            // TODO: I don't think we need to set it back to false in else, but maybe revise all
-            // this later.
-        }
-
-        val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
-        // ChatGPT magic more or less
-        LaunchedEffect(Unit) {
-            vm.saveEvents.collect { event ->
-                when (event) {
-                    PriceTrackerViewModel.SaveStatus.Success -> {
-                        popBackStack()
-                    }
-
-                    PriceTrackerViewModel.SaveStatus.Error -> {
-                        saveInitiated = false;
-                        showErrorDialog = true;
-                    }
-
-                    else -> {}
-                }
-            }
-        }
-
-
-        // TODO: Grok suggests wrapping a Box with:
-        //Modifier.semantics {
-        //    role = Role.Dialog // Marks this as a dialog for TalkBack
-        //    contentDescription = "Full-screen dialog for [task, e.g., entering details]" // Optional: describe purpose
-        //    liveRegion = LiveRegionMode.Polite // Announce when dialog opens
-        //} *around* the Scaffold. I am not entirely sure about flagging this as a dialog anyway - I sort of get the MD3 "full screen dialog" concept, but it feels very technical and not something a user (accessibility-using or not) is likely to be actively aware of. I suppose there is some argument that it clues the user in to expect (as there is) a close icon and a "confirm" type icon in the top bar.
-        // I suspect I shouldn't provide a contentDescription unless/until I do this for other screens, and at the moment I am trying not to be actively accessibility-hostile but not go out of my way to add stuff that may not be helpful. If the app is released it will be open source and I'm happy to take advice/patches if someone actually is using this.
-        // I would rather attach the modifier to the Scaffold if I can, but I don't know if that will work correctly. Maybe it
-        // doesn't work with a Box either, I haven't tested that. (Perplexity.ai says this semantics modifier won't truly flag it
-        // as a dialog, but the link it gives doesn't actually say that. It doesn't have a better option, short of actually
-        // using Dialog, which I know to my cost is utterly impractical or I'd already be using it. Perplexity does say I can
-        // attach the modifier to the Scaffold no problem. Perplexity also suggests the liveRegion thing is not necessary or appropriate here - it (I haven't tried to read up on this myself) is sort of related to visual things like scrims, and for a full screen dialog it's not appropriate.
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            topBar = {
-                TopAppBar(
-                    navigationIcon = {
-                        IconButton(enabled = !saveInitiated, onClick = { onCloseRequest() }) {
-                            Icon(Icons.Default.Close, contentDescription = "Close")
-                        }
-                    },
-                    title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price", you can also eg edit pack size and probably a free text notes field etc
-                    actions = {
-                        // TODO: When/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
-                        TextButton(enabled = !saveInitiated, onClick = {
-                            saveInitiated = true; vm.updateOrInsertPrice(price)
-                        }) {
-                            if (showSaveProgressIndicator) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp,
-                                )
-                            } else {
-                                Text("Save") // TODO: arbitrary, not thought about wording
-                            }
-                        }
-                    },
-                )
-            },
-            snackbarHost = {
-                SnackbarHost(hostState = snackbarHostState)
-            },
-        ) { innerPadding ->
-
-            // TODO: We could probably just pass innerPadding through to FullScreenDialog, that may or may not be clearer
-            Column(
-                modifier = Modifier
-                    // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am struggling to find any non-LLM explanations here, but *maybe* *if we have scrolled away from the top* we should change the background to the surfaceContainer
-                    .background(MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = fullScreenDialogBorder) // TODO: looks ugly but I haven't actually designed the dialog properly yet, so let's try to follow recommendation for now
-                    .verticalScroll(rememberScrollState())
-            ) {
-                // TODO: I think the use of "remember" here is far too weak, but this is basically old hacky code and converting to the viewmodel approach will automatically fix this
-                var packSize by remember { mutableStateOf("123") }
-                var selectedUnitId by remember { mutableStateOf(price.originalUnit.id) }
-                var packPrice by remember { mutableStateOf("2.98") }
-                //var notes by remember { mutableStateOf("My cool notes") }
-                // TODO: Product and Store should maybe be in a row. Just hacking up a rough
-                // dialog here for testing of my dialog box code (esp focus stuff) for now.
-                LabeledItem(label = "Product") {
-                    Text(productName)
-                }
-                // Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
-                LabeledItem(label = "Store") {
-                    Text(storeName)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                // TODO: WE PROBABLY WANT SOME remember+derivedStateOf HERE BUT LET'S DO IT WITHOUT FIRST
-                val units: List<MeasureUnit> = getRelevantMeasureUnits(
-                    dataSet,
-                    product.quantityType,
-                    includeDisplayOnly = false
-                )
-                Row {
-                    // TODO: Don't really like this way of showing pack size and unit etc, but
-                    // this is just a quick hack to get some "realistic-ish" content on the
-                    // dialog for testing
-                    // TODO: Using weight to size the components is also sucky, since we really
-                    // just want "a reasonable fixed size" for the unit with
-                    // the product taking whatever's left, but this will do for now.
-                    // TODO: This TextField will *not* show a cursor or let the value be changed
-                    // - I don't know if this is because my dialog code is breaking it, or I've
-                    // done something wrong here. OK, if I copy this code to HomeScreen() it
-                    // works, so it is probably dialog related. Yay!
-                    // TODO: Should I use OutlinedTextFields here? If so, for the drop down too.
-                    // TODO: Note that "Pack size" is blue only when the field is selected, but
-                    // "Unit" is always blue. This may be a localised colour tweak or it may be
-                    // a systemic glitch e.g. with my dropdown menu. FWIW the background of the
-                    // two fields appears to change differenly as I navigate around with cursor
-                    // keys too, although this *might* be normal - but worth trying to
-                    // investigate.
-                    // TODO: When the onscreen keyboard is up for "pack size", clicking on unit
-                    // opens the dropdown and hides the keyboard but the dropdown gets
-                    // positioned "to avoid" the keyboard - this might be normal/OK, but
-                    // check/read/think
-                    TextField(
-                        label = { Text("Pack size") },
-                        value = packSize,
-                        onValueChange = { packSize = it },
-                        // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
-                    MyExposedDropdownMenuBox(
-                        selectedId = selectedUnitId,
-                        onValueChange = { selectedUnitId = it },
-                        label = { Text("Unit") },
-                        items = units,
-                        modifier = Modifier.weight(0.5f),
-                        getId = { it.id },
-                        getLabel = { it.symbol },
-                    )
-
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute max)
-                TextField(
-                    label = { Text("Pack price") },
-                    prefix = { Text("£") },
-                    value = packPrice,
-                    onValueChange = { packPrice = it },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-                // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
-                TextField(
-                    label = { Text("Notes") },
-                    value = price.details,
-                    onValueChange = { price = price.copy(details = it) },
-                )
-                //}
-            }
-
-            if (showConfirmDialog) {
-                // I copied the wording of this dialog directly from a screenshot in the M3 documentaion.
-                AlertDialog(
-                    title = { Text("Discard unsaved changes?") },
-                    text = { Text("You have changes that won't be saved if you close.") },
-                    onDismissRequest = { showConfirmDialog = false },
-                    dismissButton = {
-                        TextButton(onClick = {
-                            showConfirmDialog = false
-                        }) { Text("Keep editing") }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = { popBackStack() }) {
-                            Text(
-                                "Discard"
-                            )
-                        }
-                    },
-                )
-            }
-
-            if (showErrorDialog) {
-                // We use an AlertDialog not a snackbar here. This is a local database save which is
-                // failing so it is very unlikely to be transient. We also don't want the user
-                // missing the snackbar, thinking the app is buggy ("I already saved, why didn't the
-                // dialog close?") and then tapping the close icon without realising their changes
-                // have not been saved. (If transient failure was a possibility - e.g. we needed to
-                // perform network activity - there might be value in showing a snackbar, maybe with
-                // a fallback to an AlertDialog if things keep failing.)
-                AlertDialog(
-                    title = { Text("Unable to save changes") },
-                    text = { Text("An error occurred while saving the changes.") },
-                    onDismissRequest = { showErrorDialog = false },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            showErrorDialog = false;
-                        }) { Text("OK") }
-                    }
-                )
-            }
-
-            if (showSavingSnackbar) {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Saving, please wait...")
-                    showSavingSnackbar = false
-                }
+        if (showSavingSnackbar) {
+            scope.launch {
+                snackbarHostState.showSnackbar("Saving, please wait...")
+                showSavingSnackbar = false
             }
         }
     }
@@ -2921,7 +2933,7 @@ fun AppNavigation() {
             val productId = backStackEntry.arguments?.getString("productId")?.toLong() ?: 0
             val storeId = backStackEntry.arguments?.getString("storeId")?.toLong() ?: 0
             // TODO: DELETE - NOT NEEDED val randomUUID = backStackEntry.arguments?.getString("randomUUID")
-            OuterFullScreenDialog(vm, navController, dataSetId, productId, storeId)
+            OuterFullScreenDialog(vm, navController /* TODO DELETE? , dataSetId, productId, storeId */)
         }
     }
 }
