@@ -168,8 +168,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.Executors
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
@@ -1059,6 +1062,12 @@ class SingleEventState<T>(initialState: T) {
 // - we rely on thigs like "the dropdown disappeared" to provide user feedback their tap is acknowledged - we don't update the info on *just* that combo, because it can lead to double update jank and/or inconsistent confusing displays even if only briefly
 
 
+// TODO MAGIC
+sealed class DataState<out T> {
+    data class Loaded<out T>(val data: T) : DataState<T>()
+    data class Loading<out T>(val oldData: T) : DataState<T>()
+}
+
 
 // TODO: Should things in here be "val dataSets: Flow<List<DataSet>> = repository.getAllDataSets()" rather than "getAllDataSets()" functions?
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -1071,8 +1080,8 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     private val selectedItemIdFlow = getPreference(SELECTED_ITEM_ID_KEY)
     private val selectedSourceIdFlow = getPreference(SELECTED_SOURCE_ID_KEY)
 
-    private val _uiState = MutableStateFlow<UIState?>(null)
-    val uiState: StateFlow<UIState?> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<Pair<Boolean /* loading */, UIState?>>(Pair(false, null)) // TODO: INITIAL VALUE OK?!
+    val uiState: StateFlow<Pair<Boolean /* loading */, UIState?>> = _uiState.asStateFlow()
 
     private var lastValidUIState: UIState? = null
     val cachedUIState: UIState? get() = lastValidUIState
@@ -1167,6 +1176,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
                     "MyFlow",
                     "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
                 )
+                //delay(500) // TODO HACK
                 flowOf(
                     UIState(
                         dataSet,
@@ -1180,20 +1190,10 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
                 )
             }
         }
-        
-        // TODO: ChatGPT magic. I really need to understand what's going on and see if there are any
-        // lurking bugs or fundamental problems around some "data dependencies" (dropdown X changes
-        // but we don't update correctly, or we *can* - despite ChatGPT assuring me this can't
-        // happen - get "mixed" flows with inconsistent results escaping through to the UI with
-        // this.
-        // TODO: Note that this will (according to convincing discussion I had with ChatGPT - I
-        // haven't tried to find the query execution monitoring tools to confirm it yet) re-execute
-        // the queries which depend only on dataSetId even if itemId changes. ChatGPT sketched out
-        // how you'd fix this and I think it's reasonable to say that given the size of our tables,
-        // this simpler code is on balance preferable - but it could be tweaked if performance is a
-        // concern in the future. TBH, after re-working this to avoid re-querying the database at
-        // all when sourceId changes, I am feeling it might be interesting to rework this further
-        // and see how complex it is.
+
+
+
+
         viewModelScope.launch(Dispatchers.Default) {
             /* TODO: NO IDEA HOW TO HOOK THIS IN, LET'S IGNORE IT FOR NOW AND SEE IF THE REST WORKS
             val timerFlow = flow {
@@ -1202,6 +1202,27 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             }
             */
 
+            allUserInputFlow.collectLatest { _ ->
+                val TODO2 = withTimeoutOrNull(150L) {
+                    /*
+                    completeUIStateFlow.collect { newUIState ->
+                        _uiState.value = Pair(false /* loading */, newUIState)
+                        Unit
+                    }
+                    */
+                    val newUIState = completeUIStateFlow.first()
+                    _uiState.value = Pair(false /* loading */, newUIState)
+                    Unit // TODO: DO WE NEED THIS?
+                }
+                if (TODO2 == null) {
+                    _uiState.value = Pair(true /* loading */, _uiState.value.second)
+                    // TODO: NEXT TWO LINES DUPLICATED, FEELS OFF
+                    val newUIState = completeUIStateFlow.first()
+                    _uiState.value = Pair(false /* loading */, newUIState)
+                }
+            }
+
+            /* TODO OLD
             completeUIStateFlow.collectLatest { newUIState ->
                 _uiState.value = newUIState
 
@@ -1216,7 +1237,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
                     lastValidUIState = newUIState
                 }
                 */
-            }
+            } */
         }
     }
 
@@ -2220,8 +2241,9 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // REMEMBER SEEMINGLY BEING USELESS, AND IF THAT'S WRITE WE CAN GET RID OF THE REMEMBER - AND WE
     // NEED TO REWORK THE ABOVE LONG COMMENT TO BE CLEAR
     val newUIState by vm.uiState.collectAsStateWithLifecycle()
-    var displayedUIState by remember { mutableStateOf(vm.cachedUIState ?: newUIState)}
-    displayedUIState = newUIState
+    var displayedUIStateTODO by remember { mutableStateOf(vm.cachedUIState ?: newUIState)}
+    var displayedUIState = newUIState.second // TODO second is tempish hack
+    Log.d("MyApp", "newUIState.first ${newUIState.first}")
 
     // TODO: We should probably show the *new* dataSet ASAP rather than holding back updates for that, and related to that we may want to show a spinner overlaying the UI if dataSetId has changed but we still have old data
     // TODO: Unlike my older version, UIState itself is nullable. This might work well, giving us a chance to show a clean loading screen in the unlikely event it's necessary. Or we could turn it into a UIState(withnullsinside). Just hack it for the moment while I'm trying out this new approach.
