@@ -397,7 +397,7 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit){
 }
 
 @Database(
-    entities = [DataSet::class, Item::class, Source::class, Price::class],
+    entities = [DataSet::class, Item::class, Source::class, PriceEntity::class],
     version = 1,
     exportSchema = false
 )
@@ -478,7 +478,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     )
                                     val now = Instant.now()
                                     db.priceDao().insert(
-                                        Price(
+                                        PriceEntity(
                                             dataSetId = dataSetId,
                                             itemId = itemIdGroundCoffee,
                                             sourceId = sourceIdValueMart,
@@ -490,7 +490,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                         )
                                     )
                                     db.priceDao().insert(
-                                        Price(
+                                        PriceEntity(
                                             dataSetId = dataSetId,
                                             itemId = itemIdGroundCoffee,
                                             sourceId = sourceIdSuperiorStore,
@@ -502,7 +502,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                         )
                                     )
                                     db.priceDao().insert(
-                                        Price(
+                                        PriceEntity(
                                             dataSetId = dataSetId,
                                             itemId = itemIdWholeMilk,
                                             sourceId = sourceIdValueMart,
@@ -514,7 +514,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                         )
                                     )
                                     db.priceDao().insert(
-                                        Price(
+                                        PriceEntity(
                                             dataSetId = dataSetId,
                                             itemId = itemIdWholeMilk,
                                             sourceId = sourceIdSuperiorStore,
@@ -526,7 +526,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                         )
                                     )
                                     db.priceDao().insert(
-                                        Price(
+                                        PriceEntity(
                                             dataSetId = dataSetId,
                                             itemId = itemIdTeabags,
                                             sourceId = sourceIdValueMart,
@@ -538,7 +538,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                         )
                                     )
                                     db.priceDao().insert(
-                                        Price(
+                                        PriceEntity(
                                             dataSetId = dataSetId,
                                             itemId = itemIdTeabags,
                                             sourceId = sourceIdSuperiorStore,
@@ -574,7 +574,7 @@ interface PriceTrackerRepository {
         dataSetId: Long,
         productId: Long,
         storeId: Long
-    ): Flow<List<Price>>
+    ): Flow<List<PriceEntity>>
 
     fun getNicePricesForItem(dataSetId: Long, itemId: Long): Flow<List<NicePrice>>
 
@@ -586,7 +586,7 @@ interface PriceTrackerRepository {
         storeId: Long
     ): Flow<List<NicePrice>>
 
-    suspend fun updateOrInsertPrice(price: Price)
+    suspend fun updateOrInsertPrice(price: PriceEntity)
 }
 
 class PriceTrackerRepositoryImpl(
@@ -620,7 +620,7 @@ class PriceTrackerRepositoryImpl(
         dataSetId: Long,
         productId: Long,
         storeId: Long
-    ): Flow<List<Price>> = priceDao.getPriceForProductAndStore(dataSetId, productId, storeId)
+    ): Flow<List<PriceEntity>> = priceDao.getPriceForProductAndStore(dataSetId, productId, storeId)
 
     override fun getNicePricesForItem(dataSetId: Long, itemId: Long): Flow<List<NicePrice>> =
         priceDao.getPriceWithItemForItem(dataSetId= dataSetId, itemId = itemId)
@@ -642,7 +642,7 @@ class PriceTrackerRepositoryImpl(
         priceDao.getPriceWithItemForProductAndStore(dataSetId, productId, storeId)
             .map { list -> list.map { it.toDomain() } }
 
-    override suspend fun updateOrInsertPrice(price: Price) = priceDao.upsert(price)
+    override suspend fun updateOrInsertPrice(price: PriceEntity) = priceDao.upsert(price)
 }
 
 // TODO: WTF?
@@ -870,7 +870,7 @@ data class Source(
 // The measure will be in a hard-coded "base" unit suitable to the unit type
 // TODO: This should probably be renamed PriceEntity (conventional I believe) or something if my experiment works (I want to make it obvious if this is used, as it normally shouldn't be)
 @Parcelize // TODO: probably won't need this once the edit dialog is written to use new style viewmodel data stuff
-data class Price(
+data class PriceEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId: Long,
@@ -919,7 +919,7 @@ data class Price(
 // validation which may catch bugs. Probably worth thinking about this again later.
 data class PriceWithItem(
     // TODO: should be PriceWithItemEntity eventually
-    @Embedded val price: Price,
+    @Embedded val price: PriceEntity,
     @ColumnInfo(name = "quantity_type") val quantityType: QuantityType,
 )
 
@@ -942,7 +942,7 @@ data class NicePrice(
 )
 
 // TODO: I suspect we should actually be using the item's "default unit" not its quantityType here - although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the display unit for display, to avoid "oh, it happened to work for me in metric with grams but now I'm in imperial it's displaying badly" concerns
-fun Price.toDomain(measureUnit: MeasureUnit): NicePrice =
+fun PriceEntity.toDomain(measureUnit: MeasureUnit): NicePrice =
     NicePrice(
         id = id,
         dataSetId = dataSetId,
@@ -1009,17 +1009,17 @@ interface SourceDao {
 interface PriceDao {
     // TODO: Not sure we want insert() or maybe we do but we also want upsert
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(price: Price): Long
+    suspend fun insert(price: PriceEntity): Long
 
     @Upsert()
-    suspend fun upsert(price: Price)
+    suspend fun upsert(price: PriceEntity)
 
     @Query("SELECT * FROM price WHERE data_set_id = :dataSetId AND item_id = :productId AND source_id = :storeId")
     fun getPriceForProductAndStore(
         dataSetId: Long,
         productId: Long,
         storeId: Long
-    ): Flow<List<Price>>
+    ): Flow<List<PriceEntity>>
 
     @Query("SELECT price.*, item.quantity_type FROM price JOIN item ON price.item_id = item.id WHERE price.data_set_id = :dataSetId AND price.item_id = :itemId")
     fun getPriceWithItemForItem(
@@ -1248,7 +1248,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         dataSetId: Long,
         productId: Long,
         storeId: Long
-    ): Flow<List<Price>> {
+    ): Flow<List<PriceEntity>> {
         val priceForProductAndStore =
             priceTrackerRepository.getPriceForProductAndStore(dataSetId, productId, storeId)
         return priceForProductAndStore
@@ -1283,7 +1283,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     // allow us to indicate to this function when it is an insert rather than an update, but let's
     // worry about that later.
     // TODO: Use upsert in name?
-    fun updateOrInsertPrice(price: Price) {
+    fun updateOrInsertPrice(price: PriceEntity) {
         viewModelScope.launch {
             _saveStatus.update(SaveStatus.Saving)
             try {
@@ -2460,7 +2460,7 @@ fun OuterFullScreenDialog(
     val storeMap by vm.getSourceMap(dataSetId)
         .collectAsStateWithLifecycle(initialValue = emptyMap())
     val storeName = storeMap[storeId]?.name ?: "Invalid store ID $storeId"
-    val nullablePriceList: List<Price>? by vm.getPriceForProductAndStore(
+    val nullablePriceList: List<PriceEntity>? by vm.getPriceForProductAndStore(
         dataSetId = dataSetId,
         productId = productId,
         storeId = storeId
@@ -2490,7 +2490,7 @@ fun OuterFullScreenDialog(
             mutableStateOf(
                 if (priceList.isEmpty()) {
                     // TODO: We may need to allow nulls in some way to accommodate this case properly - I don't yet have any UI for adding a first price
-                    Price(
+                    PriceEntity(
                         dataSetId = dataSetId,
                         itemId = productId,
                         sourceId = storeId,
