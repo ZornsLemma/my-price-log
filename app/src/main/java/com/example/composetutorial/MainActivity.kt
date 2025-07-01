@@ -1154,7 +1154,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
                     "MyFlow",
                     "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
                 )
-                delay(5000) // TODO HACK
+                //delay(5000) // TODO HACK
                 flowOf(
                     UIContent(
                         dataSet,
