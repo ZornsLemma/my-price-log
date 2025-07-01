@@ -1050,16 +1050,31 @@ class SingleEventState<T>(initialState: T) {
     }
 }
 
-// TODO: Should things in here be "val dataSets: Flow<List<DataSet>> = repository.getAllDataSets()" rather than "getAllDataSets()" functions?
 @OptIn(ExperimentalCoroutinesApi::class)
 class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository, application: Application) :
     ViewModel() {
-    private val app = application // TODO?
+    private val app = application
 
-    // TODO: See comment on getPrefrence() and maybe move/copy it here
+    // Every time getPreference() is called it returns a *new* StateFlow, which is probably not what
+    // we want. So we call this once and cache the result in the ViewModel and then use that
+    // everywhere.
+    // TODO: I need to be careful not to forget this and call it directly.
     private val selectedDataSetFlow = getPreference(SELECTED_DATA_SET_ID_KEY)
     private val selectedItemIdFlow = getPreference(SELECTED_ITEM_ID_KEY)
     private val selectedSourceIdFlow = getPreference(SELECTED_SOURCE_ID_KEY)
+    private fun<T> getPreference(key: Preferences.Key<T>): StateFlow<T?> {
+        return app.dataStore.data
+            .map { prefs -> prefs[key] }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    }
+
+    fun<T> savePreference(key: Preferences.Key<T>, value: T?) {
+        viewModelScope.launch {
+            app.dataStore.edit { prefs ->
+                if (value != null) prefs[key] = value else prefs.remove(key)
+            }
+        }
+    }
 
     private val _uiState = MutableStateFlow<Pair<Boolean /* loading */, UIContent>>(Pair(false, UIContent.createEmpty()))
     val uiState = _uiState.asStateFlow()
@@ -1109,7 +1124,6 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
         val combinedDatabaseFlow = combine(dataSetFlow, dataSetOnlyDatabaseFlow, dataSetIdAndItemIdDatabaseFlow, ::Triple)
 
-        // TODO: Note that it's *OK* to observe a StateFlow<T> multiple times in the hierarchy and unlike a cold flow, its value propagates atomically to all points in the hierarchy observing it with no intermediate states visible. Or so ChatGPT and Grok tell me.
         val allUserInputFlow = combine(
             selectedDataSetFlow,
             selectedItemIdFlow,
@@ -1169,19 +1183,11 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             }
         }
 
-
-
-
         viewModelScope.launch(Dispatchers.Default) {
-            /* TODO: NO IDEA HOW TO HOOK THIS IN, LET'S IGNORE IT FOR NOW AND SEE IF THE REST WORKS
-            val timerFlow = flow {
-                delay(150)
-                emit(Pair(lastValidUIState, false))
-            }
-            */
-
-            // Note that because we use collectLatest(), if the user changes the inputs the timeout
-            // starts again, which is what we want.
+            // Add the "loading" flag to the UI state flow, rather than allowing arbitrarily long
+            // delays before the user sees any kind of response. Note that because we use
+            // collectLatest(), if the user changes the inputs the timeout starts again, which is
+            // what we want.
             allUserInputFlow.collectLatest { _ ->
                 Log.d("MyFoo", "newUIState")
                 var newUIState = withTimeoutOrNull(spinnerDelay) {
@@ -1198,41 +1204,10 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
                     _uiState.value = Pair(false /* loading */, completeUIStateFlow.first())
                 }
             }
-
-            /* TODO OLD
-            completeUIStateFlow.collectLatest { newUIState ->
-                _uiState.value = newUIState
-
-                // TODO: Keeping this commented out for a bit just in case, but I don't think it's
-                // relevant any more. The concept of an invalid UI state came when I was
-                // hand-rolling my own "do not show inconsistent state while we are querying the
-                // database" code. With the above logic, we should never have a UIState which isn't
-                // valid for display. It may be invalid for some actions, but not for display, which
-                // is the concern here.
-                /*
-                if (newUIState?.importantThingsNonNull() == true) {
-                    lastValidUIState = newUIState
-                }
-                */
-            } */
         }
     }
 
-        // TODO: Perplexity magic, hacked on
-       // TODO: "too early" for the init coroutine stuff private val dataStore = application.dataStore
-    // *Every time this is called* it returns a *new* StateFlow, which is probably not what I want. So we call this once and cache the result in the ViewModel and then use that everywhere. TODO: I need to be careful not to forget this and call it directly.
-    fun<T> getPreference(key: Preferences.Key<T>): StateFlow<T?> {
-        return app.dataStore.data
-            .map { prefs -> prefs[key] }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-    }
-    fun<T> savePreference(key: Preferences.Key<T>, value: T?) {
-        viewModelScope.launch {
-            app.dataStore.edit { prefs ->
-                if (value != null) prefs[key] = value else prefs.remove(key)
-            }
-        }
-    }
+    // TODO: The following functions should now probably be private or removed - the UI composable gets its data from the UIState flow
 
     fun getAllDataSets() = priceTrackerRepository.getAllDataSets()
 
@@ -1267,29 +1242,8 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     init {
         Log.d("MyApp", "PriceTrackerViewModel created: $this")
     }
-    /* TODO!?
-    init {
-        _products.postValue(repository.getAllProducts())
-    }
-
-    // Example of updating products
-    fun updateProducts(newProducts: List<Product>) {
-        _products.value = newProducts
-    }
-
-    val stores: List<Store> get() = repository.getAllStores()
-        */
-
-
-    /* TODO
-    // Prices for selected product (external to ViewModel)
-    fun getPricesForProduct(productId: Long): List<Price> {
-        return repository.getPricesForProduct(productId)
-    }
-    */
 
     // Price details for selected product and store (external to ViewModel)
-    //@Composable // TODO!?
     fun getPriceForProductAndStore(
         dataSetId: Long,
         productId: Long,
@@ -1315,7 +1269,6 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             priceTrackerRepository.getNicePriceForProductAndStore(dataSetId, productId, storeId)
         return priceForProductAndStore
     }
-
 
     // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
 
