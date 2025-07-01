@@ -165,12 +165,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.Executors
@@ -1053,22 +1050,6 @@ class SingleEventState<T>(initialState: T) {
     }
 }
 
-
-// TODO: Sketching out new flow:
-// - we want to try very hard to observe each database flow only once to avoid duplicate queries
-// - we want to emit transactionally consistent UI flows - either (loading=false, all-consistent-new-data) or (loading=true, all-consistent-old-data)
-// - we want to emit *nothing* for ~150ms after an input change, but if it goes on longer than that we emit a loading=true flow with the old data
-// - UI does *not* apply delays to loading indicator - we tell it to display it, it displays it
-// - we rely on thigs like "the dropdown disappeared" to provide user feedback their tap is acknowledged - we don't update the info on *just* that combo, because it can lead to double update jank and/or inconsistent confusing displays even if only briefly
-
-
-// TODO MAGIC
-sealed class DataState<out T> {
-    data class Loaded<out T>(val data: T) : DataState<T>()
-    data class Loading<out T>(val oldData: T) : DataState<T>()
-}
-
-
 // TODO: Should things in here be "val dataSets: Flow<List<DataSet>> = repository.getAllDataSets()" rather than "getAllDataSets()" functions?
 @OptIn(ExperimentalCoroutinesApi::class)
 class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository, application: Application) :
@@ -1080,11 +1061,8 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     private val selectedItemIdFlow = getPreference(SELECTED_ITEM_ID_KEY)
     private val selectedSourceIdFlow = getPreference(SELECTED_SOURCE_ID_KEY)
 
-    private val _uiState = MutableStateFlow<Pair<Boolean /* loading */, UIState?>>(Pair(false, null)) // TODO: INITIAL VALUE OK?!
-    val uiState: StateFlow<Pair<Boolean /* loading */, UIState?>> = _uiState.asStateFlow()
-
-    private var lastValidUIState: UIState? = null
-    val cachedUIState: UIState? get() = lastValidUIState
+    private val _uiState = MutableStateFlow<Pair<Boolean /* loading */, UIContent>>(Pair(false, UIContent.createEmpty()))
+    val uiState = _uiState.asStateFlow()
 
     init {
         // This forces the delegate to initialize safely on the main thread TODO: VOODOO
@@ -1178,7 +1156,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
                 )
                 delay(5000) // TODO HACK
                 flowOf(
-                    UIState(
+                    UIContent(
                         dataSet,
                         dataSetList,
                         item,
@@ -1206,7 +1184,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             // starts again, which is what we want.
             allUserInputFlow.collectLatest { _ ->
                 Log.d("MyFoo", "newUIState")
-                var newUIState = withTimeoutOrNull(3000L) { // TODO: use named constant, maybe 200 also
+                var newUIState = withTimeoutOrNull(spinnerDelay) {
                     completeUIStateFlow.first()
                 }
                 if (newUIState != null) {
@@ -1369,6 +1347,23 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 enum class ThemePreference {
     LIGHT, DARK, SYSTEM
 }
+
+// Since all our data is local, we generally expect to be able to respond promptly to user requests.
+// Things like the dropdown they touched closing or the button they touched animating provide
+// feedback that their touch has been noticed. We don't immediately show a spinner because AIUI
+// "short" delays are mostly perceived as instantaneous, and if we showed a spinner (especially a
+// full screen one with scrim) immediately only to remove it after 50ms, that would be jarring.
+// Instead we leave the UI unaltered for spinnerDelay ms; if we complete our operations within that
+// time, the user never sees a spinner. If things take longer than that, we need to do something as
+// the user is not going to perceive the operation as instantaneous anyway, so we show a spinner
+// until it completes. We don't update the UI until the operation completes - we acknowledge a
+// user's change to a dropdown by the dropdown disappearing, but we don't want to show the new value
+// in that dropdown immediately while the rest of the screen still contains data related to the old
+// value. The spinner (which in this case is likely to be on a full-screen scrim) shows that the
+// on-screen data is outdated, but we retain consistency. Even if the data retrieval is shorter than
+// spinnerDelay ms, we don't want a janky double-update where the dropdown's content changes
+// instantly then the associated data changes a few ms later.
+const val spinnerDelay = 200L // milliseconds
 
 val screenBorder = 8.dp
 val fullScreenDialogBorder = 24.dp // MD3 specification
@@ -2201,7 +2196,7 @@ suspend fun <T> savePreference(context: Context, key: Preferences.Key<T>, value:
 */
 
 // TODO: inconsistent mix of "List" and "ListRaw"
-data class UIState(
+data class UIContent(
     val dataSet: DataSet?,
     val dataSetList: List<DataSet>,
     val item: Item?,
@@ -2209,7 +2204,21 @@ data class UIState(
     val source: Source?,
     val sourceListRaw: List<Source>,
     val itemPriceListRaw: List<NicePrice>,
-)
+) {
+    companion object {
+        fun createEmpty(): UIContent {
+            return UIContent(
+                dataSet = null,
+                dataSetList = emptyList(),
+                item = null,
+                itemList = emptyList(),
+                source = null,
+                sourceListRaw = emptyList(),
+                itemPriceListRaw = emptyList(),
+            )
+        }
+    }
+}
 
 // TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
 // TODO: It may just be the emulator but right now despite all my apparently sensible refactoring changes, I am seeing *massive* jank just playing around in the UI (partly but not only when returning from the "edit" full screen dialog)
@@ -2228,49 +2237,33 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
     // one (via Navigation's backstack), where the user expects this screen to "still be there" —
     // not to visibly reinitialise.
     //
-    // We could use rememberSaveable(), but instead we use remember with a ViewModel cache. This
-    // avoids needing UIState to be serialisable (a practical win) and also avoids the minor
-    // overhead of serialisation and deserialisation (a micro-optimisation).
-    // TODO: AS WRITTEN THIS IS SILLY - WE *ALWAYS* USE THE VALUE RETURNED BY COLLECTASSTATEWITHLIFECYCLE. I SUSPECT THIS WORKS IN PRACTICE, BUT THERE MAY BE A LURKING VISUAL GLITCH *OR* THIS CODE IS NEEDLESSLY COMPLICATED. I DON'T WANT TO GET SIDETRACKED INTO SORTING THIS OUT JUST NOW.
-    // - BECAUSE THE REMEMBER WILL START displayedUIState OFF WITH A CACHED VALUE IF IT CAN, BUT WE *ALWAYS* DISCARD THAT CACHED VALUE ANYWAY
-    // - I AM *SUSPECTING* THAT BECAUSE vm.uiState IS A HOT FLOW, EVEN WE *WE* ARE COMPOSED THE
-    // FIRST TIME, IT WILL GIVE US AN ACTUAL VALUE NOT A NULL - UNLIKE THE COLD DB FLOWS I HAVE BEEN
-    // USED TO SO FAR. *IF* THAT IS RIGHT, THAT EXPLAINS WHY THIS BUGGY OR AT LEAST OVE-COMPLEX CODE
-    // STILL WORKS AND WE GET NO VISUAL GLITCHES ON NAVIGATING BACK INTO THIS ACTIVITY DESPITE THIS
-    // REMEMBER SEEMINGLY BEING USELESS, AND IF THAT'S WRITE WE CAN GET RID OF THE REMEMBER - AND WE
-    // NEED TO REWORK THE ABOVE LONG COMMENT TO BE CLEAR
-    val newUIState by vm.uiState.collectAsStateWithLifecycle()
-    var displayedUIStateTODO by remember { mutableStateOf(vm.cachedUIState ?: newUIState)}
-    var displayedUIState = newUIState.second // TODO second is tempish hack
-    Log.d("MyApp", "newUIState.first ${newUIState.first}")
-
-    // TODO: We should probably show the *new* dataSet ASAP rather than holding back updates for that, and related to that we may want to show a spinner overlaying the UI if dataSetId has changed but we still have old data
-    // TODO: Unlike my older version, UIState itself is nullable. This might work well, giving us a chance to show a clean loading screen in the unlikely event it's necessary. Or we could turn it into a UIState(withnullsinside). Just hack it for the moment while I'm trying out this new approach.
-    if (displayedUIState == null) {
-        Text("TODO LOADING")
-    } else {
-        // TODO: There may be excessive allowance for nulls in the code below here - it kind of depends how the data fetches have mutated. Should review this and remove any redundant null checks and nullable types in parameter lists of child composables.
-        HomeScreenScaffold(
-            navController,
-            newUIState.first, // loading // TODO: bit hacky using newUIState but I need to deal with the TODO re cached values etc above
-            displayedUIState!!.dataSet,
-            displayedUIState!!.dataSetList,
-            onSelectedDataSetIdChange = {
-                vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
-            },
-            displayedUIState!!.item,
-            displayedUIState!!.itemList,
-            onSelectedItemIdChange = {
-                vm.savePreference(SELECTED_ITEM_ID_KEY, it)
-            },
-            displayedUIState!!.source,
-            displayedUIState!!.sourceListRaw,
-            onSelectedSourceIdChange = {
-                vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
-            },
-            displayedUIState!!.itemPriceListRaw
-        )
-    }
+    // This is addressed by having the ViewModel hold the UI state in a hot flow, so when we
+    // return to this composable after having navigated elsewhere, the correct state is available
+    // for the very first frame.
+    val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val (loading, uiContent) = uiState
+    // TODO: There may be excessive allowance for nulls in the code below here - it kind of depends how the data fetches have mutated. Should review this and remove any redundant null checks and nullable types in parameter lists of child composables.
+    // TODO: HomeScreenScaffould could take uiContent instead of splitting it out here - that wouldn't be unreasonable, *it* would split stuff out, but it would save boilerplate here. We could almost inline HomeScreenScaffold given how trivial the above code now is, and perhaps we should.
+    HomeScreenScaffold(
+        navController,
+        loading,
+        uiContent.dataSet,
+        uiContent.dataSetList,
+        onSelectedDataSetIdChange = {
+            vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
+        },
+        uiContent.item,
+        uiContent.itemList,
+        onSelectedItemIdChange = {
+            vm.savePreference(SELECTED_ITEM_ID_KEY, it)
+        },
+        uiContent.source,
+        uiContent.sourceListRaw,
+        onSelectedSourceIdChange = {
+            vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
+        },
+        uiContent.itemPriceListRaw
+    )
 }
 
 // TODO: ChatGPT/Perplexity not very magic, tweaked with help from TODO: Should this have a (fairly
@@ -2491,16 +2484,7 @@ fun HomeScreenScaffold(
     // different Android versions etc. Given how rarely we expect the spinner to appear at all (and
     // therefore also how little testing it would get), it seemed best to go with this relatively
     // simple full screen spinner.
-    // TODO: Factor out the delay time which is 150L elsewhere too
-    // TODO: Actually getting a loading boolean through to this function is non-trivial given the
-    // way the viewmodel is collecting data. I am pretty sure it's possible and it's probably not
-    // rocket science, but it is too late to be starting on that now, so let's just hardcode this to
-    // off for now. (I believe what we want is to be given a UIState() with a loading boolean set to
-    // true, the changed DataSet/Item/Source single thing (not the List<Foo>) reflecting the new
-    // selection and all the other data elements to be the *old* ones, since we don't want a janky
-    // partial update - we want the data to remain unchanged underneath the scrim. But we do want
-    // the thing the user explicitly changed to change, as I say.)
-    ScrimWithSpinner(visible = loading, delayMillis = 150L)
+    ScrimWithSpinner(visible = loading, delayMillis = spinnerDelay)
 }
 
 
@@ -2618,7 +2602,7 @@ fun OuterFullScreenDialog(
                 // We expect the save to complete quickly so we don't want the visual distraction
                 // of a progress indicator appearing straight away. Let the progress indicator kick
                 // in after a short delay if we're still here waiting for the save to complete.
-                delay(150L)
+                delay(spinnerDelay)
                 showSaveProgressIndicator = true
             }
             // TODO: I don't think we need to set it back to false in else, but maybe revise all
@@ -3112,11 +3096,3 @@ Log.d("MyApp", quux.toString())
 var baz = foo + bar
 Log.d("MyApp", baz.toString())
 */
-
-// TODO: AI chat (ChatGPT/LLM) suggests 200ms might be a better threshold for showing spinners in
-// general - <100ms feels instanteous, 100-300ms (mixed values here) is noticeable but tolerable. I
-// suppose it actually depends whether the spinner is intrusive (like the full screen one), where we
-// want to avoid janky by popping it on briefly - so there maybe 200ms is better. But for the small
-// save button swirl spinner, which isn't intrusive, we don't want to go excessively low and risk
-// the spinner appearing briefly when we could have given a more "near instanteous" appearance, but
-// perhaps 150ms is more reasonble there. Or maybe I'm overthinking this.
