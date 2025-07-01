@@ -3045,3 +3045,5 @@ Log.d("MyApp", baz.toString())
 // database) in most of this code - what can/should we do about this? I suspect most such errors are
 // basically unrecoverable and it's semi-OK if the process just dies, but I'm not sure and it would
 // be good to read up on best practices.
+
+// TOOD: I should probably limit all text fields to approx 1000 characters just to stop the user going crazy.
