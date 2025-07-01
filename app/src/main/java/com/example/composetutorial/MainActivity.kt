@@ -1190,6 +1190,13 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             val TODO2 = completeUIStateFlow.map { Pair(false /* loading */, it) }
 
             // TODO: Is there a risk with merge().collectLatest() here that a "loading" state will somehow come *after* the corresponding *loaded* state? If so we'd end up stuck with the scrim up forever.
+            // TODO: I am not sure there *is* a risk, but one possible fight *might* be to have the
+            // "allUserInput-only" flow (the one with the timeout) *redo the collection* in the "we
+            // timed out" branch after it emits the "loading=true" state - there should not be any
+            // reordering *within* flows from the merge, right? And if we put a
+            // distinctUntilChanged() after the merge that will catch any cases where we get a
+            // duplicate emission because the database flow also emits the same thing at
+            // approximately the same time
              val TODO3 = merge(TODO1, TODO2)
 
             TODO3.collectLatest { todoRename ->
