@@ -890,7 +890,7 @@ data class PriceEntity(
 data class PriceWithItemEntity(
     // TODO: should be PriceWithItemEntity eventually
         @Embedded val priceEntity: PriceEntity,
-        @ColumnInfo(name = "quantity_type") val quantityType: QuantityType,
+        @ColumnInfo(name = "quantity_type") val itemQuantityType: QuantityType,
 )
 
 @Parcelize // TODO: Can we get rid of this later!?
@@ -956,7 +956,7 @@ fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
 // TODO: Whiff of ChatGPT magic
 // TODO: I suspect we should actually be using the item's "default unit" not its quantityType here - although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the display unit for display, to avoid "oh, it happened to work for me in metric with grams but now I'm in imperial it's displaying badly" concerns
 fun PriceWithItemEntity.toDomain(): Price {
-    val measureUnit = baseUnitForQuantityType(quantityType)
+    val measureUnit = baseUnitForQuantityType(itemQuantityType)
     return Price(
         id = priceEntity.id,
         dataSetId = priceEntity.dataSetId,
