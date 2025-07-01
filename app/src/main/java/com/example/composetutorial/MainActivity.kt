@@ -1221,7 +1221,8 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
     // This is only nullable to provide us with an easy initial value to use. In use
     // setEditPriceScreenState() should always have been called before it is used.
-    private var editPriceScreenUIContent: EditPriceScreenUIContent? = null
+    private val _editPriceScreenUIContent = MutableStateFlow<EditPriceScreenUIContent?>(null)
+    val editPriceScreenUIContent = _editPriceScreenUIContent.asStateFlow()
 
     // TODO: Inconsistent use of "State" and "Content" here - rename everything consistently
     fun setEditPriceScreenState(uiContent: UIContent) {
@@ -1233,7 +1234,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         val price = uiContent.itemPriceListRaw.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
         val editablePrice = if (price != null) EditablePrice(price) else EditablePrice(dataSetId = dataSet.id, itemId = item.id, sourceId = source.id, itemQuantityType = item.quantityType, itemDefaultUnit = item.defaultUnit)
-        editPriceScreenUIContent = EditPriceScreenUIContent(
+        _editPriceScreenUIContent.value = EditPriceScreenUIContent(
             editablePrice = editablePrice,
             originalPrice = editablePrice,
             dataSet = dataSet,
@@ -1242,6 +1243,13 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         )
     }
 
+    // TODO: I think we need this to trigger the magic state emission that will cause Compose to update the GUI
+    fun setEditPriceScreenEditablePrice(editablePrice: EditablePrice) {
+        // TODO: !! is probably OK but not thought too hard right now, come back to this
+        _editPriceScreenUIContent.value = _editPriceScreenUIContent.value!!.copy(editablePrice = editablePrice)
+    }
+
+    /* TODO DELETE
     // TODO: Would it be more standard for the get...() here to have a different name, or be a read-only property or something?
     fun getEditPriceScreenUIContent(): EditPriceScreenUIContent {
         devCheck(editPriceScreenUIContent != null) {
@@ -1249,6 +1257,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         }
         return editPriceScreenUIContent!!
     }
+    */
 
     // TODO: The following functions should now probably be private or removed - the UI composable gets its data from the UIState flow
 
@@ -2256,7 +2265,7 @@ data class EditablePrice(
 }
 
 data class EditPriceScreenUIContent(
-    val editablePrice: EditablePrice,
+    var editablePrice: EditablePrice,
     val originalPrice: EditablePrice,
     val dataSet: DataSet,
     val item: Item,
@@ -2546,7 +2555,11 @@ fun OuterFullScreenDialog(
     vm: PriceTrackerViewModel, // TODO: Maybe this should have its own ViewModel?
     navController: NavHostController,
 ) {
-    val uiContent = vm.getEditPriceScreenUIContent()
+    val uiContentNullable by vm.editPriceScreenUIContent.collectAsStateWithLifecycle()
+    devCheck(uiContentNullable != null) {
+        "uiContentNullable is null, but it should have been set before navigating to the edit price dialog"
+    }
+    val uiContent = uiContentNullable!!
 
     // TODO: This probably won't work right for adding new entries from scratch, I will need to think about that and this may well need some reworking, but let's ignore that and hack round it for now in relevant places
 
@@ -2766,7 +2779,7 @@ fun OuterFullScreenDialog(
             TextField(
                 label = { Text("Notes") },
                 value = uiContent.editablePrice.details ?: "",
-                onValueChange = { uiContent.editablePrice = uiContent.editablePrice.copy(details = it) },
+                onValueChange = { vm.setEditPriceScreenEditablePrice(uiContent.editablePrice.copy(details = it)) },
             )
             //}
         }
