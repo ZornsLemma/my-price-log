@@ -1172,13 +1172,6 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
             // delays before the user sees any kind of response. Note that because we use
             // collectLatest(), if the user changes the inputs the timeout starts again, which is
             // what we want.
-            // TODO: I edited a product with no notes, added some and when I came out of edit this
-            // did *not* refresh. Subsequent changes of UI inputs and back did show it, but this
-            // should obviously have been immediately visible. I suspect the problem is that we
-            // are only "triggered" on user input changes here, no database changes - which will
-            // probably also break us in other ways. Yes, a simple *change* to the notes field on
-            // a product is not immediately visible any more.
-
             val TODO1 = allUserInputFlow.flatMapLatest { it -> // TODO: RENAME "it"
                 var newUIContent = withTimeoutOrNull(spinnerDelay) {
                     completeUIStateFlow.first()
@@ -1196,6 +1189,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
             val TODO2 = completeUIStateFlow.map { Pair(false /* loading */, it) }
 
+            // TODO: Is there a risk with merge().collectLatest() here that a "loading" state will somehow come *after* the corresponding *loaded* state? If so we'd end up stuck with the scrim up forever.
              val TODO3 = merge(TODO1, TODO2)
 
             TODO3.collectLatest { todoRename ->
