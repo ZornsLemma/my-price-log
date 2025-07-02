@@ -70,10 +70,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.input.InputTransformation
-import androidx.compose.foundation.text.input.OutputTransformation
-import androidx.compose.foundation.text.input.insert
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -114,12 +110,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -2782,6 +2776,7 @@ fun OuterFullScreenDialog(
                     modifier = Modifier.weight(1f),
                 )
                 */
+                // TODO: We "need" rememberSaveable but TextFieldValue probably doesn't support it. We will probably be using a ViewModel-held value in final code so let's not fuss about this for now.
                 var todoNumber by remember { mutableStateOf(TextFieldValue("804")) }
                 NumericTextField(
                     label = { Text("Pack size") },
@@ -2922,7 +2917,7 @@ fun isValidTransitionalDecimal(input: String): Boolean {
     return !regex.containsMatchIn(input)
 }
 
-@Parcelize
+@Parcelize // TODO: May not be needed now - are we still using these in rememberSaveable?
 data class ValidationRule(val validate: (String) -> Boolean, val message: String) : Parcelable
 
 val numericValidations = listOf(
@@ -2941,9 +2936,22 @@ fun NumericTextField(
 ) {
     // TODO: Mild Perplexity magic
     var supportingText by rememberSaveable { mutableStateOf<String?>(null) }
-    var failedValidationRule by rememberSaveable { mutableStateOf<ValidationRule?>(null) }
+    var failedValidationRule by remember { mutableStateOf<ValidationRule?>(null) }
     var delayJob by remember { mutableStateOf<Job?>(null) }
     var isFocused by remember { mutableStateOf(false) }
+
+    fun updateFailedValidationRule(newValue: String) {
+        // In order to give "consistent" supportingText, we give precedence to whichever
+        // validation generated the current supporting text.
+        val reorderedValidations = listOfNotNull(failedValidationRule) + numericValidations
+        failedValidationRule = null
+        for (validationRule in reorderedValidations) {
+            if (!validationRule.validate(newValue)) {
+                failedValidationRule = validationRule
+                break
+            }
+        }
+    }
 
     TextField(
         label = label,
@@ -2951,18 +2959,7 @@ fun NumericTextField(
         onValueChange = { newValue ->
             delayJob?.cancel()
             if (onCandidateValueChange(newValue.text)) {
-                // TODO: MORE VALIDATION-WITHOUT-REJECTION HERE
-
-                // In order to give "consistent" supportingText, we give precedence to whichever
-                // validation generated the current supporting text.
-                val reorderedValidations = listOfNotNull(failedValidationRule) + numericValidations
-                failedValidationRule = null
-                for (validationRule in reorderedValidations) {
-                    if (!validationRule.validate(newValue.text)) {
-                        failedValidationRule = validationRule
-                        break
-                    }
-                }
+                updateFailedValidationRule(newValue.text)
                 if (failedValidationRule == null) {
                     // Everything's OK. Clear any supporting text immediately.
                     supportingText = null
@@ -2995,9 +2992,13 @@ fun NumericTextField(
         },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = modifier.onFocusChanged { focusState ->
+            Log.d("MyApp", "focus changed")
             isFocused = focusState.isFocused
             if (!focusState.isFocused) {
                 Log.d("MyApp", "lost focus")
+                // This case occurs when we are first composed, so we get to immediately show any
+                // supportingText.
+                updateFailedValidationRule(value.text)
                 supportingText = failedValidationRule?.message
             }
         },
