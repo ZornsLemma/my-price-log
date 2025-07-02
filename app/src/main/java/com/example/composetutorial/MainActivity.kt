@@ -77,6 +77,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -91,6 +92,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -2926,9 +2928,8 @@ val numericValidations = listOf(
 )
 
 // TODO: Maybe we shouldn't be using supportingText for the error if we don't have some "non-error supporting text", to avoid layout changing too much?
-// TODO: Icon at right when validation is failing
 // TODO: Support for the supportingText being "somewhere else" so caller has options to work around layout quirks and the selection blob cursor obscuring the supportingText
-// TODO: Supporting text should probably be red - always? can/should we make the message in ValidationRule a composable lambda so it can vary?
+// TODO: Do we want support for "less scary" non-red supportingText with different icon? Probably OK without but think about it or add later if necessary.
 @Composable
 fun NumericTextField(
     label: @Composable() (() -> Unit)? = null,
@@ -3005,7 +3006,17 @@ fun NumericTextField(
                 supportingText = failedValidationRule?.message
             }
         },
-        supportingText = { if (supportingText != null) Text(supportingText!!) }
+        supportingText = { if (supportingText != null) Text(supportingText!!, color = MaterialTheme.colorScheme.error) },
+        trailingIcon = {
+            if (supportingText != null) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = "Error",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        },
+        isError = supportingText != null
     )
 }
 
