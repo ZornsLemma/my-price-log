@@ -3052,7 +3052,7 @@ fun NumericTextField(
                     }
                 }
 
-                onValueChange(NumericTextFieldValue(newValue.text, newValue.selection.start, newValue.selection.end))
+                onValueChange(NumericTextFieldValue.fromTextFieldValue(newValue))
             }
         },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
