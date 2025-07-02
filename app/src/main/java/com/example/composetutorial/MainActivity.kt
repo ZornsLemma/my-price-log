@@ -2928,6 +2928,7 @@ val numericValidations = listOf(
     ValidationRule({ !it.contains('4') }, "XXXXXX No 4s allowed!"),
 )
 
+// TODO: Maybe we shouldn't be using supportingText for the error if we don't have some "non-error supporting text", to avoid layout changing too much?
 @Composable
 fun NumericTextField(
     label: @Composable() (() -> Unit)? = null,
