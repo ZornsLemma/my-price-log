@@ -2705,7 +2705,7 @@ fun OuterFullScreenDialog(
         ) {
             // TODO: I think the use of "remember" here is far too weak, but this is basically old hacky code and converting to the viewmodel approach will automatically fix this
             var packSize by remember { mutableStateOf("123") }
-            var selectedUnitId by remember { mutableStateOf(uiContent.editablePrice.originalUnit.id) }
+            var selectedUnitId by remember { mutableStateOf(uiContent.editablePrice.originalUnit.id) } // TODO: This is probably wrong, I imagine it won't be propagated up via the magic state stuff - maybe it does, but I'm not sure we shoud be using remember for our new approach, anyway, think this through properly later
             var packPrice by remember { mutableStateOf("2.98") }
             //var notes by remember { mutableStateOf("My cool notes") }
             // TODO: Product and Store should maybe be in a row. Just hacking up a rough
