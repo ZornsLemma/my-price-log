@@ -2769,12 +2769,13 @@ fun OuterFullScreenDialog(
             }
             Spacer(modifier = Modifier.height(8.dp))
             // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute max)
-            TextField(
+
+            var TODOHACKYPRICE by mutableStateOf(1.23)
+            CurrencyTextField(
                 label = { Text("Pack price") },
-                prefix = { Text("£") },
-                value = packPrice,
-                onValueChange = { packPrice = it },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                // TODO prefix = { Text("£") },
+                value = TODOHACKYPRICE,
+                onValueChange = { TODOHACKYPRICE = it ?: 9.99 /* TODO! */ },
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -2835,6 +2836,50 @@ fun OuterFullScreenDialog(
             }
         }
     }
+}
+
+// TODO: Grok code, hacking it up, needs review especially the scary java-ish currency stuff with locales
+@Composable
+fun CurrencyTextField(
+    value: Double?,
+    onValueChange: (Double?) -> Unit,
+    locale: Locale = Locale.getDefault(),
+    currencyCode: String = Currency.getInstance(locale).currencyCode,
+    label: @Composable (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    var textState by remember { mutableStateOf(value?.let { formatCurrency(it, locale, currencyCode) } ?: "") }
+
+    val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
+        currency = Currency.getInstance(currencyCode)
+    }
+
+    TextField(
+        value = textState,
+        onValueChange = { newText ->
+            textState = newText
+            // Parse the input to a Double, handling locale-specific formatting
+            val cleanInput = newText.replace("[^0-9,.]".toRegex(), "") // Remove non-numeric characters
+            val parsedValue = try {
+                numberFormat.parse(cleanInput /* TODO was newText! */)?.toDouble()
+            } catch (e: Exception) {
+                null
+            }
+            onValueChange(parsedValue)
+        },
+        label = label,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        modifier = modifier,
+        // textStyle = MaterialTheme.typography.bodyLarge
+    )
+}
+
+// TODO: Grok code, may be useful, may be at least partly overlapping with my own format currency function
+private fun formatCurrency(amount: Double, locale: Locale, currencyCode: String): String {
+    val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
+        currency = Currency.getInstance(currencyCode)
+    }
+    return numberFormat.format(amount)
 }
 
 @Composable
