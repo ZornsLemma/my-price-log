@@ -2838,6 +2838,7 @@ fun OuterFullScreenDialog(
     }
 }
 
+// TODO: https://developer.android.com/develop/ui/compose/text/user-input?textfield=state-based mentions InputTransformation/OutputTransformation/VisualTransformation which may be helpful here (particularly for implementing a *numeric* TextField, which is probaly what I really want - currency will just be a prefix and/or suffix, and it will tell us the number of dps to enforce on our purely numeric input)
 // TODO: Grok code, hacking it up, needs review especially the scary java-ish currency stuff with locales
 @Composable
 fun CurrencyTextField(
