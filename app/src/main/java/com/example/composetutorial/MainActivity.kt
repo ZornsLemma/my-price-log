@@ -3021,7 +3021,8 @@ fun NumericTextField(
             if (!focusState.isFocused) {
                 Log.d("MyApp", "lost focus")
                 // This case occurs when we are first composed, so we get to immediately show any
-                // supportingText.
+                // supportingText then, as well as doing it when we lose focus and want to show
+                // any previously-delayed message.
                 updateFailedValidationRule(value.text)
                 failedValidationSupportingText = failedValidationRule?.message
             }
