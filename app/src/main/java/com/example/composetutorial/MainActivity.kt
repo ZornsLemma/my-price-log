@@ -167,7 +167,7 @@ import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.log10
 import androidx.datastore.preferences.core.edit
-import kotlinx.android.parcel.Parcelize
+import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
