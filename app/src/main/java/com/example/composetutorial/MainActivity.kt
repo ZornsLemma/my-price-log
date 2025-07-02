@@ -92,7 +92,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -2784,6 +2783,7 @@ fun OuterFullScreenDialog(
                     label = { Text("Pack size") },
                     value = todoNumber,
                     onValueChange = { todoNumber = it },
+                    supportingText = { Text("This is some supporting text just as a test.") },
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -2936,10 +2936,11 @@ fun NumericTextField(
     value: TextFieldValue,
     onCandidateValueChange: ((String) -> Boolean) = { isValidTransitionalDecimal(it) },
     onValueChange: (TextFieldValue) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    supportingText: @Composable() (() -> Unit)? = null,
 ) {
     // TODO: Mild Perplexity magic
-    var supportingText by rememberSaveable { mutableStateOf<String?>(null) }
+    var failedValidationSupportingText by rememberSaveable { mutableStateOf<String?>(null) }
     var failedValidationRule by remember { mutableStateOf<ValidationRule?>(null) }
     var delayJob by remember { mutableStateOf<Job?>(null) }
     var isFocused by remember { mutableStateOf(false) }
@@ -2966,7 +2967,7 @@ fun NumericTextField(
                 updateFailedValidationRule(newValue.text)
                 if (failedValidationRule == null) {
                     // Everything's OK. Clear any supporting text immediately.
-                    supportingText = null
+                    failedValidationSupportingText = null
                 } else {
                     // Something's wrong.
                     //
@@ -2981,13 +2982,13 @@ fun NumericTextField(
                     // If there is already supporting text, it's probably less annoying to keep
                     // showing some (currently valid) supporting text, rather than removing it while
                     // the user types and possibly pop back in again afterwards.
-                    if (supportingText == null) {
+                    if (failedValidationSupportingText == null) {
                         delayJob = CoroutineScope(Dispatchers.Main).launch {
                             delay(5000) // TODO: MAGIC
-                            supportingText = failedValidationRule!!.message
+                            failedValidationSupportingText = failedValidationRule!!.message
                         }
                     } else {
-                        supportingText = failedValidationRule!!.message
+                        failedValidationSupportingText = failedValidationRule!!.message
                     }
                 }
 
@@ -3003,12 +3004,18 @@ fun NumericTextField(
                 // This case occurs when we are first composed, so we get to immediately show any
                 // supportingText.
                 updateFailedValidationRule(value.text)
-                supportingText = failedValidationRule?.message
+                failedValidationSupportingText = failedValidationRule?.message
             }
         },
-        supportingText = { if (supportingText != null) Text(supportingText!!, color = MaterialTheme.colorScheme.error) },
+        supportingText = {
+            if (failedValidationSupportingText != null) {
+                Text(failedValidationSupportingText!!, color = MaterialTheme.colorScheme.error)
+            } else if (supportingText != null) {
+                supportingText()
+            }
+        },
         trailingIcon = {
-            if (supportingText != null) {
+            if (failedValidationSupportingText != null) {
                 Icon(
                     imageVector = Icons.Default.Warning,
                     contentDescription = "Error",
@@ -3016,7 +3023,7 @@ fun NumericTextField(
                 )
             }
         },
-        isError = supportingText != null
+        isError = failedValidationSupportingText != null
     )
 }
 
