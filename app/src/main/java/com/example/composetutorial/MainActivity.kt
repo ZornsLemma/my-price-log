@@ -178,6 +178,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
+import java.text.DecimalFormat
 import java.util.concurrent.Executors
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
@@ -2216,7 +2217,7 @@ data class EditablePrice(
     val dataSetId: Long,
     val itemId: Long,
     val sourceId: Long,
-    val price: Double?,
+    val price: String?,
     val measure: MeasuredValue?,
     val originalUnit: MeasureUnit,
     val confirmed: Instant?,
@@ -2248,7 +2249,7 @@ data class EditablePrice(
         dataSetId = price.dataSetId,
         itemId = price.itemId,
         sourceId = price.sourceId,
-        price = price.price,
+        price = formatDecimal(price.price, minDp = 2, maxDp = 2), // TODO: hardcoding 2 dp is a hack
         measure = price.measure,
         originalUnit = price.originalUnit,
         confirmed = price.confirmed,
@@ -2262,7 +2263,7 @@ data class EditablePrice(
         dataSetId = dataSetId,
         itemId = itemId,
         sourceId = sourceId,
-        price = price!!,
+        price = 42.0, // TODO! We need to do string parsing and other validation appropriate to this field and indicate to caller if it fails, hacking for now
         // Note that by using itemQuantityType - which should have come from a join to the Item
         // table and travelled with the Price ever since it came out of the database - we get a
         // sanity check that the measure on our Price hasn't mutated to a competely different
@@ -2782,15 +2783,15 @@ fun OuterFullScreenDialog(
                 )
                 */
                 // TODO: We "need" rememberSaveable but TextFieldValue probably doesn't support it. We will probably be using a ViewModel-held value in final code so let's not fuss about this for now.
-                var todoNumber2 by rememberSaveable { mutableStateOf("888") }
-                var todoNumber by remember { mutableStateOf(TextFieldValue(todoNumber2)) }
+                //var todoNumber2 by rememberSaveable { mutableStateOf("888") }
+                var todoNumber by remember { mutableStateOf(TextFieldValue(uiContent.editablePrice.price ?: "")) } // TODO: Just stop it being nullable rather than converting null to "" here?
                 NumericTextField(
                     label = { Text("Pack size") },
                     prefix = { Text("£") },
                     suffix = { Text("€") },
                     textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
                     value = todoNumber,
-                    onValueChange = { todoNumber = it; todoNumber2 = it.text },
+                    onValueChange = { todoNumber = it; vm.setEditPriceScreenEditablePrice(uiContent.editablePrice.copy(price = it.text)) },
                     onSupportingTextChange = { todoSupportingText = it },
                     supportingText = "This is some supporting text just as a test.",
                     modifier = Modifier.weight(1f)
@@ -3073,6 +3074,15 @@ private fun formatCurrency(amount: Double, locale: Locale, currencyCode: String)
         currency = Currency.getInstance(currencyCode)
     }
     return numberFormat.format(amount)
+}
+
+fun formatDecimal(number: Double, minDp: Int, maxDp: Int): String {
+    val locale = Locale.getDefault()
+    var format = NumberFormat.getNumberInstance(locale) as DecimalFormat
+    format.isGroupingUsed = false
+    format.setMinimumFractionDigits(minDp)
+    format.setMaximumFractionDigits(maxDp)
+    return format.format(number)
 }
 
 @Composable
