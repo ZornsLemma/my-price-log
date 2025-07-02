@@ -70,6 +70,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.OutputTransformation
+import androidx.compose.foundation.text.input.insert
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -109,9 +113,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -2746,6 +2753,7 @@ fun OuterFullScreenDialog(
                 // opens the dropdown and hides the keyboard but the dropdown gets
                 // positioned "to avoid" the keyboard - this might be normal/OK, but
                 // check/read/think
+                /* TODO OLD
                 TextField(
                     label = { Text("Pack size") },
                     value = packSize,
@@ -2753,6 +2761,22 @@ fun OuterFullScreenDialog(
                     // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f)
+                ) */
+                // TODO: This has the germ of something workable. Note that we are using a TextFieldValue as the value not a String, and that we don't get clever trying to modify it on onValueChange - we just accept the new one or retain the old one.
+                var todoPackSize by remember { mutableStateOf(TextFieldValue("999")) }
+                TextField(
+                    label = { Text("Pack size") },
+                    value = todoPackSize,
+                    onValueChange =  { newValue ->
+                        // Allow only digits and at most one dot, not at the start
+                        val regex = Regex("^\\d*(\\.\\d*)?\$")
+                        if (regex.matches(newValue.text)) {
+                            todoPackSize = newValue // onValueChange(newValue)
+                        } // else ignore the change, so cursor/selection is preserved
+                    },
+                    // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    modifier = Modifier.weight(1f),
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
