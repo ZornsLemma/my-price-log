@@ -3322,3 +3322,5 @@ Log.d("MyApp", baz.toString())
 // be good to read up on best practices.
 
 // TOOD: I should probably limit all text fields to approx 1000 characters just to stop the user going crazy.
+
+// TODO: When entering pack sizes, we must disallow 0!
