@@ -169,6 +169,7 @@ import kotlin.math.log10
 import androidx.datastore.preferences.core.edit
 import kotlinx.android.parcel.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -2928,17 +2929,47 @@ fun NumericTextField(
     onValueChange: (TextFieldValue) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // TODO: Mild Perplexity magic
+    var supportingText by rememberSaveable { mutableStateOf<String?>(null) }
+    var delayJob by remember { mutableStateOf<Job?>(null) }
+
     TextField(
         label = label,
         value = value,
         onValueChange = { newValue ->
             if (onCandidateValueChange(newValue.text)) {
                 // TODO: MORE VALIDATION-WITHOUT-REJECTION HERE
+                delayJob?.cancel()
+                val candidateSupportingText =
+                    if (newValue.text.contains('3')) {
+                        "No 3s allowed!"
+                    } else if (newValue.text.contains('4')) {
+                        "No 4s allowed!"
+                    } else {
+                        null
+                    }
+                if (candidateSupportingText == null) {
+                    // Everything's OK. Clear any supporting text immediately.
+                    supportingText = null
+                } else {
+                    // Something's wrong. If the current supportingText is valid, leave it there.
+                    // Otherwise, clear the now-invalid supporting text immediately and show candidateSupportingText after the value has remained static
+                    // with this problem for a while. (We don't want to annoy the user by complaining about something they are in the middle of fixing.)
+                    if (supportingText != candidateSupportingText) {
+                        supportingText = null
+                        delayJob = CoroutineScope(Dispatchers.Main).launch {
+                            delay(1000) // TODO: MAGIC
+                            supportingText = candidateSupportingText
+                        }
+                    }
+                }
+
                 onValueChange(newValue)
             }
         },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = modifier,
+        supportingText = { if (supportingText != null) Text(supportingText!!) }
     )
 }
 
