@@ -439,7 +439,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     val dataSetId = db.dataSetDao().insert(
                                         DataSet(
                                             name = "Demo",
-                                            currencyCode = Currency.getInstance(Locale.getDefault()).currencyCode,
+                                            currencyCode = "EUR", // TODO TEMP HACK Currency.getInstance(Locale.getDefault()).currencyCode,
                                             allowMetric = true,
                                             allowImperial = true,
                                             allowUSCustomary = false
@@ -1635,33 +1635,18 @@ fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's O
     Text(relativeTime)
 }
 
-// TODO: It may be normal, but it may be that ChatGPT is giving me a weird implementation here. My
-// emulated phone think it's in the US, and if I force the default database to use EUR currency, it
-// formats prices as "1,50 €". That *is* probably correct within some/all of the EUR-using locales
-// (based on speaking with ChatGPT about currency conventions), *but* I am not clear it is the
-// "right" way to format a EUR price when we're in the US - at the very least the comma instead of
-// decimal point feels wrong, and I suspect the € sign should appear at the front. It may be that
-// there is no system-defined way of getting this format, but if there is we should use it. The
-// basic approach of finding a local which defaults to the currency feels wrong - we want *our*
-// locale to format the other currency. I suspect the code is a bit silly.
+// TODO: I don't really understand this code, but having hacked it up a bit with some help from Grok
+// I think it is mostly doing what it "ought" to - I've experimented with forcing the demo data to
+// "EUR" and changing regions and languages and it does seem to mostly do the right thing. (Options
+// to override the system formatting and allow the user to specify their own prefix/suffix/dps on
+// the data set configuration would be nice in future, but not now.) These Java APIs make me edgy
+// that they are going to throw random exceptions and it would be good to try to review this code
+// cautiously, but this is not too bad.
 fun formatPrice(amount: Double, dataSet: DataSet): String {
     // TODO: ChatGPT magic, hacked up
-    val currency = Currency.getInstance(dataSet.currencyCode)
-
     try {
-        // Find a locale that uses this currency
-        // TODO: Is this immensely inefficient? Should we be building up some kind of cache of locales for currencies we are interested in at the whole-app level?
-        val locale = Locale.getAvailableLocales().find {
-            // Not all locales have a currency defined, so we need to catch the exceptions from those and ignore them.
-            try {
-                Currency.getInstance(it) == currency
-            } catch (e: IllegalArgumentException) {
-                false
-            }
-        }
-
-        val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
-            this.currency = currency
+        val numberFormat = NumberFormat.getCurrencyInstance(Locale.getDefault()).apply {
+            currency = Currency.getInstance(dataSet.currencyCode)
         }
         return numberFormat.format(amount)
     }
