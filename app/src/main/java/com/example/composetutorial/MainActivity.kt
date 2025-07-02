@@ -2768,14 +2768,14 @@ fun OuterFullScreenDialog(
 
             }
             Spacer(modifier = Modifier.height(8.dp))
-            // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute max)
-
-            var TODOHACKYPRICE by mutableStateOf(1.23)
+            // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute ma
+            var TODOHACKYPRICE by remember { mutableStateOf(1.23) }
             CurrencyTextField(
                 label = { Text("Pack price") },
                 // TODO prefix = { Text("£") },
                 value = TODOHACKYPRICE,
-                onValueChange = { TODOHACKYPRICE = it ?: 9.99 /* TODO! */ },
+                onValueChange = { TODOHACKYPRICE = it ?: 9.99 /* TODO! */; Log.d("MyApp", "TODOHACKYPRICE $TODOHACKYPRICE") },
+                currencyCode = uiContent.dataSet.currencyCode
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -2848,6 +2848,7 @@ fun CurrencyTextField(
     label: @Composable (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    Log.d("MyApp", "currencyCode $currencyCode")
     var textState by remember { mutableStateOf(value?.let { formatCurrency(it, locale, currencyCode) } ?: "") }
 
     val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
@@ -2857,14 +2858,17 @@ fun CurrencyTextField(
     TextField(
         value = textState,
         onValueChange = { newText ->
+            Log.d("MyApp", "newText $newText")
             textState = newText
             // Parse the input to a Double, handling locale-specific formatting
             val cleanInput = newText.replace("[^0-9,.]".toRegex(), "") // Remove non-numeric characters
+            Log.d("MyApp", "cleanInput $cleanInput")
             val parsedValue = try {
-                numberFormat.parse(cleanInput /* TODO was newText! */)?.toDouble()
+                numberFormat.parse(newT)?.toDouble()
             } catch (e: Exception) {
                 null
             }
+            Log.d("MyApp", "parsedValue $parsedValue")
             onValueChange(parsedValue)
         },
         label = label,
