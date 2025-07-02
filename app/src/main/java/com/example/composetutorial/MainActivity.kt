@@ -2728,6 +2728,7 @@ fun OuterFullScreenDialog(
                 uiContent.item.quantityType,
                 includeDisplayOnly = false
             )
+            var todoSupportingText by remember { mutableStateOf<String?>(null) }
             Row {
                 // TODO: Don't really like this way of showing pack size and unit etc, but
                 // this is just a quick hack to get some "realistic-ish" content on the
@@ -2778,12 +2779,13 @@ fun OuterFullScreenDialog(
                 )
                 */
                 // TODO: We "need" rememberSaveable but TextFieldValue probably doesn't support it. We will probably be using a ViewModel-held value in final code so let's not fuss about this for now.
-                var todoNumber by remember { mutableStateOf(TextFieldValue("804")) }
+                var todoNumber by remember { mutableStateOf(TextFieldValue("808")) }
                 NumericTextField(
                     label = { Text("Pack size") },
                     value = todoNumber,
                     onValueChange = { todoNumber = it },
-                    supportingText = { Text("This is some supporting text just as a test.") },
+                    onSupportingTextChange = { todoSupportingText = it },
+                    supportingText = "This is some supporting text just as a test.",
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -2798,6 +2800,9 @@ fun OuterFullScreenDialog(
                     getLabel = { it.symbol },
                 )
 
+            }
+            if (todoSupportingText != null) {
+                Text(todoSupportingText!!)
             }
             Spacer(modifier = Modifier.height(8.dp))
             // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute ma
@@ -2936,8 +2941,9 @@ fun NumericTextField(
     value: TextFieldValue,
     onCandidateValueChange: ((String) -> Boolean) = { isValidTransitionalDecimal(it) },
     onValueChange: (TextFieldValue) -> Unit,
+    onSupportingTextChange: ((String?) -> Unit)? = null,
     modifier: Modifier = Modifier,
-    supportingText: @Composable() (() -> Unit)? = null,
+    supportingText: String? = null,
 ) {
     // TODO: Mild Perplexity magic
     var failedValidationSupportingText by rememberSaveable { mutableStateOf<String?>(null) }
@@ -3008,10 +3014,12 @@ fun NumericTextField(
             }
         },
         supportingText = {
-            if (failedValidationSupportingText != null) {
-                Text(failedValidationSupportingText!!, color = MaterialTheme.colorScheme.error)
-            } else if (supportingText != null) {
-                supportingText()
+            if (onSupportingTextChange == null) {
+                if (failedValidationSupportingText != null) {
+                    Text(failedValidationSupportingText!!, color = MaterialTheme.colorScheme.error)
+                } else if (supportingText != null) {
+                    Text(supportingText)
+                }
             }
         },
         trailingIcon = {
@@ -3025,6 +3033,12 @@ fun NumericTextField(
         },
         isError = failedValidationSupportingText != null
     )
+
+    if (onSupportingTextChange != null) {
+        LaunchedEffect(failedValidationSupportingText) {
+            onSupportingTextChange(failedValidationSupportingText ?: supportingText)
+        }
+    }
 }
 
 // TODO: Grok code, may be useful, may be at least partly overlapping with my own format currency function
