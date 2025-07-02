@@ -2945,27 +2945,43 @@ val foo: TextFieldValue = TextFieldValue("string")
 // TODO: Do we want support for "less scary" non-red supportingText with different icon? Probably OK without but think about it or add later if necessary.
 // TODO: ChatGPT semi-magic
 @Parcelize
-data class NumericTextFieldValue(val text: String, val selectionStart: Int = 0, val selectionEnd: Int = 0) : Parcelable {
+// TODO: This and the previous dataclass version both *preserve a selection* on rotation, somehow - maybe it's just not recomposing.
+class NumericTextFieldValue(
+    val text: String
+) : Parcelable {
+
+    @Transient
+    var selection: TextRange = TextRange.Zero
+
     @Transient
     var composition: TextRange? = null
 
     fun toTextFieldValue(): TextFieldValue {
+        Log.d("MyApp", "Creating TFV with selection: $selection")
         return TextFieldValue(
             text = text,
-            selection = TextRange(selectionStart, selectionEnd),
+            selection = selection,
             composition = composition
         )
     }
 
+    override fun equals(other: Any?): Boolean {
+        return other is NumericTextFieldValue &&
+                text == other.text &&
+                selection == other.selection
+    }
+
+    override fun hashCode(): Int {
+        return 31 * text.hashCode() + selection.hashCode()
+    }
+
     companion object {
         fun fromTextFieldValue(tfv: TextFieldValue): NumericTextFieldValue {
-            val value = NumericTextFieldValue(
-                text = tfv.text,
-                selectionStart = tfv.selection.start,
-                selectionEnd = tfv.selection.end
-            )
-            value.composition = tfv.composition
-            return value
+            Log.d("MyApp", "Creating NTFV with selection: $tfv.selection")
+            return NumericTextFieldValue(tfv.text).also {
+                it.selection = tfv.selection
+                it.composition = tfv.composition
+            }
         }
     }
 }
