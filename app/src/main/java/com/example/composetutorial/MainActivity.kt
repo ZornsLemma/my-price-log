@@ -107,12 +107,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.window.Popup
@@ -2781,7 +2783,7 @@ fun OuterFullScreenDialog(
                 )
                 */
                 // TODO: We "need" rememberSaveable but TextFieldValue probably doesn't support it. We will probably be using a ViewModel-held value in final code so let's not fuss about this for now.
-                var todoNumber by remember { mutableStateOf(TextFieldValue("808")) }
+                var todoNumber by rememberSaveable { mutableStateOf(NumericTextFieldValue("808")) }
                 NumericTextField(
                     label = { Text("Pack size") },
                     prefix = { Text("£") },
@@ -2937,17 +2939,46 @@ val numericValidations = listOf(
     ValidationRule({ !it.contains('4') }, "XXXXXX No 4s allowed!"),
 )
 
+val foo: TextFieldValue = TextFieldValue("string")
+
 // TODO: Maybe we shouldn't be using supportingText for the error if we don't have some "non-error supporting text", to avoid layout changing too much?
 // TODO: Do we want support for "less scary" non-red supportingText with different icon? Probably OK without but think about it or add later if necessary.
+// TODO: ChatGPT semi-magic
+@Parcelize
+data class NumericTextFieldValue(val text: String, val selectionStart: Int = 0, val selectionEnd: Int = 0) : Parcelable {
+    @Transient
+    var composition: TextRange? = null
+
+    fun toTextFieldValue(): TextFieldValue {
+        return TextFieldValue(
+            text = text,
+            selection = TextRange(selectionStart, selectionEnd),
+            composition = composition
+        )
+    }
+
+    companion object {
+        fun fromTextFieldValue(tfv: TextFieldValue): NumericTextFieldValue {
+            val value = NumericTextFieldValue(
+                text = tfv.text,
+                selectionStart = tfv.selection.start,
+                selectionEnd = tfv.selection.end
+            )
+            value.composition = tfv.composition
+            return value
+        }
+    }
+}
+
 @Composable
 fun NumericTextField(
     label: @Composable() (() -> Unit)? = null,
-    value: TextFieldValue,
+    value: NumericTextFieldValue,
     prefix: @Composable() (() -> Unit)? = null,
     suffix: @Composable() (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
     onCandidateValueChange: ((String) -> Boolean) = { isValidTransitionalDecimal(it) },
-    onValueChange: (TextFieldValue) -> Unit,
+    onValueChange: (NumericTextFieldValue) -> Unit,
     onSupportingTextChange: ((String?) -> Unit)? = null,
     modifier: Modifier = Modifier,
     supportingText: String? = null,
@@ -2986,7 +3017,7 @@ fun NumericTextField(
     }
     TextField(
         label = label,
-        value = value,
+        value = value.toTextFieldValue(),
         prefix = prefix,
         suffix = suffix,
         textStyle = textStyle,
@@ -3021,7 +3052,7 @@ fun NumericTextField(
                     }
                 }
 
-                onValueChange(newValue)
+                onValueChange(NumericTextFieldValue(newValue.text, newValue.selection.start, newValue.selection.end))
             }
         },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
