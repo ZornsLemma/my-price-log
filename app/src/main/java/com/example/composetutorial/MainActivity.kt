@@ -2560,6 +2560,7 @@ fun HomeScreenScaffold(
 }
 
 
+// TODO: Although design is still in flux, this screen does show up the probably inadvisable use of the "primary" colour for the dropdown menu (unit here) label even when it's not selected - the other text boxes all show primary only when focuses and are "greyish" otherwise
 @Composable
 // TODO: https://m3.material.io/components/dialogs/specs says (near bottom) top/left/right padding on a full screen dialog should be 24.dp - I am probably not doing that, should I? Should I use similar padding on "non-dialog full screens" to match??
 fun OuterFullScreenDialog(
