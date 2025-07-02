@@ -110,6 +110,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -2941,6 +2942,7 @@ fun NumericTextField(
     var supportingText by rememberSaveable { mutableStateOf<String?>(null) }
     var failedValidationRule by rememberSaveable { mutableStateOf<ValidationRule?>(null) }
     var delayJob by remember { mutableStateOf<Job?>(null) }
+    var isFocused by remember { mutableStateOf(false) }
 
     TextField(
         label = label,
@@ -2979,7 +2981,7 @@ fun NumericTextField(
                     // the user types and possibly pop back in again afterwards.
                     if (supportingText == null) {
                         delayJob = CoroutineScope(Dispatchers.Main).launch {
-                            delay(1000) // TODO: MAGIC
+                            delay(5000) // TODO: MAGIC
                             supportingText = failedValidationRule!!.message
                         }
                     } else {
@@ -2991,7 +2993,13 @@ fun NumericTextField(
             }
         },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = modifier,
+        modifier = modifier.onFocusChanged { focusState ->
+            isFocused = focusState.isFocused
+            if (!focusState.isFocused) {
+                Log.d("MyApp", "lost focus")
+                supportingText = failedValidationRule?.message
+            }
+        },
         supportingText = { if (supportingText != null) Text(supportingText!!) }
     )
 }
