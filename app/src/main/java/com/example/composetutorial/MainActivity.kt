@@ -2922,7 +2922,8 @@ fun isValidTransitionalDecimal(input: String): Boolean {
     return !regex.containsMatchIn(input)
 }
 
-data class ValidationRule(val validate: (String) -> Boolean, val message: String)
+@Parcelize
+data class ValidationRule(val validate: (String) -> Boolean, val message: String) : Parcelable
 
 val numericValidations = listOf(
     ValidationRule({ !it.contains('3') }, "XXXXXX No 3s allowed!"),
