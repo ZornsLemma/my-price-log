@@ -2762,6 +2762,7 @@ fun OuterFullScreenDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f)
                 ) */
+                /*
                 // TODO: This has the germ of something workable. Note that we are using a TextFieldValue as the value not a String, and that we don't get clever trying to modify it on onValueChange - we just accept the new one or retain the old one.
                 var todoPackSize by remember { mutableStateOf(TextFieldValue("999")) }
                 TextField(
@@ -2777,6 +2778,14 @@ fun OuterFullScreenDialog(
                     // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f),
+                )
+                */
+                var todoNumber by remember { mutableStateOf(TextFieldValue("804")) }
+                NumericTextField(
+                    label = { Text("Pack size") },
+                    value = todoNumber,
+                    onValueChange = { todoNumber = it },
+                    modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
@@ -2897,6 +2906,22 @@ fun CurrencyTextField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         modifier = modifier,
         // textStyle = MaterialTheme.typography.bodyLarge
+    )
+}
+
+@Composable
+fun NumericTextField(
+    label: @Composable() (() -> Unit)? = null,
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    TextField(
+        label = label,
+        value = value,
+        onValueChange = onValueChange, // TODO!
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        modifier = modifier
     )
 }
 
