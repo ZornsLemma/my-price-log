@@ -2,6 +2,8 @@
 
 package com.example.composetutorial
 
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.combine
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -2782,6 +2784,9 @@ fun OuterFullScreenDialog(
                 var todoNumber by remember { mutableStateOf(TextFieldValue("808")) }
                 NumericTextField(
                     label = { Text("Pack size") },
+                    prefix = { Text("£") },
+                    suffix = { Text("€") },
+                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
                     value = todoNumber,
                     onValueChange = { todoNumber = it },
                     onSupportingTextChange = { todoSupportingText = it },
@@ -2938,6 +2943,9 @@ val numericValidations = listOf(
 fun NumericTextField(
     label: @Composable() (() -> Unit)? = null,
     value: TextFieldValue,
+    prefix: @Composable() (() -> Unit)? = null,
+    suffix: @Composable() (() -> Unit)? = null,
+    textStyle: TextStyle = LocalTextStyle.current,
     onCandidateValueChange: ((String) -> Boolean) = { isValidTransitionalDecimal(it) },
     onValueChange: (TextFieldValue) -> Unit,
     onSupportingTextChange: ((String?) -> Unit)? = null,
@@ -2979,6 +2987,9 @@ fun NumericTextField(
     TextField(
         label = label,
         value = value,
+        prefix = prefix,
+        suffix = suffix,
+        textStyle = textStyle,
         onValueChange = { newValue ->
             delayJob?.cancel()
             if (onCandidateValueChange(newValue.text)) {
