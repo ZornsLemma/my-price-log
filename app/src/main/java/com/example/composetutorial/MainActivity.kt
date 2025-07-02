@@ -2921,6 +2921,13 @@ fun isValidTransitionalDecimal(input: String): Boolean {
     return !regex.containsMatchIn(input)
 }
 
+data class ValidationRule(val validate: (String) -> Boolean, val message: String)
+
+val numericValidations = listOf(
+    ValidationRule({ !it.contains('3') }, "XXXXXX No 3s allowed!"),
+    ValidationRule({ !it.contains('4') }, "XXXXXX No 4s allowed!"),
+)
+
 @Composable
 fun NumericTextField(
     label: @Composable() (() -> Unit)? = null,
@@ -2931,35 +2938,37 @@ fun NumericTextField(
 ) {
     // TODO: Mild Perplexity magic
     var supportingText by rememberSaveable { mutableStateOf<String?>(null) }
+    var failedValidationRule by rememberSaveable { mutableStateOf<ValidationRule?>(null) }
     var delayJob by remember { mutableStateOf<Job?>(null) }
 
     TextField(
         label = label,
         value = value,
         onValueChange = { newValue ->
+            delayJob?.cancel()
             if (onCandidateValueChange(newValue.text)) {
                 // TODO: MORE VALIDATION-WITHOUT-REJECTION HERE
-                delayJob?.cancel()
-                val candidateSupportingText =
-                    if (newValue.text.contains('3')) {
-                        "No 3s allowed!"
-                    } else if (newValue.text.contains('4')) {
-                        "No 4s allowed!"
-                    } else {
-                        null
+
+                val reorderedValidations = listOfNotNull(failedValidationRule) + numericValidations
+                failedValidationRule = null
+                for (validationRule in reorderedValidations) {
+                    if (!validationRule.validate(newValue.text)) {
+                        failedValidationRule = validationRule
+                        break
                     }
-                if (candidateSupportingText == null) {
+                }
+                if (failedValidationRule == null) {
                     // Everything's OK. Clear any supporting text immediately.
                     supportingText = null
                 } else {
-                    // Something's wrong. If the current supportingText is valid, leave it there.
+                    // Something's wrong. TODO OUTDATED, UPDATE ONCE EXPERIMENT WORKS If the current supportingText is valid, leave it there.
                     // Otherwise, clear the now-invalid supporting text immediately and show candidateSupportingText after the value has remained static
                     // with this problem for a while. (We don't want to annoy the user by complaining about something they are in the middle of fixing.)
-                    if (supportingText != candidateSupportingText) {
+                    if (supportingText != failedValidationRule!!.message) {
                         supportingText = null
                         delayJob = CoroutineScope(Dispatchers.Main).launch {
                             delay(1000) // TODO: MAGIC
-                            supportingText = candidateSupportingText
+                            supportingText = failedValidationRule!!.message
                         }
                     }
                 }
