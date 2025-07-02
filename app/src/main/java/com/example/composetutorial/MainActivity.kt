@@ -2933,7 +2933,6 @@ val numericValidations = listOf(
 )
 
 // TODO: Maybe we shouldn't be using supportingText for the error if we don't have some "non-error supporting text", to avoid layout changing too much?
-// TODO: Support for the supportingText being "somewhere else" so caller has options to work around layout quirks and the selection blob cursor obscuring the supportingText
 // TODO: Do we want support for "less scary" non-red supportingText with different icon? Probably OK without but think about it or add later if necessary.
 @Composable
 fun NumericTextField(
