@@ -3082,6 +3082,8 @@ fun NumericTextField(
                 // any previously-delayed message.
                 updateFailedValidationRule(value.text)
                 failedValidationSupportingText = failedValidationRule?.message
+                // TODO: EXPERIMENTAL HACK - this does seem to fix the problem where a selection "persists in visual-only state" across rotation and I think I know why (because the caller has the state derived from onValueChanged call inside *our* onValueChange, but doesn't get to see this happening - I just don't understand why the rotation doesn't lose the selection state inside our NFTV beacuse of the way our serialise implementation discards it
+                onValueChange(NumericTextFieldValue(value.text))
             }
         },
         supportingText = getSupportingText(),
