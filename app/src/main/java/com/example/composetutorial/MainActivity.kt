@@ -2928,6 +2928,7 @@ val numericValidations = listOf(
 // TODO: Maybe we shouldn't be using supportingText for the error if we don't have some "non-error supporting text", to avoid layout changing too much?
 // TODO: Icon at right when validation is failing
 // TODO: Support for the supportingText being "somewhere else" so caller has options to work around layout quirks and the selection blob cursor obscuring the supportingText
+// TODO: Supporting text should probably be red - always? can/should we make the message in ValidationRule a composable lambda so it can vary?
 @Composable
 fun NumericTextField(
     label: @Composable() (() -> Unit)? = null,
