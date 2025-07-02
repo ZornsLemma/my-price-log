@@ -107,7 +107,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.onFocusChanged
@@ -2783,14 +2782,15 @@ fun OuterFullScreenDialog(
                 )
                 */
                 // TODO: We "need" rememberSaveable but TextFieldValue probably doesn't support it. We will probably be using a ViewModel-held value in final code so let's not fuss about this for now.
-                var todoNumber by rememberSaveable { mutableStateOf(NumericTextFieldValue("808")) }
+                var todoNumber2 by rememberSaveable { mutableStateOf("888") }
+                var todoNumber by remember { mutableStateOf(TextFieldValue(todoNumber2)) }
                 NumericTextField(
                     label = { Text("Pack size") },
                     prefix = { Text("£") },
                     suffix = { Text("€") },
                     textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
                     value = todoNumber,
-                    onValueChange = { todoNumber = it },
+                    onValueChange = { todoNumber = it; todoNumber2 = it.text },
                     onSupportingTextChange = { todoSupportingText = it },
                     supportingText = "This is some supporting text just as a test.",
                     modifier = Modifier.weight(1f)
@@ -2944,57 +2944,16 @@ val foo: TextFieldValue = TextFieldValue("string")
 // TODO: Maybe we shouldn't be using supportingText for the error if we don't have some "non-error supporting text", to avoid layout changing too much?
 // TODO: Do we want support for "less scary" non-red supportingText with different icon? Probably OK without but think about it or add later if necessary.
 // TODO: ChatGPT semi-magic
-@Parcelize
-// TODO: This and the previous dataclass version both *preserve a selection* on rotation, somehow - maybe it's just not recomposing.
-class NumericTextFieldValue(
-    val text: String
-) : Parcelable {
-
-    @Transient
-    var selection: TextRange = TextRange.Zero
-
-    @Transient
-    var composition: TextRange? = null
-
-    fun toTextFieldValue(): TextFieldValue {
-        Log.d("MyApp", "Creating TFV with selection: $selection")
-        return TextFieldValue(
-            text = text,
-            selection = selection,
-            composition = composition
-        )
-    }
-
-    override fun equals(other: Any?): Boolean {
-        return other is NumericTextFieldValue &&
-                text == other.text &&
-                selection == other.selection
-    }
-
-    override fun hashCode(): Int {
-        return 31 * text.hashCode() + selection.hashCode()
-    }
-
-    companion object {
-        fun fromTextFieldValue(tfv: TextFieldValue): NumericTextFieldValue {
-            Log.d("MyApp", "Creating NTFV with selection: $tfv.selection")
-            return NumericTextFieldValue(tfv.text).also {
-                it.selection = tfv.selection
-                it.composition = tfv.composition
-            }
-        }
-    }
-}
 
 @Composable
 fun NumericTextField(
     label: @Composable() (() -> Unit)? = null,
-    value: NumericTextFieldValue,
+    value: TextFieldValue,
     prefix: @Composable() (() -> Unit)? = null,
     suffix: @Composable() (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
     onCandidateValueChange: ((String) -> Boolean) = { isValidTransitionalDecimal(it) },
-    onValueChange: (NumericTextFieldValue) -> Unit,
+    onValueChange: (TextFieldValue) -> Unit,
     onSupportingTextChange: ((String?) -> Unit)? = null,
     modifier: Modifier = Modifier,
     supportingText: String? = null,
@@ -3033,7 +2992,7 @@ fun NumericTextField(
     }
     TextField(
         label = label,
-        value = value.toTextFieldValue(),
+        value = value,
         prefix = prefix,
         suffix = suffix,
         textStyle = textStyle,
@@ -3068,7 +3027,7 @@ fun NumericTextField(
                     }
                 }
 
-                onValueChange(NumericTextFieldValue.fromTextFieldValue(newValue))
+                onValueChange(newValue)
             }
         },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -3082,8 +3041,10 @@ fun NumericTextField(
                 // any previously-delayed message.
                 updateFailedValidationRule(value.text)
                 failedValidationSupportingText = failedValidationRule?.message
+                /* TODO: SUSPECT WE DON'T NEED THIS HACK NOW
                 // TODO: EXPERIMENTAL HACK - this does seem to fix the problem where a selection "persists in visual-only state" across rotation and I think I know why (because the caller has the state derived from onValueChanged call inside *our* onValueChange, but doesn't get to see this happening - I just don't understand why the rotation doesn't lose the selection state inside our NFTV beacuse of the way our serialise implementation discards it
                 onValueChange(NumericTextFieldValue(value.text))
+                */
             }
         },
         supportingText = getSupportingText(),
