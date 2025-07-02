@@ -2949,6 +2949,8 @@ fun NumericTextField(
             if (onCandidateValueChange(newValue.text)) {
                 // TODO: MORE VALIDATION-WITHOUT-REJECTION HERE
 
+                // In order to give "consistent" supportingText, we give precedence to whichever
+                // validation generated the current supporting text.
                 val reorderedValidations = listOfNotNull(failedValidationRule) + numericValidations
                 failedValidationRule = null
                 for (validationRule in reorderedValidations) {
@@ -2961,15 +2963,26 @@ fun NumericTextField(
                     // Everything's OK. Clear any supporting text immediately.
                     supportingText = null
                 } else {
-                    // Something's wrong. TODO OUTDATED, UPDATE ONCE EXPERIMENT WORKS If the current supportingText is valid, leave it there.
-                    // Otherwise, clear the now-invalid supporting text immediately and show candidateSupportingText after the value has remained static
-                    // with this problem for a while. (We don't want to annoy the user by complaining about something they are in the middle of fixing.)
-                    if (supportingText != failedValidationRule!!.message) {
-                        supportingText = null
+                    // Something's wrong.
+                    //
+                    // If there is currently no supporting text, we don't want to distract the user
+                    // by popping some in when they may be in the middle of typing and will correct
+                    // the problem themselves, so we only show supporting text after they've stopped
+                    // typing. (Imagine they are moving the decimal point; they type in a "new" one
+                    // in the correct place and then go to delete the "old" one. It's annoying if a
+                    // nagging message pops up after typing the new one telling you about a problem
+                    // you were in the middle of fixing.)
+                    //
+                    // If there is already supporting text, it's probably less annoying to keep
+                    // showing some (currently valid) supporting text, rather than removing it while
+                    // the user types and possibly pop back in again afterwards.
+                    if (supportingText == null) {
                         delayJob = CoroutineScope(Dispatchers.Main).launch {
                             delay(1000) // TODO: MAGIC
                             supportingText = failedValidationRule!!.message
                         }
+                    } else {
+                        supportingText = failedValidationRule!!.message
                     }
                 }
 
