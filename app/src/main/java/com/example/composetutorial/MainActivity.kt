@@ -3012,8 +3012,8 @@ fun NumericTextField(
                     // the problem themselves, so we only show supporting text after they've stopped
                     // typing. (Imagine they are moving the decimal point; they type in a "new" one
                     // in the correct place and then go to delete the "old" one. It's annoying if a
-                    // nagging message pops up after typing the new one telling you about a problem
-                    // you were in the middle of fixing.)
+                    // nagging message pops up after typing the new one telling them about a problem
+                    // they created incidentally because they can't edit in two places at once.)
                     //
                     // If there is already supporting text, it's probably less annoying to keep
                     // showing some (currently valid) supporting text, rather than removing it while
