@@ -2849,22 +2849,19 @@ fun CurrencyTextField(
     modifier: Modifier = Modifier
 ) {
     Log.d("MyApp", "currencyCode $currencyCode")
-    var textState by remember { mutableStateOf(value?.let { formatCurrency(it, locale, currencyCode) } ?: "") }
+    val textState =value?.let { formatCurrency(it, locale, currencyCode) } ?: ""
 
-    val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
-        currency = Currency.getInstance(currencyCode)
-    }
+    val numberFormat = NumberFormat.getInstance(locale)
 
     TextField(
         value = textState,
         onValueChange = { newText ->
             Log.d("MyApp", "newText $newText")
-            textState = newText
             // Parse the input to a Double, handling locale-specific formatting
             val cleanInput = newText.replace("[^0-9,.]".toRegex(), "") // Remove non-numeric characters
             Log.d("MyApp", "cleanInput $cleanInput")
             val parsedValue = try {
-                numberFormat.parse(newT)?.toDouble()
+                numberFormat.parse(cleanInput)?.toDouble()
             } catch (e: Exception) {
                 null
             }
