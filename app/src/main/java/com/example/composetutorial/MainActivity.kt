@@ -2964,6 +2964,19 @@ fun NumericTextField(
         }
     }
 
+    // We have this function to help make it easier to pass a literal null to TextField's
+    // supportingText when we don't want anything, to prevent it allocating visual space for
+    // supportingText.
+    fun getSupportingText(): @Composable (() -> Unit)? {
+        if (onSupportingTextChange == null) {
+            if (failedValidationSupportingText != null) {
+                return { Text(failedValidationSupportingText!!, color = MaterialTheme.colorScheme.error) }
+            } else if (supportingText != null) {
+                return { Text(supportingText) }
+            }
+        }
+        return null
+    }
     TextField(
         label = label,
         value = value,
@@ -3013,15 +3026,7 @@ fun NumericTextField(
                 failedValidationSupportingText = failedValidationRule?.message
             }
         },
-        supportingText = {
-            if (onSupportingTextChange == null) {
-                if (failedValidationSupportingText != null) {
-                    Text(failedValidationSupportingText!!, color = MaterialTheme.colorScheme.error)
-                } else if (supportingText != null) {
-                    Text(supportingText)
-                }
-            }
-        },
+        supportingText = getSupportingText(),
         trailingIcon = {
             if (failedValidationSupportingText != null) {
                 Icon(
