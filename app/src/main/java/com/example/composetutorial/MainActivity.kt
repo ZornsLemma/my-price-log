@@ -2685,6 +2685,7 @@ fun OuterFullScreenDialog(
     // as a dialog, but the link it gives doesn't actually say that. It doesn't have a better option, short of actually
     // using Dialog, which I know to my cost is utterly impractical or I'd already be using it. Perplexity does say I can
     // attach the modifier to the Scaffold no problem. Perplexity also suggests the liveRegion thing is not necessary or appropriate here - it (I haven't tried to read up on this myself) is sort of related to visual things like scrims, and for a full screen dialog it's not appropriate.
+    // TODO: Need to read MD3 docs - should the save button be disabled while any validation failures ("mandatory" ones of course) are on screen, or should it just remain enabled and pop up a dialog if you click it when it can't save?
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
