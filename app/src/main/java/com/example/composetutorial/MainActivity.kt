@@ -104,10 +104,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.onFocusChanged
@@ -2501,6 +2503,29 @@ fun HomeScreenScaffold(
     ScrimWithSpinner(visible = loading, delayMillis = spinnerDelayMillis)
 }
 
+// TODO: ChatGPT magic but I think I do mostly understand
+/*
+@Composable
+fun rememberSyncedTextFieldValue(modelState: String): State<TextFieldValue> {
+    val tfv = remember { mutableStateOf(TextFieldValue(modelState)) }
+    if (tfv.value.text != modelState) {
+        tfv.value = TextFieldValue(modelState)
+    }
+    return tfv
+}
+*/
+// TODO: This variant means we have to allow mutability, but can use "by" in callers
+@Composable
+fun rememberSyncedTextFieldValue(modelState: String): MutableState<TextFieldValue> {
+    val tfv = remember { mutableStateOf(TextFieldValue(modelState)) }
+
+    // If the model changes from the outside, resync tfv
+    if (tfv.value.text != modelState) {
+        tfv.value = TextFieldValue(modelState)
+    }
+
+    return tfv
+}
 
 @Composable
 // TODO: https://m3.material.io/components/dialogs/specs says (near bottom) top/left/right padding on a full screen dialog should be 24.dp - I am probably not doing that, should I? Should I use similar padding on "non-dialog full screens" to match??
@@ -2746,7 +2771,7 @@ fun OuterFullScreenDialog(
                 */
                 // TODO: We "need" rememberSaveable but TextFieldValue probably doesn't support it. We will probably be using a ViewModel-held value in final code so let's not fuss about this for now.
                 //var todoNumber2 by rememberSaveable { mutableStateOf("888") }
-                var todoNumber by remember { mutableStateOf(TextFieldValue(uiContent.editablePrice.price.value ?: "")) } // TODO: Just stop it being nullable rather than converting null to "" here?
+                var todoNumber by rememberSyncedTextFieldValue(uiContent.editablePrice.price.value ?: "") // TODO: Just stop it being nullable rather than converting null to "" here?
                 NumericTextField(
                     label = { Text("Pack size") },
                     prefix = { Text("£") },
