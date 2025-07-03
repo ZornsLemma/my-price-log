@@ -2194,19 +2194,22 @@ data class EditablePrice(
 
     // TODO: Tempish note - EditablePrice is a sort of "variant domain" class just for editing - we need to convert it to the "primary" domain class Price here. This name mioght be confusing all the same, as we are approaching domain from the opposite side to a toDomain() on an entity class
     // TODO: This should maybe return a Result<Price> so it can signal errors (we probably don't need to provide an explanation, as the user gets their explanation via the live validation on the form)
-    fun toDomain() = Price(
-        // TODO: Should we "do something" if the values are null? Should we provide some kind of validation method the caller can use first? Should we throw? We can't write nulls to the database for most of these fields, they are null in EditablePrice to allow for the idea the user hasn't filled them in yet in a new entry
-        id = id,
-        dataSetId = dataSetId,
-        itemId = itemId,
-        sourceId = sourceId,
-        price = 42.0, // TODO! We need to do string parsing and other validation appropriate to this field and indicate to caller if it fails, hacking for now
-        measure = measure!!,
-        originalUnit = originalUnit!!, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
-        confirmed = confirmed!!,
-        details = details.value!!,
-        itemQuantityType = itemQuantityType,
-    )
+    fun toDomain(): Result<Price> {
+        // TODO: Just wrapping this in success is a temp hack
+        return Result.success(Price(
+            // TODO: Should we "do something" if the values are null? Should we provide some kind of validation method the caller can use first? Should we throw? We can't write nulls to the database for most of these fields, they are null in EditablePrice to allow for the idea the user hasn't filled them in yet in a new entry
+            id = id,
+            dataSetId = dataSetId,
+            itemId = itemId,
+            sourceId = sourceId,
+            price = 42.0, // TODO! We need to do string parsing and other validation appropriate to this field and indicate to caller if it fails, hacking for now
+            measure = measure!!,
+            originalUnit = originalUnit!!, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
+            confirmed = confirmed!!,
+            details = details.value!!,
+            itemQuantityType = itemQuantityType,
+        ))
+    }
 }
 
 data class EditPriceScreenUIContent(
@@ -2626,7 +2629,13 @@ fun OuterFullScreenDialog(
                 actions = {
                     // TODO: When/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
                     TextButton(enabled = !saveInitiated, onClick = {
-                        saveInitiated = true; vm.updateOrInsertPrice(uiContent.editablePrice.toDomain())
+                        val price = uiContent.editablePrice.toDomain().getOrNull()
+                        if (price != null) {
+                            saveInitiated = true
+                            vm.updateOrInsertPrice(price)
+                        } else {
+                            TODO() // TODO GENERATE ERROR
+                        }
                     }) {
                         if (showSaveProgressIndicator) {
                             CircularProgressIndicator(
