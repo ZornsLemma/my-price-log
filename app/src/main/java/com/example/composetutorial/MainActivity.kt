@@ -113,6 +113,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
@@ -635,7 +636,7 @@ class PriceTrackerRepositoryImpl(
     }
 }
 
-// TODO: WTF?
+// TODO: WTF? - OK, I *think* this is essentially just the way we pass the parameters to the view model constructors and an AI told me this is normal and good.
 object AppViewModelProvider {
     val Factory = viewModelFactory {
         // Other Initializers
@@ -645,7 +646,7 @@ object AppViewModelProvider {
             val app =
                 (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
             // TODO ItemEntryViewModel(MyApplication().itemsRepository)
-            PriceTrackerViewModel(app.priceTrackerRepository, this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
+            HomeScreenViewModel(app.priceTrackerRepository, this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
         }
         //...
     }
@@ -1062,7 +1063,7 @@ class SingleEventState<T>(initialState: T) {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepository, application: Application) :
+class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerRepository, application: Application) :
     ViewModel() {
     private val app = application
 
@@ -2299,7 +2300,7 @@ data class EditPriceScreenUIContent(
 // TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
 // TODO: It may just be the emulator but right now despite all my apparently sensible refactoring changes, I am seeing *massive* jank just playing around in the UI (partly but not only when returning from the "edit" full screen dialog)
 @Composable
-fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
+fun HomeScreen(vm: HomeScreenViewModel, navController: NavHostController) {
     // In order to minimise jank, we want the previous UI state to be available during the *very
     // first composition* when this screen is re-entered (e.g. after navigating back from another
     // screen).
@@ -2580,7 +2581,7 @@ fun HomeScreenScaffold(
 // TODO: I was thinking this screen would show the price history, but I am cooling on that. Not quite sure where we would show it, but I am not sure it's something we want cluttering up this in-store edit screen, or encouraging people to go into this "live edit" view where they might accidentally change data just to see the history. Maybe this could go on the overflow menu on home screen if we have all three things selected?
 // TODO: I should probably re-use the (bundled up in a composable) unit price display only but with variable unit on this screen, as it will might be useful to the user as a confirmation of the unit price on the shelf.
 fun OuterFullScreenDialog(
-    vm: PriceTrackerViewModel, // TODO: Maybe this should have its own ViewModel?
+    vm: HomeScreenViewModel, // TODO: Maybe this should have its own ViewModel?
     navController: NavHostController,
 ) {
     val uiContentNullable = vm.editPriceScreenUIContent
@@ -2659,11 +2660,11 @@ fun OuterFullScreenDialog(
     LaunchedEffect(Unit) {
         vm.saveEvents.collect { event ->
             when (event) {
-                PriceTrackerViewModel.SaveStatus.Success -> {
+                HomeScreenViewModel.SaveStatus.Success -> {
                     popBackStack()
                 }
 
-                PriceTrackerViewModel.SaveStatus.Error -> {
+                HomeScreenViewModel.SaveStatus.Error -> {
                     saveInitiated = false;
                     showErrorDialog = true;
                 }
@@ -3201,13 +3202,44 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// Shared ViewModel to pass data between screens
+class SharedViewModel : ViewModel() {
+    private val _selectedItem = MutableStateFlow<Item?>(null)
+    val selectedItem: StateFlow<Item?> = _selectedItem.asStateFlow()
+
+    fun selectItem(item: Item) {
+        _selectedItem.value = item
+    }
+
+    fun clearItem() {
+        _selectedItem.value = null
+    }
+}
+// Edit Screen ViewModel
+class EditPriceScreenViewModel(/* TODO? private val repository: Repository */) : ViewModel() {
+    /* TODO
+    private val _uiState = MutableStateFlow(EditUiState())
+    val uiState: StateFlow<EditUiState> = _uiState.asStateFlow()
+
+    fun updateField(newValue: String) {
+        _uiState.update { it.copy(field = newValue) }
+    }
+
+    fun saveItem(item: Item) {
+        viewModelScope.launch {
+            repository.updateItem(item)
+        }
+    }
+    */
+}
+
 // TODO: ChatGPT magic
 // TODO: Random Grok suggestion to maybe play with later: Use LinearOutSlowInEasing for enter transitions (starts fast, slows down) and FastOutLinearInEasing for exit transitions (starts slow, speeds up) to make the slide feel natural.
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigation() {
-    var vm: PriceTrackerViewModel = viewModel(factory = AppViewModelProvider.Factory)
     val navController = rememberNavController()
+    val sharedViewModel: SharedViewModel = viewModel(LocalContext.current as ComponentActivity) // TODO: perplexity voodoo
     //val saveableStateHolder = rememberSaveableStateHolder()
     NavHost(
         navController = navController,
@@ -3223,10 +3255,13 @@ fun AppNavigation() {
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
         ) { backStackEntry ->
+            val vm: HomeScreenViewModel = viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
             Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
             // TODO: I ACTUALLY THINK I DON'T NEED SAVEABLESTATEHOLDER AND HAVE BEEN CHASING THE WRONG PROBLEM BUT LET'S KEEP IT FOR NOW ANYWAY
             //saveableStateHolder.SaveableStateProvider(backStackEntry.id) {
-                HomeScreen(vm, navController)
+                HomeScreen(vm, navController /*, onEditPriceClick = { todoRenameMe -> // TODO: WIRE THIS IN
+                    sharedViewModel.selectItem(todoRenameMe)
+                navController.navigate("edit") } */)
             //}
         }
         val tweenDurationMillisEnter = 700; // TODO: should probably be 300 in final version
@@ -3288,7 +3323,8 @@ fun AppNavigation() {
             val productId = backStackEntry.arguments?.getString("productId")?.toLong() ?: 0
             val storeId = backStackEntry.arguments?.getString("storeId")?.toLong() ?: 0
             */
-            OuterFullScreenDialog(vm, navController)
+            val vm: EditPriceScreenViewModel = viewModel(backStackEntry) // TODO: ???factory = AppViewModelProvider.Factory)
+            // TODO! OuterFullScreenDialog(vm, navController)
         }
     }
 }
