@@ -3173,6 +3173,9 @@ class SharedViewModel : ViewModel() {
     } */
 }
 
+// TODO: Should this hold the EditablePrice and we should copy it over from the SharedViewModel when
+// edit screen is first composed? But this feels like it might be a nightmare of "bad first
+// compositions" - but it does also feel like it "ought" to be in here. Think about this later.
 class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerRepository) : ViewModel() {
     /* TODO FROM GROK EXAMPLE, DELETE LATER BUT KEEPING AROUND FOR A BIT JIC
     private val _uiState = MutableStateFlow(EditUiState())
