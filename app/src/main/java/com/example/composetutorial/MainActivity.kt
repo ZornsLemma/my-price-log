@@ -595,7 +595,7 @@ interface PriceTrackerRepository {
 
     fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
 
-    suspend fun updateOrInsertPrice(price: EditablePrice)
+    suspend fun updateOrInsertPrice(price: Price)
 }
 
 class PriceTrackerRepositoryImpl(
@@ -631,7 +631,15 @@ class PriceTrackerRepositoryImpl(
         priceDao.getPriceWithItemEntityForItem(dataSetId = dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
 
-    override suspend fun updateOrInsertPrice(price: EditablePrice) {
+    // TODO: Tempish note (maybe make permanent) - I discussed with ChatGPT and it seemed to make
+    // sense - the repository should take "validated domain level" entities (where we aren't just
+    // reusing the database entities throughout all levels for simplicity - which we aren't with
+    // Price). So this should take a *Price* and convert it to a PriceEntity for writing, and there
+    // shouldn't be any user-error-catching validation here - this might go wrong, but it would be
+    // down to hardware failures or bugs in my code. The viewmodel-ish layer code is responsbile
+    // for turning an EditablePrice (a special variant domain level thing with nullness etc) into
+    // a Price and *that* is where final validation occurs.
+    override suspend fun updateOrInsertPrice(price: Price) {
         priceDao.upsert(price.toEntity())
     }
 }
@@ -922,6 +930,7 @@ data class Price(
     val itemId: Long,
     val sourceId: Long,
     val price: Double,
+    // TODO: I have some contradictory notes elsewhere, I think, but to avoid confusion I wonder if we ought to get rid of originalUnit in this domain level class and just put the "correct" unit on measure.
     val measure: MeasuredValue,
     val originalUnit: MeasureUnit,
     val confirmed: Instant,
@@ -934,6 +943,26 @@ data class Price(
     // SEE COMMENT BELOW - BUT THINK ABOUT THIS FRESH
     val itemQuantityType: QuantityType,
 ) : Parcelable {
+
+    fun toEntity(): PriceEntity {
+        // TODO: Is this a reasonable place to be doing this check?
+        // TODO: I think this check is technically redundant because using itemQuantityType to determine the base unit will cause an internal check error if measure's own unit is a different type - but this is maybe a bit more explicit.
+        val measureQuantityType = measure.unit.quantityType
+        devCheck(measure.unit.quantityType == itemQuantityType) {
+            "Expected consistent quantity type when converting Price to PriceEntity but found measure $measure with itemQuantityType $itemQuantityType"
+        }
+        return PriceEntity(
+            id = id,
+            dataSetId = dataSetId,
+            itemId = itemId,
+            sourceId = sourceId,
+            price = price,
+            measure = measure.asValue(baseUnitForQuantityType(itemQuantityType)),
+            originalUnit = measure.unit,
+            confirmed = confirmed,
+            details = details
+        )
+    }
 
     companion object {
         fun createEmpty(): Price {
@@ -2163,21 +2192,20 @@ data class EditablePrice(
         itemQuantityType = price.itemQuantityType
     )
 
-    fun toEntity() = PriceEntity(
+    // TODO: Tempish note - EditablePrice is a sort of "variant domain" class just for editing - we need to convert it to the "primary" domain class Price here. This name mioght be confusing all the same, as we are approaching domain from the opposite side to a toDomain() on an entity class
+    // TODO: This should maybe return a Result<Price> so it can signal errors (we probably don't need to provide an explanation, as the user gets their explanation via the live validation on the form)
+    fun toDomain() = Price(
         // TODO: Should we "do something" if the values are null? Should we provide some kind of validation method the caller can use first? Should we throw? We can't write nulls to the database for most of these fields, they are null in EditablePrice to allow for the idea the user hasn't filled them in yet in a new entry
         id = id,
         dataSetId = dataSetId,
         itemId = itemId,
         sourceId = sourceId,
         price = 42.0, // TODO! We need to do string parsing and other validation appropriate to this field and indicate to caller if it fails, hacking for now
-        // Note that by using itemQuantityType - which should have come from a join to the Item
-        // table and travelled with the Price ever since it came out of the database - we get a
-        // sanity check that the measure on our Price hasn't mutated to a competely different
-        // QuantityType during its travels.
-        measure = measure!!.asValue(baseUnitForQuantityType(itemQuantityType)),
+        measure = measure!!,
         originalUnit = originalUnit!!, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
         confirmed = confirmed!!,
         details = details.value!!,
+        itemQuantityType = itemQuantityType,
     )
 }
 
@@ -2598,7 +2626,7 @@ fun OuterFullScreenDialog(
                 actions = {
                     // TODO: When/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
                     TextButton(enabled = !saveInitiated, onClick = {
-                        saveInitiated = true; vm.updateOrInsertPrice(uiContent.editablePrice)
+                        saveInitiated = true; vm.updateOrInsertPrice(uiContent.editablePrice.toDomain())
                     }) {
                         if (showSaveProgressIndicator) {
                             CircularProgressIndicator(
@@ -3166,7 +3194,7 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     // it, we could also have an updatePrice() function which accepts a Price, as we know insert is
     // not necessary there.
     // TODO: Use upsert in name?
-    fun updateOrInsertPrice(price: EditablePrice) {
+    fun updateOrInsertPrice(price: Price) {
         viewModelScope.launch {
             _saveStatus.update(SaveStatus.Saving)
             try {
