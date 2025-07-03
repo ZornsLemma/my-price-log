@@ -1484,8 +1484,8 @@ fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
     disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
     disabledLabelColor = if (isFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
     disabledTextColor = MaterialTheme.colorScheme.onSurface,
-    disabledIndicatorColor = /* indicatorColor */ MaterialTheme.colorScheme.onSurfaceVariant,
-// focusedIndicatorColor = MaterialTheme.colorScheme.primary, // TODO NOT WORKING
+    // We can't make the indicator thicker when mock-focused, but we can at least change the colour.
+    disabledIndicatorColor = if (isFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
 )
 
 // TODO: THis needs support for selecting "None" - maybe we just make the user pass it in the input with a null ID, actually?
