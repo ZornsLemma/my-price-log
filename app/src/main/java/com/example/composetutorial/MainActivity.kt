@@ -1231,7 +1231,7 @@ class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerReposi
             // collectLatest(), if the user changes the inputs the timeout starts again, which is
             // what we want.
             val TODO1 = allUserInputFlow.flatMapLatest { it -> // TODO: RENAME "it"
-                var newUIContent = withTimeoutOrNull(spinnerDelay) {
+                var newUIContent = withTimeoutOrNull(spinnerDelayMillis) {
                     completeUIStateFlow.first()
                 }
                 if (newUIContent == null) {
@@ -1286,7 +1286,12 @@ enum class ThemePreference {
 // on-screen data is outdated, but we retain consistency. Even if the data retrieval is shorter than
 // spinnerDelay ms, we don't want a janky double-update where the dropdown's content changes
 // instantly then the associated data changes a few ms later.
-const val spinnerDelay = 200L // milliseconds
+const val spinnerDelayMillis = 200L
+
+// This value is a trade-off between not showing the user validation failures ASAP and not annoying
+// them by showing transient validation failures while they are in the middle of actively editing.
+// This feels reasonable-ish and we can always tweak it later.
+const val defaultValidationMessageDelayMillis = 1000L
 
 val screenBorder = 8.dp
 val fullScreenDialogBorder = 24.dp // MD3 specification
@@ -2493,7 +2498,7 @@ fun HomeScreenScaffold(
     // different Android versions etc. Given how rarely we expect the spinner to appear at all (and
     // therefore also how little testing it would get), it seemed best to go with this relatively
     // simple full screen spinner.
-    ScrimWithSpinner(visible = loading, delayMillis = spinnerDelay)
+    ScrimWithSpinner(visible = loading, delayMillis = spinnerDelayMillis)
 }
 
 
@@ -2524,11 +2529,11 @@ fun OuterFullScreenDialog(
     )}
     var price by rememberSaveable { mutableStateOf(originalPrice) }
     */
-    Log.d("MyApp", "EditPriceScreenViewModel $vm uiContent=${vm.uiContentXXX}")
-    devCheck(vm.uiContentXXX != null) {
+    Log.d("MyApp", "EditPriceScreenViewModel $vm uiContent=${vm.uiContent}")
+    devCheck(vm.uiContent != null) {
         "EditPriceScreenViewModel's uIContent should have been set to non-null before navigating to screen"
     }
-    val uiContent = vm.uiContentXXX!! // TODO: Maybe simplify this later on??!
+    val uiContent = vm.uiContent!! // TODO: Maybe simplify this later on??!
 
     // TODO: Can I get rid of saveInitiated and instead set the state inside the viewmodel to "idle" when we are not saving? The frequency with which we check it suggests it might be more painful to get rid of it. but if we track this, the distinction between idle and saving is mostly meainingless (the state never gets set back to idle) and we should maybe merge those states into a vague "meh" state.
     var saveInitiated by rememberSaveable { mutableStateOf(false) }
@@ -2578,7 +2583,7 @@ fun OuterFullScreenDialog(
             // We expect the save to complete quickly so we don't want the visual distraction
             // of a progress indicator appearing straight away. Let the progress indicator kick
             // in after a short delay if we're still here waiting for the save to complete.
-            delay(spinnerDelay)
+            delay(spinnerDelayMillis)
             showSaveProgressIndicator = true
         }
         // TODO: I don't think we need to set it back to false in else, but maybe revise all
@@ -2896,7 +2901,7 @@ fun isValidTransitionalDecimal(input: String): Boolean {
 @Parcelize // TODO: May not be needed now - are we still using these in rememberSaveable?
 data class ValidationRule(val validate: (String) -> Boolean, val message: String) : Parcelable
 
-val numericValidations = listOf(
+val numericValidationRules = listOf(
     ValidationRule({ !it.contains('3') }, "XXXXXX No 3s allowed!"),
     ValidationRule({ !it.contains('4') }, "XXXXXX No 4s allowed!"),
 )
@@ -2919,12 +2924,47 @@ fun NumericTextField(
     prefix: @Composable() (() -> Unit)? = null,
     suffix: @Composable() (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
-    onCandidateValueChange: ((String) -> Boolean) = { isValidTransitionalDecimal(it) },
+    validationRules: List<ValidationRule>? = null,
     onValueChange: (TextFieldValue) -> Unit,
     onSupportingTextChange: ((String?) -> Unit)? = null,
     modifier: Modifier = Modifier,
     supportingText: String? = null,
+    messageDelayMillis: Long = defaultValidationMessageDelayMillis,
 ) {
+    ValidatedTextField(
+        label = label,
+        value = value,
+        prefix = prefix,
+        suffix = suffix,
+        textStyle = textStyle,
+        validationRules = (validationRules ?: emptyList()) + numericValidationRules,
+        // TODO: We don't (we could, but probably no point) allow arbitrary onCandidateValueChange functions to be supplied by our caller. We just hardcode this for now. We could potentially accept some options from our caller which say whether decimal point (locale sensitive) or minus signs are allowed and tweak the internally-assigned onCandidate... function here.
+        onCandidateValueChange = { isValidTransitionalDecimal(it) },
+        onValueChange = onValueChange,
+        onSupportingTextChange = onSupportingTextChange,
+        modifier = modifier,
+        supportingText = supportingText,
+        messageDelayMillis = messageDelayMillis
+    )
+}
+
+// TODO: Can we take a String instead of a TextFieldValue and internally wrap it with a remember()? I am thinking that TextField's own String-taking implementation must do something similar, surely?
+@Composable
+fun ValidatedTextField(
+    label: @Composable() (() -> Unit)? = null,
+    value: TextFieldValue,
+    prefix: @Composable() (() -> Unit)? = null,
+    suffix: @Composable() (() -> Unit)? = null,
+    textStyle: TextStyle = LocalTextStyle.current,
+    validationRules: List<ValidationRule>? = null,
+    onCandidateValueChange: ((String) -> Boolean) ,
+    onValueChange: (TextFieldValue) -> Unit,
+    onSupportingTextChange: ((String?) -> Unit)? = null,
+    modifier: Modifier = Modifier,
+    supportingText: String? = null,
+    messageDelayMillis: Long = defaultValidationMessageDelayMillis,
+
+    ) {
     // TODO: Mild Perplexity magic
     var failedValidationSupportingText by rememberSaveable { mutableStateOf<String?>(null) }
     var failedValidationRule by remember { mutableStateOf<ValidationRule?>(null) }
@@ -2934,7 +2974,7 @@ fun NumericTextField(
     fun updateFailedValidationRule(newValue: String) {
         // In order to give "consistent" supportingText, we give precedence to whichever
         // validation generated the current supporting text.
-        val reorderedValidations = listOfNotNull(failedValidationRule) + numericValidations
+        val reorderedValidations = listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
         failedValidationRule = null
         for (validationRule in reorderedValidations) {
             if (!validationRule.validate(newValue)) {
@@ -2986,7 +3026,7 @@ fun NumericTextField(
                     // the user types and possibly pop back in again afterwards.
                     if (failedValidationSupportingText == null) {
                         delayJob = CoroutineScope(Dispatchers.Main).launch {
-                            delay(5000) // TODO: MAGIC
+                            delay(messageDelayMillis)
                             failedValidationSupportingText = failedValidationRule!!.message
                         }
                     } else {
@@ -3205,7 +3245,7 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     // TODO: Could/should this use a read only property amd a setter etc etc
     /* TODO TEMP CHANGED TO USE SETTER AT LEAST SO I CAN LOG
     var uiContent: EditPriceScreenUIContent? = null */
-    var uiContentXXX : EditPriceScreenUIContent? = null
+    var uiContent : EditPriceScreenUIContent? = null
         set(value) {
             Log.d("MyApp", "EditPriceScreenViewMode uIContent.set: $field -> $value")
             field = value
@@ -3339,8 +3379,8 @@ fun AppNavigation() {
             // probably be harmless if we didn't set sharedViewModel.editPriceScreenUIContent to null, but it
             // feels like that's useful as it highlights this issue) we must check we don't already have data.
             // TODO: I suspect that comment is subtly wrong but it is about the best I can do for now.
-            if (vm.uiContentXXX == null) {
-                vm.uiContentXXX = sharedViewModel.editPriceScreenUIContent
+            if (vm.uiContent == null) {
+                vm.uiContent = sharedViewModel.editPriceScreenUIContent
                 Log.d("MyApp", "sharedViewModel.editPriceScreenUIContent = null")
                 sharedViewModel.editPriceScreenUIContent = null
             }
