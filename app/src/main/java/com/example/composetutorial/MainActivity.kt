@@ -2517,7 +2517,8 @@ fun HomeScreenScaffold(
 fun OuterFullScreenDialog(
     vm: EditPriceScreenViewModel,
     navController: NavHostController,
-    uiContent: EditPriceScreenUIContent
+    uiContent: EditPriceScreenUIContent,
+    onClose: () -> Unit
 ) {
 /* TODO DELETE
         val uiContentNullable = vm.editPriceScreenUIContent
@@ -2552,13 +2553,13 @@ fun OuterFullScreenDialog(
         mutableStateOf(false)
     }
 
-    fun popBackStack() {
+    fun popBackStack() { // TODO: Rename "close" or "finish"? if nothing else, popBackStack() is confusingly *like* the navcontroller fn and we are *not* calling that ourselves
         // We need isNavigating to de-bounce the close button so we don't do a double pop if
         // the user double taps the close button quickly. (We may not need this for other ways
         // of going back, but it shouldn't hurt and is probably safer.)
         if (!isNavigating) {
             isNavigating = true;
-            navController.popBackStack()
+            onClose() // TODO: Is the "on" prefix so conventional we have to use it? We are not saying we *have* closed, we are saying we *want to be* closed
         }
     }
 
@@ -3311,17 +3312,19 @@ fun AppNavigation() {
                 )
             }
         ) { backStackEntry ->
-            /* TODO DELETE
-            val dataSetId = backStackEntry.arguments?.getString("dataSetId")?.toLong() ?: 0
-            val productId = backStackEntry.arguments?.getString("productId")?.toLong() ?: 0
-            val storeId = backStackEntry.arguments?.getString("storeId")?.toLong() ?: 0
-            */
             val vm: EditPriceScreenViewModel = viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
-            // TODO: WE SHOULD PROBABLY PASS AN onSave and onDismiss lambda to this to navigate back with? although the fact there is no data passed (except implicitly via db) which needs to go into sharedviewmodel makes this less critical - still probably cleaner tho
             devCheck(sharedViewModel.editPriceScreenUIContent != null) {
                 "editPriceScreenUIContent should have been set before navigating to the edit price screen"
             }
-            OuterFullScreenDialog(vm, navController, sharedViewModel.editPriceScreenUIContent!!)
+            OuterFullScreenDialog(vm, navController, sharedViewModel.editPriceScreenUIContent!!,
+                onClose = {
+                    navController.popBackStack()
+                    // TODO: Conceptually we'd like to do "sharedViewModel.editPriceScreenUIContent
+                    // = null" just out of paranoia (so if we navigate back in there again via some
+                    // odd route, we'll get a clean failure rather than using some random outdated
+                    // data), but EditPriceScreenViewModel is still using it as it is animated out.
+                    // I don't think this is a huge problem but maybe reconsider it later.
+                })
         }
     }
 }
