@@ -639,16 +639,14 @@ class PriceTrackerRepositoryImpl(
 // TODO: WTF? - OK, I *think* this is essentially just the way we pass the parameters to the view model constructors and an AI told me this is normal and good.
 object AppViewModelProvider {
     val Factory = viewModelFactory {
-        // Other Initializers
-        // Initializer for ItemEntryViewModel
         initializer {
-            // TODO: Extra special AI voodoo which wasn't in the codelab but caused startup crashes without it
-            val app =
-                (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
-            // TODO ItemEntryViewModel(MyApplication().itemsRepository)
-            HomeScreenViewModel(app.priceTrackerRepository, this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication)
+            val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+            HomeScreenViewModel(app.priceTrackerRepository, app)
         }
-        //...
+        initializer {
+            val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+            EditPriceScreenViewModel(app.priceTrackerRepository)
+        }
     }
 }
 
@@ -1234,46 +1232,8 @@ class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerReposi
         }
     }
 
-    // This is only nullable to provide us with an easy initial value to use. In use
-    // setEditPriceScreenState() should always have been called before it is used.
-    var editPriceScreenUIContent: EditPriceScreenUIContent? = null
 
-    // TODO: Inconsistent use of "State" and "Content" here - rename everything consistently
-    fun setEditPriceScreenStateFromHomeScreenState(uiContent: UIContent) {
-        // !! is justified because uiContent was shown on the home screen and the edit price button was visible, which can only happen if we have all three available.
-        val dataSet = uiContent.dataSet!!
-        val item = uiContent.item!!
-        val source = uiContent.source!!
 
-        val price = uiContent.itemPriceListRaw.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
-
-        val editablePrice = if (price != null) EditablePrice(price) else EditablePrice(dataSetId = dataSet.id, itemId = item.id, sourceId = source.id, itemQuantityType = item.quantityType, itemDefaultUnit = item.defaultUnit)
-        editPriceScreenUIContent = EditPriceScreenUIContent(
-            editablePrice = editablePrice,
-            originalPrice = editablePrice,
-            dataSet = dataSet,
-            item = item,
-            source = source
-        )
-    }
-
-    // TODO: I think we need this to trigger the magic state emission that will cause Compose to update the GUI
-    /* TODO DELETE?
-    fun setEditPriceScreenEditablePrice(editablePrice: EditablePrice) {
-        // TODO: !! is probably OK but not thought too hard right now, come back to this
-        _editPriceScreenUIContent.value = _editPriceScreenUIContent.value!!.copy(editablePrice = editablePrice)
-    }
-    */
-
-    /* TODO DELETE
-    // TODO: Would it be more standard for the get...() here to have a different name, or be a read-only property or something?
-    fun getEditPriceScreenUIContent(): EditPriceScreenUIContent {
-        devCheck(editPriceScreenUIContent != null) {
-            "setEditPriceScreenUIContent not called before getEditPriceScreenUIContent"
-        }
-        return editPriceScreenUIContent!!
-    }
-    */
 
     // TODO: The following functions should now probably be private or removed - the UI composable gets its data from the UIState flow
 
@@ -1316,32 +1276,6 @@ class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerReposi
         Log.d("MyApp", "PriceTrackerViewModel created: $this")
     }
 
-    // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
-
-    enum class SaveStatus { Idle, Saving, Success, Error }
-
-    private val _saveStatus = SingleEventState(SaveStatus.Idle)
-    val saveStatus: StateFlow<SaveStatus> = _saveStatus.state
-    val saveEvents: SharedFlow<SaveStatus> = _saveStatus.events
-
-    // TODO: I don't think this will insert correctly yet, as Price has no price_id primary key to
-    // allow us to indicate to this function when it is an insert rather than an update, but let's
-    // worry about that later. OK, I think the solution is that this takes an EditablePrice. If we need
-    // it, we could also have an updatePrice() function which accepts a Price, as we know insert is
-    // not necessary there.
-    // TODO: Use upsert in name?
-    fun updateOrInsertPrice(price: EditablePrice) {
-        viewModelScope.launch {
-            _saveStatus.update(SaveStatus.Saving)
-            try {
-                //delay(3700); // TODO TEMP FOR DEBUGGING
-                priceTrackerRepository.updateOrInsertPrice(price)
-                _saveStatus.update(SaveStatus.Success)
-            } catch (e: Exception) {
-                _saveStatus.update(SaveStatus.Error) // TODO: how can we preserve e and show it to user in UI?
-            }
-        }
-    }
 }
 
 
@@ -2300,7 +2234,7 @@ data class EditPriceScreenUIContent(
 // TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
 // TODO: It may just be the emulator but right now despite all my apparently sensible refactoring changes, I am seeing *massive* jank just playing around in the UI (partly but not only when returning from the "edit" full screen dialog)
 @Composable
-fun HomeScreen(vm: HomeScreenViewModel, navController: NavHostController) {
+fun HomeScreen(vm: HomeScreenViewModel, navController: NavHostController, onEditPriceClick: (UIContent) -> Unit) {
     // In order to minimise jank, we want the previous UI state to be available during the *very
     // first composition* when this screen is re-entered (e.g. after navigating back from another
     // screen).
@@ -2340,13 +2274,13 @@ fun HomeScreen(vm: HomeScreenViewModel, navController: NavHostController) {
             vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
         },
         uiContent.itemPriceListRaw,
-        onEditPriceClick = {
+        onEditPriceClick = { onEditPriceClick(uiContent) } /* TODO DELETE (uiContent)
             vm.setEditPriceScreenStateFromHomeScreenState(uiContent)
             // TODO: I don't know if this random UUID is necessary or helpful or harmful any more,
             // need to experiment/think about this once I finish re-implementing the price edit
             // screen.
             navController.navigate("fullScreenDialog/${UUID.randomUUID()}")
-        }
+        } */
     )
 }
 
@@ -2581,14 +2515,17 @@ fun HomeScreenScaffold(
 // TODO: I was thinking this screen would show the price history, but I am cooling on that. Not quite sure where we would show it, but I am not sure it's something we want cluttering up this in-store edit screen, or encouraging people to go into this "live edit" view where they might accidentally change data just to see the history. Maybe this could go on the overflow menu on home screen if we have all three things selected?
 // TODO: I should probably re-use the (bundled up in a composable) unit price display only but with variable unit on this screen, as it will might be useful to the user as a confirmation of the unit price on the shelf.
 fun OuterFullScreenDialog(
-    vm: HomeScreenViewModel, // TODO: Maybe this should have its own ViewModel?
+    vm: EditPriceScreenViewModel,
     navController: NavHostController,
+    uiContent: EditPriceScreenUIContent
 ) {
-    val uiContentNullable = vm.editPriceScreenUIContent
+/* TODO DELETE
+        val uiContentNullable = vm.editPriceScreenUIContent
     devCheck(uiContentNullable != null) {
         "uiContentNullable is null, but it should have been set before navigating to the edit price dialog"
     }
     val uiContent = uiContentNullable!!
+    */
 
     // TODO: This probably won't work right for adding new entries from scratch, I will need to think about that and this may well need some reworking, but let's ignore that and hack round it for now in relevant places
 
@@ -2660,11 +2597,11 @@ fun OuterFullScreenDialog(
     LaunchedEffect(Unit) {
         vm.saveEvents.collect { event ->
             when (event) {
-                HomeScreenViewModel.SaveStatus.Success -> {
+                EditPriceScreenViewModel.SaveStatus.Success -> {
                     popBackStack()
                 }
 
-                HomeScreenViewModel.SaveStatus.Error -> {
+                EditPriceScreenViewModel.SaveStatus.Error -> {
                     saveInitiated = false;
                     showErrorDialog = true;
                 }
@@ -3204,6 +3141,31 @@ class MainActivity : ComponentActivity() {
 
 // Shared ViewModel to pass data between screens
 class SharedViewModel : ViewModel() {
+
+    // This is only nullable to provide us with an easy initial value to use. In use
+    // setEditPriceScreenState() should always have been called before it is used.
+    var editPriceScreenUIContent: EditPriceScreenUIContent? = null
+
+    // TODO: Inconsistent use of "State" and "Content" here - rename everything consistently
+    fun setEditPriceScreenStateFromHomeScreenState(uiContent: UIContent) {
+        // !! is justified because uiContent was shown on the home screen and the edit price button was visible, which can only happen if we have all three available.
+        val dataSet = uiContent.dataSet!!
+        val item = uiContent.item!!
+        val source = uiContent.source!!
+
+        val price = uiContent.itemPriceListRaw.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
+
+        val editablePrice = if (price != null) EditablePrice(price) else EditablePrice(dataSetId = dataSet.id, itemId = item.id, sourceId = source.id, itemQuantityType = item.quantityType, itemDefaultUnit = item.defaultUnit)
+        editPriceScreenUIContent = EditPriceScreenUIContent(
+            editablePrice = editablePrice,
+            originalPrice = editablePrice,
+            dataSet = dataSet,
+            item = item,
+            source = source
+        )
+    }
+
+    /* TODO DELETE?!
     private val _selectedItem = MutableStateFlow<Item?>(null)
     val selectedItem: StateFlow<Item?> = _selectedItem.asStateFlow()
 
@@ -3213,10 +3175,10 @@ class SharedViewModel : ViewModel() {
 
     fun clearItem() {
         _selectedItem.value = null
-    }
+    } */
 }
 // Edit Screen ViewModel
-class EditPriceScreenViewModel(/* TODO? private val repository: Repository */) : ViewModel() {
+class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerRepository) : ViewModel() {
     /* TODO
     private val _uiState = MutableStateFlow(EditUiState())
     val uiState: StateFlow<EditUiState> = _uiState.asStateFlow()
@@ -3231,6 +3193,33 @@ class EditPriceScreenViewModel(/* TODO? private val repository: Repository */) :
         }
     }
     */
+
+    // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
+
+    enum class SaveStatus { Idle, Saving, Success, Error }
+
+    private val _saveStatus = SingleEventState(SaveStatus.Idle)
+    val saveStatus: StateFlow<SaveStatus> = _saveStatus.state
+    val saveEvents: SharedFlow<SaveStatus> = _saveStatus.events
+
+    // TODO: I don't think this will insert correctly yet, as Price has no price_id primary key to
+    // allow us to indicate to this function when it is an insert rather than an update, but let's
+    // worry about that later. OK, I think the solution is that this takes an EditablePrice. If we need
+    // it, we could also have an updatePrice() function which accepts a Price, as we know insert is
+    // not necessary there.
+    // TODO: Use upsert in name?
+    fun updateOrInsertPrice(price: EditablePrice) {
+        viewModelScope.launch {
+            _saveStatus.update(SaveStatus.Saving)
+            try {
+                //delay(3700); // TODO TEMP FOR DEBUGGING
+                priceTrackerRepository.updateOrInsertPrice(price)
+                _saveStatus.update(SaveStatus.Success)
+            } catch (e: Exception) {
+                _saveStatus.update(SaveStatus.Error) // TODO: how can we preserve e and show it to user in UI?
+            }
+        }
+    }
 }
 
 // TODO: ChatGPT magic
@@ -3259,9 +3248,13 @@ fun AppNavigation() {
             Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
             // TODO: I ACTUALLY THINK I DON'T NEED SAVEABLESTATEHOLDER AND HAVE BEEN CHASING THE WRONG PROBLEM BUT LET'S KEEP IT FOR NOW ANYWAY
             //saveableStateHolder.SaveableStateProvider(backStackEntry.id) {
-                HomeScreen(vm, navController /*, onEditPriceClick = { todoRenameMe -> // TODO: WIRE THIS IN
-                    sharedViewModel.selectItem(todoRenameMe)
-                navController.navigate("edit") } */)
+                HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
+                    sharedViewModel.setEditPriceScreenStateFromHomeScreenState(uiContent)
+                    // TODO: I don't know if this random UUID is necessary or helpful or harmful any more,
+                    // need to experiment/think about this once I finish re-implementing the price edit
+                    // screen.
+                    navController.navigate("fullScreenDialog/${UUID.randomUUID()}")
+                })
             //}
         }
         val tweenDurationMillisEnter = 700; // TODO: should probably be 300 in final version
@@ -3323,8 +3316,12 @@ fun AppNavigation() {
             val productId = backStackEntry.arguments?.getString("productId")?.toLong() ?: 0
             val storeId = backStackEntry.arguments?.getString("storeId")?.toLong() ?: 0
             */
-            val vm: EditPriceScreenViewModel = viewModel(backStackEntry) // TODO: ???factory = AppViewModelProvider.Factory)
-            // TODO! OuterFullScreenDialog(vm, navController)
+            val vm: EditPriceScreenViewModel = viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
+            // TODO: WE SHOULD PROBABLY PASS AN onSave and onDismiss lambda to this to navigate back with? although the fact there is no data passed (except implicitly via db) which needs to go into sharedviewmodel makes this less critical - still probably cleaner tho
+            devCheck(sharedViewModel.editPriceScreenUIContent != null) {
+                "editPriceScreenUIContent should have been set before navigating to the edit price screen"
+            }
+            OuterFullScreenDialog(vm, navController, sharedViewModel.editPriceScreenUIContent!!)
         }
     }
 }
