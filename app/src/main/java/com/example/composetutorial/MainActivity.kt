@@ -2969,6 +2969,7 @@ val foo: TextFieldValue = TextFieldValue("string")
 // I could imagine having different sets of validations the caller passes in to change what it's used for. Although composables
 // aren't really "objects", I do wonder if there would be some way to have a parallel "validate and convert to target type"
 // "infrastructure" which is table-ish driven or something.
+// TODO: Numeric fields should probably be limited to 10-ish characters just for sanity
 @Composable
 fun NumericTextField(
     label: @Composable() (() -> Unit)? = null,
