@@ -2949,7 +2949,7 @@ fun NumericTextField(
     prefix: @Composable() (() -> Unit)? = null,
     suffix: @Composable() (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
-    validationRules: List<ValidationRule>? = null,
+    validationRules: List<ValidationRule>? = numericValidationRules,
     onValueChange: (TextFieldValue) -> Unit,
     onSupportingTextChange: ((String?) -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -2962,7 +2962,7 @@ fun NumericTextField(
         prefix = prefix,
         suffix = suffix,
         textStyle = textStyle,
-        validationRules = (validationRules ?: emptyList()) + numericValidationRules,
+        validationRules = (validationRules ?: emptyList()),
         // TODO: We don't (we could, but probably no point) allow arbitrary onCandidateValueChange functions to be supplied by our caller. We just hardcode this for now. We could potentially accept some options from our caller which say whether decimal point (locale sensitive) or minus signs are allowed and tweak the internally-assigned onCandidate... function here.
         onCandidateValueChange = { isValidTransitionalDecimal(it) },
         onValueChange = onValueChange,
