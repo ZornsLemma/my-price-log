@@ -1435,7 +1435,7 @@ fun MainScreen(
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                 focusedContainerColor = MaterialTheme.colorScheme.surface
             ) */
-            colors = myTextFieldColors()
+            colors = myTextFieldColors(true) // TODO: hack, we should set parameter based on focus but let's just do it for MyExposedDropdownMenu first
         )
 
         // Item Modal Bottom Sheet
@@ -1480,9 +1480,9 @@ fun MainScreen(
 // Sometimes we have to make a TextField "enabled = false" for it to be clickable, so we need
 // to override the colours to make it look like it is enabled.
 @Composable
-fun myTextFieldColors() = TextFieldDefaults.colors(
+fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
     disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-    disabledLabelColor = MaterialTheme.colorScheme.primary, // TODO: experimental, "should be" MaterialTheme.colorScheme.onSurfaceVariant, - the idea is that in practice we use these colors for our dropdown selectors and they are "interactive" and maybe deserve highlighting - I have mixed feelings about how good this looks, but will go with primary for the moment
+    disabledLabelColor = if (isFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
     disabledTextColor = MaterialTheme.colorScheme.onSurface,
     disabledIndicatorColor = /* indicatorColor */ MaterialTheme.colorScheme.onSurfaceVariant,
 // focusedIndicatorColor = MaterialTheme.colorScheme.primary, // TODO NOT WORKING
@@ -1501,12 +1501,14 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     modifier: Modifier = Modifier
 ) {
     var textFieldWidth by remember { mutableStateOf(0) }
+    var isExpanded by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
         ItemWithDropdown(
             dropdownModifier = Modifier.width(with(LocalDensity.current) { textFieldWidth.toDp() }),
             selectedId = selectedId,
             onValueChange = onValueChange,
+            onExpand = { isExpanded = it },
             items = items,
             getId = getId,
             getLabel = getLabel,
@@ -1537,8 +1539,16 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
                     .fillMaxWidth()
                     .onGloballyPositioned { coordinates ->
                         textFieldWidth = coordinates.size.width
-                    },
-                colors = myTextFieldColors() // TODO: not sure this is right, need to think about MD3 etc
+                    }, /* TODO DELETE
+                    .onFocusChanged { focusState ->
+                        isFocused = focusState.isFocused
+                    }, */
+                // TODO: It isn't ideal to use isExpanded as a substitute for focus here, but it
+                // doesn't look too bad in practice. As probably noted elsewhere, because we have to
+                // have the TextField disabled in order to make it clickable, it doesn't seem to
+                // actually get focus (even when it gets that "it's focus but it's not focus" D-pad
+                // navigation focus) as far as onFocusChanged is concerned.
+                colors = myTextFieldColors(isExpanded)
             )
         }
         // If we let TextField display supportingText itself, it gets included in the bounding box
@@ -1729,6 +1739,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     dropdownModifier: Modifier = Modifier, // TODO: OK!?
     selectedId: ID?,
     onValueChange: (ID) -> Unit, // TODO: follow naming convention of MyExposedDropdownMenUBox
+    onExpand: (Boolean) -> Unit = {},
     items: List<T>,
     getId: (T) -> ID,
     getLabel: (T) -> String,
@@ -1738,14 +1749,14 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     // TODO: rememberSaveable? A simple dark mode toggle could lose this otherwise.
     var expanded by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.clickable { expanded = true }) {
+    Box(modifier = modifier.clickable { expanded = true; onExpand(expanded) }) {
         content()
 
         var previousItem: T? = null
         DropdownMenu(
             modifier = dropdownModifier,
             expanded = expanded,
-            onDismissRequest = { expanded = false }) {
+            onDismissRequest = { expanded = false; onExpand(expanded) }) {
             items.forEach { item ->
                 // We could make the first argument of getDividerBetween take null and call it every
                 // time, but I'm fairly sure it makes no sense to have a divider at the very top
@@ -1766,6 +1777,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
                     onClick = {
                         onValueChange(getId(item))
                         expanded = false
+                        onExpand(expanded)
                     }
                 )
             }
