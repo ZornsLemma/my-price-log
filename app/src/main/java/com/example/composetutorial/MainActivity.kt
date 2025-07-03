@@ -2965,6 +2965,10 @@ val foo: TextFieldValue = TextFieldValue("string")
 // TODO: Do we want support for "less scary" non-red supportingText with different icon? Probably OK without but think about it or add later if necessary.
 // TODO: ChatGPT semi-magic
 
+// TODO: It occurs to me that this isn't really "numeric" - it is a *Validated*TextField. Which is in many ways better of course.
+// I could imagine having different sets of validations the caller passes in to change what it's used for. Although composables
+// aren't really "objects", I do wonder if there would be some way to have a parallel "validate and convert to target type"
+// "infrastructure" which is table-ish driven or something.
 @Composable
 fun NumericTextField(
     label: @Composable() (() -> Unit)? = null,
