@@ -2466,7 +2466,6 @@ fun HomeScreenScaffold(
 }
 
 
-// TODO: Although design is still in flux, this screen does show up the probably inadvisable use of the "primary" colour for the dropdown menu (unit here) label even when it's not selected - the other text boxes all show primary only when focuses and are "greyish" otherwise
 @Composable
 // TODO: https://m3.material.io/components/dialogs/specs says (near bottom) top/left/right padding on a full screen dialog should be 24.dp - I am probably not doing that, should I? Should I use similar padding on "non-dialog full screens" to match??
 // TODO: This should probably show the confirmed date "in full", and although we will probably use internal logic to update it rather than letting user choose, we could show it live changing to "now" when the non-notes fields are different than originalprice, and back to old value if they rever them, and maybe a "x-in-circle" or some other button to say "force this back to the old date", though less sure that is a good idea - but showing the confirm date we are going to use is maybe a good way to show feedback that it will change. we could maybe use relative date just as on main screen, or show both?!
