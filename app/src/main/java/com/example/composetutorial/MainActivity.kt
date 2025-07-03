@@ -1061,8 +1061,11 @@ class SingleEventState<T>(initialState: T) {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerRepository, application: Application) :
-    ViewModel() {
+class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerRepository, application: Application) : ViewModel() {
+    init {
+        Log.d("MyApp", "HomeScreenViewModel created: $this")
+    }
+
     private val app = application
 
     // Every time getPreference() is called it returns a *new* StateFlow, which is probably not what
@@ -1231,51 +1234,6 @@ class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerReposi
             }
         }
     }
-
-
-
-
-    // TODO: The following functions should now probably be private or removed - the UI composable gets its data from the UIState flow
-
-    fun getAllDataSets() = priceTrackerRepository.getAllDataSets()
-
-    fun getDataSet(dataSetId: Long) = priceTrackerRepository.getDataSet(dataSetId)
-
-    // val products: Flow<List<Product>> = repository.getAllProducts()
-    // val items: Flow<List<Item>> = priceTrackerRepository.getAllItems()
-    /*
-    fun getAllItems(dataSetId: Long) = priceTrackerRepository.getAllItems(dataSetId)
-    */
-    fun getAllItems(dataSetId: Long): Flow<List<Item>> {
-        return priceTrackerRepository.getAllItems(dataSetId) /*.onEach { items ->
-            Log.d("MyApp", "Emitted items: $items")
-        } */
-    }
-
-    /* TODO DELETE?
-    fun getItemMap(dataSetId: Long): Flow<Map<Long, Item>> =
-        getAllItems(dataSetId).map { list ->
-            list.associateBy { it.id }
-        }
-        */
-
-    fun getItem(dataSetId: Long, itemId: Long) =
-        priceTrackerRepository.getItem(dataSetId, itemId)
-
-    fun getAllSources(dataSetId: Long): Flow<List<Source>> =
-        priceTrackerRepository.getAllSources(dataSetId)
-
-    fun getSourceMap(dataSetId: Long): Flow<Map<Long, Source>> =
-        getAllSources(dataSetId).map { list ->
-            list.associateBy { it.id }
-        }
-
-    // TODO: DELETE val categories: Flow<List<DataSet>> = priceTrackerRepository.getAllDataSets()
-
-    init {
-        Log.d("MyApp", "PriceTrackerViewModel created: $this")
-    }
-
 }
 
 
