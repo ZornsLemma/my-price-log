@@ -103,6 +103,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -113,7 +114,6 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.window.Popup
@@ -1235,11 +1235,10 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
 
     // This is only nullable to provide us with an easy initial value to use. In use
     // setEditPriceScreenState() should always have been called before it is used.
-    private val _editPriceScreenUIContent = MutableStateFlow<EditPriceScreenUIContent?>(null)
-    val editPriceScreenUIContent = _editPriceScreenUIContent.asStateFlow()
+    var editPriceScreenUIContent: EditPriceScreenUIContent? = null
 
     // TODO: Inconsistent use of "State" and "Content" here - rename everything consistently
-    fun setEditPriceScreenState(uiContent: UIContent) {
+    fun setEditPriceScreenStateFromHomeScreenState(uiContent: UIContent) {
         // !! is justified because uiContent was shown on the home screen and the edit price button was visible, which can only happen if we have all three available.
         val dataSet = uiContent.dataSet!!
         val item = uiContent.item!!
@@ -1248,7 +1247,7 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
         val price = uiContent.itemPriceListRaw.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
         val editablePrice = if (price != null) EditablePrice(price) else EditablePrice(dataSetId = dataSet.id, itemId = item.id, sourceId = source.id, itemQuantityType = item.quantityType, itemDefaultUnit = item.defaultUnit)
-        _editPriceScreenUIContent.value = EditPriceScreenUIContent(
+        editPriceScreenUIContent = EditPriceScreenUIContent(
             editablePrice = editablePrice,
             originalPrice = editablePrice,
             dataSet = dataSet,
@@ -1258,10 +1257,12 @@ class PriceTrackerViewModel(private val priceTrackerRepository: PriceTrackerRepo
     }
 
     // TODO: I think we need this to trigger the magic state emission that will cause Compose to update the GUI
+    /* TODO DELETE?
     fun setEditPriceScreenEditablePrice(editablePrice: EditablePrice) {
         // TODO: !! is probably OK but not thought too hard right now, come back to this
         _editPriceScreenUIContent.value = _editPriceScreenUIContent.value!!.copy(editablePrice = editablePrice)
     }
+    */
 
     /* TODO DELETE
     // TODO: Would it be more standard for the get...() here to have a different name, or be a read-only property or something?
@@ -2229,14 +2230,14 @@ data class EditablePrice(
     val dataSetId: Long,
     val itemId: Long,
     val sourceId: Long,
-    val price: String?,
+    val price: MutableState<String?>,
     val measure: MeasuredValue?,
     val originalUnit: MeasureUnit,
     val confirmed: Instant?,
-    val details: String?,
+    val details: MutableState<String?>,
     val itemQuantityType: QuantityType,
 
-) {
+    ) {
     /* TODO!?
     constructor() : this(
         id = 0,
@@ -2248,11 +2249,11 @@ data class EditablePrice(
         dataSetId = dataSetId,
         itemId = itemId,
         sourceId = sourceId,
-        price = null,
+        price = mutableStateOf(null),
         measure = null,
         originalUnit = itemDefaultUnit, // user can change this, but for a new price this is the sensible default
         confirmed = null,
-        details = null,
+        details = mutableStateOf(null),
         itemQuantityType = itemQuantityType
     )
 
@@ -2261,11 +2262,11 @@ data class EditablePrice(
         dataSetId = price.dataSetId,
         itemId = price.itemId,
         sourceId = price.sourceId,
-        price = formatDecimal(price.price, minDp = 2, maxDp = 2), // TODO: hardcoding 2 dp is a hack
+        price = mutableStateOf(formatDecimal(price.price, minDp = 2, maxDp = 2)), // TODO: hardcoding 2 dp is a hack
         measure = price.measure,
         originalUnit = price.originalUnit,
         confirmed = price.confirmed,
-        details = price.details,
+        details = mutableStateOf(price.details),
         itemQuantityType = price.itemQuantityType
     )
 
@@ -2283,7 +2284,7 @@ data class EditablePrice(
         measure = measure!!.asValue(baseUnitForQuantityType(itemQuantityType)),
         originalUnit = originalUnit!!, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
         confirmed = confirmed!!,
-        details = details!!,
+        details = details.value!!,
     )
 }
 
@@ -2339,7 +2340,7 @@ fun HomeScreen(vm: PriceTrackerViewModel, navController: NavHostController) {
         },
         uiContent.itemPriceListRaw,
         onEditPriceClick = {
-            vm.setEditPriceScreenState(uiContent)
+            vm.setEditPriceScreenStateFromHomeScreenState(uiContent)
             // TODO: I don't know if this random UUID is necessary or helpful or harmful any more,
             // need to experiment/think about this once I finish re-implementing the price edit
             // screen.
@@ -2582,7 +2583,7 @@ fun OuterFullScreenDialog(
     vm: PriceTrackerViewModel, // TODO: Maybe this should have its own ViewModel?
     navController: NavHostController,
 ) {
-    val uiContentNullable by vm.editPriceScreenUIContent.collectAsStateWithLifecycle()
+    val uiContentNullable = vm.editPriceScreenUIContent
     devCheck(uiContentNullable != null) {
         "uiContentNullable is null, but it should have been set before navigating to the edit price dialog"
     }
@@ -2803,14 +2804,15 @@ fun OuterFullScreenDialog(
                 */
                 // TODO: We "need" rememberSaveable but TextFieldValue probably doesn't support it. We will probably be using a ViewModel-held value in final code so let's not fuss about this for now.
                 //var todoNumber2 by rememberSaveable { mutableStateOf("888") }
-                var todoNumber by remember { mutableStateOf(TextFieldValue(uiContent.editablePrice.price ?: "")) } // TODO: Just stop it being nullable rather than converting null to "" here?
+                var todoNumber by remember { mutableStateOf(TextFieldValue(uiContent.editablePrice.price.value ?: "")) } // TODO: Just stop it being nullable rather than converting null to "" here?
                 NumericTextField(
                     label = { Text("Pack size") },
                     prefix = { Text("£") },
                     suffix = { Text("€") },
                     textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
                     value = todoNumber,
-                    onValueChange = { todoNumber = it; vm.setEditPriceScreenEditablePrice(uiContent.editablePrice.copy(price = it.text)) },
+                    // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
+                    onValueChange = { todoNumber = it; uiContent.editablePrice.price.value = it.text },
                     onSupportingTextChange = { todoSupportingText = it },
                     supportingText = "This is some supporting text just as a test.",
                     modifier = Modifier.weight(1f)
@@ -2849,8 +2851,8 @@ fun OuterFullScreenDialog(
             // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
             TextField(
                 label = { Text("Notes") },
-                value = uiContent.editablePrice.details ?: "",
-                onValueChange = { vm.setEditPriceScreenEditablePrice(uiContent.editablePrice.copy(details = it)) },
+                value = uiContent.editablePrice.details.value ?: "",
+                onValueChange = { uiContent.editablePrice.details.value = it  },
             )
             //}
         }
