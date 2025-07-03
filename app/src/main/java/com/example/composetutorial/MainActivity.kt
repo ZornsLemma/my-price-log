@@ -2505,7 +2505,6 @@ fun HomeScreenScaffold(
 fun OuterFullScreenDialog(
     vm: EditPriceScreenViewModel,
     navController: NavHostController,
-    uiContent: EditPriceScreenUIContent,
     onClose: () -> Unit
 ) {
 /* TODO DELETE
@@ -2525,6 +2524,11 @@ fun OuterFullScreenDialog(
     )}
     var price by rememberSaveable { mutableStateOf(originalPrice) }
     */
+    Log.d("MyApp", "EditPriceScreenViewModel $vm uiContent=${vm.uiContentXXX}")
+    devCheck(vm.uiContentXXX != null) {
+        "EditPriceScreenViewModel's uIContent should have been set to non-null before navigating to screen"
+    }
+    val uiContent = vm.uiContentXXX!! // TODO: Maybe simplify this later on??!
 
     // TODO: Can I get rid of saveInitiated and instead set the state inside the viewmodel to "idle" when we are not saving? The frequency with which we check it suggests it might be more painful to get rid of it. but if we track this, the distinction between idle and saving is mostly meainingless (the state never gets set back to idle) and we should maybe merge those states into a vague "meh" state.
     var saveInitiated by rememberSaveable { mutableStateOf(false) }
@@ -3177,6 +3181,12 @@ class SharedViewModel : ViewModel() {
 // edit screen is first composed? But this feels like it might be a nightmare of "bad first
 // compositions" - but it does also feel like it "ought" to be in here. Think about this later.
 class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerRepository) : ViewModel() {
+    val instanceId = UUID.randomUUID().toString() // TODO FOR DEBUG
+
+    init {
+        Log.d("MyApp", "EditPriceScreenViewModel $instanceId $this")
+    }
+
     /* TODO FROM GROK EXAMPLE, DELETE LATER BUT KEEPING AROUND FOR A BIT JIC
     private val _uiState = MutableStateFlow(EditUiState())
     val uiState: StateFlow<EditUiState> = _uiState.asStateFlow()
@@ -3191,6 +3201,20 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
         }
     }
     */
+
+    // TODO: Could/should this use a read only property amd a setter etc etc
+    /* TODO TEMP CHANGED TO USE SETTER AT LEAST SO I CAN LOG
+    var uiContent: EditPriceScreenUIContent? = null */
+    var uiContentXXX : EditPriceScreenUIContent? = null
+        set(value) {
+            Log.d("MyApp", "EditPriceScreenViewMode uIContent.set: $field -> $value")
+            field = value
+        }
+
+    override fun onCleared() {
+        super.onCleared()
+        Log.d("MyApp", "EditPriceScreenViewMode cleared $this")
+    }
 
     // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
 
@@ -3310,17 +3334,19 @@ fun AppNavigation() {
             }
         ) { backStackEntry ->
             val vm: EditPriceScreenViewModel = viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
-            devCheck(sharedViewModel.editPriceScreenUIContent != null) {
-                "editPriceScreenUIContent should have been set before navigating to the edit price screen"
+            // We will be re-composed during the exit transition for reasons which I kind of understand. So this
+            // code must be idempotent(ish?) and in order to avoid vm.uiContent being reset here (which would
+            // probably be harmless if we didn't set sharedViewModel.editPriceScreenUIContent to null, but it
+            // feels like that's useful as it highlights this issue) we must check we don't already have data.
+            // TODO: I suspect that comment is subtly wrong but it is about the best I can do for now.
+            if (vm.uiContentXXX == null) {
+                vm.uiContentXXX = sharedViewModel.editPriceScreenUIContent
+                Log.d("MyApp", "sharedViewModel.editPriceScreenUIContent = null")
+                sharedViewModel.editPriceScreenUIContent = null
             }
-            OuterFullScreenDialog(vm, navController, sharedViewModel.editPriceScreenUIContent!!,
+            OuterFullScreenDialog(vm, navController,
                 onClose = {
                     navController.popBackStack()
-                    // TODO: Conceptually we'd like to do "sharedViewModel.editPriceScreenUIContent
-                    // = null" just out of paranoia (so if we navigate back in there again via some
-                    // odd route, we'll get a clean failure rather than using some random outdated
-                    // data), but EditPriceScreenViewModel is still using it as it is animated out.
-                    // I don't think this is a huge problem but maybe reconsider it later.
                 })
         }
     }
