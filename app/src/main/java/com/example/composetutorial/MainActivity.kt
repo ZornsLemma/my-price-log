@@ -3100,9 +3100,9 @@ class MainActivity : ComponentActivity() {
 
 // Shared ViewModel to pass data between screens
 class SharedViewModel : ViewModel() {
-
     // This is only nullable to provide us with an easy initial value to use. In use
     // setEditPriceScreenState() should always have been called before it is used.
+    // TODO: Should we be using get/set functions or a read-only property and a set?
     var editPriceScreenUIContent: EditPriceScreenUIContent? = null
 
     // TODO: Inconsistent use of "State" and "Content" here - rename everything consistently
@@ -3124,7 +3124,7 @@ class SharedViewModel : ViewModel() {
         )
     }
 
-    /* TODO DELETE?!
+    /* TODO DELETE?! KEEPING AROUND FOR A BIT FROM GROK EXAMPLE JUST IN CASE IT'S HELPFUL
     private val _selectedItem = MutableStateFlow<Item?>(null)
     val selectedItem: StateFlow<Item?> = _selectedItem.asStateFlow()
 
@@ -3136,9 +3136,9 @@ class SharedViewModel : ViewModel() {
         _selectedItem.value = null
     } */
 }
-// Edit Screen ViewModel
+
 class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerRepository) : ViewModel() {
-    /* TODO
+    /* TODO FROM GROK EXAMPLE, DELETE LATER BUT KEEPING AROUND FOR A BIT JIC
     private val _uiState = MutableStateFlow(EditUiState())
     val uiState: StateFlow<EditUiState> = _uiState.asStateFlow()
 
