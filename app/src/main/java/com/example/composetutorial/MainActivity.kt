@@ -3478,6 +3478,10 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val vm: EditPriceScreenViewModel = viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
 
+            // TODO: Be good to test fairly late on with two datasets with different currencies - I vaguely wonder
+            // if re-use of this composable (maybe prevented via randomUUID route hack?) will not pick up the
+            // changes.
+
             // TODO: Test this but doing it this way ought to mean we correctly pick up locale changes while we are on screen
             LaunchedEffect(Locale.getDefault()) {
                 vm.updateLocaleDependencies(Locale.getDefault())
