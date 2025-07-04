@@ -2805,6 +2805,7 @@ fun OuterFullScreenDialog(
             }
             // TODO: I put this in to test the feature on NumericTextField, if (and it might) it lives, need to be careful to use the right font and spacing so it is indistinguishable (apart from its width) from a "true" supportingText under the pack size text box
             if (todoSupportingText != null) {
+                // TODO: the color is wrong-ish here - needs to be onSurfaceVariant if this *isn't* an error, or MaterialTheme.colorScheme.error if it is. Maybe todoSupportingText should be some kind of sealed class? In this form we could probably get away with just always making this error colour, but that's a bit hacky.
                 Text(text=todoSupportingText!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
             }
             Spacer(modifier = Modifier.height(8.dp))
