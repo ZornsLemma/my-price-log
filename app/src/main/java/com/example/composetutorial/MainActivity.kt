@@ -2773,6 +2773,7 @@ fun OuterFullScreenDialog(
                 // TODO: We "need" rememberSaveable but TextFieldValue probably doesn't support it. We will probably be using a ViewModel-held value in final code so let's not fuss about this for now.
                 //var todoNumber2 by rememberSaveable { mutableStateOf("888") }
                 var todoNumber by rememberSyncedTextFieldValue(uiContent.editablePrice.price.value ?: "") // TODO: Just stop it being nullable rather than converting null to "" here?
+                // TODO: Remember final "save" validation must check for non-empty strings for Validated/NUmeric TextFields, as the validation allows this
                 NumericTextField(
                     label = { Text("Pack size") },
                     prefix = { Text("£") },
@@ -2801,9 +2802,12 @@ fun OuterFullScreenDialog(
             }
             // TODO: I put this in to test the feature on NumericTextField, if (and it might) it lives, need to be careful to use the right font and spacing so it is indistinguishable (apart from its width) from a "true" supportingText under the pack size text box
             if (todoSupportingText != null) {
-                Text(todoSupportingText!!)
+                Text(text=todoSupportingText!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
             }
             Spacer(modifier = Modifier.height(8.dp))
+            /* TODO DELETE - JUST TEMP TO CHECK MY "FAKE" SUPPORTING TEXT MATCHES IN SPACING AND APPEARANCE
+            TextField(value="TODOTEMP", onValueChange = {}, modifier = Modifier.fillMaxWidth(), label={ Text("TODOTEMP") }, supportingText = { Text("Comparison supporting text") })
+            */
             // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute ma
             // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that would give a width for an arbitrary string and
             // we could use something like that to size fields like this and/or the unit (albeit both have some extra window furniture - but we could for example compute a "notional text size" taking font size into account for " £  1234.00     " (spaces approximating margins/space for icons to pop in) and " litre    " (ditto) and use those sizes as the weights - we don't want both things fixed size as they won't fill the screen then, and we probably don't want one "minimal" and the other filling rest of space - but then again, if you do that, a fixed ratio is probably more or less the same since both will expand with font size just the same, so maybe that would be pointless
@@ -2941,7 +2945,7 @@ fun validationRuleMaxDp(maxDp: Int): ValidationRule {
 */
 
 // This assumes input filtering has already excluded characters other than digits, space, comma and full stop. TODO: We could go belt and braces and check for that anyway.
-fun numericValidationRules(allowDecimals: Boolean = true, maxDp: Int? = null): List<ValidationRule> {
+fun numericValidationRules(allowDecimals: Boolean = true, allowZero: Boolean = true, maxDp: Int? = null, ): List<ValidationRule> {
     val locale = Locale.getDefault()
     val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
     val maxDecimalSeparators = if (allowDecimals) 1 else 0
@@ -2949,11 +2953,9 @@ fun numericValidationRules(allowDecimals: Boolean = true, maxDp: Int? = null): L
     // Create a function to strip off everything except digits and the decimal separator - this removes fluff like spaces and the grouping symbol if the user typed it in.
     // TODO: If we allow negative values, we shouldn't strip that off. Maybe best to just allow it through here - it is significant if typed.
     val allowedCharsRegex = "[^0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
-    fun sanitiseCandidate(candidate: String): String {
-        return candidate.replace(allowedCharsRegex, "")
-    }
-
-    // TODO: We might need to make special exceptions to handle an empty string, either here or in the ValidatedTextField - we don't really want red warnings all over the place when the form opens up with fields empty
+    fun sanitiseCandidate(candidate: String) = candidate.replace(allowedCharsRegex, "")
+    fun attemptedParse(candidate: String): Double? =
+        sanitiseCandidate(candidate).replace(decimalSeparator, '.').toDoubleOrNull()
 
     return listOfNotNull(
         ValidationRule({ it.count { it == decimalSeparator}  <= maxDecimalSeparators }, if (allowDecimals) "Only one decimal point allowed" else "Only whole numbers allowed"),
@@ -2967,8 +2969,15 @@ fun numericValidationRules(allowDecimals: Boolean = true, maxDp: Int? = null): L
             null
         },
 
+        if (!allowZero) {
+            // TODO: This message assumes you can't enter a negative value in the first place.
+            ValidationRule( { attemptedParse(it) != 0.0 }, "Must be greater than zero")
+        } else {
+            null
+        },
+
         // This is a catch-all; in practice we expect to catch all problems before this, but we don't want to have a string which can't be converted (which would cause an error on trying to save) which the user hasn't been warned about.
-        ValidationRule({ sanitiseCandidate(it).replace(decimalSeparator, '.').toDoubleOrNull() != null }, "Invalid number"),
+        ValidationRule({ attemptedParse(it) != null }, "Invalid number"),
     )
 }
 
@@ -3013,7 +3022,8 @@ fun NumericTextField(
         textStyle = textStyle,
         validationRules = (validationRules ?: emptyList()),
         // TODO: We don't (we could, but probably no point) allow arbitrary onCandidateValueChange functions to be supplied by our caller. We just hardcode this for now. We could potentially accept some options from our caller which say whether decimal point (locale sensitive) or minus signs are allowed and tweak the internally-assigned onCandidate... function here.
-        onCandidateValueChange = { isValidTransitionalDecimal(it) },
+        // TODO: The length limit is a bit arbitrary but we're just trying to avoid the user filling the box full of junk. I picked 11 because with my current layout on a small phone this avoids wrapping, and it feels very generous anyway. This allows just under a million with two decimal places and a (manually entered) thousands separator.
+        onCandidateValueChange = { isValidTransitionalDecimal(it) && it.length <= 11 },
         onValueChange = onValueChange,
         onSupportingTextChange = onSupportingTextChange,
         modifier = modifier,
@@ -3046,6 +3056,15 @@ fun ValidatedTextField(
     var isFocused by remember { mutableStateOf(false) }
 
     fun updateFailedValidationRule(newValue: String) {
+        // We don't want to generate validation failures juest because the field is empty. For the
+        // moment we consider the field empty if it's nothing but whitespace. At least for my
+        // purposes here I think this is fine. Obviously we could add a parameter to allow the
+        // caller to configure this.
+        if (newValue.trim().isEmpty()) {
+            failedValidationRule =  null
+            return
+        }
+
         // In order to give "consistent" supportingText, we give precedence to whichever
         // validation generated the current supporting text.
         val reorderedValidations = listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
@@ -3334,7 +3353,7 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     var priceValidationRules = getPriceValidationRules(Locale.getDefault())
 
     // TODO: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRIVECALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
-    fun getPriceValidationRules(locale: Locale) = numericValidationRules(allowDecimals = true, maxDp = 2)
+    private fun getPriceValidationRules(locale: Locale) = numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
 
     fun updateLocaleDependencies(locale: Locale) {
         priceValidationRules = getPriceValidationRules(locale)
