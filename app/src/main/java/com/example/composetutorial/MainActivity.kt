@@ -2675,15 +2675,13 @@ fun OuterFullScreenDialog(
                 actions = {
                     // TODO: When/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
                     TextButton(enabled = !saveInitiated, onClick = {
-                        val price = uiContent.editablePrice.toDomain().getOrNull()
-                        if (price != null) {
-                            // TODO: Should we "disable" all the composables while saveInitiated is true? This would stop the
-                            // user editing during the save, especially if it gets long. Would it look a tiny bit glitchy to
-                            // have everything grey out the instant they click save? arguably this is just feedback.
+                        // TODO: Maybe we shouldn't be passing editablePrice around as a parameter so much, when it's implicit in
+                        // the ViewModel? THis would apply elsewhere, not just here.
+                        if (vm.isEditablePriceValid(uiContent.editablePrice)) {
                             saveInitiated = true
-                            vm.updateOrInsertPrice(price)
+                            vm.saveEditablePrice(uiContent.editablePrice)
                         } else {
-                            TODO() // TODO GENERATE ERROR
+                            TODO() // TODO GENERATE ERROR - EG A SNACKBAR, AND MAYBE JUMP FOCUS TO FIRST FAILURE
                         }
                     }) {
                         if (showSaveProgressIndicator) {
@@ -2852,6 +2850,7 @@ fun OuterFullScreenDialog(
             //}
         }
 
+        // TODO: FWIW this is currently broken - it never seems to trigger. The edit stuff is in a massive state of flux so not too worried but it needs fixing later obviously!
         if (showConfirmDialog) {
             // I copied the wording of this dialog directly from a screenshot in the M3 documentaion.
             AlertDialog(
@@ -3455,6 +3454,23 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
             Log.d("MyApp", "sampleFormattedCurrency for ${dataSet.currencyCode} is '$sampleFormattedCurrency'")
             val (prefix, suffix) = splitAroundDigits(sampleFormattedCurrency)
             CurrencyFormat(decimalPlaces = currencyInstance.defaultFractionDigits, prefix = prefix.trim().ifBlank { null }, suffix = suffix.trim().ifBlank { null }, validationRules = numericValidationRules(allowDecimals = true, allowZero = false, maxDp = currencyInstance.defaultFractionDigits))
+        }
+    }
+
+    // TODO: It's tempting to think this should be on EditablePrice itself, but the whole point is that it will apply (sharing as much as possible) the same validation rules that the ValidatedTextFields are usiong - and those aren't available to EditablePrice, and based on discussion with ChatGPT I think it's better to have this function here than pass this ViewModel as an argument to EditablePrice.toDomain()
+    fun isEditablePriceValid(editablePrice: EditablePrice): Boolean {
+        return true; // TODO!
+    }
+
+    fun saveEditablePrice(editablePrice: EditablePrice) {
+        val price = editablePrice.toDomain().getOrNull()
+        if (price != null) {
+            updateOrInsertPrice(price)
+        } else {
+            // This is an internal logic error. Our caller should have got confirmation from
+            // isEditablePriceValid() that editablePrice is OK, and if that says it's OK toDomain()
+            // should not fail.
+            throw IllegalStateException("saveEditablePrice() called with an inconvertible editablePrice: $editablePrice")
         }
     }
 
