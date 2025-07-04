@@ -1335,7 +1335,6 @@ fun MainScreen(
         // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
         MyExposedDropdownMenuBox(
             modifier = Modifier
-                .padding(bottom = 8.dp)
                 .fillMaxWidth(),
             selectedId = selectedDataSetId,
             onValueChange = { onSelectedDataSetIdChange(it) },
@@ -1345,6 +1344,8 @@ fun MainScreen(
             getLabel = { it.name },
         )
         // TODO: If we have no data sets, we should (analogous to how the source dropdown works) show a supportingText about selecting one *and hide the rest of the UI*. Nothing makes sense without a dataset, there is no way to pick a product or source. This probably means we need support from our parent (or this needs moving up into the parent) to do that.
+
+        Spacer(modifier = Modifier.height(8.dp).fillMaxWidth().background(color=Color.Red))
 
         // Item selector
         TextField(
@@ -1420,6 +1421,9 @@ fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
 )
 
 // TODO: THis needs support for selecting "None" - maybe we just make the user pass it in the input with a null ID, actually?
+// TODO: As can be seen from the temporarily-red spacers on home sreen, this has a bit of extra vertical space below it which
+// introduces extra irregular vertical space. I could manually compensate for this in my layouts but it would be good if I
+// didn't have to and we could just get rid of it here.
 @Composable
 fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     selectedId: ID?,
@@ -2435,6 +2439,7 @@ fun HomeScreenScaffold(
                 modifier = androidx.compose.ui.Modifier.height(
                     8.dp
                 )
+                    .fillMaxWidth().background(color = Color.Red) // TODO DEBUG HACK
             )
 
             if (dataSet != null) {
