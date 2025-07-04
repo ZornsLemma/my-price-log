@@ -2666,6 +2666,9 @@ fun OuterFullScreenDialog(
                     TextButton(enabled = !saveInitiated, onClick = {
                         val price = uiContent.editablePrice.toDomain().getOrNull()
                         if (price != null) {
+                            // TODO: Should we "disable" all the composables while saveInitiated is true? This would stop the
+                            // user editing during the save, especially if it gets long. Would it look a tiny bit glitchy to
+                            // have everything grey out the instant they click save? arguably this is just feedback.
                             saveInitiated = true
                             vm.updateOrInsertPrice(price)
                         } else {
