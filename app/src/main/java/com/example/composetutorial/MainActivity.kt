@@ -3201,15 +3201,13 @@ fun ValidatedTextField(
             }
         },
         supportingText = getSupportingText(),
-        trailingIcon = {
-            if (failedValidationSupportingText != null) {
+        trailingIcon = if (failedValidationSupportingText != null) { {
                 Icon(
                     imageVector = Icons.Default.Warning,
                     contentDescription = "Error",
                     tint = MaterialTheme.colorScheme.error
                 )
-            }
-        },
+            } } else null,
         isError = failedValidationSupportingText != null
     )
 
