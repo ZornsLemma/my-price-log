@@ -1887,6 +1887,7 @@ fun ItemSourceInfo(
                             )
                         }
 
+                        // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Last checked") {
                             RelativeTimeText(priceList[0].confirmed)
                             // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
