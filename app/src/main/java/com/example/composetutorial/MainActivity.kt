@@ -2816,6 +2816,7 @@ fun OuterFullScreenDialog(
             // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that would give a width for an arbitrary string and
             // we could use something like that to size fields like this and/or the unit (albeit both have some extra window furniture - but we could for example compute a "notional text size" taking font size into account for " £  1234.00     " (spaces approximating margins/space for icons to pop in) and " litre    " (ditto) and use those sizes as the weights - we don't want both things fixed size as they won't fill the screen then, and we probably don't want one "minimal" and the other filling rest of space - but then again, if you do that, a fixed ratio is probably more or less the same since both will expand with font size just the same, so maybe that would be pointless
             var TODOHACKYPRICE by remember { mutableStateOf(1.23) }
+            Log.d("MyApp", "getCurrencyFormat ${vm.getCurrencyFormat(uiContent.dataSet)}")
             CurrencyTextField(
                 label = { Text("Pack price") },
                 // TODO prefix = { Text("£") },
@@ -3314,6 +3315,21 @@ class SharedViewModel : ViewModel() {
     } */
 }
 
+fun splitAroundDigits(input: String): Pair<String, String> {
+    var firstDigitIndex = input.indexOfFirst { it.isDigit() }
+    if (firstDigitIndex == -1) { firstDigitIndex = 0 }
+    val prefix = input.substring(0, firstDigitIndex)
+
+    val lastDigitIndex = input.indexOfLast { it.isDigit() }
+    val suffix = if (lastDigitIndex == -1) {
+        ""
+    } else {
+        input.substring(lastDigitIndex + 1)
+    }
+
+    return Pair(prefix, suffix)
+}
+
 // TODO: Should this hold the EditablePrice and we should copy it over from the SharedViewModel when
 // edit screen is first composed? But this feels like it might be a nightmare of "bad first
 // compositions" - but it does also feel like it "ought" to be in here. Think about this later.
@@ -3359,8 +3375,36 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     // TODO: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRIVECALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
     private fun getPriceValidationRules(locale: Locale) = numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
 
+    data class CurrencyFormat(
+        val decimalPlaces: Int,
+        val prefix: String?,
+        val suffix: String?
+    )
+
+    // TODO: We are implementing this as a map (maybe rename it to cache) because it's locale dependent but we don't have the data set handy when we do updateLocaleDependencies(). So we lazily look up the currency details (which is completely acceptable main thread work, but just fiddly enough we don't want to be doing it *constantly*) and cache it in here on first up.
+    // TODO: MutableMap is not thread safe. I don't think this is a problem, but be aware of it - I think we could switch to non-mutable Map and replace-in-place if necessary
+    val currencyFormatMap: MutableMap<String, CurrencyFormat> = mutableMapOf()
+
     fun updateLocaleDependencies(locale: Locale) {
         priceValidationRules = getPriceValidationRules(locale)
+        currencyFormatMap.clear()
+    }
+
+    // TODO: This takes a DataSet not a currency code because later on a DataSet may allow custom currency formatting which overrides whatever the current locale wants to do.
+    fun getCurrencyFormat(dataSet: DataSet): CurrencyFormat {
+        return currencyFormatMap.getOrPut(dataSet.currencyCode) {
+            val currencyInstance = Currency.getInstance(dataSet.currencyCode)
+            // currencyInstance will give us the number of decimal places, but it won't give us a
+            // prefix or suffix to use - which we need for currency TextFields. So we ask it to
+            // format a sample price and take the prefix and suffix from that.
+            val numberFormat = NumberFormat.getCurrencyInstance(Locale.getDefault()).apply {
+                currency = currencyInstance
+            }
+            val sampleFormattedCurrency = numberFormat.format(1.0)
+            Log.d("MyApp", "sampleFormattedCurrency for ${dataSet.currencyCode} is '$sampleFormattedCurrency'")
+            val (prefix, suffix) = splitAroundDigits(sampleFormattedCurrency)
+            CurrencyFormat(decimalPlaces = currencyInstance.defaultFractionDigits, prefix = prefix.trim().ifBlank { null }, suffix = suffix.trim().ifBlank { null })
+        }
     }
 
     // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
