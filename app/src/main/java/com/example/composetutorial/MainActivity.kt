@@ -2780,7 +2780,7 @@ fun OuterFullScreenDialog(
                     suffix = { Text("€") },
                     textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
                     value = todoNumber,
-                    validationRules = vm.priceValidationRules,
+                    validationRules = vm.priceValidationRules, // TODO: This *isn't* a price of course! We should use validation rules suitable for our unit.
                     // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                     onValueChange = { todoNumber = it; uiContent.editablePrice.price.value = it.text },
                     onSupportingTextChange = { todoSupportingText = it },
