@@ -2161,8 +2161,9 @@ data class EditablePrice(
     val itemId: Long,
     val sourceId: Long,
     val price: MutableState<String?>,
-    val measure: MeasuredValue?,
-    val originalUnit: MeasureUnit,
+    val measureValue: MutableState<String?>,
+    val measureUnit: MeasureUnit, // TODO: THIS OR originalUnit IS PROBABLY REDUNDANT - HAVE NOTES ELSEWHERE TO THINK ABOUT THIS
+    val originalUnit: MeasureUnit, // TODO: DOES THIS HAVE ANY MEANING HERE?
     val confirmed: Instant?,
     val details: MutableState<String?>,
     val itemQuantityType: QuantityType,
@@ -2180,7 +2181,8 @@ data class EditablePrice(
         itemId = itemId,
         sourceId = sourceId,
         price = mutableStateOf(null),
-        measure = null,
+        measureValue = mutableStateOf(null),
+        measureUnit = itemDefaultUnit, // TODO!?
         originalUnit = itemDefaultUnit, // user can change this, but for a new price this is the sensible default
         confirmed = null,
         details = mutableStateOf(null),
@@ -2193,7 +2195,8 @@ data class EditablePrice(
         itemId = price.itemId,
         sourceId = price.sourceId,
         price = mutableStateOf(formatDecimal(price.price, minDp = 2, maxDp = 2)), // TODO: hardcoding 2 dp is a hack
-        measure = price.measure,
+        measureValue = mutableStateOf(formatDecimal(price.measure.value, minDp = null, maxDp = null)),
+        measureUnit = price.originalUnit, // TODO?!?
         originalUnit = price.originalUnit,
         confirmed = price.confirmed,
         details = mutableStateOf(price.details),
@@ -2211,12 +2214,20 @@ data class EditablePrice(
             itemId = itemId,
             sourceId = sourceId,
             price = 42.0, // TODO! We need to do string parsing and other validation appropriate to this field and indicate to caller if it fails, hacking for now
-            measure = measure!!,
+            measure = MeasuredValue(69.0 /* TODO! */, measureUnit /* TODO OR ORIGINAL UNIT!? */),
             originalUnit = originalUnit!!, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
             confirmed = confirmed!!,
             details = details.value!!,
             itemQuantityType = itemQuantityType,
         ))
+    }
+}
+
+fun TextOrNull(string: String?): @Composable() (() -> Unit)? {
+    if (string == null) {
+        return string
+    } else {
+        return { Text(string) }
     }
 }
 
@@ -2775,17 +2786,14 @@ fun OuterFullScreenDialog(
                 */
                 // TODO: We "need" rememberSaveable but TextFieldValue probably doesn't support it. We will probably be using a ViewModel-held value in final code so let's not fuss about this for now.
                 //var todoNumber2 by rememberSaveable { mutableStateOf("888") }
-                var todoNumber by rememberSyncedTextFieldValue(uiContent.editablePrice.price.value ?: "") // TODO: Just stop it being nullable rather than converting null to "" here?
+                var todoNumber by rememberSyncedTextFieldValue(uiContent.editablePrice.measureValue.value ?: "") // TODO: Just stop it being nullable rather than converting null to "" here?
                 // TODO: Remember final "save" validation must check for non-empty strings for Validated/NUmeric TextFields, as the validation allows this
                 NumericTextField(
                     label = { Text("Pack size") },
-                    prefix = { Text("£") },
-                    suffix = { Text("€") },
-                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
                     value = todoNumber,
-                    validationRules = vm.priceValidationRules, // TODO: This *isn't* a price of course! We should use validation rules suitable for our unit.
+                    validationRules = vm.packSizeValidationRules,
                     // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
-                    onValueChange = { todoNumber = it; uiContent.editablePrice.price.value = it.text },
+                    onValueChange = { todoNumber = it; uiContent.editablePrice.measureValue.value = it.text },
                     onSupportingTextChange = { todoSupportingText = it },
                     supportingText = "This is some supporting text just as a test.",
                     modifier = Modifier.weight(1f)
@@ -2815,14 +2823,21 @@ fun OuterFullScreenDialog(
             // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute ma
             // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that would give a width for an arbitrary string and
             // we could use something like that to size fields like this and/or the unit (albeit both have some extra window furniture - but we could for example compute a "notional text size" taking font size into account for " £  1234.00     " (spaces approximating margins/space for icons to pop in) and " litre    " (ditto) and use those sizes as the weights - we don't want both things fixed size as they won't fill the screen then, and we probably don't want one "minimal" and the other filling rest of space - but then again, if you do that, a fixed ratio is probably more or less the same since both will expand with font size just the same, so maybe that would be pointless
-            var TODOHACKYPRICE by remember { mutableStateOf(1.23) }
+            var TODOHACKYPRICE by rememberSyncedTextFieldValue(uiContent.editablePrice.price.value ?: "") // TODO: Just stop it being nullable rather than converting null to "" here?
             Log.d("MyApp", "getCurrencyFormat ${vm.getCurrencyFormat(uiContent.dataSet)}")
-            CurrencyTextField(
+            val currencyFormat = vm.getCurrencyFormat(uiContent.dataSet)
+            NumericTextField(
                 label = { Text("Pack price") },
                 // TODO prefix = { Text("£") },
                 value = TODOHACKYPRICE,
-                onValueChange = { TODOHACKYPRICE = it ?: 9.99 /* TODO! */; Log.d("MyApp", "TODOHACKYPRICE $TODOHACKYPRICE") },
-                currencyCode = uiContent.dataSet.currencyCode
+                prefix = TextOrNull(currencyFormat.prefix),
+                suffix = TextOrNull(currencyFormat.suffix),
+                // TODO: Is it correct to right-align like this? I will assume it is for now. Maybe there's an argument since the unit on the pack size is pseudo-suffixy, we should right-align the pack size - but I think that might look ugly. But maybe that means this looks ugly. But maybe it's different if you're used to the currency symbol being on the right. Or maybe the currency symbol should be on the left in this kind of form *anyway*. Very hard for me to know. Maybe wait for user feedback?
+                textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(textAlign = TextAlign.End) else LocalTextStyle.current,
+                validationRules = currencyFormat.validationRules,
+                // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
+                onValueChange = { TODOHACKYPRICE = it; uiContent.editablePrice.price.value = it.text },
+                supportingText = "This is more supporting text just as a test.",
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -2885,6 +2900,7 @@ fun OuterFullScreenDialog(
     }
 }
 
+/* TODO DELETE
 // TODO: https://developer.android.com/develop/ui/compose/text/user-input?textfield=state-based mentions InputTransformation/OutputTransformation/VisualTransformation which may be helpful here (particularly for implementing a *numeric* TextField, which is probaly what I really want - currency will just be a prefix and/or suffix, and it will tell us the number of dps to enforce on our purely numeric input)
 // TODO: Grok code, hacking it up, needs review especially the scary java-ish currency stuff with locales
 @Composable
@@ -2922,6 +2938,7 @@ fun CurrencyTextField(
         // textStyle = MaterialTheme.typography.bodyLarge
     )
 }
+*/
 
 // TODO: Maybe rename - the idea here is this does not insist the input is actually parseable as a
 // decimal (for example, we allow "24.2.3" so the user can enter a new decimal point *and then later
@@ -2966,6 +2983,7 @@ fun numericValidationRules(allowDecimals: Boolean = true, allowZero: Boolean = t
         ValidationRule({ it.count { it == decimalSeparator}  <= maxDecimalSeparators }, if (allowDecimals) "Only one decimal point allowed" else "Only whole numbers allowed"),
 
         if (maxDp != null) {
+            // TODO: We could allow extra decimal places if they are all zeros? I could see arguments either way.
             ValidationRule({
                 val parts = sanitiseCandidate(it).split(decimalSeparator)
                 parts.size != 2 || parts[1].length <= maxDp
@@ -3037,6 +3055,34 @@ fun NumericTextField(
     )
 }
 
+/* TODO DELETE
+@Composable
+fun CurrencyTextField(
+    label: @Composable() (() -> Unit)? = null,
+    value: TextFieldValue,
+    textStyle: TextStyle = LocalTextStyle.current,
+    validationRules: List<ValidationRule>? = numericValidationRules(),
+    onValueChange: (TextFieldValue) -> Unit,
+    onSupportingTextChange: ((String?) -> Unit)? = null,
+    modifier: Modifier = Modifier,
+    supportingText: String? = null,
+    messageDelayMillis: Long = defaultValidationMessageDelayMillis,
+) {
+    NumericTextField(
+        label = label,
+        value = value,
+        prefix = TODO,
+        suffix = TODO,
+        textStyle = textStyle,
+        validationRules = validationRules,
+        onValueChange = onValueChange,
+        onSupportingTextChange = onSupportingTextChange,
+        modifier = modifier,
+        supportingText = supportingText,
+        messageDelayMillis = messageDelayMillis,
+}
+*/
+
 // TODO: Can we take a String instead of a TextFieldValue and internally wrap it with a remember()? I am thinking that TextField's own String-taking implementation must do something similar, surely?
 @Composable
 fun ValidatedTextField(
@@ -3084,7 +3130,7 @@ fun ValidatedTextField(
 
     // We have this function to help make it easier to pass a literal null to TextField's
     // supportingText when we don't want anything, to prevent it allocating visual space for
-    // supportingText.
+    // supportingText. TODO: Some overlap with TextOrNull()?
     fun getSupportingText(): @Composable (() -> Unit)? {
         if (onSupportingTextChange == null) {
             if (failedValidationSupportingText != null) {
@@ -3180,12 +3226,16 @@ private fun formatCurrency(amount: Double, locale: Locale, currencyCode: String)
     return numberFormat.format(amount)
 }
 
-fun formatDecimal(number: Double, minDp: Int, maxDp: Int): String {
+fun formatDecimal(number: Double, minDp: Int?, maxDp: Int?): String {
     val locale = Locale.getDefault()
     var format = NumberFormat.getNumberInstance(locale) as DecimalFormat
     format.isGroupingUsed = false
-    format.setMinimumFractionDigits(minDp)
-    format.setMaximumFractionDigits(maxDp)
+    if (minDp != null) {
+        format.setMinimumFractionDigits(minDp)
+    }
+    if (maxDp != null) {
+        format.setMaximumFractionDigits(maxDp)
+    }
     return format.format(number)
 }
 
@@ -3370,15 +3420,17 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     }
 
     // TODO: Even if Locale.getDefault() is sub-optimal, this is fine as it's really only a default. updateLocaleDependencies() should be called almost immediately - maybe do some test logging to check that?
-    var priceValidationRules = getPriceValidationRules(Locale.getDefault())
+    // TODO: HARDCODING 2DP FOR PACK SIZE IS A HACK - SHOULD PROBABLY VARY WITH UNIT???
+    var packSizeValidationRules = numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
 
     // TODO: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRIVECALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
     private fun getPriceValidationRules(locale: Locale) = numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
 
     data class CurrencyFormat(
-        val decimalPlaces: Int,
+        val decimalPlaces: Int, // TODO: We may not actually need this, if it's baked into validation rules and not used elsewhere
         val prefix: String?,
-        val suffix: String?
+        val suffix: String?,
+        val validationRules: List<ValidationRule>
     )
 
     // TODO: We are implementing this as a map (maybe rename it to cache) because it's locale dependent but we don't have the data set handy when we do updateLocaleDependencies(). So we lazily look up the currency details (which is completely acceptable main thread work, but just fiddly enough we don't want to be doing it *constantly*) and cache it in here on first up.
@@ -3386,7 +3438,6 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     val currencyFormatMap: MutableMap<String, CurrencyFormat> = mutableMapOf()
 
     fun updateLocaleDependencies(locale: Locale) {
-        priceValidationRules = getPriceValidationRules(locale)
         currencyFormatMap.clear()
     }
 
@@ -3403,7 +3454,7 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
             val sampleFormattedCurrency = numberFormat.format(1.0)
             Log.d("MyApp", "sampleFormattedCurrency for ${dataSet.currencyCode} is '$sampleFormattedCurrency'")
             val (prefix, suffix) = splitAroundDigits(sampleFormattedCurrency)
-            CurrencyFormat(decimalPlaces = currencyInstance.defaultFractionDigits, prefix = prefix.trim().ifBlank { null }, suffix = suffix.trim().ifBlank { null })
+            CurrencyFormat(decimalPlaces = currencyInstance.defaultFractionDigits, prefix = prefix.trim().ifBlank { null }, suffix = suffix.trim().ifBlank { null }, validationRules = numericValidationRules(allowDecimals = true, allowZero = false, maxDp = currencyInstance.defaultFractionDigits))
         }
     }
 
