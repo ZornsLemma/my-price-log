@@ -2827,6 +2827,7 @@ fun OuterFullScreenDialog(
             Log.d("MyApp", "getCurrencyFormat ${vm.getCurrencyFormat(uiContent.dataSet)}")
             val currencyFormat = vm.getCurrencyFormat(uiContent.dataSet)
             NumericTextField(
+                modifier = Modifier.fillMaxWidth(),
                 label = { Text("Pack price") },
                 // TODO prefix = { Text("£") },
                 value = TODOHACKYPRICE,
@@ -2843,6 +2844,7 @@ fun OuterFullScreenDialog(
             Spacer(modifier = Modifier.height(8.dp))
             // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
             TextField(
+                modifier = Modifier.fillMaxWidth(),
                 label = { Text("Notes") },
                 value = uiContent.editablePrice.details.value ?: "",
                 onValueChange = { uiContent.editablePrice.details.value = it  },
