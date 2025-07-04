@@ -2718,13 +2718,10 @@ fun OuterFullScreenDialog(
             //var notes by remember { mutableStateOf("My cool notes") }
             // TODO: Product and Store should maybe be in a row. Just hacking up a rough
             // dialog here for testing of my dialog box code (esp focus stuff) for now.
-            LabeledItem(label = "Product") {
-                Text(uiContent.item.name)
-            }
+            TextField(modifier=Modifier.fillMaxWidth(), label = {  Text("Product") }, value=uiContent.item.name, enabled=false, onValueChange = {})
             // Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
-            LabeledItem(label = "Store") {
-                Text(uiContent.source.name)
-            }
+            Spacer(modifier = Modifier.height(8.dp))
+            TextField(modifier=Modifier.fillMaxWidth(), label = {  Text("Store") }, value=uiContent.source.name, enabled=false, onValueChange = {})
             Spacer(modifier = Modifier.height(8.dp))
             // TODO: WE PROBABLY WANT SOME remember+derivedStateOf HERE BUT LET'S DO IT WITHOUT FIRST
             val units: List<MeasureUnit> = getRelevantMeasureUnits(
