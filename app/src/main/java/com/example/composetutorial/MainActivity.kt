@@ -182,6 +182,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
 import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.util.concurrent.Executors
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
@@ -2778,6 +2779,7 @@ fun OuterFullScreenDialog(
                     suffix = { Text("€") },
                     textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
                     value = todoNumber,
+                    validationRules = vm.priceValidationRules,
                     // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                     onValueChange = { todoNumber = it; uiContent.editablePrice.price.value = it.text },
                     onSupportingTextChange = { todoSupportingText = it },
@@ -2926,7 +2928,52 @@ fun isValidTransitionalDecimal(input: String): Boolean {
 @Parcelize // TODO: May not be needed now - are we still using these in rememberSaveable?
 data class ValidationRule(val validate: (String) -> Boolean, val message: String) : Parcelable
 
-val numericValidationRules = listOf(
+/* TODO DELETE
+fun validationRuleMaxDp(maxDp: Int): ValidationRule {
+    val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
+    return ValidationRule(
+        {
+
+        },
+        "No more than $maxDp decimal places allowed"
+    )
+}
+*/
+
+// This assumes input filtering has already excluded characters other than digits, space, comma and full stop. TODO: We could go belt and braces and check for that anyway.
+fun numericValidationRules(allowDecimals: Boolean = true, maxDp: Int? = null): List<ValidationRule> {
+    val locale = Locale.getDefault()
+    val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
+    val maxDecimalSeparators = if (allowDecimals) 1 else 0
+
+    // Create a function to strip off everything except digits and the decimal separator - this removes fluff like spaces and the grouping symbol if the user typed it in.
+    // TODO: If we allow negative values, we shouldn't strip that off. Maybe best to just allow it through here - it is significant if typed.
+    val allowedCharsRegex = "[^0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
+    fun sanitiseCandidate(candidate: String): String {
+        return candidate.replace(allowedCharsRegex, "")
+    }
+
+    // TODO: We might need to make special exceptions to handle an empty string, either here or in the ValidatedTextField - we don't really want red warnings all over the place when the form opens up with fields empty
+
+    return listOfNotNull(
+        ValidationRule({ it.count { it == decimalSeparator}  <= maxDecimalSeparators }, if (allowDecimals) "Only one decimal point allowed" else "Only whole numbers allowed"),
+
+        if (maxDp != null) {
+            ValidationRule({
+                val parts = sanitiseCandidate(it).split(decimalSeparator)
+                parts.size != 2 || parts[1].length <= maxDp
+            }, "No more than $maxDp decimal places allowed")
+        } else {
+            null
+        },
+
+        // This is a catch-all; in practice we expect to catch all problems before this, but we don't want to have a string which can't be converted (which would cause an error on trying to save) which the user hasn't been warned about.
+        ValidationRule({ sanitiseCandidate(it).replace(decimalSeparator, '.').toDoubleOrNull() != null }, "Invalid number"),
+    )
+}
+
+
+val numericValidationRulesTODOOLD = listOf(
     ValidationRule({ !it.contains('3') }, "XXXXXX No 3s allowed!"),
     ValidationRule({ !it.contains('4') }, "XXXXXX No 4s allowed!"),
 )
@@ -2951,7 +2998,7 @@ fun NumericTextField(
     prefix: @Composable() (() -> Unit)? = null,
     suffix: @Composable() (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
-    validationRules: List<ValidationRule>? = numericValidationRules,
+    validationRules: List<ValidationRule>? = numericValidationRules(),
     onValueChange: (TextFieldValue) -> Unit,
     onSupportingTextChange: ((String?) -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -3283,6 +3330,16 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
         Log.d("MyApp", "EditPriceScreenViewMode cleared $this")
     }
 
+    // TODO: Even if Locale.getDefault() is sub-optimal, this is fine as it's really only a default. updateLocaleDependencies() should be called almost immediately - maybe do some test logging to check that?
+    var priceValidationRules = getPriceValidationRules(Locale.getDefault())
+
+    // TODO: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRIVECALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
+    fun getPriceValidationRules(locale: Locale) = numericValidationRules(allowDecimals = true, maxDp = 2)
+
+    fun updateLocaleDependencies(locale: Locale) {
+        priceValidationRules = getPriceValidationRules(locale)
+    }
+
     // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
 
     enum class SaveStatus { Idle, Saving, Success, Error }
@@ -3401,6 +3458,12 @@ fun AppNavigation() {
             }
         ) { backStackEntry ->
             val vm: EditPriceScreenViewModel = viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
+
+            // TODO: Test this but doing it this way ought to mean we correctly pick up locale changes while we are on screen
+            LaunchedEffect(Locale.getDefault()) {
+                vm.updateLocaleDependencies(Locale.getDefault())
+            }
+
             // We will be re-composed during the exit transition for reasons which I kind of understand. So this
             // code must be idempotent(ish?) and in order to avoid vm.uiContent being reset here (which would
             // probably be harmless if we didn't set sharedViewModel.editPriceScreenUIContent to null, but it
@@ -3529,3 +3592,14 @@ Log.d("MyApp", baz.toString())
 // TOOD: I should probably limit all text fields to approx 1000 characters just to stop the user going crazy.
 
 // TODO: When entering pack sizes, we must disallow 0!
+
+// TODO: ChatGPT on locales:
+// TL;DR
+//
+//    🔄 In Compose: use LocalConfiguration.current.locales[0] — it’s reactive and accurate.
+//
+//    ⚙️ In ViewModels / non-UI: Locale.getDefault() is okay, but may not reflect immediate user changes.
+//
+//    🎯 Pass the current Compose locale to your ViewModel using LaunchedEffect(currentLocale) to keep everything in sync
+//
+// Do I need to switch away from using Locale.getDefault()?
