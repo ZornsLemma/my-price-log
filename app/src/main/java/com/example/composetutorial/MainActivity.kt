@@ -1176,6 +1176,12 @@ class HomeScreenViewModel(
         // This forces the delegate to initialize safely on the main thread TODO: VOODOO
         val unused = app.dataStore
 
+        // TODO: On the very first run when the database is created, we appear to end up with the
+        // app running with no data sets - it has to be killed and restarted to see them. Not
+        // investigated what's going on - superficially this looks like it ought to cause events
+        // to be generated, but maybe the fact the database is *actually empty* without the dataset
+        // table on the first run is an edge case. We need to fix this, otherwise users will get a
+        // very poor first impression.
         val dataSetFlow = priceTrackerRepository.getAllDataSets()
 
         val dataSetOnlyDatabaseFlow = selectedDataSetFlow.flatMapLatest { dataSetId ->
