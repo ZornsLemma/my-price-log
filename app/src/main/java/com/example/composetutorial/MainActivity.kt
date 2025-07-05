@@ -2761,6 +2761,22 @@ fun OuterFullScreenDialog(
     val priceFocusRequester = remember { FocusRequester() }
     var priceY by remember { mutableStateOf(0) }
 
+    fun onPackSizeOrPriceChange() {
+        // On the first change to the pack size or price, we set the "to confirm" switch to true, on
+        // the grounds that if the user is changing these values, they must be getting them from
+        // somewhere and the assumption is that they have the actual current price/pack in front of
+        // them. (We don't do this if they edit the notes; it's conceivable they are for example
+        // trying the product at home and making a note that a certain brand isn't very nice and not
+        // to consider it as acceptable in future.) We only do this on the first change so we don't
+        // fight with the user if they toggle this back off afterwards.
+        // TODO: We might want to gate this logic behind a Settings option, i.e. have an option to let the confirm
+        // always stay off unless the user explicitly turns it on.
+        if (!vm.firstPackSizeOrPriceChangeOccurred) {
+            uiContent.editablePrice.toConfirm.value = true
+            vm.firstPackSizeOrPriceChangeOccurred = true
+        }
+    }
+
     // TODO: Grok suggests wrapping a Box with:
     //Modifier.semantics {
     //    role = Role.Dialog // Marks this as a dialog for TalkBack
@@ -2941,6 +2957,7 @@ fun OuterFullScreenDialog(
                         // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                         onValueChange = {
                             todoNumber = it; uiContent.editablePrice.measureValue.value = it.text
+                            onPackSizeOrPriceChange()
                         },
                         onSupportingTextChange = { isError, supportingText ->
                             todoSupportingText = Pair(isError, supportingText)
@@ -2960,6 +2977,7 @@ fun OuterFullScreenDialog(
                                 "Invalid measure unit ID $it selected in dropdown"
                             }
                             uiContent.editablePrice.measureUnit.value = measureUnit!!
+                            onPackSizeOrPriceChange()
                         },
                         label = { Text("Unit") },
                         items = units,
@@ -3015,16 +3033,12 @@ fun OuterFullScreenDialog(
                     // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                     onValueChange = {
                         TODOHACKYPRICE = it; uiContent.editablePrice.price.value = it.text
+                        onPackSizeOrPriceChange()
                     },
                     supportingText = "This is more supporting text just as a test.",
                 )
             }
 
-            // TODO: I am thinking this will start "off", but as a one-time thing it will switch automatically to "on" if the
-            // user changes (ideally not just *focuses* the contents of pack size/unit/pack price). Editing notes field will not
-            // auto-set this. That said, it may actually be better to leave it off and let the user toggle it on if they want
-            // rather than try to be too clever. Not sure. This could be controlled via a settings option.
-            //
             // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
             // why are we entering it?
             if (uiContent.editablePrice.id != 0L) {
@@ -3677,6 +3691,8 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
             Log.d("MyApp", "EditPriceScreenViewMode uIContent.set: $field -> $value")
             field = value
         }
+
+    var firstPackSizeOrPriceChangeOccurred: Boolean = false
 
     override fun onCleared() {
         super.onCleared()
