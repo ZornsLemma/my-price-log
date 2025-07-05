@@ -97,6 +97,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -2840,6 +2841,20 @@ fun OuterFullScreenDialog(
                 onValueChange = { TODOHACKYPRICE = it; uiContent.editablePrice.price.value = it.text },
                 supportingText = "This is more supporting text just as a test.",
             )
+
+            // TODO: I am thinking this will start "off", but as a one-time thing it will switch automatically to "on" if the
+            // user changes (ideally not just *focuses* the contents of pack size/unit/pack price). Editing notes field will not
+            // auto-set this.
+            var todoHackySwitch by remember{ mutableStateOf( false) }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Column {
+                    // TODO: WORDING FOR BOTH THESE MIGHT WANT TWEAKING
+                    Text(text = "Confirm pack size and price", color = MaterialTheme.colorScheme.onSurface)
+                    Text(text = "The above details are correct right now", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                }
+                Switch(checked = todoHackySwitch, onCheckedChange = { todoHackySwitch = it })
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
             // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
