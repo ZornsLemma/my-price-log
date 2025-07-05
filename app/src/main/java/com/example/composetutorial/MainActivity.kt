@@ -2165,8 +2165,8 @@ data class EditablePrice(
     val dataSetId: Long,
     val itemId: Long,
     val sourceId: Long,
-    val price: MutableState<String?>,
-    val measureValue: MutableState<String?>,
+    val price: MutableState<String>,
+    val measureValue: MutableState<String>,
     val measureUnit: MeasureUnit, // TODO: THIS OR originalUnit IS PROBABLY REDUNDANT - HAVE NOTES ELSEWHERE TO THINK ABOUT THIS
     val originalUnit: MeasureUnit, // TODO: DOES THIS HAVE ANY MEANING HERE?
     val confirmed: Instant?,
@@ -2185,8 +2185,8 @@ data class EditablePrice(
         dataSetId = dataSetId,
         itemId = itemId,
         sourceId = sourceId,
-        price = mutableStateOf(null),
-        measureValue = mutableStateOf(null),
+        price = mutableStateOf(""),
+        measureValue = mutableStateOf(""),
         measureUnit = itemDefaultUnit, // TODO!?
         originalUnit = itemDefaultUnit, // user can change this, but for a new price this is the sensible default
         confirmed = null,
@@ -2683,11 +2683,14 @@ fun OuterFullScreenDialog(
                     TextButton(enabled = !saveInitiated, onClick = {
                         // TODO: Maybe we shouldn't be passing editablePrice around as a parameter so much, when it's implicit in
                         // the ViewModel? THis would apply elsewhere, not just here.
-                        if (vm.isEditablePriceValid(uiContent.editablePrice)) {
-                            saveInitiated = true
-                            vm.saveEditablePrice(uiContent.editablePrice)
-                        } else {
-                            TODO() // TODO GENERATE ERROR - EG A SNACKBAR, AND MAYBE JUMP FOCUS TO FIRST FAILURE
+                        when (vm.validateEditablePrice(uiContent.editablePrice)) {
+                            EditPriceScreenViewModel.ValidationState.OK -> {
+                                saveInitiated = true
+                                vm.saveEditablePrice(uiContent.editablePrice)
+                            }
+                            // TODO GENERATE ERROR - EG A SNACKBAR, AND MAYBE JUMP FOCUS TO FIRST FAILURE
+                            EditPriceScreenViewModel.ValidationState.PACK_SIZE_INVALID -> TODO()
+                            EditPriceScreenViewModel.ValidationState.PRICE_INVALID -> TODO()
                         }
                     }) {
                         if (showSaveProgressIndicator) {
@@ -2972,6 +2975,15 @@ fun isValidTransitionalDecimal(input: String): Boolean {
 
 @Parcelize // TODO: May not be needed now - are we still using these in rememberSaveable?
 data class ValidationRule(val validate: (String) -> Boolean, val message: String) : Parcelable
+
+fun validationRulesOk(validationRules: List<ValidationRule>, value: String): Boolean {
+    for (validationRule in validationRules) {
+        if (!validationRule.validate(value)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 /* TODO DELETE
 fun validationRuleMaxDp(maxDp: Int): ValidationRule {
@@ -3444,8 +3456,10 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     // TODO: HARDCODING 2DP FOR PACK SIZE IS A HACK - SHOULD PROBABLY VARY WITH UNIT???
     var packSizeValidationRules = numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
 
-    // TODO: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRIVECALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
+    // TODO: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRICEVALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
     private fun getPriceValidationRules(locale: Locale) = numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
+
+    // TODO: There's probably a lot of redundancy with the currency stuff given how it's evolved
 
     data class CurrencyFormat(
         val decimalPlaces: Int, // TODO: We may not actually need this, if it's baked into validation rules and not used elsewhere
@@ -3461,6 +3475,8 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     fun updateLocaleDependencies(locale: Locale) {
         currencyFormatMap.clear()
     }
+
+    fun getCurrencyFormatValidationRules() = getCurrencyFormat(uiContent!!.dataSet).validationRules
 
     // TODO: This takes a DataSet not a currency code because later on a DataSet may allow custom currency formatting which overrides whatever the current locale wants to do.
     fun getCurrencyFormat(dataSet: DataSet): CurrencyFormat {
@@ -3479,9 +3495,23 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
         }
     }
 
+    enum class ValidationState {
+        OK,
+        PACK_SIZE_INVALID,
+        PRICE_INVALID
+    }
+
     // TODO: It's tempting to think this should be on EditablePrice itself, but the whole point is that it will apply (sharing as much as possible) the same validation rules that the ValidatedTextFields are usiong - and those aren't available to EditablePrice, and based on discussion with ChatGPT I think it's better to have this function here than pass this ViewModel as an argument to EditablePrice.toDomain()
-    fun isEditablePriceValid(editablePrice: EditablePrice): Boolean {
-        return true; // TODO!
+    fun validateEditablePrice(editablePrice: EditablePrice): ValidationState {
+        // TODO: What about "non-null" validation? The validation rules do not cover this. So we have to a) communicate this to user b) check it separately. Just possibly we could have a "must not be empty" validation rule which is only added to the validation rule sets when save is (first) clicked - then a) we'd automatically check it here b) if the user hasn't filled in some fields they will be warned, without being nagged when they first enter the edit screen for a new record
+        if (!validationRulesOk(packSizeValidationRules, editablePrice.price.value)) {
+            return ValidationState.PACK_SIZE_INVALID
+        }
+        if (!validationRulesOk(getCurrencyFormat(uiContent!!.dataSet).validationRules, editablePrice.measureValue.value)) {
+            return ValidationState.PRICE_INVALID
+        }
+        // TODO: MORE?
+        return ValidationState.OK
     }
 
     fun saveEditablePrice(editablePrice: EditablePrice) {
@@ -3490,7 +3520,7 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
             updateOrInsertPrice(price)
         } else {
             // This is an internal logic error. Our caller should have got confirmation from
-            // isEditablePriceValid() that editablePrice is OK, and if that says it's OK toDomain()
+            // validateEditablePrice() that editablePrice is OK, and if that says it's OK toDomain()
             // should not fail.
             throw IllegalStateException("saveEditablePrice() called with an inconvertible editablePrice: $editablePrice")
         }
