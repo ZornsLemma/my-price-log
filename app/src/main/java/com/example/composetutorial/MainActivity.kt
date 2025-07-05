@@ -1421,9 +1421,6 @@ fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
 )
 
 // TODO: THis needs support for selecting "None" - maybe we just make the user pass it in the input with a null ID, actually?
-// TODO: As can be seen from the temporarily-red spacers on home sreen, this has a bit of extra vertical space below it which
-// introduces extra irregular vertical space. I could manually compensate for this in my layouts but it would be good if I
-// didn't have to and we could just get rid of it here.
 @Composable
 fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     selectedId: ID?,
@@ -1490,10 +1487,12 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
         // and the dropdown appears below the supportingText, whereas we want it to drop down over
         // it, "from" the main TextField text box. So we jump through far too many hoops to display
         // it ourselves here.
-        Box(modifier = Modifier.padding(start = menuLeftPadding, top = 4.dp)) {
-            ProvideTextStyle(MaterialTheme.typography.bodySmall) {
-                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
-                    supportingText?.invoke()
+        if (supportingText != null) {
+            Box(modifier = Modifier.padding(start = menuLeftPadding, top = 4.dp)) {
+                ProvideTextStyle(MaterialTheme.typography.bodySmall) {
+                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
+                        supportingText.invoke()
+                    }
                 }
             }
         }
