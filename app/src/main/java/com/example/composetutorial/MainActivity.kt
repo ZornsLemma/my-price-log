@@ -2735,7 +2735,7 @@ fun OuterFullScreenDialog(
                 uiContent.item.quantityType,
                 includeDisplayOnly = false
             )
-            var todoSupportingText by remember { mutableStateOf<String?>(null) }
+            var todoSupportingText by remember { mutableStateOf<Pair<Boolean, String?>>(Pair(false, null)) }
             Row {
                 // TODO: Don't really like this way of showing pack size and unit etc, but
                 // this is just a quick hack to get some "realistic-ish" content on the
@@ -2795,7 +2795,7 @@ fun OuterFullScreenDialog(
                     validationRules = vm.packSizeValidationRules,
                     // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                     onValueChange = { todoNumber = it; uiContent.editablePrice.measureValue.value = it.text },
-                    onSupportingTextChange = { todoSupportingText = it },
+                    onSupportingTextChange = { isError, supportingText -> todoSupportingText = Pair(isError, supportingText) },
                     supportingText = "This is some supporting text just as a test.",
                     modifier = Modifier.weight(1f)
                 )
@@ -2813,9 +2813,9 @@ fun OuterFullScreenDialog(
 
             }
             // TODO: I put this in to test the feature on NumericTextField, if (and it might) it lives, need to be careful to use the right font and spacing so it is indistinguishable (apart from its width) from a "true" supportingText under the pack size text box
-            if (todoSupportingText != null) {
+            if (todoSupportingText.second != null) {
                 // TODO: the color is wrong-ish here - needs to be onSurfaceVariant if this *isn't* an error, or MaterialTheme.colorScheme.error if it is. Maybe todoSupportingText should be some kind of sealed class? In this form we could probably get away with just always making this error colour, but that's a bit hacky. Or it could be a Pair(color, text).
-                Text(text=todoSupportingText!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
+                Text(text=todoSupportingText.second!!, style = MaterialTheme.typography.bodySmall, color = if (todoSupportingText.first) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp))
             }
             Spacer(modifier = Modifier.height(8.dp))
             /* TODO DELETE - JUST TEMP TO CHECK MY "FAKE" SUPPORTING TEXT MATCHES IN SPACING AND APPEARANCE
@@ -3036,7 +3036,7 @@ fun NumericTextField(
     textStyle: TextStyle = LocalTextStyle.current,
     validationRules: List<ValidationRule>? = numericValidationRules(),
     onValueChange: (TextFieldValue) -> Unit,
-    onSupportingTextChange: ((String?) -> Unit)? = null,
+    onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
     modifier: Modifier = Modifier,
     supportingText: String? = null,
     messageDelayMillis: Long = defaultValidationMessageDelayMillis,
@@ -3098,7 +3098,7 @@ fun ValidatedTextField(
     validationRules: List<ValidationRule>? = null,
     onCandidateValueChange: ((String) -> Boolean) ,
     onValueChange: (TextFieldValue) -> Unit,
-    onSupportingTextChange: ((String?) -> Unit)? = null,
+    onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
     modifier: Modifier = Modifier,
     supportingText: String? = null,
     messageDelayMillis: Long = defaultValidationMessageDelayMillis,
@@ -3215,7 +3215,11 @@ fun ValidatedTextField(
 
     if (onSupportingTextChange != null) {
         LaunchedEffect(failedValidationSupportingText) {
-            onSupportingTextChange(failedValidationSupportingText ?: supportingText)
+            if (failedValidationSupportingText != null) {
+                onSupportingTextChange(true, failedValidationSupportingText)
+            } else {
+                onSupportingTextChange(false, supportingText)
+            }
         }
     }
 }
