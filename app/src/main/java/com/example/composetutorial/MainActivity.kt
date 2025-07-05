@@ -316,6 +316,7 @@ enum class MeasureUnit(
     EACH100(303, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", 100.0, true);
 
     companion object {
+        // TODO: Can this use measureUnitById? Can we move that into this class here?
         fun fromValue(measureUnitId: Long): MeasureUnit? {
             return MeasureUnit.entries.find { it.id == measureUnitId }
         }
@@ -773,6 +774,16 @@ class Converters {
         return value?.let { QuantityType.fromValue(it) }
     }
 
+    @TypeConverter
+    fun fromMeasureUnit(measureUnit: MeasureUnit?): Long? {
+        return measureUnit?.id
+    }
+
+    @TypeConverter
+    fun toMeasureUnit(value: Long?): MeasureUnit? {
+        return value?.let { MeasureUnit.fromValue(it) }
+    }
+
     // ChatGPT magic
     @TypeConverter
     fun fromInstant(value: Long?): Instant? {
@@ -830,7 +841,7 @@ data class Item(
     // TODO: quantity_type - an enum which says "by item"/"by mass"/"by volume" - the GUI probably *should* allow editing this (not sure though), but wern that editing it will mess up old data (so maybe just don't allow it?)
     @ColumnInfo(name = "quantity_type") val quantityType: QuantityType, // TODO: quantity_type*_id* in db?? or is that only for fks?
     // TODO: default_unit - g/kg/oz/floz/litre/etc - this must be consistent with quantity_type (and we may want to let it imply quantity_type rather than storing it explicitly)
-    val defaultUnit: MeasureUnit, // TODO: this is more specific than but must be consistent with quantityType, we should maybe get rid of quantityType
+    @ColumnInfo(name = "default_unit") val defaultUnit: MeasureUnit, // TODO: this is more specific than but must be consistent with quantityType, we should maybe get rid of quantityType
 )
 // TODO: Will temporarily make a note here - I may simply (especially in v1) refuse to allow changes
 // of quantity_type in the product edit screen. There is no trivial way to convert. If the user gets
