@@ -3022,6 +3022,7 @@ fun OuterFullScreenDialog(
             // user changes (ideally not just *focuses* the contents of pack size/unit/pack price). Editing notes field will not
             // auto-set this. That said, it may actually be better to leave it off and let the user toggle it on if they want
             // rather than try to be too clever. Not sure. This could be controlled via a settings option.
+            // TODO: The switch should probably be omitted if we are adding a brand new price - we should always confirm "now" in that case - we don't want null confirm dates in the database, and if we don't have a price in front of us, why are we adding and how can we type anything in for the mandatory price?
             var todoHackySwitch by remember { mutableStateOf(false) }
             Spacer(modifier = Modifier.height(8.dp))
             Row(
