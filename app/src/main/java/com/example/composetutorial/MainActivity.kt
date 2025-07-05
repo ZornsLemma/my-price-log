@@ -438,8 +438,8 @@ abstract class InventoryDatabase : RoomDatabase() {
                 Room.databaseBuilder(context, InventoryDatabase::class.java, "main.db")
                     // TODO: Disable query logging in final version of course
                     .setQueryCallback(RoomDatabase.QueryCallback { sqlQuery, bindArgs ->
-                            Log.d("MyApp", "SQL Query: $sqlQuery SQL Args: $bindArgs")
-                        }, Executors.newSingleThreadExecutor())
+                        Log.d("MyApp", "SQL Query: $sqlQuery SQL Args: $bindArgs")
+                    }, Executors.newSingleThreadExecutor())
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
@@ -461,9 +461,32 @@ abstract class InventoryDatabase : RoomDatabase() {
                                             allowUSCustomary = false
                                         )
                                     )
-                                    val dataSetId2 = db.dataSetDao().insert(DataSet(name = "Demo 2", currencyCode = "AUD", allowMetric = true, allowImperial = false, allowUSCustomary = true)) // TODO TEMP HACK
-                                    val dataSetId3 = db.dataSetDao().insert(DataSet(name = "Demo 3", currencyCode = "AUD", allowMetric = true, allowImperial = false, allowUSCustomary = true)) // TODO TEMP HACK
-                                    val item21 = db.productDao().insert(Item(dataSetId = dataSetId2, name = "Demo 2 Item", quantityType = QuantityType.WEIGHT, defaultUnit = MeasureUnit.G))
+                                    val dataSetId2 = db.dataSetDao().insert(
+                                        DataSet(
+                                            name = "Demo 2",
+                                            currencyCode = "AUD",
+                                            allowMetric = true,
+                                            allowImperial = false,
+                                            allowUSCustomary = true
+                                        )
+                                    ) // TODO TEMP HACK
+                                    val dataSetId3 = db.dataSetDao().insert(
+                                        DataSet(
+                                            name = "Demo 3",
+                                            currencyCode = "AUD",
+                                            allowMetric = true,
+                                            allowImperial = false,
+                                            allowUSCustomary = true
+                                        )
+                                    ) // TODO TEMP HACK
+                                    val item21 = db.productDao().insert(
+                                        Item(
+                                            dataSetId = dataSetId2,
+                                            name = "Demo 2 Item",
+                                            quantityType = QuantityType.WEIGHT,
+                                            defaultUnit = MeasureUnit.G
+                                        )
+                                    )
                                     val itemIdGroundCoffee = db.productDao().insert(
                                         Item(
                                             dataSetId = dataSetId,
@@ -629,7 +652,8 @@ class PriceTrackerRepositoryImpl(
 
     override fun getAllItems(dataSetId: Long): Flow<List<Item>> = itemDao.getAllItems(dataSetId)
 
-    override fun getItem(dataSetId: Long, itemId: Long): Flow<List<Item>> = itemDao.getItem(dataSetId, itemId)
+    override fun getItem(dataSetId: Long, itemId: Long): Flow<List<Item>> =
+        itemDao.getItem(dataSetId, itemId)
 
     override fun getAllSources(dataSetId: Long): Flow<List<Source>> =
         sourceDao.getAllSources(dataSetId)
@@ -655,11 +679,13 @@ class PriceTrackerRepositoryImpl(
 object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer {
-            val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+            val app =
+                this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
             HomeScreenViewModel(app.priceTrackerRepository, app)
         }
         initializer {
-            val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+            val app =
+                this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
             EditPriceScreenViewModel(app.priceTrackerRepository)
         }
     }
@@ -919,14 +945,14 @@ data class PriceEntity(
     val details: String // Additional price details TODO: rename "notes"?
 ) : Parcelable
 
-    // TODO: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
+// TODO: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
 // that effectively tells us the quantity type implicitly and we don't need to join to item to get
 // it. However, I suspect it still has some value because it allows us to do a bit of extra
 // validation which may catch bugs. Probably worth thinking about this again later.
 data class PriceWithItemEntity(
     // TODO: should be PriceWithItemEntity eventually
-        @Embedded val priceEntity: PriceEntity,
-        @ColumnInfo(name = "quantity_type") val itemQuantityType: QuantityType,
+    @Embedded val priceEntity: PriceEntity,
+    @ColumnInfo(name = "quantity_type") val itemQuantityType: QuantityType,
 )
 
 @Parcelize // TODO: Can we get rid of this later!?
@@ -1097,7 +1123,10 @@ class SingleEventState<T>(initialState: T) {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerRepository, application: Application) : ViewModel() {
+class HomeScreenViewModel(
+    private val priceTrackerRepository: PriceTrackerRepository,
+    application: Application
+) : ViewModel() {
     init {
         Log.d("MyApp", "HomeScreenViewModel created: $this")
     }
@@ -1111,13 +1140,13 @@ class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerReposi
     private val selectedDataSetFlow = getPreference(SELECTED_DATA_SET_ID_KEY)
     private val selectedItemIdFlow = getPreference(SELECTED_ITEM_ID_KEY)
     private val selectedSourceIdFlow = getPreference(SELECTED_SOURCE_ID_KEY)
-    private fun<T> getPreference(key: Preferences.Key<T>): StateFlow<T?> {
+    private fun <T> getPreference(key: Preferences.Key<T>): StateFlow<T?> {
         return app.dataStore.data
             .map { prefs -> prefs[key] }
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     }
 
-    fun<T> savePreference(key: Preferences.Key<T>, value: T?) {
+    fun <T> savePreference(key: Preferences.Key<T>, value: T?) {
         viewModelScope.launch {
             app.dataStore.edit { prefs ->
                 if (value != null) prefs[key] = value else prefs.remove(key)
@@ -1125,7 +1154,12 @@ class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerReposi
         }
     }
 
-    private val _uiState = MutableStateFlow<Pair<Boolean /* loading */, UIContent>>(Pair(false, UIContent.createEmpty()))
+    private val _uiState = MutableStateFlow<Pair<Boolean /* loading */, UIContent>>(
+        Pair(
+            false,
+            UIContent.createEmpty()
+        )
+    )
     val uiState = _uiState.asStateFlow()
 
     init {
@@ -1150,87 +1184,118 @@ class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerReposi
             // correctly too.)
             combine(
                 flowOf(dataSetId),
-                if (dataSetId != null) priceTrackerRepository.getAllItems(dataSetId) else flowOf(emptyList()),
-                if (dataSetId != null) priceTrackerRepository.getAllSources(dataSetId) else flowOf(emptyList()),
-                ::Triple)
+                if (dataSetId != null) priceTrackerRepository.getAllItems(dataSetId) else flowOf(
+                    emptyList()
+                ),
+                if (dataSetId != null) priceTrackerRepository.getAllSources(dataSetId) else flowOf(
+                    emptyList()
+                ),
+                ::Triple
+            )
         }
 
         val dataSetIdAndItemIdFlow = combine(
             selectedDataSetFlow,
             selectedItemIdFlow,
-            ::Pair)
+            ::Pair
+        )
 
-        val dataSetIdAndItemIdDatabaseFlow = dataSetIdAndItemIdFlow.flatMapLatest { (dataSetId, itemId) ->
-            Log.d("MyFlow", "dataSetIdAndItemIdDatabaseFlow dataSetId $dataSetId, itemId $itemId")
-            val priceFlow  = if (dataSetId != null && itemId != null)
+        val dataSetIdAndItemIdDatabaseFlow =
+            dataSetIdAndItemIdFlow.flatMapLatest { (dataSetId, itemId) ->
+                Log.d(
+                    "MyFlow",
+                    "dataSetIdAndItemIdDatabaseFlow dataSetId $dataSetId, itemId $itemId"
+                )
+                val priceFlow = if (dataSetId != null && itemId != null)
                     priceTrackerRepository.getPricesForItem(dataSetId = dataSetId, itemId = itemId)
                 else
                     flowOf(emptyList())
-            // We are creating a flow based on a freshly created DAO flow, so we cannot see "stale"
-            // data here and thus the IDs we are tagging the results with will be correct.
-            priceFlow.flatMapLatest { priceList -> flowOf(Pair(Pair(dataSetId, itemId), priceList)) }
-        }
+                // We are creating a flow based on a freshly created DAO flow, so we cannot see "stale"
+                // data here and thus the IDs we are tagging the results with will be correct.
+                priceFlow.flatMapLatest { priceList ->
+                    flowOf(
+                        Pair(
+                            Pair(dataSetId, itemId),
+                            priceList
+                        )
+                    )
+                }
+            }
 
-        val combinedDatabaseFlow = combine(dataSetFlow, dataSetOnlyDatabaseFlow, dataSetIdAndItemIdDatabaseFlow, ::Triple)
+        val combinedDatabaseFlow =
+            combine(dataSetFlow, dataSetOnlyDatabaseFlow, dataSetIdAndItemIdDatabaseFlow, ::Triple)
 
         val allUserInputFlow = combine(
             selectedDataSetFlow,
             selectedItemIdFlow,
             selectedSourceIdFlow,
-            ::Triple)
+            ::Triple
+        )
 
         val TODORENAMEMEFLOW = combine(
             selectedSourceIdFlow,
-            combinedDatabaseFlow) { _, it -> it }
+            combinedDatabaseFlow
+        ) { _, it -> it }
 
         // completeUIStateFlow delivers complete, consistent results which reflect the user's selection. However,
         // it doesn't make any guarantees as to how long it takes to emit after allUserInputFlow emits.
-        val completeUIStateFlow = TODORENAMEMEFLOW.flatMapLatest {
-            (dataSetList, taggedItemListAndSourceList, taggedPriceList) ->
-            // We can take the current values here because ultimately that's all we care about; if
-            // the current flow value we're processing is older, we want to discard it anyway and
-            // because the flows are dependent on these parameters, they will emit new values once
-            // they finish querying. It feels somewhat ridiculous to have to discard stale values
-            // like this but as far as I can tell you either do something like this, accept a mixture
-            // of stale values or re-run all your queries every single time even if most of them
-            // haven't had a parameter change. Maybe I am doing something silly.
-            val dataSetId = selectedDataSetFlow.value
-            val itemId = selectedItemIdFlow.value
-            val sourceId = selectedSourceIdFlow.value
+        val completeUIStateFlow =
+            TODORENAMEMEFLOW.flatMapLatest { (dataSetList, taggedItemListAndSourceList, taggedPriceList) ->
+                // We can take the current values here because ultimately that's all we care about; if
+                // the current flow value we're processing is older, we want to discard it anyway and
+                // because the flows are dependent on these parameters, they will emit new values once
+                // they finish querying. It feels somewhat ridiculous to have to discard stale values
+                // like this but as far as I can tell you either do something like this, accept a mixture
+                // of stale values or re-run all your queries every single time even if most of them
+                // haven't had a parameter change. Maybe I am doing something silly.
+                val dataSetId = selectedDataSetFlow.value
+                val itemId = selectedItemIdFlow.value
+                val sourceId = selectedSourceIdFlow.value
 
-            if (taggedItemListAndSourceList.first != dataSetId) {
-                Log.d("MyFlow", "completeUIStateFlow discarding dataSetId ${taggedItemListAndSourceList.first}, want $dataSetId")
-                emptyFlow()
-            } else if (taggedPriceList.first != Pair(dataSetId, itemId)) {
-                Log.d("MyFlow", "completeUIStateFlow discarding (dataSetId, itemId) ${taggedPriceList.first}, want ${Pair(dataSetId, itemId)}")
-                emptyFlow()
-            } else {
-                val itemList = taggedItemListAndSourceList.second
-                val sourceList = taggedItemListAndSourceList.third
-                val priceList = taggedPriceList.second
-
-                val dataSet = dataSetList.find { it.id == dataSetId }
-                val item = itemList.find { it.id == itemId }
-                val source = sourceList.find { it.id == sourceId }
-
-                Log.d(
-                    "MyFlow",
-                    "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
-                )
-                //delay(5000) // TODO HACK
-                flowOf(
-                    UIContent(
-                        dataSet,
-                        dataSetList,
-                        item,
-                        itemList,
-                        source,
-                        sourceList,
-                        priceList
+                if (taggedItemListAndSourceList.first != dataSetId) {
+                    Log.d(
+                        "MyFlow",
+                        "completeUIStateFlow discarding dataSetId ${taggedItemListAndSourceList.first}, want $dataSetId"
                     )
-                )
+                    emptyFlow()
+                } else if (taggedPriceList.first != Pair(dataSetId, itemId)) {
+                    Log.d(
+                        "MyFlow",
+                        "completeUIStateFlow discarding (dataSetId, itemId) ${taggedPriceList.first}, want ${
+                            Pair(
+                                dataSetId,
+                                itemId
+                            )
+                        }"
+                    )
+                    emptyFlow()
+                } else {
+                    val itemList = taggedItemListAndSourceList.second
+                    val sourceList = taggedItemListAndSourceList.third
+                    val priceList = taggedPriceList.second
+
+                    val dataSet = dataSetList.find { it.id == dataSetId }
+                    val item = itemList.find { it.id == itemId }
+                    val source = sourceList.find { it.id == sourceId }
+
+                    Log.d(
+                        "MyFlow",
+                        "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
+                    )
+                    //delay(5000) // TODO HACK
+                    flowOf(
+                        UIContent(
+                            dataSet,
+                            dataSetList,
+                            item,
+                            itemList,
+                            source,
+                            sourceList,
+                            priceList
+                        )
+                    )
+                }
             }
-        }
 
         viewModelScope.launch(Dispatchers.Default) {
             // Add the "loading" flag to the UI state flow, rather than allowing arbitrarily long
@@ -1245,8 +1310,7 @@ class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerReposi
                     // We timed out. Make a new state available which is the current (old) state but
                     // flagged as loading.
                     flowOf(Pair(true /* loading */, _uiState.value.second))
-                }
-                else {
+                } else {
                     // We didn't time out.
                     flowOf(Pair(false /* loading */, newUIContent))
                 }
@@ -1262,7 +1326,7 @@ class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerReposi
             // distinctUntilChanged() after the merge that will catch any cases where we get a
             // duplicate emission because the database flow also emits the same thing at
             // approximately the same time
-             val TODO3 = merge(TODO1, TODO2)
+            val TODO3 = merge(TODO1, TODO2)
 
             TODO3.collectLatest { todoRename ->
                 Log.d("MyFoo", "newUIState")
@@ -1271,7 +1335,6 @@ class HomeScreenViewModel(private val priceTrackerRepository: PriceTrackerReposi
         }
     }
 }
-
 
 
 enum class ThemePreference {
@@ -1349,7 +1412,10 @@ fun MainScreen(
         )
         // TODO: If we have no data sets, we should (analogous to how the source dropdown works) show a supportingText about selecting one *and hide the rest of the UI*. Nothing makes sense without a dataset, there is no way to pick a product or source. This probably means we need support from our parent (or this needs moving up into the parent) to do that.
 
-        Spacer(modifier = Modifier.height(8.dp).fillMaxWidth().background(color=Color.Red))
+        Spacer(modifier = Modifier
+            .height(8.dp)
+            .fillMaxWidth()
+            .background(color = Color.Red))
 
         // Item selector
         TextField(
@@ -2123,8 +2189,8 @@ fun MyDropdownMenuItem(
 // TODO: The amount of having to explicitly specify coroutinescopes and contexts in order to be able to run these functions is utterly batshit insane.
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 val SELECTED_DATA_SET_ID_KEY = longPreferencesKey("selected_data_set_id")
-val SELECTED_ITEM_ID_KEY = longPreferencesKey( "selected_item_id")
-val SELECTED_SOURCE_ID_KEY = longPreferencesKey( "selected_source_id")
+val SELECTED_ITEM_ID_KEY = longPreferencesKey("selected_item_id")
+val SELECTED_SOURCE_ID_KEY = longPreferencesKey("selected_source_id")
 
 /* TODO DELETE
 fun <T> getPreference(context: Context, key: Preferences.Key<T>): Flow<T?> =
@@ -2138,7 +2204,8 @@ suspend fun <T> savePreference(context: Context, key: Preferences.Key<T>, value:
 */
 
 // TODO: inconsistent mix of "List" and "ListRaw"
-data class UIContent( // TODO: Rename "HomeScreenUIContent" or similar?
+data class UIContent(
+    // TODO: Rename "HomeScreenUIContent" or similar?
     val dataSet: DataSet?,
     val dataSetList: List<DataSet>,
     val item: Item?,
@@ -2183,7 +2250,13 @@ data class EditablePrice(
     )
     */
 
-    constructor(dataSetId: Long, itemId: Long, sourceId: Long, itemQuantityType: QuantityType, itemDefaultUnit: MeasureUnit) : this(
+    constructor(
+        dataSetId: Long,
+        itemId: Long,
+        sourceId: Long,
+        itemQuantityType: QuantityType,
+        itemDefaultUnit: MeasureUnit
+    ) : this(
         id = 0,
         dataSetId = dataSetId,
         itemId = itemId,
@@ -2202,8 +2275,20 @@ data class EditablePrice(
         dataSetId = price.dataSetId,
         itemId = price.itemId,
         sourceId = price.sourceId,
-        price = mutableStateOf(formatDecimal(price.price, minDp = 2, maxDp = 2)), // TODO: hardcoding 2 dp is a hack
-        measureValue = mutableStateOf(formatDecimal(price.measure.value, minDp = null, maxDp = null)),
+        price = mutableStateOf(
+            formatDecimal(
+                price.price,
+                minDp = 2,
+                maxDp = 2
+            )
+        ), // TODO: hardcoding 2 dp is a hack
+        measureValue = mutableStateOf(
+            formatDecimal(
+                price.measure.value,
+                minDp = null,
+                maxDp = null
+            )
+        ),
         measureUnit = price.originalUnit, // TODO?!?
         originalUnit = price.originalUnit,
         confirmed = price.confirmed,
@@ -2215,19 +2300,24 @@ data class EditablePrice(
     // TODO: This should maybe return a Result<Price> so it can signal errors (we probably don't need to provide an explanation, as the user gets their explanation via the live validation on the form)
     fun toDomain(): Result<Price> {
         // TODO: Just wrapping this in success is a temp hack
-        return Result.success(Price(
-            // TODO: Should we "do something" if the values are null? Should we provide some kind of validation method the caller can use first? Should we throw? We can't write nulls to the database for most of these fields, they are null in EditablePrice to allow for the idea the user hasn't filled them in yet in a new entry
-            id = id,
-            dataSetId = dataSetId,
-            itemId = itemId,
-            sourceId = sourceId,
-            price = 42.0, // TODO! We need to do string parsing and other validation appropriate to this field and indicate to caller if it fails, hacking for now
-            measure = MeasuredValue(69.0 /* TODO! */, measureUnit /* TODO OR ORIGINAL UNIT!? */),
-            originalUnit = originalUnit!!, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
-            confirmed = confirmed!!,
-            details = details.value!!,
-            itemQuantityType = itemQuantityType,
-        ))
+        return Result.success(
+            Price(
+                // TODO: Should we "do something" if the values are null? Should we provide some kind of validation method the caller can use first? Should we throw? We can't write nulls to the database for most of these fields, they are null in EditablePrice to allow for the idea the user hasn't filled them in yet in a new entry
+                id = id,
+                dataSetId = dataSetId,
+                itemId = itemId,
+                sourceId = sourceId,
+                price = 42.0, // TODO! We need to do string parsing and other validation appropriate to this field and indicate to caller if it fails, hacking for now
+                measure = MeasuredValue(
+                    69.0 /* TODO! */,
+                    measureUnit /* TODO OR ORIGINAL UNIT!? */
+                ),
+                originalUnit = originalUnit!!, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
+                confirmed = confirmed!!,
+                details = details.value!!,
+                itemQuantityType = itemQuantityType,
+            )
+        )
     }
 }
 
@@ -2250,7 +2340,11 @@ data class EditPriceScreenUIContent(
 // TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
 // TODO: It may just be the emulator but right now despite all my apparently sensible refactoring changes, I am seeing *massive* jank just playing around in the UI (partly but not only when returning from the "edit" full screen dialog)
 @Composable
-fun HomeScreen(vm: HomeScreenViewModel, navController: NavHostController, onEditPriceClick: (UIContent) -> Unit) {
+fun HomeScreen(
+    vm: HomeScreenViewModel,
+    navController: NavHostController,
+    onEditPriceClick: (UIContent) -> Unit
+) {
     // In order to minimise jank, we want the previous UI state to be available during the *very
     // first composition* when this screen is re-entered (e.g. after navigating back from another
     // screen).
@@ -2314,7 +2408,7 @@ fun HomeScreen(vm: HomeScreenViewModel, navController: NavHostController, onEdit
 @Composable
 fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
     if (visible) {
-        var showScrim by remember { mutableStateOf( false ) }
+        var showScrim by remember { mutableStateOf(false) }
 
         if (delayMillis != null) {
             LaunchedEffect(visible) {
@@ -2333,16 +2427,18 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
             val dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
             Popup(
                 alignment = Alignment.Center,
-                onDismissRequest = {  Log.d("MyApp", "ODR");
-                // We are trying to emulate the user pressing the back button here.
-                // navController.popBackStack() empirically doesn't work, I think because it's for
-                // our internal back stack. The idea is that if the activity wasn't blocked by the
-                // spinner, the user could go back to some other activity (outside our app,
-                // probably), and we should still allow that while the spinner is up.
+                onDismissRequest = {
+                    Log.d("MyApp", "ODR");
+                    // We are trying to emulate the user pressing the back button here.
+                    // navController.popBackStack() empirically doesn't work, I think because it's for
+                    // our internal back stack. The idea is that if the activity wasn't blocked by the
+                    // spinner, the user could go back to some other activity (outside our app,
+                    // probably), and we should still allow that while the spinner is up.
                     // TODO: Do we need to debounce this? Set a flag to say we've called
                     // onBackPressed() and don't call again if that flag is set? It probably
                     // wouldn't hurt even if it may not actually be necessary.
-                    dispatcher?.onBackPressed() },
+                    dispatcher?.onBackPressed()
+                },
                 properties = PopupProperties(
                     focusable = true, // Prevent touches from going through
                     dismissOnBackPress = true,
@@ -2437,13 +2533,16 @@ fun HomeScreenScaffold(
                 onSelectedDataSetIdChange = onSelectedDataSetIdChange,
                 item = item,
                 itemList = itemList,
-                onSelectedItemIdChange = onSelectedItemIdChange) // TODO: rename this
+                onSelectedItemIdChange = onSelectedItemIdChange
+            ) // TODO: rename this
 
             androidx.compose.foundation.layout.Spacer(
-                modifier = androidx.compose.ui.Modifier.height(
-                    8.dp
-                )
-                    .fillMaxWidth().background(color = Color.Red) // TODO DEBUG HACK
+                modifier = androidx.compose.ui.Modifier
+                    .height(
+                        8.dp
+                    )
+                    .fillMaxWidth()
+                    .background(color = Color.Red) // TODO DEBUG HACK
             )
 
             if (dataSet != null) {
@@ -2558,13 +2657,13 @@ fun OuterFullScreenDialog(
     navController: NavHostController,
     onClose: () -> Unit
 ) {
-/* TODO DELETE
-        val uiContentNullable = vm.editPriceScreenUIContent
-    devCheck(uiContentNullable != null) {
-        "uiContentNullable is null, but it should have been set before navigating to the edit price dialog"
-    }
-    val uiContent = uiContentNullable!!
-    */
+    /* TODO DELETE
+            val uiContentNullable = vm.editPriceScreenUIContent
+        devCheck(uiContentNullable != null) {
+            "uiContentNullable is null, but it should have been set before navigating to the edit price dialog"
+        }
+        val uiContent = uiContentNullable!!
+        */
 
     // TODO: This probably won't work right for adding new entries from scratch, I will need to think about that and this may well need some reworking, but let's ignore that and hack round it for now in relevant places
 
@@ -2691,25 +2790,28 @@ fun OuterFullScreenDialog(
                     // TODO: When/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
                     TextButton(enabled = !saveInitiated, onClick = {
                         coroutineScope.launch {
-                        // TODO: Maybe we shouldn't be passing editablePrice around as a parameter so much, when it's implicit in
-                        // the ViewModel? THis would apply elsewhere, not just here.
-                        when (vm.validateEditablePrice(uiContent.editablePrice)) {
-                            EditPriceScreenViewModel.ValidationState.OK -> {
-                                saveInitiated = true
-                                vm.saveEditablePrice(uiContent.editablePrice)
+                            // TODO: Maybe we shouldn't be passing editablePrice around as a parameter so much, when it's implicit in
+                            // the ViewModel? THis would apply elsewhere, not just here.
+                            when (vm.validateEditablePrice(uiContent.editablePrice)) {
+                                EditPriceScreenViewModel.ValidationState.OK -> {
+                                    saveInitiated = true
+                                    vm.saveEditablePrice(uiContent.editablePrice)
+                                }
+                                // TODO: We could possibly try to "animate" the problematic text field we just focused (e.g. pulse its border colour) to draw attention to it further, but this feels surprisingly fiddly and I am not sure it's ncessary. My inclination is to leave this for now and let the code settle down first before maybe trying to add it.
+                                EditPriceScreenViewModel.ValidationState.PACK_SIZE_INVALID -> {
+                                    scrollState.animateScrollTo(packSizeY)
+                                    packSizeFocusRequester.requestFocus()
+                                    // TODO GENERATE ERROR - EG A SNACKBAR
+                                }
+
+                                EditPriceScreenViewModel.ValidationState.PRICE_INVALID -> {
+                                    scrollState.animateScrollTo(priceY)
+                                    priceFocusRequester.requestFocus()
+                                    // TODO GENERATE ERROR - EG A SNACKBAR
+                                }
                             }
-                            // TODO: We could possibly try to "animate" the problematic text field we just focused (e.g. pulse its border colour) to draw attention to it further, but this feels surprisingly fiddly and I am not sure it's ncessary. My inclination is to leave this for now and let the code settle down first before maybe trying to add it.
-                            EditPriceScreenViewModel.ValidationState.PACK_SIZE_INVALID -> {
-                                scrollState.animateScrollTo(packSizeY)
-                                packSizeFocusRequester.requestFocus()
-                                // TODO GENERATE ERROR - EG A SNACKBAR
-                            }
-                            EditPriceScreenViewModel.ValidationState.PRICE_INVALID -> {
-                                scrollState.animateScrollTo(priceY)
-                                priceFocusRequester.requestFocus()
-                                // TODO GENERATE ERROR - EG A SNACKBAR
-                            }
-                    }}}) {
+                        }
+                    }) {
                         if (showSaveProgressIndicator) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
@@ -2744,10 +2846,20 @@ fun OuterFullScreenDialog(
             //var notes by remember { mutableStateOf("My cool notes") }
             // TODO: Product and Store should maybe be in a row. Just hacking up a rough
             // dialog here for testing of my dialog box code (esp focus stuff) for now.
-            TextField(modifier=Modifier.fillMaxWidth(), label = {  Text("Product") }, value=uiContent.item.name, enabled=false, onValueChange = {})
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Product") },
+                value = uiContent.item.name,
+                enabled = false,
+                onValueChange = {})
             // Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
             Spacer(modifier = Modifier.height(8.dp))
-            TextField(modifier=Modifier.fillMaxWidth(), label = {  Text("Store") }, value=uiContent.source.name, enabled=false, onValueChange = {})
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Store") },
+                value = uiContent.source.name,
+                enabled = false,
+                onValueChange = {})
             Spacer(modifier = Modifier.height(8.dp))
             // TODO: WE PROBABLY WANT SOME remember+derivedStateOf HERE BUT LET'S DO IT WITHOUT FIRST
             val units: List<MeasureUnit> = getRelevantMeasureUnits(
@@ -2755,62 +2867,76 @@ fun OuterFullScreenDialog(
                 uiContent.item.quantityType,
                 includeDisplayOnly = false
             )
-            var todoSupportingText by remember { mutableStateOf<Pair<Boolean, String?>>(Pair(false, null)) }
-            Box(modifier = Modifier.fillMaxWidth().onGloballyPositioned { coordinates -> packSizeY = coordinates.positionInParent().y.toInt() } ) {
-
-            Row {
-                // TODO: Don't really like this way of showing pack size and unit etc, but
-                // this is just a quick hack to get some "realistic-ish" content on the
-                // dialog for testing
-                // TODO: Using weight to size the components is also sucky, since we really
-                // just want "a reasonable fixed size" for the unit with
-                // the product taking whatever's left, but this will do for now.
-                // TODO: This TextField will *not* show a cursor or let the value be changed
-                // - I don't know if this is because my dialog code is breaking it, or I've
-                // done something wrong here. OK, if I copy this code to HomeScreen() it
-                // works, so it is probably dialog related. Yay!
-                // TODO: Should I use OutlinedTextFields here? If so, for the drop down too.
-                // TODO: Note that "Pack size" is blue only when the field is selected, but
-                // "Unit" is always blue. This may be a localised colour tweak or it may be
-                // a systemic glitch e.g. with my dropdown menu. FWIW the background of the
-                // two fields appears to change differenly as I navigate around with cursor
-                // keys too, although this *might* be normal - but worth trying to
-                // investigate.
-                // TODO: When the onscreen keyboard is up for "pack size", clicking on unit
-                // opens the dropdown and hides the keyboard but the dropdown gets
-                // positioned "to avoid" the keyboard - this might be normal/OK, but
-                // check/read/think
-                /* TODO OLD
-                TextField(
-                    label = { Text("Pack size") },
-                    value = packSize,
-                    onValueChange = { packSize = it },
-                    // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f)
-                ) */
-                /*
-                // TODO: This has the germ of something workable. Note that we are using a TextFieldValue as the value not a String, and that we don't get clever trying to modify it on onValueChange - we just accept the new one or retain the old one.
-                var todoPackSize by remember { mutableStateOf(TextFieldValue("999")) }
-                TextField(
-                    label = { Text("Pack size") },
-                    value = todoPackSize,
-                    onValueChange =  { newValue ->
-                        // Allow only digits and at most one dot, not at the start
-                        val regex = Regex("^\\d*(\\.\\d*)?\$")
-                        if (regex.matches(newValue.text)) {
-                            todoPackSize = newValue // onValueChange(newValue)
-                        } // else ignore the change, so cursor/selection is preserved
-                    },
-                    // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f),
+            var todoSupportingText by remember {
+                mutableStateOf<Pair<Boolean, String?>>(
+                    Pair(
+                        false,
+                        null
+                    )
                 )
-                */
-                // TODO: We "need" rememberSaveable but TextFieldValue probably doesn't support it. We will probably be using a ViewModel-held value in final code so let's not fuss about this for now.
-                //var todoNumber2 by rememberSaveable { mutableStateOf("888") }
-                var todoNumber by rememberSyncedTextFieldValue(uiContent.editablePrice.measureValue.value ?: "") // TODO: Just stop it being nullable rather than converting null to "" here?
-                // TODO: Remember final "save" validation must check for non-empty strings for Validated/NUmeric TextFields, as the validation allows this
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { coordinates ->
+                        packSizeY = coordinates.positionInParent().y.toInt()
+                    }) {
+
+                Row {
+                    // TODO: Don't really like this way of showing pack size and unit etc, but
+                    // this is just a quick hack to get some "realistic-ish" content on the
+                    // dialog for testing
+                    // TODO: Using weight to size the components is also sucky, since we really
+                    // just want "a reasonable fixed size" for the unit with
+                    // the product taking whatever's left, but this will do for now.
+                    // TODO: This TextField will *not* show a cursor or let the value be changed
+                    // - I don't know if this is because my dialog code is breaking it, or I've
+                    // done something wrong here. OK, if I copy this code to HomeScreen() it
+                    // works, so it is probably dialog related. Yay!
+                    // TODO: Should I use OutlinedTextFields here? If so, for the drop down too.
+                    // TODO: Note that "Pack size" is blue only when the field is selected, but
+                    // "Unit" is always blue. This may be a localised colour tweak or it may be
+                    // a systemic glitch e.g. with my dropdown menu. FWIW the background of the
+                    // two fields appears to change differenly as I navigate around with cursor
+                    // keys too, although this *might* be normal - but worth trying to
+                    // investigate.
+                    // TODO: When the onscreen keyboard is up for "pack size", clicking on unit
+                    // opens the dropdown and hides the keyboard but the dropdown gets
+                    // positioned "to avoid" the keyboard - this might be normal/OK, but
+                    // check/read/think
+                    /* TODO OLD
+                    TextField(
+                        label = { Text("Pack size") },
+                        value = packSize,
+                        onValueChange = { packSize = it },
+                        // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f)
+                    ) */
+                    /*
+                    // TODO: This has the germ of something workable. Note that we are using a TextFieldValue as the value not a String, and that we don't get clever trying to modify it on onValueChange - we just accept the new one or retain the old one.
+                    var todoPackSize by remember { mutableStateOf(TextFieldValue("999")) }
+                    TextField(
+                        label = { Text("Pack size") },
+                        value = todoPackSize,
+                        onValueChange =  { newValue ->
+                            // Allow only digits and at most one dot, not at the start
+                            val regex = Regex("^\\d*(\\.\\d*)?\$")
+                            if (regex.matches(newValue.text)) {
+                                todoPackSize = newValue // onValueChange(newValue)
+                            } // else ignore the change, so cursor/selection is preserved
+                        },
+                        // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.weight(1f),
+                    )
+                    */
+                    // TODO: We "need" rememberSaveable but TextFieldValue probably doesn't support it. We will probably be using a ViewModel-held value in final code so let's not fuss about this for now.
+                    //var todoNumber2 by rememberSaveable { mutableStateOf("888") }
+                    var todoNumber by rememberSyncedTextFieldValue(
+                        uiContent.editablePrice.measureValue.value ?: ""
+                    ) // TODO: Just stop it being nullable rather than converting null to "" here?
+                    // TODO: Remember final "save" validation must check for non-empty strings for Validated/NUmeric TextFields, as the validation allows this
                     NumericTextField(
                         label = { Text("Pack size") },
                         value = todoNumber,
@@ -2823,27 +2949,35 @@ fun OuterFullScreenDialog(
                             todoSupportingText = Pair(isError, supportingText)
                         },
                         supportingText = "This is some supporting text just as a test.",
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
                             .focusRequester(packSizeFocusRequester)
                     )
-                Spacer(modifier = Modifier.width(8.dp))
-                // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
-                MyExposedDropdownMenuBox(
-                    selectedId = selectedUnitId,
-                    onValueChange = { selectedUnitId = it },
-                    label = { Text("Unit") },
-                    items = units,
-                    modifier = Modifier.weight(0.5f),
-                    getId = { it.id },
-                    getLabel = { it.symbol },
-                )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
+                    MyExposedDropdownMenuBox(
+                        selectedId = selectedUnitId,
+                        onValueChange = { selectedUnitId = it },
+                        label = { Text("Unit") },
+                        items = units,
+                        modifier = Modifier.weight(0.5f),
+                        getId = { it.id },
+                        getLabel = { it.symbol },
+                    )
                 }
 
             }
             // TODO: I put this in to test the feature on NumericTextField, if (and it might) it lives, need to be careful to use the right font and spacing so it is indistinguishable (apart from its width) from a "true" supportingText under the pack size text box
             if (todoSupportingText.second != null) {
                 // TODO: the color is wrong-ish here - needs to be onSurfaceVariant if this *isn't* an error, or MaterialTheme.colorScheme.error if it is. Maybe todoSupportingText should be some kind of sealed class? In this form we could probably get away with just always making this error colour, but that's a bit hacky. Or it could be a Pair(color, text).
-                Text(text=todoSupportingText.second!!, style = MaterialTheme.typography.bodySmall, color = if (todoSupportingText.first) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 16.dp).padding(top = 4.dp))
+                Text(
+                    text = todoSupportingText.second!!,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (todoSupportingText.first) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 4.dp)
+                )
             }
             Spacer(modifier = Modifier.height(8.dp))
             /* TODO DELETE - JUST TEMP TO CHECK MY "FAKE" SUPPORTING TEXT MATCHES IN SPACING AND APPEARANCE
@@ -2852,13 +2986,19 @@ fun OuterFullScreenDialog(
             // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute ma
             // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that would give a width for an arbitrary string and
             // we could use something like that to size fields like this and/or the unit (albeit both have some extra window furniture - but we could for example compute a "notional text size" taking font size into account for " £  1234.00     " (spaces approximating margins/space for icons to pop in) and " litre    " (ditto) and use those sizes as the weights - we don't want both things fixed size as they won't fill the screen then, and we probably don't want one "minimal" and the other filling rest of space - but then again, if you do that, a fixed ratio is probably more or less the same since both will expand with font size just the same, so maybe that would be pointless
-            var TODOHACKYPRICE by rememberSyncedTextFieldValue(uiContent.editablePrice.price.value ?: "") // TODO: Just stop it being nullable rather than converting null to "" here?
+            var TODOHACKYPRICE by rememberSyncedTextFieldValue(
+                uiContent.editablePrice.price.value ?: ""
+            ) // TODO: Just stop it being nullable rather than converting null to "" here?
             Log.d("MyApp", "getCurrencyFormat ${vm.getCurrencyFormat(uiContent.dataSet)}")
             val currencyFormat = vm.getCurrencyFormat(uiContent.dataSet)
-            Box(modifier = Modifier.onGloballyPositioned { coordinates -> priceY = coordinates.positionInParent().y.toInt() } ) {
+            Box(modifier = Modifier.onGloballyPositioned { coordinates ->
+                priceY = coordinates.positionInParent().y.toInt()
+            }) {
 
                 NumericTextField(
-                    modifier = Modifier.fillMaxWidth() .focusRequester(priceFocusRequester),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(priceFocusRequester),
                     label = { Text("Pack price") },
                     // TODO prefix = { Text("£") },
                     value = TODOHACKYPRICE,
@@ -2881,13 +3021,24 @@ fun OuterFullScreenDialog(
             // user changes (ideally not just *focuses* the contents of pack size/unit/pack price). Editing notes field will not
             // auto-set this. That said, it may actually be better to leave it off and let the user toggle it on if they want
             // rather than try to be too clever. Not sure. This could be controlled via a settings option.
-            var todoHackySwitch by remember{ mutableStateOf( false) }
+            var todoHackySwitch by remember { mutableStateOf(false) }
             Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
                 Column {
                     // TODO: WORDING FOR BOTH THESE MIGHT WANT TWEAKING
-                    Text(text = "Confirm pack size and price", color = MaterialTheme.colorScheme.onSurface)
-                    Text(text = "The above details are correct right now", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        text = "Confirm pack size and price",
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "The above details are correct right now",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
                 Switch(checked = todoHackySwitch, onCheckedChange = { todoHackySwitch = it })
             }
@@ -2898,7 +3049,7 @@ fun OuterFullScreenDialog(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Notes") },
                 value = uiContent.editablePrice.details.value ?: "",
-                onValueChange = { uiContent.editablePrice.details.value = it  },
+                onValueChange = { uiContent.editablePrice.details.value = it },
             )
             //}
         }
@@ -3030,7 +3181,11 @@ fun validationRuleMaxDp(maxDp: Int): ValidationRule {
 */
 
 // This assumes input filtering has already excluded characters other than digits, space, comma and full stop. TODO: We could go belt and braces and check for that anyway.
-fun numericValidationRules(allowDecimals: Boolean = true, allowZero: Boolean = true, maxDp: Int? = null, ): List<ValidationRule> {
+fun numericValidationRules(
+    allowDecimals: Boolean = true,
+    allowZero: Boolean = true,
+    maxDp: Int? = null,
+): List<ValidationRule> {
     val locale = Locale.getDefault()
     val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
     val maxDecimalSeparators = if (allowDecimals) 1 else 0
@@ -3043,7 +3198,10 @@ fun numericValidationRules(allowDecimals: Boolean = true, allowZero: Boolean = t
         sanitiseCandidate(candidate).replace(decimalSeparator, '.').toDoubleOrNull()
 
     return listOfNotNull(
-        ValidationRule({ it.count { it == decimalSeparator}  <= maxDecimalSeparators }, if (allowDecimals) "Only one decimal point allowed" else "Only whole numbers allowed"),
+        ValidationRule(
+            { it.count { it == decimalSeparator } <= maxDecimalSeparators },
+            if (allowDecimals) "Only one decimal point allowed" else "Only whole numbers allowed"
+        ),
 
         if (maxDp != null) {
             // TODO: We could allow extra decimal places if they are all zeros? I could see arguments either way.
@@ -3057,7 +3215,7 @@ fun numericValidationRules(allowDecimals: Boolean = true, allowZero: Boolean = t
 
         if (!allowZero) {
             // TODO: This message assumes you can't enter a negative value in the first place.
-            ValidationRule( { attemptedParse(it) != 0.0 }, "Must be greater than zero")
+            ValidationRule({ attemptedParse(it) != 0.0 }, "Must be greater than zero")
         } else {
             null
         },
@@ -3155,7 +3313,7 @@ fun ValidatedTextField(
     suffix: @Composable() (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
     validationRules: List<ValidationRule>? = null,
-    onCandidateValueChange: ((String) -> Boolean) ,
+    onCandidateValueChange: ((String) -> Boolean),
     onValueChange: (TextFieldValue) -> Unit,
     onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -3175,13 +3333,14 @@ fun ValidatedTextField(
         // purposes here I think this is fine. Obviously we could add a parameter to allow the
         // caller to configure this.
         if (newValue.trim().isEmpty()) {
-            failedValidationRule =  null
+            failedValidationRule = null
             return
         }
 
         // In order to give "consistent" supportingText, we give precedence to whichever
         // validation generated the current supporting text.
-        val reorderedValidations = listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
+        val reorderedValidations =
+            listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
         failedValidationRule = null
         for (validationRule in reorderedValidations) {
             if (!validationRule.validate(newValue)) {
@@ -3197,7 +3356,12 @@ fun ValidatedTextField(
     fun getSupportingText(): @Composable (() -> Unit)? {
         if (onSupportingTextChange == null) {
             if (failedValidationSupportingText != null) {
-                return { Text(failedValidationSupportingText!!, color = MaterialTheme.colorScheme.error) }
+                return {
+                    Text(
+                        failedValidationSupportingText!!,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
             } else if (supportingText != null) {
                 return { Text(supportingText) }
             }
@@ -3262,13 +3426,15 @@ fun ValidatedTextField(
             }
         },
         supportingText = getSupportingText(),
-        trailingIcon = if (failedValidationSupportingText != null) { {
+        trailingIcon = if (failedValidationSupportingText != null) {
+            {
                 Icon(
                     imageVector = Icons.Default.Warning,
                     contentDescription = "Error",
                     tint = MaterialTheme.colorScheme.error
                 )
-            } } else null,
+            }
+        } else null,
         isError = failedValidationSupportingText != null
     )
 
@@ -3405,9 +3571,16 @@ class SharedViewModel : ViewModel() {
         val item = uiContent.item!!
         val source = uiContent.source!!
 
-        val price = uiContent.itemPriceListRaw.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
+        val price =
+            uiContent.itemPriceListRaw.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
-        val editablePrice = if (price != null) EditablePrice(price) else EditablePrice(dataSetId = dataSet.id, itemId = item.id, sourceId = source.id, itemQuantityType = item.quantityType, itemDefaultUnit = item.defaultUnit)
+        val editablePrice = if (price != null) EditablePrice(price) else EditablePrice(
+            dataSetId = dataSet.id,
+            itemId = item.id,
+            sourceId = source.id,
+            itemQuantityType = item.quantityType,
+            itemDefaultUnit = item.defaultUnit
+        )
         editPriceScreenUIContent = EditPriceScreenUIContent(
             editablePrice = editablePrice,
             originalPrice = editablePrice,
@@ -3432,7 +3605,9 @@ class SharedViewModel : ViewModel() {
 
 fun splitAroundDigits(input: String): Pair<String, String> {
     var firstDigitIndex = input.indexOfFirst { it.isDigit() }
-    if (firstDigitIndex == -1) { firstDigitIndex = 0 }
+    if (firstDigitIndex == -1) {
+        firstDigitIndex = 0
+    }
     val prefix = input.substring(0, firstDigitIndex)
 
     val lastDigitIndex = input.indexOfLast { it.isDigit() }
@@ -3448,7 +3623,8 @@ fun splitAroundDigits(input: String): Pair<String, String> {
 // TODO: Should this hold the EditablePrice and we should copy it over from the SharedViewModel when
 // edit screen is first composed? But this feels like it might be a nightmare of "bad first
 // compositions" - but it does also feel like it "ought" to be in here. Think about this later.
-class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerRepository) : ViewModel() {
+class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerRepository) :
+    ViewModel() {
     val instanceId = UUID.randomUUID().toString() // TODO FOR DEBUG
 
     init {
@@ -3473,7 +3649,7 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     // TODO: Could/should this use a read only property amd a setter etc etc
     /* TODO TEMP CHANGED TO USE SETTER AT LEAST SO I CAN LOG
     var uiContent: EditPriceScreenUIContent? = null */
-    var uiContent : EditPriceScreenUIContent? = null
+    var uiContent: EditPriceScreenUIContent? = null
         set(value) {
             Log.d("MyApp", "EditPriceScreenViewMode uIContent.set: $field -> $value")
             field = value
@@ -3486,10 +3662,12 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
 
     // TODO: Even if Locale.getDefault() is sub-optimal, this is fine as it's really only a default. updateLocaleDependencies() should be called almost immediately - maybe do some test logging to check that?
     // TODO: HARDCODING 2DP FOR PACK SIZE IS A HACK - SHOULD PROBABLY VARY WITH UNIT???
-    var packSizeValidationRules = numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
+    var packSizeValidationRules =
+        numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
 
     // TODO: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRICEVALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
-    private fun getPriceValidationRules(locale: Locale) = numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
+    private fun getPriceValidationRules(locale: Locale) =
+        numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
 
     // TODO: There's probably a lot of redundancy with the currency stuff given how it's evolved
 
@@ -3521,9 +3699,21 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
                 currency = currencyInstance
             }
             val sampleFormattedCurrency = numberFormat.format(1.0)
-            Log.d("MyApp", "sampleFormattedCurrency for ${dataSet.currencyCode} is '$sampleFormattedCurrency'")
+            Log.d(
+                "MyApp",
+                "sampleFormattedCurrency for ${dataSet.currencyCode} is '$sampleFormattedCurrency'"
+            )
             val (prefix, suffix) = splitAroundDigits(sampleFormattedCurrency)
-            CurrencyFormat(decimalPlaces = currencyInstance.defaultFractionDigits, prefix = prefix.trim().ifBlank { null }, suffix = suffix.trim().ifBlank { null }, validationRules = numericValidationRules(allowDecimals = true, allowZero = false, maxDp = currencyInstance.defaultFractionDigits))
+            CurrencyFormat(
+                decimalPlaces = currencyInstance.defaultFractionDigits,
+                prefix = prefix.trim().ifBlank { null },
+                suffix = suffix.trim().ifBlank { null },
+                validationRules = numericValidationRules(
+                    allowDecimals = true,
+                    allowZero = false,
+                    maxDp = currencyInstance.defaultFractionDigits
+                )
+            )
         }
     }
 
@@ -3539,7 +3729,11 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
         if (!validationRulesOk(packSizeValidationRules, editablePrice.measureValue.value)) {
             return ValidationState.PACK_SIZE_INVALID
         }
-        if (!validationRulesOk(getCurrencyFormat(uiContent!!.dataSet).validationRules, editablePrice.price.value)) {
+        if (!validationRulesOk(
+                getCurrencyFormat(uiContent!!.dataSet).validationRules,
+                editablePrice.price.value
+            )
+        ) {
             return ValidationState.PRICE_INVALID
         }
         // TODO: MORE?
@@ -3592,7 +3786,8 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val sharedViewModel: SharedViewModel = viewModel(LocalContext.current as ComponentActivity) // TODO: perplexity voodoo
+    val sharedViewModel: SharedViewModel =
+        viewModel(LocalContext.current as ComponentActivity) // TODO: perplexity voodoo
     //val saveableStateHolder = rememberSaveableStateHolder()
     NavHost(
         navController = navController,
@@ -3608,17 +3803,18 @@ fun AppNavigation() {
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
         ) { backStackEntry ->
-            val vm: HomeScreenViewModel = viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
+            val vm: HomeScreenViewModel =
+                viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
             Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
             // TODO: I ACTUALLY THINK I DON'T NEED SAVEABLESTATEHOLDER AND HAVE BEEN CHASING THE WRONG PROBLEM BUT LET'S KEEP IT FOR NOW ANYWAY
             //saveableStateHolder.SaveableStateProvider(backStackEntry.id) {
-                HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
-                    sharedViewModel.setEditPriceScreenStateFromHomeScreenState(uiContent)
-                    // TODO: I don't know if this random UUID is necessary or helpful or harmful any more,
-                    // need to experiment/think about this once I finish re-implementing the price edit
-                    // screen.
-                    navController.navigate("fullScreenDialog/${UUID.randomUUID()}")
-                })
+            HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
+                sharedViewModel.setEditPriceScreenStateFromHomeScreenState(uiContent)
+                // TODO: I don't know if this random UUID is necessary or helpful or harmful any more,
+                // need to experiment/think about this once I finish re-implementing the price edit
+                // screen.
+                navController.navigate("fullScreenDialog/${UUID.randomUUID()}")
+            })
             //}
         }
         val tweenDurationMillisEnter = 700; // TODO: should probably be 300 in final version
@@ -3675,7 +3871,8 @@ fun AppNavigation() {
                 )
             }
         ) { backStackEntry ->
-            val vm: EditPriceScreenViewModel = viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
+            val vm: EditPriceScreenViewModel =
+                viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
 
             // TODO: Be good to test fairly late on with two datasets with different currencies - I vaguely wonder
             // if re-use of this composable (maybe prevented via randomUUID route hack?) will not pick up the
@@ -3696,7 +3893,8 @@ fun AppNavigation() {
                 Log.d("MyApp", "sharedViewModel.editPriceScreenUIContent = null")
                 sharedViewModel.editPriceScreenUIContent = null
             }
-            OuterFullScreenDialog(vm, navController,
+            OuterFullScreenDialog(
+                vm, navController,
                 onClose = {
                     navController.popBackStack()
                 })
