@@ -942,7 +942,6 @@ data class PriceEntity(
     // confirm explicitly on the main screen if they want to)
     val confirmed: Instant,
 
-    // TODO: Should details be nullable? Or should we just use empty string?
     val details: String // Additional price details TODO: rename "notes"?
 ) : Parcelable
 
@@ -2237,8 +2236,9 @@ data class EditablePrice(
     val price: MutableState<String>,
     val measureValue: MutableState<String>,
     val measureUnit: MutableState<MeasureUnit>,
-    val confirmed: Instant?,
-    val details: MutableState<String?>,
+    val confirmed: Instant, // TODO: rename this confirmedAt (everywhere)?
+    val toConfirm: MutableState<Boolean>,
+    val details: MutableState<String>,
     val itemQuantityType: QuantityType,
 
     ) {
@@ -2262,8 +2262,9 @@ data class EditablePrice(
         price = mutableStateOf(""),
         measureValue = mutableStateOf(""),
         measureUnit = mutableStateOf(itemDefaultUnit),
-        confirmed = null,
-        details = mutableStateOf(null),
+        confirmed = Instant.now(),
+        toConfirm = mutableStateOf(true),
+        details = mutableStateOf(""),
         itemQuantityType = itemQuantityType
     )
 
@@ -2288,6 +2289,7 @@ data class EditablePrice(
         ),
         measureUnit = mutableStateOf(price.measure.unit),
         confirmed = price.confirmed,
+        toConfirm = mutableStateOf(false),
         details = mutableStateOf(price.details),
         itemQuantityType = price.itemQuantityType
     )
@@ -2311,7 +2313,7 @@ data class EditablePrice(
                         measureValueDouble,
                         measureUnit.value
                     ),
-                    confirmed = confirmed!!,
+                    confirmed = if (toConfirm.value) Instant.now() else confirmed,
                     details = details.value!!,
                     itemQuantityType = itemQuantityType,
                 )
@@ -3022,28 +3024,38 @@ fun OuterFullScreenDialog(
             // user changes (ideally not just *focuses* the contents of pack size/unit/pack price). Editing notes field will not
             // auto-set this. That said, it may actually be better to leave it off and let the user toggle it on if they want
             // rather than try to be too clever. Not sure. This could be controlled via a settings option.
-            // TODO: The switch should probably be omitted if we are adding a brand new price - we should always confirm "now" in that case - we don't want null confirm dates in the database, and if we don't have a price in front of us, why are we adding and how can we type anything in for the mandatory price?
-            var todoHackySwitch by remember { mutableStateOf(false) }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    // TODO: WORDING FOR BOTH THESE MIGHT WANT TWEAKING
-                    Text(
-                        text = "Confirm pack size and price",
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = "The above details are correct right now",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+            //
+            // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
+            // why are we entering it?
+            if (uiContent.editablePrice.id != 0L) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        // TODO: WORDING FOR BOTH THESE MIGHT WANT TWEAKING
+                        Text(
+                            text = "Confirm pack size and price",
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "The above details are correct right now",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Switch(
+                        checked = uiContent.editablePrice.toConfirm.value,
+                        onCheckedChange = { uiContent.editablePrice.toConfirm.value = it })
                 }
-                Switch(checked = todoHackySwitch, onCheckedChange = { todoHackySwitch = it })
+            } else {
+                devCheck(uiContent.editablePrice.toConfirm.value) {
+                    "Expected toConfirm to be true as this is the first price, but it's false"
+                }
             }
+
 
             Spacer(modifier = Modifier.height(8.dp))
             // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
