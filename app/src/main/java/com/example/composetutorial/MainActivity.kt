@@ -2,6 +2,7 @@
 
 package com.example.composetutorial
 
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.flow.flowOf
@@ -113,9 +114,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardType
@@ -2652,6 +2655,12 @@ fun OuterFullScreenDialog(
         }
     }
 
+    val coroutineScope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
+    val packSizeFocusRequester = remember { FocusRequester() }
+    var packSizeY by remember { mutableStateOf(0) }
+    val priceFocusRequester = remember { FocusRequester() }
+    var priceY by remember { mutableStateOf(0) }
 
     // TODO: Grok suggests wrapping a Box with:
     //Modifier.semantics {
@@ -2681,6 +2690,7 @@ fun OuterFullScreenDialog(
                 actions = {
                     // TODO: When/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
                     TextButton(enabled = !saveInitiated, onClick = {
+                        coroutineScope.launch {
                         // TODO: Maybe we shouldn't be passing editablePrice around as a parameter so much, when it's implicit in
                         // the ViewModel? THis would apply elsewhere, not just here.
                         when (vm.validateEditablePrice(uiContent.editablePrice)) {
@@ -2689,10 +2699,15 @@ fun OuterFullScreenDialog(
                                 vm.saveEditablePrice(uiContent.editablePrice)
                             }
                             // TODO GENERATE ERROR - EG A SNACKBAR, AND MAYBE JUMP FOCUS TO FIRST FAILURE
-                            EditPriceScreenViewModel.ValidationState.PACK_SIZE_INVALID -> TODO()
-                            EditPriceScreenViewModel.ValidationState.PRICE_INVALID -> TODO()
-                        }
-                    }) {
+                            EditPriceScreenViewModel.ValidationState.PACK_SIZE_INVALID -> {
+                                scrollState.animateScrollTo(packSizeY)
+                                packSizeFocusRequester.requestFocus()
+                            }
+                            EditPriceScreenViewModel.ValidationState.PRICE_INVALID -> {
+                                scrollState.animateScrollTo(priceY)
+                                priceFocusRequester.requestFocus()
+                            }
+                    }}}) {
                         if (showSaveProgressIndicator) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
@@ -2718,7 +2733,7 @@ fun OuterFullScreenDialog(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = fullScreenDialogBorder) // TODO: looks ugly but I haven't actually designed the dialog properly yet, so let's try to follow recommendation for now
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
         ) {
             // TODO: I think the use of "remember" here is far too weak, but this is basically old hacky code and converting to the viewmodel approach will automatically fix this
             var packSize by remember { mutableStateOf("123") }
@@ -2739,6 +2754,8 @@ fun OuterFullScreenDialog(
                 includeDisplayOnly = false
             )
             var todoSupportingText by remember { mutableStateOf<Pair<Boolean, String?>>(Pair(false, null)) }
+            Box(modifier = Modifier.fillMaxWidth().onGloballyPositioned { coordinates -> packSizeY = coordinates.positionInParent().y.toInt() } ) {
+
             Row {
                 // TODO: Don't really like this way of showing pack size and unit etc, but
                 // this is just a quick hack to get some "realistic-ish" content on the
@@ -2792,16 +2809,21 @@ fun OuterFullScreenDialog(
                 //var todoNumber2 by rememberSaveable { mutableStateOf("888") }
                 var todoNumber by rememberSyncedTextFieldValue(uiContent.editablePrice.measureValue.value ?: "") // TODO: Just stop it being nullable rather than converting null to "" here?
                 // TODO: Remember final "save" validation must check for non-empty strings for Validated/NUmeric TextFields, as the validation allows this
-                NumericTextField(
-                    label = { Text("Pack size") },
-                    value = todoNumber,
-                    validationRules = vm.packSizeValidationRules,
-                    // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
-                    onValueChange = { todoNumber = it; uiContent.editablePrice.measureValue.value = it.text },
-                    onSupportingTextChange = { isError, supportingText -> todoSupportingText = Pair(isError, supportingText) },
-                    supportingText = "This is some supporting text just as a test.",
-                    modifier = Modifier.weight(1f)
-                )
+                    NumericTextField(
+                        label = { Text("Pack size") },
+                        value = todoNumber,
+                        validationRules = vm.packSizeValidationRules,
+                        // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
+                        onValueChange = {
+                            todoNumber = it; uiContent.editablePrice.measureValue.value = it.text
+                        },
+                        onSupportingTextChange = { isError, supportingText ->
+                            todoSupportingText = Pair(isError, supportingText)
+                        },
+                        supportingText = "This is some supporting text just as a test.",
+                        modifier = Modifier.weight(1f)
+                            .focusRequester(packSizeFocusRequester)
+                    )
                 Spacer(modifier = Modifier.width(8.dp))
                 // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
                 MyExposedDropdownMenuBox(
@@ -2813,6 +2835,7 @@ fun OuterFullScreenDialog(
                     getId = { it.id },
                     getLabel = { it.symbol },
                 )
+                }
 
             }
             // TODO: I put this in to test the feature on NumericTextField, if (and it might) it lives, need to be careful to use the right font and spacing so it is indistinguishable (apart from its width) from a "true" supportingText under the pack size text box
@@ -2830,20 +2853,27 @@ fun OuterFullScreenDialog(
             var TODOHACKYPRICE by rememberSyncedTextFieldValue(uiContent.editablePrice.price.value ?: "") // TODO: Just stop it being nullable rather than converting null to "" here?
             Log.d("MyApp", "getCurrencyFormat ${vm.getCurrencyFormat(uiContent.dataSet)}")
             val currencyFormat = vm.getCurrencyFormat(uiContent.dataSet)
-            NumericTextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Pack price") },
-                // TODO prefix = { Text("£") },
-                value = TODOHACKYPRICE,
-                prefix = TextOrNull(currencyFormat.prefix),
-                suffix = TextOrNull(currencyFormat.suffix),
-                // TODO: Is it correct to right-align like this? I will assume it is for now. Maybe there's an argument since the unit on the pack size is pseudo-suffixy, we should right-align the pack size - but I think that might look ugly. But maybe that means this looks ugly. But maybe it's different if you're used to the currency symbol being on the right. Or maybe the currency symbol should be on the left in this kind of form *anyway*. Very hard for me to know. Maybe wait for user feedback?
-                textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(textAlign = TextAlign.End) else LocalTextStyle.current,
-                validationRules = currencyFormat.validationRules,
-                // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
-                onValueChange = { TODOHACKYPRICE = it; uiContent.editablePrice.price.value = it.text },
-                supportingText = "This is more supporting text just as a test.",
-            )
+            Box(modifier = Modifier.onGloballyPositioned { coordinates -> priceY = coordinates.positionInParent().y.toInt() } ) {
+
+                NumericTextField(
+                    modifier = Modifier.fillMaxWidth() .focusRequester(priceFocusRequester),
+                    label = { Text("Pack price") },
+                    // TODO prefix = { Text("£") },
+                    value = TODOHACKYPRICE,
+                    prefix = TextOrNull(currencyFormat.prefix),
+                    suffix = TextOrNull(currencyFormat.suffix),
+                    // TODO: Is it correct to right-align like this? I will assume it is for now. Maybe there's an argument since the unit on the pack size is pseudo-suffixy, we should right-align the pack size - but I think that might look ugly. But maybe that means this looks ugly. But maybe it's different if you're used to the currency symbol being on the right. Or maybe the currency symbol should be on the left in this kind of form *anyway*. Very hard for me to know. Maybe wait for user feedback?
+                    textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
+                        textAlign = TextAlign.End
+                    ) else LocalTextStyle.current,
+                    validationRules = currencyFormat.validationRules,
+                    // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
+                    onValueChange = {
+                        TODOHACKYPRICE = it; uiContent.editablePrice.price.value = it.text
+                    },
+                    supportingText = "This is more supporting text just as a test.",
+                )
+            }
 
             // TODO: I am thinking this will start "off", but as a one-time thing it will switch automatically to "on" if the
             // user changes (ideally not just *focuses* the contents of pack size/unit/pack price). Editing notes field will not
@@ -3504,10 +3534,10 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     // TODO: It's tempting to think this should be on EditablePrice itself, but the whole point is that it will apply (sharing as much as possible) the same validation rules that the ValidatedTextFields are usiong - and those aren't available to EditablePrice, and based on discussion with ChatGPT I think it's better to have this function here than pass this ViewModel as an argument to EditablePrice.toDomain()
     fun validateEditablePrice(editablePrice: EditablePrice): ValidationState {
         // TODO: What about "non-null" validation? The validation rules do not cover this. So we have to a) communicate this to user b) check it separately. Just possibly we could have a "must not be empty" validation rule which is only added to the validation rule sets when save is (first) clicked - then a) we'd automatically check it here b) if the user hasn't filled in some fields they will be warned, without being nagged when they first enter the edit screen for a new record
-        if (!validationRulesOk(packSizeValidationRules, editablePrice.price.value)) {
+        if (!validationRulesOk(packSizeValidationRules, editablePrice.measureValue.value)) {
             return ValidationState.PACK_SIZE_INVALID
         }
-        if (!validationRulesOk(getCurrencyFormat(uiContent!!.dataSet).validationRules, editablePrice.measureValue.value)) {
+        if (!validationRulesOk(getCurrencyFormat(uiContent!!.dataSet).validationRules, editablePrice.price.value)) {
             return ValidationState.PRICE_INVALID
         }
         // TODO: MORE?
