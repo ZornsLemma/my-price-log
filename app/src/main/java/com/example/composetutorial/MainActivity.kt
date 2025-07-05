@@ -322,6 +322,8 @@ enum class MeasureUnit(
     }
 }
 
+val measureUnitById = MeasureUnit.entries.associateBy { it.id }
+
 fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {
     val relevantUnitFamilies = setOfNotNull(
         if (dataSet.allowMetric) UnitFamily.METRIC else null,
@@ -928,6 +930,7 @@ data class PriceEntity(
     // stored on the item, but tracking it per actual price allows us to handle situations where
     // supermarket A sells milk in pint multiples (even if the pack still has litres shown, the user
     // may think of this in pints) while supermarket B sells it in litre multiples.
+    // TODO: Rename this as "user_unit" or something?
     @ColumnInfo(name = "original_unit") val originalUnit: MeasureUnit,
 
     // TODO: we need a "confirmed date" - even once we add the historical valid_{from,to} columns,
@@ -953,17 +956,15 @@ data class PriceWithItemEntity(
     @ColumnInfo(name = "quantity_type") val itemQuantityType: QuantityType,
 )
 
+// Price is a domain-level class which is "nice" for us to work with, once we've got away from the database layer.
 @Parcelize // TODO: Can we get rid of this later!?
 data class Price(
-    // TODO: probably rename just "Price" once we rename the existing "Price"
     val id: Long = 0,
     val dataSetId: Long,
     val itemId: Long,
     val sourceId: Long,
     val price: Double,
-    // TODO: I have some contradictory notes elsewhere, I think, but to avoid confusion I wonder if we ought to get rid of originalUnit in this domain level class and just put the "correct" unit on measure.
     val measure: MeasuredValue,
-    val originalUnit: MeasureUnit,
     val confirmed: Instant,
     val details: String, // Additional price details TODO: rename "notes"?
     // itemQuantityType is a copy of the quantityType from the Item when we originally read the
@@ -1003,7 +1004,6 @@ data class Price(
                 sourceId = 0, // TODO MASSIVE HACK
                 price = 0.0,
                 measure = MeasuredValue(0.0, MeasureUnit.ML), // TODO MASSIVE HACK
-                originalUnit = MeasureUnit.ML, // TODO MASSIVE HACK
                 confirmed = Instant.now(), // TODO MASSIVE HACK
                 details = "",
                 itemQuantityType = QuantityType.WEIGHT // TODO MASSIVE HACK
@@ -1022,14 +1022,16 @@ fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
 // TODO: Whiff of ChatGPT magic
 // TODO: I suspect we should actually be using the item's "default unit" not its quantityType here - although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the display unit for display, to avoid "oh, it happened to work for me in metric with grams but now I'm in imperial it's displaying badly" concerns
 fun PriceWithItemEntity.toDomain(): Price {
+    devCheck(priceEntity.originalUnit.quantityType == itemQuantityType) {
+        "TODO NOT SURE IF WE SHOULD BE CHECKING THIS HERE BUT WILL BASH IT IN FOR NOW"
+    }
     return Price(
         id = priceEntity.id,
         dataSetId = priceEntity.dataSetId,
         itemId = priceEntity.itemId,
         sourceId = priceEntity.sourceId,
         price = priceEntity.price,
-        measure = MeasuredValue(priceEntity.measure, baseUnitForQuantityType(itemQuantityType)),
-        originalUnit = priceEntity.originalUnit,
+        measure = MeasuredValue(priceEntity.measure, baseUnitForQuantityType(itemQuantityType)).to(priceEntity.originalUnit),
         confirmed = priceEntity.confirmed,
         details = priceEntity.details,
         itemQuantityType = itemQuantityType,
@@ -1948,8 +1950,7 @@ fun ItemSourceInfo(
                                         dataSet
                                     )
                                 } for ${
-                                    priceList[0].measure.to(priceList[0].originalUnit)
-                                        .toDisplayString(2)
+                                    priceList[0].measure.toDisplayString(2)
                                 }" /*, color = MaterialTheme.colorScheme.onSurface*/
                             )
                         }
@@ -1967,14 +1968,14 @@ fun ItemSourceInfo(
                         // TODO: I suspect relevantUnitList can and should be using remember but let's not worry about efficiency right now
                         val relevantUnitList = getRelevantMeasureUnits(
                             dataSet,
-                            priceList[0].originalUnit.quantityType,
+                            priceList[0].measure.unit.quantityType,
                             includeDisplayOnly = true
                         )
                         // var items = MeasureUnit.entries.filter { true }
                         var todoSelected by rememberSaveable(dataSet, priceList) {
                             val ur = getSiblingMeasureUnits(
                                 dataSet,
-                                priceList[0].originalUnit,
+                                priceList[0].measure.unit,
                                 includeDisplayOnly = true
                             )
                             // TODO: Note that we don't actually use the numerator of up - this might be fine, but it maybe suggests we could simplify the return type. OTOH, we've got to *calculate* the numerators anyway, so maybe we might as well pass it back in case it's handy in some other case?
@@ -2235,8 +2236,7 @@ data class EditablePrice(
     val sourceId: Long,
     val price: MutableState<String>,
     val measureValue: MutableState<String>,
-    val measureUnit: MeasureUnit, // TODO: THIS OR originalUnit IS PROBABLY REDUNDANT - HAVE NOTES ELSEWHERE TO THINK ABOUT THIS
-    val originalUnit: MeasureUnit, // TODO: DOES THIS HAVE ANY MEANING HERE?
+    val measureUnit: MutableState<MeasureUnit>,
     val confirmed: Instant?,
     val details: MutableState<String?>,
     val itemQuantityType: QuantityType,
@@ -2261,8 +2261,7 @@ data class EditablePrice(
         sourceId = sourceId,
         price = mutableStateOf(""),
         measureValue = mutableStateOf(""),
-        measureUnit = itemDefaultUnit, // TODO!?
-        originalUnit = itemDefaultUnit, // user can change this, but for a new price this is the sensible default
+        measureUnit = mutableStateOf(itemDefaultUnit),
         confirmed = null,
         details = mutableStateOf(null),
         itemQuantityType = itemQuantityType
@@ -2287,8 +2286,7 @@ data class EditablePrice(
                 maxDp = null
             )
         ),
-        measureUnit = price.originalUnit, // TODO?!?
-        originalUnit = price.originalUnit,
+        measureUnit = mutableStateOf(price.measure.unit),
         confirmed = price.confirmed,
         details = mutableStateOf(price.details),
         itemQuantityType = price.itemQuantityType
@@ -2311,9 +2309,8 @@ data class EditablePrice(
                     price = priceDouble,
                     measure = MeasuredValue(
                         measureValueDouble,
-                        measureUnit /* TODO OR ORIGINAL UNIT!? */
+                        measureUnit.value
                     ),
-                    originalUnit = originalUnit!!, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
                     confirmed = confirmed!!,
                     details = details.value!!,
                     itemQuantityType = itemQuantityType,
@@ -2841,9 +2838,6 @@ fun OuterFullScreenDialog(
                 .verticalScroll(scrollState)
         ) {
             // TODO: I think the use of "remember" here is far too weak, but this is basically old hacky code and converting to the viewmodel approach will automatically fix this
-            var packSize by remember { mutableStateOf("123") }
-            var selectedUnitId by remember { mutableStateOf(uiContent.editablePrice.originalUnit.id) } // TODO: This is probably wrong, I imagine it won't be propagated up via the magic state stuff - maybe it does, but I'm not sure we shoud be using remember for our new approach, anyway, think this through properly later
-            var packPrice by remember { mutableStateOf("2.98") }
             //var notes by remember { mutableStateOf("My cool notes") }
             // TODO: Product and Store should maybe be in a row. Just hacking up a rough
             // dialog here for testing of my dialog box code (esp focus stuff) for now.
@@ -2957,8 +2951,14 @@ fun OuterFullScreenDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
                     MyExposedDropdownMenuBox(
-                        selectedId = selectedUnitId,
-                        onValueChange = { selectedUnitId = it },
+                        selectedId = uiContent.editablePrice.measureUnit.value.id,
+                        onValueChange = {
+                            val measureUnit = measureUnitById[it]
+                            devCheck(measureUnit != null) {
+                                "Invalid measure unit ID $it selected in dropdown"
+                            }
+                            uiContent.editablePrice.measureUnit.value = measureUnit!!
+                        },
                         label = { Text("Unit") },
                         items = units,
                         modifier = Modifier.weight(0.5f),
@@ -3756,6 +3756,7 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
 
     fun saveEditablePrice(editablePrice: EditablePrice) {
         val price = editablePrice.toDomain(locale)
+        Log.d("MyApp", "saveEditablePrice price $price")
         if (price != null) {
             updateOrInsertPrice(price)
         } else {
