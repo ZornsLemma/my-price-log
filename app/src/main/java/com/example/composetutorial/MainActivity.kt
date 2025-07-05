@@ -2698,14 +2698,16 @@ fun OuterFullScreenDialog(
                                 saveInitiated = true
                                 vm.saveEditablePrice(uiContent.editablePrice)
                             }
-                            // TODO GENERATE ERROR - EG A SNACKBAR, AND MAYBE JUMP FOCUS TO FIRST FAILURE
+                            // TODO: We could possibly try to "animate" the problematic text field we just focused (e.g. pulse its border colour) to draw attention to it further, but this feels surprisingly fiddly and I am not sure it's ncessary. My inclination is to leave this for now and let the code settle down first before maybe trying to add it.
                             EditPriceScreenViewModel.ValidationState.PACK_SIZE_INVALID -> {
                                 scrollState.animateScrollTo(packSizeY)
                                 packSizeFocusRequester.requestFocus()
+                                // TODO GENERATE ERROR - EG A SNACKBAR
                             }
                             EditPriceScreenViewModel.ValidationState.PRICE_INVALID -> {
                                 scrollState.animateScrollTo(priceY)
                                 priceFocusRequester.requestFocus()
+                                // TODO GENERATE ERROR - EG A SNACKBAR
                             }
                     }}}) {
                         if (showSaveProgressIndicator) {
