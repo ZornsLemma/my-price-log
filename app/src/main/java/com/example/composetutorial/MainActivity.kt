@@ -2844,7 +2844,8 @@ fun OuterFullScreenDialog(
 
             // TODO: I am thinking this will start "off", but as a one-time thing it will switch automatically to "on" if the
             // user changes (ideally not just *focuses* the contents of pack size/unit/pack price). Editing notes field will not
-            // auto-set this.
+            // auto-set this. That said, it may actually be better to leave it off and let the user toggle it on if they want
+            // rather than try to be too clever. Not sure. This could be controlled via a settings option.
             var todoHackySwitch by remember{ mutableStateOf( false) }
             Spacer(modifier = Modifier.height(8.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
