@@ -3824,4 +3824,6 @@ Log.d("MyApp", baz.toString())
 //
 //    🎯 Pass the current Compose locale to your ViewModel using LaunchedEffect(currentLocale) to keep everything in sync
 //
-// Do I need to switch away from using Locale.getDefault()?
+// Do I need to switch away from using Locale.getDefault()? Perhaps I should have a LaunchedEffect(currentLocale) which passes the locale to the viewmodel, then we will have it available everywhere via that which should be up to date. But need to check ChatGPT is right of course!
+
+// TODO: It feels like I have a lot of similar-but-not-quite-the-same code to do things like locale sensitive number formatting and parsing. This ought to be rationalised.
