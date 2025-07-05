@@ -106,12 +106,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.focusRequester
@@ -2297,27 +2295,30 @@ data class EditablePrice(
     )
 
     // TODO: Tempish note - EditablePrice is a sort of "variant domain" class just for editing - we need to convert it to the "primary" domain class Price here. This name mioght be confusing all the same, as we are approaching domain from the opposite side to a toDomain() on an entity class
-    // TODO: This should maybe return a Result<Price> so it can signal errors (we probably don't need to provide an explanation, as the user gets their explanation via the live validation on the form)
-    fun toDomain(): Result<Price> {
+    fun toDomain(locale: Locale): Price? {
         // TODO: Just wrapping this in success is a temp hack
-        return Result.success(
-            Price(
-                // TODO: Should we "do something" if the values are null? Should we provide some kind of validation method the caller can use first? Should we throw? We can't write nulls to the database for most of these fields, they are null in EditablePrice to allow for the idea the user hasn't filled them in yet in a new entry
-                id = id,
-                dataSetId = dataSetId,
-                itemId = itemId,
-                sourceId = sourceId,
-                price = 42.0, // TODO! We need to do string parsing and other validation appropriate to this field and indicate to caller if it fails, hacking for now
-                measure = MeasuredValue(
-                    69.0 /* TODO! */,
-                    measureUnit /* TODO OR ORIGINAL UNIT!? */
-                ),
-                originalUnit = originalUnit!!, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
-                confirmed = confirmed!!,
-                details = details.value!!,
-                itemQuantityType = itemQuantityType,
-            )
-        )
+        val priceDouble = parseStringAsDoubleOrNull(locale, price.value)
+        val measureValueDouble = parseStringAsDoubleOrNull(locale, measureValue.value)
+        if (priceDouble == null || measureValueDouble == null) {
+            return null
+        } else {
+            return Price(
+                    // TODO: Should we "do something" if the values are null? Should we provide some kind of validation method the caller can use first? Should we throw? We can't write nulls to the database for most of these fields, they are null in EditablePrice to allow for the idea the user hasn't filled them in yet in a new entry
+                    id = id,
+                    dataSetId = dataSetId,
+                    itemId = itemId,
+                    sourceId = sourceId,
+                    price = priceDouble,
+                    measure = MeasuredValue(
+                        measureValueDouble,
+                        measureUnit /* TODO OR ORIGINAL UNIT!? */
+                    ),
+                    originalUnit = originalUnit!!, // TODO WE NEED TO BE CAREFUL, WHEN THE USER EDITS AND SETS A MEASURE, THAT NEEDS TO BE REFLECTED HRE - SHOULD WE BE TAKING IT FROM price.measure?
+                    confirmed = confirmed!!,
+                    details = details.value!!,
+                    itemQuantityType = itemQuantityType,
+                )
+        }
     }
 }
 
@@ -3180,6 +3181,15 @@ fun validationRuleMaxDp(maxDp: Int): ValidationRule {
 }
 */
 
+
+// TODO: This duplicates code in numericValidationRules()
+fun parseStringAsDoubleOrNull(locale: Locale, string: String): Double? {
+    val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
+    // TODO: If we allow negative values, we shouldn't strip that off. Maybe best to just allow it through here - it is significant if typed.
+    val insignificantCharsRegex = "[^0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
+    return string.replace(insignificantCharsRegex, "").replace(decimalSeparator, '.').toDoubleOrNull()
+}
+
 // This assumes input filtering has already excluded characters other than digits, space, comma and full stop. TODO: We could go belt and braces and check for that anyway.
 fun numericValidationRules(
     allowDecimals: Boolean = true,
@@ -3190,10 +3200,10 @@ fun numericValidationRules(
     val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
     val maxDecimalSeparators = if (allowDecimals) 1 else 0
 
-    // Create a function to strip off everything except digits and the decimal separator - this removes fluff like spaces and the grouping symbol if the user typed it in.
+    // Create a function to strip fluff like spaces and the grouping symbol if the user typed it in.
     // TODO: If we allow negative values, we shouldn't strip that off. Maybe best to just allow it through here - it is significant if typed.
-    val allowedCharsRegex = "[^0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
-    fun sanitiseCandidate(candidate: String) = candidate.replace(allowedCharsRegex, "")
+    val insignificantCharsRegex = "[^0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
+    fun sanitiseCandidate(candidate: String) = candidate.replace(insignificantCharsRegex, "")
     fun attemptedParse(candidate: String): Double? =
         sanitiseCandidate(candidate).replace(decimalSeparator, '.').toDoubleOrNull()
 
@@ -3682,7 +3692,11 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     // TODO: MutableMap is not thread safe. I don't think this is a problem, but be aware of it - I think we could switch to non-mutable Map and replace-in-place if necessary
     val currencyFormatMap: MutableMap<String, CurrencyFormat> = mutableMapOf()
 
+    // TODO: Even if Locale.getDefault() is sub-optimal, this is fine as it's really only a default. updateLocaleDependencies() should be called almost immediately - maybe do some test logging to check that?
+    var locale: Locale = Locale.getDefault()
+
     fun updateLocaleDependencies(locale: Locale) {
+        this.locale = locale
         currencyFormatMap.clear()
     }
 
@@ -3741,7 +3755,7 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     }
 
     fun saveEditablePrice(editablePrice: EditablePrice) {
-        val price = editablePrice.toDomain().getOrNull()
+        val price = editablePrice.toDomain(locale)
         if (price != null) {
             updateOrInsertPrice(price)
         } else {
