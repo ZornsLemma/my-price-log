@@ -58,7 +58,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import androidx.compose.foundation.clickable
@@ -1395,15 +1394,6 @@ fun MainScreen(
     dataSet: DataSet?, dataSetList: List<DataSet>, onSelectedDataSetIdChange: (Long) -> Unit,
     item: Item?, itemList: List<Item>, onSelectedItemIdChange: (Long) -> Unit
 ) {
-    val selectedDataSetId = dataSet?.id // TODO SEMI TEMP HACK WHILE REFACTORING
-    val selectedProductId = item?.id // TODO DITTO
-
-    // TODO: Note that because category and product use a TextField, they have the (I think) nice
-    // property that the label expands into a sort of big hint when they are empty. We should
-    // probably take advantage of this where having them empty makes sense - and it probably does
-    // everywhere, even if it's rare, because the user *could* go and delete every single item in
-    // the database in theory. TODO: We should make sure we have the same behaviour for Source,
-    // because that actually *should* allow the user to easily set it to empty/none.
     var showItemSheet by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
 
@@ -1424,7 +1414,7 @@ fun MainScreen(
         MyExposedDropdownMenuBox(
             modifier = Modifier
                 .fillMaxWidth(),
-            selectedId = selectedDataSetId,
+            selectedId = dataSet?.id,
             onValueChange = { onSelectedDataSetIdChange(it) },
             label = { Text("Collection") },
             items = dataSetList ?: emptyList(),
