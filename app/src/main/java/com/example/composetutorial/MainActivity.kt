@@ -1837,9 +1837,6 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 // - (borderline?) do we have up-to-date prices for other sources? if not it's hard to know if this is well-priced or not no matter how up to the date the price at this source is.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-// TODO: UP TO HERE
-// TODO: Arguably we should have selected{DataSet,Product}Id not allow nulls here - our parent should just not be composing us if these are not set
-// TODO: This should probably work with no selected item and it should show itself but with the variant supporting text "choose a product and store to..."
 fun ItemSourceInfo(
     navController: NavHostController,
     dataSet: DataSet,
@@ -1850,29 +1847,26 @@ fun ItemSourceInfo(
     itemPriceList: List<Price>,
     onEditPriceClick: () -> Unit,
 ) {
-    // TODO: Do we want any kind of "heading" or not? We may want some simple dividers, but those would be provided by the surrounding composables. Gut feeling is we don't want a heading, but think about it.
-
-    // TODO: It might just be the emulator, but right now when the settings screen slides out if source was non-null when we entered settings, there is a visible and
-    // rather ugly artefact as the card below this one animates down "as if" this card is expanding, although I don't see any visual
-    // effect of this card itself expanding. Need to investigate.
-    // TODO: Will we have a free-form text field on item-at-source? For eg things like noting the specific product to help find it again.
-    // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective, it's not as if the offer duration is usually clearly stated, free text note probably can be used for this among other things
-    // TODO: Should we show free-form text or special offer information here?
+    // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut
+    // feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective,
+    // it's not as if the offer duration is usually clearly stated, free text note probably can be
+    // used for this among other things
     // TODO: Just possibly the card inside layout should be some kind of grid control rather than row+column?
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        // TODO: animateContentSize() is experimental. If I keep it, I may also want it on the lower card, which can change size when product changes (just not yet, in this mockup).
-        // The odd padding here is because we want 8.dp at the left and right and 12.dp at the top and bottom to try to keep the square-ish
-        // corners of the TextField away from the round-ish corners at the top of the card. Because the bottom of the card has two buttons
-        // and these have "touchable but background colour" space around them to meet the minimum touch size (and we don't want to make them visually
-        // larger), if we use 12.dp at the bottom we actually get a bit more because of that extra space "around" the buttons. So we manually
-        // adjust the bottom padding to visually compensate for this while allowing the buttons to have their natural touch region.
-        // TODO: Can we avoid doing the animation if we are being "freshly composed", e.g. if we are returning here from another
-        // screen? I suspect this causes some animation ugliness. The problem is probably that because we start off with null data
-        // because async, we start off small and then grow once we get our data back and so this (formerly) "underlying" screen
-        // appears to be changing as the old screen slides off, even though it's supposedly been there unchanged all the time.
+        // TODO: animateContentSize() is experimental. If I keep it, I may also want it on the lower
+        // card, which can change size when product changes (just not yet, in this mockup). The odd
+        // padding here is because we want 8.dp at the left and right and 12.dp at the top and
+        // bottom to try to keep the square-ish corners of the TextField away from the round-ish
+        // corners at the top of the card. Because the bottom of the card has two buttons and these
+        // have "touchable but background colour" space around them to meet the minimum touch size
+        // (and we don't want to make them visually larger), if we use 12.dp at the bottom we
+        // actually get a bit more because of that extra space "around" the buttons. So we manually
+        // adjust the bottom padding to visually compensate for this while allowing the buttons to
+        // have their natural touch region.
+// TODO: UP TO HERE
         Column(
             modifier = Modifier
                 .animateContentSize()
@@ -4069,3 +4063,5 @@ Log.d("MyApp", baz.toString())
 // Do I need to switch away from using Locale.getDefault()? Perhaps I should have a LaunchedEffect(currentLocale) which passes the locale to the viewmodel, then we will have it available everywhere via that which should be up to date. But need to check ChatGPT is right of course!
 
 // TODO: It feels like I have a lot of similar-but-not-quite-the-same code to do things like locale sensitive number formatting and parsing. This ought to be rationalised.
+
+// TODO: Eventually will need to remove misc Log.d() lines and/or replace them with permanent well-thought-out ones if that is not inefficient.
