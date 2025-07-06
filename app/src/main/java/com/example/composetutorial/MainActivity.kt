@@ -676,7 +676,8 @@ class PriceTrackerRepositoryImpl(
     }
 }
 
-// TODO: WTF? - OK, I *think* this is essentially just the way we pass the parameters to the view model constructors and an AI told me this is normal and good.
+// AppViewModelProvider.Factory allows us to control the arguments passed to our ViewModel
+// constructors when viewModel() is called.
 object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer {
@@ -692,14 +693,9 @@ object AppViewModelProvider {
     }
 }
 
-// TODO: WTF? AI hints, complete voodoo
+// TODO: Lots of AI voodoo here, probably worth reading up later on how MyApplication should behave
+// and what it maybe ought to be doing.
 class MyApplication : Application() {
-    /* TODO
-    val itemsRepository: OfflineItemsRepository by lazy {
-        val db = InventoryDatabase.getDatabase(this)
-        OfflineItemsRepository(db.itemDao())
-    }
-    */
     val priceTrackerRepository: PriceTrackerRepositoryImpl by lazy {
         val db = InventoryDatabase.getDatabase(this)
         PriceTrackerRepositoryImpl(db.dataSetDao(), db.productDao(), db.sourceDao(), db.priceDao())
