@@ -1851,7 +1851,6 @@ fun ItemSourceInfo(
     // feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective,
     // it's not as if the offer duration is usually clearly stated, free text note probably can be
     // used for this among other things
-    // TODO: Just possibly the card inside layout should be some kind of grid control rather than row+column?
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
@@ -1996,13 +1995,12 @@ fun ItemSourceInfo(
                             onValueChange = { todoSelected = it })
 
                     }
-                    // TODO: Notes row should probably just be omitted if there are no notes - this is read-only view
-                    // TODO: I suspect there's going to be inconsistent padding vertically with or without this, because "other" Rows around it will have 8dp on all sides the way they are currently specified, and if this is missing we'll get 2x8dp gap. But I can tweak this once the layout otherwise settles down (e.g. specify explicit top padding on top Row and bottom padding on bottom Row and do the rest consistently, or something)
-                    Row(modifier = Modifier.padding(vertical = 4.dp)) {
-                        LabeledItem("Notes") {
-                            Text(priceList[0].details)
+                    if (priceList[0].details.isNotEmpty()) {
+                        Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                            LabeledItem("Notes") {
+                                Text(priceList[0].details)
+                            }
                         }
-                        //Text("TODO DUMMY TO FILL SPACE", modifier=Modifier.padding(vertical=130.dp))
                     }
                     // TODO: Vertical spacing probably poor with or without notes field - needs tweaking/better "plan" for how to specify it - that said, the vertical space above this final row probably should be "a bit" larger than the space between the two "reporting our status" rows - the following row is a "summary plus action" row and does want some visual distinction
                     Row(verticalAlignment = Alignment.CenterVertically) {
