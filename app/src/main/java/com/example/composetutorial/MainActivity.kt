@@ -205,6 +205,9 @@ enum class QuantityType(val value: Int) {
     }
 }
 
+// TODO: Could/should we get rid of the ITEM unit family and just make MeasureUnit.ITEM a member of
+// each of the three other families? This might well be a bad idea in terms of allowing the user to
+// have both metric and one of the other families enabled, but at least have a quick think.
 enum class UnitFamily {
     METRIC,
     IMPERIAL, // as used in UK
@@ -333,32 +336,38 @@ fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {
         UnitFamily.ITEM,
     )
     devCheck(relevantUnitFamilies.isNotEmpty()) { "Data set ID ${dataSet.id} has no unit families enabled" }
-    devCheck(!(dataSet.allowImperial && dataSet.allowUSCustomary)) { "Data set ID ${dataSet.id} has both imperial and US Customary unit families enabled" }
+    devCheck(!(dataSet.allowImperial && dataSet.allowUSCustomary)) { "Data set ID ${dataSet.id} has both imperial and US customary unit families enabled" }
     return relevantUnitFamilies
 }
 
-// TODO: Should this live in the "companion object" on MeasureUnit??
-// TODO: Not just here, it may be better to have single high-level unit families metric/US/imperial and use those in combination with quantitytype. This would at least be a purely internal change so I can see how/if it cleans up the code without needing to redo the database.
 // TODO: The results from this will probably be shown to the user so order matters. We should maybe
 // sort them and/or rely on MeasureUnit.entities having some order. We may want some way for the
 // caller to indicate that if there are multiple unit families in the results, they prefer a
-// particularly family (e.g. the one the user last used to enter a price) at the top. Within a unit
-// family, we should probably order by smallest to largest (which we can do by relying on
+// particularly family (e.g. the one the user last used to enter a price) at the top. There may be
+// an argument that consistent ordering of families if desirable rather than it varying too much,
+// although some users might prefer e.g. metric first and others imperial/US customary first. Within
+// a unit family, we should probably order by smallest to largest (which we can do by relying on
 // MeasureUnit.entities being in that order, or by sorting on base - probably nicer just to go with
-// the baked-in order for now
+// the baked-in order for now.
 fun getRelevantMeasureUnits(
     dataSet: DataSet,
     quantityType: QuantityType,
     includeDisplayOnly: Boolean
 ): List<MeasureUnit> {
     val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
-    val relevantMeasureUnits =
-        MeasureUnit.entries.filter { it.quantityType == quantityType && it.unitFamilies.any { it in relevantUnitFamilies } && (!it.displayOnly || includeDisplayOnly) }
-    devCheck(relevantMeasureUnits.isNotEmpty()) { "Expected at least one relevant measure unit for QuantityType ${quantityType.name} in the context of data set ID ${dataSet.id} but found none" }
+    val relevantMeasureUnits = MeasureUnit.entries.filter {
+        it.quantityType == quantityType &&
+                it.unitFamilies.any { it in relevantUnitFamilies } &&
+                (!it.displayOnly || includeDisplayOnly)
+    }
+    devCheck(relevantMeasureUnits.isNotEmpty()) {
+        "Expected at least one relevant measure unit for QuantityType ${quantityType.name} in " +
+                "the context of data set ID ${dataSet.id} but found none"
+    }
     return relevantMeasureUnits
 }
 
-// TODO: Note that this regards measureUnit as its own sibling
+// Note that this regards measureUnit as its own sibling.
 // TODO: This is *probably* only used internally to generate some units which we pick among automatically and we don't care about the order of the results.
 fun getSiblingMeasureUnits(
     dataSet: DataSet,
@@ -367,9 +376,15 @@ fun getSiblingMeasureUnits(
 ): List<MeasureUnit> {
     val unitFamily = measureUnit.unitFamilies.intersect(getRelevantUnitFamilies(dataSet))
     devCheck(unitFamily.size == 1) { "Expected MeasureUnit ID ${measureUnit.id} to be a member of exactly one unit family in the context of data set ID ${dataSet.id} but got ${unitFamily.size}" }
-    val siblingMeasureUnits =
-        MeasureUnit.entries.filter { it.quantityType == measureUnit.quantityType && unitFamily.single() in it.unitFamilies }
-    devCheck(siblingMeasureUnits.isNotEmpty()) { "Expected at least one sibling measure unit for MeasureUnit ${measureUnit.id} in the context of data set ID ${dataSet.id} but found none" }
+    val siblingMeasureUnits = MeasureUnit.entries.filter {
+        it.quantityType == measureUnit.quantityType &&
+                unitFamily.single() in it.unitFamilies &&
+                (!it.displayOnly || includeDisplayOnly)
+    }
+    devCheck(siblingMeasureUnits.isNotEmpty()) {
+        "Expected at least one sibling measure unit for MeasureUnit ${measureUnit.id} in the " +
+                "context of data set ID ${dataSet.id} but found none"
+    }
     // TODO: We could verify that measureUnit is a member of the returned list, but it feels a bad
     // idea to do a linear search just for a check.
     return siblingMeasureUnits
