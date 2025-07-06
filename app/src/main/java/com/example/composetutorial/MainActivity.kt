@@ -638,9 +638,7 @@ abstract class InventoryDatabase : RoomDatabase() {
 // this, so let's keep it around for now.
 interface PriceTrackerRepository {
     fun getAllDataSets(): Flow<List<DataSet>>
-    fun getDataSet(dataSetId: Long): Flow<List<DataSet>> // TODO: I suspect this can be removed once we tidy up the edit dialog
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
-    fun getItem(dataSetId: Long, itemId: Long): Flow<List<Item>>
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
 
     fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
@@ -654,26 +652,9 @@ class PriceTrackerRepositoryImpl(
     private val sourceDao: SourceDao,
     private val priceDao: PriceDao
 ) : PriceTrackerRepository {
-    /* TODO
-    override fun getAllItemsStream(): Flow<List<Item>> = itemDao.getAllItems()
-
-    override fun getItemStream(id: Int): Flow<Item?> = itemDao.getItem(id)
-
-    override suspend fun insertItem(item: Item) = itemDao.insert(item)
-
-    override suspend fun deleteItem(item: Item) = itemDao.delete(item)
-
-    override suspend fun updateItem(item: Item) = itemDao.update(item)
-    */
-
     override fun getAllDataSets(): Flow<List<DataSet>> = dataSetDao.getAllDataSets()
 
-    override fun getDataSet(dataSetId: Long): Flow<List<DataSet>> = dataSetDao.getDataSet(dataSetId)
-
     override fun getAllItems(dataSetId: Long): Flow<List<Item>> = itemDao.getAllItems(dataSetId)
-
-    override fun getItem(dataSetId: Long, itemId: Long): Flow<List<Item>> =
-        itemDao.getItem(dataSetId, itemId)
 
     override fun getAllSources(dataSetId: Long): Flow<List<Source>> =
         sourceDao.getAllSources(dataSetId)
@@ -1074,9 +1055,6 @@ interface DataSetDao {
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
     @Query("SELECT * FROM data_set ORDER BY name ASC")
     fun getAllDataSets(): Flow<List<DataSet>>
-
-    @Query("SELECT * FROM data_set WHERE id = :dataSetId")
-    fun getDataSet(dataSetId: Long): Flow<List<DataSet>>
 }
 
 @Dao
@@ -1093,11 +1071,6 @@ interface ItemDao {
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
     @Query("SELECT * FROM item WHERE data_set_id = :dataSetId ORDER BY name ASC")
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
-
-    // TODO: The dataSetId parameter to this function is redudnant, as item.id is the primary key so there can't be more than one matching row. It isn't "wrong" to have the dataSetId parameter too, but it is unnecessary. Maybe remove it?
-    @Query("SELECT * FROM item WHERE data_set_id = :dataSetId AND id = :itemId")
-    fun getItem(dataSetId: Long, itemId: Long): Flow<List<Item>>
-
 }
 
 @Dao
