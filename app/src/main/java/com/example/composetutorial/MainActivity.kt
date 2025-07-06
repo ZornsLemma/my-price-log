@@ -1863,6 +1863,17 @@ fun ItemSourceInfo(
         // actually get a bit more because of that extra space "around" the buttons. So we manually
         // adjust the bottom padding to visually compensate for this while allowing the buttons to
         // have their natural touch region.
+        // TODO: When the card expands, the button(s) on the "bottom" row of the card jump down
+        // instead of animating smoothly "following" the bottom of the card - probably because this
+        // layout is sort of "top to bottom". I suspect this can be worked around by using a box and
+        // having most of the content inside a column with .align(Alignment.TopStart) and then
+        // follow that by the button row with .align(Alignment.BottomCenter) or something along
+        // these lines. The trouble with the code as currently structured is that the buttons are
+        // generated in conditional code and getting the right layout of composables isn't trivial.
+        // It is probably worth tweaking this for visual polish - it might make things clearer
+        // anyway, e.g. if we factor out some sub-composables - but I'm not going to get involved
+        // with it right now. We may need to attach .animateContentSize() to the Card instead of the
+        // Column.
         Column(
             modifier = Modifier
                 .animateContentSize()
