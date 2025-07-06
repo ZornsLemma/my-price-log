@@ -1881,12 +1881,20 @@ fun ItemSourceInfo(
             // TODO: Did wonder if MyExposedDropdownMenuBox should allow null IDs to avoid the need
             // for the "-1" hack here, but I really didn't want to have to make every user of it
             // be null-tolerant when it *won't* hand you a null itself unless you gave it one in the
-            // input item list, so this is perhaps best but I'm not too sure.
+            // input item list, so this is perhaps best but I'm not too sure. I did try wrapping
+            // the null inside a simple Nullable<T> so it could "pass through" MyExposedDropdownMenuBox
+            // without altering the API and I think the idea is sound but I started to run into
+            // incomprehensible "out"/covariance stuff and it just felt too much just to fix this
+            // where -1L is an easy hack.
             MyExposedDropdownMenuBox(
                 modifier = Modifier
                     .padding(bottom = 8.dp)
                     .fillMaxWidth(),
-                selectedId = source?.id,
+                // Note that if source is null, we pass that null through to selectedId so the
+                // dropdown starts off with nothing selected and the "Store" label expands to form a
+                // large "prompt". We could turn null into -1L and have "None" shown, but it's
+                // probably nicer this way.
+                selectedId = source?.id /* ?: -1L */,
                 onValueChange = { onSelectedSourceIdChange( if (it == -1L) null else it) },
                 label = { Text("Store") },
                 supportingText = if (haveItemAndSource) null else {
