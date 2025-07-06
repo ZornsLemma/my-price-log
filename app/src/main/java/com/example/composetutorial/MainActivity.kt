@@ -1292,7 +1292,7 @@ class HomeScreenViewModel(
                         "MyFlow",
                         "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
                     )
-                    //delay(5000) // TODO HACK
+                    // delay(5000) // TODO HACK
                     flowOf(
                         UIContent(
                             dataSet,
@@ -1906,7 +1906,7 @@ fun ItemSourceInfo(
                 onValueChange = { onSelectedSourceIdChange( if (it == -1L) null else it) },
                 label = { Text("Store") },
                 supportingText = if (haveItemAndSource) null else {
-                    { Text("Select a product and store to view or change the price there") } // TODO: poor wording?
+                    { Text("Select a product and store to view or change the price there") } // TODO: poor wording? *normally* product will not be null, so maybe we should have variant wording, or maybe the message should just not mention product
                 },
                 items = items,
                 getId = { it.first },
@@ -2368,9 +2368,11 @@ fun HomeScreen(
     // for the very first frame.
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val (loading, uiContent) = uiState
-// TODO: UP TO HERE
-    // TODO: There may be excessive allowance for nulls in the code below here - it kind of depends how the data fetches have mutated. Should review this and remove any redundant null checks and nullable types in parameter lists of child composables.
-    // TODO: HomeScreenScaffould could take uiContent instead of splitting it out here - that wouldn't be unreasonable, *it* would split stuff out, but it would save boilerplate here. We could almost inline HomeScreenScaffold given how trivial the above code now is, and perhaps we should.
+
+    // TODO: HomeScreenScaffold could take uiContent instead of splitting it out here - that
+    // wouldn't be unreasonable, *it* would split stuff out, but it would save boilerplate here. We
+    // could almost inline HomeScreenScaffold given how trivial the above code now is, and perhaps
+    // we should.
     HomeScreenScaffold(
         navController,
         loading,
@@ -2400,17 +2402,17 @@ fun HomeScreen(
     )
 }
 
-// TODO: ChatGPT/Perplexity not very magic, tweaked with help from TODO: Should this have a (fairly
-// rapid) fade in and/or fade out? I am not sure. It's not a massive deal given how little I expect
-// it to actually be visible, but I might use it in other situations and it might be a nice little
-// bit of polish. If we do fade, remember it probably needs to be quick, since it won't even start
-// to fade in until ~150ms has elapsed, and the query could return any millisecond now and the scrim
-// disappear before it even got to full opacity. It might be that since the scrim is translucent, it
-// looks OK to just pop in. We could also *force* the scrim to last for at least the (short, 80ms)
-// fade in time, but that feels ridiculous - especially since it is then only just visible at full
-// "intensity" for one frame maybe before disappearing, and we're adding extra slowdown to the app
-// (albeit it might *feel* smoother), and we have complex logic to deal with this already unlikely
-// case. I suspect for this specific app this is overkill.
+// TODO: Should this have a (fairly rapid) fade in and/or fade out? I am not sure. It's not a
+// massive deal given how little I expect it to actually be visible, but I might use it in other
+// situations and it might be a nice little bit of polish. If we do fade, remember it probably needs
+// to be quick, since it won't even start to fade in until ~150ms has elapsed, and the query could
+// return any millisecond now and the scrim disappear before it even got to full opacity. It might
+// be that since the scrim is translucent, it looks OK to just pop in. We could also *force* the
+// scrim to last for at least the (short, 80ms?) fade in time, but that feels ridiculous -
+// especially since it is then only just visible at full "intensity" for one frame maybe before
+// disappearing, and we're adding extra slowdown to the app (albeit it might *feel* smoother), and
+// we have complex logic to deal with this already unlikely case. I suspect for this specific app
+// this is overkill.
 @Composable
 fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
     if (visible) {
@@ -2446,7 +2448,7 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
                     dispatcher?.onBackPressed()
                 },
                 properties = PopupProperties(
-                    focusable = true, // Prevent touches from going through
+                    focusable = true, // prevent touches from going through
                     dismissOnBackPress = true,
                     dismissOnClickOutside = false
                 )
@@ -2465,6 +2467,7 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
         }
     }
 }
+// TODO: UP TO HERE
 
 @Composable
 fun HomeScreenScaffold(
@@ -2514,6 +2517,11 @@ fun HomeScreenScaffold(
                         })
                         MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
                             menuExpanded = false
+                            // TODO: This should probably be done via a callback function provided
+                            // to HomeScreen and passed through to us, and this function should
+                            // probably *not* have the navController directly available. We might
+                            // pass a *route* back but the function passed to us would actually
+                            // invoke navController.navigate().
                             navController.navigate("settings")
                         })
                     }
@@ -2625,7 +2633,11 @@ fun HomeScreenScaffold(
     // different Android versions etc. Given how rarely we expect the spinner to appear at all (and
     // therefore also how little testing it would get), it seemed best to go with this relatively
     // simple full screen spinner.
-    ScrimWithSpinner(visible = loading, delayMillis = spinnerDelayMillis)
+    //
+    // Note that we do not pass a delayMillis parameter here; the delay before the scrim appears
+    // is implemented in the logic which sets the loading flag, so as soon as loading is true, we
+    // want the scrim.
+    ScrimWithSpinner(visible = loading)
 }
 
 // TODO: ChatGPT magic but I think I do mostly understand
