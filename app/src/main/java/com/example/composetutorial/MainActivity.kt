@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 
-package com.example.composetutorial
+package com.example.composetutorial // TODO: change this!
 
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.TextStyle
@@ -1837,6 +1837,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 // - (borderline?) do we have up-to-date prices for other sources? if not it's hard to know if this is well-priced or not no matter how up to the date the price at this source is.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// TODO: UP TO HERE
 // TODO: Arguably we should have selected{DataSet,Product}Id not allow nulls here - our parent should just not be composing us if these are not set
 // TODO: This should probably work with no selected item and it should show itself but with the variant supporting text "choose a product and store to..."
 fun ItemSourceInfo(
