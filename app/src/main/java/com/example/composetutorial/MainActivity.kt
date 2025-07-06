@@ -484,7 +484,6 @@ abstract class InventoryDatabase : RoomDatabase() {
                                         Item(
                                             dataSetId = dataSetId2,
                                             name = "Demo 2 Item",
-                                            quantityType = QuantityType.WEIGHT,
                                             defaultUnit = MeasureUnit.G
                                         )
                                     )
@@ -492,7 +491,6 @@ abstract class InventoryDatabase : RoomDatabase() {
                                         Item(
                                             dataSetId = dataSetId,
                                             name = "Coffee (ground)",
-                                            quantityType = QuantityType.WEIGHT,
                                             defaultUnit = MeasureUnit.G
                                         )
                                     )
@@ -500,7 +498,6 @@ abstract class InventoryDatabase : RoomDatabase() {
                                         Item(
                                             dataSetId = dataSetId,
                                             name = "Milk (whole)",
-                                            quantityType = QuantityType.VOLUME,
                                             defaultUnit = MeasureUnit.L
                                         )
                                     )
@@ -508,7 +505,6 @@ abstract class InventoryDatabase : RoomDatabase() {
                                         Item(
                                             dataSetId = dataSetId,
                                             name = "Teabags",
-                                            quantityType = QuantityType.ITEM,
                                             defaultUnit = MeasureUnit.EACH
                                         )
                                     )
@@ -838,10 +834,9 @@ data class Item(
     val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId: Long,
     val name: String,
-    // TODO: quantity_type - an enum which says "by item"/"by mass"/"by volume" - the GUI probably *should* allow editing this (not sure though), but wern that editing it will mess up old data (so maybe just don't allow it?)
-    @ColumnInfo(name = "quantity_type") val quantityType: QuantityType, // TODO: quantity_type*_id* in db?? or is that only for fks?
-    // TODO: default_unit - g/kg/oz/floz/litre/etc - this must be consistent with quantity_type (and we may want to let it imply quantity_type rather than storing it explicitly)
-    @ColumnInfo(name = "default_unit") val defaultUnit: MeasureUnit, // TODO: this is more specific than but must be consistent with quantityType, we should maybe get rid of quantityType
+    // default_unit implicitly specifies the item's QuantityType. It also serves as the default unit to use when the user is entering the first price for an (item, source) combination.
+    @ColumnInfo(name = "default_unit") val defaultUnit: MeasureUnit,
+    // TODO: GUI should probably restrict and/or warn before changing default_unit between MeasureUnits - maybe if you have no prices yet you can do it.
 )
 // TODO: Will temporarily make a note here - I may simply (especially in v1) refuse to allow changes
 // of quantity_type in the product edit screen. There is no trivial way to convert. If the user gets
@@ -963,7 +958,7 @@ data class PriceEntity(
 data class PriceWithItemEntity(
     // TODO: should be PriceWithItemEntity eventually
     @Embedded val priceEntity: PriceEntity,
-    @ColumnInfo(name = "quantity_type") val itemQuantityType: QuantityType,
+    @ColumnInfo(name = "default_unit") val itemDefaultUnit: MeasureUnit,
 )
 
 // Price is a domain-level class which is "nice" for us to work with, once we've got away from the database layer.
@@ -977,21 +972,21 @@ data class Price(
     val measure: MeasuredValue,
     val confirmed: Instant,
     val details: String, // Additional price details TODO: rename "notes"?
-    // itemQuantityType is a copy of the quantityType from the Item when we originally read the
+    // itemDefaultUnit is a copy of the defaultUnit from the Item when we originally read the
     // PriceWithItemEntity in from the database. It is intended to allow a best effort (protecting
     // against buggy code, not malicious code) validation that when we write back to the database,
     // measure hasn't somehow mutated into a different QuantityType. TODO: NEED TO MAKE SURE I
     // ACTUALLY USE THIS WHEN DOING INSERT/UPDATE - I THINK Price.toEntity() IS NOW DOING THIS,
     // SEE COMMENT BELOW - BUT THINK ABOUT THIS FRESH
-    val itemQuantityType: QuantityType,
+    val itemDefaultUnit: MeasureUnit
 ) : Parcelable {
 
     fun toEntity(): PriceEntity {
         // TODO: Is this a reasonable place to be doing this check?
         // TODO: I think this check is technically redundant because using itemQuantityType to determine the base unit will cause an internal check error if measure's own unit is a different type - but this is maybe a bit more explicit.
         val measureQuantityType = measure.unit.quantityType
-        devCheck(measure.unit.quantityType == itemQuantityType) {
-            "Expected consistent quantity type when converting Price to PriceEntity but found measure $measure with itemQuantityType $itemQuantityType"
+        devCheck(measure.unit.quantityType == itemDefaultUnit.quantityType) {
+            "Expected consistent quantity type when converting Price to PriceEntity but found measure $measure with itemDefaultUnit $itemDefaultUnit"
         }
         return PriceEntity(
             id = id,
@@ -999,7 +994,7 @@ data class Price(
             itemId = itemId,
             sourceId = sourceId,
             price = price,
-            measure = measure.asValue(baseUnitForQuantityType(itemQuantityType)),
+            measure = measure.asValue(baseUnitForQuantityType(itemDefaultUnit.quantityType)),
             originalUnit = measure.unit,
             confirmed = confirmed,
             details = details
@@ -1016,7 +1011,7 @@ data class Price(
                 measure = MeasuredValue(0.0, MeasureUnit.ML), // TODO MASSIVE HACK
                 confirmed = Instant.now(), // TODO MASSIVE HACK
                 details = "",
-                itemQuantityType = QuantityType.WEIGHT // TODO MASSIVE HACK
+                itemDefaultUnit = MeasureUnit.G // TODO MASSIVE HACK
             )
         }
     }
@@ -1032,7 +1027,7 @@ fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
 // TODO: Whiff of ChatGPT magic
 // TODO: I suspect we should actually be using the item's "default unit" not its quantityType here - although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the display unit for display, to avoid "oh, it happened to work for me in metric with grams but now I'm in imperial it's displaying badly" concerns
 fun PriceWithItemEntity.toDomain(): Price {
-    devCheck(priceEntity.originalUnit.quantityType == itemQuantityType) {
+    devCheck(priceEntity.originalUnit.quantityType == itemDefaultUnit.quantityType) {
         "TODO NOT SURE IF WE SHOULD BE CHECKING THIS HERE BUT WILL BASH IT IN FOR NOW"
     }
     return Price(
@@ -1041,10 +1036,10 @@ fun PriceWithItemEntity.toDomain(): Price {
         itemId = priceEntity.itemId,
         sourceId = priceEntity.sourceId,
         price = priceEntity.price,
-        measure = MeasuredValue(priceEntity.measure, baseUnitForQuantityType(itemQuantityType)).to(priceEntity.originalUnit),
+        measure = MeasuredValue(priceEntity.measure, baseUnitForQuantityType(itemDefaultUnit.quantityType)).to(priceEntity.originalUnit),
         confirmed = priceEntity.confirmed,
         details = priceEntity.details,
-        itemQuantityType = itemQuantityType,
+        itemDefaultUnit = itemDefaultUnit,
     )
 }
 
@@ -1101,7 +1096,7 @@ interface PriceDao {
     @Upsert()
     suspend fun upsert(price: PriceEntity)
 
-    @Query("SELECT price.*, item.quantity_type FROM price JOIN item ON price.item_id = item.id WHERE price.data_set_id = :dataSetId AND price.item_id = :itemId")
+    @Query("SELECT price.*, item.default_unit FROM price JOIN item ON price.item_id = item.id WHERE price.data_set_id = :dataSetId AND price.item_id = :itemId")
     fun getPriceWithItemEntityForItem(
         dataSetId: Long,
         itemId: Long,
@@ -2257,7 +2252,7 @@ data class EditablePrice(
     val confirmed: Instant, // TODO: rename this confirmedAt (everywhere)?
     val toConfirm: Boolean,
     val details: String,
-    val itemQuantityType: QuantityType,
+    val itemDefaultUnit: MeasureUnit,
 
     ) {
     /* TODO!?
@@ -2270,7 +2265,6 @@ data class EditablePrice(
         dataSetId: Long,
         itemId: Long,
         sourceId: Long,
-        itemQuantityType: QuantityType,
         itemDefaultUnit: MeasureUnit
     ) : this(
         id = 0,
@@ -2283,7 +2277,7 @@ data class EditablePrice(
         confirmed = Instant.now(),
         toConfirm = true,
         details = "",
-        itemQuantityType = itemQuantityType
+        itemDefaultUnit = itemDefaultUnit
     )
 
     constructor(price: Price) : this(
@@ -2311,7 +2305,7 @@ data class EditablePrice(
         confirmed = price.confirmed,
         toConfirm = false,
         details = price.details,
-        itemQuantityType = price.itemQuantityType
+        itemDefaultUnit = price.itemDefaultUnit
     )
 
     // TODO: Tempish note - EditablePrice is a sort of "variant domain" class just for editing - we need to convert it to the "primary" domain class Price here. This name mioght be confusing all the same, as we are approaching domain from the opposite side to a toDomain() on an entity class
@@ -2335,7 +2329,7 @@ data class EditablePrice(
                     ),
                     confirmed = if (toConfirm) Instant.now() else confirmed,
                     details = details,
-                    itemQuantityType = itemQuantityType,
+                    itemDefaultUnit = itemDefaultUnit,
                 )
         }
     }
@@ -2897,7 +2891,7 @@ fun OuterFullScreenDialog(
             // TODO: WE PROBABLY WANT SOME remember+derivedStateOf HERE BUT LET'S DO IT WITHOUT FIRST
             val units: List<MeasureUnit> = getRelevantMeasureUnits(
                 uiContent.dataSet,
-                uiContent.item.quantityType,
+                uiContent.item.defaultUnit.quantityType,
                 includeDisplayOnly = false
             )
             var todoSupportingText by remember {
@@ -3640,7 +3634,6 @@ class SharedViewModel : ViewModel() {
             dataSetId = dataSet.id,
             itemId = item.id,
             sourceId = source.id,
-            itemQuantityType = item.quantityType,
             itemDefaultUnit = item.defaultUnit
         )
         editPriceScreenUIContent = EditPriceScreenUIContent(
