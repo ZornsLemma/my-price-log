@@ -1510,7 +1510,6 @@ fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
 // TODO: If a TextField has focus and then you click on a MyExposedDropdownMenuBox, the
 // TextField does *not* lose focus so it retains its primary colour label/underline, which
 // isn't ideal.
-// TODO: This needs support for selecting "None" - maybe we just make the user pass it in the input with a null ID, actually?
 @Composable
 fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     selectedId: ID?,
