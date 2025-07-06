@@ -558,7 +558,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                             itemId = itemIdWholeMilk,
                                             sourceId = sourceIdValueMart,
                                             price = 1.99,
-                                            measure = 4 * 568.0,
+                                            measure = MeasuredValue(4.0, MeasureUnit.IMPERIAL_PINT).asValue(MeasureUnit.ML),
                                             originalUnit = MeasureUnit.IMPERIAL_PINT,
                                             confirmed = now,
                                             details = ""
@@ -2299,7 +2299,7 @@ data class EditablePrice(
                 maxDp = 2
             )
         ,
-        // TODO: We need to be careful about rounding and dps here - for non-metric stuff, there may be some low digits of "noise" - Milk at ValueMart shows this well
+        // TODO: We need to be careful about rounding and dps here - for non-metric stuff, there may be some low digits of "noise" - Milk at ValueMart shows this well - OK, while the issue of decimal points is important, that specific thing was caused by my initial data using a slightly rounded ml value for imperial pint compared to the real data
         measureValue =
             formatDecimal(
                 price.measure.value,
