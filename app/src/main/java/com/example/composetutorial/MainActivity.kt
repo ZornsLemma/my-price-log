@@ -794,21 +794,22 @@ class Converters {
 // I am not 100% sure I agree but I do need to at least consider naming for consistency at some
 // point, and I wanted to note this opinion.
 
-// TODO: I need to make sure I have the right indexes on all these tables, not sure what if any might get auto-created (and I may want to inhibit some auto-creation if there is any)
+// TODO: I need to make sure I have the right indexes on all these tables, not sure what if any
+// might get auto-created (and I may want to inhibit some auto-creation if there is any)
 
 @Entity(tableName = "data_set")
-// TODO: UI term should probably be "Collection" ("category" sounds a bit like categorising products and we don't want to confuse things)
 data class DataSet(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
     @ColumnInfo(name = "currency_code") val currencyCode: String,
-    // TODO: For now, I think I will ask the system to format currencies using the currency_code. Later on we may want to add
-    // a flag "use system formatting" and some parameters (currency prefix/suffix/decimal places) which the user can specify to
-    // override the system formatting. I think it may be that e.g. the system formatting of USD when in a GBP locale may be a bit
-    // annoying ("US$ 123.00" instead of "$123.00" perhaps - not tested though) so this extension is not necessarily ridiculous,
-    // but let's keep it simple for now. Having the option to use system formatting is good, and that will probably always be the
-    // default.
+    // TODO: For now, I think I will ask the system to format currencies using the currency_code.
+    // Later on we may want to give DataSet a flag "use system formatting" and some parameters
+    // (currency prefix/suffix/decimal places) which the user can specify to override the system
+    // formatting. I think it may be that e.g. the system formatting of USD when in a GBP locale may
+    // be a bit annoying ("US$ 123.00" instead of "$123.00" perhaps - not tested though) so this
+    // extension is not necessarily ridiculous, but let's keep it simple for now. Having the option
+    // to use system formatting is good, and that will probably always be the default.
     @ColumnInfo(name = "allow_metric") val allowMetric: Boolean,
     @ColumnInfo(name = "allow_imperial") val allowImperial: Boolean,
     @ColumnInfo(name = "allow_us_customary") val allowUSCustomary: Boolean
@@ -829,9 +830,12 @@ data class Item(
     val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId: Long,
     val name: String,
-    // default_unit implicitly specifies the item's QuantityType. It also serves as the default unit to use when the user is entering the first price for an (item, source) combination.
+    // default_unit implicitly specifies the item's QuantityType. It also serves as the default unit
+    // to use when the user is entering the first price for an (item, source) combination.
     @ColumnInfo(name = "default_unit") val defaultUnit: MeasureUnit,
-    // TODO: GUI should probably restrict and/or warn before changing default_unit between MeasureUnits - maybe if you have no prices yet you can do it.
+    // TODO: GUI should probably restrict and/or warn before changing default_unit between
+    // MeasureUnits - maybe if you have no prices yet you can do it. (It's completely fine to change
+    // within a MeasureUnit.)
 )
 // TODO: Will temporarily make a note here - I may simply (especially in v1) refuse to allow changes
 // of quantity_type in the product edit screen. There is no trivial way to convert. If the user gets
@@ -864,8 +868,7 @@ data class Source(
     val name: String
 )
 
-// TODO: Should Price have a price_id on it? If it does, it will need to be nullable (I think) so we can use it in-memory when adding a brand new price, before the db layer assigns an id
-// TODO: This needs lots more fields, including the history tracking stuff, but let's start simple
+// TODO: This needs history tracking stuff adding, either on this table or via a separate table.
 @Entity(
     tableName = "price", foreignKeys = [
         ForeignKey(
@@ -900,7 +903,6 @@ data class Source(
 // out naturally, but be careful to support it.
 //
 // The measure will be in a hard-coded "base" unit suitable to the unit type
-// TODO: This should probably be renamed PriceEntity (conventional I believe) or something if my experiment works (I want to make it obvious if this is used, as it normally shouldn't be)
 @Parcelize // TODO: probably won't need this once the edit dialog is written to use new style viewmodel data stuff
 data class PriceEntity(
     @PrimaryKey(autoGenerate = true)
@@ -924,23 +926,19 @@ data class PriceEntity(
     // because it allows us to round-trip non-metric measures perfectly (provided we round them for
     // display), and it doesn't seem to have any real downside in practice.
     val price: Double,
-    val measure: Double, // TODO: would "amount" be a much simpler yet still generic name?? hmm, maybe not - "amount" cost also be a monetary amount - but maybe "quantity" would work? I am cooling on "measure" somewhat right now
+    // TODO: would "amount" be a much simpler yet still generic name instead of "measure"?? hmm,
+    // maybe not - "amount" could also be a monetary amount - but maybe "quantity" would work? I am
+    // cooling on "measure" somewhat right now
+    val measure: Double,
     // Although measure is stored in the base unit, we also record the actual unit the user entered
     // the price in. This allows us to show it back to them in the most natural form when they are
     // e.g. comparing the database price with the current shelf price. We do have a default unit
     // stored on the item, but tracking it per actual price allows us to handle situations where
-    // supermarket A sells milk in pint multiples (even if the pack still has litres shown, the user
-    // may think of this in pints) while supermarket B sells it in litre multiples.
+    // supermarket A sells milk in pint multiples (even if the pack still has litres shown as well,
+    // the user may think of this in pints) while supermarket B sells it in litre multiples.
     // TODO: Rename this as "user_unit" or something?
     @ColumnInfo(name = "original_unit") val originalUnit: MeasureUnit,
 
-    // TODO: we need a "confirmed date" - even once we add the historical valid_{from,to} columns,
-    // we still need this, because a record can be edited in all sorts of ways (especially a tweak
-    // to the notes field, which might just be moting a question to address next time we are at the
-    // store) without that indicating a confirmation (although that raises the perhaps thorny point
-    // of how we decide when an edit counts as a confirmation - perhaps if the price or pack size
-    // changed, we treat that as a confirmation, otherwise we don't - and the user can always click
-    // confirm explicitly on the main screen if they want to)
     val confirmed: Instant,
 
     val details: String // Additional price details TODO: rename "notes"?
@@ -1395,15 +1393,23 @@ fun MainScreen(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Category Selector
-        // TODO: I am starting to think this is the best drop down menu implementation (needs renaming to avoid confusion). We probably don't *want* the primary colour underline highlight here, given that e.g. "buttons" get highlighted by an overall colour change as this does rather than an "underline" - TextFields obviously *do* get this underline for whatever reason known only to MD3 specs, but our TextField is not a "real" TextField so this "darken whole thing" approach is probably consistent
-        // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
+        // Collection Selector
+        // TODO: I am starting to think this is the best drop down menu implementation (needs
+        // renaming to avoid confusion). We probably don't *want* the primary colour underline
+        // highlight here, given that e.g. "buttons" get highlighted by an overall colour change as
+        // this does rather than an "underline" - TextFields obviously *do* get this underline for
+        // whatever reason known only to MD3 specs, but our TextField is not a "real" TextField so
+        // this "darken whole thing" approach is probably consistent
+        // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the
+        // "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about
+        // it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my
+        // impl) of the experimental "official" one that is weird
         MyExposedDropdownMenuBox(
             modifier = Modifier
                 .fillMaxWidth(),
             selectedId = selectedDataSetId,
             onValueChange = { onSelectedDataSetIdChange(it) },
-            label = { Text("Category") },
+            label = { Text("Collection") },
             items = dataSetList ?: emptyList(),
             getId = { it.id },
             getLabel = { it.name },
