@@ -1837,7 +1837,6 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemSourceInfo(
-    navController: NavHostController,
     dataSet: DataSet,
     item: Item?,
     source: Source?,
@@ -1864,7 +1863,6 @@ fun ItemSourceInfo(
         // actually get a bit more because of that extra space "around" the buttons. So we manually
         // adjust the bottom padding to visually compensate for this while allowing the buttons to
         // have their natural touch region.
-// TODO: UP TO HERE
         Column(
             modifier = Modifier
                 .animateContentSize()
@@ -1903,6 +1901,7 @@ fun ItemSourceInfo(
                 getId = { it.first },
                 getLabel = { it.second },
             )
+// TODO: UP TO HERE
             if (haveItemAndSource) {
                 val priceList = itemPriceList.filter { it.sourceId == source!!.id }
 
@@ -2546,7 +2545,6 @@ fun HomeScreenScaffold(
                 Log.d("MyApp", "HSS dataSet ${dataSet}")
                 Log.d("MyApp", "HSS item ${item}")
                 ItemSourceInfo(
-                    navController = navController,
                     dataSet = dataSet,
                     item = item,
                     source = source,
