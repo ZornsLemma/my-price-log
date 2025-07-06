@@ -1387,7 +1387,6 @@ val menuLeftPadding = 16.dp
 // Seems best to make the right padding symmetrical.
 val menuRightPadding = menuLeftPadding
 
-// Start Grok chunk
 // TODO: RENAME THIS IF IT SURVIVES REFACTORING
 @Composable
 fun MainScreen(
@@ -1534,15 +1533,13 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             getId = getId,
             getLabel = getLabel,
         ) {
-            // TODO: Hacky and probably unnecessary now I am a bit less learning/prototyping
-            val itemMap =
-                items.associateBy { getId(it) } // TODO: inefficient? should we make caller supply use with this so viewmodel can be caching it
-            val PULLEDOUT: String = if (selectedId == null) "" else {
+            val itemMap = items.associateBy { getId(it) }
+            val TODOPULLEDOUT: String = if (selectedId == null) "" else {
                 val item = itemMap[selectedId]
                 if (item != null) getLabel(item) else "Invalid ID $selectedId"
             }
             TextField(
-                value = PULLEDOUT,
+                value = TODOPULLEDOUT,
                 onValueChange = { /* No-op, handled by dropdown */ },
                 label = label,
                 readOnly = true,
@@ -1573,12 +1570,13 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
         }
         // If we let TextField display supportingText itself, it gets included in the bounding box
         // and the dropdown appears below the supportingText, whereas we want it to drop down over
-        // it, "from" the main TextField text box. So we jump through far too many hoops to display
-        // it ourselves here.
+        // the supportingText, "hanging off" the main TextField text box. So we jump through far too
+        // many hoops to display it ourselves here.
         if (supportingText != null) {
             Box(modifier = Modifier.padding(start = menuLeftPadding, top = 4.dp)) {
                 ProvideTextStyle(MaterialTheme.typography.bodySmall) {
-                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant) {
+                    CompositionLocalProvider(LocalContentColor provides
+                            MaterialTheme.colorScheme.onSurfaceVariant) {
                         supportingText.invoke()
                     }
                 }
@@ -1587,8 +1585,6 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
 
     }
 }
-
-// End Grok chunk
 
 // LabeledItem() attempts to mimic the label style of a TextField but for "read-only" content. It
 // works best with a simple Text() child, but other things are possible.
