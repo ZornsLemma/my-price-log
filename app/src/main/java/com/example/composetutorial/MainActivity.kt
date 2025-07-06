@@ -391,6 +391,7 @@ fun getSiblingMeasureUnits(
 
 // TODODOUBLE: At the moment we have:
 // - formatDoubleLocaleAware()
+// - formatPrice()
 
 // TODO: ChatGPT magic, is this really the best way?
 fun formatDoubleLocaleAware(
@@ -406,6 +407,7 @@ fun formatDoubleLocaleAware(
 }
 
 @Parcelize // TODO: can we get rid of this later?
+// TODO: Should we make "value" memeber private? Direct use could "encourage" buggy code.
 data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable {
     val quantityType: QuantityType get() = unit.quantityType
 
@@ -1611,35 +1613,6 @@ fun LabeledItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun MyFullScreenDialog(
-    onDismiss: () -> Unit
-) {
-    // Use a ModalBottomSheet or a Dialog for full-screen effect
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("This is a full-screen dialog", style = MaterialTheme.typography.titleLarge)
-                Spacer(modifier = Modifier.height(20.dp))
-                Button(onClick = onDismiss) {
-                    Text("Close")
-                }
-            }
-        }
-    }
-}
-
 // TODO: ChatGPT magic, though I do mostly understand it
 // TODO: Does this "do the right thing" with the user's current timezone? If I'm in Australia, an
 // Instant of UTC 23:59 2nd March isn't "yesterday" just because it's now 00:01 3rd March. It probably
@@ -1698,7 +1671,6 @@ fun formatPrice(amount: Double, dataSet: DataSet): String {
 
 // TODO: EXPERIMENTAL
 // TODO: HOW WILL WE HANDLE "/100G" ETC? WILL WE MAKE THESE FIRST CLASS MEASUREUNITS BUT FLAG THEM AS "MULTIPLES" SO WE OMIT THEM FROM MANY CASES, OR WILL WE MAKE IT A LIST<PAIR<MULT,MEASUREUNIT>>?
-// TODO: RENAME THIS? "friendlyUnitPrice"???
 data class UnitPrice(val numerator: Double, val denominator: MeasureUnit)
 
 fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUnit): UnitPrice =
@@ -1710,7 +1682,7 @@ fun getFriendlyUnitPrice(
     candidateDenominators: List<MeasureUnit>
 ): UnitPrice {
     devCheck(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
-    // TODO: We should sanity check to avoid division by zero, log10(0) etc
+    devCheck(measure.value > 0.0) { "Expected positive measure; got $measure" }
     var bestScore: Double? = null
     var bestUnitPrice: UnitPrice? = null
     for (candidateDenominator in candidateDenominators) {
@@ -1720,16 +1692,16 @@ fun getFriendlyUnitPrice(
         // to get as close to a single digit before the decimal point as we can.
         // TODO: I'm not sure this score is right - e.g. looking at ground coffee at SuperiorStore,
         // it chooses $0.66/100g but $6.61/kg is probably better. This code could maybe try to
-        // down-weight "display only" units, but I'm not sure - anyway, that isn't the issue here.
-        // I think we sort of don't want a 0 before the decimal point if we can help it, but our
-        // score doesn't take this into account. Off the top of my head, maybe something where we
-        // fairly heavily penalise for "more decimal places than our currency display format" and lightly penalise
-        // for every extra digit more significant than the units digit?! Actually what might work
-        // is using log10 with integer truncation to calculate the "index" of the most significant
-        // digit (0 for 1s place, 2 for 10s place, -1 for 0.1s place, etc), then scoring (low is good)
-        // by the index but with negative ones multipled by 2 to discourage them - given we have
-        // limited dp (because of currency display settings), we want to make full use of the space
-        // we have.
+        // down-weight "display only" units, but I'm not sure - anyway, that isn't the issue here. I
+        // think we sort of don't want a 0 before the decimal point if we can help it, but our score
+        // doesn't take this into account. Off the top of my head, maybe something where we fairly
+        // heavily penalise for "more decimal places than our currency display format" and lightly
+        // penalise for every extra digit more significant than the units digit?! Actually what
+        // might work is using log10 with integer truncation to calculate the "index" of the most
+        // significant digit (0 for 1s place, 2 for 10s place, -1 for 0.1s place, etc), then scoring
+        // (low is good) by the index but with negative ones multipled by 2 to discourage them -
+        // given we have limited dp (because of currency display settings), we want to make full use
+        // of the space we have.
         val log10Of1 = 0.0
         val candidateScore = abs(log10(candidateUnitPrice.numerator) - log10Of1) // lower is better
         if (bestScore == null || candidateScore < bestScore) {
@@ -1740,12 +1712,12 @@ fun getFriendlyUnitPrice(
     return bestUnitPrice!!
 }
 
+// TODO: I suspect there is an open issue with whether the denominator should use the full name or
+// symbol for the unit, probably with some extra wrinkles around "per individual item".
 fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet): String {
     return "${formatPrice(unitPrice.numerator, dataSet)}/${unitPrice.denominator.symbol}"
 }
 
-// TODO: Could this be merged with MyExposedDropdownMenuBox by pulling the always-visible part out
-// into a child composable? But let's just do it standalone first.
 // TODO: Note that selectedId is not used. I would like to use this to focus the previously
 // selected item when expanding the dropdown using a D-pad, instead of defaulting to the first
 // item. However, this appears to be ninja-grade level development and I tried tweaking multiple
