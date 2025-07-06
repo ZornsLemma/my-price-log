@@ -21,8 +21,6 @@ import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
 import androidx.activity.compose.BackHandler
-import androidx.compose.material3.Button
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
 import android.os.Parcelable
@@ -433,7 +431,7 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
     // TODO: Is this used for user-facing output, or just for devCheck type debug output? If it's
     // the latter, we should maybe using Kotlin's toDouble() which I think will always use "."
     // decimal separators, because I'm pretty sure that's what will happen if we do $aDoubleValue
-    // for example
+    // for example. Rightly or wrongly, it *is* currently using for user output in "Price as sold".
     fun toDisplayString(precision: Int): String =
         "${formatDoubleLocaleAware(value, precision)} ${unit.symbol}"
 }
@@ -1675,6 +1673,10 @@ data class UnitPrice(val numerator: Double, val denominator: MeasureUnit)
 fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUnit): UnitPrice =
     UnitPrice(amount / measure.asValue(denominator), denominator)
 
+// TODO: Note that we don't currently use the numerator of the returned UnitPrice - this might be
+// fine, but it suggests we could simplify the return type to just MeasureUnit. OTOH, we've got to
+// *calculate* the numerator anyway, so maybe we might as well pass it back in case it's handy in
+// some other case?
 fun getFriendlyUnitPrice(
     amount: Double,
     measure: MeasuredValue,
@@ -1935,7 +1937,8 @@ fun ItemSourceInfo(
                         }
                     }
                 } else {
-                    devCheck(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
+                    devCheck(priceList.size == 1) { "Expected one prices for a product and store, but got ${priceList.size}" }
+                    // TODONOW: Should we do: "val price = priceList[0]" and simplify all the following code?
 
                     // TODO: This row can get a bit congested on small phones when the text in some
                     // of the LabeledItems gets a bit long. It does kind of work and some further
@@ -1948,10 +1951,9 @@ fun ItemSourceInfo(
                             .padding(bottom = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-// TODO: UP TO HERE
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Price as sold"
                         ) { // TODO: quite like this, but maybe "Shelf price"?
-                            // TODO: hard coding 2 dp is hacky
+                            // TODONOW: hard coding 2 dp is hacky
                             // TODO: There might be an argument for designing the UI to separate the
                             // price and quantity here, then we side-step the internationalisation
                             // issues of "for", which is *probably* tractable but might be a
@@ -1970,42 +1972,48 @@ fun ItemSourceInfo(
                         }
 
                         // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
-                        LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Last checked") {
+                        LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Confirmed" /* "Last checked" */) {
                             RelativeTimeText(priceList[0].confirmed)
-                            // TODO: would it be helpful to color code this and/or show an icon ("!"?) if this is "old"? maybe even with an ascening amber/red "severity" (and correspondingly different icons?)
+                            // TODO: would it be helpful to color code this and/or show an icon
+                            // ("!"?) if this is "old"? maybe even with an ascending amber/red
+                            // "severity" (and correspondingly different icons?)
                         }
 
-                        // TODO: remember/derivedStateOf?
-                        val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
+                        val relevantUnitFamilies = remember(dataSet) { getRelevantUnitFamilies(dataSet) }
 
-                        // TODO: It might be more elegant if the parent could pass us a Product and we use the quantity type off that, but except for minor recomposition efficiency concerns, this doesn't matter - the quantity type is absolutely fixed wherever it comes from (units can change, not the quantity type)
-                        // TODO: I suspect relevantUnitList can and should be using remember but let's not worry about efficiency right now
-                        val relevantUnitList = getRelevantMeasureUnits(
+                        val relevantUnitList = remember(dataSet, priceList[0].measure.unit.quantityType) { getRelevantMeasureUnits(
                             dataSet,
                             priceList[0].measure.unit.quantityType,
                             includeDisplayOnly = true
-                        )
-                        // var items = MeasureUnit.entries.filter { true }
-                        var todoSelected by rememberSaveable(dataSet, priceList) {
-                            val ur = getSiblingMeasureUnits(
+                        ) }
+                        var selectedUnitPriceUnit by rememberSaveable(dataSet, priceList) {
+                            val candidateDenominators = getSiblingMeasureUnits(
                                 dataSet,
                                 priceList[0].measure.unit,
                                 includeDisplayOnly = true
                             )
-                            // TODO: Note that we don't actually use the numerator of up - this might be fine, but it maybe suggests we could simplify the return type. OTOH, we've got to *calculate* the numerators anyway, so maybe we might as well pass it back in case it's handy in some other case?
-                            val up = getFriendlyUnitPrice(
+                            val friendlyUnitPrice = getFriendlyUnitPrice(
                                 priceList[0].price,
                                 priceList[0].measure,
-                                ur
+                                candidateDenominators
                             )
-                            mutableStateOf(up.denominator)
+                            mutableStateOf(friendlyUnitPrice.denominator)
                         }
-                        // TODO: If the user selects "g" for a product sold in relative bulk, the standard decimal places on the currency is a bit misleading. This isn't a bug as such, but can/should we try to increase the decimal places on the currency in this case? Does the stanmdard formatting stuff we are using have any concept of "not a shelf price so smaller fractions make sense than usual"? Maybe at the very least we should always round prices *up* when showing with official dp - although we are not doing the conversion ourselves, maybe the standard function has an option to do this?
+                        // TODO: If the user selects "g" for a product sold in relative bulk, the
+                        // standard decimal places on the currency is a bit misleading. This isn't a
+                        // bug as such, but can/should we try to increase the decimal places on the
+                        // currency in this case? Does the standard formatting stuff we are using
+                        // have any concept of "not a shelf price so smaller fractions make sense
+                        // than usual"? Maybe at the very least we should always round prices *up*
+                        // when showing with official dp - although we are not doing the conversion
+                        // ourselves, maybe the standard function has an option to do this? We could
+                        // perhaps even omit units which would give a "display zero" price from the
+                        // dropdown, though that might be more confusing than helpful.
                         val unitPriceString = formatUnitPrice(
                             getUnitPrice(
                                 priceList[0].price,
                                 priceList[0].measure,
-                                todoSelected
+                                selectedUnitPriceUnit
                             ), dataSet
                         )
                         LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price",
@@ -2014,6 +2022,7 @@ fun ItemSourceInfo(
                             items = relevantUnitList,
                             getId = { it },
                             getLabel = { "/${it.symbol}" },
+                            // Show dividers between unit families
                             getDividerBetween = { previousItem, item ->
                                 var previousItemUnitFamily =
                                     previousItem.unitFamilies.intersect(relevantUnitFamilies)
@@ -2021,10 +2030,11 @@ fun ItemSourceInfo(
                                     item.unitFamilies.intersect(relevantUnitFamilies)
                                 previousItemUnitFamily != itemUnitFamily
                             },
-                            selectedId = todoSelected,
-                            onValueChange = { todoSelected = it })
+                            selectedId = selectedUnitPriceUnit,
+                            onValueChange = { selectedUnitPriceUnit = it })
 
                     }
+
                     if (priceList[0].details.isNotEmpty()) {
                         Row(modifier = Modifier.padding(bottom = 8.dp)) {
                             LabeledItem("Notes") {
@@ -2032,6 +2042,8 @@ fun ItemSourceInfo(
                             }
                         }
                     }
+
+// TODO: UP TO HERE
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Row() {
                             Icon(
