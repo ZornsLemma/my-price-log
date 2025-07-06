@@ -1857,7 +1857,6 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 // - make it easy for the user to confirm our current price or update it
 // - (borderline?) do we have up-to-date prices for other sources? if not it's hard to know if this is well-priced or not no matter how up to the date the price at this source is.
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
 @Composable
 // TODO: Arguably we should have selected{DataSet,Product}Id not allow nulls here - our parent should just not be composing us if these are not set
 // TODO: This should probably work with no selected item and it should show itself but with the variant supporting text "choose a product and store to..."
@@ -2825,6 +2824,7 @@ fun OuterFullScreenDialog(
                             when (vm.validateEditablePrice(uiContent.editablePrice.value)) {
                                 EditPriceScreenViewModel.ValidationState.OK -> {
                                     saveInitiated = true
+                                    // delay(5000) // TODO HACK
                                     vm.saveEditablePrice(uiContent.editablePrice.value)
                                 }
                                 // TODO: We could possibly try to "animate" the problematic text field we just focused (e.g. pulse its border colour) to draw attention to it further, but this feels surprisingly fiddly and I am not sure it's ncessary. My inclination is to leave this for now and let the code settle down first before maybe trying to add it.
@@ -3143,10 +3143,12 @@ fun OuterFullScreenDialog(
             )
         }
 
-        if (showSavingSnackbar) {
-            scope.launch {
-                snackbarHostState.showSnackbar("Saving, please wait...")
-                showSavingSnackbar = false
+        LaunchedEffect(showSavingSnackbar) {
+            if (showSavingSnackbar) {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Saving, please wait...")
+                    showSavingSnackbar = false
+                }
             }
         }
     }
