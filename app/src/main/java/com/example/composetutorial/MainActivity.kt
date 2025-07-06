@@ -319,14 +319,11 @@ enum class MeasureUnit(
     EACH100(303, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", 100.0, true);
 
     companion object {
-        // TODO: Can this use measureUnitById? Can we move that into this class here?
-        fun fromValue(measureUnitId: Long): MeasureUnit? {
-            return MeasureUnit.entries.find { it.id == measureUnitId }
-        }
+        private val measureUnitById = entries.associateBy { it.id }
+
+        fun fromValue(measureUnitId: Long): MeasureUnit? = measureUnitById[measureUnitId]
     }
 }
-
-val measureUnitById = MeasureUnit.entries.associateBy { it.id }
 
 fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {
     val relevantUnitFamilies = setOfNotNull(
@@ -2987,7 +2984,7 @@ fun OuterFullScreenDialog(
                     MyExposedDropdownMenuBox(
                         selectedId = uiContent.editablePrice.value.measureUnit.id,
                         onValueChange = {
-                            val measureUnit = measureUnitById[it]
+                            val measureUnit = MeasureUnit.fromValue(it)
                             devCheck(measureUnit != null) {
                                 "Invalid measure unit ID $it selected in dropdown"
                             }
