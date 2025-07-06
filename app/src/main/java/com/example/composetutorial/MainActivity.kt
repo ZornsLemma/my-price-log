@@ -1031,7 +1031,7 @@ fun PriceWithItemEntity.toDomain(): Price {
     // I have checks like this in various places but this is probably a pretty solid place for one.
     // On the way from database->domain, this is where we have a "solid" itemDefaultUnit value
     // (because it came from a database join) and that gives us an independent cross-check that
-    // priceEntity.originalUnit is of the right QuantityType. (We should also be doing a check
+    // priceEntity.originalUnit is of the right QuantityType. (TODO: We should also be doing a check
     // before we write to the database, to stop bad data getting in, but at that point we don't have
     // such absolutely confidence in our itemDefaultUnit.)
     devCheck(priceEntity.originalUnit.quantityType == itemDefaultUnit.quantityType) {
@@ -1044,7 +1044,10 @@ fun PriceWithItemEntity.toDomain(): Price {
         itemId = priceEntity.itemId,
         sourceId = priceEntity.sourceId,
         price = priceEntity.price,
-        measure = MeasuredValue(priceEntity.measure, baseUnitForQuantityType(itemDefaultUnit.quantityType)).to(priceEntity.originalUnit),
+        measure = MeasuredValue(
+            priceEntity.measure,
+            baseUnitForQuantityType(priceEntity.originalUnit.quantityType)
+        ).to(priceEntity.originalUnit),
         confirmed = priceEntity.confirmed,
         details = priceEntity.details,
         itemDefaultUnit = itemDefaultUnit,
@@ -1056,7 +1059,8 @@ interface DataSetDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(dataSet: DataSet): Long
 
-    // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
+    // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't
+    // need this order by here
     @Query("SELECT * FROM data_set ORDER BY name ASC")
     fun getAllDataSets(): Flow<List<DataSet>>
 }
@@ -1089,30 +1093,21 @@ interface SourceDao {
 
 @Dao
 interface PriceDao {
-    // TODO: Not sure we want insert() or maybe we do but we also want upsert
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(price: PriceEntity): Long
 
     @Upsert()
     suspend fun upsert(price: PriceEntity)
 
-    @Query("SELECT price.*, item.default_unit FROM price JOIN item ON price.item_id = item.id WHERE price.data_set_id = :dataSetId AND price.item_id = :itemId")
+    @Query("SELECT price.*, item.default_unit FROM price JOIN item ON price.item_id = item.id " +
+            "WHERE price.data_set_id = :dataSetId AND price.item_id = :itemId")
     fun getPriceWithItemEntityForItem(
         dataSetId: Long,
         itemId: Long,
     ): Flow<List<PriceWithItemEntity>>
-
-    /* TODO DELETE
-    @Query("SELECT price.*, item.quantity_type FROM price JOIN item ON price.item_id = item.id WHERE price.data_set_id = :dataSetId AND price.item_id = :itemId AND price.source_id = :sourceId")
-    fun getPriceWithItemEntityForItemAndSource(
-        dataSetId: Long,
-        itemId: Long,
-        sourceId: Long
-    ): Flow<List<PriceWithItemEntity>>
-    */
 }
 
-// ChatGPT magic
+// TODO: ChatGPT magic
 class SingleEventState<T>(initialState: T) {
 
     private val _state = MutableStateFlow(initialState)
@@ -1139,8 +1134,8 @@ class HomeScreenViewModel(
     private val app = application
 
     // Every time getPreference() is called it returns a *new* StateFlow, which is probably not what
-    // we want. So we call this once and cache the result in the ViewModel and then use that
-    // everywhere.
+    // we want. So we call it once per preference, cache the result in the ViewModel and then use
+    // that everywhere.
     // TODO: I need to be careful not to forget this and call it directly.
     private val selectedDataSetFlow = getPreference(SELECTED_DATA_SET_ID_KEY)
     private val selectedItemIdFlow = getPreference(SELECTED_ITEM_ID_KEY)
@@ -1159,6 +1154,7 @@ class HomeScreenViewModel(
         }
     }
 
+    // TODO: Rename UIContent->HomeScreenUIContent and/or scope it to this ViewModel?
     private val _uiState = MutableStateFlow<Pair<Boolean /* loading */, UIContent>>(
         Pair(
             false,
@@ -1176,7 +1172,11 @@ class HomeScreenViewModel(
         // investigated what's going on - superficially this looks like it ought to cause events
         // to be generated, but maybe the fact the database is *actually empty* without the dataset
         // table on the first run is an edge case. We need to fix this, otherwise users will get a
-        // very poor first impression.
+        // very poor first impression. OK, this certainly doesn't *always* happen and I do wonder
+        // if I just got impatient and it was running a bit slow. I will just have to keep an eye
+        // on it. It's by no means conclusive but I discussed this with ChatGPT and Perplexity and
+        // both seemed to feel that what I am doing should not be at risk of this happening (barring
+        // bugs of course).
         val dataSetFlow = priceTrackerRepository.getAllDataSets()
 
         val dataSetOnlyDatabaseFlow = selectedDataSetFlow.flatMapLatest { dataSetId ->
@@ -1189,10 +1189,10 @@ class HomeScreenViewModel(
             // just might work out OK, but it feels dangerous. I think empty lists are perfect valid
             // results to emit in the null case.
             Log.d("MyFlow", "dataSetOnlyDatabaseFlow dataSetId $dataSetId")
-            // We are combining freshly-created DAO flows, so we cannot see "stale" data here, so the
-            // dataSetId we are tagging the results with will be correct. (In practice non-empty
-            // lists of results for these queries are self-tagging, but we need to handle empty lists
-            // correctly too.)
+            // We are combining freshly-created DAO flows, so we cannot see "stale" data here, so
+            // the dataSetId we are tagging the results with will be correct. (In practice non-empty
+            // lists of results for these queries are self-tagging, but we need to handle empty
+            // lists correctly too.)
             combine(
                 flowOf(dataSetId),
                 if (dataSetId != null) priceTrackerRepository.getAllItems(dataSetId) else flowOf(
@@ -1221,8 +1221,9 @@ class HomeScreenViewModel(
                     priceTrackerRepository.getPricesForItem(dataSetId = dataSetId, itemId = itemId)
                 else
                     flowOf(emptyList())
-                // We are creating a flow based on a freshly created DAO flow, so we cannot see "stale"
-                // data here and thus the IDs we are tagging the results with will be correct.
+                // We are creating a flow based on a freshly created DAO flow, so we cannot see
+                // "stale" data here and thus the IDs we are tagging the results with will be
+                // correct.
                 priceFlow.flatMapLatest { priceList ->
                     flowOf(
                         Pair(
@@ -1248,17 +1249,19 @@ class HomeScreenViewModel(
             combinedDatabaseFlow
         ) { _, it -> it }
 
-        // completeUIStateFlow delivers complete, consistent results which reflect the user's selection. However,
-        // it doesn't make any guarantees as to how long it takes to emit after allUserInputFlow emits.
+        // completeUIStateFlow delivers complete, consistent results which reflect the user's
+        // selection. However, it doesn't make any guarantees as to how long it takes to emit after
+        // allUserInputFlow emits.
         val completeUIStateFlow =
             TODORENAMEMEFLOW.flatMapLatest { (dataSetList, taggedItemListAndSourceList, taggedPriceList) ->
-                // We can take the current values here because ultimately that's all we care about; if
-                // the current flow value we're processing is older, we want to discard it anyway and
-                // because the flows are dependent on these parameters, they will emit new values once
-                // they finish querying. It feels somewhat ridiculous to have to discard stale values
-                // like this but as far as I can tell you either do something like this, accept a mixture
-                // of stale values or re-run all your queries every single time even if most of them
-                // haven't had a parameter change. Maybe I am doing something silly.
+                // We can take the current UI values here because ultimately that's all we care
+                // about; if the current flow value we're processing is older, we want to discard it
+                // anyway and because the flows are dependent on these parameters, they will emit
+                // new values once they finish querying. It feels somewhat ridiculous to have to
+                // discard stale values like this but as far as I can tell you either do something
+                // like this, accept a mixture of stale values or re-run all your queries every
+                // single time even if most of them haven't had a parameter change. Maybe I am doing
+                // something silly.
                 val dataSetId = selectedDataSetFlow.value
                 val itemId = selectedItemIdFlow.value
                 val sourceId = selectedSourceIdFlow.value
@@ -1329,12 +1332,13 @@ class HomeScreenViewModel(
 
             val TODO2 = completeUIStateFlow.map { Pair(false /* loading */, it) }
 
-            // TODO: Is there a risk with merge().collectLatest() here that a "loading" state will somehow come *after* the corresponding *loaded* state? If so we'd end up stuck with the scrim up forever.
-            // TODO: I am not sure there *is* a risk, but one possible fix *might* be to have the
-            // "allUserInput-only" flow (the one with the timeout) *redo the collection* in the "we
-            // timed out" branch after it emits the "loading=true" state - there should not be any
-            // reordering *within* flows from the merge, right? And if we put a
-            // distinctUntilChanged() after the merge that will catch any cases where we get a
+            // TODO: Is there a risk with merge().collectLatest() here that a "loading" state will
+            // somehow come *after* the corresponding *loaded* state? If so we'd end up stuck with
+            // the scrim up forever. I am not sure there *is* a risk, but one possible fix *might*
+            // be to have the "allUserInput-only" flow (the one with the timeout) *redo the
+            // collection* in the "we timed out" branch after it emits the "loading=true" state -
+            // there should not be any reordering *within* flows from the merge, right? And if we
+            // put a distinctUntilChanged() after the merge that will catch any cases where we get a
             // duplicate emission because the database flow also emits the same thing at
             // approximately the same time
             val TODO3 = merge(TODO1, TODO2)
@@ -1346,7 +1350,6 @@ class HomeScreenViewModel(
         }
     }
 }
-
 
 enum class ThemePreference {
     LIGHT, DARK, SYSTEM
@@ -1364,14 +1367,14 @@ enum class ThemePreference {
 // user's change to a dropdown by the dropdown disappearing, but we don't want to show the new value
 // in that dropdown immediately while the rest of the screen still contains data related to the old
 // value. The spinner (which in this case is likely to be on a full-screen scrim) shows that the
-// on-screen data is outdated, but we retain consistency. Even if the data retrieval is shorter than
+// on-screen data is outdated, but we retain consistency. Even if the data retrieval is quicker than
 // spinnerDelay ms, we don't want a janky double-update where the dropdown's content changes
 // instantly then the associated data changes a few ms later.
 const val spinnerDelayMillis = 200L
 
-// This value is a trade-off between not showing the user validation failures ASAP and not annoying
-// them by showing transient validation failures while they are in the middle of actively editing.
-// This feels reasonable-ish and we can always tweak it later.
+// This value is a trade-off between showing the user validation failures ASAP and not annoying them
+// by showing transient validation failures while they are in the middle of actively editing. This
+// feels reasonable-ish and we can always tweak it later.
 const val defaultValidationMessageDelayMillis = 1000L
 
 val screenBorder = 8.dp
@@ -1384,7 +1387,6 @@ val menuLeftPadding = 16.dp
 
 // Seems best to make the right padding symmetrical.
 val menuRightPadding = menuLeftPadding
-
 
 // Start Grok chunk
 // TODO: RENAME THIS IF IT SURVIVES REFACTORING
