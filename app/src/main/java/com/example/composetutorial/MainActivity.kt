@@ -2631,7 +2631,6 @@ fun HomeScreenScaffold(
     // want the scrim.
     ScrimWithSpinner(visible = loading)
 }
-// TODO: UP TO HERE
 
 // TODO: ChatGPT magic but I think I do mostly understand
 /*
@@ -2658,10 +2657,16 @@ fun rememberSyncedTextFieldValue(modelState: String): MutableState<TextFieldValu
 }
 
 @Composable
-// TODO: https://m3.material.io/components/dialogs/specs says (near bottom) top/left/right padding on a full screen dialog should be 24.dp - I am probably not doing that, should I? Should I use similar padding on "non-dialog full screens" to match??
-// TODO: This should probably show the confirmed date "in full", and although we will probably use internal logic to update it rather than letting user choose, we could show it live changing to "now" when the non-notes fields are different than originalprice, and back to old value if they rever them, and maybe a "x-in-circle" or some other button to say "force this back to the old date", though less sure that is a good idea - but showing the confirm date we are going to use is maybe a good way to show feedback that it will change. we could maybe use relative date just as on main screen, or show both?!
-// TODO: I was thinking this screen would show the price history, but I am cooling on that. Not quite sure where we would show it, but I am not sure it's something we want cluttering up this in-store edit screen, or encouraging people to go into this "live edit" view where they might accidentally change data just to see the history. Maybe this could go on the overflow menu on home screen if we have all three things selected?
-// TODO: I should probably re-use the (bundled up in a composable) unit price display only but with variable unit on this screen, as it will might be useful to the user as a confirmation of the unit price on the shelf.
+// TODO: I was thinking this screen would show the price history, but I am cooling on that. Not
+// quite sure where we would show it, but I am not sure it's something we want cluttering up this
+// in-store edit screen, or encouraging people to go into this "live edit" view where they might
+// accidentally change data just to see the history. Maybe this could go on the overflow menu on
+// home screen if we have all three things selected?
+// TODO: I could maybe re-use the (bundled up in a composable) unit price display only but with
+// variable unit on this screen, as it will might be useful to the user as a confirmation of the
+// unit price on the shelf. On the other hand, it might just be extra clutter on a screen where
+// the user is editing.
+// TODO: UP TO HERE
 fun OuterFullScreenDialog(
     vm: EditPriceScreenViewModel,
     navController: NavHostController,
