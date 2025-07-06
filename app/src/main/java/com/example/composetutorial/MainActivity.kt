@@ -191,7 +191,8 @@ import java.util.concurrent.Executors
 // weight or volume. This is fundamental as we make no effort to convert between them using some
 // sort of density estimate or whatever. Actual units (kg, oz, etc) of the same quantity type can
 // be varied much more freely.
-// TODO: Just possibly rename this "MeasureType"? ChatGPT suggestion, maybe has a point, "QuantityType" is definitely not a terrible name though.
+// TODO: Just possibly rename this "MeasureType"? ChatGPT suggestion, maybe has a point,
+// "QuantityType" is definitely not a terrible name though.
 enum class QuantityType(val value: Int) {
     ITEM(1),
     WEIGHT(2), // technically mass but everyone says "price per weight"
@@ -262,6 +263,7 @@ enum class MeasureUnit(
     ), // TODO: experimental
     L(202, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "l", 1000.0, false),
 
+    // TODO: Arguably imperial should come first here to match order in UnitFamily
     // TODO: As a massive hack to help me notice problems during debugging, I have replaced the space in "fl oz" with a U or I to
     // let me see which type is in use. I don't seriously expect subtle bugs here (if we do mess up our unit family handling, we
     // will probably end up with duplicated values in dropdowns which will be fairly obvious), but might as well keep an eye on it.
@@ -303,6 +305,7 @@ enum class MeasureUnit(
     IMPERIAL_GAL(206, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "gal", 4546.09, false),
 
     // Countable items
+    // TODO: Arguably these should come first to match order in QuantityType
     // TODO: Should symbol be empty string or something else here? feeling my way. I suspect "" looks best, it may lead to strings like "for 20 " with a trailing space but that's probably not a big deal in practice. (We could also just make a point of trimming strings generated using symbol.) We sort of might want "1" for the unit price denominator stuff though.
     EACH(
         301,
