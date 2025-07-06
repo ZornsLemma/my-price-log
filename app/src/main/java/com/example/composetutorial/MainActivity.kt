@@ -2467,7 +2467,6 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
         }
     }
 }
-// TODO: UP TO HERE
 
 @Composable
 fun HomeScreenScaffold(
@@ -2487,13 +2486,6 @@ fun HomeScreenScaffold(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
-    // TODO: I added this Surface by analogy with the one in SettingsScreen, but it appears to have
-    // no real effect - even if I set its color to Red or primary, nothing shows.
-    // TODO: Actually it may or may not be this, but on the O6 at least there does seem to be a weird
-    // extra background shade with a bit of the white background down the edges where the border is.
-    // No - it is there, but even if I remove this surface it is still there. I will have to experiment further. Part of the issue may be that it's the top-level Nav thing which is responsible.
-    // Surface(modifier = Modifier.fillMaxSize()/*, color=MaterialTheme.colorScheme.surface */) {
-
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -2507,13 +2499,13 @@ fun HomeScreenScaffold(
 
                     DropdownMenu(
                         expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        // TODO: FONTS AND PROB COLORS ON THIS LIST ARE PROB WRONG
                         MyDropdownMenuItem(text = { Text("Edit product list") }, onClick = {
                             menuExpanded = false
-                            // Handle navigation or action
+                            // TODO: Handle navigation or action
                         })
                         MyDropdownMenuItem(text = { Text("Edit categories") }, onClick = {
                             menuExpanded = false
+                            // TODO: Handle navigation or action
                         })
                         MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
                             menuExpanded = false
@@ -2550,7 +2542,7 @@ fun HomeScreenScaffold(
                 onSelectedItemIdChange = onSelectedItemIdChange
             ) // TODO: rename this
 
-            androidx.compose.foundation.layout.Spacer(
+            Spacer(
                 modifier = androidx.compose.ui.Modifier
                     .height(
                         8.dp
@@ -2573,7 +2565,7 @@ fun HomeScreenScaffold(
                 )
             }
 
-            androidx.compose.foundation.layout.Spacer(
+            Spacer(
                 modifier = androidx.compose.ui.Modifier.height(
                     8.dp
                 )
@@ -2639,6 +2631,7 @@ fun HomeScreenScaffold(
     // want the scrim.
     ScrimWithSpinner(visible = loading)
 }
+// TODO: UP TO HERE
 
 // TODO: ChatGPT magic but I think I do mostly understand
 /*
