@@ -954,7 +954,8 @@ data class PriceWithItemEntity(
     @ColumnInfo(name = "default_unit") val itemDefaultUnit: MeasureUnit,
 )
 
-// Price is a domain-level class which is "nice" for us to work with, once we've got away from the database layer.
+// Price is a domain-level class which is nice for us to work with, once we've got away from the
+// database layer.
 @Parcelize // TODO: Can we get rid of this later!?
 data class Price(
     val id: Long = 0,
@@ -976,10 +977,13 @@ data class Price(
 
     fun toEntity(): PriceEntity {
         // TODO: Is this a reasonable place to be doing this check?
-        // TODO: I think this check is technically redundant because using itemQuantityType to determine the base unit will cause an internal check error if measure's own unit is a different type - but this is maybe a bit more explicit.
+        // TODO: I think this check is technically redundant because using itemQuantityType to
+        // determine the base unit will cause an internal check error if measure's own unit is a
+        // different type - but this is maybe a bit more explicit.
         val measureQuantityType = measure.unit.quantityType
         devCheck(measure.unit.quantityType == itemDefaultUnit.quantityType) {
-            "Expected consistent quantity type when converting Price to PriceEntity but found measure $measure with itemDefaultUnit $itemDefaultUnit"
+            "Expected consistent quantity type when converting Price to PriceEntity but found " +
+                    "measure $measure with itemDefaultUnit $itemDefaultUnit"
         }
         return PriceEntity(
             id = id,
@@ -994,6 +998,7 @@ data class Price(
         )
     }
 
+    /* TODO: DELETE?
     companion object {
         fun createEmpty(): Price {
             return Price(
@@ -1008,6 +1013,7 @@ data class Price(
             )
         }
     }
+    */
 }
 
 // TODO: HACKING
