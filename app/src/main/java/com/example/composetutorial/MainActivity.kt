@@ -390,6 +390,9 @@ fun getSiblingMeasureUnits(
     return siblingMeasureUnits
 }
 
+// TODODOUBLE: At the moment we have:
+// - formatDoubleLocaleAware()
+
 // TODO: ChatGPT magic, is this really the best way?
 fun formatDoubleLocaleAware(
     value: Double,
@@ -409,7 +412,7 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
 
     fun to(unit: MeasureUnit): MeasuredValue {
         devRequire(this.quantityType == unit.quantityType) {
-            "Cannot convert between different quantity types: trying to convert $this (${this.quantityType}) to ${unit.quantityType}"
+            "Cannot convert between different quantity types: trying to convert $this to $unit"
         }
         val baseValue = this.value * this.unit.toBase
         return MeasuredValue(baseValue / unit.toBase, unit)
@@ -426,6 +429,10 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
     fun asValue(unit: MeasureUnit): Double = this.to(unit).value
 
     // precision is a maximum number of decimal places; we will not pad with trailing zeroes.
+    // TODO: Is this used for user-facing output, or just for devCheck type debug output? If it's
+    // the latter, we should maybe using Kotlin's toDouble() which I think will always use "."
+    // decimal separators, because I'm pretty sure that's what will happen if we do $aDoubleValue
+    // for example
     fun toDisplayString(precision: Int): String =
         "${formatDoubleLocaleAware(value, precision)} ${unit.symbol}"
 }
