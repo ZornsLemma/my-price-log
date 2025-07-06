@@ -2294,10 +2294,12 @@ data class EditablePrice(
         price = mutableStateOf(
             formatDecimal(
                 price.price,
+                // TODO: hardcoding 2 dp is a hack
                 minDp = 2,
                 maxDp = 2
             )
-        ), // TODO: hardcoding 2 dp is a hack
+        ),
+        // TODO: We need to be careful about rounding and dps here - for non-metric stuff, there may be some low digits of "noise" - Milk at ValueMart shows this well
         measureValue = mutableStateOf(
             formatDecimal(
                 price.measure.value,
@@ -2925,12 +2927,6 @@ fun OuterFullScreenDialog(
                     // done something wrong here. OK, if I copy this code to HomeScreen() it
                     // works, so it is probably dialog related. Yay!
                     // TODO: Should I use OutlinedTextFields here? If so, for the drop down too.
-                    // TODO: Note that "Pack size" is blue only when the field is selected, but
-                    // "Unit" is always blue. This may be a localised colour tweak or it may be
-                    // a systemic glitch e.g. with my dropdown menu. FWIW the background of the
-                    // two fields appears to change differenly as I navigate around with cursor
-                    // keys too, although this *might* be normal - but worth trying to
-                    // investigate.
                     // TODO: When the onscreen keyboard is up for "pack size", clicking on unit
                     // opens the dropdown and hides the keyboard but the dropdown gets
                     // positioned "to avoid" the keyboard - this might be normal/OK, but
