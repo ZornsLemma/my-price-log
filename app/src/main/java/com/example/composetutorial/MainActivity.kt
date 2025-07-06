@@ -3645,7 +3645,7 @@ class SharedViewModel : ViewModel() {
         )
         editPriceScreenUIContent = EditPriceScreenUIContent(
             editablePrice = mutableStateOf(editablePrice),
-            originalPrice = editablePrice.copy(),
+            originalPrice = editablePrice,
             dataSet = dataSet,
             item = item,
             source = source
