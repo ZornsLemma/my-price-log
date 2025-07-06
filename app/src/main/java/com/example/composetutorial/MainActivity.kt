@@ -2251,12 +2251,12 @@ data class EditablePrice(
     val dataSetId: Long,
     val itemId: Long,
     val sourceId: Long,
-    val price: MutableState<String>,
-    val measureValue: MutableState<String>,
-    val measureUnit: MutableState<MeasureUnit>,
+    val price: String,
+    val measureValue: String,
+    val measureUnit: MeasureUnit,
     val confirmed: Instant, // TODO: rename this confirmedAt (everywhere)?
-    val toConfirm: MutableState<Boolean>,
-    val details: MutableState<String>,
+    val toConfirm: Boolean,
+    val details: String,
     val itemQuantityType: QuantityType,
 
     ) {
@@ -2277,12 +2277,12 @@ data class EditablePrice(
         dataSetId = dataSetId,
         itemId = itemId,
         sourceId = sourceId,
-        price = mutableStateOf(""),
-        measureValue = mutableStateOf(""),
-        measureUnit = mutableStateOf(itemDefaultUnit),
+        price = "",
+        measureValue = "",
+        measureUnit = itemDefaultUnit,
         confirmed = Instant.now(),
-        toConfirm = mutableStateOf(true),
-        details = mutableStateOf(""),
+        toConfirm = true,
+        details = "",
         itemQuantityType = itemQuantityType
     )
 
@@ -2291,34 +2291,34 @@ data class EditablePrice(
         dataSetId = price.dataSetId,
         itemId = price.itemId,
         sourceId = price.sourceId,
-        price = mutableStateOf(
+        price =
             formatDecimal(
                 price.price,
                 // TODO: hardcoding 2 dp is a hack
                 minDp = 2,
                 maxDp = 2
             )
-        ),
+        ,
         // TODO: We need to be careful about rounding and dps here - for non-metric stuff, there may be some low digits of "noise" - Milk at ValueMart shows this well
-        measureValue = mutableStateOf(
+        measureValue =
             formatDecimal(
                 price.measure.value,
                 minDp = null,
                 maxDp = null
             )
-        ),
-        measureUnit = mutableStateOf(price.measure.unit),
+        ,
+        measureUnit = price.measure.unit,
         confirmed = price.confirmed,
-        toConfirm = mutableStateOf(false),
-        details = mutableStateOf(price.details),
+        toConfirm = false,
+        details = price.details,
         itemQuantityType = price.itemQuantityType
     )
 
     // TODO: Tempish note - EditablePrice is a sort of "variant domain" class just for editing - we need to convert it to the "primary" domain class Price here. This name mioght be confusing all the same, as we are approaching domain from the opposite side to a toDomain() on an entity class
     fun toDomain(locale: Locale): Price? {
         // TODO: Just wrapping this in success is a temp hack
-        val priceDouble = parseStringAsDoubleOrNull(locale, price.value)
-        val measureValueDouble = parseStringAsDoubleOrNull(locale, measureValue.value)
+        val priceDouble = parseStringAsDoubleOrNull(locale, price)
+        val measureValueDouble = parseStringAsDoubleOrNull(locale, measureValue)
         if (priceDouble == null || measureValueDouble == null) {
             return null
         } else {
@@ -2331,10 +2331,10 @@ data class EditablePrice(
                     price = priceDouble,
                     measure = MeasuredValue(
                         measureValueDouble,
-                        measureUnit.value
+                        measureUnit
                     ),
-                    confirmed = if (toConfirm.value) Instant.now() else confirmed,
-                    details = details.value!!,
+                    confirmed = if (toConfirm) Instant.now() else confirmed,
+                    details = details,
                     itemQuantityType = itemQuantityType,
                 )
         }
@@ -2350,7 +2350,7 @@ fun TextOrNull(string: String?): @Composable() (() -> Unit)? {
 }
 
 data class EditPriceScreenUIContent(
-    var editablePrice: EditablePrice,
+    var editablePrice: MutableState<EditablePrice>,
     val originalPrice: EditablePrice,
     val dataSet: DataSet,
     val item: Item,
@@ -2726,7 +2726,7 @@ fun OuterFullScreenDialog(
     }
 
     fun onCloseRequest() {
-        if (uiContent.editablePrice != uiContent.originalPrice) {
+        if (uiContent.editablePrice.value != uiContent.originalPrice) {
             showConfirmDialog = true
         } else {
             popBackStack()
@@ -2792,7 +2792,7 @@ fun OuterFullScreenDialog(
         // TODO: We might want to gate this logic behind a Settings option, i.e. have an option to let the confirm
         // always stay off unless the user explicitly turns it on.
         if (!vm.firstPackSizeOrPriceChangeOccurred) {
-            uiContent.editablePrice.toConfirm.value = true
+            uiContent.editablePrice.value = uiContent.editablePrice.value.copy(toConfirm = true)
             vm.firstPackSizeOrPriceChangeOccurred = true
         }
     }
@@ -2828,10 +2828,10 @@ fun OuterFullScreenDialog(
                         coroutineScope.launch {
                             // TODO: Maybe we shouldn't be passing editablePrice around as a parameter so much, when it's implicit in
                             // the ViewModel? THis would apply elsewhere, not just here.
-                            when (vm.validateEditablePrice(uiContent.editablePrice)) {
+                            when (vm.validateEditablePrice(uiContent.editablePrice.value)) {
                                 EditPriceScreenViewModel.ValidationState.OK -> {
                                     saveInitiated = true
-                                    vm.saveEditablePrice(uiContent.editablePrice)
+                                    vm.saveEditablePrice(uiContent.editablePrice.value)
                                 }
                                 // TODO: We could possibly try to "animate" the problematic text field we just focused (e.g. pulse its border colour) to draw attention to it further, but this feels surprisingly fiddly and I am not sure it's ncessary. My inclination is to leave this for now and let the code settle down first before maybe trying to add it.
                                 EditPriceScreenViewModel.ValidationState.PACK_SIZE_INVALID -> {
@@ -2961,7 +2961,7 @@ fun OuterFullScreenDialog(
                     // TODO: We "need" rememberSaveable but TextFieldValue probably doesn't support it. We will probably be using a ViewModel-held value in final code so let's not fuss about this for now.
                     //var todoNumber2 by rememberSaveable { mutableStateOf("888") }
                     var todoNumber by rememberSyncedTextFieldValue(
-                        uiContent.editablePrice.measureValue.value ?: ""
+                        uiContent.editablePrice.value.measureValue ?: ""
                     ) // TODO: Just stop it being nullable rather than converting null to "" here?
                     // TODO: Remember final "save" validation must check for non-empty strings for Validated/NUmeric TextFields, as the validation allows this
                     NumericTextField(
@@ -2970,8 +2970,12 @@ fun OuterFullScreenDialog(
                         validationRules = vm.packSizeValidationRules,
                         // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                         onValueChange = {
-                            todoNumber = it; uiContent.editablePrice.measureValue.value = it.text
-                            onPackSizeOrPriceChange()
+                            todoNumber = it
+                            if (uiContent.editablePrice.value.measureValue != it.text) {
+                                uiContent.editablePrice.value =
+                                    uiContent.editablePrice.value.copy(measureValue = it.text)
+                                onPackSizeOrPriceChange()
+                            }
                         },
                         onSupportingTextChange = { isError, supportingText ->
                             todoSupportingText = Pair(isError, supportingText)
@@ -2984,14 +2988,17 @@ fun OuterFullScreenDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
                     MyExposedDropdownMenuBox(
-                        selectedId = uiContent.editablePrice.measureUnit.value.id,
+                        selectedId = uiContent.editablePrice.value.measureUnit.id,
                         onValueChange = {
                             val measureUnit = measureUnitById[it]
                             devCheck(measureUnit != null) {
                                 "Invalid measure unit ID $it selected in dropdown"
                             }
-                            uiContent.editablePrice.measureUnit.value = measureUnit!!
-                            onPackSizeOrPriceChange()
+                            if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
+                                uiContent.editablePrice.value =
+                                    uiContent.editablePrice.value.copy(measureUnit = measureUnit!!)
+                                onPackSizeOrPriceChange()
+                            }
                         },
                         label = { Text("Unit") },
                         items = units,
@@ -3022,7 +3029,7 @@ fun OuterFullScreenDialog(
             // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that would give a width for an arbitrary string and
             // we could use something like that to size fields like this and/or the unit (albeit both have some extra window furniture - but we could for example compute a "notional text size" taking font size into account for " £  1234.00     " (spaces approximating margins/space for icons to pop in) and " litre    " (ditto) and use those sizes as the weights - we don't want both things fixed size as they won't fill the screen then, and we probably don't want one "minimal" and the other filling rest of space - but then again, if you do that, a fixed ratio is probably more or less the same since both will expand with font size just the same, so maybe that would be pointless
             var TODOHACKYPRICE by rememberSyncedTextFieldValue(
-                uiContent.editablePrice.price.value ?: ""
+                uiContent.editablePrice.value.price ?: ""
             ) // TODO: Just stop it being nullable rather than converting null to "" here?
             Log.d("MyApp", "getCurrencyFormat ${vm.getCurrencyFormat(uiContent.dataSet)}")
             val currencyFormat = vm.getCurrencyFormat(uiContent.dataSet)
@@ -3046,8 +3053,12 @@ fun OuterFullScreenDialog(
                     validationRules = currencyFormat.validationRules,
                     // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                     onValueChange = {
-                        TODOHACKYPRICE = it; uiContent.editablePrice.price.value = it.text
-                        onPackSizeOrPriceChange()
+                        TODOHACKYPRICE = it
+                        if (uiContent.editablePrice.value.price != it.text) {
+                            uiContent.editablePrice.value =
+                                uiContent.editablePrice.value.copy(price = it.text)
+                            onPackSizeOrPriceChange()
+                        }
                     },
                     supportingText = "This is more supporting text just as a test.",
                 )
@@ -3055,7 +3066,7 @@ fun OuterFullScreenDialog(
 
             // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
             // why are we entering it?
-            if (uiContent.editablePrice.id != 0L) {
+            if (uiContent.editablePrice.value.id != 0L) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -3075,11 +3086,11 @@ fun OuterFullScreenDialog(
                         )
                     }
                     Switch(
-                        checked = uiContent.editablePrice.toConfirm.value,
-                        onCheckedChange = { uiContent.editablePrice.toConfirm.value = it })
+                        checked = uiContent.editablePrice.value.toConfirm,
+                        onCheckedChange = { uiContent.editablePrice.value = uiContent.editablePrice.value.copy(toConfirm = it) })
                 }
             } else {
-                devCheck(uiContent.editablePrice.toConfirm.value) {
+                devCheck(uiContent.editablePrice.value.toConfirm) {
                     "Expected toConfirm to be true as this is the first price, but it's false"
                 }
             }
@@ -3090,8 +3101,8 @@ fun OuterFullScreenDialog(
             TextField(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Notes") },
-                value = uiContent.editablePrice.details.value ?: "",
-                onValueChange = { uiContent.editablePrice.details.value = it },
+                value = uiContent.editablePrice.value.details,
+                onValueChange = { uiContent.editablePrice.value = uiContent.editablePrice.value.copy(details = it) },
             )
             //}
         }
@@ -3633,8 +3644,8 @@ class SharedViewModel : ViewModel() {
             itemDefaultUnit = item.defaultUnit
         )
         editPriceScreenUIContent = EditPriceScreenUIContent(
-            editablePrice = editablePrice,
-            originalPrice = editablePrice,
+            editablePrice = mutableStateOf(editablePrice),
+            originalPrice = editablePrice.copy(),
             dataSet = dataSet,
             item = item,
             source = source
@@ -3783,12 +3794,12 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     // TODO: It's tempting to think this should be on EditablePrice itself, but the whole point is that it will apply (sharing as much as possible) the same validation rules that the ValidatedTextFields are usiong - and those aren't available to EditablePrice, and based on discussion with ChatGPT I think it's better to have this function here than pass this ViewModel as an argument to EditablePrice.toDomain()
     fun validateEditablePrice(editablePrice: EditablePrice): ValidationState {
         // TODO: What about "non-null" validation? The validation rules do not cover this. So we have to a) communicate this to user b) check it separately. Just possibly we could have a "must not be empty" validation rule which is only added to the validation rule sets when save is (first) clicked - then a) we'd automatically check it here b) if the user hasn't filled in some fields they will be warned, without being nagged when they first enter the edit screen for a new record
-        if (!validationRulesOk(packSizeValidationRules, editablePrice.measureValue.value)) {
+        if (!validationRulesOk(packSizeValidationRules, editablePrice.measureValue)) {
             return ValidationState.PACK_SIZE_INVALID
         }
         if (!validationRulesOk(
                 getCurrencyFormat(uiContent!!.dataSet).validationRules,
-                editablePrice.price.value
+                editablePrice.price
             )
         ) {
             return ValidationState.PRICE_INVALID
