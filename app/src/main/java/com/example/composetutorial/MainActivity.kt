@@ -1836,6 +1836,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 // - do we have an up-to-date price for this item?
 // - make it easy for the user to confirm our current price or update it
 // - (borderline?) do we have up-to-date prices for other sources? if not it's hard to know if this is well-priced or not no matter how up to the date the price at this source is.
+// TODO: This is quite a long function and might benefit from subcomposables being factored out.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemSourceInfo(
@@ -2043,7 +2044,6 @@ fun ItemSourceInfo(
                         }
                     }
 
-// TODO: UP TO HERE
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Row() {
                             Icon(
@@ -2055,27 +2055,25 @@ fun ItemSourceInfo(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Good price")
                         }
-                        // TODO: *If* we consider "Confirm" to be the primary action (potentially users
-                        // click it every time they buy this item), it should probably get the bottom
-                        // right position, i.e. we should swap its position with "Edit".
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.End
                         ) {
                             FilledTonalButton(
-                                // TODO: I accidentally wrote a double "}}" at the end of"${source.id}" and it triggered a strict mode
-                                // violation. Turning strict mode penaltyDeath off showed a simple NumberFormatException, I fixed the
-                                // problem and strict mode penaltyDeath no longer crashes. This is a bit worrying - I do not understand
-                                // why this could ever cause a strict mode failure. But there doesn't seem to be much I can do about
-                                // it right now. The NumberFormatException was not AFAICS present in logcat on the run where
-                                // penaltyDeath killed it.
                                 onClick = onEditPriceClick,
                                 shape = MaterialTheme.shapes.small
                             ) {
                                 Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
                             }
+
                             Spacer(modifier = Modifier.width(8.dp))
-                            // TODO: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
+
+                            // The "Confirm" button is the primary button - we expect it to be the
+                            // button users click on most on this card (most of the time prices
+                            // won't have changed on subsequent visits) - so it gets the position on
+                            // the right.
+                            // TODONOW: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
                             FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
                                 Text("Confirm")
                             }
@@ -2089,6 +2087,7 @@ fun ItemSourceInfo(
     }
 }
 
+// TODO: UP TO HERE
 // TODO: o4-mini code, review if keep
 // TODO: I should probably display an arrow of some sort next to the column which controls the sort
 // order, and I should probably make it clickable to reverse the order - the main thing being to
