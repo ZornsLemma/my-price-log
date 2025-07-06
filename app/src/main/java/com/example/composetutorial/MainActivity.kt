@@ -1843,7 +1843,7 @@ fun ItemSourceInfo(
     item: Item?,
     source: Source?,
     sourceList: List<Source>,
-    onSelectedSourceIdChange: (Long) -> Unit,
+    onSelectedSourceIdChange: (Long?) -> Unit,
     itemPriceList: List<Price>,
     onEditPriceClick: () -> Unit,
 ) {
@@ -1871,27 +1871,30 @@ fun ItemSourceInfo(
                 .animateContentSize()
                 .padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)
         ) {
-            // TODO: We need to allow this to be set to empty/None by the user - how best to do
-            // that? And if it is empty, we need to collapse all the stuff below it and replace it
-            // with a brief instructional string roughly "Select a store to see and edit product
-            // details" - check the ChatGPT discussion I saved for some wording
             Log.d("MyApp", "ISI dataset ${dataSet}")
             Log.d("MyApp", "ISI item ${item}")
             Log.d("MyApp", "ISI source ${item}")
             val haveItemAndSource = item != null && source != null
+            // If sourceList is empty this will generate a single-item menu with just "None" in,
+            // but that is probably better than the "skeleton" menu we get with no items in.
+            val items = listOf(Pair(-1L, "None")) + sourceList.map { Pair(it.id, it.name) }
+            // TODO: Did wonder if MyExposedDropdownMenuBox should allow null IDs to avoid the need
+            // for the "-1" hack here, but I really didn't want to have to make every user of it
+            // be null-tolerant when it *won't* hand you a null itself unless you gave it one in the
+            // input item list, so this is perhaps best but I'm not too sure.
             MyExposedDropdownMenuBox(
                 modifier = Modifier
                     .padding(bottom = 8.dp)
                     .fillMaxWidth(),
                 selectedId = source?.id,
-                onValueChange = onSelectedSourceIdChange,
+                onValueChange = { onSelectedSourceIdChange( if (it == -1L) null else it) },
                 label = { Text("Store") },
                 supportingText = if (haveItemAndSource) null else {
-                    { Text("Select a product and store to view or change the price there") } // TODO: poor wording
+                    { Text("Select a product and store to view or change the price there") } // TODO: poor wording?
                 },
-                items = sourceList ?: emptyList(),
-                getId = { it.id },
-                getLabel = { it.name },
+                items = items,
+                getId = { it.first },
+                getLabel = { it.second },
             )
             if (haveItemAndSource) {
                 val priceList = itemPriceList.filter { it.sourceId == source!!.id }
@@ -2459,7 +2462,7 @@ fun HomeScreenScaffold(
     onSelectedItemIdChange: (Long) -> Unit,
     source: Source?,
     sourceListRaw: List<Source>,
-    onSelectedSourceIdChange: (Long) -> Unit,
+    onSelectedSourceIdChange: (Long?) -> Unit,
     itemPriceListRaw: List<Price>,
     onEditPriceClick: () -> Unit,
 ) {
