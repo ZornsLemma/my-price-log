@@ -1722,9 +1722,9 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet): String {
 // selected item when expanding the dropdown using a D-pad, instead of defaulting to the first
 // item. However, this appears to be ninja-grade level development and I tried tweaking multiple
 // AI-suggested solutions and got nothing but crashes.
+// TODO: RENAME?
 @Composable
 fun <T, ID : Comparable<ID>> ItemWithDropdown(
-    // TODO: RENAME?
     modifier: Modifier = Modifier,
     dropdownModifier: Modifier = Modifier, // TODO: OK!?
     selectedId: ID?,
@@ -1736,7 +1736,8 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     getDividerBetween: ((T, T) -> Boolean)? = null,
     content: @Composable () -> Unit,
 ) {
-    // TODO: rememberSaveable? A simple dark mode toggle could lose this otherwise.
+    // TODO: rememberSaveable? A simple dark mode toggle could lose this otherwise. But maybe that
+    // is "expected", and users probably also expect the dropdown to close on rotation.
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.clickable { expanded = true; onExpand(expanded) }) {
@@ -1803,16 +1804,19 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     ) {
         LabeledItem(label = label) {
             Row() {
-                // TODO: FWIW a quick discussion with ChatGPT suggests it is
-                // reasonable for i18n to have some kind of format substitition to
-                // generate a unit price string analogous to the one I'm using here.
-                // So having a single "Unit price" field is probably reasonable, and
-                // it does feel like the clearest way to express it.
+                // TODO: FWIW a quick discussion with ChatGPT suggests it is reasonable for i18n to
+                // have some kind of format substitition to generate a unit price string analogous
+                // to the one I'm using here. So having a single "Unit price" field is probably
+                // reasonable, and it does feel like the clearest way to express it.
                 Box {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // TODO: I am starting to wonder if this down arrow should be vertically centred wrt the textfield as a whole (including its label-above) not just the text, despite working very hard to get it to be lined up with just the "text content" before - probably arguments both ways, but think about it
+                        // TODO: I am starting to wonder if this down arrow should be vertically
+                        // centred wrt the textfield as a whole (including its label-above) not just
+                        // the text, despite working very hard to get it to be lined up with just
+                        // the "text content" before - probably arguments both ways, but think about
+                        // it
                         Text(text)
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
