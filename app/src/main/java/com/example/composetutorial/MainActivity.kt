@@ -16,10 +16,8 @@ import java.time.Duration
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
-import android.app.Activity
 import android.app.Application
 import android.content.Context
-import android.content.ContextWrapper
 import androidx.activity.compose.BackHandler
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
@@ -27,7 +25,6 @@ import android.os.Parcelable
 import android.os.StrictMode
 import android.text.format.DateUtils
 import android.util.Log
-import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
@@ -2087,7 +2084,6 @@ fun ItemSourceInfo(
     }
 }
 
-// TODO: UP TO HERE
 // TODO: o4-mini code, review if keep
 // TODO: I should probably display an arrow of some sort next to the column which controls the sort
 // order, and I should probably make it clickable to reverse the order - the main thing being to
@@ -2174,6 +2170,7 @@ fun DataTable(
 }
 
 
+/* TODO: Delete if not needed
 // Utility to get Activity window
 // TODO: Is this used?
 @Composable
@@ -2185,7 +2182,7 @@ private fun Context.getActivityWindow(): Window? {
     }
     return null
 }
-
+*/
 
 // A simple wrapper around DropdownMenuItem applying MD3 formatting.
 // TODO: This isn't fully general as I don't want to add stuff that isn't going to get tested; I can
@@ -2207,34 +2204,23 @@ fun MyDropdownMenuItem(
     )
 }
 
-// TODO: Perplexity magic
-// TODO: The amount of having to explicitly specify coroutinescopes and contexts in order to be able to run these functions is utterly batshit insane.
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 val SELECTED_DATA_SET_ID_KEY = longPreferencesKey("selected_data_set_id")
 val SELECTED_ITEM_ID_KEY = longPreferencesKey("selected_item_id")
 val SELECTED_SOURCE_ID_KEY = longPreferencesKey("selected_source_id")
 
-/* TODO DELETE
-fun <T> getPreference(context: Context, key: Preferences.Key<T>): Flow<T?> =
-    context.dataStore.data.map { prefs -> prefs[key] }
-
-suspend fun <T> savePreference(context: Context, key: Preferences.Key<T>, value: T?) {
-    context.dataStore.edit { prefs ->
-        if (value != null) prefs[key] = value else prefs.remove(key)
-    }
-}
-*/
+// TODO: UP TO HERE
 
 // TODO: inconsistent mix of "List" and "ListRaw"
+// TODO: Rename "HomeScreenUIContent" or similar?
 data class UIContent(
-    // TODO: Rename "HomeScreenUIContent" or similar?
     val dataSet: DataSet?,
     val dataSetList: List<DataSet>,
     val item: Item?,
     val itemList: List<Item>,
     val source: Source?,
-    val sourceListRaw: List<Source>,
-    val itemPriceListRaw: List<Price>,
+    val sourceList: List<Source>,
+    val priceList: List<Price>,
 ) {
     companion object {
         fun createEmpty(): UIContent {
@@ -2244,8 +2230,8 @@ data class UIContent(
                 item = null,
                 itemList = emptyList(),
                 source = null,
-                sourceListRaw = emptyList(),
-                itemPriceListRaw = emptyList(),
+                sourceList = emptyList(),
+                priceList = emptyList(),
             )
         }
     }
@@ -2404,11 +2390,11 @@ fun HomeScreen(
             vm.savePreference(SELECTED_ITEM_ID_KEY, it)
         },
         uiContent.source,
-        uiContent.sourceListRaw,
+        uiContent.sourceList,
         onSelectedSourceIdChange = {
             vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
         },
-        uiContent.itemPriceListRaw,
+        uiContent.priceList,
         onEditPriceClick = { onEditPriceClick(uiContent) } /* TODO DELETE (uiContent)
             vm.setEditPriceScreenStateFromHomeScreenState(uiContent)
             // TODO: I don't know if this random UUID is necessary or helpful or harmful any more,
@@ -3641,7 +3627,7 @@ class SharedViewModel : ViewModel() {
         val source = uiContent.source!!
 
         val price =
-            uiContent.itemPriceListRaw.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
+            uiContent.priceList.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
         val editablePrice = if (price != null) EditablePrice(price) else EditablePrice(
             dataSetId = dataSet.id,
