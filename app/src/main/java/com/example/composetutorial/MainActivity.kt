@@ -634,7 +634,8 @@ abstract class InventoryDatabase : RoomDatabase() {
     }
 }
 
-// TODO: Is this interface buying us anything?!
+// TODO: This interface is here to help with mocking the database during testing. I may want to do
+// this, so let's keep it around for now.
 interface PriceTrackerRepository {
     fun getAllDataSets(): Flow<List<DataSet>>
     fun getDataSet(dataSetId: Long): Flow<List<DataSet>> // TODO: I suspect this can be removed once we tidy up the edit dialog
