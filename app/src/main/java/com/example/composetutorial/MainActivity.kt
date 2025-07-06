@@ -1912,13 +1912,15 @@ fun ItemSourceInfo(
                 getId = { it.first },
                 getLabel = { it.second },
             )
-// TODO: UP TO HERE
             if (haveItemAndSource) {
                 val priceList = itemPriceList.filter { it.sourceId == source!!.id }
 
                 if (priceList.isEmpty()) {
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        // TODO: Should this be in the supportingText on the store dropdown? My gut feeling is not, as this is "card content" about the store+product together, not a "note" specifically on the "Store" dropdown. But think about it.
+                        // TODO: Should this be in the supportingText on the store dropdown? My gut
+                        // feeling is not, as this is "card content" about the store+product
+                        // together, not a note specifically on the "Store" dropdown. But think
+                        // about it.
                         Text("There is no price recorded for this product at this store yet.")
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -1935,13 +1937,18 @@ fun ItemSourceInfo(
                 } else {
                     devCheck(priceList.size <= 1) { "Expected 0 or 1 prices for a product and store, but got ${priceList.size}" }
 
+                    // TODO: This row can get a bit congested on small phones when the text in some
+                    // of the LabeledItems gets a bit long. It does kind of work and some further
+                    // tweaking (e.g. making sure we force some space between the three horizontal
+                    // elements) might fix the corner cases better than any alternatives, but do
+                    // have a think to see if some alternate design would look and/or work better.
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-
+// TODO: UP TO HERE
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Price as sold"
                         ) { // TODO: quite like this, but maybe "Shelf price"?
                             // TODO: hard coding 2 dp is hacky
