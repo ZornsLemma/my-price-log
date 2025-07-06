@@ -1871,7 +1871,10 @@ fun ItemSourceInfo(
                 .animateContentSize()
                 .padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)
         ) {
-            // TODO: We need to allow this to be set to empty/None by the user - how best to do that? And if it is empty, we need to collapse all the stuff below it and replace it with a brief instructional string roughly "Select a store to see and edit product details" - check the ChatGPT discussion I saved for some wording
+            // TODO: We need to allow this to be set to empty/None by the user - how best to do
+            // that? And if it is empty, we need to collapse all the stuff below it and replace it
+            // with a brief instructional string roughly "Select a store to see and edit product
+            // details" - check the ChatGPT discussion I saved for some wording
             Log.d("MyApp", "ISI dataset ${dataSet}")
             Log.d("MyApp", "ISI item ${item}")
             Log.d("MyApp", "ISI source ${item}")
@@ -2002,7 +2005,6 @@ fun ItemSourceInfo(
                             }
                         }
                     }
-                    // TODO: Vertical spacing probably poor with or without notes field - needs tweaking/better "plan" for how to specify it - that said, the vertical space above this final row probably should be "a bit" larger than the space between the two "reporting our status" rows - the following row is a "summary plus action" row and does want some visual distinction
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Row() {
                             Icon(
