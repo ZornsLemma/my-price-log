@@ -2209,9 +2209,6 @@ val SELECTED_DATA_SET_ID_KEY = longPreferencesKey("selected_data_set_id")
 val SELECTED_ITEM_ID_KEY = longPreferencesKey("selected_item_id")
 val SELECTED_SOURCE_ID_KEY = longPreferencesKey("selected_source_id")
 
-// TODO: UP TO HERE
-
-// TODO: inconsistent mix of "List" and "ListRaw"
 // TODO: Rename "HomeScreenUIContent" or similar?
 data class UIContent(
     val dataSet: DataSet?,
@@ -2237,7 +2234,8 @@ data class UIContent(
     }
 }
 
-// TODO: Perm comment - this is basically a Price but with most fields nullable, so we can use it in an edit screen to allow adding new Prices as well as editing existing ones.
+// A version of Price we can use while editing - it holds the same basic information but with mostly
+// string representations for editability.
 data class EditablePrice(
     val id: Long,
     val dataSetId: Long,
@@ -2252,12 +2250,9 @@ data class EditablePrice(
     val itemDefaultUnit: MeasureUnit,
 
     ) {
-    /* TODO!?
-    constructor() : this(
-        id = 0,
-    )
-    */
 
+    // Constructor for adding the first price for a (source, item) combination - we have the
+    // "parent" fields, but everything else starts off blank/default.
     constructor(
         dataSetId: Long,
         itemId: Long,
@@ -2277,20 +2272,22 @@ data class EditablePrice(
         itemDefaultUnit = itemDefaultUnit
     )
 
+    // Constructor for editing an existing Price.
     constructor(price: Price) : this(
         id = price.id,
         dataSetId = price.dataSetId,
         itemId = price.itemId,
         sourceId = price.sourceId,
-        price =
-            formatDecimal(
+        price = formatDecimal(
                 price.price,
-                // TODO: hardcoding 2 dp is a hack
+                // TODONOW: hardcoding 2 dp is a hack
                 minDp = 2,
                 maxDp = 2
-            )
-        ,
-        // TODO: We need to be careful about rounding and dps here - for non-metric stuff, there may be some low digits of "noise" - Milk at ValueMart shows this well - OK, while the issue of decimal points is important, that specific thing was caused by my initial data using a slightly rounded ml value for imperial pint compared to the real data
+            ),
+        // TODONOW: We need to be careful about rounding and dps here - for non-metric stuff, there
+        // may be some low digits of "noise" - Milk at ValueMart shows this well - OK, while the
+        // issue of decimal points is important, that specific thing was caused by my initial data
+        // using a slightly rounded ml value for imperial pint compared to the real data
         measureValue =
             formatDecimal(
                 price.measure.value,
@@ -2305,33 +2302,32 @@ data class EditablePrice(
         itemDefaultUnit = price.itemDefaultUnit
     )
 
-    // TODO: Tempish note - EditablePrice is a sort of "variant domain" class just for editing - we need to convert it to the "primary" domain class Price here. This name mioght be confusing all the same, as we are approaching domain from the opposite side to a toDomain() on an entity class
+    // TODO: Tempish note - EditablePrice is a sort of "variant domain" class just for editing - we
+    // need to convert it to the "primary" domain class Price here. This name might be confusing
+    // all the same, as we are approaching domain from the opposite side to a toDomain() on an
+    // entity class
     fun toDomain(locale: Locale): Price? {
-        // TODO: Just wrapping this in success is a temp hack
         val priceDouble = parseStringAsDoubleOrNull(locale, price)
         val measureValueDouble = parseStringAsDoubleOrNull(locale, measureValue)
         if (priceDouble == null || measureValueDouble == null) {
             return null
         } else {
             return Price(
-                    // TODO: Should we "do something" if the values are null? Should we provide some kind of validation method the caller can use first? Should we throw? We can't write nulls to the database for most of these fields, they are null in EditablePrice to allow for the idea the user hasn't filled them in yet in a new entry
-                    id = id,
-                    dataSetId = dataSetId,
-                    itemId = itemId,
-                    sourceId = sourceId,
-                    price = priceDouble,
-                    measure = MeasuredValue(
-                        measureValueDouble,
-                        measureUnit
-                    ),
-                    confirmed = if (toConfirm) Instant.now() else confirmed,
-                    details = details,
-                    itemDefaultUnit = itemDefaultUnit,
-                )
+                id = id,
+                dataSetId = dataSetId,
+                itemId = itemId,
+                sourceId = sourceId,
+                price = priceDouble,
+                measure = MeasuredValue(measureValueDouble, measureUnit),
+                confirmed = if (toConfirm) Instant.now() else confirmed,
+                details = details,
+                itemDefaultUnit = itemDefaultUnit,
+            )
         }
     }
 }
 
+// TODO: UP TO HERE
 fun TextOrNull(string: String?): @Composable() (() -> Unit)? {
     if (string == null) {
         return string
