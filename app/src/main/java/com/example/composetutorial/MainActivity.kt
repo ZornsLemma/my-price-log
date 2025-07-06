@@ -1016,7 +1016,6 @@ data class Price(
     */
 }
 
-// TODO: HACKING
 fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
     QuantityType.WEIGHT -> MeasureUnit.G
     QuantityType.VOLUME -> MeasureUnit.ML
@@ -1024,10 +1023,20 @@ fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
 }
 
 // TODO: Whiff of ChatGPT magic
-// TODO: I suspect we should actually be using the item's "default unit" not its quantityType here - although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the display unit for display, to avoid "oh, it happened to work for me in metric with grams but now I'm in imperial it's displaying badly" concerns
+// TODO: I suspect we should actually be using the item's "default unit" not its quantityType here -
+// although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the
+// display unit for display, to avoid "oh, it happened to work for me in metric with grams but now
+// I'm in imperial it's displaying badly" concerns
 fun PriceWithItemEntity.toDomain(): Price {
+    // I have checks like this in various places but this is probably a pretty solid place for one.
+    // On the way from database->domain, this is where we have a "solid" itemDefaultUnit value
+    // (because it came from a database join) and that gives us an independent cross-check that
+    // priceEntity.originalUnit is of the right QuantityType. (We should also be doing a check
+    // before we write to the database, to stop bad data getting in, but at that point we don't have
+    // such absolutely confidence in our itemDefaultUnit.)
     devCheck(priceEntity.originalUnit.quantityType == itemDefaultUnit.quantityType) {
-        "TODO NOT SURE IF WE SHOULD BE CHECKING THIS HERE BUT WILL BASH IT IN FOR NOW"
+        "Expected consistent units on PriceWithItemEntity but we have originalUnit " +
+        "${priceEntity.originalUnit} and itemDefaultUnit $itemDefaultUnit"
     }
     return Price(
         id = priceEntity.id,
