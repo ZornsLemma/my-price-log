@@ -755,11 +755,7 @@ class MyApplication : Application() {
 
 }
 
-// TODO: The database inspector used to show the quantity_type as a string but it seems to have
-// stopped working. Not sure why and not the end of the world, but would be nice if that would work
-// again.
 class Converters {
-    // TODO: Grok magic, although it seems logical enough - but read up
     @TypeConverter
     fun fromQuantityType(quantityType: QuantityType?): Int? {
         return quantityType?.value
@@ -780,15 +776,14 @@ class Converters {
         return value?.let { MeasureUnit.fromValue(it) }
     }
 
-    // ChatGPT magic
     @TypeConverter
-    fun fromInstant(value: Long?): Instant? {
-        return value?.let { Instant.ofEpochMilli(it) }
+    fun fromInstant(instant: Instant?): Long? {
+        return instant?.toEpochMilli()
     }
 
     @TypeConverter
-    fun toInstant(instant: Instant?): Long? {
-        return instant?.toEpochMilli()
+    fun toInstant(value: Long?): Instant? {
+        return value?.let { Instant.ofEpochMilli(it) }
     }
 }
 
