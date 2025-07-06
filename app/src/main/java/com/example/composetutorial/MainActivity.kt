@@ -1401,16 +1401,6 @@ fun MainScreen(
         modifier = Modifier.fillMaxWidth()
     ) {
         // Collection Selector
-        // TODO: I am starting to think this is the best drop down menu implementation (needs
-        // renaming to avoid confusion). We probably don't *want* the primary colour underline
-        // highlight here, given that e.g. "buttons" get highlighted by an overall colour change as
-        // this does rather than an "underline" - TextFields obviously *do* get this underline for
-        // whatever reason known only to MD3 specs, but our TextField is not a "real" TextField so
-        // this "darken whole thing" approach is probably consistent
-        // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the
-        // "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about
-        // it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my
-        // impl) of the experimental "official" one that is weird
         MyExposedDropdownMenuBox(
             modifier = Modifier
                 .fillMaxWidth(),
@@ -1421,7 +1411,10 @@ fun MainScreen(
             getId = { it.id },
             getLabel = { it.name },
         )
-        // TODO: If we have no data sets, we should (analogous to how the source dropdown works) show a supportingText about selecting one *and hide the rest of the UI*. Nothing makes sense without a dataset, there is no way to pick a product or source. This probably means we need support from our parent (or this needs moving up into the parent) to do that.
+        // TODO: If we have no data sets, we should (analogous to how the source dropdown works)
+        // show a supportingText about selecting one *and hide the rest of the UI*. Nothing makes
+        // sense without a dataset, there is no way to pick a product or source. This probably means
+        // we need support from our parent (or this needs moving up into the parent) to do that.
 
         Spacer(modifier = Modifier
             .height(8.dp)
@@ -1433,7 +1426,7 @@ fun MainScreen(
             value = item?.name ?: "",
             onValueChange = { /* No-op, read-only */ },
             label = { Text("Product") },
-            enabled = false, // TODO: this is necessary to make "clickable" work, it looks wrong but this is all an experimental hack anyway
+            enabled = false, // TODO: this is necessary to make "clickable" work, bit hacky
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable { Log.d("MyApp", "SPS"); showItemSheet = true },
@@ -1444,14 +1437,16 @@ fun MainScreen(
                     contentDescription = "Search Products",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            },/* colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                focusedContainerColor = MaterialTheme.colorScheme.surface
-            ) */
-            colors = myTextFieldColors(true) // TODO: hack, we should set parameter based on focus but let's just do it for MyExposedDropdownMenu first
+            },
+            colors = myTextFieldColors(true) // TODO: "true" is a hack, we should set parameter based on focus roughly as we do in MyExposedDropdownMenu
         )
 
         // Item Modal Bottom Sheet
+        // TODO: This is mostly untouched AI code and it probably needs a review. I am also wondering
+        // if I should just make this a full-screen dialog, now I more-or-less know how to do one
+        // and since it would give more space for the product list to be scrolled in etc. But it
+        // might be best to just leave this as-is for now and fiddle around with this after hitting
+        // MVP.
         if (showItemSheet) {
             ModalBottomSheet(onDismissRequest = { showItemSheet = false }) {
                 Column(
@@ -1495,13 +1490,26 @@ fun MainScreen(
 @Composable
 fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
     disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-    disabledLabelColor = if (isFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+    disabledLabelColor = if (isFocused)
+        MaterialTheme.colorScheme.primary
+    else
+        MaterialTheme.colorScheme.onSurfaceVariant,
     disabledTextColor = MaterialTheme.colorScheme.onSurface,
     // We can't make the indicator thicker when mock-focused, but we can at least change the colour.
-    disabledIndicatorColor = if (isFocused) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+    disabledIndicatorColor = if (isFocused)
+        MaterialTheme.colorScheme.primary
+    else
+        MaterialTheme.colorScheme.onSurfaceVariant,
 )
 
-// TODO: THis needs support for selecting "None" - maybe we just make the user pass it in the input with a null ID, actually?
+// TODO: We *may* want to disable the on click ripple whatsit for this, based on how the
+// "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about
+// it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my
+// impl) of the experimental "official" one that is weird
+// TODO: If a TextField has focus and then you click on a MyExposedDropdownMenuBox, the
+// TextField does *not* lose focus so it retains its primary colour label/underline, which
+// isn't ideal.
+// TODO: This needs support for selecting "None" - maybe we just make the user pass it in the input with a null ID, actually?
 @Composable
 fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     selectedId: ID?,
@@ -1537,9 +1545,8 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
                 value = PULLEDOUT,
                 onValueChange = { /* No-op, handled by dropdown */ },
                 label = label,
-                // TODO: DELETE - WE DO THIS OURSELVES BELOW supportingText = supportingText,
                 readOnly = true,
-                enabled = false, // TODO HACK
+                enabled = false, // TODO: this is necessary to make "clickable" work, bit hacky
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
