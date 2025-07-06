@@ -1915,7 +1915,7 @@ fun ItemSourceInfo(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(bottom = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
 
@@ -1996,7 +1996,7 @@ fun ItemSourceInfo(
 
                     }
                     if (priceList[0].details.isNotEmpty()) {
-                        Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                        Row(modifier = Modifier.padding(bottom = 8.dp)) {
                             LabeledItem("Notes") {
                                 Text(priceList[0].details)
                             }
