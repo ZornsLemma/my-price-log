@@ -2327,7 +2327,6 @@ data class EditablePrice(
     }
 }
 
-// TODO: UP TO HERE
 fun TextOrNull(string: String?): @Composable() (() -> Unit)? {
     if (string == null) {
         return string
@@ -2339,13 +2338,12 @@ fun TextOrNull(string: String?): @Composable() (() -> Unit)? {
 data class EditPriceScreenUIContent(
     var editablePrice: MutableState<EditablePrice>,
     val originalPrice: EditablePrice,
+    // TODO: Move the following three to the start of this data class? Entirely cosmetic of course.
     val dataSet: DataSet,
     val item: Item,
     val source: Source
 )
 
-// TODO: Would it actually work just as well for us to read these lists with intial_value emptyList() without going via null?
-// TODO: It may just be the emulator but right now despite all my apparently sensible refactoring changes, I am seeing *massive* jank just playing around in the UI (partly but not only when returning from the "edit" full screen dialog)
 @Composable
 fun HomeScreen(
     vm: HomeScreenViewModel,
@@ -2370,6 +2368,7 @@ fun HomeScreen(
     // for the very first frame.
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val (loading, uiContent) = uiState
+// TODO: UP TO HERE
     // TODO: There may be excessive allowance for nulls in the code below here - it kind of depends how the data fetches have mutated. Should review this and remove any redundant null checks and nullable types in parameter lists of child composables.
     // TODO: HomeScreenScaffould could take uiContent instead of splitting it out here - that wouldn't be unreasonable, *it* would split stuff out, but it would save boilerplate here. We could almost inline HomeScreenScaffold given how trivial the above code now is, and perhaps we should.
     HomeScreenScaffold(
