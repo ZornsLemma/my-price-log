@@ -2743,7 +2743,6 @@ fun OuterFullScreenDialog(
     }
 // TODO: UP TO HERE
 
-    val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
     // ChatGPT magic more or less
     LaunchedEffect(Unit) {
         vm.saveEvents.collect { event ->
@@ -3816,16 +3815,11 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     enum class SaveStatus { Idle, Saving, Success, Error }
 
     private val _saveStatus = SingleEventState(SaveStatus.Idle)
-    val saveStatus: StateFlow<SaveStatus> = _saveStatus.state
-    val saveEvents: SharedFlow<SaveStatus> = _saveStatus.events
+    // TODO: DELETE? val saveStatus = _saveStatus.state
+    val saveEvents = _saveStatus.events
 
-    // TODO: I don't think this will insert correctly yet, as Price has no price_id primary key to
-    // allow us to indicate to this function when it is an insert rather than an update, but let's
-    // worry about that later. OK, I think the solution is that this takes an EditablePrice. If we need
-    // it, we could also have an updatePrice() function which accepts a Price, as we know insert is
-    // not necessary there.
     // TODO: Use upsert in name?
-    fun updateOrInsertPrice(price: Price) {
+    private fun updateOrInsertPrice(price: Price) {
         viewModelScope.launch {
             _saveStatus.update(SaveStatus.Saving)
             try {
