@@ -2666,36 +2666,23 @@ fun rememberSyncedTextFieldValue(modelState: String): MutableState<TextFieldValu
 // variable unit on this screen, as it will might be useful to the user as a confirmation of the
 // unit price on the shelf. On the other hand, it might just be extra clutter on a screen where
 // the user is editing.
-// TODO: UP TO HERE
 fun OuterFullScreenDialog(
     vm: EditPriceScreenViewModel,
     navController: NavHostController,
-    onClose: () -> Unit
+    requestClose: () -> Unit
 ) {
-    /* TODO DELETE
-            val uiContentNullable = vm.editPriceScreenUIContent
-        devCheck(uiContentNullable != null) {
-            "uiContentNullable is null, but it should have been set before navigating to the edit price dialog"
-        }
-        val uiContent = uiContentNullable!!
-        */
-
-    // TODO: This probably won't work right for adding new entries from scratch, I will need to think about that and this may well need some reworking, but let's ignore that and hack round it for now in relevant places
-
-    /* TODO DELETE
-    // TODO: Move these into ViewModel and then I don't need rememberSaveable or the Parceilze stuff and it doesn't cost much - no state faffery, just a Price (or EditablePrice) object held in ViewModel
-    var originalPrice by rememberSaveable { mutableStateOf(
-        uiContent.itemPriceListRaw.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id } ?: Price.createEmpty()
-    )}
-    var price by rememberSaveable { mutableStateOf(originalPrice) }
-    */
     Log.d("MyApp", "EditPriceScreenViewModel $vm uiContent=${vm.uiContent}")
     devCheck(vm.uiContent != null) {
         "EditPriceScreenViewModel's uIContent should have been set to non-null before navigating to screen"
     }
     val uiContent = vm.uiContent!! // TODO: Maybe simplify this later on??!
 
-    // TODO: Can I get rid of saveInitiated and instead set the state inside the viewmodel to "idle" when we are not saving? The frequency with which we check it suggests it might be more painful to get rid of it. but if we track this, the distinction between idle and saving is mostly meainingless (the state never gets set back to idle) and we should maybe merge those states into a vague "meh" state.
+    // TODO: Can I get rid of saveInitiated and instead set the state inside the viewmodel to "idle"
+    // when we are not saving? The frequency with which we check it suggests it might be more
+    // painful to get rid of it. but if we track this, the distinction between idle and saving is
+    // mostly meainingless (the state never gets set back to idle) and we should maybe merge those
+    // states into a vague "meh" state.
+    // TODO: Some of this remember stuff should maybe move into the ViewModel
     var saveInitiated by rememberSaveable { mutableStateOf(false) }
     var showSaveProgressIndicator by rememberSaveable { mutableStateOf(false) }
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
@@ -2706,34 +2693,39 @@ fun OuterFullScreenDialog(
     // TODO: ChatGPT magic. This idea here is that a) currentBackStackEntry reflects the actual
     // back stack, not merely "we have popped but it hasn't come into effect yet" b) this will force
     // isNavigating to be initialised to false when we are re-entered "fresh" but not if e.g. a rotation occurs.
+    // I can't help thinking we can simplify this by storing a close-debounce flag in the ViewModel, which
+    // ought to be re-created from scratch every time we are "truly re-entered" (either because popBackStack()
+    // discards the old state or because the random UUID trick effectively guarantees this - I am far from
+    // clear what the actual reality of how popBackStack() works is).
     var isNavigating by remember(navController.currentBackStackEntry) {
         mutableStateOf(false)
     }
 
-    fun popBackStack() { // TODO: Rename "close" or "finish"? if nothing else, popBackStack() is confusingly *like* the navcontroller fn and we are *not* calling that ourselves
-        // We need isNavigating to de-bounce the close button so we don't do a double pop if
-        // the user double taps the close button quickly. (We may not need this for other ways
-        // of going back, but it shouldn't hurt and is probably safer.)
+    fun requestCloseDebounced() {
+        // We need isNavigating to de-bounce the close button so we don't invoke requestClose()
+        // (which probably calls popBackStack() and is therefore not idempotent) if the user double
+        // taps the close button quickly. (We may not need this for other ways of closing, but it
+        // shouldn't hurt and is probably safer.)
         if (!isNavigating) {
             isNavigating = true;
-            onClose() // TODO: Is the "on" prefix so conventional we have to use it? We are not saying we *have* closed, we are saying we *want to be* closed
+            requestClose()
         }
     }
 
-    fun onCloseRequest() {
+    fun requestDismiss() {
         if (uiContent.editablePrice.value != uiContent.originalPrice) {
             showConfirmDialog = true
         } else {
-            popBackStack()
+            requestCloseDebounced()
         }
     }
 
     BackHandler {
         if (!saveInitiated) {
-            onCloseRequest()
+            requestDismiss()
         } else {
-            // I've discussed this with LLMs and it's not clear if we should do this or not, but
-            // I'll go with it for now.
+            // I've discussed this with LLMs and it's not clear if - from a UI perspective - we
+            // should do this or not, but I'll go with it for now.
             showSavingSnackbar = true;
         }
     }
@@ -2749,6 +2741,7 @@ fun OuterFullScreenDialog(
         // TODO: I don't think we need to set it back to false in else, but maybe revise all
         // this later.
     }
+// TODO: UP TO HERE
 
     val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
     // ChatGPT magic more or less
@@ -2756,7 +2749,7 @@ fun OuterFullScreenDialog(
         vm.saveEvents.collect { event ->
             when (event) {
                 EditPriceScreenViewModel.SaveStatus.Success -> {
-                    popBackStack()
+                    requestCloseDebounced()
                 }
 
                 EditPriceScreenViewModel.SaveStatus.Error -> {
@@ -2812,7 +2805,7 @@ fun OuterFullScreenDialog(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(enabled = !saveInitiated, onClick = { onCloseRequest() }) {
+                    IconButton(enabled = !saveInitiated, onClick = { requestDismiss() }) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 },
@@ -3116,7 +3109,7 @@ fun OuterFullScreenDialog(
                     }) { Text("Keep editing") }
                 },
                 confirmButton = {
-                    TextButton(onClick = { popBackStack() }) {
+                    TextButton(onClick = { requestCloseDebounced() }) {
                         Text(
                             "Discard"
                         )
@@ -3851,6 +3844,11 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigation() {
+    // TODONOW: We might be completely screwed here. If Android kills this app in the background
+    // then restores it, the viewmodel(s) will all go with it. That's fine on the home screen, I
+    // think. But if the edit screen is the foreground screen, all the state it needs to edit is
+    // completely blown away. I haven't yet tried to test this, but this could be a showstopper.
+
     val navController = rememberNavController()
     val sharedViewModel: SharedViewModel =
         viewModel(LocalContext.current as ComponentActivity) // TODO: perplexity voodoo
@@ -3961,7 +3959,7 @@ fun AppNavigation() {
             }
             OuterFullScreenDialog(
                 vm, navController,
-                onClose = {
+                requestClose = {
                     navController.popBackStack()
                 })
         }
