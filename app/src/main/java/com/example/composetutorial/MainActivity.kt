@@ -3282,6 +3282,11 @@ fun ValidatedTextField(
         // moment we consider the field empty if it's nothing but whitespace. At least for my
         // purposes here I think this is fine. Obviously we could add a parameter to allow the
         // caller to configure this.
+        // TODO: Possibly once the user clicks "Save" and gets validation failures, we should pass
+        // a flag into this composable to tell it not to filter out empty strings, and make sure
+        // the validation rules do include "Cannot be empty" validations? That way we won't nag the
+        // user with a sea of red "Cannot be empty" validations on first appearance, but they will
+        // get a message if they try to save without realising the value is mandatory.
         if (newValue.trim().isEmpty()) {
             failedValidationRule = null
             return
@@ -3567,7 +3572,6 @@ fun splitAroundDigits(input: String): Pair<String, String> {
     return Pair(prefix, suffix)
 }
 
-// TODO: UP TO HERE
 // TODO: Should this hold the EditablePrice and we should copy it over from the SharedViewModel when
 // edit screen is first composed? But this feels like it might be a nightmare of "bad first
 // compositions" - but it does also feel like it "ought" to be in here. Think about this later.
@@ -3603,23 +3607,27 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
             field = value
         }
 
+    // TODO: This is possibly an example (but the point is general) of something which (far from
+    // clear) is not really business logic but is UI state and which we shouldn't hoist into the
+    // viewmodel just to have it preserved?!
     var firstPackSizeOrPriceChangeOccurred: Boolean = false
 
+    // TODO: TEMP JUST FOR DEBUG
     override fun onCleared() {
         super.onCleared()
         Log.d("MyApp", "EditPriceScreenViewMode cleared $this")
     }
 
     // TODO: Even if Locale.getDefault() is sub-optimal, this is fine as it's really only a default. updateLocaleDependencies() should be called almost immediately - maybe do some test logging to check that?
-    // TODO: HARDCODING 2DP FOR PACK SIZE IS A HACK - SHOULD PROBABLY VARY WITH UNIT???
+    // TODONOW: HARDCODING 2DP FOR PACK SIZE IS A HACK - SHOULD PROBABLY VARY WITH UNIT???
     var packSizeValidationRules =
         numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
 
-    // TODO: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRICEVALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
+    // TODONOW: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRICEVALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
     private fun getPriceValidationRules(locale: Locale) =
         numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
 
-    // TODO: There's probably a lot of redundancy with the currency stuff given how it's evolved
+    // TODONOW: There's probably a lot of redundancy with the currency stuff given how it's evolved
 
     data class CurrencyFormat(
         val decimalPlaces: Int, // TODO: We may not actually need this, if it's baked into validation rules and not used elsewhere
@@ -3640,6 +3648,7 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
         currencyFormatMap.clear()
     }
 
+    // TODO: DELETE?
     fun getCurrencyFormatValidationRules() = getCurrencyFormat(uiContent!!.dataSet).validationRules
 
     // TODO: This takes a DataSet not a currency code because later on a DataSet may allow custom currency formatting which overrides whatever the current locale wants to do.
@@ -3677,9 +3686,12 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
         PRICE_INVALID
     }
 
-    // TODO: It's tempting to think this should be on EditablePrice itself, but the whole point is that it will apply (sharing as much as possible) the same validation rules that the ValidatedTextFields are usiong - and those aren't available to EditablePrice, and based on discussion with ChatGPT I think it's better to have this function here than pass this ViewModel as an argument to EditablePrice.toDomain()
+    // TODO: It's tempting to think this should be on EditablePrice itself, but the whole point is
+    // that it will apply (sharing as much as possible) the same validation rules that the
+    // ValidatedTextFields are using - and those aren't available to EditablePrice, and based on
+    // discussion with ChatGPT I think it's better to have this function here than pass this
+    // ViewModel as an argument to EditablePrice.toDomain()
     fun validateEditablePrice(editablePrice: EditablePrice): ValidationState {
-        // TODO: What about "non-null" validation? The validation rules do not cover this. So we have to a) communicate this to user b) check it separately. Just possibly we could have a "must not be empty" validation rule which is only added to the validation rule sets when save is (first) clicked - then a) we'd automatically check it here b) if the user hasn't filled in some fields they will be warned, without being nagged when they first enter the edit screen for a new record
         if (!validationRulesOk(packSizeValidationRules, editablePrice.measureValue)) {
             return ValidationState.PACK_SIZE_INVALID
         }
@@ -3730,8 +3742,12 @@ class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerR
     }
 }
 
-// TODO: ChatGPT magic
-// TODO: Random Grok suggestion to maybe play with later: Use LinearOutSlowInEasing for enter transitions (starts fast, slows down) and FastOutLinearInEasing for exit transitions (starts slow, speeds up) to make the slide feel natural.
+// TODO: Navigation is a mess - I'm completely unclear how the mysterious back stack and routes and
+// viewmodels being reused and various different kinds of composition and activity and process
+// destruction and reconstruction are supposed to interact.
+// TODO: Random Grok suggestion to maybe play with later: Use LinearOutSlowInEasing for enter
+// transitions (starts fast, slows down) and FastOutLinearInEasing for exit transitions (starts
+// slow, speeds up) to make the slide feel natural.
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigation() {
@@ -3866,21 +3882,17 @@ fun AppNavigation() {
 // alternatives) etc and would probably be worth a re-read later.
 
 
-// TODO: It may be that on a real device more than 4.dp around the screen border looks nice. I should probably introduce a named constant for "screen border" and use that everywhere, it would probably help readability and it *is* a clearly defined concept I can identify, not some vague "it looks nicer with 8dp here" layout thing.
-
 // TODO: I should probably lock the app to portrait mode
 
-// TODO: There is no colour in the app at all when running on P7! Material You active without me realising it? I suspect so - look at Theme.kt, which appears to support dynamic colours. This isn't a problem as such, but should make a note about it, and I may want to offer a setting which allows newer Android versions to choose the app's native theme.
+// TODO: There is no colour in the app at all when running on P7! Material You active without me
+// realising it? I suspect so - look at Theme.kt, which appears to support dynamic colours. This
+// isn't a problem as such, but should make a note about it, and I may want to offer a setting which
+// allows newer Android versions to choose the app's native theme.
 
-// TODO: There is an ugly animation glitch where the "T" of "TODO" on SettingsScreen hangs around far too long when transitioning between home and settings. This wasn't visible before I added the previously-lost border at the left and right of the main activity. It feels like this might be a clue to some problem with the animations but I am far from sure. In practice this will probably not be an issue if we add the same border to settings, but I am not sure that's a "fix" even if it does happen.
 
-// TODO: In final version make sure e.g. going from home to settings to back doesn't lose category/product/source - I think it does now, but since it's all hacky that is fine in short term
 
 
 // General note type comments to put somewhere appropriate in long term:
-//
-
-// TODO: It is just possible that we should be using somethnig like animateContentSize on the column containing the "cards" on the home screen, so that if (most likely because the Notes field appears/disappears/occupies more or less lines because text is longer or shorter) the card showing price-at-store changes size, the card show price-across-stores below it "animates" discreetly into its new position instead of jumping. With the current test data stuff, the upper card tends to be fixed size so this isn't too noticeable yet.
 
 // TODO: Terminology:
 // - "shop" may be better than "store", it is more UK-ish anyway but even in the US we can have a "barber shop" but not a "barber store", so it's slightly more generic
@@ -3908,14 +3920,15 @@ fun AppNavigation() {
 // dialog, I had to allow for the on-screen keyboard sliding in and this really seemed to interact
 // badly, even though it was near trivial to get it to work in normal full-screen composables.
 //
-// Popup: This does (I think) "guarantee" that the stuff on the popup is "on top", although it
-// still requires finicky hacks to trap focus and avoid touch input sometimes going to the screen underneath. The killer problem for me was that a
-// simple editable TextField didn't work on it, even using a hardware keyboard in the emulator I
-// never got to the point of trying it with an on-screen keyboard.
+// Popup: This does (I think) "guarantee" that the stuff on the popup is "on top", although it still
+// requires finicky hacks to trap focus and avoid touch input sometimes going to the screen
+// underneath. The killer problem for me was that a simple editable TextField didn't work on it,
+// even using a hardware keyboard in the emulator I never got to the point of trying it with an
+// on-screen keyboard.
 //
 // Box with high Z-order: This visually ensures our fake dialog's stuff is "on top", but (as with
 // Popup) in ways I don't fully understand, you need to stop touch input sometimes going to the
-// screen underneath and without the separate context (?) creataed by Popup, the touch input hacks
+// screen underneath and without the separate context (?) created by Popup, the touch input hacks
 // become less reliable. I never actually saw a problem caused by touch input going to the lower
 // screen, but that's not to say it could never happen. (The other miscellaneous Dialog-emulating
 // hacks required by Popup are also required here.)
@@ -3936,12 +3949,13 @@ fun AppNavigation() {
 // in, for example) also does this. So even if the app eventually disables rotations for layout
 // reasons, don't assume this gets rid of the need to handle being destroyed and re-created.
 
-// TODO: Do I have to do anything special to accommodate e.g. use of "," as a decimal separator on
-// input and/or output, or will the relevant libraries just take care of this for me?
+// TODO: I just may need to enable Java desugaring to support older Android versions - this is
+// probably just a one-off config.
 
-// TODO: I just may need to enable Java desugaring to support older Android versions - this is probably just a one-off config.
+// TODO: For some bizarre reason beyond my comprehension, check() and require() sometimes kill the
+// app but without leaving a clear logcat trace, which makes it very hard to figure out what went
+// wrong. So we use these instead.
 
-// TODO: ChatGPT magic. I sort of get this. For some bizarre reason beyond my comprehension, check() sometimes kills the app but without leaving a clear logcat trace, which makes it very hard to figure out what went wrong.
 inline fun devCheck(condition: Boolean, lazyMessage: () -> String) {
     if (!condition) {
         val msg = lazyMessage()
@@ -3950,7 +3964,9 @@ inline fun devCheck(condition: Boolean, lazyMessage: () -> String) {
     }
 }
 
-// TODO: Technically this should throw IllegalArgumentException but I don't care. Using the two names allows me to preserve the distinction in the code FWIW but without duplicating the body of devCheck.
+// TODO: Technically this should throw IllegalArgumentException but I don't care. Using the two
+// names allows me to preserve the distinction in the code FWIW but without duplicating the body of
+// devCheck.
 inline fun devRequire(condition: Boolean, lazyMessage: () -> String) =
     devCheck(condition, lazyMessage)
 
@@ -3970,9 +3986,7 @@ Log.d("MyApp", baz.toString())
 
 // TOOD: I should probably limit all text fields to approx 1000 characters just to stop the user going crazy.
 
-// TODO: When entering pack sizes, we must disallow 0!
-
-// TODO: ChatGPT on locales:
+// TODONOW: ChatGPT on locales:
 // TL;DR
 //
 //    🔄 In Compose: use LocalConfiguration.current.locales[0] — it’s reactive and accurate.
@@ -3983,6 +3997,7 @@ Log.d("MyApp", baz.toString())
 //
 // Do I need to switch away from using Locale.getDefault()? Perhaps I should have a LaunchedEffect(currentLocale) which passes the locale to the viewmodel, then we will have it available everywhere via that which should be up to date. But need to check ChatGPT is right of course!
 
-// TODO: It feels like I have a lot of similar-but-not-quite-the-same code to do things like locale sensitive number formatting and parsing. This ought to be rationalised.
+// TODONOW: It feels like I have a lot of similar-but-not-quite-the-same code to do things like
+// locale sensitive number formatting and parsing. This ought to be rationalised.
 
 // TODO: Eventually will need to remove misc Log.d() lines and/or replace them with permanent well-thought-out ones if that is not inefficient.
