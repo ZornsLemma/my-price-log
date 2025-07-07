@@ -3504,7 +3504,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// TODO: UP TO HERE
 // Shared ViewModel to pass data between screens
 class SharedViewModel : ViewModel() {
     // This is only nullable to provide us with an easy initial value to use. In use
@@ -3514,7 +3513,8 @@ class SharedViewModel : ViewModel() {
 
     // TODO: Inconsistent use of "State" and "Content" here - rename everything consistently
     fun setEditPriceScreenStateFromHomeScreenState(uiContent: UIContent) {
-        // !! is justified because uiContent was shown on the home screen and the edit price button was visible, which can only happen if we have all three available.
+        // !! is justified because uiContent was shown on the home screen and the edit price button
+        // was visible, which can only happen if we have all three available.
         val dataSet = uiContent.dataSet!!
         val item = uiContent.item!!
         val source = uiContent.source!!
@@ -3567,6 +3567,7 @@ fun splitAroundDigits(input: String): Pair<String, String> {
     return Pair(prefix, suffix)
 }
 
+// TODO: UP TO HERE
 // TODO: Should this hold the EditablePrice and we should copy it over from the SharedViewModel when
 // edit screen is first composed? But this feels like it might be a nightmare of "bad first
 // compositions" - but it does also feel like it "ought" to be in here. Think about this later.
