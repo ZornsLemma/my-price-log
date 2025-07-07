@@ -2966,10 +2966,7 @@ fun OuterFullScreenDialog(
                     )
                 }
             }
-            // TODO UP TO HERE
-            // TODO: I put this in to test the feature on NumericTextField, if (and it might) it lives, need to be careful to use the right font and spacing so it is indistinguishable (apart from its width) from a "true" supportingText under the pack size text box
             if (packSizeSupportingText.second != null) {
-                // TODO: the color is wrong-ish here - needs to be onSurfaceVariant if this *isn't* an error, or MaterialTheme.colorScheme.error if it is. Maybe todoSupportingText should be some kind of sealed class? In this form we could probably get away with just always making this error colour, but that's a bit hacky. Or it could be a Pair(color, text).
                 Text(
                     text = packSizeSupportingText.second!!,
                     style = MaterialTheme.typography.bodySmall,
@@ -2979,39 +2976,52 @@ fun OuterFullScreenDialog(
                         .padding(top = 4.dp)
                 )
             }
+
             Spacer(modifier = Modifier.height(8.dp))
+
             /* TODO DELETE - JUST TEMP TO CHECK MY "FAKE" SUPPORTING TEXT MATCHES IN SPACING AND APPEARANCE
             TextField(value="TODOTEMP", onValueChange = {}, modifier = Modifier.fillMaxWidth(), label={ Text("TODOTEMP") }, supportingText = { Text("Comparison supporting text") })
             */
-            // TODO: Should the pack price be MaxWidth or something more "restrained" given it's short (5-ish digits absolute ma
-            // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that would give a width for an arbitrary string and
-            // we could use something like that to size fields like this and/or the unit (albeit both have some extra window furniture - but we could for example compute a "notional text size" taking font size into account for " £  1234.00     " (spaces approximating margins/space for icons to pop in) and " litre    " (ditto) and use those sizes as the weights - we don't want both things fixed size as they won't fill the screen then, and we probably don't want one "minimal" and the other filling rest of space - but then again, if you do that, a fixed ratio is probably more or less the same since both will expand with font size just the same, so maybe that would be pointless
-            var TODOHACKYPRICE by rememberSyncedTextFieldValue(
+            // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that
+            // would give a width for an arbitrary string and we could use something like that to
+            // size fields like this and/or the unit (albeit both have some extra window furniture -
+            // but we could for example compute a "notional text size" taking font size into account
+            // for " £  1234.00     " (spaces approximating margins/space for icons to pop in) and "
+            // litre    " (ditto) and use those sizes as the weights - we don't want both things
+            // fixed size as they won't fill the screen then, and we probably don't want one
+            // "minimal" and the other filling rest of space - but then again, if you do that, a
+            // fixed ratio is probably more or less the same since both will expand with font size
+            // just the same, so maybe that would be pointless
+            var packPrice by rememberSyncedTextFieldValue(
                 uiContent.editablePrice.value.price ?: ""
-            ) // TODO: Just stop it being nullable rather than converting null to "" here?
+            ) // TODONOW: Just stop it being nullable rather than converting null to "" here?
             Log.d("MyApp", "getCurrencyFormat ${vm.getCurrencyFormat(uiContent.dataSet)}")
             val currencyFormat = vm.getCurrencyFormat(uiContent.dataSet)
             Box(modifier = Modifier.onGloballyPositioned { coordinates ->
                 priceY = coordinates.positionInParent().y.toInt()
             }) {
-
                 NumericTextField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(priceFocusRequester),
                     label = { Text("Pack price") },
-                    // TODO prefix = { Text("£") },
-                    value = TODOHACKYPRICE,
+                    value = packPrice,
                     prefix = TextOrNull(currencyFormat.prefix),
                     suffix = TextOrNull(currencyFormat.suffix),
-                    // TODO: Is it correct to right-align like this? I will assume it is for now. Maybe there's an argument since the unit on the pack size is pseudo-suffixy, we should right-align the pack size - but I think that might look ugly. But maybe that means this looks ugly. But maybe it's different if you're used to the currency symbol being on the right. Or maybe the currency symbol should be on the left in this kind of form *anyway*. Very hard for me to know. Maybe wait for user feedback?
+                    // TODO: Is it correct to right-align like this? I will assume it is for now.
+                    // Maybe there's an argument since the unit on the pack size is pseudo-suffixy,
+                    // we should right-align the pack size - but I think that might look ugly. But
+                    // maybe that means this looks ugly. But maybe it's different if you're used to
+                    // the currency symbol being on the right. Or maybe the currency symbol should
+                    // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
+                    // wait for user feedback?
                     textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
                         textAlign = TextAlign.End
                     ) else LocalTextStyle.current,
                     validationRules = currencyFormat.validationRules,
-                    // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
+                    // TODONOW: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                     onValueChange = {
-                        TODOHACKYPRICE = it
+                        packPrice = it
                         if (uiContent.editablePrice.value.price != it.text) {
                             uiContent.editablePrice.value =
                                 uiContent.editablePrice.value.copy(price = it.text)
@@ -3022,6 +3032,7 @@ fun OuterFullScreenDialog(
                 )
             }
 
+            // TODO UP TO HERE
             // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
             // why are we entering it?
             if (uiContent.editablePrice.value.id != 0L) {
