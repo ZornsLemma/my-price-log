@@ -3032,11 +3032,11 @@ fun OuterFullScreenDialog(
                 )
             }
 
-            // TODO UP TO HERE
             // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
             // why are we entering it?
             if (uiContent.editablePrice.value.id != 0L) {
                 Spacer(modifier = Modifier.height(8.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -3064,8 +3064,8 @@ fun OuterFullScreenDialog(
                 }
             }
 
-
             Spacer(modifier = Modifier.height(8.dp))
+
             // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
             TextField(
                 modifier = Modifier.fillMaxWidth(),
@@ -3073,10 +3073,8 @@ fun OuterFullScreenDialog(
                 value = uiContent.editablePrice.value.details,
                 onValueChange = { uiContent.editablePrice.value = uiContent.editablePrice.value.copy(details = it) },
             )
-            //}
         }
 
-        // TODO: FWIW this is currently broken - it never seems to trigger. The edit stuff is in a massive state of flux so not too worried but it needs fixing later obviously!
         if (showConfirmDialog) {
             // I copied the wording of this dialog directly from a screenshot in the M3 documentaion.
             AlertDialog(
@@ -3129,45 +3127,7 @@ fun OuterFullScreenDialog(
     }
 }
 
-/* TODO DELETE
-// TODO: https://developer.android.com/develop/ui/compose/text/user-input?textfield=state-based mentions InputTransformation/OutputTransformation/VisualTransformation which may be helpful here (particularly for implementing a *numeric* TextField, which is probaly what I really want - currency will just be a prefix and/or suffix, and it will tell us the number of dps to enforce on our purely numeric input)
-// TODO: Grok code, hacking it up, needs review especially the scary java-ish currency stuff with locales
-@Composable
-fun CurrencyTextField(
-    value: Double?,
-    onValueChange: (Double?) -> Unit,
-    locale: Locale = Locale.getDefault(),
-    currencyCode: String = Currency.getInstance(locale).currencyCode,
-    label: @Composable (() -> Unit)? = null,
-    modifier: Modifier = Modifier
-) {
-    Log.d("MyApp", "currencyCode $currencyCode")
-    val textState =value?.let { formatCurrency(it, locale, currencyCode) } ?: ""
-
-    val numberFormat = NumberFormat.getInstance(locale)
-
-    TextField(
-        value = textState,
-        onValueChange = { newText ->
-            Log.d("MyApp", "newText $newText")
-            // Parse the input to a Double, handling locale-specific formatting
-            val cleanInput = newText.replace("[^0-9,.]".toRegex(), "") // Remove non-numeric characters
-            Log.d("MyApp", "cleanInput $cleanInput")
-            val parsedValue = try {
-                numberFormat.parse(cleanInput)?.toDouble()
-            } catch (e: Exception) {
-                null
-            }
-            Log.d("MyApp", "parsedValue $parsedValue")
-            onValueChange(parsedValue)
-        },
-        label = label,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = modifier,
-        // textStyle = MaterialTheme.typography.bodyLarge
-    )
-}
-*/
+// TODO: UP TO HERE
 
 // TODO: Maybe rename - the idea here is this does not insist the input is actually parseable as a
 // decimal (for example, we allow "24.2.3" so the user can enter a new decimal point *and then later
