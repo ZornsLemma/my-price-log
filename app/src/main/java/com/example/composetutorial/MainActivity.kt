@@ -3394,7 +3394,6 @@ fun ValidatedTextField(
         }
     }
 }
-// TODO: UP TO HERE
 
 // TODO: Grok code, may be useful, may be at least partly overlapping with my own format currency function
 private fun formatCurrency(amount: Double, locale: Locale, currencyCode: String): String {
@@ -3445,8 +3444,9 @@ fun SettingsScreen(navController: NavHostController) {
             Text("TODO SETTINGS")
         }
     }
-    //}
 }
+
+// TODO: UP TO HERE
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
