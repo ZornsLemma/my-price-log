@@ -1374,7 +1374,13 @@ const val spinnerDelayMillis = 200L
 const val defaultValidationMessageDelayMillis = 1000L
 
 val screenBorder = 8.dp
-val fullScreenDialogBorder = 24.dp // MD3 specification
+
+// TODO: MD3 specs say there should be a 24.dp horizontal border, but this seems quite ugly. The
+// left hand edge of the dialog's body controls don't line up with the close icon and the right hand
+// edges don't line up with the right hand edge of the "Save" text button. Some of the screenshots
+// in the documentation seem to show some but not all of these misalignments. It just feels
+// half-baked and inconsistent so I'm going to go with this.
+val fullScreenDialogBorder = 16.dp
 
 // MD3 says 12.dp but MyExposedDropdownMenuBox's dropdown item text doesn't line up with the parent
 // TextField text with that. TODO: We could override it for that specific case and use 12.dp for
@@ -2854,18 +2860,19 @@ fun OuterFullScreenDialog(
             SnackbarHost(hostState = snackbarHostState)
         },
     ) { innerPadding ->
-        // TODO UP TO HERE
-
-        // TODO: We could probably just pass innerPadding through to FullScreenDialog, that may or may not be clearer
         Column(
             modifier = Modifier
-                // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am struggling to find any non-LLM explanations here, but *maybe* *if we have scrolled away from the top* we should change the background to the surfaceContainer
+                // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am
+                // struggling to find any non-LLM explanations here, but *maybe* *if we have
+                // scrolled away from the top* we should change the background to surfaceContainer
                 .background(MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = fullScreenDialogBorder) // TODO: looks ugly but I haven't actually designed the dialog properly yet, so let's try to follow recommendation for now
+                .padding(horizontal = fullScreenDialogBorder)
                 .verticalScroll(scrollState)
         ) {
+            // TODO UP TO HERE
+
             // TODO: I think the use of "remember" here is far too weak, but this is basically old hacky code and converting to the viewmodel approach will automatically fix this
             //var notes by remember { mutableStateOf("My cool notes") }
             // TODO: Product and Store should maybe be in a row. Just hacking up a rough
