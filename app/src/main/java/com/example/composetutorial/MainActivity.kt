@@ -1511,6 +1511,11 @@ fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
 // TODO: If a TextField has focus and then you click on a MyExposedDropdownMenuBox, the
 // TextField does *not* lose focus so it retains its primary colour label/underline, which
 // isn't ideal.
+// TODO: We *may* want to disable the on click ripple whatsit for this, based on
+// how the "official" experimental ExposedDropdownMenuBox behaves - although
+// having thoughts about it and chatted with Grok and ChatGPT, maybe this is
+// *good* and it is a weird quirk of (my impl) of the experimental "official"
+// one that is weird
 @Composable
 fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     selectedId: ID?,
@@ -2871,34 +2876,32 @@ fun OuterFullScreenDialog(
                 .padding(horizontal = fullScreenDialogBorder)
                 .verticalScroll(scrollState)
         ) {
-            // TODO UP TO HERE
-
-            // TODO: I think the use of "remember" here is far too weak, but this is basically old hacky code and converting to the viewmodel approach will automatically fix this
-            //var notes by remember { mutableStateOf("My cool notes") }
-            // TODO: Product and Store should maybe be in a row. Just hacking up a rough
-            // dialog here for testing of my dialog box code (esp focus stuff) for now.
             TextField(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Product") },
                 value = uiContent.item.name,
                 enabled = false,
                 onValueChange = {})
-            // Spacer(modifier = Modifier.height(300.dp)) // TODO TEMP HACK
+
             Spacer(modifier = Modifier.height(8.dp))
+
             TextField(
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Store") },
                 value = uiContent.source.name,
                 enabled = false,
                 onValueChange = {})
+
             Spacer(modifier = Modifier.height(8.dp))
-            // TODO: WE PROBABLY WANT SOME remember+derivedStateOf HERE BUT LET'S DO IT WITHOUT FIRST
-            val units: List<MeasureUnit> = getRelevantMeasureUnits(
-                uiContent.dataSet,
-                uiContent.item.defaultUnit.quantityType,
-                includeDisplayOnly = false
-            )
-            var todoSupportingText by remember {
+
+            val units: List<MeasureUnit> = remember(uiContent.dataSet, uiContent.item.defaultUnit.quantityType) {
+                getRelevantMeasureUnits(
+                    uiContent.dataSet,
+                    uiContent.item.defaultUnit.quantityType,
+                    includeDisplayOnly = false
+                )
+            }
+            var packSizeSupportingText by remember {
                 mutableStateOf<Pair<Boolean, String?>>(
                     Pair(
                         false,
@@ -2912,63 +2915,20 @@ fun OuterFullScreenDialog(
                     .onGloballyPositioned { coordinates ->
                         packSizeY = coordinates.positionInParent().y.toInt()
                     }) {
-
                 Row {
-                    // TODO: Don't really like this way of showing pack size and unit etc, but
-                    // this is just a quick hack to get some "realistic-ish" content on the
-                    // dialog for testing
                     // TODO: Using weight to size the components is also sucky, since we really
                     // just want "a reasonable fixed size" for the unit with
                     // the product taking whatever's left, but this will do for now.
-                    // TODO: This TextField will *not* show a cursor or let the value be changed
-                    // - I don't know if this is because my dialog code is breaking it, or I've
-                    // done something wrong here. OK, if I copy this code to HomeScreen() it
-                    // works, so it is probably dialog related. Yay!
-                    // TODO: Should I use OutlinedTextFields here? If so, for the drop down too.
-                    // TODO: When the onscreen keyboard is up for "pack size", clicking on unit
-                    // opens the dropdown and hides the keyboard but the dropdown gets
-                    // positioned "to avoid" the keyboard - this might be normal/OK, but
-                    // check/read/think
-                    /* TODO OLD
-                    TextField(
-                        label = { Text("Pack size") },
-                        value = packSize,
-                        onValueChange = { packSize = it },
-                        // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.weight(1f)
-                    ) */
-                    /*
-                    // TODO: This has the germ of something workable. Note that we are using a TextFieldValue as the value not a String, and that we don't get clever trying to modify it on onValueChange - we just accept the new one or retain the old one.
-                    var todoPackSize by remember { mutableStateOf(TextFieldValue("999")) }
-                    TextField(
-                        label = { Text("Pack size") },
-                        value = todoPackSize,
-                        onValueChange =  { newValue ->
-                            // Allow only digits and at most one dot, not at the start
-                            val regex = Regex("^\\d*(\\.\\d*)?\$")
-                            if (regex.matches(newValue.text)) {
-                                todoPackSize = newValue // onValueChange(newValue)
-                            } // else ignore the change, so cursor/selection is preserved
-                        },
-                        // TODO: keyboardOptions here hints to on-screen keyboard, we probably also ought to prohibit non-numbers or (regional) decimal separator and *maybe* prohibit multiple decimal separators (but maybe this should just be an error report not prohibited, what's normal?)
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.weight(1f),
-                    )
-                    */
-                    // TODO: We "need" rememberSaveable but TextFieldValue probably doesn't support it. We will probably be using a ViewModel-held value in final code so let's not fuss about this for now.
-                    //var todoNumber2 by rememberSaveable { mutableStateOf("888") }
-                    var todoNumber by rememberSyncedTextFieldValue(
+                    var packSizeNumber by rememberSyncedTextFieldValue(
                         uiContent.editablePrice.value.measureValue ?: ""
-                    ) // TODO: Just stop it being nullable rather than converting null to "" here?
-                    // TODO: Remember final "save" validation must check for non-empty strings for Validated/NUmeric TextFields, as the validation allows this
+                    ) // TODONOW: Just stop it being nullable rather than converting null to "" here?
                     NumericTextField(
                         label = { Text("Pack size") },
-                        value = todoNumber,
+                        value = packSizeNumber,
                         validationRules = vm.packSizeValidationRules,
-                        // TODO: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
+                        // TODONOW: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                         onValueChange = {
-                            todoNumber = it
+                            packSizeNumber = it
                             if (uiContent.editablePrice.value.measureValue != it.text) {
                                 uiContent.editablePrice.value =
                                     uiContent.editablePrice.value.copy(measureValue = it.text)
@@ -2976,21 +2936,21 @@ fun OuterFullScreenDialog(
                             }
                         },
                         onSupportingTextChange = { isError, supportingText ->
-                            todoSupportingText = Pair(isError, supportingText)
+                            packSizeSupportingText = Pair(isError, supportingText)
                         },
-                        supportingText = "This is some supporting text just as a test.",
                         modifier = Modifier
                             .weight(1f)
                             .focusRequester(packSizeFocusRequester)
                     )
+
                     Spacer(modifier = Modifier.width(8.dp))
-                    // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my impl) of the experimental "official" one that is weird
+
                     MyExposedDropdownMenuBox(
                         selectedId = uiContent.editablePrice.value.measureUnit.id,
                         onValueChange = {
                             val measureUnit = MeasureUnit.fromValue(it)
                             devCheck(measureUnit != null) {
-                                "Invalid measure unit ID $it selected in dropdown"
+                                "Expected non-null measureUnit to be selected; got $it"
                             }
                             if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
                                 uiContent.editablePrice.value =
@@ -3005,15 +2965,15 @@ fun OuterFullScreenDialog(
                         getLabel = { it.symbol },
                     )
                 }
-
             }
+            // TODO UP TO HERE
             // TODO: I put this in to test the feature on NumericTextField, if (and it might) it lives, need to be careful to use the right font and spacing so it is indistinguishable (apart from its width) from a "true" supportingText under the pack size text box
-            if (todoSupportingText.second != null) {
+            if (packSizeSupportingText.second != null) {
                 // TODO: the color is wrong-ish here - needs to be onSurfaceVariant if this *isn't* an error, or MaterialTheme.colorScheme.error if it is. Maybe todoSupportingText should be some kind of sealed class? In this form we could probably get away with just always making this error colour, but that's a bit hacky. Or it could be a Pair(color, text).
                 Text(
-                    text = todoSupportingText.second!!,
+                    text = packSizeSupportingText.second!!,
                     style = MaterialTheme.typography.bodySmall,
-                    color = if (todoSupportingText.first) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (packSizeSupportingText.first) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .padding(top = 4.dp)
