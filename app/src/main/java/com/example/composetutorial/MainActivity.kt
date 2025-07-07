@@ -2741,9 +2741,8 @@ fun OuterFullScreenDialog(
         // TODO: I don't think we need to set it back to false in else, but maybe revise all
         // this later.
     }
-// TODO: UP TO HERE
 
-    // ChatGPT magic more or less
+    // TODO: ChatGPT magic more or less
     LaunchedEffect(Unit) {
         vm.saveEvents.collect { event ->
             when (event) {
@@ -2776,8 +2775,8 @@ fun OuterFullScreenDialog(
         // trying the product at home and making a note that a certain brand isn't very nice and not
         // to consider it as acceptable in future.) We only do this on the first change so we don't
         // fight with the user if they toggle this back off afterwards.
-        // TODO: We might want to gate this logic behind a Settings option, i.e. have an option to let the confirm
-        // always stay off unless the user explicitly turns it on.
+        // TODO: We might want to gate this logic behind a Settings option, i.e. have an option to
+        // let the confirm always stay off unless the user explicitly turns it on.
         if (!vm.firstPackSizeOrPriceChangeOccurred) {
             uiContent.editablePrice.value = uiContent.editablePrice.value.copy(toConfirm = true)
             vm.firstPackSizeOrPriceChangeOccurred = true
@@ -2797,8 +2796,6 @@ fun OuterFullScreenDialog(
     // using Dialog, which I know to my cost is utterly impractical or I'd already be using it. Perplexity does say I can
     // attach the modifier to the Scaffold no problem. Perplexity also suggests the liveRegion thing is not necessary or appropriate here - it (I haven't tried to read up on this myself) is sort of related to visual things like scrims, and for a full screen dialog it's not appropriate.
     //
-    // TODO: Need to read MD3 docs - should the save button be disabled while any validation failures ("mandatory" ones of course) are on screen, or should it just remain enabled and pop up a dialog if you click it when it can't save?
-    // Chatting with some AIs they all give different opinions and I don't see anything obvious in MD3 about this. My gut feeling is that disabling the button might not be too obvious, there is a possible screen reader angle that disabled buttons might not be read out, it might "flicker" annonyling with validation. When the user taps save while validation failures exist, we could (this may be technically hard, and I'm also not sure exactly what it might look like visually) highlight with an animation (and scroll to it, but won't be relefvant on this short form) the first failing field. A snackbar (rather than a dialog) to point out the the problem when we refuse to save might also be appropriate.
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -2808,20 +2805,25 @@ fun OuterFullScreenDialog(
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 },
-                title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price", you can also eg edit pack size and probably a free text notes field etc
+                title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price" (even though we call it that internally, because it's the "price" table), you can also eg edit pack size and probably a free text notes field etc
                 actions = {
-                    // TODO: When/where should "data is not valid, we cannot save" check happen? We should probably be putting little warnings on the dialog components as the user edits, but we also need to check this before actually saving if they click save without resolving all the issues.
                     TextButton(enabled = !saveInitiated, onClick = {
                         coroutineScope.launch {
-                            // TODO: Maybe we shouldn't be passing editablePrice around as a parameter so much, when it's implicit in
-                            // the ViewModel? THis would apply elsewhere, not just here.
+                            // TODO: Maybe we shouldn't be passing editablePrice around as a
+                            // parameter so much, when it's implicit in the ViewModel? This would
+                            // apply elsewhere, not just here.
                             when (vm.validateEditablePrice(uiContent.editablePrice.value)) {
                                 EditPriceScreenViewModel.ValidationState.OK -> {
                                     saveInitiated = true
                                     // delay(5000) // TODO HACK
                                     vm.saveEditablePrice(uiContent.editablePrice.value)
                                 }
-                                // TODO: We could possibly try to "animate" the problematic text field we just focused (e.g. pulse its border colour) to draw attention to it further, but this feels surprisingly fiddly and I am not sure it's ncessary. My inclination is to leave this for now and let the code settle down first before maybe trying to add it.
+                                // TODO: We could possibly try to "animate" the problematic text
+                                // field we just focused (e.g. pulse its border colour) to draw
+                                // attention to it further, but this feels surprisingly fiddly and I
+                                // am not sure it's ncessary. My inclination is to leave this for
+                                // now and let the code settle down first before maybe trying to add
+                                // it.
                                 EditPriceScreenViewModel.ValidationState.PACK_SIZE_INVALID -> {
                                     scrollState.animateScrollTo(packSizeY)
                                     packSizeFocusRequester.requestFocus()
@@ -2842,7 +2844,7 @@ fun OuterFullScreenDialog(
                                 strokeWidth = 2.dp,
                             )
                         } else {
-                            Text("Save") // TODO: arbitrary, not thought about wording
+                            Text("Save")
                         }
                     }
                 },
@@ -2852,6 +2854,7 @@ fun OuterFullScreenDialog(
             SnackbarHost(hostState = snackbarHostState)
         },
     ) { innerPadding ->
+        // TODO UP TO HERE
 
         // TODO: We could probably just pass innerPadding through to FullScreenDialog, that may or may not be clearer
         Column(
