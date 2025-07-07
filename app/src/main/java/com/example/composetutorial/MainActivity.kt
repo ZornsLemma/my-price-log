@@ -3446,8 +3446,8 @@ fun SettingsScreen(navController: NavHostController) {
     }
 }
 
-// TODO: UP TO HERE
-
+// TODO: This is a bit of a mess but probably best leave it alone until I either gain more
+// experience or do more testing with different Android versions.
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -3504,6 +3504,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// TODO: UP TO HERE
 // Shared ViewModel to pass data between screens
 class SharedViewModel : ViewModel() {
     // This is only nullable to provide us with an easy initial value to use. In use
