@@ -3213,19 +3213,6 @@ fun numericValidationRules(
     )
 }
 
-// TODO: UP TO HERE
-
-// TODO: Maybe we shouldn't be using supportingText for the error if we don't have some "non-error supporting text", to avoid layout changing too much?
-// TODO: Do we want support for "less scary" non-red supportingText with different icon? Probably OK without but think about it or add later if necessary.
-// TODO: ChatGPT semi-magic
-
-// TODO: I think I need to try moving the validation logic into the viewmodel as per one of my chatgpt conversations.
-
-// TODO: It occurs to me that this isn't really "numeric" - it is a *Validated*TextField. Which is in many ways better of course.
-// I could imagine having different sets of validations the caller passes in to change what it's used for. Although composables
-// aren't really "objects", I do wonder if there would be some way to have a parallel "validate and convert to target type"
-// "infrastructure" which is table-ish driven or something.
-// TODO: Numeric fields should probably be limited to 10-ish characters just for sanity
 @Composable
 fun NumericTextField(
     label: @Composable() (() -> Unit)? = null,
@@ -3247,8 +3234,15 @@ fun NumericTextField(
         suffix = suffix,
         textStyle = textStyle,
         validationRules = (validationRules ?: emptyList()),
-        // TODO: We don't (we could, but probably no point) allow arbitrary onCandidateValueChange functions to be supplied by our caller. We just hardcode this for now. We could potentially accept some options from our caller which say whether decimal point (locale sensitive) or minus signs are allowed and tweak the internally-assigned onCandidate... function here.
-        // TODO: The length limit is a bit arbitrary but we're just trying to avoid the user filling the box full of junk. I picked 11 because with my current layout on a small phone this avoids wrapping, and it feels very generous anyway. This allows just under a million with two decimal places and a (manually entered) thousands separator.
+        // TODO: We don't (we could, but probably no point) allow arbitrary onCandidateValueChange
+        // functions to be supplied by our caller. We just hardcode this for now. We could
+        // potentially accept some options from our caller which say whether decimal point (locale
+        // sensitive) or minus signs are allowed and tweak the internally-assigned onCandidate...
+        // function here.
+        // TODO: The length limit is a bit arbitrary but we're just trying to avoid the user filling
+        // the box full of junk. I picked 11 because with my current layout on a small phone this
+        // avoids wrapping, and it feels very generous anyway. This allows just under a million with
+        // two decimal places and a (manually entered) thousands separator.
         onCandidateValueChange = { isValidTransitionalDecimal(it) && it.length <= 11 },
         onValueChange = onValueChange,
         onSupportingTextChange = onSupportingTextChange,
@@ -3258,35 +3252,8 @@ fun NumericTextField(
     )
 }
 
-/* TODO DELETE
-@Composable
-fun CurrencyTextField(
-    label: @Composable() (() -> Unit)? = null,
-    value: TextFieldValue,
-    textStyle: TextStyle = LocalTextStyle.current,
-    validationRules: List<ValidationRule>? = numericValidationRules(),
-    onValueChange: (TextFieldValue) -> Unit,
-    onSupportingTextChange: ((String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
-    supportingText: String? = null,
-    messageDelayMillis: Long = defaultValidationMessageDelayMillis,
-) {
-    NumericTextField(
-        label = label,
-        value = value,
-        prefix = TODO,
-        suffix = TODO,
-        textStyle = textStyle,
-        validationRules = validationRules,
-        onValueChange = onValueChange,
-        onSupportingTextChange = onSupportingTextChange,
-        modifier = modifier,
-        supportingText = supportingText,
-        messageDelayMillis = messageDelayMillis,
-}
-*/
+// TODO: UP TO HERE
 
-// TODO: Can we take a String instead of a TextFieldValue and internally wrap it with a remember()? I am thinking that TextField's own String-taking implementation must do something similar, surely?
 @Composable
 fun ValidatedTextField(
     label: @Composable() (() -> Unit)? = null,
