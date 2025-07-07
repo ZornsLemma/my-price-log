@@ -387,6 +387,8 @@ fun getSiblingMeasureUnits(
 // TODODOUBLE: At the moment we have:
 // - formatDoubleLocaleAware()
 // - formatPrice()
+// - formatCurrency()
+// - formatDecimal()
 // - parseStringAsDoubleOrNull()
 
 // TODO: ChatGPT magic, is this really the best way?
