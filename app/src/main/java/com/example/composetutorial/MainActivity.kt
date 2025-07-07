@@ -3227,6 +3227,7 @@ fun NumericTextField(
     onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
     modifier: Modifier = Modifier,
     supportingText: String? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
     messageDelayMillis: Long = defaultValidationMessageDelayMillis,
 ) {
     ValidatedTextField(
@@ -3250,11 +3251,10 @@ fun NumericTextField(
         onSupportingTextChange = onSupportingTextChange,
         modifier = modifier,
         supportingText = supportingText,
+        keyboardOptions = keyboardOptions,
         messageDelayMillis = messageDelayMillis
     )
 }
-
-// TODO: UP TO HERE
 
 @Composable
 fun ValidatedTextField(
@@ -3269,17 +3269,16 @@ fun ValidatedTextField(
     onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
     modifier: Modifier = Modifier,
     supportingText: String? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     messageDelayMillis: Long = defaultValidationMessageDelayMillis,
-
-    ) {
-    // TODO: Mild Perplexity magic
+) {
     var failedValidationSupportingText by rememberSaveable { mutableStateOf<String?>(null) }
     var failedValidationRule by remember { mutableStateOf<ValidationRule?>(null) }
     var delayJob by remember { mutableStateOf<Job?>(null) }
     var isFocused by remember { mutableStateOf(false) }
 
     fun updateFailedValidationRule(newValue: String) {
-        // We don't want to generate validation failures juest because the field is empty. For the
+        // We don't want to generate validation failures just because the field is empty. For the
         // moment we consider the field empty if it's nothing but whitespace. At least for my
         // purposes here I think this is fine. Obviously we could add a parameter to allow the
         // caller to configure this.
@@ -3301,9 +3300,9 @@ fun ValidatedTextField(
         }
     }
 
-    // We have this function to help make it easier to pass a literal null to TextField's
-    // supportingText when we don't want anything, to prevent it allocating visual space for
-    // supportingText. TODO: Some overlap with TextOrNull()?
+    // We have this function to make it easier to pass a literal null to TextField's supportingText
+    // when we don't want anything, to prevent it allocating visual space for supportingText. TODO:
+    // Some overlap with TextOrNull()?
     fun getSupportingText(): @Composable (() -> Unit)? {
         if (onSupportingTextChange == null) {
             if (failedValidationSupportingText != null) {
@@ -3340,12 +3339,12 @@ fun ValidatedTextField(
                     // the problem themselves, so we only show supporting text after they've stopped
                     // typing. (Imagine they are moving the decimal point; they type in a "new" one
                     // in the correct place and then go to delete the "old" one. It's annoying if a
-                    // nagging message pops up after typing the new one telling them about a problem
-                    // they created incidentally because they can't edit in two places at once.)
+                    // nagging message pops up after typing the new one telling them they have two
+                    // decimal points when they were already addressing the problem.)
                     //
                     // If there is already supporting text, it's probably less annoying to keep
                     // showing some (currently valid) supporting text, rather than removing it while
-                    // the user types and possibly pop back in again afterwards.
+                    // the user types and possibly having it pop back in again afterwards.
                     if (failedValidationSupportingText == null) {
                         delayJob = CoroutineScope(Dispatchers.Main).launch {
                             delay(messageDelayMillis)
@@ -3359,7 +3358,7 @@ fun ValidatedTextField(
                 onValueChange(newValue)
             }
         },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        keyboardOptions = keyboardOptions,
         modifier = modifier.onFocusChanged { focusState ->
             Log.d("MyApp", "focus changed")
             isFocused = focusState.isFocused
@@ -3370,10 +3369,6 @@ fun ValidatedTextField(
                 // any previously-delayed message.
                 updateFailedValidationRule(value.text)
                 failedValidationSupportingText = failedValidationRule?.message
-                /* TODO: SUSPECT WE DON'T NEED THIS HACK NOW
-                // TODO: EXPERIMENTAL HACK - this does seem to fix the problem where a selection "persists in visual-only state" across rotation and I think I know why (because the caller has the state derived from onValueChanged call inside *our* onValueChange, but doesn't get to see this happening - I just don't understand why the rotation doesn't lose the selection state inside our NFTV beacuse of the way our serialise implementation discards it
-                onValueChange(NumericTextFieldValue(value.text))
-                */
             }
         },
         supportingText = getSupportingText(),
@@ -3399,6 +3394,7 @@ fun ValidatedTextField(
         }
     }
 }
+// TODO: UP TO HERE
 
 // TODO: Grok code, may be useful, may be at least partly overlapping with my own format currency function
 private fun formatCurrency(amount: Double, locale: Locale, currencyCode: String): String {
