@@ -387,6 +387,7 @@ fun getSiblingMeasureUnits(
 // TODODOUBLE: At the moment we have:
 // - formatDoubleLocaleAware()
 // - formatPrice()
+// - parseStringAsDoubleOrNull()
 
 // TODO: ChatGPT magic, is this really the best way?
 fun formatDoubleLocaleAware(
@@ -3127,8 +3128,6 @@ fun OuterFullScreenDialog(
     }
 }
 
-// TODO: UP TO HERE
-
 // TODO: Maybe rename - the idea here is this does not insist the input is actually parseable as a
 // decimal (for example, we allow "24.2.3" so the user can enter a new decimal point *and then later
 // go delete the old one*), but that it rejects obviously incorrect things. We allow digits, commas,
@@ -3152,28 +3151,25 @@ fun validationRulesOk(validationRules: List<ValidationRule>, value: String): Boo
     return true;
 }
 
-/* TODO DELETE
-fun validationRuleMaxDp(maxDp: Int): ValidationRule {
-    val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
-    return ValidationRule(
-        {
-
-        },
-        "No more than $maxDp decimal places allowed"
-    )
-}
-*/
-
-
-// TODO: This duplicates code in numericValidationRules()
+// TODO: This duplicates code in numericValidationRules(). It may be as well to move some of these
+// functions and associated logic onto the ViewModel, as it is already locale-aware and is notified
+// when the locale changes. That said, this isn't ideal as multiple different screens/ViewModels
+// could all want to use this code and we don't really want to duplicate it. Can/should we have
+// an object which is included by composition in all ViewModels that want it? Inheritance? Something
+// else?
 fun parseStringAsDoubleOrNull(locale: Locale, string: String): Double? {
     val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
-    // TODO: If we allow negative values, we shouldn't strip that off. Maybe best to just allow it through here - it is significant if typed.
-    val insignificantCharsRegex = "[^0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
-    return string.replace(insignificantCharsRegex, "").replace(decimalSeparator, '.').toDoubleOrNull()
+    // If input filtering allowed "-" characters through they are significant, so we don't strip
+    // them out here. This is harmless if they were never allowed through, of course.
+    val insignificantCharsRegex = "[^-0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
+    return string
+        .replace(insignificantCharsRegex, "")
+        .replace(decimalSeparator, '.')
+        .toDoubleOrNull()
 }
 
-// This assumes input filtering has already excluded characters other than digits, space, comma and full stop. TODO: We could go belt and braces and check for that anyway.
+// This assumes input filtering has already excluded characters other than digits, space, comma and
+// full stop.
 fun numericValidationRules(
     allowDecimals: Boolean = true,
     allowZero: Boolean = true,
@@ -3184,8 +3180,7 @@ fun numericValidationRules(
     val maxDecimalSeparators = if (allowDecimals) 1 else 0
 
     // Create a function to strip fluff like spaces and the grouping symbol if the user typed it in.
-    // TODO: If we allow negative values, we shouldn't strip that off. Maybe best to just allow it through here - it is significant if typed.
-    val insignificantCharsRegex = "[^0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
+    val insignificantCharsRegex = "[^-0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
     fun sanitiseCandidate(candidate: String) = candidate.replace(insignificantCharsRegex, "")
     fun attemptedParse(candidate: String): Double? =
         sanitiseCandidate(candidate).replace(decimalSeparator, '.').toDoubleOrNull()
@@ -3218,13 +3213,7 @@ fun numericValidationRules(
     )
 }
 
-
-val numericValidationRulesTODOOLD = listOf(
-    ValidationRule({ !it.contains('3') }, "XXXXXX No 3s allowed!"),
-    ValidationRule({ !it.contains('4') }, "XXXXXX No 4s allowed!"),
-)
-
-val foo: TextFieldValue = TextFieldValue("string")
+// TODO: UP TO HERE
 
 // TODO: Maybe we shouldn't be using supportingText for the error if we don't have some "non-error supporting text", to avoid layout changing too much?
 // TODO: Do we want support for "less scary" non-red supportingText with different icon? Probably OK without but think about it or add later if necessary.
@@ -3783,6 +3772,10 @@ fun AppNavigation() {
     // then restores it, the viewmodel(s) will all go with it. That's fine on the home screen, I
     // think. But if the edit screen is the foreground screen, all the state it needs to edit is
     // completely blown away. I haven't yet tried to test this, but this could be a showstopper.
+    // OK, reading around a bit, I suspect this *might* be kind-of OK, we probably need to use
+    // a SavedStateHandle inside our ViewModel for "stuff that has to survive this kind of stuff"
+    // and just let that handle it. There may still be some navigation-y stuff and I need to read
+    // up on this more.
 
     val navController = rememberNavController()
     val sharedViewModel: SharedViewModel =
