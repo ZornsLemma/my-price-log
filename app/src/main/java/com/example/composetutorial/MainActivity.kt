@@ -3896,8 +3896,6 @@ fun AppNavigation() {
             })
         }
 
-        // TODO: If possible (probably is) we should factor out the "full screen" and "full screen dialog"
-        // transitions into helper functions/variables to avoid duplication.
         composable(
             "settings", enterTransition = { slideLeftTransition() },
             popExitTransition = { slideRightTransition() },
@@ -3911,6 +3909,8 @@ fun AppNavigation() {
             popExitTransition = { slideDownTransition() },
 
         ) { backStackEntry ->
+            // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
+            // backStackEntry) - this avoids stale data causing problems.
             val vm: EditPriceScreenViewModel =
                 viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
 
