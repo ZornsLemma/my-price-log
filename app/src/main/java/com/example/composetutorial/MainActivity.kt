@@ -2731,21 +2731,10 @@ fun OuterFullScreenDialog(
     requestClose: () -> Unit
 ) {
     Log.d("MyApp", "EditPriceScreenViewModel $vm uiContent=${vm.uiContent}")
-    // TODO: NOT AT ALL SURE - *IF* WE ARE OBSERVING THIS TOP LEVEL STATE, IS THERE ANY VALUE TO HAVING EDITABLEPRICE ACTUALLY A MUTABLE STATE WITHIN IN? IT IS STILL POSSIBLE I WILL *NOT* WANT THE MUTABLE STATE TOP LEVEL WRAPPER ANYWAY.
-    val uiContentTODO by vm.uiContent.collectAsStateWithLifecycle()
-    /* TODO DELETE OR MOVE OR TWEAK - WE WANT TO CATCH THIS IF IT HAPPENS "NORMALLY", BUT IT *CAN* HAPPEN AFTER RESURRECTION
     devCheck(vm.uiContent != null) {
         "EditPriceScreenViewModel's uIContent should have been set to non-null before navigating to screen"
     }
-    */
-
-    if (uiContentTODO == null) {
-        Log.d("MyApp", "Big fat null uiContent in OuterFulLScreenDialog")
-        Box(modifier = Modifier.fillMaxSize().background(Color.Red)) {
-            Text("TODO LOADING VERY VISIBLE HACK")
-        }
-    } else {
-        val uiContent = uiContentTODO!!
+    val uiContent = vm.uiContent!!
 
 // TODO: Can I get rid of saveInitiated and instead set the state inside the viewmodel to "idle"
 // when we are not saving? The frequency with which we check it suggests it might be more
@@ -3187,7 +3176,7 @@ fun OuterFullScreenDialog(
             }
         }
     }
-}
+
 
 // TODO: Maybe rename - the idea here is this does not insist the input is actually parseable as a
 // decimal (for example, we allow "24.2.3" so the user can enter a new decimal point *and then later
@@ -3657,20 +3646,22 @@ fun saveItem(item: Item) {
 }
 */
 
-    private val _uiContent = MutableStateFlow(EditPriceScreenUIContent.fromSavedState(savedStateHandle))
-    val uiContent: StateFlow<EditPriceScreenUIContent?> = _uiContent.asStateFlow()
+    // This is only nullable because we may not have a saved state and it may be some time before
+    // the "real" state is used to overwrite it, although that should happen before anything that
+    // cares can observe it.
+    var uiContent: EditPriceScreenUIContent? = EditPriceScreenUIContent.fromSavedState(savedStateHandle)
 
     fun setUIContent(newUIContent: EditPriceScreenUIContent) {
         Log.d("MyApp", "EditPriceScreenViewModel.setUIContent($newUIContent)")
-        _uiContent.value = newUIContent
-        _uiContent.value!!.saveState(savedStateHandle)
+        uiContent = newUIContent
+        newUIContent.saveState(savedStateHandle)
     }
 
     fun setUIContentEditablePrice(newEditablePrice: EditablePrice) {
         Log.d("MyApp", "EditPriceScreenViewModel.setUIContentEditablePrice($newEditablePrice)")
         // TODO: NOT SURE IF !! OK, IT PROBABLY IS BUT NEED TO THINK
-        _uiContent.value!!.editablePrice.value = newEditablePrice
-        _uiContent.value!!.saveEditablePriceState(savedStateHandle)
+        uiContent!!.editablePrice.value = newEditablePrice
+        uiContent!!.saveEditablePriceState(savedStateHandle)
     }
 
     // TODO: This is possibly an example (but the point is general) of something which (far from
@@ -3759,7 +3750,7 @@ fun saveItem(item: Item) {
             return ValidationState.PACK_SIZE_INVALID
         }
         if (!validationRulesOk(
-                getCurrencyFormat(uiContent!!.value!!.dataSet).validationRules, // TODO BOTH !! PROB NOT JUSTIFIED
+                getCurrencyFormat(uiContent!!.dataSet).validationRules, // TODO BOTH !! PROB NOT JUSTIFIED
                 editablePrice.price
             )
         ) {
@@ -3922,17 +3913,11 @@ NavHost(
             vm.updateLocaleDependencies(Locale.getDefault())
         }
 
-        // We will be re-composed during the exit transition for reasons which I kind of understand. So this
-        // code must be idempotent(ish?) and in order to avoid vm.uiContent being reset here (which would
-        // probably be harmless if we didn't set sharedViewModel.editPriceScreenUIContent to null, but it
-        // feels like that's useful as it highlights this issue) we must check we don't already have data.
-        // TODO: I suspect that comment is subtly wrong but it is about the best I can do for now.
-        //if (vm.uiContent.value == null) { // TODO: I get a warnig on this which I think is wrong in my case, but it may be possible to use an alreadyInitialised remembered-boolean to do this differently
         if (sharedViewModel.editPriceScreenUIContent != null) {
-            vm.setUIContent(sharedViewModel.editPriceScreenUIContent!!) // TODO: NO IDEA IF !! JUSTIFIED
-            Log.d("MyApp", "sharedViewModel.editPriceScreenUIContent = null")
+            vm.setUIContent(sharedViewModel.editPriceScreenUIContent!!)
             sharedViewModel.editPriceScreenUIContent = null
         }
+
         OuterFullScreenDialog(
             vm, navController,
             requestClose = {
