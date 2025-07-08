@@ -3848,10 +3848,7 @@ fun AppNavigation() {
             //saveableStateHolder.SaveableStateProvider(backStackEntry.id) {
             HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
                 sharedViewModel.setEditPriceScreenStateFromHomeScreenState(uiContent)
-                // TODO: I don't know if this random UUID is necessary or helpful or harmful any more,
-                // need to experiment/think about this once I finish re-implementing the price edit
-                // screen.
-                navController.navigate("fullScreenDialog/${UUID.randomUUID()}")
+                navController.navigate("fullScreenDialog")
             })
             //}
         }
@@ -3884,7 +3881,7 @@ fun AppNavigation() {
         }
         composable(
             // TODO: OLD "fullScreenDialog/{dataSetId}/{productId}/{storeId}/{randomUUID}", enterTransition = {
-            "fullScreenDialog/{randomUUID}", enterTransition = {
+            "fullScreenDialog", enterTransition = {
                 slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Up,
 
