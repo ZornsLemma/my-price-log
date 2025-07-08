@@ -3584,8 +3584,8 @@ class MainActivity : ComponentActivity() {
 // Shared ViewModel to pass data between screens
 class SharedViewModel : ViewModel() {
     // This is only nullable to provide us with an easy initial value to use. In use
-// setEditPriceScreenState() should always have been called before it is used.
-// TODO: Should we be using get/set functions or a read-only property and a set?
+    // setEditPriceScreenState() should always have been called before it is used.
+    // TODO: Should we be using get/set functions or a read-only property and a set?
     var editPriceScreenUIContent: EditPriceScreenUIContent? = null
 
     // TODO: Inconsistent use of "State" and "Content" here - rename everything consistently
@@ -3692,19 +3692,10 @@ fun saveItem(item: Item) {
         uiContent!!.saveEditablePriceState(savedStateHandle)
     }
 
-    // TODO: This is possibly an example (but the point is general) of something which (far from
-// clear) is not really business logic but is UI state and which we shouldn't hoist into the
-// viewmodel just to have it preserved?!
     var firstPackSizeOrPriceChangeOccurred: Boolean = false
 
-    // TODO: TEMP JUST FOR DEBUG
-    override fun onCleared() {
-        super.onCleared()
-        Log.d("MyApp", "EditPriceScreenViewMode cleared $this")
-    }
-
     // TODO: Even if Locale.getDefault() is sub-optimal, this is fine as it's really only a default. updateLocaleDependencies() should be called almost immediately - maybe do some test logging to check that?
-// TODONOW: HARDCODING 2DP FOR PACK SIZE IS A HACK - SHOULD PROBABLY VARY WITH UNIT???
+    // TODONOW: HARDCODING 2DP FOR PACK SIZE IS A HACK - SHOULD PROBABLY VARY WITH UNIT???
     var packSizeValidationRules =
         numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
 
@@ -3712,7 +3703,7 @@ fun saveItem(item: Item) {
     private fun getPriceValidationRules(locale: Locale) =
         numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
 
-// TODONOW: There's probably a lot of redundancy with the currency stuff given how it's evolved
+    // TODONOW: There's probably a lot of redundancy with the currency stuff given how it's evolved
 
     data class CurrencyFormat(
         val decimalPlaces: Int, // TODO: We may not actually need this, if it's baked into validation rules and not used elsewhere
@@ -3722,7 +3713,7 @@ fun saveItem(item: Item) {
     )
 
     // TODO: We are implementing this as a map (maybe rename it to cache) because it's locale dependent but we don't have the data set handy when we do updateLocaleDependencies(). So we lazily look up the currency details (which is completely acceptable main thread work, but just fiddly enough we don't want to be doing it *constantly*) and cache it in here on first up.
-// TODO: MutableMap is not thread safe. I don't think this is a problem, but be aware of it - I think we could switch to non-mutable Map and replace-in-place if necessary
+    // TODO: MutableMap is not thread safe. I don't think this is a problem, but be aware of it - I think we could switch to non-mutable Map and replace-in-place if necessary
     val currencyFormatMap: MutableMap<String, CurrencyFormat> = mutableMapOf()
 
     // TODO: Even if Locale.getDefault() is sub-optimal, this is fine as it's really only a default. updateLocaleDependencies() should be called almost immediately - maybe do some test logging to check that?
@@ -3769,16 +3760,16 @@ fun saveItem(item: Item) {
     }
 
     // TODO: It's tempting to think this should be on EditablePrice itself, but the whole point is
-// that it will apply (sharing as much as possible) the same validation rules that the
-// ValidatedTextFields are using - and those aren't available to EditablePrice, and based on
-// discussion with ChatGPT I think it's better to have this function here than pass this
-// ViewModel as an argument to EditablePrice.toDomain()
+    // that it will apply (sharing as much as possible) the same validation rules that the
+    // ValidatedTextFields are using - and those aren't available to EditablePrice, and based on
+    // discussion with ChatGPT I think it's better to have this function here than pass this
+    // ViewModel as an argument to EditablePrice.toDomain()
     fun validateEditablePrice(editablePrice: EditablePrice): ValidationState {
         if (!validationRulesOk(packSizeValidationRules, editablePrice.measureValue)) {
             return ValidationState.PACK_SIZE_INVALID
         }
         if (!validationRulesOk(
-                getCurrencyFormat(uiContent!!.dataSet).validationRules, // TODO BOTH !! PROB NOT JUSTIFIED
+                getCurrencyFormat(uiContent!!.dataSet).validationRules,
                 editablePrice.price
             )
         ) {
@@ -3801,7 +3792,7 @@ fun saveItem(item: Item) {
         }
     }
 
-// TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
+    // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
 
     enum class SaveStatus { Idle, Saving, Success, Error }
 
