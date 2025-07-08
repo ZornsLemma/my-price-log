@@ -3892,7 +3892,7 @@ fun AppNavigation() {
             Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
             HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
                 sharedViewModel.setEditPriceScreenStateFromHomeScreenState(uiContent)
-                navController.navigate("fullScreenDialog")
+                navController.navigate("editPrice")
             })
         }
 
@@ -3907,8 +3907,7 @@ fun AppNavigation() {
         }
 
         composable(
-            // TODO: OLD "fullScreenDialog/{dataSetId}/{productId}/{storeId}/{randomUUID}", enterTransition = {
-            "fullScreenDialog", enterTransition = { slideUpTransition() },
+            "editPrice", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
 
         ) { backStackEntry ->
