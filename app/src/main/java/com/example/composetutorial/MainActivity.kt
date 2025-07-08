@@ -2369,7 +2369,7 @@ fun TextOrNull(string: String?): @Composable() (() -> Unit)? {
 }
 
 data class EditPriceScreenUIContent(
-    val editablePrice: MutableState<EditablePrice>, // TODO: As written this is a bug magnet, because you can assign direct to it but this does *not* update the sharedstateholder
+    val editablePrice: MutableState<EditablePrice>,
     val originalPrice: EditablePrice,
     // TODO: Move the following three to the start of this data class? Entirely cosmetic of course.
     val dataSet: DataSet,
@@ -3644,44 +3644,26 @@ fun splitAroundDigits(input: String): Pair<String, String> {
     return Pair(prefix, suffix)
 }
 
-// TODO: Should this hold the EditablePrice and we should copy it over from the SharedViewModel when
-// edit screen is first composed? But this feels like it might be a nightmare of "bad first
-// compositions" - but it does also feel like it "ought" to be in here. Think about this later.
 class EditPriceScreenViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle
-) :
-    ViewModel() {
+) : ViewModel() {
     val instanceId = UUID.randomUUID().toString() // TODO FOR DEBUG
 
     init {
         Log.d("MyApp", "EditPriceScreenViewModel $instanceId $this")
     }
 
-    /* TODO FROM GROK EXAMPLE, DELETE LATER BUT KEEPING AROUND FOR A BIT JIC
-private val _uiState = MutableStateFlow(EditUiState())
-val uiState: StateFlow<EditUiState> = _uiState.asStateFlow()
-
-fun updateField(newValue: String) {
-    _uiState.update { it.copy(field = newValue) }
-}
-
-fun saveItem(item: Item) {
-    viewModelScope.launch {
-        repository.updateItem(item)
-    }
-}
-*/
-
     // This is only nullable because we may not have a saved state and it may be some time before
     // the "real" state is used to overwrite it, although that should happen before anything that
     // cares can observe it.
-    var uiContent: EditPriceScreenUIContent? =
+    private var _uiContent: EditPriceScreenUIContent? =
         EditPriceScreenUIContent.fromSavedState(savedStateHandle)
+    val uiContent get() = _uiContent
 
     fun setUIContent(newUIContent: EditPriceScreenUIContent) {
         Log.d("MyApp", "EditPriceScreenViewModel.setUIContent($newUIContent)")
-        uiContent = newUIContent
+        _uiContent = newUIContent
         newUIContent.saveState(savedStateHandle)
     }
 
@@ -3692,6 +3674,9 @@ fun saveItem(item: Item) {
         uiContent!!.saveEditablePriceState(savedStateHandle)
     }
 
+    // TODO: I suspect this should *either* be moved down into a rememberSaveable inside the composable,
+    // *or* it should be preserved across process death (perhaps, but not necessarily, by being moved
+    // into EditPriceScreenUIContent).
     var firstPackSizeOrPriceChangeOccurred: Boolean = false
 
     // TODO: Even if Locale.getDefault() is sub-optimal, this is fine as it's really only a default. updateLocaleDependencies() should be called almost immediately - maybe do some test logging to check that?
