@@ -577,7 +577,10 @@ abstract class InventoryDatabase : RoomDatabase() {
                                             itemId = itemIdWholeMilk,
                                             sourceId = sourceIdValueMart,
                                             price = 1.99,
-                                            measure = MeasuredValue(4.0, MeasureUnit.IMPERIAL_PINT).asValue(MeasureUnit.ML),
+                                            measure = MeasuredValue(
+                                                4.0,
+                                                MeasureUnit.IMPERIAL_PINT
+                                            ).asValue(MeasureUnit.ML),
                                             originalUnit = MeasureUnit.IMPERIAL_PINT,
                                             confirmed = now,
                                             details = ""
@@ -1041,7 +1044,7 @@ fun PriceWithItemEntity.toDomain(): Price {
     // such absolutely confidence in our itemDefaultUnit.)
     devCheck(priceEntity.originalUnit.quantityType == itemDefaultUnit.quantityType) {
         "Expected consistent units on PriceWithItemEntity but we have originalUnit " +
-        "${priceEntity.originalUnit} and itemDefaultUnit $itemDefaultUnit"
+                "${priceEntity.originalUnit} and itemDefaultUnit $itemDefaultUnit"
     }
     return Price(
         id = priceEntity.id,
@@ -1104,8 +1107,10 @@ interface PriceDao {
     @Upsert()
     suspend fun upsert(price: PriceEntity)
 
-    @Query("SELECT price.*, item.default_unit FROM price JOIN item ON price.item_id = item.id " +
-            "WHERE price.data_set_id = :dataSetId AND price.item_id = :itemId")
+    @Query(
+        "SELECT price.*, item.default_unit FROM price JOIN item ON price.item_id = item.id " +
+                "WHERE price.data_set_id = :dataSetId AND price.item_id = :itemId"
+    )
     fun getPriceWithItemEntityForItem(
         dataSetId: Long,
         itemId: Long,
@@ -1427,10 +1432,12 @@ fun MainScreen(
         // sense without a dataset, there is no way to pick a product or source. This probably means
         // we need support from our parent (or this needs moving up into the parent) to do that.
 
-        Spacer(modifier = Modifier
-            .height(8.dp)
-            .fillMaxWidth()
-            .background(color = Color.Red))
+        Spacer(
+            modifier = Modifier
+                .height(8.dp)
+                .fillMaxWidth()
+                .background(color = Color.Red)
+        )
 
         // Item selector
         TextField(
@@ -1591,8 +1598,10 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
         if (supportingText != null) {
             Box(modifier = Modifier.padding(start = menuLeftPadding, top = 4.dp)) {
                 ProvideTextStyle(MaterialTheme.typography.bodySmall) {
-                    CompositionLocalProvider(LocalContentColor provides
-                            MaterialTheme.colorScheme.onSurfaceVariant) {
+                    CompositionLocalProvider(
+                        LocalContentColor provides
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                    ) {
                         supportingText.invoke()
                     }
                 }
@@ -1922,8 +1931,8 @@ fun ItemSourceInfo(
                 // dropdown starts off with nothing selected and the "Store" label expands to form a
                 // large "prompt". We could turn null into -1L and have "None" shown, but it's
                 // probably nicer this way.
-                selectedId = source?.id /* ?: -1L */,
-                onValueChange = { onSelectedSourceIdChange( if (it == -1L) null else it) },
+                selectedId = source?.id, /* ?: -1L */
+                onValueChange = { onSelectedSourceIdChange(if (it == -1L) null else it) },
                 label = { Text("Store") },
                 supportingText = if (haveItemAndSource) null else {
                     { Text("Select a product and store to view or change the price there") } // TODO: poor wording? *normally* product will not be null, so maybe we should have variant wording, or maybe the message should just not mention product
@@ -1997,13 +2006,17 @@ fun ItemSourceInfo(
                             // "severity" (and correspondingly different icons?)
                         }
 
-                        val relevantUnitFamilies = remember(dataSet) { getRelevantUnitFamilies(dataSet) }
+                        val relevantUnitFamilies =
+                            remember(dataSet) { getRelevantUnitFamilies(dataSet) }
 
-                        val relevantUnitList = remember(dataSet, priceList[0].measure.unit.quantityType) { getRelevantMeasureUnits(
-                            dataSet,
-                            priceList[0].measure.unit.quantityType,
-                            includeDisplayOnly = true
-                        ) }
+                        val relevantUnitList =
+                            remember(dataSet, priceList[0].measure.unit.quantityType) {
+                                getRelevantMeasureUnits(
+                                    dataSet,
+                                    priceList[0].measure.unit.quantityType,
+                                    includeDisplayOnly = true
+                                )
+                            }
                         var selectedUnitPriceUnit by rememberSaveable(dataSet, priceList) {
                             val candidateDenominators = getSiblingMeasureUnits(
                                 dataSet,
@@ -2300,11 +2313,11 @@ data class EditablePrice(
         itemId = price.itemId,
         sourceId = price.sourceId,
         price = formatDecimal(
-                price.price,
-                // TODONOW: hardcoding 2 dp is a hack
-                minDp = 2,
-                maxDp = 2
-            ),
+            price.price,
+            // TODONOW: hardcoding 2 dp is a hack
+            minDp = 2,
+            maxDp = 2
+        ),
         // TODONOW: We need to be careful about rounding and dps here - for non-metric stuff, there
         // may be some low digits of "noise" - Milk at ValueMart shows this well - OK, while the
         // issue of decimal points is important, that specific thing was caused by my initial data
@@ -2314,8 +2327,7 @@ data class EditablePrice(
                 price.measure.value,
                 minDp = null,
                 maxDp = null
-            )
-        ,
+            ),
         measureUnit = price.measure.unit,
         confirmed = price.confirmed,
         toConfirm = false,
@@ -2742,13 +2754,13 @@ fun OuterFullScreenDialog(
 // mostly meainingless (the state never gets set back to idle) and we should maybe merge those
 // states into a vague "meh" state.
 // TODO: Some of this remember stuff should maybe move into the ViewModel
-        var saveInitiated by rememberSaveable { mutableStateOf(false) }
-        var showSaveProgressIndicator by rememberSaveable { mutableStateOf(false) }
-        var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
-        var showErrorDialog by rememberSaveable { mutableStateOf(false) }
-        var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
-        var scope = rememberCoroutineScope()
-        val snackbarHostState = remember { SnackbarHostState() }
+    var saveInitiated by rememberSaveable { mutableStateOf(false) }
+    var showSaveProgressIndicator by rememberSaveable { mutableStateOf(false) }
+    var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var showErrorDialog by rememberSaveable { mutableStateOf(false) }
+    var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
+    var scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 // TODO: ChatGPT magic. This idea here is that a) currentBackStackEntry reflects the actual
 // back stack, not merely "we have popped but it hasn't come into effect yet" b) this will force
 // isNavigating to be initialised to false when we are re-entered "fresh" but not if e.g. a rotation occurs.
@@ -2756,91 +2768,91 @@ fun OuterFullScreenDialog(
 // ought to be re-created from scratch every time we are "truly re-entered" (either because popBackStack()
 // discards the old state or because the random UUID trick effectively guarantees this - I am far from
 // clear what the actual reality of how popBackStack() works is).
-        var isNavigating by remember(navController.currentBackStackEntry) {
-            mutableStateOf(false)
-        }
+    var isNavigating by remember(navController.currentBackStackEntry) {
+        mutableStateOf(false)
+    }
 
-        fun requestCloseDebounced() {
-            // We need isNavigating to de-bounce the close button so we don't invoke requestClose()
-            // (which probably calls popBackStack() and is therefore not idempotent) if the user double
-            // taps the close button quickly. (We may not need this for other ways of closing, but it
-            // shouldn't hurt and is probably safer.)
-            if (!isNavigating) {
-                isNavigating = true;
-                requestClose()
-            }
+    fun requestCloseDebounced() {
+        // We need isNavigating to de-bounce the close button so we don't invoke requestClose()
+        // (which probably calls popBackStack() and is therefore not idempotent) if the user double
+        // taps the close button quickly. (We may not need this for other ways of closing, but it
+        // shouldn't hurt and is probably safer.)
+        if (!isNavigating) {
+            isNavigating = true;
+            requestClose()
         }
+    }
 
-        fun requestDismiss() {
-            if (uiContent.editablePrice.value != uiContent.originalPrice) {
-                showConfirmDialog = true
-            } else {
-                requestCloseDebounced()
-            }
+    fun requestDismiss() {
+        if (uiContent.editablePrice.value != uiContent.originalPrice) {
+            showConfirmDialog = true
+        } else {
+            requestCloseDebounced()
         }
+    }
 
-        BackHandler {
-            if (!saveInitiated) {
-                requestDismiss()
-            } else {
-                // I've discussed this with LLMs and it's not clear if - from a UI perspective - we
-                // should do this or not, but I'll go with it for now.
-                showSavingSnackbar = true;
-            }
+    BackHandler {
+        if (!saveInitiated) {
+            requestDismiss()
+        } else {
+            // I've discussed this with LLMs and it's not clear if - from a UI perspective - we
+            // should do this or not, but I'll go with it for now.
+            showSavingSnackbar = true;
         }
+    }
 
-        LaunchedEffect(saveInitiated) {
-            if (saveInitiated) {
-                // We expect the save to complete quickly so we don't want the visual distraction
-                // of a progress indicator appearing straight away. Let the progress indicator kick
-                // in after a short delay if we're still here waiting for the save to complete.
-                delay(spinnerDelayMillis)
-                showSaveProgressIndicator = true
-            }
-            // TODO: I don't think we need to set it back to false in else, but maybe revise all
-            // this later.
+    LaunchedEffect(saveInitiated) {
+        if (saveInitiated) {
+            // We expect the save to complete quickly so we don't want the visual distraction
+            // of a progress indicator appearing straight away. Let the progress indicator kick
+            // in after a short delay if we're still here waiting for the save to complete.
+            delay(spinnerDelayMillis)
+            showSaveProgressIndicator = true
         }
+        // TODO: I don't think we need to set it back to false in else, but maybe revise all
+        // this later.
+    }
 
 // TODO: ChatGPT magic more or less
-        LaunchedEffect(Unit) {
-            vm.saveEvents.collect { event ->
-                when (event) {
-                    EditPriceScreenViewModel.SaveStatus.Success -> {
-                        requestCloseDebounced()
-                    }
-
-                    EditPriceScreenViewModel.SaveStatus.Error -> {
-                        saveInitiated = false;
-                        showErrorDialog = true;
-                    }
-
-                    else -> {}
+    LaunchedEffect(Unit) {
+        vm.saveEvents.collect { event ->
+            when (event) {
+                EditPriceScreenViewModel.SaveStatus.Success -> {
+                    requestCloseDebounced()
                 }
+
+                EditPriceScreenViewModel.SaveStatus.Error -> {
+                    saveInitiated = false;
+                    showErrorDialog = true;
+                }
+
+                else -> {}
             }
         }
+    }
 
-        val coroutineScope = rememberCoroutineScope()
-        val scrollState = rememberScrollState()
-        val packSizeFocusRequester = remember { FocusRequester() }
-        var packSizeY by remember { mutableStateOf(0) }
-        val priceFocusRequester = remember { FocusRequester() }
-        var priceY by remember { mutableStateOf(0) }
+    val coroutineScope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
+    val packSizeFocusRequester = remember { FocusRequester() }
+    var packSizeY by remember { mutableStateOf(0) }
+    val priceFocusRequester = remember { FocusRequester() }
+    var priceY by remember { mutableStateOf(0) }
 
-        fun onPackSizeOrPriceChange() {
-            // On the first change to the pack size or price, we set the "to confirm" switch to true, on
-            // the grounds that if the user is changing these values, they must be getting them from
-            // somewhere and the assumption is that they have the actual current price/pack in front of
-            // them. (We don't do this if they edit the notes; it's conceivable they are for example
-            // trying the product at home and making a note that a certain brand isn't very nice and not
-            // to consider it as acceptable in future.) We only do this on the first change so we don't
-            // fight with the user if they toggle this back off afterwards.
-            // TODO: We might want to gate this logic behind a Settings option, i.e. have an option to
-            // let the confirm always stay off unless the user explicitly turns it on.
-            if (!vm.firstPackSizeOrPriceChangeOccurred) {
-                vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(toConfirm = true))
-                vm.firstPackSizeOrPriceChangeOccurred = true
-            }
+    fun onPackSizeOrPriceChange() {
+        // On the first change to the pack size or price, we set the "to confirm" switch to true, on
+        // the grounds that if the user is changing these values, they must be getting them from
+        // somewhere and the assumption is that they have the actual current price/pack in front of
+        // them. (We don't do this if they edit the notes; it's conceivable they are for example
+        // trying the product at home and making a note that a certain brand isn't very nice and not
+        // to consider it as acceptable in future.) We only do this on the first change so we don't
+        // fight with the user if they toggle this back off afterwards.
+        // TODO: We might want to gate this logic behind a Settings option, i.e. have an option to
+        // let the confirm always stay off unless the user explicitly turns it on.
+        if (!vm.firstPackSizeOrPriceChangeOccurred) {
+            vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(toConfirm = true))
+            vm.firstPackSizeOrPriceChangeOccurred = true
         }
+    }
 
 // TODO: Grok suggests wrapping a Box with:
 //Modifier.semantics {
@@ -2855,327 +2867,339 @@ fun OuterFullScreenDialog(
 // using Dialog, which I know to my cost is utterly impractical or I'd already be using it. Perplexity does say I can
 // attach the modifier to the Scaffold no problem. Perplexity also suggests the liveRegion thing is not necessary or appropriate here - it (I haven't tried to read up on this myself) is sort of related to visual things like scrims, and for a full screen dialog it's not appropriate.
 //
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            topBar = {
-                TopAppBar(
-                    navigationIcon = {
-                        IconButton(enabled = !saveInitiated, onClick = { requestDismiss() }) {
-                            Icon(Icons.Default.Close, contentDescription = "Close")
-                        }
-                    },
-                    title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price" (even though we call it that internally, because it's the "price" table), you can also eg edit pack size and probably a free text notes field etc
-                    actions = {
-                        TextButton(enabled = !saveInitiated, onClick = {
-                            coroutineScope.launch {
-                                // TODO: Maybe we shouldn't be passing editablePrice around as a
-                                // parameter so much, when it's implicit in the ViewModel? This would
-                                // apply elsewhere, not just here.
-                                when (vm.validateEditablePrice(uiContent.editablePrice.value)) {
-                                    EditPriceScreenViewModel.ValidationState.OK -> {
-                                        saveInitiated = true
-                                        // delay(5000) // TODO HACK
-                                        vm.saveEditablePrice(uiContent.editablePrice.value)
-                                    }
-                                    // TODO: We could possibly try to "animate" the problematic text
-                                    // field we just focused (e.g. pulse its border colour) to draw
-                                    // attention to it further, but this feels surprisingly fiddly and I
-                                    // am not sure it's ncessary. My inclination is to leave this for
-                                    // now and let the code settle down first before maybe trying to add
-                                    // it.
-                                    EditPriceScreenViewModel.ValidationState.PACK_SIZE_INVALID -> {
-                                        scrollState.animateScrollTo(packSizeY)
-                                        packSizeFocusRequester.requestFocus()
-                                        // TODO GENERATE ERROR - EG A SNACKBAR
-                                    }
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(enabled = !saveInitiated, onClick = { requestDismiss() }) {
+                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    }
+                },
+                title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price" (even though we call it that internally, because it's the "price" table), you can also eg edit pack size and probably a free text notes field etc
+                actions = {
+                    TextButton(enabled = !saveInitiated, onClick = {
+                        coroutineScope.launch {
+                            // TODO: Maybe we shouldn't be passing editablePrice around as a
+                            // parameter so much, when it's implicit in the ViewModel? This would
+                            // apply elsewhere, not just here.
+                            when (vm.validateEditablePrice(uiContent.editablePrice.value)) {
+                                EditPriceScreenViewModel.ValidationState.OK -> {
+                                    saveInitiated = true
+                                    // delay(5000) // TODO HACK
+                                    vm.saveEditablePrice(uiContent.editablePrice.value)
+                                }
+                                // TODO: We could possibly try to "animate" the problematic text
+                                // field we just focused (e.g. pulse its border colour) to draw
+                                // attention to it further, but this feels surprisingly fiddly and I
+                                // am not sure it's ncessary. My inclination is to leave this for
+                                // now and let the code settle down first before maybe trying to add
+                                // it.
+                                EditPriceScreenViewModel.ValidationState.PACK_SIZE_INVALID -> {
+                                    scrollState.animateScrollTo(packSizeY)
+                                    packSizeFocusRequester.requestFocus()
+                                    // TODO GENERATE ERROR - EG A SNACKBAR
+                                }
 
-                                    EditPriceScreenViewModel.ValidationState.PRICE_INVALID -> {
-                                        scrollState.animateScrollTo(priceY)
-                                        priceFocusRequester.requestFocus()
-                                        // TODO GENERATE ERROR - EG A SNACKBAR
-                                    }
+                                EditPriceScreenViewModel.ValidationState.PRICE_INVALID -> {
+                                    scrollState.animateScrollTo(priceY)
+                                    priceFocusRequester.requestFocus()
+                                    // TODO GENERATE ERROR - EG A SNACKBAR
                                 }
                             }
-                        }) {
-                            if (showSaveProgressIndicator) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp,
-                                )
-                            } else {
-                                Text("Save")
-                            }
                         }
-                    },
+                    }) {
+                        if (showSaveProgressIndicator) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Text("Save")
+                        }
+                    }
+                },
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am
+                // struggling to find any non-LLM explanations here, but *maybe* *if we have
+                // scrolled away from the top* we should change the background to surfaceContainer
+                .background(MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = fullScreenDialogBorder)
+                .verticalScroll(scrollState)
+        ) {
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Product") },
+                value = uiContent.item.name,
+                enabled = false,
+                onValueChange = {})
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Store") },
+                value = uiContent.source.name,
+                enabled = false,
+                onValueChange = {})
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val units: List<MeasureUnit> =
+                remember(uiContent.dataSet, uiContent.item.defaultUnit.quantityType) {
+                    getRelevantMeasureUnits(
+                        uiContent.dataSet,
+                        uiContent.item.defaultUnit.quantityType,
+                        includeDisplayOnly = false
+                    )
+                }
+            var packSizeSupportingText by remember {
+                mutableStateOf<Pair<Boolean, String?>>(
+                    Pair(
+                        false,
+                        null
+                    )
                 )
-            },
-            snackbarHost = {
-                SnackbarHost(hostState = snackbarHostState)
-            },
-        ) { innerPadding ->
-            Column(
+            }
+            Box(
                 modifier = Modifier
-                    // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am
-                    // struggling to find any non-LLM explanations here, but *maybe* *if we have
-                    // scrolled away from the top* we should change the background to surfaceContainer
-                    .background(MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(horizontal = fullScreenDialogBorder)
-                    .verticalScroll(scrollState)
-            ) {
-                TextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Product") },
-                    value = uiContent.item.name,
-                    enabled = false,
-                    onValueChange = {})
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                TextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Store") },
-                    value = uiContent.source.name,
-                    enabled = false,
-                    onValueChange = {})
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                val units: List<MeasureUnit> =
-                    remember(uiContent.dataSet, uiContent.item.defaultUnit.quantityType) {
-                        getRelevantMeasureUnits(
-                            uiContent.dataSet,
-                            uiContent.item.defaultUnit.quantityType,
-                            includeDisplayOnly = false
-                        )
-                    }
-                var packSizeSupportingText by remember {
-                    mutableStateOf<Pair<Boolean, String?>>(
-                        Pair(
-                            false,
-                            null
-                        )
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onGloballyPositioned { coordinates ->
-                            packSizeY = coordinates.positionInParent().y.toInt()
-                        }) {
-                    Row {
-                        // TODO: Using weight to size the components is also sucky, since we really
-                        // just want "a reasonable fixed size" for the unit with
-                        // the product taking whatever's left, but this will do for now.
-                        var packSizeNumber by rememberSyncedTextFieldValue(
-                            uiContent.editablePrice.value.measureValue ?: ""
-                        ) // TODONOW: Just stop it being nullable rather than converting null to "" here?
-                        NumericTextField(
-                            label = { Text("Pack size") },
-                            value = packSizeNumber,
-                            validationRules = vm.packSizeValidationRules,
-                            // TODONOW: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
-                            onValueChange = {
-                                packSizeNumber = it
-                                if (uiContent.editablePrice.value.measureValue != it.text) {
-                                    vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(measureValue = it.text))
-                                    onPackSizeOrPriceChange()
-                                }
-                            },
-                            onSupportingTextChange = { isError, supportingText ->
-                                packSizeSupportingText = Pair(isError, supportingText)
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .focusRequester(packSizeFocusRequester)
-                        )
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        MyExposedDropdownMenuBox(
-                            selectedId = uiContent.editablePrice.value.measureUnit.id,
-                            onValueChange = {
-                                val measureUnit = MeasureUnit.fromValue(it)
-                                devCheck(measureUnit != null) {
-                                    "Expected non-null measureUnit to be selected; got $it"
-                                }
-                                if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
-                                    vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(measureUnit = measureUnit!!))
-                                    onPackSizeOrPriceChange()
-                                }
-                            },
-                            label = { Text("Unit") },
-                            items = units,
-                            modifier = Modifier.weight(0.5f),
-                            getId = { it.id },
-                            getLabel = { it.symbol },
-                        )
-                    }
-                }
-                if (packSizeSupportingText.second != null) {
-                    Text(
-                        text = packSizeSupportingText.second!!,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (packSizeSupportingText.first) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .padding(top = 4.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                /* TODO DELETE - JUST TEMP TO CHECK MY "FAKE" SUPPORTING TEXT MATCHES IN SPACING AND APPEARANCE
-        TextField(value="TODOTEMP", onValueChange = {}, modifier = Modifier.fillMaxWidth(), label={ Text("TODOTEMP") }, supportingText = { Text("Comparison supporting text") })
-        */
-                // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that
-                // would give a width for an arbitrary string and we could use something like that to
-                // size fields like this and/or the unit (albeit both have some extra window furniture -
-                // but we could for example compute a "notional text size" taking font size into account
-                // for " £  1234.00     " (spaces approximating margins/space for icons to pop in) and "
-                // litre    " (ditto) and use those sizes as the weights - we don't want both things
-                // fixed size as they won't fill the screen then, and we probably don't want one
-                // "minimal" and the other filling rest of space - but then again, if you do that, a
-                // fixed ratio is probably more or less the same since both will expand with font size
-                // just the same, so maybe that would be pointless
-                var packPrice by rememberSyncedTextFieldValue(
-                    uiContent.editablePrice.value.price ?: ""
-                ) // TODONOW: Just stop it being nullable rather than converting null to "" here?
-                Log.d("MyApp", "getCurrencyFormat ${vm.getCurrencyFormat(uiContent.dataSet)}")
-                val currencyFormat = vm.getCurrencyFormat(uiContent.dataSet)
-                Box(modifier = Modifier.onGloballyPositioned { coordinates ->
-                    priceY = coordinates.positionInParent().y.toInt()
-                }) {
+                    .fillMaxWidth()
+                    .onGloballyPositioned { coordinates ->
+                        packSizeY = coordinates.positionInParent().y.toInt()
+                    }) {
+                Row {
+                    // TODO: Using weight to size the components is also sucky, since we really
+                    // just want "a reasonable fixed size" for the unit with
+                    // the product taking whatever's left, but this will do for now.
+                    var packSizeNumber by rememberSyncedTextFieldValue(
+                        uiContent.editablePrice.value.measureValue ?: ""
+                    ) // TODONOW: Just stop it being nullable rather than converting null to "" here?
                     NumericTextField(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(priceFocusRequester),
-                        label = { Text("Pack price") },
-                        value = packPrice,
-                        prefix = TextOrNull(currencyFormat.prefix),
-                        suffix = TextOrNull(currencyFormat.suffix),
-                        // TODO: Is it correct to right-align like this? I will assume it is for now.
-                        // Maybe there's an argument since the unit on the pack size is pseudo-suffixy,
-                        // we should right-align the pack size - but I think that might look ugly. But
-                        // maybe that means this looks ugly. But maybe it's different if you're used to
-                        // the currency symbol being on the right. Or maybe the currency symbol should
-                        // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
-                        // wait for user feedback?
-                        textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
-                            textAlign = TextAlign.End
-                        ) else LocalTextStyle.current,
-                        validationRules = currencyFormat.validationRules,
+                        label = { Text("Pack size") },
+                        value = packSizeNumber,
+                        validationRules = vm.packSizeValidationRules,
                         // TODONOW: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                         onValueChange = {
-                            packPrice = it
-                            if (uiContent.editablePrice.value.price != it.text) {
-                                vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
+                            packSizeNumber = it
+                            if (uiContent.editablePrice.value.measureValue != it.text) {
+                                vm.setUIContentEditablePrice(
+                                    uiContent.editablePrice.value.copy(
+                                        measureValue = it.text
+                                    )
+                                )
                                 onPackSizeOrPriceChange()
                             }
                         },
-                        supportingText = "This is more supporting text just as a test.",
+                        onSupportingTextChange = { isError, supportingText ->
+                            packSizeSupportingText = Pair(isError, supportingText)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .focusRequester(packSizeFocusRequester)
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    MyExposedDropdownMenuBox(
+                        selectedId = uiContent.editablePrice.value.measureUnit.id,
+                        onValueChange = {
+                            val measureUnit = MeasureUnit.fromValue(it)
+                            devCheck(measureUnit != null) {
+                                "Expected non-null measureUnit to be selected; got $it"
+                            }
+                            if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
+                                vm.setUIContentEditablePrice(
+                                    uiContent.editablePrice.value.copy(
+                                        measureUnit = measureUnit!!
+                                    )
+                                )
+                                onPackSizeOrPriceChange()
+                            }
+                        },
+                        label = { Text("Unit") },
+                        items = units,
+                        modifier = Modifier.weight(0.5f),
+                        getId = { it.id },
+                        getLabel = { it.symbol },
                     )
                 }
+            }
+            if (packSizeSupportingText.second != null) {
+                Text(
+                    text = packSizeSupportingText.second!!,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (packSizeSupportingText.first) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 4.dp)
+                )
+            }
 
-                // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
-                // why are we entering it?
-                if (uiContent.editablePrice.value.id != 0L) {
-                    Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            // TODO: WORDING FOR BOTH THESE MIGHT WANT TWEAKING
-                            Text(
-                                text = "Confirm pack size and price",
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Text(
-                                text = "The above details are correct right now",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall
-                            )
+            /* TODO DELETE - JUST TEMP TO CHECK MY "FAKE" SUPPORTING TEXT MATCHES IN SPACING AND APPEARANCE
+    TextField(value="TODOTEMP", onValueChange = {}, modifier = Modifier.fillMaxWidth(), label={ Text("TODOTEMP") }, supportingText = { Text("Comparison supporting text") })
+    */
+            // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that
+            // would give a width for an arbitrary string and we could use something like that to
+            // size fields like this and/or the unit (albeit both have some extra window furniture -
+            // but we could for example compute a "notional text size" taking font size into account
+            // for " £  1234.00     " (spaces approximating margins/space for icons to pop in) and "
+            // litre    " (ditto) and use those sizes as the weights - we don't want both things
+            // fixed size as they won't fill the screen then, and we probably don't want one
+            // "minimal" and the other filling rest of space - but then again, if you do that, a
+            // fixed ratio is probably more or less the same since both will expand with font size
+            // just the same, so maybe that would be pointless
+            var packPrice by rememberSyncedTextFieldValue(
+                uiContent.editablePrice.value.price ?: ""
+            ) // TODONOW: Just stop it being nullable rather than converting null to "" here?
+            Log.d("MyApp", "getCurrencyFormat ${vm.getCurrencyFormat(uiContent.dataSet)}")
+            val currencyFormat = vm.getCurrencyFormat(uiContent.dataSet)
+            Box(modifier = Modifier.onGloballyPositioned { coordinates ->
+                priceY = coordinates.positionInParent().y.toInt()
+            }) {
+                NumericTextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(priceFocusRequester),
+                    label = { Text("Pack price") },
+                    value = packPrice,
+                    prefix = TextOrNull(currencyFormat.prefix),
+                    suffix = TextOrNull(currencyFormat.suffix),
+                    // TODO: Is it correct to right-align like this? I will assume it is for now.
+                    // Maybe there's an argument since the unit on the pack size is pseudo-suffixy,
+                    // we should right-align the pack size - but I think that might look ugly. But
+                    // maybe that means this looks ugly. But maybe it's different if you're used to
+                    // the currency symbol being on the right. Or maybe the currency symbol should
+                    // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
+                    // wait for user feedback?
+                    textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
+                        textAlign = TextAlign.End
+                    ) else LocalTextStyle.current,
+                    validationRules = currencyFormat.validationRules,
+                    // TODONOW: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
+                    onValueChange = {
+                        packPrice = it
+                        if (uiContent.editablePrice.value.price != it.text) {
+                            vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
+                            onPackSizeOrPriceChange()
                         }
-                        Switch(
-                            checked = uiContent.editablePrice.value.toConfirm,
-                            onCheckedChange = {
-                                vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(toConfirm = it))
-                            })
-                    }
-                } else {
-                    devCheck(uiContent.editablePrice.value.toConfirm) {
-                        "Expected toConfirm to be true as this is the first price, but it's false"
-                    }
-                }
+                    },
+                    supportingText = "This is more supporting text just as a test.",
+                )
+            }
 
+            // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
+            // why are we entering it?
+            if (uiContent.editablePrice.value.id != 0L) {
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
-                TextField(
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Notes") },
-                    value = uiContent.editablePrice.value.details,
-                    onValueChange = {
-                        vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(details = it))
-                    },
-                )
-            }
-
-            if (showConfirmDialog) {
-                // I copied the wording of this dialog directly from a screenshot in the M3 documentaion.
-                AlertDialog(
-                    title = { Text("Discard unsaved changes?") },
-                    text = { Text("You have changes that won't be saved if you close.") },
-                    onDismissRequest = { showConfirmDialog = false },
-                    dismissButton = {
-                        TextButton(onClick = {
-                            showConfirmDialog = false
-                        }) { Text("Keep editing") }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = { requestCloseDebounced() }) {
-                            Text(
-                                "Discard"
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        // TODO: WORDING FOR BOTH THESE MIGHT WANT TWEAKING
+                        Text(
+                            text = "Confirm pack size and price",
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "The above details are correct right now",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                    Switch(
+                        checked = uiContent.editablePrice.value.toConfirm,
+                        onCheckedChange = {
+                            vm.setUIContentEditablePrice(
+                                uiContent.editablePrice.value.copy(
+                                    toConfirm = it
+                                )
                             )
-                        }
-                    },
-                )
+                        })
+                }
+            } else {
+                devCheck(uiContent.editablePrice.value.toConfirm) {
+                    "Expected toConfirm to be true as this is the first price, but it's false"
+                }
             }
 
-            if (showErrorDialog) {
-                // We use an AlertDialog not a snackbar here. This is a local database save which is
-                // failing so it is very unlikely to be transient. We also don't want the user
-                // missing the snackbar, thinking the app is buggy ("I already saved, why didn't the
-                // dialog close?") and then tapping the close icon without realising their changes
-                // have not been saved. (If transient failure was a possibility - e.g. we needed to
-                // perform network activity - there might be value in showing a snackbar, maybe with
-                // a fallback to an AlertDialog if things keep failing.)
-                AlertDialog(
-                    title = { Text("Unable to save changes") },
-                    text = { Text("An error occurred while saving the changes.") },
-                    onDismissRequest = { showErrorDialog = false },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            showErrorDialog = false;
-                        }) { Text("OK") }
-                    }
-                )
-            }
+            Spacer(modifier = Modifier.height(8.dp))
 
-            LaunchedEffect(showSavingSnackbar) {
-                if (showSavingSnackbar) {
-                    scope.launch {
-                        snackbarHostState.showSnackbar("Saving, please wait...")
-                        showSavingSnackbar = false
+            // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text("Notes") },
+                value = uiContent.editablePrice.value.details,
+                onValueChange = {
+                    vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(details = it))
+                },
+            )
+        }
+
+        if (showConfirmDialog) {
+            // I copied the wording of this dialog directly from a screenshot in the M3 documentaion.
+            AlertDialog(
+                title = { Text("Discard unsaved changes?") },
+                text = { Text("You have changes that won't be saved if you close.") },
+                onDismissRequest = { showConfirmDialog = false },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showConfirmDialog = false
+                    }) { Text("Keep editing") }
+                },
+                confirmButton = {
+                    TextButton(onClick = { requestCloseDebounced() }) {
+                        Text(
+                            "Discard"
+                        )
                     }
+                },
+            )
+        }
+
+        if (showErrorDialog) {
+            // We use an AlertDialog not a snackbar here. This is a local database save which is
+            // failing so it is very unlikely to be transient. We also don't want the user
+            // missing the snackbar, thinking the app is buggy ("I already saved, why didn't the
+            // dialog close?") and then tapping the close icon without realising their changes
+            // have not been saved. (If transient failure was a possibility - e.g. we needed to
+            // perform network activity - there might be value in showing a snackbar, maybe with
+            // a fallback to an AlertDialog if things keep failing.)
+            AlertDialog(
+                title = { Text("Unable to save changes") },
+                text = { Text("An error occurred while saving the changes.") },
+                onDismissRequest = { showErrorDialog = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showErrorDialog = false;
+                    }) { Text("OK") }
+                }
+            )
+        }
+
+        LaunchedEffect(showSavingSnackbar) {
+            if (showSavingSnackbar) {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Saving, please wait...")
+                    showSavingSnackbar = false
                 }
             }
         }
     }
+}
 
 
 // TODO: Maybe rename - the idea here is this does not insist the input is actually parseable as a
@@ -3185,20 +3209,20 @@ fun OuterFullScreenDialog(
 // valid decimals to be entered with no annoying quirks in any locale.
 fun isValidTransitionalDecimal(input: String): Boolean {
 // Regular expression to match any character that is not a digit, comma, period, or space
-val regex = Regex("[^\\d,.\\s]")
-return !regex.containsMatchIn(input)
+    val regex = Regex("[^\\d,.\\s]")
+    return !regex.containsMatchIn(input)
 }
 
 @Parcelize // TODO: May not be needed now - are we still using these in rememberSaveable?
 data class ValidationRule(val validate: (String) -> Boolean, val message: String) : Parcelable
 
 fun validationRulesOk(validationRules: List<ValidationRule>, value: String): Boolean {
-for (validationRule in validationRules) {
-    if (!validationRule.validate(value)) {
-        return false;
+    for (validationRule in validationRules) {
+        if (!validationRule.validate(value)) {
+            return false;
+        }
     }
-}
-return true;
+    return true;
 }
 
 // TODO: This duplicates code in numericValidationRules(). It may be as well to move some of these
@@ -3208,423 +3232,426 @@ return true;
 // an object which is included by composition in all ViewModels that want it? Inheritance? Something
 // else?
 fun parseStringAsDoubleOrNull(locale: Locale, string: String): Double? {
-val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
+    val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
 // If input filtering allowed "-" characters through they are significant, so we don't strip
 // them out here. This is harmless if they were never allowed through, of course.
-val insignificantCharsRegex = "[^-0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
-return string
-    .replace(insignificantCharsRegex, "")
-    .replace(decimalSeparator, '.')
-    .toDoubleOrNull()
+    val insignificantCharsRegex = "[^-0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
+    return string
+        .replace(insignificantCharsRegex, "")
+        .replace(decimalSeparator, '.')
+        .toDoubleOrNull()
 }
 
 // This assumes input filtering has already excluded characters other than digits, space, comma and
 // full stop.
 fun numericValidationRules(
-allowDecimals: Boolean = true,
-allowZero: Boolean = true,
-maxDp: Int? = null,
+    allowDecimals: Boolean = true,
+    allowZero: Boolean = true,
+    maxDp: Int? = null,
 ): List<ValidationRule> {
-val locale = Locale.getDefault()
-val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
-val maxDecimalSeparators = if (allowDecimals) 1 else 0
+    val locale = Locale.getDefault()
+    val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
+    val maxDecimalSeparators = if (allowDecimals) 1 else 0
 
 // Create a function to strip fluff like spaces and the grouping symbol if the user typed it in.
-val insignificantCharsRegex = "[^-0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
-fun sanitiseCandidate(candidate: String) = candidate.replace(insignificantCharsRegex, "")
-fun attemptedParse(candidate: String): Double? =
-    sanitiseCandidate(candidate).replace(decimalSeparator, '.').toDoubleOrNull()
+    val insignificantCharsRegex = "[^-0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
+    fun sanitiseCandidate(candidate: String) = candidate.replace(insignificantCharsRegex, "")
+    fun attemptedParse(candidate: String): Double? =
+        sanitiseCandidate(candidate).replace(decimalSeparator, '.').toDoubleOrNull()
 
-return listOfNotNull(
-    ValidationRule(
-        { it.count { it == decimalSeparator } <= maxDecimalSeparators },
-        if (allowDecimals) "Only one decimal point allowed" else "Only whole numbers allowed"
-    ),
+    return listOfNotNull(
+        ValidationRule(
+            { it.count { it == decimalSeparator } <= maxDecimalSeparators },
+            if (allowDecimals) "Only one decimal point allowed" else "Only whole numbers allowed"
+        ),
 
-    if (maxDp != null) {
-        // TODO: We could allow extra decimal places if they are all zeros? I could see arguments either way.
-        ValidationRule({
-            val parts = sanitiseCandidate(it).split(decimalSeparator)
-            parts.size != 2 || parts[1].length <= maxDp
-        }, "No more than $maxDp decimal places allowed")
-    } else {
-        null
-    },
+        if (maxDp != null) {
+            // TODO: We could allow extra decimal places if they are all zeros? I could see arguments either way.
+            ValidationRule({
+                val parts = sanitiseCandidate(it).split(decimalSeparator)
+                parts.size != 2 || parts[1].length <= maxDp
+            }, "No more than $maxDp decimal places allowed")
+        } else {
+            null
+        },
 
-    if (!allowZero) {
-        // TODO: This message assumes you can't enter a negative value in the first place.
-        ValidationRule({ attemptedParse(it) != 0.0 }, "Must be greater than zero")
-    } else {
-        null
-    },
+        if (!allowZero) {
+            // TODO: This message assumes you can't enter a negative value in the first place.
+            ValidationRule({ attemptedParse(it) != 0.0 }, "Must be greater than zero")
+        } else {
+            null
+        },
 
-    // This is a catch-all; in practice we expect to catch all problems before this, but we don't want to have a string which can't be converted (which would cause an error on trying to save) which the user hasn't been warned about.
-    ValidationRule({ attemptedParse(it) != null }, "Invalid number"),
-)
+        // This is a catch-all; in practice we expect to catch all problems before this, but we don't want to have a string which can't be converted (which would cause an error on trying to save) which the user hasn't been warned about.
+        ValidationRule({ attemptedParse(it) != null }, "Invalid number"),
+    )
 }
 
 @Composable
 fun NumericTextField(
-label: @Composable() (() -> Unit)? = null,
-value: TextFieldValue,
-prefix: @Composable() (() -> Unit)? = null,
-suffix: @Composable() (() -> Unit)? = null,
-textStyle: TextStyle = LocalTextStyle.current,
-validationRules: List<ValidationRule>? = numericValidationRules(),
-onValueChange: (TextFieldValue) -> Unit,
-onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
-modifier: Modifier = Modifier,
-supportingText: String? = null,
-keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-messageDelayMillis: Long = defaultValidationMessageDelayMillis,
+    label: @Composable() (() -> Unit)? = null,
+    value: TextFieldValue,
+    prefix: @Composable() (() -> Unit)? = null,
+    suffix: @Composable() (() -> Unit)? = null,
+    textStyle: TextStyle = LocalTextStyle.current,
+    validationRules: List<ValidationRule>? = numericValidationRules(),
+    onValueChange: (TextFieldValue) -> Unit,
+    onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
+    modifier: Modifier = Modifier,
+    supportingText: String? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+    messageDelayMillis: Long = defaultValidationMessageDelayMillis,
 ) {
-ValidatedTextField(
-    label = label,
-    value = value,
-    prefix = prefix,
-    suffix = suffix,
-    textStyle = textStyle,
-    validationRules = (validationRules ?: emptyList()),
-    // TODO: We don't (we could, but probably no point) allow arbitrary onCandidateValueChange
-    // functions to be supplied by our caller. We just hardcode this for now. We could
-    // potentially accept some options from our caller which say whether decimal point (locale
-    // sensitive) or minus signs are allowed and tweak the internally-assigned onCandidate...
-    // function here.
-    // TODO: The length limit is a bit arbitrary but we're just trying to avoid the user filling
-    // the box full of junk. I picked 11 because with my current layout on a small phone this
-    // avoids wrapping, and it feels very generous anyway. This allows just under a million with
-    // two decimal places and a (manually entered) thousands separator.
-    onCandidateValueChange = { isValidTransitionalDecimal(it) && it.length <= 11 },
-    onValueChange = onValueChange,
-    onSupportingTextChange = onSupportingTextChange,
-    modifier = modifier,
-    supportingText = supportingText,
-    keyboardOptions = keyboardOptions,
-    messageDelayMillis = messageDelayMillis
-)
+    ValidatedTextField(
+        label = label,
+        value = value,
+        prefix = prefix,
+        suffix = suffix,
+        textStyle = textStyle,
+        validationRules = (validationRules ?: emptyList()),
+        // TODO: We don't (we could, but probably no point) allow arbitrary onCandidateValueChange
+        // functions to be supplied by our caller. We just hardcode this for now. We could
+        // potentially accept some options from our caller which say whether decimal point (locale
+        // sensitive) or minus signs are allowed and tweak the internally-assigned onCandidate...
+        // function here.
+        // TODO: The length limit is a bit arbitrary but we're just trying to avoid the user filling
+        // the box full of junk. I picked 11 because with my current layout on a small phone this
+        // avoids wrapping, and it feels very generous anyway. This allows just under a million with
+        // two decimal places and a (manually entered) thousands separator.
+        onCandidateValueChange = { isValidTransitionalDecimal(it) && it.length <= 11 },
+        onValueChange = onValueChange,
+        onSupportingTextChange = onSupportingTextChange,
+        modifier = modifier,
+        supportingText = supportingText,
+        keyboardOptions = keyboardOptions,
+        messageDelayMillis = messageDelayMillis
+    )
 }
 
 @Composable
 fun ValidatedTextField(
-label: @Composable() (() -> Unit)? = null,
-value: TextFieldValue,
-prefix: @Composable() (() -> Unit)? = null,
-suffix: @Composable() (() -> Unit)? = null,
-textStyle: TextStyle = LocalTextStyle.current,
-validationRules: List<ValidationRule>? = null,
-onCandidateValueChange: ((String) -> Boolean),
-onValueChange: (TextFieldValue) -> Unit,
-onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
-modifier: Modifier = Modifier,
-supportingText: String? = null,
-keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-messageDelayMillis: Long = defaultValidationMessageDelayMillis,
+    label: @Composable() (() -> Unit)? = null,
+    value: TextFieldValue,
+    prefix: @Composable() (() -> Unit)? = null,
+    suffix: @Composable() (() -> Unit)? = null,
+    textStyle: TextStyle = LocalTextStyle.current,
+    validationRules: List<ValidationRule>? = null,
+    onCandidateValueChange: ((String) -> Boolean),
+    onValueChange: (TextFieldValue) -> Unit,
+    onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
+    modifier: Modifier = Modifier,
+    supportingText: String? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    messageDelayMillis: Long = defaultValidationMessageDelayMillis,
 ) {
-var failedValidationSupportingText by rememberSaveable { mutableStateOf<String?>(null) }
-var failedValidationRule by remember { mutableStateOf<ValidationRule?>(null) }
-var delayJob by remember { mutableStateOf<Job?>(null) }
-var isFocused by remember { mutableStateOf(false) }
+    var failedValidationSupportingText by rememberSaveable { mutableStateOf<String?>(null) }
+    var failedValidationRule by remember { mutableStateOf<ValidationRule?>(null) }
+    var delayJob by remember { mutableStateOf<Job?>(null) }
+    var isFocused by remember { mutableStateOf(false) }
 
-fun updateFailedValidationRule(newValue: String) {
-    // We don't want to generate validation failures just because the field is empty. For the
-    // moment we consider the field empty if it's nothing but whitespace. At least for my
-    // purposes here I think this is fine. Obviously we could add a parameter to allow the
-    // caller to configure this.
-    // TODO: Possibly once the user clicks "Save" and gets validation failures, we should pass
-    // a flag into this composable to tell it not to filter out empty strings, and make sure
-    // the validation rules do include "Cannot be empty" validations? That way we won't nag the
-    // user with a sea of red "Cannot be empty" validations on first appearance, but they will
-    // get a message if they try to save without realising the value is mandatory.
-    if (newValue.trim().isEmpty()) {
+    fun updateFailedValidationRule(newValue: String) {
+        // We don't want to generate validation failures just because the field is empty. For the
+        // moment we consider the field empty if it's nothing but whitespace. At least for my
+        // purposes here I think this is fine. Obviously we could add a parameter to allow the
+        // caller to configure this.
+        // TODO: Possibly once the user clicks "Save" and gets validation failures, we should pass
+        // a flag into this composable to tell it not to filter out empty strings, and make sure
+        // the validation rules do include "Cannot be empty" validations? That way we won't nag the
+        // user with a sea of red "Cannot be empty" validations on first appearance, but they will
+        // get a message if they try to save without realising the value is mandatory.
+        if (newValue.trim().isEmpty()) {
+            failedValidationRule = null
+            return
+        }
+
+        // In order to give "consistent" supportingText, we give precedence to whichever
+        // validation generated the current supporting text.
+        val reorderedValidations =
+            listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
         failedValidationRule = null
-        return
-    }
-
-    // In order to give "consistent" supportingText, we give precedence to whichever
-    // validation generated the current supporting text.
-    val reorderedValidations =
-        listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
-    failedValidationRule = null
-    for (validationRule in reorderedValidations) {
-        if (!validationRule.validate(newValue)) {
-            failedValidationRule = validationRule
-            break
+        for (validationRule in reorderedValidations) {
+            if (!validationRule.validate(newValue)) {
+                failedValidationRule = validationRule
+                break
+            }
         }
     }
-}
 
-// We have this function to make it easier to pass a literal null to TextField's supportingText
+    // We have this function to make it easier to pass a literal null to TextField's supportingText
 // when we don't want anything, to prevent it allocating visual space for supportingText. TODO:
 // Some overlap with TextOrNull()?
-fun getSupportingText(): @Composable (() -> Unit)? {
-    if (onSupportingTextChange == null) {
-        if (failedValidationSupportingText != null) {
-            return {
-                Text(
-                    failedValidationSupportingText!!,
-                    color = MaterialTheme.colorScheme.error
-                )
+    fun getSupportingText(): @Composable (() -> Unit)? {
+        if (onSupportingTextChange == null) {
+            if (failedValidationSupportingText != null) {
+                return {
+                    Text(
+                        failedValidationSupportingText!!,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            } else if (supportingText != null) {
+                return { Text(supportingText) }
             }
-        } else if (supportingText != null) {
-            return { Text(supportingText) }
         }
+        return null
     }
-    return null
-}
-TextField(
-    label = label,
-    value = value,
-    prefix = prefix,
-    suffix = suffix,
-    textStyle = textStyle,
-    onValueChange = { newValue ->
-        delayJob?.cancel()
-        if (onCandidateValueChange(newValue.text)) {
-            updateFailedValidationRule(newValue.text)
-            if (failedValidationRule == null) {
-                // Everything's OK. Clear any supporting text immediately.
-                failedValidationSupportingText = null
-            } else {
-                // Something's wrong.
-                //
-                // If there is currently no supporting text, we don't want to distract the user
-                // by popping some in when they may be in the middle of typing and will correct
-                // the problem themselves, so we only show supporting text after they've stopped
-                // typing. (Imagine they are moving the decimal point; they type in a "new" one
-                // in the correct place and then go to delete the "old" one. It's annoying if a
-                // nagging message pops up after typing the new one telling them they have two
-                // decimal points when they were already addressing the problem.)
-                //
-                // If there is already supporting text, it's probably less annoying to keep
-                // showing some (currently valid) supporting text, rather than removing it while
-                // the user types and possibly having it pop back in again afterwards.
-                if (failedValidationSupportingText == null) {
-                    delayJob = CoroutineScope(Dispatchers.Main).launch {
-                        delay(messageDelayMillis)
+    TextField(
+        label = label,
+        value = value,
+        prefix = prefix,
+        suffix = suffix,
+        textStyle = textStyle,
+        onValueChange = { newValue ->
+            delayJob?.cancel()
+            if (onCandidateValueChange(newValue.text)) {
+                updateFailedValidationRule(newValue.text)
+                if (failedValidationRule == null) {
+                    // Everything's OK. Clear any supporting text immediately.
+                    failedValidationSupportingText = null
+                } else {
+                    // Something's wrong.
+                    //
+                    // If there is currently no supporting text, we don't want to distract the user
+                    // by popping some in when they may be in the middle of typing and will correct
+                    // the problem themselves, so we only show supporting text after they've stopped
+                    // typing. (Imagine they are moving the decimal point; they type in a "new" one
+                    // in the correct place and then go to delete the "old" one. It's annoying if a
+                    // nagging message pops up after typing the new one telling them they have two
+                    // decimal points when they were already addressing the problem.)
+                    //
+                    // If there is already supporting text, it's probably less annoying to keep
+                    // showing some (currently valid) supporting text, rather than removing it while
+                    // the user types and possibly having it pop back in again afterwards.
+                    if (failedValidationSupportingText == null) {
+                        delayJob = CoroutineScope(Dispatchers.Main).launch {
+                            delay(messageDelayMillis)
+                            failedValidationSupportingText = failedValidationRule!!.message
+                        }
+                    } else {
                         failedValidationSupportingText = failedValidationRule!!.message
                     }
-                } else {
-                    failedValidationSupportingText = failedValidationRule!!.message
                 }
+
+                onValueChange(newValue)
             }
+        },
+        keyboardOptions = keyboardOptions,
+        modifier = modifier.onFocusChanged { focusState ->
+            Log.d("MyApp", "focus changed")
+            isFocused = focusState.isFocused
+            if (!focusState.isFocused) {
+                Log.d("MyApp", "lost focus")
+                // This case occurs when we are first composed, so we get to immediately show any
+                // supportingText then, as well as doing it when we lose focus and want to show
+                // any previously-delayed message.
+                updateFailedValidationRule(value.text)
+                failedValidationSupportingText = failedValidationRule?.message
+            }
+        },
+        supportingText = getSupportingText(),
+        trailingIcon = if (failedValidationSupportingText != null) {
+            {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = "Error",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        } else null,
+        isError = failedValidationSupportingText != null
+    )
 
-            onValueChange(newValue)
-        }
-    },
-    keyboardOptions = keyboardOptions,
-    modifier = modifier.onFocusChanged { focusState ->
-        Log.d("MyApp", "focus changed")
-        isFocused = focusState.isFocused
-        if (!focusState.isFocused) {
-            Log.d("MyApp", "lost focus")
-            // This case occurs when we are first composed, so we get to immediately show any
-            // supportingText then, as well as doing it when we lose focus and want to show
-            // any previously-delayed message.
-            updateFailedValidationRule(value.text)
-            failedValidationSupportingText = failedValidationRule?.message
-        }
-    },
-    supportingText = getSupportingText(),
-    trailingIcon = if (failedValidationSupportingText != null) {
-        {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = "Error",
-                tint = MaterialTheme.colorScheme.error
-            )
-        }
-    } else null,
-    isError = failedValidationSupportingText != null
-)
-
-if (onSupportingTextChange != null) {
-    LaunchedEffect(failedValidationSupportingText) {
-        if (failedValidationSupportingText != null) {
-            onSupportingTextChange(true, failedValidationSupportingText)
-        } else {
-            onSupportingTextChange(false, supportingText)
+    if (onSupportingTextChange != null) {
+        LaunchedEffect(failedValidationSupportingText) {
+            if (failedValidationSupportingText != null) {
+                onSupportingTextChange(true, failedValidationSupportingText)
+            } else {
+                onSupportingTextChange(false, supportingText)
+            }
         }
     }
-}
 }
 
 // TODO: Grok code, may be useful, may be at least partly overlapping with my own format currency function
 private fun formatCurrency(amount: Double, locale: Locale, currencyCode: String): String {
-val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
-    currency = Currency.getInstance(currencyCode)
-}
-return numberFormat.format(amount)
+    val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
+        currency = Currency.getInstance(currencyCode)
+    }
+    return numberFormat.format(amount)
 }
 
 fun formatDecimal(number: Double, minDp: Int?, maxDp: Int?): String {
-val locale = Locale.getDefault()
-var format = NumberFormat.getNumberInstance(locale) as DecimalFormat
-format.isGroupingUsed = false
-if (minDp != null) {
-    format.setMinimumFractionDigits(minDp)
-}
-if (maxDp != null) {
-    format.setMaximumFractionDigits(maxDp)
-}
-return format.format(number)
+    val locale = Locale.getDefault()
+    var format = NumberFormat.getNumberInstance(locale) as DecimalFormat
+    format.isGroupingUsed = false
+    if (minDp != null) {
+        format.setMinimumFractionDigits(minDp)
+    }
+    if (maxDp != null) {
+        format.setMaximumFractionDigits(maxDp)
+    }
+    return format.format(number)
 }
 
 @Composable
 fun SettingsScreen(navController: NavHostController) {
-Scaffold(
-    modifier = Modifier.fillMaxSize(),
-    topBar = {
-        TopAppBar(title = { Text("Settings") }, navigationIcon = {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(title = { Text("Settings") }, navigationIcon = {
 
-            IconButton(onClick = { navController.navigateUp() }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                    contentDescription = "Back"
-                )
-            }
-        })
-    },
-) { innerPadding ->
-    Column(
-        modifier = Modifier
-            .background(MaterialTheme.colorScheme.primary) // TODO: debug hack
-            .fillMaxSize()
-            .padding(innerPadding)
-            .padding(horizontal = screenBorder)
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+            })
+        },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.primary) // TODO: debug hack
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = screenBorder)
 
-        // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
-    ) {
-        Text("TODO SETTINGS")
+            // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
+        ) {
+            Text("TODO SETTINGS")
+        }
     }
-}
 }
 
 // TODO: This is a bit of a mess but probably best leave it alone until I either gain more
 // experience or do more testing with different Android versions.
 class MainActivity : ComponentActivity() {
-override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    // Target SDK >=35 directly enables edge-to-edge (see e.g. https://stackoverflow.com/questions/79018063/trying-to-understand-edge-to-edge-in-android). We don't particularly want this, but we can work with it so we don't try to fight it.
-    // We call it here to be explicit. TODO: I am far from clear but you can pass some arguments to enableEdgeToEdge(), which may have some relevant effect on older and/or newer platforms. For now I will keep it simple but if there are nightmarish inconsistencies on older versions of Android this might be part of the puzzle.
-    enableEdgeToEdge()
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Target SDK >=35 directly enables edge-to-edge (see e.g. https://stackoverflow.com/questions/79018063/trying-to-understand-edge-to-edge-in-android). We don't particularly want this, but we can work with it so we don't try to fight it.
+        // We call it here to be explicit. TODO: I am far from clear but you can pass some arguments to enableEdgeToEdge(), which may have some relevant effect on older and/or newer platforms. For now I will keep it simple but if there are nightmarish inconsistencies on older versions of Android this might be part of the puzzle.
+        enableEdgeToEdge()
 
-    // TODO: ChatGPT suggestion. Correct? Do I need to make this debug-build-only somehow?
-    StrictMode.setThreadPolicy(
-        StrictMode.ThreadPolicy.Builder()
-            .detectAll()
-            .penaltyLog() // TODO .penaltyDeath() // TODO .penaltyLog()  // logs violations; you can also add .penaltyDeath() to crash on violation
-            .build()
-    )
+        // TODO: ChatGPT suggestion. Correct? Do I need to make this debug-build-only somehow?
+        StrictMode.setThreadPolicy(
+            StrictMode.ThreadPolicy.Builder()
+                .detectAll()
+                .penaltyLog() // TODO .penaltyDeath() // TODO .penaltyLog()  // logs violations; you can also add .penaltyDeath() to crash on violation
+                .build()
+        )
 
-    // TODO: Experiment with adding a Settings activity and make the dark/light/follow system available and grey out (with some text saying why) follow system on Android < 10
-    val isDarkTheme = true /* TODO when (userThemePref) {
+        // TODO: Experiment with adding a Settings activity and make the dark/light/follow system available and grey out (with some text saying why) follow system on Android < 10
+        val isDarkTheme = true /* TODO when (userThemePref) {
         ThemePreference.DARK -> true
         ThemePreference.LIGHT -> false
         ThemePreference.SYSTEM -> isSystemInDarkTheme()
     } */
-    setContent {
-        val darkTheme = isSystemInDarkTheme()
+        setContent {
+            val darkTheme = isSystemInDarkTheme()
 
-        ComposeTutorialTheme(darkTheme = darkTheme) {
-            val window = (this as ComponentActivity).window
+            ComposeTutorialTheme(darkTheme = darkTheme) {
+                val window = (this as ComponentActivity).window
 
-            /*
-            // This allows us to control status bar icon color
-            SideEffect {
-                WindowCompat.setDecorFitsSystemWindows(window, false)
-                val insetsController = WindowInsetsControllerCompat(window, window.decorView)
-                insetsController.isAppearanceLightStatusBars = !darkTheme // false in dark mode = light icons
-                insetsController.isAppearanceLightNavigationBars = !darkTheme
-            }
-            */
+                /*
+                // This allows us to control status bar icon color
+                SideEffect {
+                    WindowCompat.setDecorFitsSystemWindows(window, false)
+                    val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+                    insetsController.isAppearanceLightStatusBars = !darkTheme // false in dark mode = light icons
+                    insetsController.isAppearanceLightNavigationBars = !darkTheme
+                }
+                */
 
-            // TODO: Grok told me I could/should shove a DisposableEffect() in here to futz around with isAppearanceLightStatusBars. I don't particularly trust it, but let's make a note in csae this is part of fixing any problems we might see on older Android versions later.
-            // TODO: OK, I have added this Surface here because I wondered if I "should" as well as/instead of the Surfaces wrapping
-            // the individual screens. Honestly don't know any more. There might be some slightly odd colours on the O6 but maybe
-            // they are just its theme. I will have to play around with this and maybe it will become clearer as I write more code
-            // etc. fillMaxHeight() is perhaps a bit unusual here but I was experimenting and thought I'd leave it in for now.
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize()/* .safeDrawingPadding() */.imePadding(),
-                color = Color.Green /* MaterialTheme.colorScheme.background */
-            ) {
-                Box(modifier = Modifier.safeDrawingPadding()) {
-                    AppNavigation()
+                // TODO: Grok told me I could/should shove a DisposableEffect() in here to futz around with isAppearanceLightStatusBars. I don't particularly trust it, but let's make a note in csae this is part of fixing any problems we might see on older Android versions later.
+                // TODO: OK, I have added this Surface here because I wondered if I "should" as well as/instead of the Surfaces wrapping
+                // the individual screens. Honestly don't know any more. There might be some slightly odd colours on the O6 but maybe
+                // they are just its theme. I will have to play around with this and maybe it will become clearer as I write more code
+                // etc. fillMaxHeight() is perhaps a bit unusual here but I was experimenting and thought I'd leave it in for now.
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()/* .safeDrawingPadding() */.imePadding(),
+                    color = Color.Green /* MaterialTheme.colorScheme.background */
+                ) {
+                    Box(modifier = Modifier.safeDrawingPadding()) {
+                        AppNavigation()
+                    }
                 }
             }
         }
     }
 }
-}
 
 // Shared ViewModel to pass data between screens
 class SharedViewModel : ViewModel() {
-// This is only nullable to provide us with an easy initial value to use. In use
+    // This is only nullable to provide us with an easy initial value to use. In use
 // setEditPriceScreenState() should always have been called before it is used.
 // TODO: Should we be using get/set functions or a read-only property and a set?
-var editPriceScreenUIContent: EditPriceScreenUIContent? = null
+    var editPriceScreenUIContent: EditPriceScreenUIContent? = null
 
-// TODO: Inconsistent use of "State" and "Content" here - rename everything consistently
-fun setEditPriceScreenStateFromHomeScreenState(uiContent: UIContent) {
-    // !! is justified because uiContent was shown on the home screen and the edit price button
-    // was visible, which can only happen if we have all three available.
-    val dataSet = uiContent.dataSet!!
-    val item = uiContent.item!!
-    val source = uiContent.source!!
+    // TODO: Inconsistent use of "State" and "Content" here - rename everything consistently
+    fun setEditPriceScreenStateFromHomeScreenState(uiContent: UIContent) {
+        // !! is justified because uiContent was shown on the home screen and the edit price button
+        // was visible, which can only happen if we have all three available.
+        val dataSet = uiContent.dataSet!!
+        val item = uiContent.item!!
+        val source = uiContent.source!!
 
-    val price =
-        uiContent.priceList.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
+        val price =
+            uiContent.priceList.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
-    val editablePrice = if (price != null) EditablePrice(price) else EditablePrice(
-        dataSetId = dataSet.id,
-        itemId = item.id,
-        sourceId = source.id,
-        itemDefaultUnit = item.defaultUnit
-    )
-    editPriceScreenUIContent = EditPriceScreenUIContent(
-        editablePrice = mutableStateOf(editablePrice),
-        originalPrice = editablePrice,
-        dataSet = dataSet,
-        item = item,
-        source = source
-    )
-}
+        val editablePrice = if (price != null) EditablePrice(price) else EditablePrice(
+            dataSetId = dataSet.id,
+            itemId = item.id,
+            sourceId = source.id,
+            itemDefaultUnit = item.defaultUnit
+        )
+        editPriceScreenUIContent = EditPriceScreenUIContent(
+            editablePrice = mutableStateOf(editablePrice),
+            originalPrice = editablePrice,
+            dataSet = dataSet,
+            item = item,
+            source = source
+        )
+    }
 
-/* TODO DELETE?! KEEPING AROUND FOR A BIT FROM GROK EXAMPLE JUST IN CASE IT'S HELPFUL
-private val _selectedItem = MutableStateFlow<Item?>(null)
-val selectedItem: StateFlow<Item?> = _selectedItem.asStateFlow()
+    /* TODO DELETE?! KEEPING AROUND FOR A BIT FROM GROK EXAMPLE JUST IN CASE IT'S HELPFUL
+    private val _selectedItem = MutableStateFlow<Item?>(null)
+    val selectedItem: StateFlow<Item?> = _selectedItem.asStateFlow()
 
-fun selectItem(item: Item) {
-    _selectedItem.value = item
-}
+    fun selectItem(item: Item) {
+        _selectedItem.value = item
+    }
 
-fun clearItem() {
-    _selectedItem.value = null
-} */
+    fun clearItem() {
+        _selectedItem.value = null
+    } */
 }
 
 fun splitAroundDigits(input: String): Pair<String, String> {
-var firstDigitIndex = input.indexOfFirst { it.isDigit() }
-if (firstDigitIndex == -1) {
-    firstDigitIndex = 0
-}
-val prefix = input.substring(0, firstDigitIndex)
+    var firstDigitIndex = input.indexOfFirst { it.isDigit() }
+    if (firstDigitIndex == -1) {
+        firstDigitIndex = 0
+    }
+    val prefix = input.substring(0, firstDigitIndex)
 
-val lastDigitIndex = input.indexOfLast { it.isDigit() }
-val suffix = if (lastDigitIndex == -1) {
-    ""
-} else {
-    input.substring(lastDigitIndex + 1)
-}
+    val lastDigitIndex = input.indexOfLast { it.isDigit() }
+    val suffix = if (lastDigitIndex == -1) {
+        ""
+    } else {
+        input.substring(lastDigitIndex + 1)
+    }
 
-return Pair(prefix, suffix)
+    return Pair(prefix, suffix)
 }
 
 // TODO: Should this hold the EditablePrice and we should copy it over from the SharedViewModel when
 // edit screen is first composed? But this feels like it might be a nightmare of "bad first
 // compositions" - but it does also feel like it "ought" to be in here. Think about this later.
-class EditPriceScreenViewModel(private val priceTrackerRepository: PriceTrackerRepository, private val savedStateHandle: SavedStateHandle) :
-ViewModel() {
+class EditPriceScreenViewModel(
+    private val priceTrackerRepository: PriceTrackerRepository,
+    private val savedStateHandle: SavedStateHandle
+) :
+    ViewModel() {
     val instanceId = UUID.randomUUID().toString() // TODO FOR DEBUG
 
     init {
@@ -3649,7 +3676,8 @@ fun saveItem(item: Item) {
     // This is only nullable because we may not have a saved state and it may be some time before
     // the "real" state is used to overwrite it, although that should happen before anything that
     // cares can observe it.
-    var uiContent: EditPriceScreenUIContent? = EditPriceScreenUIContent.fromSavedState(savedStateHandle)
+    var uiContent: EditPriceScreenUIContent? =
+        EditPriceScreenUIContent.fromSavedState(savedStateHandle)
 
     fun setUIContent(newUIContent: EditPriceScreenUIContent) {
         Log.d("MyApp", "EditPriceScreenViewModel.setUIContent($newUIContent)")
@@ -3815,116 +3843,116 @@ fun AppNavigation() {
 // and just let that handle it. There may still be some navigation-y stuff and I need to read
 // up on this more.
 
-val navController = rememberNavController()
-val sharedViewModel: SharedViewModel =
-    viewModel(LocalContext.current as ComponentActivity) // TODO: perplexity voodoo
+    val navController = rememberNavController()
+    val sharedViewModel: SharedViewModel =
+        viewModel(LocalContext.current as ComponentActivity) // TODO: perplexity voodoo
 //val saveableStateHolder = rememberSaveableStateHolder()
-NavHost(
-    navController = navController,
-    startDestination = "home",
-    // TODO!? modifier = Modifier.padding(innerPadding)
-) {
-    // TODO: The animation here is complete voodoo. This is a tweaked version of https://stackoverflow.com/questions/65643015/animating-between-composables-in-navigation-with-compose
-    // and does actually seem to more-or-less behave (and consistently too). I didn't want to force 700ms, this feels a smidge fast at the (I think) default 300 but I think it is OK.
-    // No, no, it isn't consistent. Sometimes the back animation is much faster than others. Not a clue. Not a f* clue.
+    NavHost(
+        navController = navController,
+        startDestination = "home",
+        // TODO!? modifier = Modifier.padding(innerPadding)
+    ) {
+        // TODO: The animation here is complete voodoo. This is a tweaked version of https://stackoverflow.com/questions/65643015/animating-between-composables-in-navigation-with-compose
+        // and does actually seem to more-or-less behave (and consistently too). I didn't want to force 700ms, this feels a smidge fast at the (I think) default 300 but I think it is OK.
+        // No, no, it isn't consistent. Sometimes the back animation is much faster than others. Not a clue. Not a f* clue.
 
-    composable(
-        "home",
-        exitTransition = { ExitTransition.None },
-        popEnterTransition = { EnterTransition.None },
-    ) { backStackEntry ->
-        val vm: HomeScreenViewModel =
-            viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
-        Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
-        // TODO: I ACTUALLY THINK I DON'T NEED SAVEABLESTATEHOLDER AND HAVE BEEN CHASING THE WRONG PROBLEM BUT LET'S KEEP IT FOR NOW ANYWAY
-        //saveableStateHolder.SaveableStateProvider(backStackEntry.id) {
-        HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
-            sharedViewModel.setEditPriceScreenStateFromHomeScreenState(uiContent)
-            // TODO: I don't know if this random UUID is necessary or helpful or harmful any more,
-            // need to experiment/think about this once I finish re-implementing the price edit
-            // screen.
-            navController.navigate("fullScreenDialog/${UUID.randomUUID()}")
-        })
-        //}
-    }
-    val tweenDurationMillisEnter = 700; // TODO: should probably be 300 in final version
-    val tweenDurationMillisExit = 700; // TODO: should probably be 250 in final version
-    // TODO: If possible (probably is) we should factor out the "full screen" and "full screen dialog"
-    // transitions into helper functions/variables to avoid duplication.
-    composable(
-        "settings", enterTransition = {
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+        composable(
+            "home",
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+        ) { backStackEntry ->
+            val vm: HomeScreenViewModel =
+                viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
+            Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
+            // TODO: I ACTUALLY THINK I DON'T NEED SAVEABLESTATEHOLDER AND HAVE BEEN CHASING THE WRONG PROBLEM BUT LET'S KEEP IT FOR NOW ANYWAY
+            //saveableStateHolder.SaveableStateProvider(backStackEntry.id) {
+            HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
+                sharedViewModel.setEditPriceScreenStateFromHomeScreenState(uiContent)
+                // TODO: I don't know if this random UUID is necessary or helpful or harmful any more,
+                // need to experiment/think about this once I finish re-implementing the price edit
+                // screen.
+                navController.navigate("fullScreenDialog/${UUID.randomUUID()}")
+            })
+            //}
+        }
+        val tweenDurationMillisEnter = 700; // TODO: should probably be 300 in final version
+        val tweenDurationMillisExit = 700; // TODO: should probably be 250 in final version
+        // TODO: If possible (probably is) we should factor out the "full screen" and "full screen dialog"
+        // transitions into helper functions/variables to avoid duplication.
+        composable(
+            "settings", enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
 
-                animationSpec = tween(
-                    durationMillis = tweenDurationMillisEnter,
-                    easing = LinearOutSlowInEasing
-                ),
-            )
-
-        },
-        popExitTransition = {
-            slideOutOfContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                animationSpec = tween(
-                    durationMillis = tweenDurationMillisExit,
-                    easing = FastOutLinearInEasing
+                    animationSpec = tween(
+                        durationMillis = tweenDurationMillisEnter,
+                        easing = LinearOutSlowInEasing
+                    ),
                 )
-            )
-        }) {
-        SettingsScreen(navController)
-    }
-    composable(
-        // TODO: OLD "fullScreenDialog/{dataSetId}/{productId}/{storeId}/{randomUUID}", enterTransition = {
-        "fullScreenDialog/{randomUUID}", enterTransition = {
-            slideIntoContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Up,
 
-                animationSpec = tween(
-                    durationMillis = tweenDurationMillisEnter,
-                    easing = LinearOutSlowInEasing
-                ),
-            ) /* TODO DELETE? + fadeIn(
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(
+                        durationMillis = tweenDurationMillisExit,
+                        easing = FastOutLinearInEasing
+                    )
+                )
+            }) {
+            SettingsScreen(navController)
+        }
+        composable(
+            // TODO: OLD "fullScreenDialog/{dataSetId}/{productId}/{storeId}/{randomUUID}", enterTransition = {
+            "fullScreenDialog/{randomUUID}", enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Up,
+
+                    animationSpec = tween(
+                        durationMillis = tweenDurationMillisEnter,
+                        easing = LinearOutSlowInEasing
+                    ),
+                ) /* TODO DELETE? + fadeIn(
                 animationSpec = tween(
                     durationMillis = tweenDurationMillisEnter, easing = LinearOutSlowInEasing
                 )
             ) */
 
-        },
-        popExitTransition = {
-            slideOutOfContainer(
-                towards = AnimatedContentTransitionScope.SlideDirection.Down,
-                animationSpec = tween(
-                    durationMillis = tweenDurationMillisExit,
-                    easing = FastOutLinearInEasing
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                    animationSpec = tween(
+                        durationMillis = tweenDurationMillisExit,
+                        easing = FastOutLinearInEasing
+                    )
                 )
-            )
+            }
+        ) { backStackEntry ->
+            val vm: EditPriceScreenViewModel =
+                viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
+
+            // TODO: Be good to test fairly late on with two datasets with different currencies - I vaguely wonder
+            // if re-use of this composable (maybe prevented via randomUUID route hack?) will not pick up the
+            // changes.
+
+            // TODO: Test this but doing it this way ought to mean we correctly pick up locale changes while we are on screen
+            LaunchedEffect(Locale.getDefault()) {
+                vm.updateLocaleDependencies(Locale.getDefault())
+            }
+
+            if (sharedViewModel.editPriceScreenUIContent != null) {
+                vm.setUIContent(sharedViewModel.editPriceScreenUIContent!!)
+                sharedViewModel.editPriceScreenUIContent = null
+            }
+
+            OuterFullScreenDialog(
+                vm, navController,
+                requestClose = {
+                    navController.popBackStack()
+                })
         }
-    ) { backStackEntry ->
-        val vm: EditPriceScreenViewModel =
-            viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
-
-        // TODO: Be good to test fairly late on with two datasets with different currencies - I vaguely wonder
-        // if re-use of this composable (maybe prevented via randomUUID route hack?) will not pick up the
-        // changes.
-
-        // TODO: Test this but doing it this way ought to mean we correctly pick up locale changes while we are on screen
-        LaunchedEffect(Locale.getDefault()) {
-            vm.updateLocaleDependencies(Locale.getDefault())
-        }
-
-        if (sharedViewModel.editPriceScreenUIContent != null) {
-            vm.setUIContent(sharedViewModel.editPriceScreenUIContent!!)
-            sharedViewModel.editPriceScreenUIContent = null
-        }
-
-        OuterFullScreenDialog(
-            vm, navController,
-            requestClose = {
-                navController.popBackStack()
-            })
     }
-}
 }
 
 // TODO: ~/pc-sync/ai-chat-misc-to-move/grok-combo-box-and-alternate-ui.txt is a potentially
@@ -3938,8 +3966,6 @@ NavHost(
 // realising it? I suspect so - look at Theme.kt, which appears to support dynamic colours. This
 // isn't a problem as such, but should make a note about it, and I may want to offer a setting which
 // allows newer Android versions to choose the app's native theme.
-
-
 
 
 // General note type comments to put somewhere appropriate in long term:
@@ -4007,18 +4033,18 @@ NavHost(
 // wrong. So we use these instead.
 
 inline fun devCheck(condition: Boolean, lazyMessage: () -> String) {
-if (!condition) {
-    val msg = lazyMessage()
-    Log.e("DevCheck", "FAILED CHECK: $msg", Throwable())
-    throw IllegalStateException(msg) // same as check()
-}
+    if (!condition) {
+        val msg = lazyMessage()
+        Log.e("DevCheck", "FAILED CHECK: $msg", Throwable())
+        throw IllegalStateException(msg) // same as check()
+    }
 }
 
 // TODO: Technically this should throw IllegalArgumentException but I don't care. Using the two
 // names allows me to preserve the distinction in the code FWIW but without duplicating the body of
 // devCheck.
 inline fun devRequire(condition: Boolean, lazyMessage: () -> String) =
-devCheck(condition, lazyMessage)
+    devCheck(condition, lazyMessage)
 
 /* TODO TEMP TEST CODE FOR MEASUREDVALUE
 val foo = MeasuredValue(5.0, MeasureUnit.KG)
