@@ -2376,28 +2376,33 @@ data class EditPriceScreenUIContent(
     val item: Item,
     val source: Source
 ) {
-    // TODO: All the keys here ought to be compile-time strings to avoid typos
     fun saveState(handle: SavedStateHandle) {
         saveEditablePriceState(handle)
-        handle.set("originalPrice", originalPrice)
-        handle.set("dataSet", dataSet)
-        handle.set("item", item)
-        handle.set("source", source)
+        handle[ORIGINAL_PRICE_KEY] = originalPrice
+        handle[DATA_SET_KEY] = dataSet
+        handle[ITEM_KEY] = item
+        handle[SOURCE_KEY] = source
     }
 
-    // TODO: NOT SURE HOW THIS IS ALL WORKING OUT, BUT IDEA OF PULLING THIS OUT IS TO AVOID SERIALISING THE WHOLE UNCHANGING THING EVERY TIME THE USER EDITS A SINGLE TEXTFIELD
+    // This is a separate function to minimise the amount of work done after every user edit.
     fun saveEditablePriceState(handle: SavedStateHandle) {
-        handle.set("editablePrice", editablePrice.value)
+        handle[EDITABLE_PRICE_KEY] = editablePrice.value
     }
 
     companion object {
+        private const val EDITABLE_PRICE_KEY = "editablePrice"
+        private const val ORIGINAL_PRICE_KEY = "originalPrice"
+        private const val DATA_SET_KEY = "dataSet"
+        private const val ITEM_KEY = "item"
+        private const val SOURCE_KEY = "source"
+
         fun fromSavedState(handle: SavedStateHandle): EditPriceScreenUIContent? {
-            val savedEditablePrice: EditablePrice? = handle.get("editablePrice")
+            val savedEditablePrice: EditablePrice? = handle[EDITABLE_PRICE_KEY]
             Log.d("MyApp", "fromSavedState savedEditablePrice ${savedEditablePrice}")
-            val savedOriginalPrice: EditablePrice? = handle.get("originalPrice")
-            val savedDataSet: DataSet? = handle.get("dataSet")
-            val savedItem: Item? = handle.get("item")
-            val savedSource: Source? = handle.get("source")
+            val savedOriginalPrice: EditablePrice? = handle[ORIGINAL_PRICE_KEY]
+            val savedDataSet: DataSet? = handle[DATA_SET_KEY]
+            val savedItem: Item? = handle[ITEM_KEY]
+            val savedSource: Source? = handle[SOURCE_KEY]
             if (savedEditablePrice != null && savedOriginalPrice != null && savedDataSet != null && savedItem != null && savedSource != null) {
                 Log.d("MyApp", "reconstructed EditPriceScreenUIContent")
                 return EditPriceScreenUIContent(
