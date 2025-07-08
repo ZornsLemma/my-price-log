@@ -29,6 +29,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -167,6 +168,7 @@ import kotlin.math.log10
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.createSavedStateHandle
+import androidx.navigation.NavBackStackEntry
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -3826,7 +3828,6 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val sharedViewModel: SharedViewModel =
         viewModel(LocalContext.current as ComponentActivity) // TODO: perplexity voodoo
-//val saveableStateHolder = rememberSaveableStateHolder()
     NavHost(
         navController = navController,
         startDestination = "home",
@@ -3836,29 +3837,15 @@ fun AppNavigation() {
         // and does actually seem to more-or-less behave (and consistently too). I didn't want to force 700ms, this feels a smidge fast at the (I think) default 300 but I think it is OK.
         // No, no, it isn't consistent. Sometimes the back animation is much faster than others. Not a clue. Not a f* clue.
 
-        composable(
-            "home",
-            exitTransition = { ExitTransition.None },
-            popEnterTransition = { EnterTransition.None },
-        ) { backStackEntry ->
-            val vm: HomeScreenViewModel =
-                viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
-            Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
-            // TODO: I ACTUALLY THINK I DON'T NEED SAVEABLESTATEHOLDER AND HAVE BEEN CHASING THE WRONG PROBLEM BUT LET'S KEEP IT FOR NOW ANYWAY
-            //saveableStateHolder.SaveableStateProvider(backStackEntry.id) {
-            HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
-                sharedViewModel.setEditPriceScreenStateFromHomeScreenState(uiContent)
-                navController.navigate("fullScreenDialog")
-            })
-            //}
-        }
         val tweenDurationMillisEnter = 700; // TODO: should probably be 300 in final version
         val tweenDurationMillisExit = 700; // TODO: should probably be 250 in final version
-        // TODO: If possible (probably is) we should factor out the "full screen" and "full screen dialog"
-        // transitions into helper functions/variables to avoid duplication.
-        composable(
-            "settings", enterTransition = {
-                slideIntoContainer(
+
+        // TODO: The syntax required to factor these animations out into re-usable functions is pure
+        // ChatGPT voodoo (and it took several attempts to get it right, unless I just kept messing
+        // up myself).
+
+        fun AnimatedContentTransitionScope<NavBackStackEntry>.slideLeftTransition(): EnterTransition =
+            slideIntoContainer(
                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
 
                     animationSpec = tween(
@@ -3867,44 +3854,63 @@ fun AppNavigation() {
                     ),
                 )
 
-            },
-            popExitTransition = {
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                    animationSpec = tween(
-                        durationMillis = tweenDurationMillisExit,
-                        easing = FastOutLinearInEasing
-                    )
+        fun AnimatedContentTransitionScope<NavBackStackEntry>.slideRightTransition(): ExitTransition =
+            slideOutOfContainer(
+            towards = AnimatedContentTransitionScope.SlideDirection.Right,
+            animationSpec = tween(
+                durationMillis = tweenDurationMillisExit,
+                easing = FastOutLinearInEasing
+            )
+        )
+
+        fun AnimatedContentTransitionScope<NavBackStackEntry>.slideUpTransition(): EnterTransition =
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Up,
+
+                animationSpec = tween(
+                    durationMillis = tweenDurationMillisEnter,
+                    easing = LinearOutSlowInEasing
+                ),
+            )
+
+        fun AnimatedContentTransitionScope<NavBackStackEntry>.slideDownTransition(): ExitTransition =
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                animationSpec = tween(
+                    durationMillis = tweenDurationMillisExit,
+                    easing = FastOutLinearInEasing
                 )
-            }) {
+            )
+
+        composable(
+            "home",
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+        ) { backStackEntry ->
+            val vm: HomeScreenViewModel =
+                viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
+            Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
+            HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
+                sharedViewModel.setEditPriceScreenStateFromHomeScreenState(uiContent)
+                navController.navigate("fullScreenDialog")
+            })
+        }
+
+        // TODO: If possible (probably is) we should factor out the "full screen" and "full screen dialog"
+        // transitions into helper functions/variables to avoid duplication.
+        composable(
+            "settings", enterTransition = { slideLeftTransition() },
+            popExitTransition = { slideRightTransition() },
+
+            ) {
             SettingsScreen(navController)
         }
+
         composable(
             // TODO: OLD "fullScreenDialog/{dataSetId}/{productId}/{storeId}/{randomUUID}", enterTransition = {
-            "fullScreenDialog", enterTransition = {
-                slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Up,
+            "fullScreenDialog", enterTransition = { slideUpTransition() },
+            popExitTransition = { slideDownTransition() },
 
-                    animationSpec = tween(
-                        durationMillis = tweenDurationMillisEnter,
-                        easing = LinearOutSlowInEasing
-                    ),
-                ) /* TODO DELETE? + fadeIn(
-                animationSpec = tween(
-                    durationMillis = tweenDurationMillisEnter, easing = LinearOutSlowInEasing
-                )
-            ) */
-
-            },
-            popExitTransition = {
-                slideOutOfContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Down,
-                    animationSpec = tween(
-                        durationMillis = tweenDurationMillisExit,
-                        easing = FastOutLinearInEasing
-                    )
-                )
-            }
         ) { backStackEntry ->
             val vm: EditPriceScreenViewModel =
                 viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
