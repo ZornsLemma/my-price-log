@@ -29,7 +29,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -689,13 +688,13 @@ object AppViewModelProvider {
         initializer {
             val app =
                 this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
-            HomeScreenViewModel(app.priceTrackerRepository, app)
+            HomeViewModel(app.priceTrackerRepository, app)
         }
         initializer {
             val app =
                 this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
             val savedStateHandle = createSavedStateHandle()
-            EditPriceScreenViewModel(app.priceTrackerRepository, savedStateHandle)
+            EditPriceViewModel(app.priceTrackerRepository, savedStateHandle)
         }
     }
 }
@@ -1135,7 +1134,7 @@ class SingleEventState<T>(initialState: T) {
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class HomeScreenViewModel(
+class HomeViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
     application: Application
 ) : ViewModel() {
@@ -2423,7 +2422,7 @@ data class EditPriceScreenUIContent(
 
 @Composable
 fun HomeScreen(
-    vm: HomeScreenViewModel,
+    vm: HomeViewModel,
     navController: NavHostController,
     onEditPriceClick: (HomeScreenUIContent) -> Unit
 ) {
@@ -2743,8 +2742,8 @@ fun rememberSyncedTextFieldValue(modelState: String): MutableState<TextFieldValu
 // variable unit on this screen, as it will might be useful to the user as a confirmation of the
 // unit price on the shelf. On the other hand, it might just be extra clutter on a screen where
 // the user is editing.
-fun OuterFullScreenDialog(
-    vm: EditPriceScreenViewModel,
+fun EditPriceScreen(
+    vm: EditPriceViewModel,
     navController: NavHostController,
     requestClose: () -> Unit
 ) {
@@ -2823,11 +2822,11 @@ fun OuterFullScreenDialog(
     LaunchedEffect(Unit) {
         vm.saveEvents.collect { event ->
             when (event) {
-                EditPriceScreenViewModel.SaveStatus.Success -> {
+                EditPriceViewModel.SaveStatus.Success -> {
                     requestCloseDebounced()
                 }
 
-                EditPriceScreenViewModel.SaveStatus.Error -> {
+                EditPriceViewModel.SaveStatus.Error -> {
                     saveInitiated = false;
                     showErrorDialog = true;
                 }
@@ -2890,7 +2889,7 @@ fun OuterFullScreenDialog(
                             // parameter so much, when it's implicit in the ViewModel? This would
                             // apply elsewhere, not just here.
                             when (vm.validateEditablePrice(uiContent.editablePrice.value)) {
-                                EditPriceScreenViewModel.ValidationState.OK -> {
+                                EditPriceViewModel.ValidationState.OK -> {
                                     saveInitiated = true
                                     // delay(5000) // TODO HACK
                                     vm.saveEditablePrice(uiContent.editablePrice.value)
@@ -2901,13 +2900,13 @@ fun OuterFullScreenDialog(
                                 // am not sure it's ncessary. My inclination is to leave this for
                                 // now and let the code settle down first before maybe trying to add
                                 // it.
-                                EditPriceScreenViewModel.ValidationState.PACK_SIZE_INVALID -> {
+                                EditPriceViewModel.ValidationState.PACK_SIZE_INVALID -> {
                                     scrollState.animateScrollTo(packSizeY)
                                     packSizeFocusRequester.requestFocus()
                                     // TODO GENERATE ERROR - EG A SNACKBAR
                                 }
 
-                                EditPriceScreenViewModel.ValidationState.PRICE_INVALID -> {
+                                EditPriceViewModel.ValidationState.PRICE_INVALID -> {
                                     scrollState.animateScrollTo(priceY)
                                     priceFocusRequester.requestFocus()
                                     // TODO GENERATE ERROR - EG A SNACKBAR
@@ -3650,7 +3649,7 @@ fun splitAroundDigits(input: String): Pair<String, String> {
     return Pair(prefix, suffix)
 }
 
-class EditPriceScreenViewModel(
+class EditPriceViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -3887,7 +3886,7 @@ fun AppNavigation() {
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
         ) { backStackEntry ->
-            val vm: HomeScreenViewModel =
+            val vm: HomeViewModel =
                 viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
             Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
             HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
@@ -3911,7 +3910,7 @@ fun AppNavigation() {
         ) { backStackEntry ->
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
-            val vm: EditPriceScreenViewModel =
+            val vm: EditPriceViewModel =
                 viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
 
             // TODO: Be good to test fairly late on with two datasets with different currencies - I vaguely wonder
@@ -3928,7 +3927,7 @@ fun AppNavigation() {
                 sharedViewModel.editPriceScreenUIContent = null
             }
 
-            OuterFullScreenDialog(
+            EditPriceScreen(
                 vm, navController,
                 requestClose = {
                     navController.popBackStack()
