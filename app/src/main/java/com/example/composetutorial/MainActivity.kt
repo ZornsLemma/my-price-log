@@ -1165,10 +1165,10 @@ class HomeScreenViewModel(
     }
 
     // TODO: Rename UIContent->HomeScreenUIContent and/or scope it to this ViewModel?
-    private val _uiState = MutableStateFlow<Pair<Boolean /* loading */, UIContent>>(
+    private val _uiState = MutableStateFlow<Pair<Boolean /* loading */, HomeScreenUIContent>>(
         Pair(
             false,
-            UIContent.createEmpty()
+            HomeScreenUIContent.createEmpty()
         )
     )
     val uiState = _uiState.asStateFlow()
@@ -1308,7 +1308,7 @@ class HomeScreenViewModel(
                     )
                     // delay(5000) // TODO HACK
                     flowOf(
-                        UIContent(
+                        HomeScreenUIContent(
                             dataSet,
                             dataSetList,
                             item,
@@ -2242,8 +2242,7 @@ val SELECTED_DATA_SET_ID_KEY = longPreferencesKey("selected_data_set_id")
 val SELECTED_ITEM_ID_KEY = longPreferencesKey("selected_item_id")
 val SELECTED_SOURCE_ID_KEY = longPreferencesKey("selected_source_id")
 
-// TODO: Rename "HomeScreenUIContent" or similar?
-data class UIContent(
+data class HomeScreenUIContent(
     val dataSet: DataSet?,
     val dataSetList: List<DataSet>,
     val item: Item?,
@@ -2253,8 +2252,8 @@ data class UIContent(
     val priceList: List<Price>,
 ) {
     companion object {
-        fun createEmpty(): UIContent {
-            return UIContent(
+        fun createEmpty(): HomeScreenUIContent {
+            return HomeScreenUIContent(
                 dataSet = null,
                 dataSetList = emptyList(),
                 item = null,
@@ -2398,7 +2397,7 @@ data class EditPriceScreenUIContent(
 
         fun fromSavedState(handle: SavedStateHandle): EditPriceScreenUIContent? {
             val savedEditablePrice: EditablePrice? = handle[EDITABLE_PRICE_KEY]
-            Log.d("MyApp", "fromSavedState savedEditablePrice ${savedEditablePrice}")
+            Log.d("MyApp", "fromSavedState savedEditablePrice $savedEditablePrice")
             val savedOriginalPrice: EditablePrice? = handle[ORIGINAL_PRICE_KEY]
             val savedDataSet: DataSet? = handle[DATA_SET_KEY]
             val savedItem: Item? = handle[ITEM_KEY]
@@ -2424,7 +2423,7 @@ data class EditPriceScreenUIContent(
 fun HomeScreen(
     vm: HomeScreenViewModel,
     navController: NavHostController,
-    onEditPriceClick: (UIContent) -> Unit
+    onEditPriceClick: (HomeScreenUIContent) -> Unit
 ) {
     // In order to minimise jank, we want the previous UI state to be available during the *very
     // first composition* when this screen is re-entered (e.g. after navigating back from another
@@ -3594,7 +3593,7 @@ class SharedViewModel : ViewModel() {
     var editPriceScreenUIContent: EditPriceScreenUIContent? = null
 
     // TODO: Inconsistent use of "State" and "Content" here - rename everything consistently
-    fun setEditPriceScreenStateFromHomeScreenState(uiContent: UIContent) {
+    fun setEditPriceScreenStateFromHomeScreenState(uiContent: HomeScreenUIContent) {
         // !! is justified because uiContent was shown on the home screen and the edit price button
         // was visible, which can only happen if we have all three available.
         val dataSet = uiContent.dataSet!!
