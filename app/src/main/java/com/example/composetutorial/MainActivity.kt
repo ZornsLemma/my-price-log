@@ -3294,6 +3294,8 @@ fun numericValidationRules(
     return listOfNotNull(
         ValidationRule(
             { it.count { it == decimalSeparator } <= maxDecimalSeparators },
+            // TODO: Just possibly we should not consider a single decimal separator with nothing
+            // significant following it as violating "only whole numbers allowed".
             if (allowDecimals) "Only one decimal point allowed" else "Only whole numbers allowed"
         ),
 
@@ -3390,7 +3392,8 @@ fun ValidatedTextField(
     var delayJob by remember { mutableStateOf<Job?>(null) }
     var isFocused by remember { mutableStateOf(false) }
 
-    fun updateFailedValidationRule(newValue: String) {
+    // TODO: RENAME THIS FN IF NEW STRUCTURE WORKS
+    fun updateFailedValidationRule(newValue: String, innerMessageDelayMillis: Long) {
         // We don't want to generate validation failures just because the field is empty. For the
         // moment we consider the field empty if it's nothing but whitespace. At least for my
         // purposes here I think this is fine. Obviously we could add a parameter to allow the
@@ -3402,10 +3405,11 @@ fun ValidatedTextField(
         // get a message if they try to save without realising the value is mandatory.
         if (newValue.trim().isEmpty()) {
             failedValidationRule = null
+            failedValidationSupportingText = null
             return
         }
 
-        // In order to give "consistent" supportingText, we give precedence to whichever
+        // In order to give "consistent" supportingText, we give precedence  whichever
         // validation generated the current supporting text.
         val reorderedValidations =
             listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
@@ -3417,12 +3421,40 @@ fun ValidatedTextField(
                 break
             }
         }
+
+        Log.d("MyAppVTF", "after ufvr $failedValidationRule")
+        if (failedValidationRule == null) {
+            // Everything's OK. Clear any supporting text immediately.
+            failedValidationSupportingText = null
+        } else {
+            // Something's wrong.
+            //
+            // If there is currently no supporting text and the user is actively editing (as
+            // determined by our caller passing a non-0 value for innerMessageDelayMillis), we don't
+            // want to distract the user by popping some in when they may be in the middle of typing
+            // and will correct the problem themselves, so we only show supporting text after
+            // they've stopped typing. (Imagine they are moving the decimal point; they type in a
+            // "new" one in the correct place and then go to delete the "old" one. It's annoying if
+            // a nagging message pops up after typing the new one telling them they have two decimal
+            // points when they were already addressing the problem.)
+            //
+            // If there is already supporting text, it's probably less annoying to keep
+            // showing some (currently valid) supporting text, rather than removing it while
+            // the user types and possibly having it pop back in again afterwards.
+            if (failedValidationSupportingText == null && innerMessageDelayMillis != 0L) {
+                delayJob = CoroutineScope(Dispatchers.Main).launch {
+                    delay(innerMessageDelayMillis)
+                    failedValidationSupportingText = failedValidationRule!!.message
+                }
+            } else {
+                failedValidationSupportingText = failedValidationRule!!.message
+            }
+        }
     }
 
     LaunchedEffect(validationRulesKey) {
-        // TODO: I think this kind of works but there is some probably invalid or misplaced or not being executed logic which means the supporting text is not being propagated when this happens - remember the extra wrinkle around our "fake" supportingText
         Log.d("MyAppVTF", "LAUNCHED EFFECT")
-        updateFailedValidationRule(value.text)
+        updateFailedValidationRule(value.text, 0)
     }
 
     // We have this function to make it easier to pass a literal null to TextField's supportingText
@@ -3452,34 +3484,8 @@ fun ValidatedTextField(
         onValueChange = { newValue ->
             delayJob?.cancel()
             if (onCandidateValueChange(newValue.text)) {
-                updateFailedValidationRule(newValue.text)
-                Log.d("MyAppVTF", "after ufvr $failedValidationRule")
-                if (failedValidationRule == null) {
-                    // Everything's OK. Clear any supporting text immediately.
-                    failedValidationSupportingText = null
-                } else {
-                    // Something's wrong.
-                    //
-                    // If there is currently no supporting text, we don't want to distract the user
-                    // by popping some in when they may be in the middle of typing and will correct
-                    // the problem themselves, so we only show supporting text after they've stopped
-                    // typing. (Imagine they are moving the decimal point; they type in a "new" one
-                    // in the correct place and then go to delete the "old" one. It's annoying if a
-                    // nagging message pops up after typing the new one telling them they have two
-                    // decimal points when they were already addressing the problem.)
-                    //
-                    // If there is already supporting text, it's probably less annoying to keep
-                    // showing some (currently valid) supporting text, rather than removing it while
-                    // the user types and possibly having it pop back in again afterwards.
-                    if (failedValidationSupportingText == null) {
-                        delayJob = CoroutineScope(Dispatchers.Main).launch {
-                            delay(messageDelayMillis)
-                            failedValidationSupportingText = failedValidationRule!!.message
-                        }
-                    } else {
-                        failedValidationSupportingText = failedValidationRule!!.message
-                    }
-                }
+                updateFailedValidationRule(newValue.text, messageDelayMillis)
+
 
                 onValueChange(newValue)
             }
@@ -3493,8 +3499,8 @@ fun ValidatedTextField(
                 // This case occurs when we are first composed, so we get to immediately show any
                 // supportingText then, as well as doing it when we lose focus and want to show
                 // any previously-delayed message.
-                updateFailedValidationRule(value.text)
-                failedValidationSupportingText = failedValidationRule?.message
+                updateFailedValidationRule(value.text, 0)
+                // TODO? failedValidationSupportingText = failedValidationRule?.message
             }
         },
         supportingText = getSupportingText(),
@@ -3704,8 +3710,8 @@ class EditPriceViewModel(
         // TODO: NOT SURE IF !! OK, IT PROBABLY IS BUT NEED TO THINK
         uiContent!!.editablePrice.value = newEditablePrice
         uiContent!!.saveEditablePriceState(savedStateHandle)
-        // TODO: There might be a case for setting allowDecimals = false if maxDecimals is 0. In practice it's probably harmless-ish, because "1234." will happily parse as "1234". It might be less confusing for the user if we did just disallow decimal separators in this case though.
-        packSizeValidationRules = numericValidationRules(allowDecimals = true, allowZero = false, maxDecimals = newEditablePrice.measureUnit.maxDecimals)
+        val maxDecimals = newEditablePrice.measureUnit.maxDecimals
+        packSizeValidationRules = numericValidationRules(allowDecimals = if (maxDecimals > 0) true else false, allowZero = false, maxDecimals = maxDecimals)
     }
 
     // TODO: I suspect this should *either* be moved down into a rememberSaveable inside the composable,
@@ -3715,12 +3721,6 @@ class EditPriceViewModel(
 
     // This default is just to make initialisation possible; in reality we expect this to be
     // overwritten before it's used.
-    // TODONOW: We may need to make this a State<> or something, because when you change the units,
-    // the rules change and we need to trigger the validatedtextfield to update its supportingText -
-    // e.g. suppose we have "3.1234 l" with message "only 3 dp allowed" and the unit changes to ml
-    // so the error should be "no decimals allwoed" but the old message will stay up - there may be
-    // an extra wrinkle beyond stateful observation of this depending how the "current supporting
-    // text" is tracked
     var packSizeValidationRules = emptyList<ValidationRule>()
 
     // TODONOW: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRICEVALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
