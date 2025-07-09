@@ -3618,18 +3618,6 @@ class SharedViewModel : ViewModel() {
             source = source
         )
     }
-
-    /* TODO DELETE?! KEEPING AROUND FOR A BIT FROM GROK EXAMPLE JUST IN CASE IT'S HELPFUL
-    private val _selectedItem = MutableStateFlow<Item?>(null)
-    val selectedItem: StateFlow<Item?> = _selectedItem.asStateFlow()
-
-    fun selectItem(item: Item) {
-        _selectedItem.value = item
-    }
-
-    fun clearItem() {
-        _selectedItem.value = null
-    } */
 }
 
 fun splitAroundDigits(input: String): Pair<String, String> {
@@ -3922,6 +3910,8 @@ fun AppNavigation() {
                 vm.updateLocaleDependencies(Locale.getDefault())
             }
 
+            // TODO: Maybe editPriceScreenUIContent should be private or read-only and the
+            // set-to-null at least should be done via a function call.
             if (sharedViewModel.editPriceScreenUIContent != null) {
                 vm.setUIContent(sharedViewModel.editPriceScreenUIContent!!)
                 sharedViewModel.editPriceScreenUIContent = null
