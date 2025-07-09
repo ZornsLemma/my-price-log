@@ -3317,7 +3317,9 @@ fun numericValidationRules(
             null
         },
 
-        // This is a catch-all; in practice we expect to catch all problems before this, but we don't want to have a string which can't be converted (which would cause an error on trying to save) which the user hasn't been warned about.
+        // This is a catch-all; in practice we expect to catch all problems before this, but we
+        // don't want to have a string which can't be converted (which would cause an error on
+        // trying to save) which the user hasn't been warned about.
         ValidationRule({ attemptedParse(it) != null }, "Invalid number"),
     )
 }
@@ -3382,7 +3384,6 @@ fun ValidatedTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     messageDelayMillis: Long = defaultValidationMessageDelayMillis,
 ) {
-    // TODONOW: ADDING THE validationRules key to the next two lines has broken this and I am trying to figure out why - I *suspect* the problem is the lambdas that get "dynamically created" (maybe any lambda would do this) - the fix might be to simply pass the measurement unit as a key, but need to think this through - that may not even be the problem, but it's a likely next avenue to follow - we'd probably call the new paramaeter validationRuleKey or something, but our callers would basically be passing the measure unit as that's what controls the validation rules
     Log.d("MyAppVTF", "input == previousInput? ${remember { validationRules }} == $validationRules")
     var failedValidationSupportingText by rememberSaveable(validationRulesKey) { mutableStateOf<String?>(null) }
     var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule?>(null) }
@@ -3849,15 +3850,6 @@ class EditPriceViewModel(
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigation() {
-// TODONOW: We might be completely screwed here. If Android kills this app in the background
-// then restores it, the viewmodel(s) will all go with it. That's fine on the home screen, I
-// think. But if the edit screen is the foreground screen, all the state it needs to edit is
-// completely blown away. I haven't yet tried to test this, but this could be a showstopper.
-// OK, reading around a bit, I suspect this *might* be kind-of OK, we probably need to use
-// a SavedStateHandle inside our ViewModel for "stuff that has to survive this kind of stuff"
-// and just let that handle it. There may still be some navigation-y stuff and I need to read
-// up on this more.
-
     val navController = rememberNavController()
     val sharedViewModel: SharedViewModel =
         viewModel(LocalContext.current as ComponentActivity) // TODO: perplexity voodoo
