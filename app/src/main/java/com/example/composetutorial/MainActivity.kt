@@ -2337,13 +2337,14 @@ data class EditablePrice(
             minDecimals = 2,
             maxDecimals = 2
         ),
-        // TODONOW: We need to be careful about rounding and dps here - for non-metric stuff, there
-        // may be some low digits of "noise"
+        // Rounding is particularly important here - for non-metric measures, which are stored in
+        // doubles in metric base units in the database, if we didn't round we could end up with
+        // some visible noise in the least significant decimal places.
         measureValue =
             formatDoubleForEditing(
                 price.measure.value,
                 minDecimals = 0,
-                maxDecimals = 3, // TODO: HARDCODED VALUE IS A HACK
+                maxDecimals = price.measure.unit.maxDecimals,
             ),
         measureUnit = price.measure.unit,
         confirmed = price.confirmed,
@@ -3262,8 +3263,8 @@ fun validationRulesOk(validationRules: List<ValidationRule>, value: String): Boo
 // native symbols. This could be a setting of course but don't rush to make it one.
 fun parseStringAsDoubleOrNull(locale: Locale, string: String): Double? {
     val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
-// If input filtering allowed "-" characters through they are significant, so we don't strip
-// them out here. This is harmless if they were never allowed through, of course.
+    // If input filtering allowed "-" characters through they are significant, so we don't strip
+    // them out here. This is harmless if they were never allowed through, of course.
     val insignificantCharsRegex = "[^-0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
     return string
         .replace(insignificantCharsRegex, "")
@@ -3276,7 +3277,7 @@ fun parseStringAsDoubleOrNull(locale: Locale, string: String): Double? {
 fun numericValidationRules(
     allowDecimals: Boolean = true,
     allowZero: Boolean = true,
-    maxDp: Int? = null,
+    maxDecimals: Int? = null,
 ): List<ValidationRule> {
     val locale = Locale.getDefault()
     val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
@@ -3294,12 +3295,12 @@ fun numericValidationRules(
             if (allowDecimals) "Only one decimal point allowed" else "Only whole numbers allowed"
         ),
 
-        if (maxDp != null) {
+        if (maxDecimals != null) {
             // TODO: We could allow extra decimal places if they are all zeros? I could see arguments either way.
             ValidationRule({
                 val parts = sanitiseCandidate(it).split(decimalSeparator)
-                parts.size != 2 || parts[1].length <= maxDp
-            }, "No more than $maxDp decimal places allowed")
+                parts.size != 2 || parts[1].length <= maxDecimals
+            }, "No more than $maxDecimals decimal places allowed")
         } else {
             null
         },
@@ -3693,11 +3694,11 @@ class EditPriceViewModel(
     // TODO: Even if Locale.getDefault() is sub-optimal, this is fine as it's really only a default. updateLocaleDependencies() should be called almost immediately - maybe do some test logging to check that?
     // TODONOW: HARDCODING 2DP FOR PACK SIZE IS A HACK - SHOULD PROBABLY VARY WITH UNIT???
     var packSizeValidationRules =
-        numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
+        numericValidationRules(allowDecimals = true, allowZero = false, maxDecimals = 2)
 
     // TODONOW: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRICEVALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
     private fun getPriceValidationRules(locale: Locale) =
-        numericValidationRules(allowDecimals = true, allowZero = false, maxDp = 2)
+        numericValidationRules(allowDecimals = true, allowZero = false, maxDecimals = 2)
 
     // TODONOW: There's probably a lot of redundancy with the currency stuff given how it's evolved
 
@@ -3743,7 +3744,7 @@ class EditPriceViewModel(
                 validationRules = numericValidationRules(
                     allowDecimals = true,
                     allowZero = false,
-                    maxDp = currencyInstance.defaultFractionDigits
+                    maxDecimals = currencyInstance.defaultFractionDigits
                 )
             )
         }
