@@ -104,6 +104,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.focusRequester
@@ -111,6 +112,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardType
@@ -417,7 +419,7 @@ fun formatDouble(
     minDecimals: Int,
     maxDecimals: Int,
     useLocaleGrouping: Boolean,
-    locale: Locale = Locale.getDefault()
+    locale: Locale // = Locale.getDefault() // TODO: GET RID OF DEFAULT HERE?
 ): String {
     val numberFormat = NumberFormat.getNumberInstance(locale)
     numberFormat.minimumFractionDigits = minDecimals
@@ -455,8 +457,8 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
     // international angle, I suspect that in practice we don't want grouping separators in our
     // measures even when they're for display only - "2272 ml" feels better than "2,272 ml", at
     // least to me.
-    fun toDisplayString(): String =
-        "${formatDouble(value, minDecimals = 0, maxDecimals = unit.maxDecimals, useLocaleGrouping = false)} ${unit.symbol}"
+    fun toDisplayString(locale: Locale): String =
+        "${formatDouble(value, minDecimals = 0, maxDecimals = unit.maxDecimals, useLocaleGrouping = false, locale)} ${unit.symbol}"
 }
 
 @Database(
@@ -1688,13 +1690,12 @@ fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's O
     Text(relativeTime)
 }
 
-// TODO: This might want to take a locale object so we don't have to use Locale.getDefault()
-fun formatPrice(amount: Double, dataSet: DataSet): String {
+fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
     // At least on Android this doesn't throw for invalid three-letter currency codes but it will
     // throw if given currency code "AAAA", so it seems safest to catch exceptions and have a
     // fallback, even if it's not great.
     try {
-        val numberFormat = NumberFormat.getCurrencyInstance(Locale.getDefault()).apply {
+        val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
             currency = Currency.getInstance(dataSet.currencyCode)
         }
         return numberFormat.format(amount)
@@ -1762,8 +1763,8 @@ fun getFriendlyUnitPrice(
 
 // TODO: I suspect there is an open issue with whether the denominator should use the full name or
 // symbol for the unit, probably with some extra wrinkles around "per individual item".
-fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet): String {
-    return "${formatPrice(unitPrice.numerator, dataSet)}/${unitPrice.denominator.symbol}"
+fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet, locale: Locale): String {
+    return "${formatPrice(unitPrice.numerator, dataSet, locale)}/${unitPrice.denominator.symbol}"
 }
 
 // TODO: Note that selectedId is not used. I would like to use this to focus the previously
@@ -2010,10 +2011,11 @@ fun ItemSourceInfo(
                                 "${
                                     formatPrice(
                                         priceList[0].price,
-                                        dataSet
+                                        dataSet,
+                                        LocalConfiguration.current.locales[0]
                                     )
                                 } for ${
-                                    priceList[0].measure.toDisplayString()
+                                    priceList[0].measure.toDisplayString(LocalConfiguration.current.locales[0])
                                 }" /*, color = MaterialTheme.colorScheme.onSurface*/
                             )
                         }
@@ -2064,8 +2066,9 @@ fun ItemSourceInfo(
                             getUnitPrice(
                                 priceList[0].price,
                                 priceList[0].measure,
-                                selectedUnitPriceUnit
-                            ), dataSet
+                                selectedUnitPriceUnit,
+                            ), dataSet,
+                            LocalConfiguration.current.locales[0]
                         )
                         LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price",
                             text = unitPriceString,
@@ -2326,7 +2329,7 @@ data class EditablePrice(
     )
 
     // Constructor for editing an existing Price.
-    constructor(price: Price) : this(
+    constructor(price: Price, locale: Locale) : this(
         id = price.id,
         dataSetId = price.dataSetId,
         itemId = price.itemId,
@@ -2335,7 +2338,8 @@ data class EditablePrice(
             price.price,
             // TODONOW: hardcoding 2 dp is a hack
             minDecimals = 2,
-            maxDecimals = 2
+            maxDecimals = 2,
+            locale
         ),
         // Rounding is particularly important here - for non-metric measures, which are stored in
         // doubles in metric base units in the database, if we didn't round we could end up with
@@ -2345,6 +2349,7 @@ data class EditablePrice(
                 price.measure.value,
                 minDecimals = 0,
                 maxDecimals = price.measure.unit.maxDecimals,
+                locale
             ),
         measureUnit = price.measure.unit,
         confirmed = price.confirmed,
@@ -2392,7 +2397,8 @@ data class EditPriceScreenUIContent(
     // TODO: Move the following three to the start of this data class? Entirely cosmetic of course.
     val dataSet: DataSet,
     val item: Item,
-    val source: Source
+    val source: Source,
+    val frozenLocale: Locale,
 ) {
     fun saveState(handle: SavedStateHandle) {
         saveEditablePriceState(handle)
@@ -2400,6 +2406,7 @@ data class EditPriceScreenUIContent(
         handle[DATA_SET_KEY] = dataSet
         handle[ITEM_KEY] = item
         handle[SOURCE_KEY] = source
+        handle[LOCALE_TAG] = frozenLocale.toLanguageTag()
     }
 
     // This is a separate function to minimise the amount of work done after every user edit.
@@ -2413,6 +2420,7 @@ data class EditPriceScreenUIContent(
         private const val DATA_SET_KEY = "dataSet"
         private const val ITEM_KEY = "item"
         private const val SOURCE_KEY = "source"
+        private const val LOCALE_TAG = "localeTag"
 
         fun fromSavedState(handle: SavedStateHandle): EditPriceScreenUIContent? {
             val savedEditablePrice: EditablePrice? = handle[EDITABLE_PRICE_KEY]
@@ -2421,6 +2429,7 @@ data class EditPriceScreenUIContent(
             val savedDataSet: DataSet? = handle[DATA_SET_KEY]
             val savedItem: Item? = handle[ITEM_KEY]
             val savedSource: Source? = handle[SOURCE_KEY]
+            val savedLocaleTag: String? = handle[LOCALE_TAG]
             if (savedEditablePrice != null && savedOriginalPrice != null && savedDataSet != null && savedItem != null && savedSource != null) {
                 Log.d("MyApp", "reconstructed EditPriceScreenUIContent")
                 return EditPriceScreenUIContent(
@@ -2428,7 +2437,8 @@ data class EditPriceScreenUIContent(
                     savedOriginalPrice,
                     savedDataSet,
                     savedItem,
-                    savedSource
+                    savedSource,
+                    Locale.forLanguageTag(savedLocaleTag)
                 )
             } else {
                 Log.d("MyApp", "couldn't reconstruct EditPriceScreenUIContent")
@@ -3277,11 +3287,11 @@ fun parseStringAsDoubleOrNull(locale: Locale, string: String): Double? {
 // This assumes input filtering has already excluded characters other than digits, space, comma and
 // full stop.
 fun numericValidationRules(
+    locale: Locale,
     allowDecimals: Boolean = true,
     allowZero: Boolean = true,
     maxDecimals: Int? = null,
 ): List<ValidationRule> {
-    val locale = Locale.getDefault()
     val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
     val maxDecimalSeparators = if (allowDecimals) 1 else 0
 
@@ -3331,7 +3341,11 @@ fun NumericTextField(
     prefix: @Composable() (() -> Unit)? = null,
     suffix: @Composable() (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
-    validationRules: List<ValidationRule>? = numericValidationRules(),
+    // TODO: I am not completely happy about defaulting to the current locale here, since I am
+    // generally trying to make sure I think about the correct locale when I need one. This is a
+    // theoretically re-usable component and this isn't a ridiculous default in general, but it's
+    // not ideal for this app.
+    validationRules: List<ValidationRule>? = numericValidationRules(LocalConfiguration.current.locales[0]),
     validationRulesKey: Any? = null,
     onValueChange: (TextFieldValue) -> Unit,
     onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
@@ -3536,12 +3550,13 @@ fun ValidatedTextField(
 // are frowned on these days, this isn't just laziness on my part. (It's not part of this function,
 // but we do allow the user to add their own grouping separators if they want; we just ignore them
 // when parsing the string later.)
-fun formatDoubleForEditing(value: Double, minDecimals: Int, maxDecimals: Int) =
+fun formatDoubleForEditing(value: Double, minDecimals: Int, maxDecimals: Int, locale: Locale) =
     formatDouble(
         value,
         minDecimals = minDecimals,
         maxDecimals = maxDecimals,
-        useLocaleGrouping = false
+        useLocaleGrouping = false,
+        locale = locale,
     )
 
 @Composable
@@ -3639,8 +3654,13 @@ class SharedViewModel : ViewModel() {
     // TODO: Should we be using get/set functions or a read-only property and a set?
     var editPriceScreenUIContent: EditPriceScreenUIContent? = null
 
+    // frozenLocale becomes part of the edit screen state - it was used to convert the doubles to
+    // strings, and we will use it to convert the strings back to doubles if the user saves. If the
+    // user changes the locale while on the edit screen, we do *not* want to reflect that change
+    // immediately because it makes parsing the strings ambiguous. (TODO: This is not heavily tested
+    // and is not all that an important case, but I am at least trying to do things right.)
     // TODO: Inconsistent use of "State" and "Content" here - rename everything consistently
-    fun setEditPriceScreenStateFromHomeScreenState(uiContent: HomeScreenUIContent) {
+    fun setEditPriceScreenStateFromHomeScreenState(uiContent: HomeScreenUIContent, frozenLocale: Locale) {
         // !! is justified because uiContent was shown on the home screen and the edit price button
         // was visible, which can only happen if we have all three available.
         val dataSet = uiContent.dataSet!!
@@ -3650,7 +3670,7 @@ class SharedViewModel : ViewModel() {
         val price =
             uiContent.priceList.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
-        val editablePrice = if (price != null) EditablePrice(price) else EditablePrice(
+        val editablePrice = if (price != null) EditablePrice(price, frozenLocale) else EditablePrice(
             dataSetId = dataSet.id,
             itemId = item.id,
             sourceId = source.id,
@@ -3661,7 +3681,8 @@ class SharedViewModel : ViewModel() {
             originalPrice = editablePrice,
             dataSet = dataSet,
             item = item,
-            source = source
+            source = source,
+            frozenLocale = frozenLocale,
         )
     }
 }
@@ -3685,7 +3706,7 @@ fun splitAroundDigits(input: String): Pair<String, String> {
 
 class EditPriceViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
-    private val savedStateHandle: SavedStateHandle
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     val instanceId = UUID.randomUUID().toString() // TODO FOR DEBUG
 
@@ -3712,7 +3733,7 @@ class EditPriceViewModel(
         uiContent!!.editablePrice.value = newEditablePrice
         uiContent!!.saveEditablePriceState(savedStateHandle)
         val maxDecimals = newEditablePrice.measureUnit.maxDecimals
-        packSizeValidationRules = numericValidationRules(allowDecimals = if (maxDecimals > 0) true else false, allowZero = false, maxDecimals = maxDecimals)
+        packSizeValidationRules = numericValidationRules(uiContent!!.frozenLocale, allowDecimals = if (maxDecimals > 0) true else false, allowZero = false, maxDecimals = maxDecimals)
     }
 
     // TODO: I suspect this should *either* be moved down into a rememberSaveable inside the composable,
@@ -3726,7 +3747,7 @@ class EditPriceViewModel(
 
     // TODONOW: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRICEVALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
     private fun getPriceValidationRules(locale: Locale) =
-        numericValidationRules(allowDecimals = true, allowZero = false, maxDecimals = 2)
+        numericValidationRules(uiContent!!.frozenLocale, allowDecimals = true, allowZero = false, maxDecimals = 2)
 
     // TODONOW: There's probably a lot of redundancy with the currency stuff given how it's evolved
 
@@ -3741,13 +3762,17 @@ class EditPriceViewModel(
     // TODO: MutableMap is not thread safe. I don't think this is a problem, but be aware of it - I think we could switch to non-mutable Map and replace-in-place if necessary
     val currencyFormatMap: MutableMap<String, CurrencyFormat> = mutableMapOf()
 
+    /* TODO DELETE
     // TODO: Even if Locale.getDefault() is sub-optimal, this is fine as it's really only a default. updateLocaleDependencies() should be called almost immediately - maybe do some test logging to check that?
     var locale: Locale = Locale.getDefault()
+    */
 
+    /* TODO DELETE
     fun updateLocaleDependencies(locale: Locale) {
         this.locale = locale
         currencyFormatMap.clear()
     }
+    */
 
     // TODO: This takes a DataSet not a currency code because later on a DataSet may allow custom currency formatting which overrides whatever the current locale wants to do.
     fun getCurrencyFormat(dataSet: DataSet): CurrencyFormat {
@@ -3756,7 +3781,7 @@ class EditPriceViewModel(
             // currencyInstance will give us the number of decimal places, but it won't give us a
             // prefix or suffix to use - which we need for currency TextFields. So we ask it to
             // format a sample price and take the prefix and suffix from that.
-            val numberFormat = NumberFormat.getCurrencyInstance(Locale.getDefault()).apply {
+            val numberFormat = NumberFormat.getCurrencyInstance(uiContent!!.frozenLocale).apply {
                 currency = currencyInstance
             }
             val sampleFormattedCurrency = numberFormat.format(1.0)
@@ -3770,6 +3795,7 @@ class EditPriceViewModel(
                 prefix = prefix.trim().ifBlank { null },
                 suffix = suffix.trim().ifBlank { null },
                 validationRules = numericValidationRules(
+                    uiContent!!.frozenLocale,
                     allowDecimals = true,
                     allowZero = false,
                     maxDecimals = currencyInstance.defaultFractionDigits
@@ -3805,7 +3831,7 @@ class EditPriceViewModel(
     }
 
     fun saveEditablePrice(editablePrice: EditablePrice) {
-        val price = editablePrice.toDomain(locale)
+        val price = editablePrice.toDomain(uiContent!!.frozenLocale)
         Log.d("MyApp", "saveEditablePrice price $price")
         if (price != null) {
             updateOrInsertPrice(price)
@@ -3915,8 +3941,9 @@ fun AppNavigation() {
             val vm: HomeViewModel =
                 viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
             Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
+            val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
             HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
-                sharedViewModel.setEditPriceScreenStateFromHomeScreenState(uiContent)
+                sharedViewModel.setEditPriceScreenStateFromHomeScreenState(uiContent, locale)
                 navController.navigate("editPrice")
             })
         }
@@ -3943,10 +3970,12 @@ fun AppNavigation() {
             // if re-use of this composable (maybe prevented via randomUUID route hack?) will not pick up the
             // changes.
 
+            /* TODO: DELETE?
             // TODO: Test this but doing it this way ought to mean we correctly pick up locale changes while we are on screen
             LaunchedEffect(Locale.getDefault()) {
                 vm.updateLocaleDependencies(Locale.getDefault())
             }
+            */
 
             // TODO: Maybe editPriceScreenUIContent should be private or read-only and the
             // set-to-null at least should be done via a function call.
