@@ -3684,6 +3684,8 @@ class EditPriceViewModel(
         // TODO: NOT SURE IF !! OK, IT PROBABLY IS BUT NEED TO THINK
         uiContent!!.editablePrice.value = newEditablePrice
         uiContent!!.saveEditablePriceState(savedStateHandle)
+        // TODO: There might be a case for setting allowDecimals = false if maxDecimals is 0. In practice it's probably harmless-ish, because "1234." will happily parse as "1234". It might be less confusing for the user if we did just disallow decimal separators in this case though.
+        packSizeValidationRules = numericValidationRules(allowDecimals = true, allowZero = false, maxDecimals = newEditablePrice.measureUnit.maxDecimals)
     }
 
     // TODO: I suspect this should *either* be moved down into a rememberSaveable inside the composable,
@@ -3691,10 +3693,15 @@ class EditPriceViewModel(
     // into EditPriceScreenUIContent).
     var firstPackSizeOrPriceChangeOccurred: Boolean = false
 
-    // TODO: Even if Locale.getDefault() is sub-optimal, this is fine as it's really only a default. updateLocaleDependencies() should be called almost immediately - maybe do some test logging to check that?
-    // TODONOW: HARDCODING 2DP FOR PACK SIZE IS A HACK - SHOULD PROBABLY VARY WITH UNIT???
-    var packSizeValidationRules =
-        numericValidationRules(allowDecimals = true, allowZero = false, maxDecimals = 2)
+    // This default is just to make initialisation possible; in reality we expect this to be
+    // overwritten before it's used.
+    // TODONOW: We may need to make this a State<> or something, because when you change the units,
+    // the rules change and we need to trigger the validatedtextfield to update its supportingText -
+    // e.g. suppose we have "3.1234 l" with message "only 3 dp allowed" and the unit changes to ml
+    // so the error should be "no decimals allwoed" but the old message will stay up - there may be
+    // an extra wrinkle beyond stateful observation of this depending how the "current supporting
+    // text" is tracked
+    var packSizeValidationRules = emptyList<ValidationRule>()
 
     // TODONOW: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRICEVALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
     private fun getPriceValidationRules(locale: Locale) =
