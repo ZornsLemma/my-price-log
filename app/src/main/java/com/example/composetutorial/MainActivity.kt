@@ -3010,6 +3010,8 @@ fun EditPriceScreen(
                         label = { Text("Pack size") },
                         value = packSizeNumber,
                         validationRules = vm.packSizeValidationRules,
+                        // TODO: If this works we need a vrkey on other numerictextfields too
+                        validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
                         // TODONOW: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                         onValueChange = {
                             packSizeNumber = it
@@ -3297,6 +3299,7 @@ fun numericValidationRules(
 
         if (maxDecimals != null) {
             // TODO: We could allow extra decimal places if they are all zeros? I could see arguments either way.
+            // TODO: This message will be ungrammatical if maxDecimals == 1
             ValidationRule({
                 val parts = sanitiseCandidate(it).split(decimalSeparator)
                 parts.size != 2 || parts[1].length <= maxDecimals
@@ -3325,6 +3328,7 @@ fun NumericTextField(
     suffix: @Composable() (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
     validationRules: List<ValidationRule>? = numericValidationRules(),
+    validationRulesKey: Any? = null,
     onValueChange: (TextFieldValue) -> Unit,
     onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -3339,6 +3343,7 @@ fun NumericTextField(
         suffix = suffix,
         textStyle = textStyle,
         validationRules = (validationRules ?: emptyList()),
+        validationRulesKey = validationRulesKey,
         // TODO: We don't (we could, but probably no point) allow arbitrary onCandidateValueChange
         // functions to be supplied by our caller. We just hardcode this for now. We could
         // potentially accept some options from our caller which say whether decimal point (locale
@@ -3366,6 +3371,7 @@ fun ValidatedTextField(
     suffix: @Composable() (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
     validationRules: List<ValidationRule>? = null,
+    validationRulesKey: Any? = null,
     onCandidateValueChange: ((String) -> Boolean),
     onValueChange: (TextFieldValue) -> Unit,
     onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
@@ -3374,8 +3380,13 @@ fun ValidatedTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     messageDelayMillis: Long = defaultValidationMessageDelayMillis,
 ) {
-    var failedValidationSupportingText by rememberSaveable { mutableStateOf<String?>(null) }
-    var failedValidationRule by remember { mutableStateOf<ValidationRule?>(null) }
+    // TODONOW: ADDING THE validationRules key to the next two lines has broken this and I am trying to figure out why - I *suspect* the problem is the lambdas that get "dynamically created" (maybe any lambda would do this) - the fix might be to simply pass the measurement unit as a key, but need to think this through - that may not even be the problem, but it's a likely next avenue to follow - we'd probably call the new paramaeter validationRuleKey or something, but our callers would basically be passing the measure unit as that's what controls the validation rules
+    Log.d("MyAppVTF", "input == previousInput? ${remember { validationRules }} == $validationRules")
+    var failedValidationSupportingText by rememberSaveable(validationRulesKey) { mutableStateOf<String?>(null) }
+    var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule?>(null) }
+    Log.d("MyAppVTF", "validationRules?.size ${validationRules?.size}")
+    Log.d("MyAppVTF", "fVST $failedValidationSupportingText")
+    Log.d("MyAppVTF", "fVR $failedValidationRule")
     var delayJob by remember { mutableStateOf<Job?>(null) }
     var isFocused by remember { mutableStateOf(false) }
 
@@ -3402,14 +3413,21 @@ fun ValidatedTextField(
         for (validationRule in reorderedValidations) {
             if (!validationRule.validate(newValue)) {
                 failedValidationRule = validationRule
+                Log.d("MyAppVTF", "inside ufvr $failedValidationRule")
                 break
             }
         }
     }
 
+    LaunchedEffect(validationRulesKey) {
+        // TODO: I think this kind of works but there is some probably invalid or misplaced or not being executed logic which means the supporting text is not being propagated when this happens - remember the extra wrinkle around our "fake" supportingText
+        Log.d("MyAppVTF", "LAUNCHED EFFECT")
+        updateFailedValidationRule(value.text)
+    }
+
     // We have this function to make it easier to pass a literal null to TextField's supportingText
-// when we don't want anything, to prevent it allocating visual space for supportingText. TODO:
-// Some overlap with TextOrNull()?
+    // when we don't want anything, to prevent it allocating visual space for supportingText. TODO:
+    // Some overlap with TextOrNull()?
     fun getSupportingText(): @Composable (() -> Unit)? {
         if (onSupportingTextChange == null) {
             if (failedValidationSupportingText != null) {
@@ -3435,6 +3453,7 @@ fun ValidatedTextField(
             delayJob?.cancel()
             if (onCandidateValueChange(newValue.text)) {
                 updateFailedValidationRule(newValue.text)
+                Log.d("MyAppVTF", "after ufvr $failedValidationRule")
                 if (failedValidationRule == null) {
                     // Everything's OK. Clear any supporting text immediately.
                     failedValidationSupportingText = null
@@ -3493,6 +3512,7 @@ fun ValidatedTextField(
 
     if (onSupportingTextChange != null) {
         LaunchedEffect(failedValidationSupportingText) {
+            Log.d("MyAppVTF", "LE $failedValidationSupportingText")
             if (failedValidationSupportingText != null) {
                 onSupportingTextChange(true, failedValidationSupportingText)
             } else {
