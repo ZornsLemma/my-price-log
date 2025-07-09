@@ -390,7 +390,7 @@ fun getSiblingMeasureUnits(
 // TODODOUBLE: At the moment we have:
 // - formatDoubleLocaleAware()
 // - formatPrice()
-// - formatDecimal()
+// - formatDecimalForEditing()
 // - parseStringAsDoubleOrNull()
 
 // TODO: ChatGPT magic, is this really the best way?
@@ -2311,18 +2311,16 @@ data class EditablePrice(
         dataSetId = price.dataSetId,
         itemId = price.itemId,
         sourceId = price.sourceId,
-        price = formatDecimal(
+        price = formatDecimalForEditing(
             price.price,
             // TODONOW: hardcoding 2 dp is a hack
             minDp = 2,
             maxDp = 2
         ),
         // TODONOW: We need to be careful about rounding and dps here - for non-metric stuff, there
-        // may be some low digits of "noise" - Milk at ValueMart shows this well - OK, while the
-        // issue of decimal points is important, that specific thing was caused by my initial data
-        // using a slightly rounded ml value for imperial pint compared to the real data
+        // may be some low digits of "noise"
         measureValue =
-            formatDecimal(
+            formatDecimalForEditing(
                 price.measure.value,
                 minDp = null,
                 maxDp = null
@@ -3476,7 +3474,14 @@ fun ValidatedTextField(
     }
 }
 
-fun formatDecimal(number: Double, minDp: Int?, maxDp: Int?): String {
+// Formats a Double respecting the locale (important for decimal separators) and the specified
+// decimal place ranges. Grouping is *not* used - since this is for editing via a text field and the
+// grouping characters (if any) won't automagically stay in place as the user edits, we don't want
+// any. As far as I can tell, general consensus is that "clever" edit fields which automatically
+// insert or maintain grouping separators are frowned on these days, this isn't just laziness on my
+// part. (It's not part of this function, but we do allow the user to add their own grouping
+// separators if they want and we just ignore them when parsing the string later.)
+fun formatDecimalForEditing(number: Double, minDp: Int?, maxDp: Int?): String {
     val locale = Locale.getDefault()
     var format = NumberFormat.getNumberInstance(locale) as DecimalFormat
     format.isGroupingUsed = false
