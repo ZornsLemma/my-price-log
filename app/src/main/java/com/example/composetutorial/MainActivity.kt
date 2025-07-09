@@ -180,7 +180,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
-import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.concurrent.Executors
 
@@ -387,23 +386,22 @@ fun getSiblingMeasureUnits(
     return siblingMeasureUnits
 }
 
-// TODODOUBLE: At the moment we have:
-// - formatDoubleLocaleAware()
-// - formatPrice()
-// - formatDoubleForEditing()
-// - parseStringAsDoubleOrNull()
-
-// TODO: ChatGPT magic, is this really the best way?
-fun formatDoubleLocaleAware(
+// The arguments are mandatory here so we don't fail to think about what's correct when we call
+// this. For miscellaneous debug output we can just use string interpolation of course.
+fun formatDouble(
     value: Double,
+    minDecimals: Int,
     maxDecimals: Int,
+    useLocaleGrouping: Boolean,
     locale: Locale = Locale.getDefault()
 ): String {
-    val nf = NumberFormat.getNumberInstance(locale)
-    nf.maximumFractionDigits = maxDecimals
-    nf.minimumFractionDigits = 0 // Avoid trailing zeros
-    nf.isGroupingUsed = false    // Optional: disable thousands separator
-    return nf.format(value)
+    val numberFormat = NumberFormat.getNumberInstance(locale)
+    numberFormat.minimumFractionDigits = minDecimals
+    numberFormat.maximumFractionDigits = maxDecimals
+    if (!useLocaleGrouping) {
+        numberFormat.isGroupingUsed = false
+    }
+    return numberFormat.format(value)
 }
 
 @Parcelize // TODO: can we get rid of this later?
@@ -429,13 +427,12 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
 
     fun asValue(unit: MeasureUnit): Double = this.to(unit).value
 
-    // precision is a maximum number of decimal places; we will not pad with trailing zeroes.
-    // TODO: Is this used for user-facing output, or just for devCheck type debug output? If it's
-    // the latter, we should maybe using Kotlin's toDouble() which I think will always use "."
-    // decimal separators, because I'm pretty sure that's what will happen if we do $aDoubleValue
-    // for example. Rightly or wrongly, it *is* currently using for user output in "Price as sold".
+    // Based on my own experience and a possibly-trustworthy discussion with ChatGPT for an
+    // international angle, I suspect that in practice we don't want grouping separators in our
+    // measures even when they're for display only - "2272 ml" feels better than "2,272 ml", at
+    // least to me.
     fun toDisplayString(precision: Int): String =
-        "${formatDoubleLocaleAware(value, precision)} ${unit.symbol}"
+        "${formatDouble(value, minDecimals = 0, maxDecimals = precision, useLocaleGrouping = false)} ${unit.symbol}"
 }
 
 @Database(
@@ -2314,16 +2311,16 @@ data class EditablePrice(
         price = formatDoubleForEditing(
             price.price,
             // TODONOW: hardcoding 2 dp is a hack
-            minDp = 2,
-            maxDp = 2
+            minDecimals = 2,
+            maxDecimals = 2
         ),
         // TODONOW: We need to be careful about rounding and dps here - for non-metric stuff, there
         // may be some low digits of "noise"
         measureValue =
             formatDoubleForEditing(
                 price.measure.value,
-                minDp = null,
-                maxDp = null
+                minDecimals = 0,
+                maxDecimals = 3, // TODO: HARDCODED VALUE IS A HACK
             ),
         measureUnit = price.measure.unit,
         confirmed = price.confirmed,
@@ -3474,25 +3471,20 @@ fun ValidatedTextField(
     }
 }
 
-// Formats a Double respecting the locale (important for decimal separators) and the specified
-// decimal place ranges. Grouping is *not* used - since this is for editing via a text field and the
-// grouping characters (if any) won't automagically stay in place as the user edits, we don't want
-// any. As far as I can tell, general consensus is that "clever" edit fields which automatically
-// insert or maintain grouping separators are frowned on these days, this isn't just laziness on my
-// part. (It's not part of this function, but we do allow the user to add their own grouping
-// separators if they want and we just ignore them when parsing the string later.)
-fun formatDoubleForEditing(number: Double, minDp: Int?, maxDp: Int?): String {
-    val locale = Locale.getDefault()
-    var format = NumberFormat.getNumberInstance(locale) as DecimalFormat
-    format.isGroupingUsed = false
-    if (minDp != null) {
-        format.setMinimumFractionDigits(minDp)
-    }
-    if (maxDp != null) {
-        format.setMaximumFractionDigits(maxDp)
-    }
-    return format.format(number)
-}
+// Format a double to be edited by the user as a string in a TextField. Grouping is *not* used -
+// since this is for editing via a text field and the grouping characters (if any) won't
+// automagically stay in place as the user edits, we don't want any. As far as I can tell, general
+// consensus is that "clever" edit fields which automatically insert or maintain grouping separators
+// are frowned on these days, this isn't just laziness on my part. (It's not part of this function,
+// but we do allow the user to add their own grouping separators if they want; we just ignore them
+// when parsing the string later.)
+fun formatDoubleForEditing(value: Double, minDecimals: Int, maxDecimals: Int) =
+    formatDouble(
+        value,
+        minDecimals = minDecimals,
+        maxDecimals = maxDecimals,
+        useLocaleGrouping = false
+    )
 
 @Composable
 fun SettingsScreen(navController: NavHostController) {
