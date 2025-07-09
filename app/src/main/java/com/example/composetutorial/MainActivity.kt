@@ -390,7 +390,6 @@ fun getSiblingMeasureUnits(
 // TODODOUBLE: At the moment we have:
 // - formatDoubleLocaleAware()
 // - formatPrice()
-// - formatCurrency()
 // - formatDecimal()
 // - parseStringAsDoubleOrNull()
 
@@ -1668,28 +1667,28 @@ fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's O
     Text(relativeTime)
 }
 
-// TODO: I don't really understand this code, but having hacked it up a bit with some help from Grok
-// I think it is mostly doing what it "ought" to - I've experimented with forcing the demo data to
-// "EUR" and changing regions and languages and it does seem to mostly do the right thing. (Options
-// to override the system formatting and allow the user to specify their own prefix/suffix/dps on
-// the data set configuration would be nice in future, but not now.) These Java APIs make me edgy
-// that they are going to throw random exceptions and it would be good to try to review this code
-// cautiously, but this is not too bad.
+// TODO: This might want to take a locale object so we don't have to use Locale.getDefault()
 fun formatPrice(amount: Double, dataSet: DataSet): String {
-    // TODO: ChatGPT magic, hacked up
+    // At least on Android this doesn't throw for invalid three-letter currency codes but it will
+    // throw if given currency code "AAAA", so it seems safest to catch exceptions and have a
+    // fallback, even if it's not great.
     try {
         val numberFormat = NumberFormat.getCurrencyInstance(Locale.getDefault()).apply {
             currency = Currency.getInstance(dataSet.currencyCode)
         }
         return numberFormat.format(amount)
     }
-    // TODO: Are we catching too broadly here? This Java-ish stuff seems to just be able throw anything at any time
     catch (e: Exception) {
-        // TODO: Eventually we might want to see if there's any useful data in a currency prefix/suffix/decimal places set of fields in dataSet, but we don't have those yet.
+        // Generate a generic-ish "USD 1234" value as a fallback, without trying to use any
+        // localisation settings.
+        // TODO: Eventually we might want to see if there's any useful data in a currency
+        // prefix/suffix/decimal places set of fields in dataSet, but we don't have those yet. But
+        // even if we did, we'd probably already be using those in preference to
+        // getCurrencyInstance(), so they wouldn't help us at this point.
         val numberFormat = NumberFormat.getNumberInstance()
-        numberFormat.isGroupingUsed =
-            true // TODO: reasonable? probably mostly irrelevant in most currencies for our type of data
-        return "TODO" + numberFormat.format(amount)
+        // TODO: The "x" instead of a space in the next line is temporary, just to make it more
+        // obvious if this code is coming into play while I am developing/testing.
+        return "${dataSet.currencyCode}x${numberFormat.format(amount)}"
     }
 }
 
@@ -3475,14 +3474,6 @@ fun ValidatedTextField(
             }
         }
     }
-}
-
-// TODO: Grok code, may be useful, may be at least partly overlapping with my own format currency function
-private fun formatCurrency(amount: Double, locale: Locale, currencyCode: String): String {
-    val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
-        currency = Currency.getInstance(currencyCode)
-    }
-    return numberFormat.format(amount)
 }
 
 fun formatDecimal(number: Double, minDp: Int?, maxDp: Int?): String {
