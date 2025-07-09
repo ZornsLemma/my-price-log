@@ -219,25 +219,28 @@ enum class MeasureUnit(
     val unitFamilies: Set<UnitFamily>,
     val quantityType: QuantityType,
     val symbol: String,
+    val maxDecimals: Int,
     val toBase: Double,
     val displayOnly: Boolean
 ) {
     // Weight
-    G(101, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "g", 1.0, false),
+    G(101, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "g", 0, 1.0, false),
     G100(
         1001,
         setOf(UnitFamily.METRIC),
         QuantityType.WEIGHT,
         "100 g",
+        2,
         100.0,
         true
     ), // TODO: experimental
-    KG(102, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "kg", 1000.0, false),
+    KG(102, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "kg", 3, 1000.0, false),
     OZ(
         103,
         setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
         QuantityType.WEIGHT,
         "oz",
+        3, // allow for eighths
         28.3495,
         false
     ),
@@ -246,21 +249,23 @@ enum class MeasureUnit(
         setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
         QuantityType.WEIGHT,
         "lb",
+        3, // allow for eighths
         453.592,
         false
     ),
 
     // Volume
-    ML(201, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml", 1.0, false),
+    ML(201, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml", 0, 1.0, false),
     ML100(
         2001,
         setOf(UnitFamily.METRIC),
         QuantityType.VOLUME,
         "100 ml",
+        2,
         100.0,
         true
     ), // TODO: experimental
-    L(202, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "l", 1000.0, false),
+    L(202, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "l", 3, 1000.0, false),
 
     // TODO: Arguably imperial should come first here to match order in UnitFamily
     // TODO: As a massive hack to help me notice problems during debugging, I have replaced the space in "fl oz" with a U or I to
@@ -273,6 +278,7 @@ enum class MeasureUnit(
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
         "flUoz",
+        3, // allow for eighths
         29.5735,
         false
     ),
@@ -281,6 +287,7 @@ enum class MeasureUnit(
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
         "pt",
+        3, // allow for eighths
         473.176473,
         false
     ),
@@ -289,6 +296,7 @@ enum class MeasureUnit(
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
         "gal",
+        3, // allow for eighths
         3785.41,
         false
     ),
@@ -297,11 +305,26 @@ enum class MeasureUnit(
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
         "flIoz",
+        3, // allow for eighths
         28.4130625,
         false
     ),
-    IMPERIAL_PINT(205, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "pt", 568.26125, false),
-    IMPERIAL_GAL(206, setOf(UnitFamily.IMPERIAL), QuantityType.VOLUME, "gal", 4546.09, false),
+    IMPERIAL_PINT(
+        205,
+        setOf(UnitFamily.IMPERIAL),
+        QuantityType.VOLUME,
+        "pt",
+        3, // allow for eighths
+        568.26125,
+        false),
+    IMPERIAL_GAL(
+        206,
+        setOf(UnitFamily.IMPERIAL),
+        QuantityType.VOLUME,
+        "gal",
+        3, // allow for eighths
+        4546.09,
+        false),
 
     // Countable items
     // TODO: Arguably these should come first to match order in QuantityType
@@ -311,11 +334,12 @@ enum class MeasureUnit(
         setOf(UnitFamily.ITEM),
         QuantityType.ITEM,
         "",
+        0,
         1.0,
         false
     ), // TODO: RENAME "EACH" TO "ITEM"?
-    EACH10(302, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", 10.0, true),
-    EACH100(303, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", 100.0, true);
+    EACH10(302, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", 1, 10.0, true),
+    EACH100(303, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", 2, 100.0, true);
 
     companion object {
         private val measureUnitById = entries.associateBy { it.id }
@@ -431,8 +455,8 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
     // international angle, I suspect that in practice we don't want grouping separators in our
     // measures even when they're for display only - "2272 ml" feels better than "2,272 ml", at
     // least to me.
-    fun toDisplayString(precision: Int): String =
-        "${formatDouble(value, minDecimals = 0, maxDecimals = precision, useLocaleGrouping = false)} ${unit.symbol}"
+    fun toDisplayString(): String =
+        "${formatDouble(value, minDecimals = 0, maxDecimals = unit.maxDecimals, useLocaleGrouping = false)} ${unit.symbol}"
 }
 
 @Database(
@@ -1977,7 +2001,6 @@ fun ItemSourceInfo(
                     ) {
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Price as sold"
                         ) { // TODO: quite like this, but maybe "Shelf price"?
-                            // TODONOW: hard coding 2 dp is hacky
                             // TODO: There might be an argument for designing the UI to separate the
                             // price and quantity here, then we side-step the internationalisation
                             // issues of "for", which is *probably* tractable but might be a
@@ -1990,7 +2013,7 @@ fun ItemSourceInfo(
                                         dataSet
                                     )
                                 } for ${
-                                    priceList[0].measure.toDisplayString(2)
+                                    priceList[0].measure.toDisplayString()
                                 }" /*, color = MaterialTheme.colorScheme.onSurface*/
                             )
                         }
@@ -3230,6 +3253,13 @@ fun validationRulesOk(validationRules: List<ValidationRule>, value: String): Boo
 // could all want to use this code and we don't really want to duplicate it. Can/should we have
 // an object which is included by composition in all ViewModels that want it? Inheritance? Something
 // else?
+// TODO: There might be an argument for *not* allowing grouping characters in strings - not just
+// here, perhaps we even would always allow them here, but maybe more in TextFields. If a user is
+// mixing different "regions", they might get confused and type "." when the decimal separator is
+// "," or vice versa and enter junk, whereas if typing "." when it isn't the decimal separator is
+// discarded it's a little more obvious. Maybe this isn't a concern, given the device's region is
+// what (I think) matters here, not the dataSet's setting, so the user will always be using their
+// native symbols. This could be a setting of course but don't rush to make it one.
 fun parseStringAsDoubleOrNull(locale: Locale, string: String): Double? {
     val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
 // If input filtering allowed "-" characters through they are significant, so we don't strip
@@ -3238,7 +3268,7 @@ fun parseStringAsDoubleOrNull(locale: Locale, string: String): Double? {
     return string
         .replace(insignificantCharsRegex, "")
         .replace(decimalSeparator, '.')
-        .toDoubleOrNull()
+        .toDoubleOrNull() // not locale aware, decimal separator is always "."
 }
 
 // This assumes input filtering has already excluded characters other than digits, space, comma and
