@@ -390,7 +390,7 @@ fun getSiblingMeasureUnits(
 // TODODOUBLE: At the moment we have:
 // - formatDoubleLocaleAware()
 // - formatPrice()
-// - formatDecimalForEditing()
+// - formatDoubleForEditing()
 // - parseStringAsDoubleOrNull()
 
 // TODO: ChatGPT magic, is this really the best way?
@@ -2311,7 +2311,7 @@ data class EditablePrice(
         dataSetId = price.dataSetId,
         itemId = price.itemId,
         sourceId = price.sourceId,
-        price = formatDecimalForEditing(
+        price = formatDoubleForEditing(
             price.price,
             // TODONOW: hardcoding 2 dp is a hack
             minDp = 2,
@@ -2320,7 +2320,7 @@ data class EditablePrice(
         // TODONOW: We need to be careful about rounding and dps here - for non-metric stuff, there
         // may be some low digits of "noise"
         measureValue =
-            formatDecimalForEditing(
+            formatDoubleForEditing(
                 price.measure.value,
                 minDp = null,
                 maxDp = null
@@ -3481,7 +3481,7 @@ fun ValidatedTextField(
 // insert or maintain grouping separators are frowned on these days, this isn't just laziness on my
 // part. (It's not part of this function, but we do allow the user to add their own grouping
 // separators if they want and we just ignore them when parsing the string later.)
-fun formatDecimalForEditing(number: Double, minDp: Int?, maxDp: Int?): String {
+fun formatDoubleForEditing(number: Double, minDp: Int?, maxDp: Int?): String {
     val locale = Locale.getDefault()
     var format = NumberFormat.getNumberInstance(locale) as DecimalFormat
     format.isGroupingUsed = false
