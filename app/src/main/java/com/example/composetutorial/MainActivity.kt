@@ -4090,33 +4090,29 @@ Log.d("MyApp", baz.toString())
 
 // TOOD: I should probably limit all text fields to approx 1000 characters just to stop the user going crazy.
 
-// Note to self: As far as I can tell, Locale.getDefault() is set to the current locale when our
-// app process starts and is never automatically updated. Changes to localisation settings while we
-// are running will cause re-compositions and will be immediately available to composables using
-// LocalConfiguration.current.locales[0]. It is possible (although with race conditions around
-// re-composition timing and use by composables of non-composable functions) to update the value
-// returned by Locale.getDefault() to match LocalConfiguration.current.locales[0] using
-// Locale.setDefault(), but we don't really want to do this.
+// Note to self: Locale.getDefault() is initialised to the current locale when our app process
+// starts and is not automatically updated if the user changes the system locale while the app is
+// running. However, Compose's LocalConfiguration.current.locales[0] is updated live and immediately
+// reflects locale changes, triggering recompositions as needed.
 //
-// We adopt a different strategy for read-only screens and editing screens:
-// - For read-only screens, we react live to locale changes and use
-//   LocalConfiguration.current.locales[0], passing it around as necessary to make it available to
-//   non-composable code.
-// - For editing screens, we "freeze" a copy of the locale from LocalConfiguration.current.locales[0]
-//   when we start editing (at which point we have likely generated a locale-sensitive string
-//   representation of some values to be edited) and use that locale for the lifespan of the editing
-//   screen. This avoids problems like ambiguous interpretation of "," or "." as the decimal
-//   separator or grouping separator. (Because the values are strings and may be temporarily
-//   invalid, we cannot parse them to double in the old locale and re-generate strings in the new
-//   locale reliably.)
+// It is possible (though risky, due to race conditions with recomposition and non-composable code)
+// to update Locale.getDefault() via Locale.setDefault() to match
+// LocalConfiguration.current.locales[0], but we avoid this.
 //
-// In theory, an editing screen with no locale-sensitive editable data on it might be treated as a
-// read-only screen from this point of view.
+// Our strategy:
+// - For read-only screens, we react live to locale changes using
+//   LocalConfiguration.current.locales[0], passing it as needed to non-composable code.
+// - For editing screens, we "freeze" the locale from LocalConfiguration.current.locales[0] at the
+//   start of editing (when locale-sensitive string representations are generated) and use this
+//   locale for the duration of the editing session. This avoids issues like ambiguous
+//   interpretation of "," or "." as decimal/grouping separators. (As string representations of
+//   doubles may be temporarily un-parseable during editing, we cannot reliably parse them to double
+//   in the old locale and re-stringify in the new locale.)
 //
-// In general, we avoid using Locale.getDefault() and make locale parameters to functions explicit
-// without defaults to force us to think about where our locale is coming from.
+// Editing screens without locale-sensitive data can be treated as read-only from this perspective.
 //
-// TODO: Is this correct/OK?
+// In general, we avoid Locale.getDefault() and require explicit locale parameters to functions
+// (without defaults) to ensure we always consider the source of our locale.
 
 // TODONOW: ChatGPT on locales:
 // TL;DR
