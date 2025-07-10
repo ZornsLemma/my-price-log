@@ -101,6 +101,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -1301,7 +1302,7 @@ class HomeViewModel(
             ::Triple
         )
 
-        val TODORENAMEMEFLOW = combine(
+        val todoRenameMeFlow = combine(
             selectedSourceIdFlow,
             combinedDatabaseFlow
         ) { _, it -> it }
@@ -1310,7 +1311,7 @@ class HomeViewModel(
         // selection. However, it doesn't make any guarantees as to how long it takes to emit after
         // allUserInputFlow emits.
         val completeUIStateFlow =
-            TODORENAMEMEFLOW.flatMapLatest { (dataSetList, taggedItemListAndSourceList, taggedPriceList) ->
+            todoRenameMeFlow.flatMapLatest { (dataSetList, taggedItemListAndSourceList, taggedPriceList) ->
                 // We can take the current UI values here because ultimately that's all we care
                 // about; if the current flow value we're processing is older, we want to discard it
                 // anyway and because the flows are dependent on these parameters, they will emit
@@ -1373,7 +1374,7 @@ class HomeViewModel(
             // delays before the user sees any kind of response. Note that because we use
             // collectLatest(), if the user changes the inputs the timeout starts again, which is
             // what we want.
-            val TODO1 = allUserInputFlow.flatMapLatest { it -> // TODO: RENAME "it"
+            val todo1 = allUserInputFlow.flatMapLatest { _ ->
                 val newUIContent = withTimeoutOrNull(spinnerDelayMillis) {
                     completeUIStateFlow.first()
                 }
@@ -1387,7 +1388,7 @@ class HomeViewModel(
                 }
             }
 
-            val TODO2 = completeUIStateFlow.map { Pair(false /* loading */, it) }
+            val todo2 = completeUIStateFlow.map { Pair(false /* loading */, it) }
 
             // TODO: Is there a risk with merge().collectLatest() here that a "loading" state will
             // somehow come *after* the corresponding *loaded* state? If so we'd end up stuck with
@@ -1398,9 +1399,9 @@ class HomeViewModel(
             // put a distinctUntilChanged() after the merge that will catch any cases where we get a
             // duplicate emission because the database flow also emits the same thing at
             // approximately the same time
-            val TODO3 = merge(TODO1, TODO2)
+            val todo3 = merge(todo1, todo2)
 
-            TODO3.collectLatest { todoRename ->
+            todo3.collectLatest { todoRename ->
                 Log.d("MyFoo", "newUIState")
                 _uiState.value = todoRename
             }
@@ -1593,7 +1594,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     getId: (T) -> ID,
     getLabel: (T) -> String,
 ) {
-    var textFieldWidth by remember { mutableStateOf(0) }
+    var textFieldWidth by remember { mutableIntStateOf(0) }
     var isExpanded by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
@@ -1607,12 +1608,12 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             getLabel = getLabel,
         ) {
             val itemMap = items.associateBy { getId(it) }
-            val TODOPULLEDOUT: String = if (selectedId == null) "" else {
+            val todoPulledOut: String = if (selectedId == null) "" else {
                 val item = itemMap[selectedId]
                 if (item != null) getLabel(item) else "Invalid ID $selectedId"
             }
             TextField(
-                value = TODOPULLEDOUT,
+                value = todoPulledOut,
                 onValueChange = { /* No-op, handled by dropdown */ },
                 label = label,
                 readOnly = true,
