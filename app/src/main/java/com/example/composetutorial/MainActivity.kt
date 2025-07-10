@@ -3657,8 +3657,7 @@ class SharedViewModel : ViewModel() {
     // user changes the locale while on the edit screen, we do *not* want to reflect that change
     // immediately because it makes parsing the strings ambiguous. (TODO: This is not heavily tested
     // and is not all that an important case, but I am at least trying to do things right.)
-    // TODONOW: Inconsistent use of "State" and "Content" here - rename everything consistently - might actually be OK but think
-    fun setEditPriceScreenStateFromHomeScreenState(
+    fun setEditPriceScreenContentFromHomeScreenContent(
         uiContent: HomeScreenUIContent,
         frozenLocale: Locale
     ) {
@@ -3900,7 +3899,7 @@ fun AppNavigation() {
             Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
             val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
             HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
-                sharedViewModel.setEditPriceScreenStateFromHomeScreenState(uiContent, locale)
+                sharedViewModel.setEditPriceScreenContentFromHomeScreenContent(uiContent, locale)
                 navController.navigate("editPrice")
             })
         }
@@ -3920,15 +3919,17 @@ fun AppNavigation() {
         ) { backStackEntry ->
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
-            // TODONOW: If we were to provide a Factory *right here*, it might be able to take
-            // sharedViewModel.editPriceScreenUIContent and apply it to our EditPriceViewModel on
-            // construction, eliminating the need for the transitory null/emptiness on some of its
-            // properties.
             val factory = remember(backStackEntry) {
                 viewModelFactoryWithHandle { extras, savedStateHandle ->
-                    val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+                    val app =
+                        extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
                     // TODO: !! ON NEXT LINE FEELS A BIT HACKY BUT IS PROBABLY OK
-                    EditPriceViewModel(app.priceTrackerRepository, savedStateHandle, sharedViewModel.editPriceScreenUIContent ?: EditPriceScreenUIContent.fromSavedState(savedStateHandle)!! )
+                    EditPriceViewModel(
+                        app.priceTrackerRepository,
+                        savedStateHandle,
+                        sharedViewModel.editPriceScreenUIContent
+                            ?: EditPriceScreenUIContent.fromSavedState(savedStateHandle)!!
+                    )
                 }
             }
             val vm: EditPriceViewModel = viewModel(backStackEntry, factory = factory)
