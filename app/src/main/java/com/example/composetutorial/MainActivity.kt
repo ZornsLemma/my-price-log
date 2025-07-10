@@ -3765,9 +3765,6 @@ class EditPriceViewModel(
     // into EditPriceScreenUIContent).
     var firstPackSizeOrPriceChangeOccurred: Boolean = false
 
-    // TODONOW: There's probably a lot of redundancy with the currency stuff given how it's evolved
-    // - maybe fixed up now but needs a review.
-
     enum class ValidationState {
         OK,
         PACK_SIZE_INVALID,
@@ -4085,7 +4082,6 @@ fun getCurrencyFormat(dataSet: DataSet, locale: Locale): CurrencyFormat {
         )
     )
 }
-
 
 /* TODO TEMP TEST CODE FOR MEASUREDVALUE
 val foo = MeasuredValue(5.0, MeasureUnit.KG)
