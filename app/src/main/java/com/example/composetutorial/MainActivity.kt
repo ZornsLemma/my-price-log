@@ -3777,6 +3777,7 @@ class EditPriceViewModel(
 
     init {
         Log.d("MyApp", "EditPriceScreenViewModel $instanceId $this")
+        setUIContent(uiContentTODORENAMEORWHATEVER) // TODO: TEMP HACK BEFORE I REFACTOR
     }
 
     // This is only nullable because we may not have a saved state and it may be some time before
@@ -4005,13 +4006,6 @@ fun AppNavigation() {
                 vm.updateLocaleDependencies(Locale.getDefault())
             }
             */
-
-            // TODO: Maybe editPriceScreenUIContent should be private or read-only and the
-            // set-to-null at least should be done via a function call.
-            if (sharedViewModel.editPriceScreenUIContent != null) {
-                vm.setUIContent(sharedViewModel.editPriceScreenUIContent!!)
-                sharedViewModel.editPriceScreenUIContent = null
-            }
 
             EditPriceScreen(
                 vm, navController,
