@@ -167,7 +167,6 @@ import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.log10
 import androidx.datastore.preferences.core.edit
-import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
@@ -716,7 +715,7 @@ object AppViewModelProvider {
                 this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
             HomeViewModel(app.priceTrackerRepository, app)
         }
-        /* TODO DELETE?
+        /* TODO DELETE LATER, KEEPING AROUND FOR REF FOR OTHER VIEWS IF NEC FOR NOW
         initializer {
             val app =
                 this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
@@ -3713,35 +3712,6 @@ fun splitAroundDigits(input: String): Pair<String, String> {
     return Pair(prefix, suffix)
 }
 
-/* TODO DELETE
-// TODO: ChatGPT magic
-inline fun <reified VM : ViewModel> savedStateFactory(
-    crossinline creator: (SavedStateHandle) -> VM
-): ViewModelProvider.Factory = object : AbstractSavedStateViewModelFactory(null, null) {
-    override fun <T : ViewModel?> create(
-        key: String,
-        modelClass: Class<T>,
-        handle: SavedStateHandle
-    ): T {
-        return creator(handle) as T
-    }
-}
-*/
-
-/*
-// TODO: ChatGPT magic
-inline fun <reified VM : ViewModel> savedStateViewModelFactory(
-    crossinline builder: (SavedStateHandle) -> VM
-): ViewModelProvider.Factory {
-    return viewModelFactory {
-        initializer {
-            val handle = createSavedStateHandle()
-            builder(handle)
-        }
-    }
-}
-*/
-
 // TODO: ChatGPT magic
 inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
     crossinline builder: (CreationExtras, SavedStateHandle) -> VM
@@ -3754,74 +3724,45 @@ inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
     }
 }
 
-/* TODO DELETE?
-class EditPriceViewModelFactory(
-    private val priceTrackerRepository: PriceTrackerRepository,
-    private val savedStateHandle: SavedStateHandle,
-    private val uiContent: EditPriceScreenUIContent
-) : ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val savedStateHandle = createSavedStateHandle()
-        return EditPriceViewModel(priceTrackerRepository, savedStateHandle, uiContent) as T
-    }
-}
-*/
-
 class EditPriceViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
-    private val uiContentTODORENAMEORWHATEVER: EditPriceScreenUIContent,
+    public val uiContent: EditPriceScreenUIContent,
 ) : ViewModel() {
     val instanceId = UUID.randomUUID().toString() // TODO FOR DEBUG
+    var packSizeValidationRules = generatePackSizeValidationRules()
+    var currencyFormat = getCurrencyFormat(uiContent.dataSet, uiContent.frozenLocale)
 
     init {
         Log.d("MyApp", "EditPriceScreenViewModel $instanceId $this")
-        setUIContent(uiContentTODORENAMEORWHATEVER) // TODO: TEMP HACK BEFORE I REFACTOR
-    }
-
-    // This is only nullable because we may not have a saved state and it may be some time before
-    // the "real" state is used to overwrite it, although that should happen before anything that
-    // cares can observe it.
-    private var _uiContent: EditPriceScreenUIContent? =
-        EditPriceScreenUIContent.fromSavedState(savedStateHandle)
-    val uiContent get() = _uiContent
-
-    // This function is intended to be called once when the edit price screen is first composed and
-    // populates the ViewModel with the data handed over by the home screen.
-    fun setUIContent(newUIContent: EditPriceScreenUIContent) {
-        Log.d("MyApp", "EditPriceScreenViewModel.setUIContent($newUIContent)")
-        _uiContent = newUIContent
-        newUIContent.saveState(savedStateHandle)
-        currencyFormat = getCurrencyFormat(newUIContent.dataSet, newUIContent.frozenLocale)
-        updateAfterSetUIContentEditablePrice(newUIContent.editablePrice.value)
+        Log.d("MyApp", "EditPriceScreenViewModel.init($uiContent)")
+        uiContent.saveState(savedStateHandle)
     }
 
     fun setUIContentEditablePrice(newEditablePrice: EditablePrice) {
         Log.d("MyApp", "EditPriceScreenViewModel.setUIContentEditablePrice($newEditablePrice)")
-        // TODO: NOT SURE IF !! OK, IT PROBABLY IS BUT NEED TO THINK
-        uiContent!!.editablePrice.value = newEditablePrice
-        uiContent!!.saveEditablePriceState(savedStateHandle)
-        updateAfterSetUIContentEditablePrice(newEditablePrice)
+        // TODO: We could potentially refactor so that if newEditablePrice has the same measure unit
+        // as uiContent before we update it, we don't regenerate the pack size validation rules.
+        uiContent.editablePrice.value = newEditablePrice
+        uiContent.saveEditablePriceState(savedStateHandle)
+        packSizeValidationRules = generatePackSizeValidationRules()
     }
 
-    // TODO: I don't like having to call this function in two places, but it fixes a bug for now (we
-    // weren't setting packSizeValidationRules on first entry to the edit screen) and I can think
-    // about refactoring later.
-    fun updateAfterSetUIContentEditablePrice(newEditablePrice: EditablePrice) {
-        val maxDecimals = newEditablePrice.measureUnit.maxDecimals
-        packSizeValidationRules = numericValidationRules(uiContent!!.frozenLocale, allowDecimals = if (maxDecimals > 0) true else false, allowZero = false, maxDecimals = maxDecimals)
+    // TODO: Rename "generate" not "get" to show it "does work"?
+    private fun generatePackSizeValidationRules(): List<ValidationRule> {
+        val maxDecimals = uiContent.editablePrice.value.measureUnit.maxDecimals
+        return numericValidationRules(
+            uiContent.frozenLocale,
+            allowDecimals = maxDecimals > 0,
+            allowZero = false,
+            maxDecimals = maxDecimals
+        )
     }
 
     // TODO: I suspect this should *either* be moved down into a rememberSaveable inside the composable,
     // *or* it should be preserved across process death (perhaps, but not necessarily, by being moved
     // into EditPriceScreenUIContent).
     var firstPackSizeOrPriceChangeOccurred: Boolean = false
-
-    // This default/nullability is just to make initialisation possible; in reality we expect these
-    // to be overwritten before they're used.
-    var packSizeValidationRules = emptyList<ValidationRule>()
-    var currencyFormat: CurrencyFormat? = null
 
     // TODONOW: There's probably a lot of redundancy with the currency stuff given how it's evolved
     // - maybe fixed up now but needs a review.
@@ -3986,9 +3927,10 @@ fun AppNavigation() {
             // construction, eliminating the need for the transitory null/emptiness on some of its
             // properties.
             val factory = remember(backStackEntry) {
-                viewModelFactoryWithHandle { extras, handle ->
+                viewModelFactoryWithHandle { extras, savedStateHandle ->
                     val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
-                    EditPriceViewModel(app.priceTrackerRepository, handle, sharedViewModel.editPriceScreenUIContent!!)
+                    // TODO: !! ON NEXT LINE FEELS A BIT HACKY BUT IS PROBABLY OK
+                    EditPriceViewModel(app.priceTrackerRepository, savedStateHandle, sharedViewModel.editPriceScreenUIContent ?: EditPriceScreenUIContent.fromSavedState(savedStateHandle)!! )
                 }
             }
             val vm: EditPriceViewModel = viewModel(backStackEntry, factory = factory)
