@@ -32,7 +32,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -534,7 +533,7 @@ suspend fun populateDemoData(context: Context) {
                 allowUSCustomary = true
             )
         ) // TODO TEMP HACK
-        val dataSetId3 = db.dataSetDao().insert(
+        db.dataSetDao().insert(
             DataSet(
                 name = "Demo 3",
                 currencyCode = "AUD",
@@ -543,7 +542,7 @@ suspend fun populateDemoData(context: Context) {
                 allowUSCustomary = true
             )
         ) // TODO TEMP HACK
-        val item21 = db.productDao().insert(
+        db.productDao().insert(
             Item(
                 dataSetId = dataSetId2,
                 name = "Demo 2 Item",
@@ -1222,7 +1221,7 @@ class HomeViewModel(
 
     init {
         // This forces the delegate to initialize safely on the main thread TODO: VOODOO
-        val unused = app.dataStore
+        @Suppress("UNUSED_VARIABLE") val unused = app.dataStore
 
         // TODO: On the very first run when the database is created, we appear to end up with the
         // app running with no data sets - it has to be killed and restarted to see them. Not
@@ -1408,9 +1407,11 @@ class HomeViewModel(
     }
 }
 
+/* TODO?
 enum class ThemePreference {
     LIGHT, DARK, SYSTEM
 }
+*/
 
 // Since all our data is local, we generally expect to be able to respond promptly to user requests.
 // Things like the dropdown they touched closing or the button they touched animating provide
@@ -3629,8 +3630,9 @@ class MainActivity : ComponentActivity() {
                 .build()
         )
 
+        /*
         // TODO: Experiment with adding a Settings activity and make the dark/light/follow system available and grey out (with some text saying why) follow system on Android < 10
-        val isDarkTheme = true /* TODO when (userThemePref) {
+        val isDarkTheme = true when (userThemePref) {
         ThemePreference.DARK -> true
         ThemePreference.LIGHT -> false
         ThemePreference.SYSTEM -> isSystemInDarkTheme()
@@ -3639,9 +3641,9 @@ class MainActivity : ComponentActivity() {
             val darkTheme = isSystemInDarkTheme()
 
             ComposeTutorialTheme(darkTheme = darkTheme) {
+                /* TODO: DELETE?
                 val window = (this as ComponentActivity).window
 
-                /*
                 // This allows us to control status bar icon color
                 SideEffect {
                     WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -3755,7 +3757,7 @@ class EditPriceViewModel(
     private val savedStateHandle: SavedStateHandle,
     val uiContent: EditPriceScreenUIContent,
 ) : ViewModel() {
-    val instanceId = UUID.randomUUID().toString() // TODO FOR DEBUG
+    private val instanceId = UUID.randomUUID().toString() // TODO FOR DEBUG
     var packSizeValidationRules = generatePackSizeValidationRules()
     var currencyFormat = getCurrencyFormat(uiContent.dataSet, uiContent.frozenLocale)
 
@@ -3859,7 +3861,6 @@ class EditPriceViewModel(
 // TODO: Random Grok suggestion to maybe play with later: Use LinearOutSlowInEasing for enter
 // transitions (starts fast, slows down) and FastOutLinearInEasing for exit transitions (starts
 // slow, speeds up) to make the slide feel natural.
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
