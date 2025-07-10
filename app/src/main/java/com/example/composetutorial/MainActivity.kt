@@ -499,6 +499,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
                                     // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current locale (and make sure any non-metric units in the data below are changed accordingly)
                                     // TODO: We should have some demo products which are (fake) "branded" products, so get the idea across that this is another way to do things if you are brand-sensitive on a particular item
+                                    // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp 
                                     val dataSetId = db.dataSetDao().insert(
                                         DataSet(
                                             name = "Demo",
@@ -2329,16 +2330,15 @@ data class EditablePrice(
     )
 
     // Constructor for editing an existing Price.
-    constructor(price: Price, locale: Locale) : this(
+    constructor(price: Price, locale: Locale, currencyFormat: CurrencyFormat) : this(
         id = price.id,
         dataSetId = price.dataSetId,
         itemId = price.itemId,
         sourceId = price.sourceId,
         price = formatDoubleForEditing(
             price.price,
-            // TODONOW: hardcoding 2 dp is a hack
-            minDecimals = 2,
-            maxDecimals = 2,
+            minDecimals = currencyFormat.decimalPlaces,
+            maxDecimals = currencyFormat.decimalPlaces,
             locale
         ),
         // Rounding is particularly important here - for non-metric measures, which are stored in
@@ -3669,7 +3669,7 @@ class SharedViewModel : ViewModel() {
         val price =
             uiContent.priceList.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
-        val editablePrice = if (price != null) EditablePrice(price, frozenLocale) else EditablePrice(
+        val editablePrice = if (price != null) EditablePrice(price, frozenLocale, getCurrencyFormat(dataSet, frozenLocale)) else EditablePrice(
             dataSetId = dataSet.id,
             itemId = item.id,
             sourceId = source.id,
@@ -3752,9 +3752,11 @@ class EditPriceViewModel(
     // overwritten before it's used.
     var packSizeValidationRules = emptyList<ValidationRule>()
 
+    /* TODO DELETE
     // TODONOW: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRICEVALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
     private fun getPriceValidationRules(locale: Locale) =
         numericValidationRules(uiContent!!.frozenLocale, allowDecimals = true, allowZero = false, maxDecimals = 2)
+     */
 
     // TODONOW: There's probably a lot of redundancy with the currency stuff given how it's evolved
 
