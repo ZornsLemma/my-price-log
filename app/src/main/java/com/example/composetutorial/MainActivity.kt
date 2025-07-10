@@ -485,182 +485,184 @@ abstract class InventoryDatabase : RoomDatabase() {
             return Instance ?: synchronized(this) {
                 Room.databaseBuilder(context, InventoryDatabase::class.java, "main.db")
                     // TODO: Disable query logging in final version of course
-                    .setQueryCallback(RoomDatabase.QueryCallback { sqlQuery, bindArgs ->
+                    .setQueryCallback({ sqlQuery, bindArgs ->
                         Log.d("MyApp", "SQL Query: $sqlQuery SQL Args: $bindArgs")
                     }, Executors.newSingleThreadExecutor())
-                    .addCallback(object : RoomDatabase.Callback() {
+                    .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
-                            CoroutineScope(Dispatchers.IO).launch {
-                                val db = InventoryDatabase.getDatabase(context)
-                                // TODO: I may want to add multiple demo data sets - if so, given them all names of the form "Demo (foo)", probably. I may at the very least want to do an imperial unit demo set, so new potential users don't assume the app is metric only. This might be overkill but it may not hurt. We could just use imperial with the metric-ish data set (i.e. just configure the display units to be the user's current regional ones by default when we set the database up), and that might well be reasonable - it would give "odd" pack sizes (e.g. nominally imperial demo data selling 2 litre cartons of milk which the shops call a 3.52 pint pack) but for demo purposes it is probably fine.
-                                // TODO: We should have some cases in the demo data set where there is no price for a store+product combination
-                                db.withTransaction {
-                                    // TODO: It's probably smart to default the demo data to the local currency, since that will look most natural to our new user, but do rethink this afterwards. (It's also just possible, remember, that they will start editing the demo dataset for their own use, rather than starting again with a fresh dataset.)
-                                    // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
-                                    // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current locale (and make sure any non-metric units in the data below are changed accordingly)
-                                    // TODO: We should have some demo products which are (fake) "branded" products, so get the idea across that this is another way to do things if you are brand-sensitive on a particular item
-                                    // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp - or perhaps better, have something I can turn on for debug builds which will do that, but don't pollute the user initial database with it
-                                    // TODO: We should maybe - perhaps not worth worrying about - avoid using the demo data designed for 2dp currencies with e.g. JPY, if only by forcing the currency to be something else even if that's the system default, or perhaps applying a multiplier of 10^(2-currencydps) to all the prices just so they are "readable"
-                                    val dataSetId = db.dataSetDao().insert(
-                                        DataSet(
-                                            name = "Demo",
-                                            currencyCode = "EUR", // TODO TEMP HACK Currency.getInstance(Locale.getDefault()).currencyCode,
-                                            allowMetric = true,
-                                            allowImperial = true,
-                                            allowUSCustomary = false
-                                        )
-                                    )
-                                    val dataSetId2 = db.dataSetDao().insert(
-                                        DataSet(
-                                            name = "Demo 2",
-                                            currencyCode = "AUD",
-                                            allowMetric = true,
-                                            allowImperial = false,
-                                            allowUSCustomary = true
-                                        )
-                                    ) // TODO TEMP HACK
-                                    val dataSetId3 = db.dataSetDao().insert(
-                                        DataSet(
-                                            name = "Demo 3",
-                                            currencyCode = "AUD",
-                                            allowMetric = true,
-                                            allowImperial = false,
-                                            allowUSCustomary = true
-                                        )
-                                    ) // TODO TEMP HACK
-                                    val item21 = db.productDao().insert(
-                                        Item(
-                                            dataSetId = dataSetId2,
-                                            name = "Demo 2 Item",
-                                            defaultUnit = MeasureUnit.G
-                                        )
-                                    )
-                                    val itemIdGroundCoffee = db.productDao().insert(
-                                        Item(
-                                            dataSetId = dataSetId,
-                                            name = "Coffee (ground)",
-                                            defaultUnit = MeasureUnit.G
-                                        )
-                                    )
-                                    val itemIdWholeMilk = db.productDao().insert(
-                                        Item(
-                                            dataSetId = dataSetId,
-                                            name = "Milk (whole)",
-                                            defaultUnit = MeasureUnit.L
-                                        )
-                                    )
-                                    val itemIdTeabags = db.productDao().insert(
-                                        Item(
-                                            dataSetId = dataSetId,
-                                            name = "Teabags",
-                                            defaultUnit = MeasureUnit.EACH
-                                        )
-                                    )
-                                    // TODO: Do some web searches and confirm these are not real supermarket names
-                                    val sourceIdValueMart = db.sourceDao()
-                                        .insert(Source(dataSetId = dataSetId, name = "ValueMart"))
-                                    val sourceIdSuperiorStore = db.sourceDao().insert(
-                                        Source(
-                                            dataSetId = dataSetId,
-                                            name = "SuperiorStore"
-                                        )
-                                    )
-                                    val sourceIdNewco = db.sourceDao().insert(
-                                        Source(
-                                            dataSetId = dataSetId,
-                                            name = "Newco"
-                                        )
-                                    )
-                                    val now = Instant.now()
-                                    db.priceDao().insert(
-                                        PriceEntity(
-                                            dataSetId = dataSetId,
-                                            itemId = itemIdGroundCoffee,
-                                            sourceId = sourceIdValueMart,
-                                            price = 2.03,
-                                            measure = 500.0,
-                                            originalUnit = MeasureUnit.G,
-                                            confirmed = now.minus(2, ChronoUnit.MINUTES),
-                                            details = "Large pack own brand"
-                                        )
-                                    )
-                                    db.priceDao().insert(
-                                        PriceEntity(
-                                            dataSetId = dataSetId,
-                                            itemId = itemIdGroundCoffee,
-                                            sourceId = sourceIdSuperiorStore,
-                                            price = 1.50,
-                                            measure = 227.0,
-                                            originalUnit = MeasureUnit.G,
-                                            confirmed = now.minus(4, ChronoUnit.DAYS),
-                                            details = "Own brand"
-                                        )
-                                    )
-                                    db.priceDao().insert(
-                                        PriceEntity(
-                                            dataSetId = dataSetId,
-                                            itemId = itemIdWholeMilk,
-                                            sourceId = sourceIdValueMart,
-                                            price = 1.99,
-                                            measure = MeasuredValue(
-                                                4.0,
-                                                MeasureUnit.IMPERIAL_PINT
-                                            ).asValue(MeasureUnit.ML),
-                                            originalUnit = MeasureUnit.IMPERIAL_PINT,
-                                            confirmed = now,
-                                            details = ""
-                                        )
-                                    )
-                                    db.priceDao().insert(
-                                        PriceEntity(
-                                            dataSetId = dataSetId,
-                                            itemId = itemIdWholeMilk,
-                                            sourceId = sourceIdSuperiorStore,
-                                            price = 2.86,
-                                            measure = 2000.0,
-                                            originalUnit = MeasureUnit.L,
-                                            confirmed = now.minus(63, ChronoUnit.DAYS),
-                                            details = ""
-                                        )
-                                    )
-                                    db.priceDao().insert(
-                                        PriceEntity(
-                                            dataSetId = dataSetId,
-                                            itemId = itemIdTeabags,
-                                            sourceId = sourceIdValueMart,
-                                            price = 0.76,
-                                            measure = 40.0,
-                                            originalUnit = MeasureUnit.EACH,
-                                            confirmed = now.minus(7, ChronoUnit.DAYS),
-                                            details = "Soft pack own brand"
-                                        )
-                                    )
-                                    db.priceDao().insert(
-                                        PriceEntity(
-                                            dataSetId = dataSetId,
-                                            itemId = itemIdTeabags,
-                                            sourceId = sourceIdSuperiorStore,
-                                            price = 0.60,
-                                            measure = 20.0,
-                                            originalUnit = MeasureUnit.EACH,
-                                            confirmed = now.minus(4, ChronoUnit.HOURS),
-                                            details = ""
-                                        )
-                                    )
-                                    /*
-                                    db.productDao().insert(Product(name = "Demo Product"))
-                                    db.itemDao().insert(Item(name = "Demo Item"))
-                                    // ...insert into other DAOs as needed
-                                    */
-                                }
-                            }
+                            CoroutineScope(Dispatchers.IO).launch { populateDemoData(context) }
                         }
                     })
                     .build()
                     .also { Instance = it }
             }
         }
+    }
+}
+
+suspend fun populateDemoData(context: Context) {
+    val db = InventoryDatabase.getDatabase(context)
+    // TODO: I may want to add multiple demo data sets - if so, given them all names of the form "Demo (foo)", probably. I may at the very least want to do an imperial unit demo set, so new potential users don't assume the app is metric only. This might be overkill but it may not hurt. We could just use imperial with the metric-ish data set (i.e. just configure the display units to be the user's current regional ones by default when we set the database up), and that might well be reasonable - it would give "odd" pack sizes (e.g. nominally imperial demo data selling 2 litre cartons of milk which the shops call a 3.52 pint pack) but for demo purposes it is probably fine.
+    // TODO: We should have some cases in the demo data set where there is no price for a store+product combination
+    db.withTransaction {
+        // TODO: It's probably smart to default the demo data to the local currency, since that will look most natural to our new user, but do rethink this afterwards. (It's also just possible, remember, that they will start editing the demo dataset for their own use, rather than starting again with a fresh dataset.)
+        // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
+        // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current locale (and make sure any non-metric units in the data below are changed accordingly)
+        // TODO: We should have some demo products which are (fake) "branded" products, so get the idea across that this is another way to do things if you are brand-sensitive on a particular item
+        // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp - or perhaps better, have something I can turn on for debug builds which will do that, but don't pollute the user initial database with it
+        // TODO: We should maybe - perhaps not worth worrying about - avoid using the demo data designed for 2dp currencies with e.g. JPY, if only by forcing the currency to be something else even if that's the system default, or perhaps applying a multiplier of 10^(2-currencydps) to all the prices just so they are "readable"
+        val dataSetId = db.dataSetDao().insert(
+            DataSet(
+                name = "Demo",
+                currencyCode = "EUR", // TODO TEMP HACK Currency.getInstance(Locale.getDefault()).currencyCode,
+                allowMetric = true,
+                allowImperial = true,
+                allowUSCustomary = false
+            )
+        )
+        val dataSetId2 = db.dataSetDao().insert(
+            DataSet(
+                name = "Demo 2",
+                currencyCode = "AUD",
+                allowMetric = true,
+                allowImperial = false,
+                allowUSCustomary = true
+            )
+        ) // TODO TEMP HACK
+        val dataSetId3 = db.dataSetDao().insert(
+            DataSet(
+                name = "Demo 3",
+                currencyCode = "AUD",
+                allowMetric = true,
+                allowImperial = false,
+                allowUSCustomary = true
+            )
+        ) // TODO TEMP HACK
+        val item21 = db.productDao().insert(
+            Item(
+                dataSetId = dataSetId2,
+                name = "Demo 2 Item",
+                defaultUnit = MeasureUnit.G
+            )
+        )
+        val itemIdGroundCoffee = db.productDao().insert(
+            Item(
+                dataSetId = dataSetId,
+                name = "Coffee (ground)",
+                defaultUnit = MeasureUnit.G
+            )
+        )
+        val itemIdWholeMilk = db.productDao().insert(
+            Item(
+                dataSetId = dataSetId,
+                name = "Milk (whole)",
+                defaultUnit = MeasureUnit.L
+            )
+        )
+        val itemIdTeabags = db.productDao().insert(
+            Item(
+                dataSetId = dataSetId,
+                name = "Teabags",
+                defaultUnit = MeasureUnit.EACH
+            )
+        )
+        // TODO: Do some web searches and confirm these are not real supermarket names
+        val sourceIdValueMart = db.sourceDao()
+            .insert(Source(dataSetId = dataSetId, name = "ValueMart"))
+        val sourceIdSuperiorStore = db.sourceDao().insert(
+            Source(
+                dataSetId = dataSetId,
+                name = "SuperiorStore"
+            )
+        )
+        val sourceIdNewco = db.sourceDao().insert(
+            Source(
+                dataSetId = dataSetId,
+                name = "Newco"
+            )
+        )
+        val now = Instant.now()
+        db.priceDao().insert(
+            PriceEntity(
+                dataSetId = dataSetId,
+                itemId = itemIdGroundCoffee,
+                sourceId = sourceIdValueMart,
+                price = 2.03,
+                measure = 500.0,
+                originalUnit = MeasureUnit.G,
+                confirmed = now.minus(2, ChronoUnit.MINUTES),
+                details = "Large pack own brand"
+            )
+        )
+        db.priceDao().insert(
+            PriceEntity(
+                dataSetId = dataSetId,
+                itemId = itemIdGroundCoffee,
+                sourceId = sourceIdSuperiorStore,
+                price = 1.50,
+                measure = 227.0,
+                originalUnit = MeasureUnit.G,
+                confirmed = now.minus(4, ChronoUnit.DAYS),
+                details = "Own brand"
+            )
+        )
+        db.priceDao().insert(
+            PriceEntity(
+                dataSetId = dataSetId,
+                itemId = itemIdWholeMilk,
+                sourceId = sourceIdValueMart,
+                price = 1.99,
+                measure = MeasuredValue(
+                    4.0,
+                    MeasureUnit.IMPERIAL_PINT
+                ).asValue(MeasureUnit.ML),
+                originalUnit = MeasureUnit.IMPERIAL_PINT,
+                confirmed = now,
+                details = ""
+            )
+        )
+        db.priceDao().insert(
+            PriceEntity(
+                dataSetId = dataSetId,
+                itemId = itemIdWholeMilk,
+                sourceId = sourceIdSuperiorStore,
+                price = 2.86,
+                measure = 2000.0,
+                originalUnit = MeasureUnit.L,
+                confirmed = now.minus(63, ChronoUnit.DAYS),
+                details = ""
+            )
+        )
+        db.priceDao().insert(
+            PriceEntity(
+                dataSetId = dataSetId,
+                itemId = itemIdTeabags,
+                sourceId = sourceIdValueMart,
+                price = 0.76,
+                measure = 40.0,
+                originalUnit = MeasureUnit.EACH,
+                confirmed = now.minus(7, ChronoUnit.DAYS),
+                details = "Soft pack own brand"
+            )
+        )
+        db.priceDao().insert(
+            PriceEntity(
+                dataSetId = dataSetId,
+                itemId = itemIdTeabags,
+                sourceId = sourceIdSuperiorStore,
+                price = 0.60,
+                measure = 20.0,
+                originalUnit = MeasureUnit.EACH,
+                confirmed = now.minus(4, ChronoUnit.HOURS),
+                details = ""
+            )
+        )
+        /*
+        db.productDao().insert(Product(name = "Demo Product"))
+        db.itemDao().insert(Item(name = "Demo Item"))
+        // ...insert into other DAOs as needed
+        */
     }
 }
 
