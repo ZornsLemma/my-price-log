@@ -99,7 +99,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -178,11 +177,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -2495,8 +2492,8 @@ fun HomeScreen(
     vm: HomeViewModel,
     navController: NavHostController,
     onEditPriceClick: (HomeScreenUIContent) -> Unit,
+    onEditDataSetsClick: (HomeScreenUIContent) -> Unit,
     onEditProductsClick: (HomeScreenUIContent) -> Unit
-
 ) {
     // In order to minimise jank, we want the previous UI state to be available during the *very
     // first composition* when this screen is re-entered (e.g. after navigating back from another
@@ -2547,7 +2544,8 @@ fun HomeScreen(
             // screen.
             navController.navigate("fullScreenDialog/${UUID.randomUUID()}")
         } */
-        ,onEditProductsClick = { onEditProductsClick(uiContent) },
+        , onEditDataSetsClick = { onEditDataSetsClick( uiContent) }
+        ,onEditItemsClick = { onEditProductsClick(uiContent) },
     )
 }
 
@@ -2629,7 +2627,8 @@ fun HomeScreenScaffold(
     onSelectedSourceIdChange: (Long?) -> Unit,
     priceList: List<Price>,
     onEditPriceClick: () -> Unit,
-    onEditProductsClick: () -> Unit,
+    onEditDataSetsClick: () -> Unit,
+    onEditItemsClick: () -> Unit,
     ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -2646,13 +2645,13 @@ fun HomeScreenScaffold(
 
                     DropdownMenu(
                         expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        MyDropdownMenuItem(text = { Text("Edit collections") }, onClick = {
+                            menuExpanded = false
+                            onEditDataSetsClick()
+                        })
                         MyDropdownMenuItem(text = { Text("Edit product list") }, onClick = {
                             menuExpanded = false
-                            onEditProductsClick()
-                        })
-                        MyDropdownMenuItem(text = { Text("Edit categories") }, onClick = {
-                            menuExpanded = false
-                            // TODO: Handle navigation or action
+                            onEditItemsClick()
                         })
                         MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
                             menuExpanded = false
@@ -3729,11 +3728,18 @@ class SharedViewModel : ViewModel() {
 
     // TODO: ALL EXPERIMENTAL NEW BELOW HERE
 
+    // TODO: Following and their associated functions should maybe be plural
+    var generalSelectorScreenUIContentDataSet: GeneralSelectorScreenUIContent<DataSet>? = null
     var generalSelectorScreenUIContentItem: GeneralSelectorScreenUIContent<Item>? = null
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentItem = GeneralSelectorScreenUIContent("TODO: TITLE42", uiContent.itemList + uiContent.itemList)
+        generalSelectorScreenUIContentItem = GeneralSelectorScreenUIContent("TODO: TITLE ITEM", uiContent.itemList + uiContent.itemList)
+    }
+
+    fun setGeneralSelectorScreenContentFromHomeScreenContentDataSet(uiContent: HomeScreenUIContent) {
+        // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
+        generalSelectorScreenUIContentDataSet = GeneralSelectorScreenUIContent("TODO: TITLE DATA SET", uiContent.dataSetList + uiContent.dataSetList)
     }
 }
 
@@ -3773,6 +3779,7 @@ data class GeneralSelectorScreenUIContent<T>(
     val initialList: List<T>
 )
 
+// TODO: This may not actually need the repository passing in given we pass in a query
 class GeneralSelectorViewModel<T>(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
@@ -4053,9 +4060,15 @@ fun AppNavigation() {
                 sharedViewModel.setEditPriceScreenContentFromHomeScreenContent(uiContent, locale)
                 navController.navigate("editPrice")
             },
+                onEditDataSetsClick = { uiContent ->
+                    sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentDataSet(
+                        uiContent
+                    )
+                    navController.navigate("editDataSets")
+                },
                 onEditProductsClick = { uiContent ->
                     sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent)
-                    navController.navigate("editProducts") // TODO: rename "editItems" - it is an internal string so use internal terminology
+                    navController.navigate("editItems")
                 },
             )
         }
@@ -4068,8 +4081,56 @@ fun AppNavigation() {
             SettingsScreen(navController)
         }
 
+        // TODO: Lots of code duplication across the editStatic here
         composable(
-            "editProducts", enterTransition = { slideLeftTransition() },
+            "editDataSets", enterTransition = { slideLeftTransition() },
+            popExitTransition = { slideRightTransition() },
+
+            ) { backStackEntry ->
+            // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
+            // backStackEntry) - this avoids stale data causing problems.
+            // TODO: I am not actually going to use a savedStateHandle to start with - because this *can*
+            // get its data from the database (it's just an optimisation having it passed over on first
+            // navigation), it isn't so necessary. I may change my mind. If I *don't* change my mind,
+            // it *may* be that we can or should use a different simpler factory. (Although given this
+            // viewModelFactoryWithHandle thing already exists, maybe it's as well to use it even if
+            // we ignore the handle. And maybe it wouldn't be a big deal to use the handle for extra
+            // smoothness anyway.)
+            val factory = remember(backStackEntry) {
+                viewModelFactoryWithHandle { extras, savedStateHandle ->
+                    val app =
+                        extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+                    // TODO: !! ON sharedViewModel.generalSelectorScreenUIContent causes (probably)
+                    // crash in the kill-and-revive case - we (probably) either need savedStateHandle stuff
+                    // and/or we need to construct a GeneralSelectorScreenUIContent but without the
+                    // initial data list and just wait for the database to come through.
+                    // TODO: !! ON (COMMENTED OUT) FROM SAVED STATE FEELS A BIT HACKY BUT PROBABLY FINE
+                    GeneralSelectorViewModel(
+                        app.priceTrackerRepository,
+                        savedStateHandle,
+                        sharedViewModel.generalSelectorScreenUIContentDataSet!! /* TODO
+                            ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */
+                        ,initialQuery = app.priceTrackerRepository.getAllDataSets()
+                    )
+                }
+            }
+            val vm: GeneralSelectorViewModel<DataSet> = viewModel(backStackEntry, factory = factory)
+            LaunchedEffect(Unit) {
+                sharedViewModel.generalSelectorScreenUIContentDataSet = null
+            }
+
+            // TODO: My intention is that this screen (which shows a list of named things and let's
+            // you pick one to do something with, or optionally to add a new one, and may have an
+            // optional search button and may take over from the modal bottom sheet for products in
+            // that form) is generic enough to be shared across data sets/items/sources. I will
+            // start writing in pseudo-specific to products, but I will name things generically and
+            // then I can try to factor things out later.
+            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
+        }
+
+
+        composable(
+            "editItems", enterTransition = { slideLeftTransition() },
             popExitTransition = { slideRightTransition() },
 
             ) { backStackEntry ->
