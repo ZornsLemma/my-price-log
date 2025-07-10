@@ -3097,8 +3097,7 @@ fun EditPriceScreen(
             var packPrice by rememberSyncedTextFieldValue(
                 uiContent.editablePrice.value.price ?: ""
             ) // TODONOW: Just stop it being nullable rather than converting null to "" here?
-            Log.d("MyApp", "getCurrencyFormat ${vm.getCurrencyFormat(uiContent.dataSet)}")
-            val currencyFormat = vm.getCurrencyFormat(uiContent.dataSet)
+            val currencyFormat = remember { vm.getCurrencyFormat(uiContent.dataSet) }
             Box(modifier = Modifier.onGloballyPositioned { coordinates ->
                 priceY = coordinates.positionInParent().y.toInt()
             }) {
@@ -3758,9 +3757,11 @@ class EditPriceViewModel(
         val validationRules: List<ValidationRule>
     )
 
+    /* TODO DELETE
     // TODO: We are implementing this as a map (maybe rename it to cache) because it's locale dependent but we don't have the data set handy when we do updateLocaleDependencies(). So we lazily look up the currency details (which is completely acceptable main thread work, but just fiddly enough we don't want to be doing it *constantly*) and cache it in here on first up.
     // TODO: MutableMap is not thread safe. I don't think this is a problem, but be aware of it - I think we could switch to non-mutable Map and replace-in-place if necessary
     val currencyFormatMap: MutableMap<String, CurrencyFormat> = mutableMapOf()
+    */
 
     /* TODO DELETE
     // TODO: Even if Locale.getDefault() is sub-optimal, this is fine as it's really only a default. updateLocaleDependencies() should be called almost immediately - maybe do some test logging to check that?
@@ -3776,7 +3777,6 @@ class EditPriceViewModel(
 
     // TODO: This takes a DataSet not a currency code because later on a DataSet may allow custom currency formatting which overrides whatever the current locale wants to do.
     fun getCurrencyFormat(dataSet: DataSet): CurrencyFormat {
-        return currencyFormatMap.getOrPut(dataSet.currencyCode) {
             val currencyInstance = Currency.getInstance(dataSet.currencyCode)
             // currencyInstance will give us the number of decimal places, but it won't give us a
             // prefix or suffix to use - which we need for currency TextFields. So we ask it to
@@ -3790,7 +3790,7 @@ class EditPriceViewModel(
                 "sampleFormattedCurrency for ${dataSet.currencyCode} is '$sampleFormattedCurrency'"
             )
             val (prefix, suffix) = splitAroundDigits(sampleFormattedCurrency)
-            CurrencyFormat(
+            return CurrencyFormat(
                 decimalPlaces = currencyInstance.defaultFractionDigits,
                 prefix = prefix.trim().ifBlank { null },
                 suffix = suffix.trim().ifBlank { null },
@@ -3801,7 +3801,6 @@ class EditPriceViewModel(
                     maxDecimals = currencyInstance.defaultFractionDigits
                 )
             )
-        }
     }
 
     enum class ValidationState {
