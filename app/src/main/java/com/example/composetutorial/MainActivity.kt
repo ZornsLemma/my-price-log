@@ -2287,6 +2287,7 @@ private fun Context.getActivityWindow(): Window? {
 fun MyDropdownMenuItem(
     text: @Composable () -> Unit,
     onClick: () -> Unit,
+    enabled: Boolean = true,
 ) {
     DropdownMenuItem(
         text = {
@@ -2296,6 +2297,7 @@ fun MyDropdownMenuItem(
             }
         },
         contentPadding = PaddingValues(start = menuLeftPadding, end = menuRightPadding),
+        enabled = enabled,
         onClick = onClick,
     )
 }
@@ -2652,11 +2654,11 @@ fun HomeScreenScaffold(
                             menuExpanded = false
                             onEditDataSetsClick()
                         })
-                        MyDropdownMenuItem(text = { Text("Edit products") }, onClick = {
+                        MyDropdownMenuItem(text = { Text("Edit products") }, enabled = dataSet != null, onClick = {
                             menuExpanded = false
                             onEditItemsClick()
                         })
-                        MyDropdownMenuItem(text = { Text("Edit stores") }, onClick = {
+                        MyDropdownMenuItem(text = { Text("Edit stores") }, enabled = dataSet != null, onClick = {
                             menuExpanded = false
                             onEditSourcesClick()
                         })
@@ -3742,17 +3744,17 @@ class SharedViewModel : ViewModel() {
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentItem = GeneralSelectorScreenUIContent("TODO: TITLE ITEM", uiContent.itemList + uiContent.itemList)
+        generalSelectorScreenUIContentItem = GeneralSelectorScreenUIContent("TODO: TITLE ITEM", uiContent.dataSet, uiContent.itemList + uiContent.itemList)
     }
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentDataSet(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentDataSet = GeneralSelectorScreenUIContent("TODO: TITLE DATA SET", uiContent.dataSetList + uiContent.dataSetList)
+        generalSelectorScreenUIContentDataSet = GeneralSelectorScreenUIContent("TODO: TITLE DATA SET", uiContent.dataSet,uiContent.dataSetList + uiContent.dataSetList)
     }
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentSource(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentSource = GeneralSelectorScreenUIContent("TODO: TITLE SOURCE", uiContent.sourceList + uiContent.sourceList)
+        generalSelectorScreenUIContentSource = GeneralSelectorScreenUIContent("TODO: TITLE SOURCE", uiContent.dataSet,uiContent.sourceList + uiContent.sourceList)
     }
 }
 
@@ -3789,6 +3791,7 @@ inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
 
 data class GeneralSelectorScreenUIContent<T>(
     val title: String,
+    val dataSet: DataSet?,
     val initialList: List<T>
 )
 
@@ -4173,7 +4176,7 @@ fun AppNavigation() {
                         savedStateHandle,
                         sharedViewModel.generalSelectorScreenUIContentItem!! /* TODO
                             ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */
-                        ,initialQuery = app.priceTrackerRepository.getAllItems(1L /* TODO HACK */)
+                        ,initialQuery = app.priceTrackerRepository.getAllItems(sharedViewModel.generalSelectorScreenUIContentItem!!.dataSet!!.id)
                     )
                 }
             }
@@ -4219,7 +4222,7 @@ fun AppNavigation() {
                         savedStateHandle,
                         sharedViewModel.generalSelectorScreenUIContentSource!! /* TODO
                             ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */
-                        ,initialQuery = app.priceTrackerRepository.getAllSources(1L /* TODO HACK */)
+                        ,initialQuery = app.priceTrackerRepository.getAllSources(sharedViewModel.generalSelectorScreenUIContentSource!!.dataSet!!.id)
                     )
                 }
             }
