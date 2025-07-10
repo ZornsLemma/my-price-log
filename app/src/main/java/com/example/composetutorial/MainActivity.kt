@@ -3021,7 +3021,6 @@ fun EditPriceScreen(
                         label = { Text("Pack size") },
                         value = packSizeNumber,
                         validationRules = vm.packSizeValidationRules,
-                        // TODO: If this works we need a vrkey on other numerictextfields too
                         validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
                         // TODONOW: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                         onValueChange = {
@@ -3125,6 +3124,9 @@ fun EditPriceScreen(
                         textAlign = TextAlign.End
                     ) else LocalTextStyle.current,
                     validationRules = currencyFormat.validationRules,
+                    // We don't need a validationRulesKey here because the currency validation rules
+                    // cannot change while we are editing. They depend only on our DataSet and our
+                    // frozen locale.
                     // TODONOW: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                     onValueChange = {
                         packPrice = it
