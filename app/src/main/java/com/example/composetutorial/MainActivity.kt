@@ -2555,16 +2555,12 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
         var showScrim by remember { mutableStateOf(false) }
 
         if (delayMillis != null) {
-            LaunchedEffect(visible) {
-                if (visible) {
-                    delay(delayMillis)
-                    showScrim = true
-                } else {
-                    showScrim = false
-                }
+            LaunchedEffect(Unit) {
+                delay(delayMillis)
+                showScrim = true
             }
         } else {
-            showScrim = visible
+            showScrim = true
         }
 
         if (showScrim) {
