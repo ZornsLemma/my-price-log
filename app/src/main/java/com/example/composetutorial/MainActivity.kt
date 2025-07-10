@@ -3800,7 +3800,7 @@ class GeneralSelectorViewModel(
 // change up. But for first frame perfection, we probably do also want to receive an initial list
 // from the home screen.
 @Composable
-fun GeneralSelectorScreen(vm: GeneralSelectorViewModel, navController: NavHostController) {
+fun GeneralSelectorScreen(vm: GeneralSelectorViewModel, navController: NavHostController, onItemSelected: (Long) -> Unit) {
     val dataList by vm.dataFlow.collectAsStateWithLifecycle()
     Log.d("MyAppGS", "dataList $dataList")
 
@@ -3841,17 +3841,25 @@ fun GeneralSelectorScreen(vm: GeneralSelectorViewModel, navController: NavHostCo
             // is sorted by name, remember).
             LazyColumn {
                 items(dataList) { item ->
-                    GeneralSelectorListItem(id = item.id, name = item.name)
+                    GeneralSelectorListItem(id = item.id, name = item.name, onItemSelected = onItemSelected)
                 }
             }
+
+            // TODO: Optional caller-controlled support for a free text substring search
+
+            // TODO: We will want optional support (controlled by caller) for having a FAB to do "add"
+
+            // TODO: We *might* want optional support for a delete action on items, but I suspect we
+            // won't - deleting is rare and we don't want to make it too easy and it can be done
+            // from the "edit individual item" screen.
         }
     }
 }
 
 @Composable
-fun GeneralSelectorListItem(id: Long, name: String) {
+fun GeneralSelectorListItem(id: Long, name: String, onItemSelected: (Long) -> Unit) {
     Row {
-        Text(text = name)
+        Text(text = name, modifier = Modifier.clickable { onItemSelected(id) })
     }
 }
 
@@ -4096,7 +4104,7 @@ fun AppNavigation() {
             // that form) is generic enough to be shared across data sets/items/sources. I will
             // start writing in pseudo-specific to products, but I will name things generically and
             // then I can try to factor things out later.
-            GeneralSelectorScreen(vm, navController)
+            GeneralSelectorScreen(vm, navController, onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
         }
 
         composable(
