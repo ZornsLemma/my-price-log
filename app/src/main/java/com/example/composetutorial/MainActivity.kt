@@ -2641,7 +2641,7 @@ fun HomeScreenScaffold(
                         expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                         MyDropdownMenuItem(text = { Text("Edit product list") }, onClick = {
                             menuExpanded = false
-                            // TODO: Handle navigation or action
+                            navController.navigate("editProducts")
                         })
                         MyDropdownMenuItem(text = { Text("Edit categories") }, onClick = {
                             menuExpanded = false
@@ -3618,6 +3618,36 @@ fun SettingsScreen(navController: NavHostController) {
     }
 }
 
+@Composable
+fun GeneralSelectorScreen(navController: NavHostController) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(title = { Text("TODO TITLE") }, navigationIcon = {
+
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+            })
+        },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.primary) // TODO: debug hack
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = screenBorder)
+
+            // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
+        ) {
+            Text("TODO GENERAL SELECTOR")
+        }
+    }
+}
+
 // TODO: This is a bit of a mess but probably best leave it alone until I either gain more
 // experience or do more testing with different Android versions.
 class MainActivity : ComponentActivity() {
@@ -3848,7 +3878,7 @@ class EditPriceViewModel(
         viewModelScope.launch {
             saveStatus.update(SaveStatus.Saving)
             try {
-                delay(3700); // TODO TEMP FOR DEBUGGING
+                //delay(3700); // TODO TEMP FOR DEBUGGING
                 priceTrackerRepository.updateOrInsertPrice(price)
                 saveStatus.update(SaveStatus.Success)
             } catch (e: Exception) {
@@ -3944,6 +3974,20 @@ fun AppNavigation() {
 
             ) {
             SettingsScreen(navController)
+        }
+
+        composable(
+            "editProducts", enterTransition = { slideLeftTransition() },
+            popExitTransition = { slideRightTransition() },
+
+            ) {
+            // TODO: My intention is that this screen (which shows a list of named things and let's
+            // you pick one to do something with, or optionally to add a new one, and may have an
+            // optional search button and may take over from the modal bottom sheet for products in
+            // that form) is generic enough to be shared across data sets/items/sources. I will
+            // start writing in pseudo-specific to products, but I will name things generically and
+            // then I can try to factor things out later.
+            GeneralSelectorScreen(navController)
         }
 
         composable(
