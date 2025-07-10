@@ -2099,9 +2099,9 @@ fun ItemSourceInfo(
                             getLabel = { "/${it.symbol}" },
                             // Show dividers between unit families
                             getDividerBetween = { previousItem, item ->
-                                var previousItemUnitFamily =
+                                val previousItemUnitFamily =
                                     previousItem.unitFamilies.intersect(relevantUnitFamilies)
-                                var itemUnitFamily =
+                                val itemUnitFamily =
                                     item.unitFamilies.intersect(relevantUnitFamilies)
                                 previousItemUnitFamily != itemUnitFamily
                             },
@@ -2268,7 +2268,7 @@ private fun Context.getActivityWindow(): Window? {
 fun MyDropdownMenuItem(
     text: @Composable () -> Unit,
     onClick: () -> Unit,
-): Unit {
+) {
     DropdownMenuItem(
         text = {
             ProvideTextStyle(MaterialTheme.typography.bodyLarge) {
@@ -2450,7 +2450,7 @@ data class EditPriceScreenUIContent(
             val savedItem: Item? = handle[ITEM_KEY]
             val savedSource: Source? = handle[SOURCE_KEY]
             val savedLocaleTag: String? = handle[LOCALE_TAG]
-            if (savedEditablePrice != null && savedOriginalPrice != null && savedDataSet != null && savedItem != null && savedSource != null) {
+            if (savedEditablePrice != null && savedOriginalPrice != null && savedDataSet != null && savedItem != null && savedSource != null && savedLocaleTag != null) {
                 Log.d("MyApp", "reconstructed EditPriceScreenUIContent")
                 return EditPriceScreenUIContent(
                     mutableStateOf(savedEditablePrice),
