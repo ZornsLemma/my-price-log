@@ -1817,14 +1817,20 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     // is "expected", and users probably also expect the dropdown to close on rotation.
     var expanded by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.clickable { expanded = true; onExpand(expanded) }) {
+    Box(modifier = modifier.clickable {
+        expanded = true;
+        @Suppress("KotlinConstantConditions") onExpand(expanded)
+    }) {
         content()
 
         var previousItem: T? = null
         DropdownMenu(
             modifier = dropdownModifier,
             expanded = expanded,
-            onDismissRequest = { expanded = false; onExpand(expanded) }) {
+            onDismissRequest = {
+                expanded = false
+                @Suppress("KotlinConstantConditions") onExpand(expanded)
+            }) {
             items.forEach { item ->
                 // We could make the first argument of getDividerBetween take null and call it every
                 // time, but I'm fairly sure it makes no sense to have a divider at the very top
@@ -1845,7 +1851,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
                     onClick = {
                         onValueChange(getId(item))
                         expanded = false
-                        onExpand(expanded)
+                        @Suppress("KotlinConstantConditions") onExpand(expanded)
                     }
                 )
             }
@@ -1880,7 +1886,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
         getDividerBetween = getDividerBetween,
     ) {
         LabeledItem(label = label) {
-            Row() {
+            Row {
                 // TODO: FWIW a quick discussion with ChatGPT suggests it is reasonable for i18n to
                 // have some kind of format substitition to generate a unit price string analogous
                 // to the one I'm using here. So having a single "Unit price" field is probably
