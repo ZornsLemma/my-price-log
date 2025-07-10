@@ -178,10 +178,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
 import java.text.DecimalFormatSymbols
@@ -3622,59 +3625,6 @@ fun SettingsScreen(navController: NavHostController) {
     }
 }
 
-// TODO: I think this needs to have a Room-based feed of data because we could potentially return to
-// it after adding or renaming something on a child full screen dialog and we need to pick that
-// change up. But for first frame perfection, we probably do also want to receive an initial list
-// from the home screen.
-@Composable
-fun GeneralSelectorScreen(vm: GeneralSelectorViewModel, navController: NavHostController) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(title = { Text(vm.uiContent.title) }, navigationIcon = {
-
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                        contentDescription = "Back"
-                    )
-                }
-            })
-        },
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primary) // TODO: debug hack
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = screenBorder)
-
-            // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
-        ) {
-            // TODO: Maybe this should optionally display the data set name (fixed, inherited from
-            // home screen) if we are editing items or sources.
-
-
-            Text("TODO GENERAL SELECTOR")
-
-            data class GeneralSelectorEntity(val id: Long, val name: String)
-            val todoTempList = listOf(GeneralSelectorEntity(1, "ONE"), GeneralSelectorEntity(2, "TWO"))
-            LazyColumn {
-                items(todoTempList) { item ->
-                    GeneralSelectorListItem(id = item.id, name = item.name)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun GeneralSelectorListItem(id: Long, name: String) {
-    Row {
-        Text(text = name)
-    }
-}
-
 // TODO: This is a bit of a mess but probably best leave it alone until I either gain more
 // experience or do more testing with different Android versions.
 class MainActivity : ComponentActivity() {
@@ -3782,7 +3732,8 @@ class SharedViewModel : ViewModel() {
     var generalSelectorScreenUIContent: GeneralSelectorScreenUIContent? = null
 
     fun setGeneralSelectorScreenContentFromHomeScreenContent(uiContent: HomeScreenUIContent) {
-        generalSelectorScreenUIContent = GeneralSelectorScreenUIContent("TODO: TITLE42")
+        // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
+        generalSelectorScreenUIContent = GeneralSelectorScreenUIContent("TODO: TITLE42", uiContent.itemList + uiContent.itemList)
     }
 }
 
@@ -3817,13 +3768,88 @@ inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
     }
 }
 
-data class GeneralSelectorScreenUIContent(val title: String)
+data class GeneralSelectorScreenUIContent(
+    val title: String,
+    val initialList: List<Item>
+)
 
 class GeneralSelectorViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
     val uiContent: GeneralSelectorScreenUIContent,
 ) : ViewModel() {
+    // TODO: Need to test, but the idea here is that we emit the initialList handed to us by our
+    // caller so we can get a good first composition, but we remain reactive to database state
+    // which is important if we are returned to after an edit operation has added, deleted or
+    // renamed something.
+    /* TODO DELETE
+    val dataFlow: StateFlow<List<Item>> = flow {
+        emit(uiContent.initialList)
+        emitAll(priceTrackerRepository.getAllItems(1L /* TODO HARDCODING IS A HACK */))
+    }.stateIn(scope = viewModelScope, started = SharingStarted.Eagerly,
+    */
+    // TODO: delay(5000) is temp hack
+    val dataFlow: StateFlow<List<Item>> = priceTrackerRepository.getAllItems(1L /* TODO HARDCODING IS A HACK */)
+        .onEach { emittedList -> delay(5000); Log.d("MyAppGS", "Room emitted list: ${System.identityHashCode(emittedList)}") }
+        .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = uiContent.initialList.also {
+            Log.d("MyAppGS", "Initial list: ${System.identityHashCode(it)}") } )
+}
+
+// TODO: I think this needs to have a Room-based feed of data because we could potentially return to
+// it after adding or renaming something on a child full screen dialog and we need to pick that
+// change up. But for first frame perfection, we probably do also want to receive an initial list
+// from the home screen.
+@Composable
+fun GeneralSelectorScreen(vm: GeneralSelectorViewModel, navController: NavHostController) {
+    val dataList by vm.dataFlow.collectAsStateWithLifecycle()
+    Log.d("MyAppGS", "dataList $dataList")
+
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(title = { Text(vm.uiContent.title) }, navigationIcon = {
+
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+            })
+        },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.primary) // TODO: debug hack
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = screenBorder)
+
+            // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
+        ) {
+            // TODO: Maybe this should optionally display the data set name (fixed, inherited from
+            // home screen) if we are editing items or sources.
+
+
+            Text("TODO GENERAL SELECTOR")
+
+            data class GeneralSelectorEntity(val id: Long, val name: String)
+            val todoTempList = listOf(GeneralSelectorEntity(1, "ONE"), GeneralSelectorEntity(2, "TWO"))
+            LazyColumn {
+                items(dataList) { item ->
+                    GeneralSelectorListItem(id = item.id, name = item.name)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun GeneralSelectorListItem(id: Long, name: String) {
+    Row {
+        Text(text = name)
+    }
 }
 
 // TODO: Here, and possibly in other ViewModels, there is a tendency to be passing parameters into
