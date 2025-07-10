@@ -4072,7 +4072,11 @@ fun AppNavigation() {
                 viewModelFactoryWithHandle { extras, savedStateHandle ->
                     val app =
                         extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
-                    // TODO: !! ON NEXT LINE FEELS A BIT HACKY BUT IS PROBABLY OK
+                    // TODO: !! ON sharedViewModel.generalSelectorScreenUIContent causes (probably)
+                    // crash in the kill-and-revive case - we (probably) either need savedStateHandle stuff
+                    // and/or we need to construct a GeneralSelectorScreenUIContent but without the
+                    // initial data list and just wait for the database to come through.
+                    // TODO: !! ON (COMMENTED OUT) FROM SAVED STATE FEELS A BIT HACKY BUT PROBABLY FINE
                     GeneralSelectorViewModel(
                         app.priceTrackerRepository,
                         savedStateHandle,
