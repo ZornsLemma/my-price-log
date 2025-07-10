@@ -1496,7 +1496,10 @@ fun MainScreen(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
-            colors = myTextFieldColors(true) // TODO: "true" is a hack, we should set parameter based on focus roughly as we do in MyExposedDropdownMenu
+            // TODO: There might be an argument that this should "sometimes" get the focused
+            // colours, but since clicking on it immediately opens a modal bottom sheet, I think
+            // it's probably reasonable to hard-code false here.
+            colors = myTextFieldColors(false)
         )
 
         // Item Modal Bottom Sheet
