@@ -499,7 +499,8 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
                                     // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current locale (and make sure any non-metric units in the data below are changed accordingly)
                                     // TODO: We should have some demo products which are (fake) "branded" products, so get the idea across that this is another way to do things if you are brand-sensitive on a particular item
-                                    // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp
+                                    // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp - or perhaps better, have something I can turn on for debug builds which will do that, but don't pollute the user initial database with it
+                                    // TODO: We should maybe - perhaps not worth worrying about - avoid using the demo data designed for 2dp currencies with e.g. JPY, if only by forcing the currency to be something else even if that's the system default, or perhaps applying a multiplier of 10^(2-currencydps) to all the prices just so they are "readable"
                                     val dataSetId = db.dataSetDao().insert(
                                         DataSet(
                                             name = "Demo",
