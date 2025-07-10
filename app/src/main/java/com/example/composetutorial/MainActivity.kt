@@ -3094,14 +3094,10 @@ fun EditPriceScreen(
             // fixed ratio is probably more or less the same since both will expand with font size
             // just the same, so maybe that would be pointless
             var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
-            // TODONOW: This is perhaps inconsistent. The packSizeValidationRules are stored on the
-            // ViewModel, but we cache the (actually unchanging - frozen locale, remember, and
-            // dataset can't change either) currencyFormat here (it includes validation rules). We
-            // should probably keep both on the viewmodel.
-            val currencyFormat = remember { getCurrencyFormat(uiContent.dataSet, uiContent.frozenLocale) }
             Box(modifier = Modifier.onGloballyPositioned { coordinates ->
                 priceY = coordinates.positionInParent().y.toInt()
             }) {
+                val currencyFormat = vm.currencyFormat!!
                 NumericTextField(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -3117,7 +3113,7 @@ fun EditPriceScreen(
                     // the currency symbol being on the right. Or maybe the currency symbol should
                     // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
                     // wait for user feedback?
-                    textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
+                    textStyle = if (currencyFormat!!.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
                         textAlign = TextAlign.End
                     ) else LocalTextStyle.current,
                     validationRules = currencyFormat.validationRules,
@@ -3661,8 +3657,11 @@ class SharedViewModel : ViewModel() {
     // user changes the locale while on the edit screen, we do *not* want to reflect that change
     // immediately because it makes parsing the strings ambiguous. (TODO: This is not heavily tested
     // and is not all that an important case, but I am at least trying to do things right.)
-    // TODO: Inconsistent use of "State" and "Content" here - rename everything consistently
-    fun setEditPriceScreenStateFromHomeScreenState(uiContent: HomeScreenUIContent, frozenLocale: Locale) {
+    // TODONOW: Inconsistent use of "State" and "Content" here - rename everything consistently - might actually be OK but think
+    fun setEditPriceScreenStateFromHomeScreenState(
+        uiContent: HomeScreenUIContent,
+        frozenLocale: Locale
+    ) {
         // !! is justified because uiContent was shown on the home screen and the edit price button
         // was visible, which can only happen if we have all three available.
         val dataSet = uiContent.dataSet!!
@@ -3672,7 +3671,9 @@ class SharedViewModel : ViewModel() {
         val price =
             uiContent.priceList.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
-        val editablePrice = if (price != null) EditablePrice(price, frozenLocale, getCurrencyFormat(dataSet, frozenLocale)) else EditablePrice(
+        val editablePrice = if (price != null)
+            EditablePrice(price, frozenLocale, getCurrencyFormat(dataSet, frozenLocale))
+        else EditablePrice(
             dataSetId = dataSet.id,
             itemId = item.id,
             sourceId = source.id,
@@ -3689,6 +3690,8 @@ class SharedViewModel : ViewModel() {
     }
 }
 
+// Return the non-digit prefix and suffix around a digit-containing string. Given "foo123bar4 baz56
+// quux", this returns ("foo", " quux").
 fun splitAroundDigits(input: String): Pair<String, String> {
     var firstDigitIndex = input.indexOfFirst { it.isDigit() }
     if (firstDigitIndex == -1) {
@@ -3723,10 +3726,13 @@ class EditPriceViewModel(
         EditPriceScreenUIContent.fromSavedState(savedStateHandle)
     val uiContent get() = _uiContent
 
+    // This function is intended to be called once when the edit price screen is first composed and
+    // populates the ViewModel with the data handed over by the home screen.
     fun setUIContent(newUIContent: EditPriceScreenUIContent) {
         Log.d("MyApp", "EditPriceScreenViewModel.setUIContent($newUIContent)")
         _uiContent = newUIContent
         newUIContent.saveState(savedStateHandle)
+        currencyFormat = getCurrencyFormat(newUIContent.dataSet, newUIContent.frozenLocale)
         updateAfterSetUIContentEditablePrice(newUIContent.editablePrice.value)
     }
 
@@ -3751,9 +3757,10 @@ class EditPriceViewModel(
     // into EditPriceScreenUIContent).
     var firstPackSizeOrPriceChangeOccurred: Boolean = false
 
-    // This default is just to make initialisation possible; in reality we expect this to be
-    // overwritten before it's used.
+    // This default/nullability is just to make initialisation possible; in reality we expect these
+    // to be overwritten before they're used.
     var packSizeValidationRules = emptyList<ValidationRule>()
+    var currencyFormat: CurrencyFormat? = null
 
     // TODONOW: There's probably a lot of redundancy with the currency stuff given how it's evolved
     // - maybe fixed up now but needs a review.
@@ -3773,11 +3780,7 @@ class EditPriceViewModel(
         if (!validationRulesOk(packSizeValidationRules, editablePrice.measureValue)) {
             return ValidationState.PACK_SIZE_INVALID
         }
-        if (!validationRulesOk(
-                getCurrencyFormat(uiContent!!.dataSet, uiContent!!.frozenLocale).validationRules,
-                editablePrice.price
-            )
-        ) {
+        if (!validationRulesOk(currencyFormat!!.validationRules, editablePrice.price)) {
             return ValidationState.PRICE_INVALID
         }
         // TODO: MORE?
@@ -3917,6 +3920,10 @@ fun AppNavigation() {
         ) { backStackEntry ->
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
+            // TODONOW: If we were to provide a Factory *right here*, it might be able to take
+            // sharedViewModel.editPriceScreenUIContent and apply it to our EditPriceViewModel on
+            // construction, eliminating the need for the transitory null/emptiness on some of its
+            // properties.
             val vm: EditPriceViewModel =
                 viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
 
@@ -4045,7 +4052,8 @@ data class CurrencyFormat(
     val validationRules: List<ValidationRule>
 )
 
-// TODO: This takes a DataSet not a currency code because later on a DataSet may allow custom currency formatting which overrides whatever the current locale wants to do.
+// TODO: This takes a DataSet not a currency code because later on a DataSet may allow custom
+// currency formatting which overrides whatever the current locale wants to do.
 fun getCurrencyFormat(dataSet: DataSet, locale: Locale): CurrencyFormat {
     val currencyInstance = Currency.getInstance(dataSet.currencyCode)
     // currencyInstance will give us the number of decimal places, but it won't give us a
