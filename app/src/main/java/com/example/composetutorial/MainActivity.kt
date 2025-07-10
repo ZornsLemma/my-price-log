@@ -2493,7 +2493,8 @@ fun HomeScreen(
     navController: NavHostController,
     onEditPriceClick: (HomeScreenUIContent) -> Unit,
     onEditDataSetsClick: (HomeScreenUIContent) -> Unit,
-    onEditProductsClick: (HomeScreenUIContent) -> Unit
+    onEditProductsClick: (HomeScreenUIContent) -> Unit,
+    onEditSourcesClick: (HomeScreenUIContent) -> Unit
 ) {
     // In order to minimise jank, we want the previous UI state to be available during the *very
     // first composition* when this screen is re-entered (e.g. after navigating back from another
@@ -2546,6 +2547,7 @@ fun HomeScreen(
         } */
         , onEditDataSetsClick = { onEditDataSetsClick( uiContent) }
         ,onEditItemsClick = { onEditProductsClick(uiContent) },
+        onEditSourcesClick = { onEditSourcesClick(uiContent) }
     )
 }
 
@@ -2629,6 +2631,7 @@ fun HomeScreenScaffold(
     onEditPriceClick: () -> Unit,
     onEditDataSetsClick: () -> Unit,
     onEditItemsClick: () -> Unit,
+    onEditSourcesClick: () -> Unit,
     ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
@@ -2649,9 +2652,13 @@ fun HomeScreenScaffold(
                             menuExpanded = false
                             onEditDataSetsClick()
                         })
-                        MyDropdownMenuItem(text = { Text("Edit product list") }, onClick = {
+                        MyDropdownMenuItem(text = { Text("Edit products") }, onClick = {
                             menuExpanded = false
                             onEditItemsClick()
+                        })
+                        MyDropdownMenuItem(text = { Text("Edit stores") }, onClick = {
+                            menuExpanded = false
+                            onEditSourcesClick()
                         })
                         MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
                             menuExpanded = false
@@ -3731,6 +3738,7 @@ class SharedViewModel : ViewModel() {
     // TODO: Following and their associated functions should maybe be plural
     var generalSelectorScreenUIContentDataSet: GeneralSelectorScreenUIContent<DataSet>? = null
     var generalSelectorScreenUIContentItem: GeneralSelectorScreenUIContent<Item>? = null
+    var generalSelectorScreenUIContentSource: GeneralSelectorScreenUIContent<Source>? = null
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
@@ -3740,6 +3748,11 @@ class SharedViewModel : ViewModel() {
     fun setGeneralSelectorScreenContentFromHomeScreenContentDataSet(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
         generalSelectorScreenUIContentDataSet = GeneralSelectorScreenUIContent("TODO: TITLE DATA SET", uiContent.dataSetList + uiContent.dataSetList)
+    }
+
+    fun setGeneralSelectorScreenContentFromHomeScreenContentSource(uiContent: HomeScreenUIContent) {
+        // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
+        generalSelectorScreenUIContentSource = GeneralSelectorScreenUIContent("TODO: TITLE SOURCE", uiContent.sourceList + uiContent.sourceList)
     }
 }
 
@@ -4070,6 +4083,10 @@ fun AppNavigation() {
                     sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent)
                     navController.navigate("editItems")
                 },
+                onEditSourcesClick = { uiContent ->
+                    sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentSource(uiContent)
+                    navController.navigate("editSources")
+                },
             )
         }
 
@@ -4128,7 +4145,6 @@ fun AppNavigation() {
             GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
         }
 
-
         composable(
             "editItems", enterTransition = { slideLeftTransition() },
             popExitTransition = { slideRightTransition() },
@@ -4162,6 +4178,52 @@ fun AppNavigation() {
                 }
             }
             val vm: GeneralSelectorViewModel<Item> = viewModel(backStackEntry, factory = factory)
+            LaunchedEffect(Unit) {
+                sharedViewModel.generalSelectorScreenUIContentItem = null
+            }
+
+            // TODO: My intention is that this screen (which shows a list of named things and let's
+            // you pick one to do something with, or optionally to add a new one, and may have an
+            // optional search button and may take over from the modal bottom sheet for products in
+            // that form) is generic enough to be shared across data sets/items/sources. I will
+            // start writing in pseudo-specific to products, but I will name things generically and
+            // then I can try to factor things out later.
+            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
+        }
+
+        composable(
+            "editSources", enterTransition = { slideLeftTransition() },
+            popExitTransition = { slideRightTransition() },
+
+            ) { backStackEntry ->
+            // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
+            // backStackEntry) - this avoids stale data causing problems.
+            // TODO: I am not actually going to use a savedStateHandle to start with - because this *can*
+            // get its data from the database (it's just an optimisation having it passed over on first
+            // navigation), it isn't so necessary. I may change my mind. If I *don't* change my mind,
+            // it *may* be that we can or should use a different simpler factory. (Although given this
+            // viewModelFactoryWithHandle thing already exists, maybe it's as well to use it even if
+            // we ignore the handle. And maybe it wouldn't be a big deal to use the handle for extra
+            // smoothness anyway.)
+            val factory = remember(backStackEntry) {
+                viewModelFactoryWithHandle { extras, savedStateHandle ->
+                    val app =
+                        extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+                    // TODO: !! ON sharedViewModel.generalSelectorScreenUIContent causes (probably)
+                    // crash in the kill-and-revive case - we (probably) either need savedStateHandle stuff
+                    // and/or we need to construct a GeneralSelectorScreenUIContent but without the
+                    // initial data list and just wait for the database to come through.
+                    // TODO: !! ON (COMMENTED OUT) FROM SAVED STATE FEELS A BIT HACKY BUT PROBABLY FINE
+                    GeneralSelectorViewModel(
+                        app.priceTrackerRepository,
+                        savedStateHandle,
+                        sharedViewModel.generalSelectorScreenUIContentSource!! /* TODO
+                            ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */
+                        ,initialQuery = app.priceTrackerRepository.getAllSources(1L /* TODO HACK */)
+                    )
+                }
+            }
+            val vm: GeneralSelectorViewModel<Source> = viewModel(backStackEntry, factory = factory)
             LaunchedEffect(Unit) {
                 sharedViewModel.generalSelectorScreenUIContentItem = null
             }
