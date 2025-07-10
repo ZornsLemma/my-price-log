@@ -98,6 +98,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -1176,6 +1178,27 @@ class SingleEventState<T>(initialState: T) {
         _state.value = value
         _events.emit(value)
     }
+}
+
+// TODO: ChatGPT semi-magic
+class SyncedStateEvent<T>(initialState: T) {
+    private val _state = MutableStateFlow(initialState)
+    private val _events = MutableSharedFlow<T>(extraBufferCapacity = 1)
+
+    val events: SharedFlow<T> = _events
+
+    @Composable
+    fun collectAsStateWithLifecycle(): State<T> = _state.collectAsStateWithLifecycle()
+
+    suspend fun update(value: T) {
+        _state.value = value
+        _events.emit(value)
+    }
+
+    /* TODO DELETE
+    // Only internal use
+    internal fun currentValue(): T = _state.value
+    */
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -2808,14 +2831,12 @@ fun EditPriceScreen(
 ) {
     val uiContent = vm.uiContent
 
-// TODO: Can I get rid of saveInitiated and instead set the state inside the viewmodel to "idle"
-// when we are not saving? The frequency with which we check it suggests it might be more
-// painful to get rid of it. but if we track this, the distinction between idle and saving is
-// mostly meainingless (the state never gets set back to idle) and we should maybe merge those
-// states into a vague "meh" state.
 // TODO: Some of this remember stuff should maybe move into the ViewModel
-    var saveInitiated by rememberSaveable { mutableStateOf(false) }
-    var showSaveProgressIndicator by rememberSaveable { mutableStateOf(false) }
+    val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
+    // We count "success" as saving here, since we don't want the "Save" button to re-enable
+    // briefly; it looks ugly, we already saved (so saving again makes no sense if the user does
+    // manage to click it) and we are about to close this screen.
+    val isSaving = (saveStatus == EditPriceViewModel.SaveStatus.Saving) || (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) || (saveStatus == EditPriceViewModel.SaveStatus.Success)
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
     var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
@@ -2852,7 +2873,7 @@ fun EditPriceScreen(
     }
 
     BackHandler {
-        if (!saveInitiated) {
+        if (!isSaving) {
             requestDismiss()
         } else {
             // I've discussed this with LLMs and it's not clear if - from a UI perspective - we
@@ -2861,13 +2882,13 @@ fun EditPriceScreen(
         }
     }
 
-    LaunchedEffect(saveInitiated) {
-        if (saveInitiated) {
+    LaunchedEffect(isSaving) {
+        if (isSaving) {
             // We expect the save to complete quickly so we don't want the visual distraction
             // of a progress indicator appearing straight away. Let the progress indicator kick
             // in after a short delay if we're still here waiting for the save to complete.
             delay(spinnerDelayMillis)
-            showSaveProgressIndicator = true
+            vm.saveStatus.update(EditPriceViewModel.SaveStatus.SavingSlowly)
         }
         // TODO: I don't think we need to set it back to false in else, but maybe revise all
         // this later.
@@ -2875,14 +2896,14 @@ fun EditPriceScreen(
 
 // TODO: ChatGPT magic more or less
     LaunchedEffect(Unit) {
-        vm.saveEvents.collect { event ->
+        vm.saveStatus.events.collect { event ->
             when (event) {
                 EditPriceViewModel.SaveStatus.Success -> {
                     requestCloseDebounced()
                 }
 
                 EditPriceViewModel.SaveStatus.Error -> {
-                    saveInitiated = false
+                    vm.saveStatus.update(EditPriceViewModel.SaveStatus.Idle)
                     showErrorDialog = true
                 }
 
@@ -2932,20 +2953,19 @@ fun EditPriceScreen(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(enabled = !saveInitiated, onClick = { requestDismiss() }) {
+                    IconButton(enabled = !isSaving, onClick = { requestDismiss() }) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 },
                 title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price" (even though we call it that internally, because it's the "price" table), you can also eg edit pack size and probably a free text notes field etc
                 actions = {
-                    TextButton(enabled = !saveInitiated, onClick = {
+                    TextButton(enabled = !isSaving, onClick = {
                         coroutineScope.launch {
                             // TODO: Maybe we shouldn't be passing editablePrice around as a
                             // parameter so much, when it's implicit in the ViewModel? This would
                             // apply elsewhere, not just here.
                             when (vm.validateEditablePrice(uiContent.editablePrice.value)) {
                                 EditPriceViewModel.ValidationState.OK -> {
-                                    saveInitiated = true
                                     // delay(5000) // TODO HACK
                                     vm.saveEditablePrice(uiContent.editablePrice.value)
                                 }
@@ -2969,7 +2989,7 @@ fun EditPriceScreen(
                             }
                         }
                     }) {
-                        if (showSaveProgressIndicator) {
+                        if (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
                                 strokeWidth = 2.dp,
@@ -3833,23 +3853,31 @@ class EditPriceViewModel(
 
     // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
 
-    enum class SaveStatus { Idle, Saving, Success, Error }
+    enum class SaveStatus { Idle, Saving, SavingSlowly, Success, Error }
 
-    private val _saveStatus = SingleEventState(SaveStatus.Idle)
+    // TODO: DELETE!? /* TODO? private */ val _saveStatus = SingleEventState(SaveStatus.Idle)
 
-    // TODO: DELETE? val saveStatus = _saveStatus.state
+    val saveStatus = SyncedStateEvent(SaveStatus.Idle)
+
+    /* TODO DELETE?!?!!
+    suspend fun setSaveStatusIdle() {
+        _saveStatus.update(SaveStatus.Idle)
+    }
+
+    val saveStatus = _saveStatus.state
     val saveEvents = _saveStatus.events
+    */
 
     // TODO: Use upsert in name?
     private fun updateOrInsertPrice(price: Price) {
         viewModelScope.launch {
-            _saveStatus.update(SaveStatus.Saving)
+            saveStatus.update(SaveStatus.Saving)
             try {
                 //delay(3700); // TODO TEMP FOR DEBUGGING
                 priceTrackerRepository.updateOrInsertPrice(price)
-                _saveStatus.update(SaveStatus.Success)
+                saveStatus.update(SaveStatus.Success)
             } catch (e: Exception) {
-                _saveStatus.update(SaveStatus.Error) // TODO: how can we preserve e and show it to user in UI?
+                saveStatus.update(SaveStatus.Error) // TODO: how can we preserve e and show it to user in UI?
             }
         }
     }
