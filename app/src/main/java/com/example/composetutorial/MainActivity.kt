@@ -3720,6 +3720,11 @@ inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
     }
 }
 
+// TODO: Here, and possibly in other ViewModels, there is a tendency to be passing parameters into
+// functions which are actually just taken out of the ViewModel's own state anyway. It may well be
+// worth removing these redundant parameters, but I will hold off for now on the vague grounds that
+// the parameters being explicit may be useful for unit testing later on. I can always refactor when
+// I've had a go at writing some tests.
 class EditPriceViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
