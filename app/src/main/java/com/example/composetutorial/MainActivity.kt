@@ -4114,18 +4114,4 @@ Log.d("MyApp", baz.toString())
 // In general, we avoid Locale.getDefault() and require explicit locale parameters to functions
 // (without defaults) to ensure we always consider the source of our locale.
 
-// TODONOW: ChatGPT on locales:
-// TL;DR
-//
-//    🔄 In Compose: use LocalConfiguration.current.locales[0] — it’s reactive and accurate.
-//
-//    ⚙️ In ViewModels / non-UI: Locale.getDefault() is okay, but may not reflect immediate user changes.
-//
-//    🎯 Pass the current Compose locale to your ViewModel using LaunchedEffect(currentLocale) to keep everything in sync
-//
-// Do I need to switch away from using Locale.getDefault()? Perhaps I should have a LaunchedEffect(currentLocale) which passes the locale to the viewmodel, then we will have it available everywhere via that which should be up to date. But need to check ChatGPT is right of course!
-
-// TODONOW: It feels like I have a lot of similar-but-not-quite-the-same code to do things like
-// locale sensitive number formatting and parsing. This ought to be rationalised.
-
 // TODO: Eventually will need to remove misc Log.d() lines and/or replace them with permanent well-thought-out ones if that is not inefficient.
