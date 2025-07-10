@@ -1165,22 +1165,10 @@ interface PriceDao {
     ): Flow<List<PriceWithItemEntity>>
 }
 
-// TODO: ChatGPT magic
-class SingleEventState<T>(initialState: T) {
-
-    private val _state = MutableStateFlow(initialState)
-    val state: StateFlow<T> = _state
-
-    private val _events = MutableSharedFlow<T>()
-    val events: SharedFlow<T> = _events
-
-    suspend fun update(value: T) {
-        _state.value = value
-        _events.emit(value)
-    }
-}
-
 // TODO: ChatGPT semi-magic
+// Represents a UI state that should be both:
+// - Observable via [state] for UI rendering
+// - Emitted via [events] for triggering side-effects
 class SyncedStateEvent<T>(initialState: T) {
     private val _state = MutableStateFlow(initialState)
     private val _events = MutableSharedFlow<T>(extraBufferCapacity = 1)
@@ -1194,11 +1182,6 @@ class SyncedStateEvent<T>(initialState: T) {
         _state.value = value
         _events.emit(value)
     }
-
-    /* TODO DELETE
-    // Only internal use
-    internal fun currentValue(): T = _state.value
-    */
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -2836,6 +2819,8 @@ fun EditPriceScreen(
     // We count "success" as saving here, since we don't want the "Save" button to re-enable
     // briefly; it looks ugly, we already saved (so saving again makes no sense if the user does
     // manage to click it) and we are about to close this screen.
+    // TODO: Arguably we should do something similar with the spinner - if we've ever been in
+    // SavingSlowly state, we should keep showing the spinner until we close.
     val isSaving = (saveStatus == EditPriceViewModel.SaveStatus.Saving) || (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) || (saveStatus == EditPriceViewModel.SaveStatus.Success)
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
@@ -3853,27 +3838,17 @@ class EditPriceViewModel(
 
     // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
 
+    // TODONOW: This should be moved outside EditPriceViewModel - it will be useful for other screens
     enum class SaveStatus { Idle, Saving, SavingSlowly, Success, Error }
-
-    // TODO: DELETE!? /* TODO? private */ val _saveStatus = SingleEventState(SaveStatus.Idle)
 
     val saveStatus = SyncedStateEvent(SaveStatus.Idle)
 
-    /* TODO DELETE?!?!!
-    suspend fun setSaveStatusIdle() {
-        _saveStatus.update(SaveStatus.Idle)
-    }
-
-    val saveStatus = _saveStatus.state
-    val saveEvents = _saveStatus.events
-    */
-
-    // TODO: Use upsert in name?
+// TODO: Use upsert in name?
     private fun updateOrInsertPrice(price: Price) {
         viewModelScope.launch {
             saveStatus.update(SaveStatus.Saving)
             try {
-                //delay(3700); // TODO TEMP FOR DEBUGGING
+                delay(3700); // TODO TEMP FOR DEBUGGING
                 priceTrackerRepository.updateOrInsertPrice(price)
                 saveStatus.update(SaveStatus.Success)
             } catch (e: Exception) {
