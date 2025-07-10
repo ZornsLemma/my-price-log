@@ -3068,7 +3068,7 @@ fun EditPriceScreen(
                             if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
                                 vm.setUIContentEditablePrice(
                                     uiContent.editablePrice.value.copy(
-                                        measureUnit = measureUnit!!
+                                        measureUnit = measureUnit
                                     )
                                 )
                                 onPackSizeOrPriceChange()
@@ -3112,7 +3112,7 @@ fun EditPriceScreen(
             Box(modifier = Modifier.onGloballyPositioned { coordinates ->
                 priceY = coordinates.positionInParent().y.toInt()
             }) {
-                val currencyFormat = vm.currencyFormat!!
+                val currencyFormat = vm.currencyFormat
                 NumericTextField(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -3128,7 +3128,7 @@ fun EditPriceScreen(
                     // the currency symbol being on the right. Or maybe the currency symbol should
                     // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
                     // wait for user feedback?
-                    textStyle = if (currencyFormat!!.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
+                    textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
                         textAlign = TextAlign.End
                     ) else LocalTextStyle.current,
                     validationRules = currencyFormat.validationRules,
@@ -3232,7 +3232,7 @@ fun EditPriceScreen(
                 onDismissRequest = { showErrorDialog = false },
                 confirmButton = {
                     TextButton(onClick = {
-                        showErrorDialog = false;
+                        showErrorDialog = false
                     }) { Text("OK") }
                 }
             )
@@ -3267,10 +3267,10 @@ data class ValidationRule(val validate: (String) -> Boolean, val message: String
 fun validationRulesOk(validationRules: List<ValidationRule>, value: String): Boolean {
     for (validationRule in validationRules) {
         if (!validationRule.validate(value)) {
-            return false;
+            return false
         }
     }
-    return true;
+    return true
 }
 
 // TODO: This duplicates code in numericValidationRules(). It may be as well to move some of these
@@ -3349,6 +3349,7 @@ fun numericValidationRules(
 
 @Composable
 fun NumericTextField(
+    modifier: Modifier = Modifier,
     label: @Composable() (() -> Unit)? = null,
     value: TextFieldValue,
     prefix: @Composable() (() -> Unit)? = null,
@@ -3362,7 +3363,6 @@ fun NumericTextField(
     validationRulesKey: Any? = null,
     onValueChange: (TextFieldValue) -> Unit,
     onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
     supportingText: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
     messageDelayMillis: Long = defaultValidationMessageDelayMillis,
@@ -3396,6 +3396,7 @@ fun NumericTextField(
 
 @Composable
 fun ValidatedTextField(
+    modifier: Modifier = Modifier,
     label: @Composable() (() -> Unit)? = null,
     value: TextFieldValue,
     prefix: @Composable() (() -> Unit)? = null,
@@ -3406,7 +3407,6 @@ fun ValidatedTextField(
     onCandidateValueChange: ((String) -> Boolean),
     onValueChange: (TextFieldValue) -> Unit,
     onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
-    modifier: Modifier = Modifier,
     supportingText: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     messageDelayMillis: Long = defaultValidationMessageDelayMillis,
