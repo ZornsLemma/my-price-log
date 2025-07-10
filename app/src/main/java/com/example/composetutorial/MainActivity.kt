@@ -3656,7 +3656,22 @@ fun GeneralSelectorScreen(vm: GeneralSelectorViewModel, navController: NavHostCo
 
 
             Text("TODO GENERAL SELECTOR")
+
+            data class GeneralSelectorEntity(val id: Long, val name: String)
+            val todoTempList = listOf(GeneralSelectorEntity(1, "ONE"), GeneralSelectorEntity(2, "TWO"))
+            LazyColumn {
+                items(todoTempList) { item ->
+                    GeneralSelectorListItem(id = item.id, name = item.name)
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun GeneralSelectorListItem(id: Long, name: String) {
+    Row {
+        Text(text = name)
     }
 }
 
