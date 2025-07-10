@@ -3097,7 +3097,7 @@ fun EditPriceScreen(
             var packPrice by rememberSyncedTextFieldValue(
                 uiContent.editablePrice.value.price ?: ""
             ) // TODONOW: Just stop it being nullable rather than converting null to "" here?
-            val currencyFormat = remember { vm.getCurrencyFormat(uiContent.dataSet) }
+            val currencyFormat = remember { getCurrencyFormat(uiContent.dataSet, uiContent.frozenLocale) }
             Box(modifier = Modifier.onGloballyPositioned { coordinates ->
                 priceY = coordinates.positionInParent().y.toInt()
             }) {
@@ -3758,13 +3758,6 @@ class EditPriceViewModel(
 
     // TODONOW: There's probably a lot of redundancy with the currency stuff given how it's evolved
 
-    data class CurrencyFormat(
-        val decimalPlaces: Int, // TODO: We may not actually need this, if it's baked into validation rules and not used elsewhere
-        val prefix: String?,
-        val suffix: String?,
-        val validationRules: List<ValidationRule>
-    )
-
     /* TODO DELETE
     // TODO: We are implementing this as a map (maybe rename it to cache) because it's locale dependent but we don't have the data set handy when we do updateLocaleDependencies(). So we lazily look up the currency details (which is completely acceptable main thread work, but just fiddly enough we don't want to be doing it *constantly*) and cache it in here on first up.
     // TODO: MutableMap is not thread safe. I don't think this is a problem, but be aware of it - I think we could switch to non-mutable Map and replace-in-place if necessary
@@ -3782,35 +3775,6 @@ class EditPriceViewModel(
         currencyFormatMap.clear()
     }
     */
-
-    // TODO: This takes a DataSet not a currency code because later on a DataSet may allow custom currency formatting which overrides whatever the current locale wants to do.
-    fun getCurrencyFormat(dataSet: DataSet): CurrencyFormat {
-            val currencyInstance = Currency.getInstance(dataSet.currencyCode)
-            // currencyInstance will give us the number of decimal places, but it won't give us a
-            // prefix or suffix to use - which we need for currency TextFields. So we ask it to
-            // format a sample price and take the prefix and suffix from that.
-            val numberFormat = NumberFormat.getCurrencyInstance(uiContent!!.frozenLocale).apply {
-                currency = currencyInstance
-            }
-            val sampleFormattedCurrency = numberFormat.format(1.0)
-            Log.d(
-                "MyApp",
-                "sampleFormattedCurrency for ${dataSet.currencyCode} is '$sampleFormattedCurrency'"
-            )
-            val (prefix, suffix) = splitAroundDigits(sampleFormattedCurrency)
-            return CurrencyFormat(
-                decimalPlaces = currencyInstance.defaultFractionDigits,
-                prefix = prefix.trim().ifBlank { null },
-                suffix = suffix.trim().ifBlank { null },
-                validationRules = numericValidationRules(
-                    uiContent!!.frozenLocale,
-                    allowDecimals = true,
-                    allowZero = false,
-                    maxDecimals = currencyInstance.defaultFractionDigits
-                )
-            )
-    }
-
     enum class ValidationState {
         OK,
         PACK_SIZE_INVALID,
@@ -3827,7 +3791,7 @@ class EditPriceViewModel(
             return ValidationState.PACK_SIZE_INVALID
         }
         if (!validationRulesOk(
-                getCurrencyFormat(uiContent!!.dataSet).validationRules,
+                getCurrencyFormat(uiContent!!.dataSet, uiContent!!.frozenLocale).validationRules,
                 editablePrice.price
             )
         ) {
@@ -4090,6 +4054,42 @@ inline fun devCheck(condition: Boolean, lazyMessage: () -> String) {
 // devCheck.
 inline fun devRequire(condition: Boolean, lazyMessage: () -> String) =
     devCheck(condition, lazyMessage)
+
+data class CurrencyFormat(
+    val decimalPlaces: Int, // TODO: We may not actually need this, if it's baked into validation rules and not used elsewhere
+    val prefix: String?,
+    val suffix: String?,
+    val validationRules: List<ValidationRule>
+)
+
+// TODO: This takes a DataSet not a currency code because later on a DataSet may allow custom currency formatting which overrides whatever the current locale wants to do.
+fun getCurrencyFormat(dataSet: DataSet, locale: Locale): CurrencyFormat {
+    val currencyInstance = Currency.getInstance(dataSet.currencyCode)
+    // currencyInstance will give us the number of decimal places, but it won't give us a
+    // prefix or suffix to use - which we need for currency TextFields. So we ask it to
+    // format a sample price and take the prefix and suffix from that.
+    val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
+        currency = currencyInstance
+    }
+    val sampleFormattedCurrency = numberFormat.format(1.0)
+    Log.d(
+        "MyApp",
+        "sampleFormattedCurrency for ${dataSet.currencyCode} is '$sampleFormattedCurrency'"
+    )
+    val (prefix, suffix) = splitAroundDigits(sampleFormattedCurrency)
+    return CurrencyFormat(
+        decimalPlaces = currencyInstance.defaultFractionDigits,
+        prefix = prefix.trim().ifBlank { null },
+        suffix = suffix.trim().ifBlank { null },
+        validationRules = numericValidationRules(
+            locale,
+            allowDecimals = true,
+            allowZero = false,
+            maxDecimals = currencyInstance.defaultFractionDigits
+        )
+    )
+}
+
 
 /* TODO TEMP TEST CODE FOR MEASUREDVALUE
 val foo = MeasuredValue(5.0, MeasureUnit.KG)
