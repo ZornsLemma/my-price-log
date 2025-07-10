@@ -3748,7 +3748,11 @@ class EditPriceViewModel(
         packSizeValidationRules = generatePackSizeValidationRules()
     }
 
-    // TODO: Rename "generate" not "get" to show it "does work"?
+    // TODO: This is called "generate" not "get" in part to show it performs work and isn't just
+    // returning a cached value, but also to avoid a Kotlin/JVM clash with the
+    // packSizeValidationRules property. I think I am generally a bit inconsistent in naming here
+    // anyway (e.g. numericValidationRules() also performs work) and some kind of tidying up of the
+    // naming generally might be in order.
     private fun generatePackSizeValidationRules(): List<ValidationRule> {
         val maxDecimals = uiContent.editablePrice.value.measureUnit.maxDecimals
         return numericValidationRules(
