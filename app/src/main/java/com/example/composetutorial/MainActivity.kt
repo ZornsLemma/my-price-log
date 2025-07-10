@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class)
 
 package com.example.composetutorial // TODO: change this!
 
@@ -380,10 +380,10 @@ fun getRelevantMeasureUnits(
     includeDisplayOnly: Boolean
 ): List<MeasureUnit> {
     val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
-    val relevantMeasureUnits = MeasureUnit.entries.filter {
-        it.quantityType == quantityType &&
-                it.unitFamilies.any { it in relevantUnitFamilies } &&
-                (!it.displayOnly || includeDisplayOnly)
+    val relevantMeasureUnits = MeasureUnit.entries.filter { measureUnit ->
+        measureUnit.quantityType == quantityType &&
+                measureUnit.unitFamilies.any { it in relevantUnitFamilies } &&
+                (!measureUnit.displayOnly || includeDisplayOnly)
     }
     devCheck(relevantMeasureUnits.isNotEmpty()) {
         "Expected at least one relevant measure unit for QuantityType ${quantityType.name} in " +
@@ -436,7 +436,9 @@ fun formatDouble(
 @Parcelize // TODO: can we get rid of this later?
 // TODO: Should we make "value" memeber private? Direct use could "encourage" buggy code.
 data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable {
-    val quantityType: QuantityType get() = unit.quantityType
+    // TODO: We could make quantityType public and slightly simplify some of our callers, but it's
+    // *probably* clearer to make them go through unit to get to it.
+    private val quantityType: QuantityType get() = unit.quantityType
 
     fun to(unit: MeasureUnit): MeasuredValue {
         devRequire(this.quantityType == unit.quantityType) {
@@ -1149,7 +1151,7 @@ interface PriceDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(price: PriceEntity): Long
 
-    @Upsert()
+    @Upsert
     suspend fun upsert(price: PriceEntity)
 
     @Query(
@@ -1210,7 +1212,7 @@ class HomeViewModel(
     }
 
     // TODO: Rename UIContent->HomeScreenUIContent and/or scope it to this ViewModel?
-    private val _uiState = MutableStateFlow<Pair<Boolean /* loading */, HomeScreenUIContent>>(
+    private val _uiState = MutableStateFlow(
         Pair(
             false,
             HomeScreenUIContent.createEmpty()
@@ -1450,6 +1452,7 @@ val menuLeftPadding = 16.dp
 val menuRightPadding = menuLeftPadding
 
 // TODO: RENAME THIS IF IT SURVIVES REFACTORING
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     dataSet: DataSet?, dataSetList: List<DataSet>, onSelectedDataSetIdChange: (Long) -> Unit,
@@ -2592,6 +2595,7 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreenScaffold(
     navController: NavHostController,
@@ -2780,6 +2784,7 @@ fun rememberSyncedTextFieldValue(modelState: String): MutableState<TextFieldValu
     return tfv
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 // TODO: I was thinking this screen would show the price history, but I am cooling on that. Not
 // quite sure where we would show it, but I am not sure it's something we want cluttering up this
@@ -3743,7 +3748,7 @@ inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
 class EditPriceViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
-    public val uiContent: EditPriceScreenUIContent,
+    val uiContent: EditPriceScreenUIContent,
 ) : ViewModel() {
     val instanceId = UUID.randomUUID().toString() // TODO FOR DEBUG
     var packSizeValidationRules = generatePackSizeValidationRules()
@@ -3799,7 +3804,7 @@ class EditPriceViewModel(
         if (!validationRulesOk(packSizeValidationRules, editablePrice.measureValue)) {
             return ValidationState.PACK_SIZE_INVALID
         }
-        if (!validationRulesOk(currencyFormat!!.validationRules, editablePrice.price)) {
+        if (!validationRulesOk(currencyFormat.validationRules, editablePrice.price)) {
             return ValidationState.PRICE_INVALID
         }
         // TODO: MORE?
@@ -3807,7 +3812,7 @@ class EditPriceViewModel(
     }
 
     fun saveEditablePrice(editablePrice: EditablePrice) {
-        val price = editablePrice.toDomain(uiContent!!.frozenLocale)
+        val price = editablePrice.toDomain(uiContent.frozenLocale)
         Log.d("MyApp", "saveEditablePrice price $price")
         if (price != null) {
             updateOrInsertPrice(price)
@@ -3864,8 +3869,8 @@ fun AppNavigation() {
         // and does actually seem to more-or-less behave (and consistently too). I didn't want to force 700ms, this feels a smidge fast at the (I think) default 300 but I think it is OK.
         // No, no, it isn't consistent. Sometimes the back animation is much faster than others. Not a clue. Not a f* clue.
 
-        val tweenDurationMillisEnter = 700; // TODO: should probably be 300 in final version
-        val tweenDurationMillisExit = 700; // TODO: should probably be 250 in final version
+        val tweenDurationMillisEnter = 700 // TODO: should probably be 300 in final version
+        val tweenDurationMillisExit = 700 // TODO: should probably be 250 in final version
 
         // TODO: The syntax required to factor these animations out into re-usable functions is pure
         // ChatGPT voodoo (and it took several attempts to get it right, unless I just kept messing
