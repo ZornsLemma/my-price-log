@@ -2587,9 +2587,9 @@ fun HomeScreenScaffold(
     itemList: List<Item>,
     onSelectedItemIdChange: (Long) -> Unit,
     source: Source?,
-    sourceListRaw: List<Source>,
+    sourceList: List<Source>,
     onSelectedSourceIdChange: (Long?) -> Unit,
-    itemPriceListRaw: List<Price>,
+    priceList: List<Price>,
     onEditPriceClick: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -2666,9 +2666,9 @@ fun HomeScreenScaffold(
                     dataSet = dataSet,
                     item = item,
                     source = source,
-                    sourceList = sourceListRaw,
+                    sourceList = sourceList,
                     onSelectedSourceIdChange = onSelectedSourceIdChange,
-                    itemPriceList = itemPriceListRaw,
+                    itemPriceList = priceList,
                     onEditPriceClick = onEditPriceClick
                 )
             }
