@@ -3015,14 +3015,13 @@ fun EditPriceScreen(
                     // just want "a reasonable fixed size" for the unit with
                     // the product taking whatever's left, but this will do for now.
                     var packSizeNumber by rememberSyncedTextFieldValue(
-                        uiContent.editablePrice.value.measureValue ?: ""
-                    ) // TODONOW: Just stop it being nullable rather than converting null to "" here?
+                        uiContent.editablePrice.value.measureValue
+                    )
                     NumericTextField(
                         label = { Text("Pack size") },
                         value = packSizeNumber,
                         validationRules = vm.packSizeValidationRules,
                         validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
-                        // TODONOW: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                         onValueChange = {
                             packSizeNumber = it
                             if (uiContent.editablePrice.value.measureValue != it.text) {
@@ -3094,10 +3093,8 @@ fun EditPriceScreen(
             // "minimal" and the other filling rest of space - but then again, if you do that, a
             // fixed ratio is probably more or less the same since both will expand with font size
             // just the same, so maybe that would be pointless
-            var packPrice by rememberSyncedTextFieldValue(
-                uiContent.editablePrice.value.price ?: ""
-            ) // TODONOW: Just stop it being nullable rather than converting null to "" here?
-            // TODO: This is perhaps inconsistent. The packSizeValidationRules are stored on the
+            var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
+            // TODONOW: This is perhaps inconsistent. The packSizeValidationRules are stored on the
             // ViewModel, but we cache the (actually unchanging - frozen locale, remember, and
             // dataset can't change either) currencyFormat here (it includes validation rules). We
             // should probably keep both on the viewmodel.
@@ -3127,7 +3124,6 @@ fun EditPriceScreen(
                     // We don't need a validationRulesKey here because the currency validation rules
                     // cannot change while we are editing. They depend only on our DataSet and our
                     // frozen locale.
-                    // TODONOW: next line is probably never going to generate a null, suggesting our nullness in EditablePrice is pointless
                     onValueChange = {
                         packPrice = it
                         if (uiContent.editablePrice.value.price != it.text) {
@@ -3759,31 +3755,9 @@ class EditPriceViewModel(
     // overwritten before it's used.
     var packSizeValidationRules = emptyList<ValidationRule>()
 
-    /* TODO DELETE
-    // TODONOW: HARDCODING 2 DP IS A HACK - WE REALLY OUGHT TO GET THIS FROM LOCALE, AND WE OUGHT TO PROBABLY CONSTRUCT PRICEVALIDATIONRULES IN OUR NAVHOST COMPOSABLE VIA REMEMBER AND PASS IT IN SO IT'S REGENERATED IF USER CHANGES LOCAL
-    private fun getPriceValidationRules(locale: Locale) =
-        numericValidationRules(uiContent!!.frozenLocale, allowDecimals = true, allowZero = false, maxDecimals = 2)
-     */
-
     // TODONOW: There's probably a lot of redundancy with the currency stuff given how it's evolved
+    // - maybe fixed up now but needs a review.
 
-    /* TODO DELETE
-    // TODO: We are implementing this as a map (maybe rename it to cache) because it's locale dependent but we don't have the data set handy when we do updateLocaleDependencies(). So we lazily look up the currency details (which is completely acceptable main thread work, but just fiddly enough we don't want to be doing it *constantly*) and cache it in here on first up.
-    // TODO: MutableMap is not thread safe. I don't think this is a problem, but be aware of it - I think we could switch to non-mutable Map and replace-in-place if necessary
-    val currencyFormatMap: MutableMap<String, CurrencyFormat> = mutableMapOf()
-    */
-
-    /* TODO DELETE
-    // TODO: Even if Locale.getDefault() is sub-optimal, this is fine as it's really only a default. updateLocaleDependencies() should be called almost immediately - maybe do some test logging to check that?
-    var locale: Locale = Locale.getDefault()
-    */
-
-    /* TODO DELETE
-    fun updateLocaleDependencies(locale: Locale) {
-        this.locale = locale
-        currencyFormatMap.clear()
-    }
-    */
     enum class ValidationState {
         OK,
         PACK_SIZE_INVALID,
@@ -4115,6 +4089,34 @@ Log.d("MyApp", baz.toString())
 // be good to read up on best practices.
 
 // TOOD: I should probably limit all text fields to approx 1000 characters just to stop the user going crazy.
+
+// Note to self: As far as I can tell, Locale.getDefault() is set to the current locale when our
+// app process starts and is never automatically updated. Changes to localisation settings while we
+// are running will cause re-compositions and will be immediately available to composables using
+// LocalConfiguration.current.locales[0]. It is possible (although with race conditions around
+// re-composition timing and use by composables of non-composable functions) to update the value
+// returned by Locale.getDefault() to match LocalConfiguration.current.locales[0] using
+// Locale.setDefault(), but we don't really want to do this.
+//
+// We adopt a different strategy for read-only screens and editing screens:
+// - For read-only screens, we react live to locale changes and use
+//   LocalConfiguration.current.locales[0], passing it around as necessary to make it available to
+//   non-composable code.
+// - For editing screens, we "freeze" a copy of the locale from LocalConfiguration.current.locales[0]
+//   when we start editing (at which point we have likely generated a locale-sensitive string
+//   representation of some values to be edited) and use that locale for the lifespan of the editing
+//   screen. This avoids problems like ambiguous interpretation of "," or "." as the decimal
+//   separator or grouping separator. (Because the values are strings and may be temporarily
+//   invalid, we cannot parse them to double in the old locale and re-generate strings in the new
+//   locale reliably.)
+//
+// In theory, an editing screen with no locale-sensitive editable data on it might be treated as a
+// read-only screen from this point of view.
+//
+// In general, we avoid using Locale.getDefault() and make locale parameters to functions explicit
+// without defaults to force us to think about where our locale is coming from.
+//
+// TODO: Is this correct/OK?
 
 // TODONOW: ChatGPT on locales:
 // TL;DR
