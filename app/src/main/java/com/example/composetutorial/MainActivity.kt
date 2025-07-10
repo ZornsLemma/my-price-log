@@ -499,7 +499,7 @@ abstract class InventoryDatabase : RoomDatabase() {
                                     // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
                                     // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current locale (and make sure any non-metric units in the data below are changed accordingly)
                                     // TODO: We should have some demo products which are (fake) "branded" products, so get the idea across that this is another way to do things if you are brand-sensitive on a particular item
-                                    // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp 
+                                    // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp
                                     val dataSetId = db.dataSetDao().insert(
                                         DataSet(
                                             name = "Demo",
@@ -3097,6 +3097,10 @@ fun EditPriceScreen(
             var packPrice by rememberSyncedTextFieldValue(
                 uiContent.editablePrice.value.price ?: ""
             ) // TODONOW: Just stop it being nullable rather than converting null to "" here?
+            // TODO: This is perhaps inconsistent. The packSizeValidationRules are stored on the
+            // ViewModel, but we cache the (actually unchanging - frozen locale, remember, and
+            // dataset can't change either) currencyFormat here (it includes validation rules). We
+            // should probably keep both on the viewmodel.
             val currencyFormat = remember { getCurrencyFormat(uiContent.dataSet, uiContent.frozenLocale) }
             Box(modifier = Modifier.onGloballyPositioned { coordinates ->
                 priceY = coordinates.positionInParent().y.toInt()
