@@ -2491,7 +2491,9 @@ data class EditPriceScreenUIContent(
 fun HomeScreen(
     vm: HomeViewModel,
     navController: NavHostController,
-    onEditPriceClick: (HomeScreenUIContent) -> Unit
+    onEditPriceClick: (HomeScreenUIContent) -> Unit,
+    onEditProductsClick: (HomeScreenUIContent) -> Unit
+
 ) {
     // In order to minimise jank, we want the previous UI state to be available during the *very
     // first composition* when this screen is re-entered (e.g. after navigating back from another
@@ -2542,6 +2544,7 @@ fun HomeScreen(
             // screen.
             navController.navigate("fullScreenDialog/${UUID.randomUUID()}")
         } */
+        ,onEditProductsClick = { onEditProductsClick(uiContent) },
     )
 }
 
@@ -2623,7 +2626,8 @@ fun HomeScreenScaffold(
     onSelectedSourceIdChange: (Long?) -> Unit,
     priceList: List<Price>,
     onEditPriceClick: () -> Unit,
-) {
+    onEditProductsClick: () -> Unit,
+    ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -2641,7 +2645,7 @@ fun HomeScreenScaffold(
                         expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                         MyDropdownMenuItem(text = { Text("Edit product list") }, onClick = {
                             menuExpanded = false
-                            navController.navigate("editProducts")
+                            onEditProductsClick()
                         })
                         MyDropdownMenuItem(text = { Text("Edit categories") }, onClick = {
                             menuExpanded = false
@@ -3618,12 +3622,16 @@ fun SettingsScreen(navController: NavHostController) {
     }
 }
 
+// TODO: I think this needs to have a Room-based feed of data because we could potentially return to
+// it after adding or renaming something on a child full screen dialog and we need to pick that
+// change up. But for first frame perfection, we probably do also want to receive an initial list
+// from the home screen.
 @Composable
-fun GeneralSelectorScreen(navController: NavHostController) {
+fun GeneralSelectorScreen(vm: GeneralSelectorViewModel, navController: NavHostController) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text("TODO TITLE") }, navigationIcon = {
+            TopAppBar(title = { Text(vm.uiContent.title) }, navigationIcon = {
 
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(
@@ -3643,6 +3651,10 @@ fun GeneralSelectorScreen(navController: NavHostController) {
 
             // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
+            // TODO: Maybe this should optionally display the data set name (fixed, inherited from
+            // home screen) if we are editing items or sources.
+
+
             Text("TODO GENERAL SELECTOR")
         }
     }
@@ -3749,6 +3761,14 @@ class SharedViewModel : ViewModel() {
             frozenLocale = frozenLocale,
         )
     }
+
+    // TODO: ALL EXPERIMENTAL NEW BELOW HERE
+
+    var generalSelectorScreenUIContent: GeneralSelectorScreenUIContent? = null
+
+    fun setGeneralSelectorScreenContentFromHomeScreenContent(uiContent: HomeScreenUIContent) {
+        generalSelectorScreenUIContent = GeneralSelectorScreenUIContent("TODO: TITLE42")
+    }
 }
 
 // Return the non-digit prefix and suffix around a digit-containing string. Given "foo123bar4 baz56
@@ -3780,6 +3800,15 @@ inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
             builder(this, handle)
         }
     }
+}
+
+data class GeneralSelectorScreenUIContent(val title: String)
+
+class GeneralSelectorViewModel(
+    private val priceTrackerRepository: PriceTrackerRepository,
+    private val savedStateHandle: SavedStateHandle,
+    val uiContent: GeneralSelectorScreenUIContent,
+) : ViewModel() {
 }
 
 // TODO: Here, and possibly in other ViewModels, there is a tendency to be passing parameters into
@@ -3965,7 +3994,12 @@ fun AppNavigation() {
             HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
                 sharedViewModel.setEditPriceScreenContentFromHomeScreenContent(uiContent, locale)
                 navController.navigate("editPrice")
-            })
+            },
+                onEditProductsClick = { uiContent ->
+                    sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContent(uiContent)
+                    navController.navigate("editProducts")
+                },
+            )
         }
 
         composable(
@@ -3980,14 +4014,41 @@ fun AppNavigation() {
             "editProducts", enterTransition = { slideLeftTransition() },
             popExitTransition = { slideRightTransition() },
 
-            ) {
+            ) { backStackEntry ->
+            // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
+            // backStackEntry) - this avoids stale data causing problems.
+            // TODO: I am not actually going to use a savedStateHandle to start with - because this *can*
+            // get its data from the database (it's just an optimisation having it passed over on first
+            // navigation), it isn't so necessary. I may change my mind. If I *don't* change my mind,
+            // it *may* be that we can or should use a different simpler factory. (Although given this
+            // viewModelFactoryWithHandle thing already exists, maybe it's as well to use it even if
+            // we ignore the handle. And maybe it wouldn't be a big deal to use the handle for extra
+            // smoothness anyway.)
+            val factory = remember(backStackEntry) {
+                viewModelFactoryWithHandle { extras, savedStateHandle ->
+                    val app =
+                        extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+                    // TODO: !! ON NEXT LINE FEELS A BIT HACKY BUT IS PROBABLY OK
+                    GeneralSelectorViewModel(
+                        app.priceTrackerRepository,
+                        savedStateHandle,
+                        sharedViewModel.generalSelectorScreenUIContent!! /* TODO
+                            ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */
+                    )
+                }
+            }
+            val vm: GeneralSelectorViewModel = viewModel(backStackEntry, factory = factory)
+            LaunchedEffect(Unit) {
+                sharedViewModel.generalSelectorScreenUIContent = null
+            }
+
             // TODO: My intention is that this screen (which shows a list of named things and let's
             // you pick one to do something with, or optionally to add a new one, and may have an
             // optional search button and may take over from the modal bottom sheet for products in
             // that form) is generic enough to be shared across data sets/items/sources. I will
             // start writing in pseudo-specific to products, but I will name things generically and
             // then I can try to factor things out later.
-            GeneralSelectorScreen(navController)
+            GeneralSelectorScreen(vm, navController)
         }
 
         composable(
