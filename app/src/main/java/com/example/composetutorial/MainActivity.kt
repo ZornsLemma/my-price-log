@@ -3984,16 +3984,14 @@ fun AppNavigation() {
             // sharedViewModel.editPriceScreenUIContent and apply it to our EditPriceViewModel on
             // construction, eliminating the need for the transitory null/emptiness on some of its
             // properties.
-            val uiContent = remember { sharedViewModel.editPriceScreenUIContent!! }
-            val factory = remember(uiContent) { // TODO: Can we just use backStackEntry or something as a key and avoid having to have remembered-uiContent!?
+            val factory = remember(backStackEntry) {
                 viewModelFactoryWithHandle { extras, handle ->
                     val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
-                    EditPriceViewModel(app.priceTrackerRepository, handle, uiContent)
+                    EditPriceViewModel(app.priceTrackerRepository, handle, sharedViewModel.editPriceScreenUIContent!!)
                 }
             }
             val vm: EditPriceViewModel = viewModel(backStackEntry, factory = factory)
             LaunchedEffect(Unit) {
-                // TODO: Any point? uiContent is still holding on to a copy!? but maybe it would catch bugs!? really not sure
                 sharedViewModel.editPriceScreenUIContent = null
             }
 
