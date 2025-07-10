@@ -197,11 +197,13 @@ enum class QuantityType(val value: Int) {
     WEIGHT(2), // technically mass but everyone says "price per weight"
     VOLUME(3);
 
+    /* TODO: DELETE?
     companion object {
         fun fromValue(value: Int): QuantityType? {
             return entries.find { it.value == value }
         }
     }
+    */
 }
 
 // TODO: Could/should we get rid of the ITEM unit family and just make MeasureUnit.ITEM a member of
@@ -576,7 +578,8 @@ suspend fun populateDemoData(context: Context) {
                 name = "SuperiorStore"
             )
         )
-        val sourceIdNewco = db.sourceDao().insert(
+        // Newco deliberately has no prices to start with.
+        db.sourceDao().insert(
             Source(
                 dataSetId = dataSetId,
                 name = "Newco"
@@ -801,6 +804,8 @@ class MyApplication : Application() {
 }
 
 class Converters {
+    /* TODO: DELETE? I don't believe we have any QuantityType fields in the database any more. Maybe
+       wait until we're more sure there won't be any in the future before deleting these.
     @TypeConverter
     fun fromQuantityType(quantityType: QuantityType?): Int? {
         return quantityType?.value
@@ -810,6 +815,7 @@ class Converters {
     fun toQuantityType(value: Int?): QuantityType? {
         return value?.let { QuantityType.fromValue(it) }
     }
+    */
 
     @TypeConverter
     fun fromMeasureUnit(measureUnit: MeasureUnit?): Long? {
@@ -1025,10 +1031,9 @@ data class Price(
 
     fun toEntity(): PriceEntity {
         // TODO: Is this a reasonable place to be doing this check?
-        // TODO: I think this check is technically redundant because using itemQuantityType to
-        // determine the base unit will cause an internal check error if measure's own unit is a
-        // different type - but this is maybe a bit more explicit.
-        val measureQuantityType = measure.unit.quantityType
+        // TODO: I think this check is technically redundant because using
+        // itemDefaultUnit.quantityType to determine the base unit will cause an internal check
+        // error if measure's own unit is a different type - but this is maybe a bit more explicit.
         devCheck(measure.unit.quantityType == itemDefaultUnit.quantityType) {
             "Expected consistent quantity type when converting Price to PriceEntity but found " +
                     "measure $measure with itemDefaultUnit $itemDefaultUnit"
@@ -1367,7 +1372,7 @@ class HomeViewModel(
             // collectLatest(), if the user changes the inputs the timeout starts again, which is
             // what we want.
             val TODO1 = allUserInputFlow.flatMapLatest { it -> // TODO: RENAME "it"
-                var newUIContent = withTimeoutOrNull(spinnerDelayMillis) {
+                val newUIContent = withTimeoutOrNull(spinnerDelayMillis) {
                     completeUIStateFlow.first()
                 }
                 if (newUIContent == null) {
@@ -1463,7 +1468,7 @@ fun MainScreen(
             selectedId = dataSet?.id,
             onValueChange = { onSelectedDataSetIdChange(it) },
             label = { Text("Collection") },
-            items = dataSetList ?: emptyList(),
+            items = dataSetList,
             getId = { it.id },
             getLabel = { it.name },
         )
@@ -1526,8 +1531,7 @@ fun MainScreen(
                             )
                         })
                     LazyColumn {
-                        val itemListNonNull = itemList ?: emptyList()
-                        items(itemListNonNull.filter {
+                        items(itemList.filter {
                             it.name.contains(searchQuery, ignoreCase = true)
                         }) { listItem ->
                             ListItem(
@@ -1577,6 +1581,7 @@ fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
 // one that is weird
 @Composable
 fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
+    modifier: Modifier = Modifier,
     selectedId: ID?,
     onValueChange: (ID) -> Unit, // TODO: rename onItemSelected? is there a "standard" for e.g. the crappy MD3 experimental dropdown?
     label: @Composable () -> Unit, // TODO: rename to distinguish from getLabel type use?
@@ -1584,7 +1589,6 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     items: List<T>,
     getId: (T) -> ID,
     getLabel: (T) -> String,
-    modifier: Modifier = Modifier
 ) {
     var textFieldWidth by remember { mutableStateOf(0) }
     var isExpanded by remember { mutableStateOf(false) }
@@ -1686,7 +1690,7 @@ fun LabeledItem(
 @Composable
 fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's OK
     var now by remember { mutableStateOf(Instant.now()) }
-    var ageInSeconds = Duration.between(instant, now).seconds
+    val ageInSeconds = Duration.between(instant, now).seconds
     val secondsPerDay = 24 * 60 * 60
 
     if (ageInSeconds < secondsPerDay) {
@@ -1796,7 +1800,7 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet, locale: Locale): Str
 fun <T, ID : Comparable<ID>> ItemWithDropdown(
     modifier: Modifier = Modifier,
     dropdownModifier: Modifier = Modifier, // TODO: OK!?
-    selectedId: ID?,
+    @Suppress("UNUSED_PARAMETER") selectedId: ID?, // see above
     onValueChange: (ID) -> Unit, // TODO: follow naming convention of MyExposedDropdownMenUBox
     onExpand: (Boolean) -> Unit = {},
     items: List<T>,
