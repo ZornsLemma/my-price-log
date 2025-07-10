@@ -2560,7 +2560,7 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
             Popup(
                 alignment = Alignment.Center,
                 onDismissRequest = {
-                    Log.d("MyApp", "ODR");
+                    Log.d("MyApp", "ODR")
                     // We are trying to emulate the user pressing the back button here.
                     // navController.popBackStack() empirically doesn't work, I think because it's for
                     // our internal back stack. The idea is that if the activity wasn't blocked by the
@@ -2651,7 +2651,7 @@ fun HomeScreenScaffold(
                 // .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
                 .background(MaterialTheme.colorScheme.background) // TODO?
                 .fillMaxSize()
-                .verticalScroll(androidx.compose.foundation.rememberScrollState())
+                .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
                 .padding(screenBorder)
 
@@ -2667,7 +2667,7 @@ fun HomeScreenScaffold(
             ) // TODO: rename this
 
             Spacer(
-                modifier = androidx.compose.ui.Modifier
+                modifier = Modifier
                     .height(
                         8.dp
                     )
@@ -2690,7 +2690,7 @@ fun HomeScreenScaffold(
             }
 
             Spacer(
-                modifier = androidx.compose.ui.Modifier.height(
+                modifier = Modifier.height(
                     8.dp
                 )
             )
@@ -2708,34 +2708,34 @@ fun HomeScreenScaffold(
             // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
             // but things are slightly different if we go with this approach.
             // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
-            val header = kotlin.collections.listOf("Source", "£/100g", "Notes")
+            val header = listOf("Source", "£/100g", "Notes")
             // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
-            val data = kotlin.collections.listOf(
-                kotlin.collections.listOf(
+            val data = listOf(
+                listOf(
                     "Tesco", "£2.13", "Tesco Finest is actually cheapest"
                 ),
-                kotlin.collections.listOf("Sainsbury's Local", "£2.94", ""),
-                kotlin.collections.listOf("Asda", "£2.08", "KTC brand"),
-                kotlin.collections.listOf("Iceland", "£2.38", ""),
+                listOf("Sainsbury's Local", "£2.94", ""),
+                listOf("Asda", "£2.08", "KTC brand"),
+                listOf("Iceland", "£2.38", ""),
                 // …
             )
 
             // TODO: Price column should be right-aligned, of course
-            androidx.compose.material3.Card(
-                modifier = androidx.compose.ui.Modifier
+            Card(
+                modifier = Modifier
                     //.weight(1f, fill=false) // only component with weight, so fills all remaining space
                     .fillMaxWidth(),
-                colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surfaceContainer)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             ) {
-                androidx.compose.foundation.layout.Box(
-                    modifier = androidx.compose.ui.Modifier.padding(
+                Box(
+                    modifier = Modifier.padding(
                         horizontal = 8.dp, vertical = 12.dp
                     )
                 ) {
                     DataTable(
                         header = header, rows = data,
                         // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
-                        columnWeights = kotlin.collections.listOf(1.6f, 1f, 2.2f)
+                        columnWeights = listOf(1.6f, 1f, 2.2f)
                     )
                 }
             }
@@ -2795,11 +2795,7 @@ fun EditPriceScreen(
     navController: NavHostController,
     requestClose: () -> Unit
 ) {
-    Log.d("MyApp", "EditPriceScreenViewModel $vm uiContent=${vm.uiContent}")
-    devCheck(vm.uiContent != null) {
-        "EditPriceScreenViewModel's uIContent should have been set to non-null before navigating to screen"
-    }
-    val uiContent = vm.uiContent!!
+    val uiContent = vm.uiContent
 
 // TODO: Can I get rid of saveInitiated and instead set the state inside the viewmodel to "idle"
 // when we are not saving? The frequency with which we check it suggests it might be more
@@ -2812,7 +2808,7 @@ fun EditPriceScreen(
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
     var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
-    var scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 // TODO: ChatGPT magic. This idea here is that a) currentBackStackEntry reflects the actual
 // back stack, not merely "we have popped but it hasn't come into effect yet" b) this will force
@@ -2831,7 +2827,7 @@ fun EditPriceScreen(
         // taps the close button quickly. (We may not need this for other ways of closing, but it
         // shouldn't hurt and is probably safer.)
         if (!isNavigating) {
-            isNavigating = true;
+            isNavigating = true
             requestClose()
         }
     }
@@ -2850,7 +2846,7 @@ fun EditPriceScreen(
         } else {
             // I've discussed this with LLMs and it's not clear if - from a UI perspective - we
             // should do this or not, but I'll go with it for now.
-            showSavingSnackbar = true;
+            showSavingSnackbar = true
         }
     }
 
@@ -2875,8 +2871,8 @@ fun EditPriceScreen(
                 }
 
                 EditPriceViewModel.SaveStatus.Error -> {
-                    saveInitiated = false;
-                    showErrorDialog = true;
+                    saveInitiated = false
+                    showErrorDialog = true
                 }
 
                 else -> {}
