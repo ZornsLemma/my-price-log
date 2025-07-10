@@ -37,7 +37,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -1818,7 +1817,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.clickable {
-        expanded = true;
+        expanded = true
         @Suppress("KotlinConstantConditions") onExpand(expanded)
     }) {
         content()
@@ -1891,6 +1890,11 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
                 // have some kind of format substitition to generate a unit price string analogous
                 // to the one I'm using here. So having a single "Unit price" field is probably
                 // reasonable, and it does feel like the clearest way to express it.
+                // TODONOW: There's a small bug here, if we edit the price so a different unit price
+                // would be more appropriate we do *not* change it when we navigate back. Obviously
+                // this isn't super likely with realistic price data, but it could happen. There is
+                // a subtlety here, as the user may have changed the unit price unit themselves and
+                // *maybe* we should respect that if so.
                 Box {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
@@ -1919,7 +1923,6 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 // - make it easy for the user to confirm our current price or update it
 // - (borderline?) do we have up-to-date prices for other sources? if not it's hard to know if this is well-priced or not no matter how up to the date the price at this source is.
 // TODO: This is quite a long function and might benefit from subcomposables being factored out.
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemSourceInfo(
     dataSet: DataSet,
@@ -1964,9 +1967,9 @@ fun ItemSourceInfo(
                 .animateContentSize()
                 .padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)
         ) {
-            Log.d("MyApp", "ISI dataset ${dataSet}")
-            Log.d("MyApp", "ISI item ${item}")
-            Log.d("MyApp", "ISI source ${item}")
+            Log.d("MyApp", "ISI dataset $dataSet")
+            Log.d("MyApp", "ISI item $item")
+            Log.d("MyApp", "ISI source $item")
             val haveItemAndSource = item != null && source != null
             // If sourceList is empty this will generate a single-item menu with just "None" in,
             // but that is probably better than the "skeleton" menu we get with no items in.
@@ -2129,7 +2132,7 @@ fun ItemSourceInfo(
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Row() {
+                        Row {
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = "Checked",
@@ -2176,7 +2179,6 @@ fun ItemSourceInfo(
 // order, and I should probably make it clickable to reverse the order - the main thing being to
 // visually indicate that the data is sorted, I don't think in practice changing the order is of
 // much interest and I certainly don't see the need to allow sorting on other columns.
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DataTable(
     header: List<String>,
@@ -2195,7 +2197,7 @@ fun DataTable(
     // TODO: The header should remain fixed even when the list scrolls. - this is now done, but the header now loses contrast when a dark zebra row is adjacent
     // TODO: Should the header and the last item of the list have rounded corners? I am not sure. Probably best square corners TBH.
 
-    Column() {
+    Column {
         // optional header
         Surface(color = MaterialTheme.colorScheme.surfaceContainerHighest) {
             Column {
@@ -2395,10 +2397,10 @@ data class EditablePrice(
     fun toDomain(locale: Locale): Price? {
         val priceDouble = parseStringAsDoubleOrNull(locale, price)
         val measureValueDouble = parseStringAsDoubleOrNull(locale, measureValue)
-        if (priceDouble == null || measureValueDouble == null) {
-            return null
+        return if (priceDouble == null || measureValueDouble == null) {
+            null
         } else {
-            return Price(
+            Price(
                 id = id,
                 dataSetId = dataSetId,
                 itemId = itemId,
@@ -2413,7 +2415,7 @@ data class EditablePrice(
     }
 }
 
-fun TextOrNull(string: String?): @Composable() (() -> Unit)? {
+fun textOrNull(string: String?): @Composable (() -> Unit)? {
     if (string == null) {
         return string
     } else {
@@ -2687,8 +2689,8 @@ fun HomeScreenScaffold(
             )
 
             if (dataSet != null) {
-                Log.d("MyApp", "HSS dataSet ${dataSet}")
-                Log.d("MyApp", "HSS item ${item}")
+                Log.d("MyApp", "HSS dataSet $dataSet")
+                Log.d("MyApp", "HSS item $item")
                 ItemSourceInfo(
                     dataSet = dataSet,
                     item = item,
@@ -2895,9 +2897,9 @@ fun EditPriceScreen(
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
     val packSizeFocusRequester = remember { FocusRequester() }
-    var packSizeY by remember { mutableStateOf(0) }
+    var packSizeY by remember { mutableIntStateOf(0) }
     val priceFocusRequester = remember { FocusRequester() }
-    var priceY by remember { mutableStateOf(0) }
+    var priceY by remember { mutableIntStateOf(0) }
 
     fun onPackSizeOrPriceChange() {
         // On the first change to the pack size or price, we set the "to confirm" switch to true, on
@@ -3131,8 +3133,8 @@ fun EditPriceScreen(
                         .focusRequester(priceFocusRequester),
                     label = { Text("Pack price") },
                     value = packPrice,
-                    prefix = TextOrNull(currencyFormat.prefix),
-                    suffix = TextOrNull(currencyFormat.suffix),
+                    prefix = textOrNull(currencyFormat.prefix),
+                    suffix = textOrNull(currencyFormat.suffix),
                     // TODO: Is it correct to right-align like this? I will assume it is for now.
                     // Maybe there's an argument since the unit on the pack size is pseudo-suffixy,
                     // we should right-align the pack size - but I think that might look ugly. But
@@ -3328,7 +3330,7 @@ fun numericValidationRules(
 
     return listOfNotNull(
         ValidationRule(
-            { it.count { it == decimalSeparator } <= maxDecimalSeparators },
+            { it.count { char -> char == decimalSeparator } <= maxDecimalSeparators },
             // TODO: Just possibly we should not consider a single decimal separator with nothing
             // significant following it as violating "only whole numbers allowed".
             if (allowDecimals) "Only one decimal point allowed" else "Only whole numbers allowed"
@@ -3362,10 +3364,10 @@ fun numericValidationRules(
 @Composable
 fun NumericTextField(
     modifier: Modifier = Modifier,
-    label: @Composable() (() -> Unit)? = null,
+    label: @Composable (() -> Unit)? = null,
     value: TextFieldValue,
-    prefix: @Composable() (() -> Unit)? = null,
-    suffix: @Composable() (() -> Unit)? = null,
+    prefix: @Composable (() -> Unit)? = null,
+    suffix: @Composable (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
     // TODO: I am not completely happy about defaulting to the current locale here, since I am
     // generally trying to make sure I think about the correct locale when I need one. This is a
@@ -3409,10 +3411,10 @@ fun NumericTextField(
 @Composable
 fun ValidatedTextField(
     modifier: Modifier = Modifier,
-    label: @Composable() (() -> Unit)? = null,
+    label: @Composable (() -> Unit)? = null,
     value: TextFieldValue,
-    prefix: @Composable() (() -> Unit)? = null,
-    suffix: @Composable() (() -> Unit)? = null,
+    prefix: @Composable (() -> Unit)? = null,
+    suffix: @Composable (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
     validationRules: List<ValidationRule>? = null,
     validationRulesKey: Any? = null,
