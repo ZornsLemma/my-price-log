@@ -3724,6 +3724,7 @@ class EditPriceViewModel(
         Log.d("MyApp", "EditPriceScreenViewModel.setUIContent($newUIContent)")
         _uiContent = newUIContent
         newUIContent.saveState(savedStateHandle)
+        updateAfterSetUIContentEditablePrice(newUIContent.editablePrice.value)
     }
 
     fun setUIContentEditablePrice(newEditablePrice: EditablePrice) {
@@ -3731,6 +3732,13 @@ class EditPriceViewModel(
         // TODO: NOT SURE IF !! OK, IT PROBABLY IS BUT NEED TO THINK
         uiContent!!.editablePrice.value = newEditablePrice
         uiContent!!.saveEditablePriceState(savedStateHandle)
+        updateAfterSetUIContentEditablePrice(newEditablePrice)
+    }
+
+    // TODO: I don't like having to call this function in two places, but it fixes a bug for now (we
+    // weren't setting packSizeValidationRules on first entry to the edit screen) and I can think
+    // about refactoring later.
+    fun updateAfterSetUIContentEditablePrice(newEditablePrice: EditablePrice) {
         val maxDecimals = newEditablePrice.measureUnit.maxDecimals
         packSizeValidationRules = numericValidationRules(uiContent!!.frozenLocale, allowDecimals = if (maxDecimals > 0) true else false, allowZero = false, maxDecimals = maxDecimals)
     }
