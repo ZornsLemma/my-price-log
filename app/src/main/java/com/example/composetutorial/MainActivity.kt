@@ -3729,11 +3729,11 @@ class SharedViewModel : ViewModel() {
 
     // TODO: ALL EXPERIMENTAL NEW BELOW HERE
 
-    var generalSelectorScreenUIContent: GeneralSelectorScreenUIContent? = null
+    var generalSelectorScreenUIContentItem: GeneralSelectorScreenUIContent<Item>? = null
 
-    fun setGeneralSelectorScreenContentFromHomeScreenContent(uiContent: HomeScreenUIContent) {
+    fun setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContent = GeneralSelectorScreenUIContent("TODO: TITLE42", uiContent.itemList + uiContent.itemList)
+        generalSelectorScreenUIContentItem = GeneralSelectorScreenUIContent("TODO: TITLE42", uiContent.itemList + uiContent.itemList)
     }
 }
 
@@ -3768,15 +3768,16 @@ inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
     }
 }
 
-data class GeneralSelectorScreenUIContent(
+data class GeneralSelectorScreenUIContent<T>(
     val title: String,
-    val initialList: List<Item>
+    val initialList: List<T>
 )
 
-class GeneralSelectorViewModel(
+class GeneralSelectorViewModel<T>(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
-    val uiContent: GeneralSelectorScreenUIContent,
+    val uiContent: GeneralSelectorScreenUIContent<T>,
+    private val initialQuery: Flow<List<T>>, // TODO: rename - it is not initial, it is "ongoing", maybe just call it dataQuery to match dataFlow
 ) : ViewModel() {
     // TODO: Need to test, but the idea here is that we emit the initialList handed to us by our
     // caller so we can get a good first composition, but we remain reactive to database state
@@ -3789,7 +3790,7 @@ class GeneralSelectorViewModel(
     }.stateIn(scope = viewModelScope, started = SharingStarted.Eagerly,
     */
     // TODO: delay(5000) is temp hack
-    val dataFlow: StateFlow<List<Item>> = priceTrackerRepository.getAllItems(1L /* TODO HARDCODING IS A HACK */)
+    val dataFlow: StateFlow<List<T>> = initialQuery
         .onEach { emittedList -> delay(5000); Log.d("MyAppGS", "Room emitted list: ${System.identityHashCode(emittedList)}") }
         .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = uiContent.initialList.also {
             Log.d("MyAppGS", "Initial list: ${System.identityHashCode(it)}") } )
@@ -3800,7 +3801,12 @@ class GeneralSelectorViewModel(
 // change up. But for first frame perfection, we probably do also want to receive an initial list
 // from the home screen.
 @Composable
-fun GeneralSelectorScreen(vm: GeneralSelectorViewModel, navController: NavHostController, onItemSelected: (Long) -> Unit) {
+fun <T> GeneralSelectorScreen(
+    vm: GeneralSelectorViewModel<T>,
+    navController: NavHostController,
+    getId: (T) -> Long,
+    getName: (T) -> String,
+    onItemSelected: (Long) -> Unit) {
     val dataList by vm.dataFlow.collectAsStateWithLifecycle()
     Log.d("MyAppGS", "dataList $dataList")
 
@@ -3841,7 +3847,7 @@ fun GeneralSelectorScreen(vm: GeneralSelectorViewModel, navController: NavHostCo
             // is sorted by name, remember).
             LazyColumn {
                 items(dataList) { item ->
-                    GeneralSelectorListItem(id = item.id, name = item.name, onItemSelected = onItemSelected)
+                    GeneralSelectorListItem(id = getId(item), name = getName(item), onItemSelected = onItemSelected)
                 }
             }
 
@@ -4048,8 +4054,8 @@ fun AppNavigation() {
                 navController.navigate("editPrice")
             },
                 onEditProductsClick = { uiContent ->
-                    sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContent(uiContent)
-                    navController.navigate("editProducts")
+                    sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent)
+                    navController.navigate("editProducts") // TODO: rename "editItems" - it is an internal string so use internal terminology
                 },
             )
         }
@@ -4088,14 +4094,15 @@ fun AppNavigation() {
                     GeneralSelectorViewModel(
                         app.priceTrackerRepository,
                         savedStateHandle,
-                        sharedViewModel.generalSelectorScreenUIContent!! /* TODO
+                        sharedViewModel.generalSelectorScreenUIContentItem!! /* TODO
                             ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */
+                        ,initialQuery = app.priceTrackerRepository.getAllItems(1L /* TODO HACK */)
                     )
                 }
             }
-            val vm: GeneralSelectorViewModel = viewModel(backStackEntry, factory = factory)
+            val vm: GeneralSelectorViewModel<Item> = viewModel(backStackEntry, factory = factory)
             LaunchedEffect(Unit) {
-                sharedViewModel.generalSelectorScreenUIContent = null
+                sharedViewModel.generalSelectorScreenUIContentItem = null
             }
 
             // TODO: My intention is that this screen (which shows a list of named things and let's
@@ -4104,7 +4111,7 @@ fun AppNavigation() {
             // that form) is generic enough to be shared across data sets/items/sources. I will
             // start writing in pseudo-specific to products, but I will name things generically and
             // then I can try to factor things out later.
-            GeneralSelectorScreen(vm, navController, onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
+            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
         }
 
         composable(
