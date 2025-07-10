@@ -3836,6 +3836,9 @@ fun GeneralSelectorScreen(vm: GeneralSelectorViewModel, navController: NavHostCo
 
             data class GeneralSelectorEntity(val id: Long, val name: String)
             val todoTempList = listOf(GeneralSelectorEntity(1, "ONE"), GeneralSelectorEntity(2, "TWO"))
+            // TODO: Do I need to attach the IDs as keys to lazycolumn (as in that "movie" example in the docs somewhere)
+            // to minimise recomposition or other types of load in case the user's edits mean the list gets reordered (it
+            // is sorted by name, remember).
             LazyColumn {
                 items(dataList) { item ->
                     GeneralSelectorListItem(id = item.id, name = item.name)
