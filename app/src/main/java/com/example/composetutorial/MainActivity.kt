@@ -167,8 +167,10 @@ import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.log10
 import androidx.datastore.preferences.core.edit
+import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.navigation.NavBackStackEntry
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -714,12 +716,14 @@ object AppViewModelProvider {
                 this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
             HomeViewModel(app.priceTrackerRepository, app)
         }
+        /* TODO DELETE?
         initializer {
             val app =
                 this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
             val savedStateHandle = createSavedStateHandle()
             EditPriceViewModel(app.priceTrackerRepository, savedStateHandle)
         }
+        */
     }
 }
 
@@ -3709,9 +3713,65 @@ fun splitAroundDigits(input: String): Pair<String, String> {
     return Pair(prefix, suffix)
 }
 
+/* TODO DELETE
+// TODO: ChatGPT magic
+inline fun <reified VM : ViewModel> savedStateFactory(
+    crossinline creator: (SavedStateHandle) -> VM
+): ViewModelProvider.Factory = object : AbstractSavedStateViewModelFactory(null, null) {
+    override fun <T : ViewModel?> create(
+        key: String,
+        modelClass: Class<T>,
+        handle: SavedStateHandle
+    ): T {
+        return creator(handle) as T
+    }
+}
+*/
+
+/*
+// TODO: ChatGPT magic
+inline fun <reified VM : ViewModel> savedStateViewModelFactory(
+    crossinline builder: (SavedStateHandle) -> VM
+): ViewModelProvider.Factory {
+    return viewModelFactory {
+        initializer {
+            val handle = createSavedStateHandle()
+            builder(handle)
+        }
+    }
+}
+*/
+
+// TODO: ChatGPT magic
+inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
+    crossinline builder: (CreationExtras, SavedStateHandle) -> VM
+): ViewModelProvider.Factory {
+    return viewModelFactory {
+        initializer {
+            val handle = createSavedStateHandle()
+            builder(this, handle)
+        }
+    }
+}
+
+/* TODO DELETE?
+class EditPriceViewModelFactory(
+    private val priceTrackerRepository: PriceTrackerRepository,
+    private val savedStateHandle: SavedStateHandle,
+    private val uiContent: EditPriceScreenUIContent
+) : ViewModelProvider.Factory {
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        val savedStateHandle = createSavedStateHandle()
+        return EditPriceViewModel(priceTrackerRepository, savedStateHandle, uiContent) as T
+    }
+}
+*/
+
 class EditPriceViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
+    private val uiContentTODORENAMEORWHATEVER: EditPriceScreenUIContent,
 ) : ViewModel() {
     val instanceId = UUID.randomUUID().toString() // TODO FOR DEBUG
 
@@ -3924,8 +3984,18 @@ fun AppNavigation() {
             // sharedViewModel.editPriceScreenUIContent and apply it to our EditPriceViewModel on
             // construction, eliminating the need for the transitory null/emptiness on some of its
             // properties.
-            val vm: EditPriceViewModel =
-                viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
+            val uiContent = remember { sharedViewModel.editPriceScreenUIContent!! }
+            val factory = remember(uiContent) { // TODO: Can we just use backStackEntry or something as a key and avoid having to have remembered-uiContent!?
+                viewModelFactoryWithHandle { extras, handle ->
+                    val app = extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+                    EditPriceViewModel(app.priceTrackerRepository, handle, uiContent)
+                }
+            }
+            val vm: EditPriceViewModel = viewModel(backStackEntry, factory = factory)
+            LaunchedEffect(Unit) {
+                // TODO: Any point? uiContent is still holding on to a copy!? but maybe it would catch bugs!? really not sure
+                sharedViewModel.editPriceScreenUIContent = null
+            }
 
             // TODO: Be good to test fairly late on with two datasets with different currencies - I vaguely wonder
             // if re-use of this composable (maybe prevented via randomUUID route hack?) will not pick up the
