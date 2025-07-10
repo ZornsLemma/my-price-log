@@ -961,7 +961,7 @@ data class PriceEntity(
     // marking pack sizes in ounces instead of lbs, for example. We use floating point for "measure"
     // because it allows us to round-trip non-metric measures perfectly (provided we round them for
     // display), and it doesn't seem to have any real downside in practice.
-    val price: Double,
+    val price: Double, // TODO: It might be better to rename this column to avoid "price.price" type stuff
     // TODO: would "amount" be a much simpler yet still generic name instead of "measure"?? hmm,
     // maybe not - "amount" could also be a monetary amount - but maybe "quantity" would work? I am
     // cooling on "measure" somewhat right now
@@ -1969,9 +1969,9 @@ fun ItemSourceInfo(
                 getLabel = { it.second },
             )
             if (haveItemAndSource) {
-                val priceList = itemPriceList.filter { it.sourceId == source!!.id }
+                val price = itemPriceList.singleOrNull { it.sourceId == source!!.id }
 
-                if (priceList.isEmpty()) {
+                if (price == null) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         // TODO: Should this be in the supportingText on the store dropdown? My gut
                         // feeling is not, as this is "card content" about the store+product
@@ -1991,9 +1991,6 @@ fun ItemSourceInfo(
                         }
                     }
                 } else {
-                    devCheck(priceList.size == 1) { "Expected one prices for a product and store, but got ${priceList.size}" }
-                    // TODONOW: Should we do: "val price = priceList[0]" and simplify all the following code?
-
                     // TODO: This row can get a bit congested on small phones when the text in some
                     // of the LabeledItems gets a bit long. It does kind of work and some further
                     // tweaking (e.g. making sure we force some space between the three horizontal
@@ -2015,19 +2012,19 @@ fun ItemSourceInfo(
                             Text(
                                 "${
                                     formatPrice(
-                                        priceList[0].price,
+                                        price.price,
                                         dataSet,
                                         LocalConfiguration.current.locales[0]
                                     )
                                 } for ${
-                                    priceList[0].measure.toDisplayString(LocalConfiguration.current.locales[0])
+                                    price.measure.toDisplayString(LocalConfiguration.current.locales[0])
                                 }" /*, color = MaterialTheme.colorScheme.onSurface*/
                             )
                         }
 
                         // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Confirmed" /* "Last checked" */) {
-                            RelativeTimeText(priceList[0].confirmed)
+                            RelativeTimeText(price.confirmed)
                             // TODO: would it be helpful to color code this and/or show an icon
                             // ("!"?) if this is "old"? maybe even with an ascending amber/red
                             // "severity" (and correspondingly different icons?)
@@ -2037,22 +2034,22 @@ fun ItemSourceInfo(
                             remember(dataSet) { getRelevantUnitFamilies(dataSet) }
 
                         val relevantUnitList =
-                            remember(dataSet, priceList[0].measure.unit.quantityType) {
+                            remember(dataSet, price.measure.unit.quantityType) {
                                 getRelevantMeasureUnits(
                                     dataSet,
-                                    priceList[0].measure.unit.quantityType,
+                                    price.measure.unit.quantityType,
                                     includeDisplayOnly = true
                                 )
                             }
-                        var selectedUnitPriceUnit by rememberSaveable(dataSet, priceList) {
+                        var selectedUnitPriceUnit by rememberSaveable(dataSet, price) {
                             val candidateDenominators = getSiblingMeasureUnits(
                                 dataSet,
-                                priceList[0].measure.unit,
+                                price.measure.unit,
                                 includeDisplayOnly = true
                             )
                             val friendlyUnitPrice = getFriendlyUnitPrice(
-                                priceList[0].price,
-                                priceList[0].measure,
+                                price.price,
+                                price.measure,
                                 candidateDenominators
                             )
                             mutableStateOf(friendlyUnitPrice.denominator)
@@ -2069,8 +2066,8 @@ fun ItemSourceInfo(
                         // dropdown, though that might be more confusing than helpful.
                         val unitPriceString = formatUnitPrice(
                             getUnitPrice(
-                                priceList[0].price,
-                                priceList[0].measure,
+                                price.price,
+                                price.measure,
                                 selectedUnitPriceUnit,
                             ), dataSet,
                             LocalConfiguration.current.locales[0]
@@ -2094,10 +2091,10 @@ fun ItemSourceInfo(
 
                     }
 
-                    if (priceList[0].details.isNotEmpty()) {
+                    if (price.details.isNotEmpty()) {
                         Row(modifier = Modifier.padding(bottom = 8.dp)) {
                             LabeledItem("Notes") {
-                                Text(priceList[0].details)
+                                Text(price.details)
                             }
                         }
                     }
