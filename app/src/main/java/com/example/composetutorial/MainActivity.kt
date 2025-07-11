@@ -79,6 +79,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
@@ -1510,7 +1511,7 @@ fun MainScreen(
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = "Search Products",
+                    contentDescription = "Search products",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
@@ -1536,7 +1537,7 @@ fun MainScreen(
                     TextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        label = { Text("Search Products") },
+                        label = { Text("Search products") },
                         modifier = Modifier.fillMaxWidth(),
                         leadingIcon = {
                             Icon(
@@ -4025,19 +4026,19 @@ fun <T> GeneralSelectorScreen(
                 TextField(
                     value = searchString,
                     onValueChange = { it -> vm.searchStringFlow.value = it},
-                    label = { Text("Search products") }, // TODO: If we say "products" or whatever, caller needs to be passing this in
-                    // TODO: Should this be a leading icon!? Can/should we adopt some of the MD3
-                    // "search bar" type styling here? I don't want to giv eup the idea of simple
-                    // "in place" filtering and start popping up historical searches or anything
-                    // though. I am leaning towards this *not* being a search bar as it doesn't
-                    // really behave like one, but keeping a text field, have the search icon at
-                    // the left (non-functional, as now) and having a "clear text" icon at the right
-                    // to remove any filter quickly.
-                    trailingIcon = {
+                    label = { Text("Search") },
+                    leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Search Products",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            contentDescription = "Search",
+                            //tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Clear search text",
+                            modifier = Modifier.clickable { vm.searchStringFlow.value = "" },
                         )
                     },
                     modifier  = Modifier.fillMaxWidth().padding(horizontal = screenBorder).padding(bottom = 8.dp),
