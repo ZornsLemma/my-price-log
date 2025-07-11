@@ -3874,7 +3874,7 @@ fun <T> GeneralSelectorScreen(
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.secondary) // TODO: debug hack
+                .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = screenBorder)
