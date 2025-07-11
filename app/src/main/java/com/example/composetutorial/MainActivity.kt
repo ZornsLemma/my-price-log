@@ -1766,6 +1766,9 @@ fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUni
 // fine, but it suggests we could simplify the return type to just MeasureUnit. OTOH, we've got to
 // *calculate* the numerator anyway, so maybe we might as well pass it back in case it's handy in
 // some other case?
+// TODO: This probably needs to be currency-dp aware - imagine for example we're working with JPY,
+// it's not about decimal places per se but about getting the "shortest" number which doesn't
+// gratuitously push non-zero digits into the non-displayed part after rounding.
 fun getFriendlyUnitPrice(
     amount: Double,
     measure: MeasuredValue,
@@ -3754,17 +3757,17 @@ class SharedViewModel : ViewModel() {
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentItem = GeneralSelectorScreenUIContent("TODO: TITLE ITEM", uiContent.dataSet, uiContent.itemList + uiContent.itemList)
+        generalSelectorScreenUIContentItem = GeneralSelectorScreenUIContent("Edit products", uiContent.dataSet, uiContent.itemList + uiContent.itemList)
     }
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentDataSet(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentDataSet = GeneralSelectorScreenUIContent("TODO: TITLE DATA SET", null /* TODO? we use this to decide whether to show a dataset textfield at op uiContent.dataSet */,uiContent.dataSetList + uiContent.dataSetList)
+        generalSelectorScreenUIContentDataSet = GeneralSelectorScreenUIContent("Edit collections", null /* TODO? we use this to decide whether to show a dataset textfield at op uiContent.dataSet */,uiContent.dataSetList + uiContent.dataSetList)
     }
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentSource(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentSource = GeneralSelectorScreenUIContent("TODO: TITLE SOURCE", uiContent.dataSet,uiContent.sourceList + uiContent.sourceList)
+        generalSelectorScreenUIContentSource = GeneralSelectorScreenUIContent("Edit stores", uiContent.dataSet,uiContent.sourceList + uiContent.sourceList)
     }
 }
 
