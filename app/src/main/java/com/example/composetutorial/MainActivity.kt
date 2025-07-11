@@ -2666,10 +2666,13 @@ fun HomeScreenScaffold(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
-                Text("TODO", modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { /* TODO */ }
-                    .padding(16.dp) // TODO?
+                Text("TODONAVIGATION", modifier=Modifier.padding(16.dp)) // TODO: 16dp right/necessary?
+                NavigationDrawerItem(
+                    label = { Text("TODO1") },
+                    selected = true,
+                    onClick = {
+                        coroutineScope.launch { drawerState.close() }
+                    }
                 )
             }
         }
