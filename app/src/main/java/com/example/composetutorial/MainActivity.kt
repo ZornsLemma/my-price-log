@@ -1479,6 +1479,9 @@ fun MainScreen(
         modifier = Modifier.fillMaxWidth()
     ) {
         // Collection Selector
+        // TODO: I am wondering if taking this off the main screen, showing it read-only as a subtitle in the top app bar under the app name (or maybe *instead of* the app name?) and having a hamburger menu at the left which opens a drawer at lhs to choose a collection might be nicer.
+        // TODO: Going along with this (but could be done independently) would be getting rid of the greyed out "Collection" at the top of the Edit product/store screens and moving the read-only collection reminder into their subtitle on top app bar.
+        // TODO: Not here but FWIW - not too sure, but based on discussion with LLMs the greyed out TextFields used at top of edit price dialog to "remind us" of product and store are perhaps not very MD3 and might be ugly to boot - maybe the "move into the subtitle on top bar" or maybe even "use as title in some way" technique can be used here.
         MyExposedDropdownMenuBox(
             modifier = Modifier
                 .fillMaxWidth(),
@@ -3935,7 +3938,14 @@ fun <T> GeneralSelectorScreen(
                     value = searchString,
                     onValueChange = { it -> vm.searchStringFlow.value = it},
                     label = { Text("Search products") }, // TODO: If we say "products" or whatever, caller needs to be passing this in
-                    trailingIcon = { // TODO: Should this be a leading icon!? Can/should we adopt some of the MD3 "search bar" type styling here? I don't want to giv eup the idea of simple "in place" filtering and start popping up historical searches or anything though.
+                    // TODO: Should this be a leading icon!? Can/should we adopt some of the MD3
+                    // "search bar" type styling here? I don't want to giv eup the idea of simple
+                    // "in place" filtering and start popping up historical searches or anything
+                    // though. I am leaning towards this *not* being a search bar as it doesn't
+                    // really behave like one, but keeping a text field, have the search icon at
+                    // the left (non-functional, as now) and having a "clear text" icon at the right
+                    // to remove any filter quickly.
+                    trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search Products",
