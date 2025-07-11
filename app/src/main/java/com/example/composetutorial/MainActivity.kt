@@ -129,6 +129,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.ViewModel
@@ -531,7 +532,7 @@ suspend fun populateDemoData(context: Context) {
         // TODO: We should maybe - perhaps not worth worrying about - avoid using the demo data designed for 2dp currencies with e.g. JPY, if only by forcing the currency to be something else even if that's the system default, or perhaps applying a multiplier of 10^(2-currencydps) to all the prices just so they are "readable"
         val dataSetId = db.dataSetDao().insert(
             DataSet(
-                name = "Demo",
+                name = "Groceries (demo)",
                 currencyCode = "EUR", // TODO TEMP HACK Currency.getInstance(Locale.getDefault()).currencyCode,
                 allowMetric = true,
                 allowImperial = true,
@@ -1487,31 +1488,10 @@ fun MainScreen(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Collection Selector
-        // TODO: I am wondering if taking this off the main screen, showing it read-only as a subtitle in the top app bar under the app name (or maybe *instead of* the app name?) and having a hamburger menu at the left which opens a drawer at lhs to choose a collection might be nicer.
-        // TODO: Going along with this (but could be done independently) would be getting rid of the greyed out "Collection" at the top of the Edit product/store screens and moving the read-only collection reminder into their subtitle on top app bar.
-        // TODO: Not here but FWIW - not too sure, but based on discussion with LLMs the greyed out TextFields used at top of edit price dialog to "remind us" of product and store are perhaps not very MD3 and might be ugly to boot - maybe the "move into the subtitle on top bar" or maybe even "use as title in some way" technique can be used here.
-        MyExposedDropdownMenuBox(
-            modifier = Modifier
-                .fillMaxWidth(),
-            selectedId = dataSet?.id,
-            onValueChange = { onSelectedDataSetIdChange(it) },
-            label = { Text("Collection") },
-            items = dataSetList,
-            getId = { it.id },
-            getLabel = { it.name },
-        )
         // TODO: If we have no data sets, we should (analogous to how the source dropdown works)
-        // show a supportingText about selecting one *and hide the rest of the UI*. Nothing makes
+        // show a message about selecting/creating one *and hide the rest of the UI*. Nothing makes
         // sense without a dataset, there is no way to pick a product or source. This probably means
         // we need support from our parent (or this needs moving up into the parent) to do that.
-
-        Spacer(
-            modifier = Modifier
-                .height(8.dp)
-                .fillMaxWidth()
-                .background(color = Color.Red)
-        )
 
         // Item selector
         TextField(
@@ -2664,6 +2644,10 @@ fun HomeScreenScaffold(
     // and it seems to be intended for "a few" designer-selected things, not user-defined
     // categories. It also seems to want to live at the bottom of the screen on a portrait
     // smartphone layout. So I am going to stick with the navigation drawer for now.
+    // TODO: rememberDrawerState seems to persist across rotations, which feels a bit odd to me -
+    // given how we seem to be expected to treat e.g. dropdowns, I'd have expected the drawer to
+    // close. Should we try to force it to close on a rotation or just accept this default
+    // behaviour?
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     var menuExpanded by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -2727,7 +2711,7 @@ fun HomeScreenScaffold(
                 .background(Color.Red /* TODO DEBUG HACK */),
             topBar = {
                 TopAppBar(
-                    title = { Text("My App Name Here") },
+                    title = { Text(dataSet?.name ?: "") }, // TODO: better null handling?
                     navigationIcon = {
                         IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
                             Icon(imageVector = Icons.Default.Menu, contentDescription = "Open drawer") // TODO: tweak description?
@@ -3931,13 +3915,41 @@ class GeneralSelectorViewModel<T>(
     // TODO: delay(5000) is temp hack
     // This will *not* filter uiContent.initialList, but that's OK because we know the initial filter doesn't exclude anything.
     val searchStringFlow = MutableStateFlow("")
+    // TODO: Just possibly we should say "query.trim()" in isCaseInsensitive... call?
     val dataFlow = combine(initialQuery.flatMapLatest { data -> delay(5000); flowOf(data) }, searchStringFlow) { data, query ->
-        data.filter { isCaseInsensitiveSubstring(query, getName(it), Locale.getDefault() /* TODO VERY TEMP HACK */) }
+        data.filter { isCaseInsensitiveSubstring(query, getName(it), Locale.getDefault() /* TODO VERY TEMP HACK - WE ARE NOT SUPPOSED TO BE USING THIS FUNCTION */) }
     }
         .onEach { emittedList -> /* delay(5000); */ Log.d("MyAppGS", "Room emitted list: ${System.identityHashCode(emittedList)}") }
         .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = uiContent.initialList)
 
 }
+
+@Composable
+fun topAppBarTitle(title: String, subtitle: String?): @Composable (() -> Unit) =
+    if (subtitle != null) {{
+        // TODO: No idea if these sizes are MD3 compliant, spec talks about actual sizes etc
+        // but I really feel I ought to be using the MaterialTheme.typography stuff. Maybe
+        // I'm wrong. I think this does look about right anyway.
+        Column {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                /*
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Normal,
+                */
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }} else {{ Text(title) }}
+
 
 // TODO: I think this needs to have a Room-based feed of data because we could potentially return to
 // it after adding or renaming something on a child full screen dialog and we need to pick that
@@ -3983,7 +3995,8 @@ fun <T> GeneralSelectorScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text(vm.uiContent.title) }, navigationIcon = {
+            // TODO: I am wondering if title and subtitle should swap roles here? Keep the data set name as the title as on the home screen? And if we go with this, *maybe* the subtitle is just "Products" (for example) not "Edit products"??
+            TopAppBar(title = topAppBarTitle(vm.uiContent.title, vm.uiContent.dataSet?.name), navigationIcon = {
 
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(
@@ -4004,20 +4017,6 @@ fun <T> GeneralSelectorScreen(
 
             // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
-            if (vm.uiContent.dataSet != null) {
-                // TODO: Is this a good idea? I am half wondering if it would be cleaner if it
-                // wasn't present. Question is if this is good or bad UI.
-                // TODO: Should this be a modifiable dropdown which feeds into the database query? If it is,
-                // should it modify the home screen selected data set or not?
-                TextField(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = screenBorder).padding(bottom = 8.dp),
-                    label = { Text("Collection") },
-                    value = vm.uiContent.dataSet.name,
-                    enabled = false,
-                    onValueChange = {}
-                )
-            }
-
             if (showSearch) {
                 TextField(
                     value = searchString,
