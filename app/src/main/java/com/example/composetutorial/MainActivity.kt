@@ -3901,6 +3901,8 @@ fun <T> GeneralSelectorScreen(
             // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
             if (vm.uiContent.dataSet != null) {
+                // TODO: Is this a good idea? I am half wondering if it would be cleaner if it
+                // wasn't present. Question is if this is good or bad UI.
                 // TODO: Should this be a modifiable dropdown which feeds into the database query? If it is,
                 // should it modify the home screen selected data set or not?
                 TextField(
