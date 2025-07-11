@@ -2666,7 +2666,8 @@ fun HomeScreenScaffold(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
-                Text("TODONAVIGATION", modifier=Modifier.padding(16.dp)) // TODO: 16dp right/necessary?
+                // TODO: Probably need to set font style/colour for this "heading"
+                Text("Collections", modifier=Modifier.padding(16.dp)) // TODO: 16dp right/necessary?
                 NavigationDrawerItem(
                     label = { Text("TODO1") },
                     selected = true,
