@@ -1454,6 +1454,10 @@ const val spinnerDelayMillis = 200L
 // feels reasonable-ish and we can always tweak it later.
 const val defaultValidationMessageDelayMillis = 1000L
 
+// TODO: https://m3.material.io/foundations/layout/applying-layout/compact says 16dp left and right
+// margins - maybe change this? Then again there are placed where I've used edge-to-edge for lists
+// so I just don't know. For that matter, are there 16.dp margins supposed to be added to left and
+// right of the top app bar as well? Or just the body content below it?
 val screenBorder = 8.dp
 
 // TODO: MD3 specs say there should be a 24.dp horizontal border, but this seems quite ugly. The
