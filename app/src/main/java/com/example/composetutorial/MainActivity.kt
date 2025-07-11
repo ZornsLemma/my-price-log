@@ -3935,7 +3935,7 @@ fun <T> GeneralSelectorScreen(
                     value = searchString,
                     onValueChange = { it -> vm.searchStringFlow.value = it},
                     label = { Text("Search products") }, // TODO: If we say "products" or whatever, caller needs to be passing this in
-                    trailingIcon = { // TODO: Should this be a leading icon!?
+                    trailingIcon = { // TODO: Should this be a leading icon!? Can/should we adopt some of the MD3 "search bar" type styling here? I don't want to giv eup the idea of simple "in place" filtering and start popping up historical searches or anything though.
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search Products",
