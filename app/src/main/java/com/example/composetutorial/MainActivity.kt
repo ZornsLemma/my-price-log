@@ -67,6 +67,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -2657,24 +2659,39 @@ fun HomeScreenScaffold(
     onEditSourcesClick: () -> Unit,
     ) {
     // TODO: Navigation drawer is being deprecated in favour of expanded navigation rail in Material
-    // 3 expressive as of May 2025, but I will just go with this for now.
+    // 3 Expressive from May 2025. However, it appears to be a rotten fit for my requirements here -
+    // it wants (in its non-expanded form) to be permanently on screen, and I don't have the space,
+    // and it seems to be intended for "a few" designer-selected things, not user-defined
+    // categories. It also seems to want to live at the bottom of the screen on a portrait
+    // smartphone layout. So I am going to stick with the navigation drawer for now.
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     var menuExpanded by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
+    // TODO: Check M3 spec and appyl all formatting/spacing/colours/font sizes
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet {
+            // TODO: Hard-coding this to 2/3 of the screen width feels a bit of a hack, but I really
+            // don't like the default behaviour of it taking the full screen width. If nothing else,
+            // that makes how to dismiss it feel less discoverable.
+            ModalDrawerSheet(modifier = Modifier.wrapContentWidth().widthIn(max = LocalConfiguration.current.screenWidthDp.dp * 2f / 3f)) {
                 // TODO: Probably need to set font style/colour for this "heading"
-                Text("Collections", modifier=Modifier.padding(16.dp)) // TODO: 16dp right/necessary?
-                NavigationDrawerItem(
-                    label = { Text("TODO1") },
-                    selected = true,
-                    onClick = {
-                        coroutineScope.launch { drawerState.close() }
+                Column(modifier = Modifier.padding(16.dp)) { // TODO: 16dp right/necessary?
+                    Text(
+                        "Collections",
+                        modifier = Modifier.padding(0.dp) // TODO!?
+                    ) // TODO: 16dp right/necessary?
+                    dataSetList.forEach { item ->
+                        NavigationDrawerItem(
+                            label = { Text(item.name ) },
+                            selected =  dataSet?.id == item.id,
+                            onClick = {
+                                coroutineScope.launch { onSelectedDataSetIdChange(item.id); drawerState.close() }
+                            }
+                        )
                     }
-                )
+                }
             }
         }
     ) {
