@@ -2674,7 +2674,10 @@ fun HomeScreenScaffold(
     // drawer rather than being obscured by it.) Also, it feels a bit aggressive and experimenting
     // in the emulator the status bar can still be dragged down to open the usual stuff and the
     // bottom slide-finger type bar still works, so I don't see why we should be covering these up.
-    // TODO: I have tried to get the dimensions right as per M3 specs here, but I'm not that confident.
+    // TODO: I have tried to get the dimensions right as per M3 specs here, but I'm not that
+    // confident. Although I think I have followed the font size/style advice, I am not sure it
+    // doesn't look weird - it would maybe be good to e.g. compare with a modern-ish version of
+    // GMail and see what that looks like.
     // TODO: Will this scroll nicely if we have loads of data sets?
     ModalNavigationDrawer(
         drawerState = drawerState,
