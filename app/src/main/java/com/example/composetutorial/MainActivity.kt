@@ -3852,7 +3852,8 @@ fun <T> GeneralSelectorScreen(
     getId: (T) -> Long,
     getName: (T) -> String,
     onAddClick: (() -> Unit)? = null,
-    onItemSelected: (Long) -> Unit
+    onItemSelected: (Long) -> Unit,
+    showSearch: Boolean = false,
 ) {
     val dataList by vm.dataFlow.collectAsStateWithLifecycle()
     Log.d("MyAppGS", "dataList $dataList")
@@ -3911,6 +3912,23 @@ fun <T> GeneralSelectorScreen(
                     value = vm.uiContent.dataSet.name,
                     enabled = false,
                     onValueChange = {}
+                )
+            }
+
+            var searchString by rememberSaveable { mutableStateOf("") }
+            if (showSearch) {
+                TextField(
+                    value = searchString,
+                    onValueChange = { it -> searchString = it.trim() /* TODO MORE */},
+                    label = { Text("Search products") }, // TODO: If we say "products" or whatever, caller needs to be passing this in
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search Products",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    modifier  = Modifier.fillMaxWidth().padding(horizontal = screenBorder).padding(bottom = 8.dp),
                 )
             }
 
@@ -4271,7 +4289,7 @@ fun AppNavigation() {
             // that form) is generic enough to be shared across data sets/items/sources. I will
             // start writing in pseudo-specific to products, but I will name things generically and
             // then I can try to factor things out later.
-            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onAddClick = { Log.d("MyAppGS", "Add item") }, onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
+            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onAddClick = { Log.d("MyAppGS", "Add item") }, onItemSelected = { Log.d("MyAppGS", "selected $it" ) }, showSearch = true)
         }
 
         composable(
