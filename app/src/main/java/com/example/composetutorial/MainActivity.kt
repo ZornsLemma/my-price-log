@@ -3934,9 +3934,8 @@ fun <T> GeneralSelectorScreen(
                 TextField(
                     value = searchString,
                     onValueChange = { it -> vm.searchStringFlow.value = it},
-                    // TODO: "Search Products" or "Search products"? Or "Search"?
                     label = { Text("Search products") }, // TODO: If we say "products" or whatever, caller needs to be passing this in
-                    trailingIcon = {
+                    trailingIcon = { // TODO: Should this be a leading icon!?
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search Products",
