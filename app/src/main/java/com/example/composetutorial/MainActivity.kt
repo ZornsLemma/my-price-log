@@ -949,6 +949,24 @@ data class Source(
     val name: String
 ) : Parcelable
 
+data class EditableSource(
+    val id: Long,
+    val dataSetId: Long,
+    val name: String,
+) {
+    companion object {
+        fun fromSource(source: Source?, dataSetId: Long): EditableSource {
+            if (source == null) {
+                return EditableSource(0, dataSetId, "")
+            } else {
+                devCheck(dataSetId == source.dataSetId) {
+                    "Expected identical dataSetIds but have dataSetId $dataSetId and source.dataSetid ${source.dataSetId}"
+                }
+                return EditableSource(source.id, dataSetId, source.name)
+            }
+        }
+    }
+}
 // TODO: This needs history tracking stuff adding, either on this table or via a separate table.
 @Entity(
     tableName = "price", foreignKeys = [
@@ -2505,6 +2523,16 @@ data class EditPriceScreenUIContent(
     }
 }
 
+data class EditSourceScreenUIContent(
+    val editableSource: EditableSource?
+) {
+    companion object {
+        fun fromSavedState(handle: SavedStateHandle): EditSourceScreenUIContent? {
+            return null // TODO!
+        }
+    }
+}
+
 @Composable
 fun HomeScreen(
     vm: HomeViewModel,
@@ -3406,6 +3434,97 @@ fun EditPriceScreen(
     }
 }
 
+// TODO: Rename? This is not actually a ViewModel, though it plays a similar role (I think).
+class GeneralEditScreenViewModel {
+    val saveStatus = SyncedStateEvent(EditPriceViewModel.SaveStatus.Idle)
+}
+
+// TODO: The fantasy outcome would be to be able to use this to avoid duplication with/simplify
+// EditPriceScreen as well as the static data editing.
+@Composable
+fun GeneralEditScreen(
+    vm: GeneralEditScreenViewModel,
+    title: @Composable () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
+    // We count "success" as saving here, since we don't want the "Save" button to re-enable
+    // briefly; it looks ugly, we already saved (so saving again makes no sense if the user does
+    // manage to click it) and we are about to close this screen.
+    // TODO: Arguably we should do something similar with the spinner - if we've ever been in
+    // SavingSlowly state, we should keep showing the spinner until we close.
+    val isSaving =
+        (saveStatus == EditPriceViewModel.SaveStatus.Saving) ||
+                (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) ||
+                (saveStatus == EditPriceViewModel.SaveStatus.Success)
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // TODO: We may need to make this available to the content() so it can use it for scrolling to highlight errors, or it may be that we don't need it here at all and it can be entirely in the content()
+    val scrollState = rememberScrollState()
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(enabled = !isSaving, onClick = { /* TODO requestDismiss() - here we need to call some callback to ask "is the content changed?" and use that to do something similar to editprice's requestDismiss internal version*/ }) {
+                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    }
+                },
+                title = title,
+                actions = {
+                    TextButton(enabled = !isSaving, onClick = {
+                        // TODO: Some sort of callback, need to think about this as this generic
+                        // code evolves
+                    }) {
+                        if (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Text("Save")
+                        }
+                    }
+                },
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am
+                // struggling to find any non-LLM explanations here, but *maybe* *if we have
+                // scrolled away from the top* we should change the background to surfaceContainer
+                .background(MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = fullScreenDialogBorder)
+                .verticalScroll(scrollState)
+        ) {
+            content()
+        }
+    }
+}
+
+@Composable
+fun EditSourceScreen(
+    vm: EditSourceViewModel,
+    navController: NavHostController,
+    requestClose: () -> Unit
+) {
+    val uiContent = vm.uiContent
+
+    GeneralEditScreen(
+        vm = vm.generalEditScreenViewModel,
+        title = { Text("TODO: TITLE") },
+    ) {
+        Text("TODO EDIT SOURCE STUFF")
+    }
+}
 
 // TODO: Maybe rename - the idea here is this does not insist the input is actually parseable as a
 // decimal (for example, we allow "24.2.3" so the user can enter a new decimal point *and then later
@@ -3898,6 +4017,18 @@ class SharedViewModel : ViewModel() {
             uiContent.sourceList + uiContent.sourceList
         )
     }
+
+    // TODO: MORE NEW EXPERIMENTAL
+
+    var editSourceScreenUIContent: EditSourceScreenUIContent? = null
+
+    fun setEditSourceScreenContent( // TODO: name should include "FromBlah"? or maybe that's a silly convention?
+        generalSelectorScreenUiContent: GeneralSelectorScreenUIContent<Source>,
+        sourceIdToEdit: Long
+    ) {
+        val source = generalSelectorScreenUiContent.initialList.singleOrNull { it.id == sourceIdToEdit }
+        editSourceScreenUIContent = EditSourceScreenUIContent(editableSource = EditableSource.fromSource(source, generalSelectorScreenUiContent.dataSet!!.id))
+    }
 }
 
 // Return the non-digit prefix and suffix around a digit-containing string. Given "foo123bar4 baz56
@@ -4287,6 +4418,14 @@ class EditPriceViewModel(
     }
 }
 
+class EditSourceViewModel(
+    private val priceTrackerRepository: PriceTrackerRepository,
+    private val savedStateHandle: SavedStateHandle,
+    val uiContent: EditSourceScreenUIContent,
+) : ViewModel() {
+    val generalEditScreenViewModel = GeneralEditScreenViewModel()
+}
+
 // TODO: Navigation is a mess - I'm completely unclear how the mysterious back stack and routes and
 // viewmodels being reused and various different kinds of composition and activity and process
 // destruction and reconstruction are supposed to interact.
@@ -4558,7 +4697,11 @@ fun AppNavigation() {
                 getId = { it.id },
                 getName = { it.name },
                 onAddClick = { Log.d("MyAppGS", "Add source") },
-                onItemSelected = { Log.d("MyAppGS", "selected $it") })
+                onItemSelected = {
+                    Log.d("MyAppGS", "selected $it")
+                    sharedViewModel.setEditSourceScreenContent(vm.uiContent, it)
+                    navController.navigate("editSource")
+                })
         }
 
         composable(
@@ -4603,6 +4746,50 @@ fun AppNavigation() {
                     navController.popBackStack()
                 })
         }
+
+        composable(
+            "editSource", enterTransition = { slideUpTransition() },
+            popExitTransition = { slideDownTransition() },
+
+            ) { backStackEntry ->
+            // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
+            // backStackEntry) - this avoids stale data causing problems.
+            val factory = remember(backStackEntry) {
+                viewModelFactoryWithHandle { extras, savedStateHandle ->
+                    val app =
+                        extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+                    // TODO: !! ON NEXT LINE FEELS A BIT HACKY BUT IS PROBABLY OK
+                    EditSourceViewModel(
+                        app.priceTrackerRepository,
+                        savedStateHandle,
+                        sharedViewModel.editSourceScreenUIContent
+                            ?: EditSourceScreenUIContent.fromSavedState(savedStateHandle)!!
+                    )
+                }
+            }
+            val vm: EditSourceViewModel = viewModel(backStackEntry, factory = factory)
+            LaunchedEffect(Unit) {
+                sharedViewModel.editPriceScreenUIContent = null
+            }
+
+            // TODO: Be good to test fairly late on with two datasets with different currencies - I vaguely wonder
+            // if re-use of this composable (maybe prevented via randomUUID route hack?) will not pick up the
+            // changes.
+
+            /* TODO: DELETE?
+            // TODO: Test this but doing it this way ought to mean we correctly pick up locale changes while we are on screen
+            LaunchedEffect(Locale.getDefault()) {
+                vm.updateLocaleDependencies(Locale.getDefault())
+            }
+            */
+
+            EditSourceScreen(
+                vm, navController,
+                requestClose = {
+                    navController.popBackStack()
+                })
+        }
+
     }
 }
 
@@ -4774,3 +4961,5 @@ Log.d("MyApp", baz.toString())
 // (without defaults) to ensure we always consider the source of our locale.
 
 // TODO: Eventually will need to remove misc Log.d() lines and/or replace them with permanent well-thought-out ones if that is not inefficient.
+
+// TODO: If I double click on e.g. Newco when editing sources, I seem to get the edit screen open twice. I suspect this is one of those cases where I need to add debouncing.
