@@ -336,7 +336,8 @@ enum class MeasureUnit(
         "pt",
         3, // allow for eighths
         568.26125,
-        false),
+        false
+    ),
     IMPERIAL_GAL(
         206,
         setOf(UnitFamily.IMPERIAL),
@@ -344,7 +345,8 @@ enum class MeasureUnit(
         "gal",
         3, // allow for eighths
         4546.09,
-        false),
+        false
+    ),
 
     // Countable items
     // TODO: Arguably these should come first to match order in QuantityType
@@ -478,7 +480,15 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
     // measures even when they're for display only - "2272 ml" feels better than "2,272 ml", at
     // least to me.
     fun toDisplayString(locale: Locale): String =
-        "${formatDouble(value, minDecimals = 0, maxDecimals = unit.maxDecimals, useLocaleGrouping = false, locale)} ${unit.symbol}"
+        "${
+            formatDouble(
+                value,
+                minDecimals = 0,
+                maxDecimals = unit.maxDecimals,
+                useLocaleGrouping = false,
+                locale
+            )
+        } ${unit.symbol}"
 }
 
 @Database(
@@ -1737,8 +1747,7 @@ fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
             currency = Currency.getInstance(dataSet.currencyCode)
         }
         return numberFormat.format(amount)
-    }
-    catch (e: Exception) {
+    } catch (e: Exception) {
         // Generate a generic-ish "USD 1234" value as a fallback, without trying to use any
         // localisation settings.
         // TODO: Eventually we might want to see if there's any useful data in a currency
@@ -2553,9 +2562,9 @@ fun HomeScreen(
             // need to experiment/think about this once I finish re-implementing the price edit
             // screen.
             navController.navigate("fullScreenDialog/${UUID.randomUUID()}")
-        } */
-        , onEditDataSetsClick = { onEditDataSetsClick( uiContent) }
-        ,onEditItemsClick = { onEditProductsClick(uiContent) },
+        } */,
+        onEditDataSetsClick = { onEditDataSetsClick(uiContent) },
+        onEditItemsClick = { onEditProductsClick(uiContent) },
         onEditSourcesClick = { onEditSourcesClick(uiContent) }
     )
 }
@@ -2642,7 +2651,7 @@ fun HomeScreenScaffold(
     onEditDataSetsClick: () -> Unit,
     onEditItemsClick: () -> Unit,
     onEditSourcesClick: () -> Unit,
-    ) {
+) {
     // TODO: Navigation drawer is being deprecated in favour of expanded navigation rail in Material
     // 3 Expressive from May 2025. However, it appears to be a rotten fit for my requirements here -
     // it wants (in its non-expanded form) to be permanently on screen, and I don't have the space,
@@ -2675,10 +2684,19 @@ fun HomeScreenScaffold(
             // don't like the default behaviour of it taking the full screen width. If nothing else,
             // that makes how to dismiss it feel less discoverable.
             // TODO: Probably irrelevant on a phone, but we should maybe cap the width at 360.dp, which is MD3 specified width.
-            ModalDrawerSheet(modifier = Modifier.wrapContentWidth().widthIn(max = LocalConfiguration.current.screenWidthDp.dp * 2f / 3f)) {
+            ModalDrawerSheet(
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .widthIn(max = LocalConfiguration.current.screenWidthDp.dp * 2f / 3f)
+            ) {
                 // TODO: Probably need to set font style/colour for this "heading"
                 Column {
-                    Box(modifier = Modifier.height(56.dp).padding(start = 16.dp), contentAlignment = Alignment.CenterStart) {
+                    Box(
+                        modifier = Modifier
+                            .height(56.dp)
+                            .padding(start = 16.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
                         Text(
                             text = "Collections",
                             //color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -2692,13 +2710,16 @@ fun HomeScreenScaffold(
                         // cut off "labels" gmail screenshot in m3 docs hints at this. But it might
                         // also look a bit weird to have these.
                         NavigationDrawerItem(
-                            modifier = Modifier.padding(horizontal = 12.dp).height(56.dp),
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp)
+                                .height(56.dp),
                             label = {
                                 Text(
                                     item.name,
                                     // color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style=MaterialTheme.typography.labelLarge
-                                ) },
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            },
                             selected = selected,
                             onClick = {
                                 coroutineScope.launch { onSelectedDataSetIdChange(item.id); drawerState.close() }
@@ -2719,12 +2740,18 @@ fun HomeScreenScaffold(
                     title = { Text(dataSet?.name ?: "") }, // TODO: better null handling?
                     navigationIcon = {
                         IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
-                            Icon(imageVector = Icons.Default.Menu, contentDescription = "Open drawer") // TODO: tweak description?
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Open drawer"
+                            ) // TODO: tweak description?
                         }
                     },
                     actions = {
                         IconButton(onClick = { menuExpanded = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "Menu") // TODO: tweak description?
+                            Icon(
+                                Icons.Default.MoreVert,
+                                contentDescription = "Menu"
+                            ) // TODO: tweak description?
                         }
 
                         DropdownMenu(
@@ -2928,7 +2955,8 @@ fun EditPriceScreen(
     // manage to click it) and we are about to close this screen.
     // TODO: Arguably we should do something similar with the spinner - if we've ever been in
     // SavingSlowly state, we should keep showing the spinner until we close.
-    val isSaving = (saveStatus == EditPriceViewModel.SaveStatus.Saving) || (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) || (saveStatus == EditPriceViewModel.SaveStatus.Success)
+    val isSaving =
+        (saveStatus == EditPriceViewModel.SaveStatus.Saving) || (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) || (saveStatus == EditPriceViewModel.SaveStatus.Success)
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
     var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
@@ -2960,7 +2988,10 @@ fun EditPriceScreen(
         // We don't consider the toConfirm property relevant here - this avoids gratuitous "are you
         // sure?" confirmations if for example the user deletes a digit of the price and then
         // re-types it.
-        if (uiContent.editablePrice.value.copy(toConfirm = false) != uiContent.originalPrice.copy(toConfirm = false)) {
+        if (uiContent.editablePrice.value.copy(toConfirm = false) != uiContent.originalPrice.copy(
+                toConfirm = false
+            )
+        ) {
             showConfirmDialog = true
         } else {
             requestCloseDebounced()
@@ -3538,7 +3569,11 @@ fun ValidatedTextField(
     messageDelayMillis: Long = defaultValidationMessageDelayMillis,
 ) {
     Log.d("MyAppVTF", "input == previousInput? ${remember { validationRules }} == $validationRules")
-    var failedValidationSupportingText by rememberSaveable(validationRulesKey) { mutableStateOf<String?>(null) }
+    var failedValidationSupportingText by rememberSaveable(validationRulesKey) {
+        mutableStateOf<String?>(
+            null
+        )
+    }
     var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule?>(null) }
     Log.d("MyAppVTF", "validationRules?.size ${validationRules?.size}")
     Log.d("MyAppVTF", "fVST $failedValidationSupportingText")
@@ -3839,17 +3874,29 @@ class SharedViewModel : ViewModel() {
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentItem = GeneralSelectorScreenUIContent("Edit products", uiContent.dataSet, uiContent.itemList + uiContent.itemList)
+        generalSelectorScreenUIContentItem = GeneralSelectorScreenUIContent(
+            "Edit products",
+            uiContent.dataSet,
+            uiContent.itemList + uiContent.itemList
+        )
     }
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentDataSet(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentDataSet = GeneralSelectorScreenUIContent("Edit collections", null /* TODO? we use this to decide whether to show a dataset textfield at op uiContent.dataSet */,uiContent.dataSetList + uiContent.dataSetList)
+        generalSelectorScreenUIContentDataSet = GeneralSelectorScreenUIContent(
+            "Edit collections",
+            null /* TODO? we use this to decide whether to show a dataset textfield at op uiContent.dataSet */,
+            uiContent.dataSetList + uiContent.dataSetList
+        )
     }
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentSource(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentSource = GeneralSelectorScreenUIContent("Edit stores", uiContent.dataSet,uiContent.sourceList + uiContent.sourceList)
+        generalSelectorScreenUIContentSource = GeneralSelectorScreenUIContent(
+            "Edit stores",
+            uiContent.dataSet,
+            uiContent.sourceList + uiContent.sourceList
+        )
     }
 }
 
@@ -3920,40 +3967,62 @@ class GeneralSelectorViewModel<T>(
     // TODO: delay(5000) is temp hack
     // This will *not* filter uiContent.initialList, but that's OK because we know the initial filter doesn't exclude anything.
     val searchStringFlow = MutableStateFlow("")
+
     // TODO: Just possibly we should say "query.trim()" in isCaseInsensitive... call?
-    val dataFlow = combine(initialQuery.flatMapLatest { data -> delay(5000); flowOf(data) }, searchStringFlow) { data, query ->
-        data.filter { isCaseInsensitiveSubstring(query, getName(it), Locale.getDefault() /* TODO VERY TEMP HACK - WE ARE NOT SUPPOSED TO BE USING THIS FUNCTION */) }
+    val dataFlow = combine(
+        initialQuery.flatMapLatest { data -> delay(5000); flowOf(data) },
+        searchStringFlow
+    ) { data, query ->
+        data.filter {
+            isCaseInsensitiveSubstring(
+                query,
+                getName(it),
+                Locale.getDefault() /* TODO VERY TEMP HACK - WE ARE NOT SUPPOSED TO BE USING THIS FUNCTION */
+            )
+        }
     }
-        .onEach { emittedList -> /* delay(5000); */ Log.d("MyAppGS", "Room emitted list: ${System.identityHashCode(emittedList)}") }
-        .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = uiContent.initialList)
+        .onEach { emittedList -> /* delay(5000); */ Log.d(
+            "MyAppGS",
+            "Room emitted list: ${System.identityHashCode(emittedList)}"
+        )
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = uiContent.initialList
+        )
 
 }
 
 @Composable
 fun topAppBarTitle(title: String, subtitle: String?): @Composable (() -> Unit) =
-    if (subtitle != null) {{
-        // TODO: No idea if these sizes are MD3 compliant, spec talks about actual sizes etc
-        // but I really feel I ought to be using the MaterialTheme.typography stuff. Maybe
-        // I'm wrong. I think this does look about right anyway.
-        Column {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                /*
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Normal,
-                */
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+    if (subtitle != null) {
+        {
+            // TODO: No idea if these sizes are MD3 compliant, spec talks about actual sizes etc
+            // but I really feel I ought to be using the MaterialTheme.typography stuff. Maybe
+            // I'm wrong. I think this does look about right anyway.
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    /*
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Normal,
+                    */
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
-    }} else {{ Text(title) }}
+    } else {
+        { Text(title) }
+    }
 
 
 // TODO: I think this needs to have a Room-based feed of data because we could potentially return to
@@ -3978,7 +4047,9 @@ fun <T> GeneralSelectorScreen(
     val searchString by vm.searchStringFlow.collectAsStateWithLifecycle()
     Log.d("MyAppGS", "dataList $dataList")
 
-    val floatingActionButton: (@Composable () -> Unit) =  if (onAddClick == null) { {} } else {
+    val floatingActionButton: (@Composable () -> Unit) = if (onAddClick == null) {
+        {}
+    } else {
         @Composable {
             // The commented out options here would (I think) be MD3 compliant (picking the
             // "default" colour combination) but they seem to be the defaults anyway.
@@ -4001,15 +4072,17 @@ fun <T> GeneralSelectorScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             // TODO: I am wondering if title and subtitle should swap roles here? Keep the data set name as the title as on the home screen? And if we go with this, *maybe* the subtitle is just "Products" (for example) not "Edit products"??
-            TopAppBar(title = topAppBarTitle(vm.uiContent.title, vm.uiContent.dataSet?.name), navigationIcon = {
+            TopAppBar(
+                title = topAppBarTitle(vm.uiContent.title, vm.uiContent.dataSet?.name),
+                navigationIcon = {
 
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                        contentDescription = "Back"
-                    )
-                }
-            })
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                })
         },
         floatingActionButton = floatingActionButton,
     ) { innerPadding ->
@@ -4018,14 +4091,14 @@ fun <T> GeneralSelectorScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize()
                 .padding(innerPadding)
-                // TODO: experimentally not using this here so list can be edge-to-edge .padding(screenBorder)
+            // TODO: experimentally not using this here so list can be edge-to-edge .padding(screenBorder)
 
             // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
             if (showSearch) {
                 TextField(
                     value = searchString,
-                    onValueChange = { it -> vm.searchStringFlow.value = it},
+                    onValueChange = { it -> vm.searchStringFlow.value = it },
                     label = { Text("Search") },
                     leadingIcon = {
                         Icon(
@@ -4041,13 +4114,18 @@ fun <T> GeneralSelectorScreen(
                             modifier = Modifier.clickable { vm.searchStringFlow.value = "" },
                         )
                     },
-                    modifier  = Modifier.fillMaxWidth().padding(horizontal = screenBorder).padding(bottom = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = screenBorder)
+                        .padding(bottom = 8.dp),
                 )
             }
 
-            Box(modifier = Modifier
-                .background(Color.Green /* TODO! */)
-                .fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .background(Color.Green /* TODO! */)
+                    .fillMaxWidth()
+            ) {
 
                 data class GeneralSelectorEntity(val id: Long, val name: String)
 
@@ -4097,10 +4175,10 @@ fun GeneralSelectorListItem(id: Long, name: String, onItemSelected: (Long) -> Un
         )
     }
     */
-        ListItem(
-            headlineContent = { Text(name) },
-            modifier = Modifier.clickable { onItemSelected(id) },
-        )
+    ListItem(
+        headlineContent = { Text(name) },
+        modifier = Modifier.clickable { onItemSelected(id) },
+    )
 }
 
 // TODO: Here, and possibly in other ViewModels, there is a tendency to be passing parameters into
@@ -4194,7 +4272,7 @@ class EditPriceViewModel(
 
     val saveStatus = SyncedStateEvent(SaveStatus.Idle)
 
-// TODO: Use upsert in name?
+    // TODO: Use upsert in name?
     private fun updateOrInsertPrice(price: Price) {
         viewModelScope.launch {
             saveStatus.update(SaveStatus.Saving)
@@ -4238,22 +4316,22 @@ fun AppNavigation() {
 
         fun AnimatedContentTransitionScope<NavBackStackEntry>.slideLeftTransition(): EnterTransition =
             slideIntoContainer(
-                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                towards = AnimatedContentTransitionScope.SlideDirection.Left,
 
-                    animationSpec = tween(
-                        durationMillis = tweenDurationMillisEnter,
-                        easing = LinearOutSlowInEasing
-                    ),
-                )
+                animationSpec = tween(
+                    durationMillis = tweenDurationMillisEnter,
+                    easing = LinearOutSlowInEasing
+                ),
+            )
 
         fun AnimatedContentTransitionScope<NavBackStackEntry>.slideRightTransition(): ExitTransition =
             slideOutOfContainer(
-            towards = AnimatedContentTransitionScope.SlideDirection.Right,
-            animationSpec = tween(
-                durationMillis = tweenDurationMillisExit,
-                easing = FastOutLinearInEasing
+                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(
+                    durationMillis = tweenDurationMillisExit,
+                    easing = FastOutLinearInEasing
+                )
             )
-        )
 
         fun AnimatedContentTransitionScope<NavBackStackEntry>.slideUpTransition(): EnterTransition =
             slideIntoContainer(
@@ -4283,10 +4361,15 @@ fun AppNavigation() {
                 viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
             Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
             val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
-            HomeScreen(vm, navController, onEditPriceClick = { uiContent ->
-                sharedViewModel.setEditPriceScreenContentFromHomeScreenContent(uiContent, locale)
-                navController.navigate("editPrice")
-            },
+            HomeScreen(
+                vm, navController,
+                onEditPriceClick = { uiContent ->
+                    sharedViewModel.setEditPriceScreenContentFromHomeScreenContent(
+                        uiContent,
+                        locale
+                    )
+                    navController.navigate("editPrice")
+                },
                 onEditDataSetsClick = { uiContent ->
                     sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentDataSet(
                         uiContent
@@ -4294,11 +4377,15 @@ fun AppNavigation() {
                     navController.navigate("editDataSets")
                 },
                 onEditProductsClick = { uiContent ->
-                    sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent)
+                    sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentItem(
+                        uiContent
+                    )
                     navController.navigate("editItems")
                 },
                 onEditSourcesClick = { uiContent ->
-                    sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentSource(uiContent)
+                    sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentSource(
+                        uiContent
+                    )
                     navController.navigate("editSources")
                 },
             )
@@ -4341,8 +4428,8 @@ fun AppNavigation() {
                         savedStateHandle,
                         getName = { it -> it.name }, // TODO: not actually used, allow null?
                         sharedViewModel.generalSelectorScreenUIContentDataSet!! /* TODO
-                            ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */
-                        ,initialQuery = app.priceTrackerRepository.getAllDataSets()
+                            ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */,
+                        initialQuery = app.priceTrackerRepository.getAllDataSets()
                     )
                 }
             }
@@ -4357,7 +4444,13 @@ fun AppNavigation() {
             // that form) is generic enough to be shared across data sets/items/sources. I will
             // start writing in pseudo-specific to products, but I will name things generically and
             // then I can try to factor things out later.
-            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onAddClick = { Log.d("MyAppGS", "Add data set") } , onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
+            GeneralSelectorScreen(
+                vm,
+                navController,
+                getId = { it.id },
+                getName = { it.name },
+                onAddClick = { Log.d("MyAppGS", "Add data set") },
+                onItemSelected = { Log.d("MyAppGS", "selected $it") })
         }
 
         composable(
@@ -4388,8 +4481,8 @@ fun AppNavigation() {
                         savedStateHandle,
                         getName = { it -> it.name },
                         sharedViewModel.generalSelectorScreenUIContentItem!! /* TODO
-                            ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */
-                        ,initialQuery = app.priceTrackerRepository.getAllItems(sharedViewModel.generalSelectorScreenUIContentItem!!.dataSet!!.id)
+                            ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */,
+                        initialQuery = app.priceTrackerRepository.getAllItems(sharedViewModel.generalSelectorScreenUIContentItem!!.dataSet!!.id)
                     )
                 }
             }
@@ -4404,7 +4497,15 @@ fun AppNavigation() {
             // that form) is generic enough to be shared across data sets/items/sources. I will
             // start writing in pseudo-specific to products, but I will name things generically and
             // then I can try to factor things out later.
-            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onAddClick = { Log.d("MyAppGS", "Add item") }, onItemSelected = { Log.d("MyAppGS", "selected $it" ) }, showSearch = true)
+            GeneralSelectorScreen(
+                vm,
+                navController,
+                getId = { it.id },
+                getName = { it.name },
+                onAddClick = { Log.d("MyAppGS", "Add item") },
+                onItemSelected = { Log.d("MyAppGS", "selected $it") },
+                showSearch = true
+            )
         }
 
         composable(
@@ -4435,8 +4536,8 @@ fun AppNavigation() {
                         savedStateHandle,
                         getName = { it -> it.name }, // TODO: not actually used, allow null?
                         sharedViewModel.generalSelectorScreenUIContentSource!! /* TODO
-                            ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */
-                        ,initialQuery = app.priceTrackerRepository.getAllSources(sharedViewModel.generalSelectorScreenUIContentSource!!.dataSet!!.id)
+                            ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */,
+                        initialQuery = app.priceTrackerRepository.getAllSources(sharedViewModel.generalSelectorScreenUIContentSource!!.dataSet!!.id)
                     )
                 }
             }
@@ -4451,14 +4552,20 @@ fun AppNavigation() {
             // that form) is generic enough to be shared across data sets/items/sources. I will
             // start writing in pseudo-specific to products, but I will name things generically and
             // then I can try to factor things out later.
-            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onAddClick = { Log.d("MyAppGS", "Add source") }, onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
+            GeneralSelectorScreen(
+                vm,
+                navController,
+                getId = { it.id },
+                getName = { it.name },
+                onAddClick = { Log.d("MyAppGS", "Add source") },
+                onItemSelected = { Log.d("MyAppGS", "selected $it") })
         }
 
         composable(
             "editPrice", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
 
-        ) { backStackEntry ->
+            ) { backStackEntry ->
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
