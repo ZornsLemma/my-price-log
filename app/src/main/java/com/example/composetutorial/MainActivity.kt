@@ -3813,10 +3813,20 @@ data class GeneralSelectorScreenUIContent<T>(
     val initialList: List<T>
 )
 
+// TODO: This function does not handle non-English languages very well. As far as I can tell from
+// discussing with LLMs and doing my own web searches, we really need something like the ICU string
+// search service (https://unicode-org.github.io/icu/userguide/collation/string-search) but although
+// Android has some ICU stuff by default, it apparently doesn't have this. I am going to use this
+// basic implementation (which I believe won't handle the German sharp S correctly, just as an
+// example) for now and can revisit it later if any non-English users turn up.
+fun isCaseInsensitiveSubstring(lhs: String, rhs: String, locale: Locale) =
+    rhs.lowercase(locale).contains(lhs.lowercase(locale))
+
 // TODO: This may not actually need the repository passing in given we pass in a query
 class GeneralSelectorViewModel<T>(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
+    private val getName: (T) -> String,
     val uiContent: GeneralSelectorScreenUIContent<T>,
     private val initialQuery: Flow<List<T>>, // TODO: rename - it is not initial, it is "ongoing", maybe just call it dataQuery to match dataFlow
 ) : ViewModel() {
@@ -3831,10 +3841,14 @@ class GeneralSelectorViewModel<T>(
     }.stateIn(scope = viewModelScope, started = SharingStarted.Eagerly,
     */
     // TODO: delay(5000) is temp hack
-    val dataFlow: StateFlow<List<T>> = initialQuery
-        .onEach { emittedList -> delay(5000); Log.d("MyAppGS", "Room emitted list: ${System.identityHashCode(emittedList)}") }
-        .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = uiContent.initialList.also {
-            Log.d("MyAppGS", "Initial list: ${System.identityHashCode(it)}") } )
+    // This will *not* filter uiContent.initialList, but that's OK because we know the initial filter doesn't exclude anything.
+    val searchStringFlow = MutableStateFlow("")
+    val dataFlow = combine(initialQuery.flatMapLatest { data -> delay(5000); flowOf(data) }, searchStringFlow) { data, query ->
+        data.filter { isCaseInsensitiveSubstring(query, getName(it), Locale.getDefault() /* TODO VERY TEMP HACK */) }
+    }
+        .onEach { emittedList -> /* delay(5000); */ Log.d("MyAppGS", "Room emitted list: ${System.identityHashCode(emittedList)}") }
+        .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = uiContent.initialList)
+
 }
 
 // TODO: I think this needs to have a Room-based feed of data because we could potentially return to
@@ -3856,6 +3870,7 @@ fun <T> GeneralSelectorScreen(
     showSearch: Boolean = false,
 ) {
     val dataList by vm.dataFlow.collectAsStateWithLifecycle()
+    val searchString by vm.searchStringFlow.collectAsStateWithLifecycle()
     Log.d("MyAppGS", "dataList $dataList")
 
     val floatingActionButton: (@Composable () -> Unit) =  if (onAddClick == null) { {} } else {
@@ -3915,11 +3930,11 @@ fun <T> GeneralSelectorScreen(
                 )
             }
 
-            var searchString by rememberSaveable { mutableStateOf("") }
             if (showSearch) {
                 TextField(
                     value = searchString,
-                    onValueChange = { it -> searchString = it.trim() /* TODO MORE */},
+                    onValueChange = { it -> vm.searchStringFlow.value = it},
+                    // TODO: "Search Products" or "Search products"? Or "Search"?
                     label = { Text("Search products") }, // TODO: If we say "products" or whatever, caller needs to be passing this in
                     trailingIcon = {
                         Icon(
@@ -4226,6 +4241,7 @@ fun AppNavigation() {
                     GeneralSelectorViewModel(
                         app.priceTrackerRepository,
                         savedStateHandle,
+                        getName = { it -> it.name }, // TODO: not actually used, allow null?
                         sharedViewModel.generalSelectorScreenUIContentDataSet!! /* TODO
                             ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */
                         ,initialQuery = app.priceTrackerRepository.getAllDataSets()
@@ -4272,6 +4288,7 @@ fun AppNavigation() {
                     GeneralSelectorViewModel(
                         app.priceTrackerRepository,
                         savedStateHandle,
+                        getName = { it -> it.name },
                         sharedViewModel.generalSelectorScreenUIContentItem!! /* TODO
                             ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */
                         ,initialQuery = app.priceTrackerRepository.getAllItems(sharedViewModel.generalSelectorScreenUIContentItem!!.dataSet!!.id)
@@ -4318,6 +4335,7 @@ fun AppNavigation() {
                     GeneralSelectorViewModel(
                         app.priceTrackerRepository,
                         savedStateHandle,
+                        getName = { it -> it.name }, // TODO: not actually used, allow null?
                         sharedViewModel.generalSelectorScreenUIContentSource!! /* TODO
                             ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */
                         ,initialQuery = app.priceTrackerRepository.getAllSources(sharedViewModel.generalSelectorScreenUIContentSource!!.dataSet!!.id)
