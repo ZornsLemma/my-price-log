@@ -3826,6 +3826,10 @@ class GeneralSelectorViewModel<T>(
 // it after adding or renaming something on a child full screen dialog and we need to pick that
 // change up. But for first frame perfection, we probably do also want to receive an initial list
 // from the home screen.
+// TODO: It's possible some/all of the generic stuff is not worth it - for example maybe each
+// screen should have its own implementation for its own type and just re-use a core composable
+// or two to do the big chunks of screen layout. Not at all sure - I think the thing to do is to
+// implement it in the current not-terrible generic framework then see how it all looks.
 @Composable
 fun <T> GeneralSelectorScreen(
     vm: GeneralSelectorViewModel<T>,
@@ -3883,6 +3887,8 @@ fun <T> GeneralSelectorScreen(
         ) {
             // TODO: Maybe this should optionally display the data set name (fixed, inherited from
             // home screen) if we are editing items or sources.
+            // TODO: Actually it probably *ought* to be a live data set dropdown - but given the genericness
+            // my inclination is to probably try to do this for v1, but for now stick with it being non-live.
 
 
             Text("TODO GENERAL SELECTOR")
