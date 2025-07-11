@@ -2668,24 +2668,46 @@ fun HomeScreenScaffold(
     var menuExpanded by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-    // TODO: Check M3 spec and appyl all formatting/spacing/colours/font sizes
+    // TODO: M3 docs appear to show this covering the status bar at the top of the phone. ChatGPT
+    // assures me this is essentially impossible to implement. (Obviously my high-level padding to
+    // avoid the status bar stops me doing it, but if I remove that, the clock draws over the
+    // drawer rather than being obscured by it.) Also, it feels a bit aggressive and experimenting
+    // in the emulator the status bar can still be dragged down to open the usual stuff and the
+    // bottom slide-finger type bar still works, so I don't see why we should be covering these up.
+    // TODO: I have tried to get the dimensions right as per M3 specs here, but I'm not that confident.
+    // TODO: Will this scroll nicely if we have loads of data sets?
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             // TODO: Hard-coding this to 2/3 of the screen width feels a bit of a hack, but I really
             // don't like the default behaviour of it taking the full screen width. If nothing else,
             // that makes how to dismiss it feel less discoverable.
+            // TODO: Probably irrelevant on a phone, but we should maybe cap the width at 360.dp, which is MD3 specified width.
             ModalDrawerSheet(modifier = Modifier.wrapContentWidth().widthIn(max = LocalConfiguration.current.screenWidthDp.dp * 2f / 3f)) {
                 // TODO: Probably need to set font style/colour for this "heading"
-                Column(modifier = Modifier.padding(16.dp)) { // TODO: 16dp right/necessary?
-                    Text(
-                        "Collections",
-                        modifier = Modifier.padding(0.dp) // TODO!?
-                    ) // TODO: 16dp right/necessary?
+                Column {
+                    Box(modifier = Modifier.height(56.dp).padding(start = 16.dp), contentAlignment = Alignment.CenterStart) {
+                        Text(
+                            text = "Collections",
+                            //color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.titleSmall,
+                            //modifier = Modifier.padding(start = 16.dp).height(56.dp) // TODO!?
+                        ) // TODO: 16dp right/necessary?
+                    }
                     dataSetList.forEach { item ->
+                        val selected = dataSet?.id == item.id
+                        // TODO: Should these have some kind of generic bullet-style icon? The half
+                        // cut off "labels" gmail screenshot in m3 docs hints at this. But it might
+                        // also look a bit weird to have these.
                         NavigationDrawerItem(
-                            label = { Text(item.name ) },
-                            selected =  dataSet?.id == item.id,
+                            modifier = Modifier.padding(horizontal = 12.dp).height(56.dp),
+                            label = {
+                                Text(
+                                    item.name,
+                                    // color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style=MaterialTheme.typography.labelLarge
+                                ) },
+                            selected = selected,
                             onClick = {
                                 coroutineScope.launch { onSelectedDataSetIdChange(item.id); drawerState.close() }
                             }
