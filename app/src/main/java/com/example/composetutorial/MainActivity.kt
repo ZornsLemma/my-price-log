@@ -2,6 +2,12 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -72,6 +78,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
@@ -2630,6 +2637,7 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+// TODO: Function might be misnamed if we introduce navigation drawer, but I probably want to refactor a lot of the composables anyway in order to get away from gigantic massively independent functions.
 fun HomeScreenScaffold(
     navController: NavHostController,
     loading: Boolean,
@@ -2648,144 +2656,174 @@ fun HomeScreenScaffold(
     onEditItemsClick: () -> Unit,
     onEditSourcesClick: () -> Unit,
     ) {
+    // TODO: Navigation drawer is being deprecated in favour of expanded navigation rail in Material
+    // 3 expressive as of May 2025, but I will just go with this for now.
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
     var menuExpanded by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
-    Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Red /* TODO DEBUG HACK */),
-        topBar = {
-            TopAppBar(
-                title = { Text("My App Name Here") }, actions = {
-                    IconButton(onClick = { menuExpanded = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Menu")
-                    }
-
-                    DropdownMenu(
-                        expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        // TODO: There is maybe an argument that "Manage" might be better than
-                        // "Edit" because it carries a stronger suggestion of adding/removing
-                        // products (or whatever) rather than just tweaking their details. But not
-                        // sure. Edit is shorter! And while edit is a *tiny* bit tech jargon it is
-                        // widely accepted in phone apps, while "manage" feels vaguely corporate.
-                        MyDropdownMenuItem(text = { Text("Edit collections") }, onClick = {
-                            menuExpanded = false
-                            onEditDataSetsClick()
-                        })
-                        MyDropdownMenuItem(text = { Text("Edit products") }, enabled = dataSet != null, onClick = {
-                            menuExpanded = false
-                            onEditItemsClick()
-                        })
-                        MyDropdownMenuItem(text = { Text("Edit stores") }, enabled = dataSet != null, onClick = {
-                            menuExpanded = false
-                            onEditSourcesClick()
-                        })
-                        MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
-                            menuExpanded = false
-                            // TODO: This should probably be done via a callback function provided
-                            // to HomeScreen and passed through to us, and this function should
-                            // probably *not* have the navController directly available. We might
-                            // pass a *route* back but the function passed to us would actually
-                            // invoke navController.navigate().
-                            navController.navigate("settings")
-                        })
-                    }
-                },
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface /* TODO? */)
-            )
-        },
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                // .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
-                .background(MaterialTheme.colorScheme.background) // TODO?
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(innerPadding)
-                .padding(screenBorder) // TODO: MAYBE THIS SHOULD ONLY BE HORIZONTAL - MY YELLOW DEBUG BACKGROUND IS MAYBE GIVING ME A MISLEADING IDEA AND WE MAYBE SHOULDN'T HAVE VERTICAL SPACE BETWEEN TOP BAR AND TOP OF CONTENT
-
-        ) {
-
-            MainScreen(
-                dataSet = dataSet,
-                dataSetList = dataSetList,
-                onSelectedDataSetIdChange = onSelectedDataSetIdChange,
-                item = item,
-                itemList = itemList,
-                onSelectedItemIdChange = onSelectedItemIdChange
-            ) // TODO: rename this
-
-            Spacer(
-                modifier = Modifier
-                    .height(
-                        8.dp
-                    )
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Text("TODO", modifier = Modifier
                     .fillMaxWidth()
-                    .background(color = Color.Red) // TODO DEBUG HACK
-            )
-
-            if (dataSet != null) {
-                Log.d("MyApp", "HSS dataSet $dataSet")
-                Log.d("MyApp", "HSS item $item")
-                ItemSourceInfo(
-                    dataSet = dataSet,
-                    item = item,
-                    source = source,
-                    sourceList = sourceList,
-                    onSelectedSourceIdChange = onSelectedSourceIdChange,
-                    itemPriceList = priceList,
-                    onEditPriceClick = onEditPriceClick
+                    .clickable { /* TODO */ }
+                    .padding(16.dp) // TODO?
                 )
             }
+        }
+    ) {
 
-            Spacer(
-                modifier = Modifier.height(
-                    8.dp
+        Scaffold(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Red /* TODO DEBUG HACK */),
+            topBar = {
+                TopAppBar(
+                    title = { Text("My App Name Here") },
+                    navigationIcon = {
+                        IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
+                            Icon(imageVector = Icons.Default.Menu, contentDescription = "Open drawer") // TODO: tweak description?
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "Menu") // TODO: tweak description?
+                        }
+
+                        DropdownMenu(
+                            expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            // TODO: There is maybe an argument that "Manage" might be better than
+                            // "Edit" because it carries a stronger suggestion of adding/removing
+                            // products (or whatever) rather than just tweaking their details. But not
+                            // sure. Edit is shorter! And while edit is a *tiny* bit tech jargon it is
+                            // widely accepted in phone apps, while "manage" feels vaguely corporate.
+                            MyDropdownMenuItem(text = { Text("Edit collections") }, onClick = {
+                                menuExpanded = false
+                                onEditDataSetsClick()
+                            })
+                            MyDropdownMenuItem(
+                                text = { Text("Edit products") },
+                                enabled = dataSet != null,
+                                onClick = {
+                                    menuExpanded = false
+                                    onEditItemsClick()
+                                })
+                            MyDropdownMenuItem(
+                                text = { Text("Edit stores") },
+                                enabled = dataSet != null,
+                                onClick = {
+                                    menuExpanded = false
+                                    onEditSourcesClick()
+                                })
+                            MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
+                                menuExpanded = false
+                                // TODO: This should probably be done via a callback function provided
+                                // to HomeScreen and passed through to us, and this function should
+                                // probably *not* have the navController directly available. We might
+                                // pass a *route* back but the function passed to us would actually
+                                // invoke navController.navigate().
+                                navController.navigate("settings")
+                            })
+                        }
+                    },
+                    modifier = Modifier.background(MaterialTheme.colorScheme.surface /* TODO? */)
                 )
-            )
-
-            // TODO: This mock data shows some questions:
-            // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
-            // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
-            // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
-            // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
-            // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
-            // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
-            // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
-            // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
-            // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
-            // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
-            // but things are slightly different if we go with this approach.
-            // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
-            val header = listOf("Source", "£/100g", "Notes")
-            // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
-            val data = listOf(
-                listOf(
-                    "Tesco", "£2.13", "Tesco Finest is actually cheapest"
-                ),
-                listOf("Sainsbury's Local", "£2.94", ""),
-                listOf("Asda", "£2.08", "KTC brand"),
-                listOf("Iceland", "£2.38", ""),
-                // …
-            )
-
-            // TODO: Price column should be right-aligned, of course
-            Card(
+            },
+        ) { innerPadding ->
+            Column(
                 modifier = Modifier
-                    //.weight(1f, fill=false) // only component with weight, so fills all remaining space
-                    .fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                    // .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
+                    .background(MaterialTheme.colorScheme.background) // TODO?
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(innerPadding)
+                    .padding(screenBorder) // TODO: MAYBE THIS SHOULD ONLY BE HORIZONTAL - MY YELLOW DEBUG BACKGROUND IS MAYBE GIVING ME A MISLEADING IDEA AND WE MAYBE SHOULDN'T HAVE VERTICAL SPACE BETWEEN TOP BAR AND TOP OF CONTENT
+
             ) {
-                Box(
-                    modifier = Modifier.padding(
-                        horizontal = 8.dp, vertical = 12.dp
+
+                MainScreen(
+                    dataSet = dataSet,
+                    dataSetList = dataSetList,
+                    onSelectedDataSetIdChange = onSelectedDataSetIdChange,
+                    item = item,
+                    itemList = itemList,
+                    onSelectedItemIdChange = onSelectedItemIdChange
+                ) // TODO: rename this
+
+                Spacer(
+                    modifier = Modifier
+                        .height(
+                            8.dp
+                        )
+                        .fillMaxWidth()
+                        .background(color = Color.Red) // TODO DEBUG HACK
+                )
+
+                if (dataSet != null) {
+                    Log.d("MyApp", "HSS dataSet $dataSet")
+                    Log.d("MyApp", "HSS item $item")
+                    ItemSourceInfo(
+                        dataSet = dataSet,
+                        item = item,
+                        source = source,
+                        sourceList = sourceList,
+                        onSelectedSourceIdChange = onSelectedSourceIdChange,
+                        itemPriceList = priceList,
+                        onEditPriceClick = onEditPriceClick
                     )
+                }
+
+                Spacer(
+                    modifier = Modifier.height(
+                        8.dp
+                    )
+                )
+
+                // TODO: This mock data shows some questions:
+                // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
+                // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
+                // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
+                // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
+                // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
+                // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
+                // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
+                // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
+                // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
+                // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
+                // but things are slightly different if we go with this approach.
+                // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
+                val header = listOf("Source", "£/100g", "Notes")
+                // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
+                val data = listOf(
+                    listOf(
+                        "Tesco", "£2.13", "Tesco Finest is actually cheapest"
+                    ),
+                    listOf("Sainsbury's Local", "£2.94", ""),
+                    listOf("Asda", "£2.08", "KTC brand"),
+                    listOf("Iceland", "£2.38", ""),
+                    // …
+                )
+
+                // TODO: Price column should be right-aligned, of course
+                Card(
+                    modifier = Modifier
+                        //.weight(1f, fill=false) // only component with weight, so fills all remaining space
+                        .fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                 ) {
-                    DataTable(
-                        header = header, rows = data,
-                        // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
-                        columnWeights = listOf(1.6f, 1f, 2.2f)
-                    )
+                    Box(
+                        modifier = Modifier.padding(
+                            horizontal = 8.dp, vertical = 12.dp
+                        )
+                    ) {
+                        DataTable(
+                            header = header, rows = data,
+                            // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
+                            columnWeights = listOf(1.6f, 1f, 2.2f)
+                        )
+                    }
                 }
             }
         }
@@ -2802,6 +2840,7 @@ fun HomeScreenScaffold(
     // Note that we do not pass a delayMillis parameter here; the delay before the scrim appears
     // is implemented in the logic which sets the loading flag, so as soon as loading is true, we
     // want the scrim.
+    // TODO: Is this in right place in hierarchy wrt navigation drawer?
     ScrimWithSpinner(visible = loading)
 }
 
