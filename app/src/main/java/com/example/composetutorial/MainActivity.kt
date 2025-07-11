@@ -64,9 +64,11 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
@@ -81,6 +83,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -3829,11 +3832,31 @@ fun <T> GeneralSelectorScreen(
     navController: NavHostController,
     getId: (T) -> Long,
     getName: (T) -> String,
-    onItemSelected: (Long) -> Unit) {
+    onAddClick: (() -> Unit)? = null,
+    onItemSelected: (Long) -> Unit
+) {
     val dataList by vm.dataFlow.collectAsStateWithLifecycle()
     Log.d("MyAppGS", "dataList $dataList")
 
+    val floatingActionButton: (@Composable () -> Unit) =  if (onAddClick == null) { {} } else {
+        @Composable {
+            // The commented out options here would (I think) be MD3 compliant (picking the
+            // "default" colour combination) but they seem to be the defaults anyway.
+            FloatingActionButton(
+                onClick = onAddClick,
 
+                // containerColor = MaterialTheme.colorScheme.primaryContainer,
+                // contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                // shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(
+                    // modifier = Modifier.size(24.dp),
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add item" // TODO: CALLER SHOULD SUPPLY THIS
+                )
+            }
+        }
+    }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -3847,10 +3870,11 @@ fun <T> GeneralSelectorScreen(
                 }
             })
         },
+        floatingActionButton = floatingActionButton,
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.primary) // TODO: debug hack
+                .background(MaterialTheme.colorScheme.secondary) // TODO: debug hack
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = screenBorder)
@@ -4145,7 +4169,7 @@ fun AppNavigation() {
             // that form) is generic enough to be shared across data sets/items/sources. I will
             // start writing in pseudo-specific to products, but I will name things generically and
             // then I can try to factor things out later.
-            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
+            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onAddClick = { Log.d("MyAppGS", "Add data set") } , onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
         }
 
         composable(
@@ -4191,7 +4215,7 @@ fun AppNavigation() {
             // that form) is generic enough to be shared across data sets/items/sources. I will
             // start writing in pseudo-specific to products, but I will name things generically and
             // then I can try to factor things out later.
-            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
+            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onAddClick = { Log.d("MyAppGS", "Add item") }, onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
         }
 
         composable(
@@ -4237,7 +4261,7 @@ fun AppNavigation() {
             // that form) is generic enough to be shared across data sets/items/sources. I will
             // start writing in pseudo-specific to products, but I will name things generically and
             // then I can try to factor things out later.
-            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
+            GeneralSelectorScreen(vm, navController, getId = { it.id }, getName = { it.name }, onAddClick = { Log.d("MyAppGS", "Add source") }, onItemSelected = { Log.d("MyAppGS", "selected $it" ) })
         }
 
         composable(
