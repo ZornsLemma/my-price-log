@@ -1458,6 +1458,10 @@ val fullScreenDialogBorder = 16.dp
 // other menus?
 val menuLeftPadding = 16.dp
 
+// MD3 standard values
+val oneLineListItemHeight = 56.dp
+val listItemHorizontalPadding = 16.dp
+
 // Seems best to make the right padding symmetrical.
 val menuRightPadding = menuLeftPadding
 
@@ -2687,7 +2691,7 @@ fun HomeScreenScaffold(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
-                .padding(screenBorder)
+                .padding(screenBorder) // TODO: MAYBE THIS SHOULD ONLY BE HORIZONTAL - MY YELLOW DEBUG BACKGROUND IS MAYBE GIVING ME A MISLEADING IDEA AND WE MAYBE SHOULDN'T HAVE VERTICAL SPACE BETWEEN TOP BAR AND TOP OF CONTENT
 
         ) {
 
@@ -3752,7 +3756,7 @@ class SharedViewModel : ViewModel() {
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentDataSet(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentDataSet = GeneralSelectorScreenUIContent("TODO: TITLE DATA SET", uiContent.dataSet,uiContent.dataSetList + uiContent.dataSetList)
+        generalSelectorScreenUIContentDataSet = GeneralSelectorScreenUIContent("TODO: TITLE DATA SET", null /* TODO? we use this to decide whether to show a dataset textfield at op uiContent.dataSet */,uiContent.dataSetList + uiContent.dataSetList)
     }
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentSource(uiContent: HomeScreenUIContent) {
@@ -3881,26 +3885,41 @@ fun <T> GeneralSelectorScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = screenBorder)
+                // TODO: experimentally not using this here so list can be edge-to-edge .padding(screenBorder)
 
             // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
-            // TODO: Maybe this should optionally display the data set name (fixed, inherited from
-            // home screen) if we are editing items or sources.
-            // TODO: Actually it probably *ought* to be a live data set dropdown - but given the genericness
-            // my inclination is to probably try to do this for v1, but for now stick with it being non-live.
+            if (vm.uiContent.dataSet != null) {
+                // TODO: Should this be a modifiable dropdown which feeds into the database query? If it is,
+                // should it modify the home screen selected data set or not?
+                TextField(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = screenBorder).padding(bottom = 8.dp),
+                    label = { Text("Collection") },
+                    value = vm.uiContent.dataSet.name,
+                    enabled = false,
+                    onValueChange = {}
+                )
+            }
 
+            Box(modifier = Modifier
+                .background(Color.Green /* TODO! */)
+                .fillMaxWidth()) {
 
-            Text("TODO GENERAL SELECTOR")
+                data class GeneralSelectorEntity(val id: Long, val name: String)
 
-            data class GeneralSelectorEntity(val id: Long, val name: String)
-            val todoTempList = listOf(GeneralSelectorEntity(1, "ONE"), GeneralSelectorEntity(2, "TWO"))
-            // TODO: Do I need to attach the IDs as keys to lazycolumn (as in that "movie" example in the docs somewhere)
-            // to minimise recomposition or other types of load in case the user's edits mean the list gets reordered (it
-            // is sorted by name, remember).
-            LazyColumn {
-                items(dataList) { item ->
-                    GeneralSelectorListItem(id = getId(item), name = getName(item), onItemSelected = onItemSelected)
+                val todoTempList =
+                    listOf(GeneralSelectorEntity(1, "ONE"), GeneralSelectorEntity(2, "TWO"))
+                // TODO: Do I need to attach the IDs as keys to lazycolumn (as in that "movie" example in the docs somewhere)
+                // to minimise recomposition or other types of load in case the user's edits mean the list gets reordered (it
+                // is sorted by name, remember).
+                LazyColumn {
+                    items(dataList) { item ->
+                        GeneralSelectorListItem(
+                            id = getId(item),
+                            name = getName(item),
+                            onItemSelected = onItemSelected
+                        )
+                    }
                 }
             }
 
@@ -3915,11 +3934,29 @@ fun <T> GeneralSelectorScreen(
     }
 }
 
+// TODO: We I think ought to have ripple when these are tapped - that may be automatic, but check
+// TODO: We could optionally add switches or check boxes to the list items to allow them to be enabled or disabled - but this may well be better done at the edit X individual screen level
 @Composable
 fun GeneralSelectorListItem(id: Long, name: String, onItemSelected: (Long) -> Unit) {
+    /* TODO!?
     Row {
-        Text(text = name, modifier = Modifier.clickable { onItemSelected(id) })
+        Text(
+            text = name,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.Magenta /* TODO! */)
+                .height(oneLineListItemHeight)
+                .padding(horizontal = listItemHorizontalPadding)
+                .clickable { onItemSelected(id) }
+        )
     }
+    */
+        ListItem(
+            headlineContent = { Text(name) },
+            modifier = Modifier.clickable { onItemSelected(id) },
+        )
 }
 
 // TODO: Here, and possibly in other ViewModels, there is a tendency to be passing parameters into
