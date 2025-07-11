@@ -2872,7 +2872,10 @@ fun EditPriceScreen(
     }
 
     fun requestDismiss() {
-        if (uiContent.editablePrice.value != uiContent.originalPrice) {
+        // We don't consider the toConfirm property relevant here - this avoids gratuitous "are you
+        // sure?" confirmations if for example the user deletes a digit of the price and then
+        // re-types it.
+        if (uiContent.editablePrice.value.copy(toConfirm = false) != uiContent.originalPrice.copy(toConfirm = false)) {
             showConfirmDialog = true
         } else {
             requestCloseDebounced()
