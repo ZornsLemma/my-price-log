@@ -2660,6 +2660,11 @@ fun HomeScreenScaffold(
 
                     DropdownMenu(
                         expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        // TODO: There is maybe an argument that "Manage" might be better than
+                        // "Edit" because it carries a stronger suggestion of adding/removing
+                        // products (or whatever) rather than just tweaking their details. But not
+                        // sure. Edit is shorter! And while edit is a *tiny* bit tech jargon it is
+                        // widely accepted in phone apps, while "manage" feels vaguely corporate.
                         MyDropdownMenuItem(text = { Text("Edit collections") }, onClick = {
                             menuExpanded = false
                             onEditDataSetsClick()
