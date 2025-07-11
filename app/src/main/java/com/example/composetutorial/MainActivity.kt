@@ -2524,7 +2524,7 @@ data class EditPriceScreenUIContent(
 }
 
 data class EditSourceScreenUIContent(
-    val editableSource: EditableSource?
+    val editableSource: MutableState<EditableSource>
 ) {
     companion object {
         fun fromSavedState(handle: SavedStateHandle): EditSourceScreenUIContent? {
@@ -3523,6 +3523,13 @@ fun EditSourceScreen(
         title = { Text("TODO: TITLE") },
     ) {
         Text("TODO EDIT SOURCE STUFF")
+
+        TextField(
+            label = { Text("Name") },
+            value = uiContent.editableSource.value.name,
+            onValueChange = { uiContent.editableSource.value = uiContent.editableSource.value.copy(name = it) },
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -4026,8 +4033,9 @@ class SharedViewModel : ViewModel() {
         generalSelectorScreenUiContent: GeneralSelectorScreenUIContent<Source>,
         sourceIdToEdit: Long
     ) {
+        // TODO: This is wrong - we don't want initialList, we want the "live" flow list, sigh
         val source = generalSelectorScreenUiContent.initialList.singleOrNull { it.id == sourceIdToEdit }
-        editSourceScreenUIContent = EditSourceScreenUIContent(editableSource = EditableSource.fromSource(source, generalSelectorScreenUiContent.dataSet!!.id))
+        editSourceScreenUIContent = EditSourceScreenUIContent(editableSource = mutableStateOf(EditableSource.fromSource(source, generalSelectorScreenUiContent.dataSet!!.id)))
     }
 }
 
