@@ -200,6 +200,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
+import java.io.IOException
 import java.text.DecimalFormatSymbols
 import java.util.concurrent.Executors
 
@@ -741,6 +742,7 @@ class PriceTrackerRepositoryImpl(
             .map { list -> list.map { it.toDomain() } }
 
     override suspend fun updateOrInsertSource(source: Source) {
+        // throw IOException("Simulated database failure") // TODO TEMP
         sourceDao.upsert(source)
     }
 
@@ -3490,7 +3492,7 @@ fun GeneralEditScreen(
     title: @Composable () -> Unit,
     isDirty: () -> Boolean,
     validateForSave: suspend () -> Boolean,
-    performSave: () -> Unit, // not suspend, to encourage caller to run it on viewModelScope where it belongs
+    performSave: suspend () -> Unit,
     requestClose: () -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -3610,7 +3612,7 @@ fun GeneralEditScreen(
                             // any auto-scroll or other UI highlighting to convey problem to user. TODO!?
                             if (validateForSave()) {
                                 vm.saveStatus.update(EditPriceViewModel.SaveStatus.Saving)
-                                // delay(5000) // TODO HACK
+                                //delay(5000) // TODO HACK
                                 try {
                                     performSave()
                                     vm.saveStatus.update(EditPriceViewModel.SaveStatus.Success)
@@ -3670,6 +3672,26 @@ fun GeneralEditScreen(
                     )
                 }
             },
+        )
+    }
+
+    if (showErrorDialog) {
+        // We use an AlertDialog not a snackbar here. This is a local database save which is
+        // failing so it is very unlikely to be transient. We also don't want the user
+        // missing the snackbar, thinking the app is buggy ("I already saved, why didn't the
+        // dialog close?") and then tapping the close icon without realising their changes
+        // have not been saved. (If transient failure was a possibility - e.g. we needed to
+        // perform network activity - there might be value in showing a snackbar, maybe with
+        // a fallback to an AlertDialog if things keep failing.)
+        AlertDialog(
+            title = { Text("Unable to save changes") },
+            text = { Text("An error occurred while saving the changes.") },
+            onDismissRequest = { showErrorDialog = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    showErrorDialog = false
+                }) { Text("OK") }
+            }
         )
     }
 
@@ -4727,16 +4749,12 @@ class EditSourceViewModel(
         return true
     }
 
-    fun performSave() {
+    suspend fun performSave() {
         val source = uiContent.editableSource.value.toDomain()
         if (source == null) {
             throw IllegalStateException("performSave() called with an inconvertible EditableSource: ${uiContent.editableSource.value}")
         }
-
-        // TODONOW: DO I NEED TO WORRY ABOUT EXCEPTIONS HERE? NOTE THAT UNLIKE THE EDITPRICE CODE, WE HAVE SPLIT THE LOGIC UP DIFFERENTLY.
-        viewModelScope.launch {
-            priceTrackerRepository.updateOrInsertSource(source)
-        }
+        priceTrackerRepository.updateOrInsertSource(source)
     }
 }
 
