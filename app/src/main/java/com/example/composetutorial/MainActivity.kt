@@ -599,18 +599,20 @@ suspend fun populateDemoData(context: Context) {
         )
         // TODO: Do some web searches and confirm these are not real supermarket names
         val sourceIdValueMart = db.sourceDao()
-            .insert(Source(dataSetId = dataSetId, name = "ValueMart"))
+            .insert(Source(dataSetId = dataSetId, name = "ValueMart", notes = ""))
         val sourceIdSuperiorStore = db.sourceDao().insert(
             Source(
                 dataSetId = dataSetId,
-                name = "SuperiorStore"
+                name = "SuperiorStore",
+                notes = ""
             )
         )
         // Newco deliberately has no prices to start with.
         db.sourceDao().insert(
             Source(
                 dataSetId = dataSetId,
-                name = "Newco"
+                name = "Newco",
+                notes = "Only just opened but I hope their prices will be good."
             )
         )
         val now = Instant.now()
@@ -947,23 +949,25 @@ data class Source(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId: Long,
-    val name: String
+    val name: String,
+    val notes: String,
 ) : Parcelable
 
 data class EditableSource(
     val id: Long,
     val dataSetId: Long,
     val name: String,
+    val notes: String,
 ) {
     companion object {
         fun fromSource(source: Source?, dataSetId: Long): EditableSource {
             if (source == null) {
-                return EditableSource(0, dataSetId, "")
+                return EditableSource(0, dataSetId, "", "")
             } else {
                 devCheck(dataSetId == source.dataSetId) {
                     "Expected identical dataSetIds but have dataSetId $dataSetId and source.dataSetid ${source.dataSetId}"
                 }
-                return EditableSource(source.id, dataSetId, source.name)
+                return EditableSource(source.id, dataSetId, source.name, source.notes)
             }
         }
     }
@@ -3500,7 +3504,7 @@ fun GeneralEditScreen(
                 // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am
                 // struggling to find any non-LLM explanations here, but *maybe* *if we have
                 // scrolled away from the top* we should change the background to surfaceContainer
-                .background(MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
+                .background(Color.DarkGray /* TODO TEMP FOR DEBUG, SHOULD BE MaterialTheme.colorScheme.surface */) // because this is a full-screen dialog
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = fullScreenDialogBorder)
@@ -3529,6 +3533,15 @@ fun EditSourceScreen(
             label = { Text("Name") },
             value = uiContent.editableSource.value.name,
             onValueChange = { uiContent.editableSource.value = uiContent.editableSource.value.copy(name = it) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextField(
+            label = { Text("Notes") },
+            value = uiContent.editableSource.value.notes,
+            onValueChange = { uiContent.editableSource.value = uiContent.editableSource.value.copy(notes = it) },
             modifier = Modifier.fillMaxWidth(),
         )
     }
