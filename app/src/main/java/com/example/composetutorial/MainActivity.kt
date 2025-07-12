@@ -3732,6 +3732,9 @@ fun EditSourceScreen(
 
     val nameScrollToFocusableHandle = rememberScrollToFocusable()
 
+    // TODO: We want option to delete the source - this may need to be on an overflow menu and
+    // thus need tweaks to GeneralEditScreen.
+    
     GeneralEditScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
