@@ -4758,12 +4758,8 @@ fun AppNavigation() {
     NavHost(
         navController = navController,
         startDestination = "home",
-        // TODO!? modifier = Modifier.padding(innerPadding)
     ) {
-        // TODO: The animation here is complete voodoo. This is a tweaked version of https://stackoverflow.com/questions/65643015/animating-between-composables-in-navigation-with-compose
-        // and does actually seem to more-or-less behave (and consistently too). I didn't want to force 700ms, this feels a smidge fast at the (I think) default 300 but I think it is OK.
-        // No, no, it isn't consistent. Sometimes the back animation is much faster than others. Not a clue. Not a f* clue.
-
+        // TODO: Move these up to where the other global-ish constants are defined?
         val tweenDurationMillisEnter = 700 // TODO: should probably be 300 in final version
         val tweenDurationMillisExit = 700 // TODO: should probably be 250 in final version
 
@@ -4814,12 +4810,11 @@ fun AppNavigation() {
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
         ) { backStackEntry ->
-            val vm: HomeViewModel =
-                viewModel(backStackEntry, factory = AppViewModelProvider.Factory)
             Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
             val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
             HomeScreen(
-                vm, navController,
+                viewModel(backStackEntry, factory = AppViewModelProvider.Factory),
+                navController,
                 onEditPriceClick = { uiContent ->
                     sharedViewModel.setEditPriceScreenContent(
                         uiContent,
@@ -4851,7 +4846,6 @@ fun AppNavigation() {
         composable(
             "settings", enterTransition = { slideLeftTransition() },
             popExitTransition = { slideRightTransition() },
-
             ) {
             SettingsScreen(navController)
         }
@@ -4861,7 +4855,6 @@ fun AppNavigation() {
             "editDataSets", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
-
             ) { backStackEntry ->
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
@@ -4875,11 +4868,11 @@ fun AppNavigation() {
                     )
                 }
             }
-            val vm: GeneralSelectorViewModel<DataSet> = viewModel(backStackEntry, factory = factory)
             LaunchedEffect(Unit) {
                 sharedViewModel.editDataSetsScreenUIContent = null
             }
 
+            val vm: GeneralSelectorViewModel<DataSet> = viewModel(backStackEntry, factory = factory)
             GeneralSelectorScreen(
                 vm,
                 navController,
@@ -4894,7 +4887,6 @@ fun AppNavigation() {
             "editItems/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
-
             ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
@@ -4910,11 +4902,11 @@ fun AppNavigation() {
                     )
                 }
             }
-            val vm: GeneralSelectorViewModel<Item> = viewModel(backStackEntry, factory = factory)
             LaunchedEffect(Unit) {
                 sharedViewModel.editItemsScreenUIContent = null
             }
 
+            val vm: GeneralSelectorViewModel<Item> = viewModel(backStackEntry, factory = factory)
             GeneralSelectorScreen(
                 vm,
                 navController,
@@ -4931,7 +4923,6 @@ fun AppNavigation() {
             "editSources/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
-
             ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
@@ -4947,11 +4938,11 @@ fun AppNavigation() {
                     )
                 }
             }
-            val vm: GeneralSelectorViewModel<Source> = viewModel(backStackEntry, factory = factory)
             LaunchedEffect(Unit) {
                 sharedViewModel.editItemsScreenUIContent = null
             }
 
+            val vm: GeneralSelectorViewModel<Source> = viewModel(backStackEntry, factory = factory)
             GeneralSelectorScreen(
                 vm,
                 navController,
@@ -4969,7 +4960,6 @@ fun AppNavigation() {
         composable(
             "editPrice", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
-
             ) { backStackEntry ->
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
@@ -4984,7 +4974,6 @@ fun AppNavigation() {
                     )
                 }
             }
-            val vm: EditPriceViewModel = viewModel(backStackEntry, factory = factory)
             LaunchedEffect(Unit) {
                 sharedViewModel.editPriceScreenUIContent = null
             }
@@ -4993,15 +4982,8 @@ fun AppNavigation() {
             // if re-use of this composable (maybe prevented via randomUUID route hack?) will not pick up the
             // changes.
 
-            /* TODO: DELETE?
-            // TODO: Test this but doing it this way ought to mean we correctly pick up locale changes while we are on screen
-            LaunchedEffect(Locale.getDefault()) {
-                vm.updateLocaleDependencies(Locale.getDefault())
-            }
-            */
-
             EditPriceScreen(
-                vm, navController,
+                viewModel(backStackEntry, factory = factory), navController,
                 requestClose = {
                     navController.popBackStack()
                 })
@@ -5011,7 +4993,6 @@ fun AppNavigation() {
         composable(
             "editSource", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
-
             ) { backStackEntry ->
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
@@ -5026,29 +5007,16 @@ fun AppNavigation() {
                     )
                 }
             }
-            val vm: EditSourceViewModel = viewModel(backStackEntry, factory = factory)
             LaunchedEffect(Unit) {
                 sharedViewModel.editPriceScreenUIContent = null
             }
 
-            // TODO: Be good to test fairly late on with two datasets with different currencies - I vaguely wonder
-            // if re-use of this composable (maybe prevented via randomUUID route hack?) will not pick up the
-            // changes.
-
-            /* TODO: DELETE?
-            // TODO: Test this but doing it this way ought to mean we correctly pick up locale changes while we are on screen
-            LaunchedEffect(Locale.getDefault()) {
-                vm.updateLocaleDependencies(Locale.getDefault())
-            }
-            */
-
             EditSourceScreen(
-                vm, navController,
+                viewModel(backStackEntry, factory = factory), navController,
                 requestClose = {
                     navController.popBackStack()
                 })
         }
-
     }
 }
 
