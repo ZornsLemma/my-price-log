@@ -185,6 +185,11 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.navigation.NavBackStackEntry
+import com.example.composetutorial.EditPriceScreenUIContent.Companion.DATA_SET_KEY
+import com.example.composetutorial.EditPriceScreenUIContent.Companion.ITEM_KEY
+import com.example.composetutorial.EditPriceScreenUIContent.Companion.LOCALE_TAG
+import com.example.composetutorial.EditPriceScreenUIContent.Companion.ORIGINAL_PRICE_KEY
+import com.example.composetutorial.EditPriceScreenUIContent.Companion.SOURCE_KEY
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -961,12 +966,13 @@ data class Source(
     val notes: String,
 ) : Parcelable
 
+@Parcelize
 data class EditableSource(
     val id: Long,
     val dataSetId: Long,
     val name: String,
     val notes: String,
-) {
+) : Parcelable {
     fun toDomain(): Source? {
         val trimmedName = name.trim()
         // It could get confusing if an empty name leaked into the database (it would be
@@ -2563,9 +2569,28 @@ data class EditSourceScreenUIContent(
     val editableSource: MutableState<EditableSource>,
     val originalSource: EditableSource,
 ) {
+    fun saveState(savedStateHandle: SavedStateHandle) {
+        saveEditableSourceState(savedStateHandle)
+        savedStateHandle[ORIGINAL_SOURCE_KEY] = originalSource
+    }
+
+    // This is a separate function to minimise the amount of work done after every user edit.
+    fun saveEditableSourceState(savedStateHandle: SavedStateHandle) {
+        savedStateHandle[EDITABLE_SOURCE_KEY] = editableSource.value
+    }
+
     companion object {
-        fun fromSavedState(handle: SavedStateHandle): EditSourceScreenUIContent? {
-            return null // TODO!
+        private const val EDITABLE_SOURCE_KEY = "editableSource"
+        private const val ORIGINAL_SOURCE_KEY = "originalSource"
+
+        fun fromSavedState(savedStateHandle: SavedStateHandle): EditSourceScreenUIContent? {
+            val savedEditableSource: EditableSource? = savedStateHandle[EDITABLE_SOURCE_KEY]
+            val savedOriginalSource: EditableSource? = savedStateHandle[ORIGINAL_SOURCE_KEY]
+            if (savedEditableSource != null && savedOriginalSource != null) {
+                return EditSourceScreenUIContent(mutableStateOf(savedEditableSource), savedOriginalSource)
+            } else {
+                return null
+            }
         }
     }
 }
@@ -3733,7 +3758,7 @@ fun EditSourceScreen(
             onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxSourceNameLength),
             onValueChange = {
                 name = it
-                uiContent.editableSource.value = uiContent.editableSource.value.copy(name = it.text)
+                vm.setUIContentEditableSource(uiContent.editableSource.value.copy(name = it.text))
             },
             modifier = Modifier.fillMaxWidth().scrollToFocusable(nameScrollToFocusableHandle),
         )
@@ -4696,7 +4721,16 @@ class EditSourceViewModel(
     private val savedStateHandle: SavedStateHandle,
     val uiContent: EditSourceScreenUIContent,
 ) : ViewModel() {
+    init {
+        uiContent.saveState(savedStateHandle)
+    }
+
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
+
+    fun setUIContentEditableSource(newEditableSource: EditableSource) {
+        uiContent.editableSource.value = newEditableSource
+        uiContent.saveEditableSourceState(savedStateHandle)
+    }
 
     // TODO: There just might be an argument for not using emptyList() in stateIn, so we can head
     // off a theoretical possibility of the user entering invalid data (maybe just leaving the
