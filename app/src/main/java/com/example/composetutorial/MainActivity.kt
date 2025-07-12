@@ -4440,15 +4440,6 @@ fun topAppBarTitle(title: String, subtitle: String?): @Composable (() -> Unit) =
         { Text(title) }
     }
 
-
-// TODO: I think this needs to have a Room-based feed of data because we could potentially return to
-// it after adding or renaming something on a child full screen dialog and we need to pick that
-// change up. But for first frame perfection, we probably do also want to receive an initial list
-// from the home screen.
-// TODO: It's possible some/all of the generic stuff is not worth it - for example maybe each
-// screen should have its own implementation for its own type and just re-use a core composable
-// or two to do the big chunks of screen layout. Not at all sure - I think the thing to do is to
-// implement it in the current not-terrible generic framework then see how it all looks.
 @Composable
 fun <T> GeneralSelectorScreen(
     vm: GeneralSelectorViewModel<T>,
@@ -4457,7 +4448,9 @@ fun <T> GeneralSelectorScreen(
     getId: (T) -> Long,
     getName: (T) -> String,
     onAddClick: (() -> Unit)? = null,
-    // TODO: We pass the actual T to onItemSelected to try to avoid race conditions, I am not completely sure about this but let's see how it goes
+    // TODO: We pass the actual T to onItemSelected to try to avoid race conditions, I am not
+    // completely sure about this but let's see how it goes. Do I need to do this in any other
+    // contexts as well?
     onItemSelected: (T) -> Unit,
     showSearch: Boolean = false,
 ) {
@@ -4489,11 +4482,14 @@ fun <T> GeneralSelectorScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            // TODO: I am wondering if title and subtitle should swap roles here? Keep the data set name as the title as on the home screen? And if we go with this, *maybe* the subtitle is just "Products" (for example) not "Edit products"??
+            // TODO: I am wondering if title and subtitle should swap roles here? Keep the data set
+            // name as the title as on the home screen? And if we go with this, *maybe* the subtitle
+            // is just "Products" (for example) not "Edit products"?? Although this approach won't
+            // work for "edit collections", so would it be inconsistent for it to have that as its
+            // title? Maybe it would be OK.
             TopAppBar(
                 title = title,
                 navigationIcon = {
-
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ArrowBack,
@@ -4522,13 +4518,14 @@ fun <T> GeneralSelectorScreen(
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search",
-                            //tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            // tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Clear search text",
+                            // TODO: If we make the search string persist to SavedStateHandle, next line would have to call a vm function to update it and write it to the SSH
                             modifier = Modifier.clickable { vm.searchStringFlow.value = "" },
                         )
                     },
@@ -4547,8 +4544,6 @@ fun <T> GeneralSelectorScreen(
 
                 data class GeneralSelectorEntity(val id: Long, val name: String)
 
-                val todoTempList =
-                    listOf(GeneralSelectorEntity(1, "ONE"), GeneralSelectorEntity(2, "TWO"))
                 // TODO: Do I need to attach the IDs as keys to lazycolumn (as in that "movie" example in the docs somewhere)
                 // to minimise recomposition or other types of load in case the user's edits mean the list gets reordered (it
                 // is sorted by name, remember).
@@ -4563,36 +4558,17 @@ fun <T> GeneralSelectorScreen(
                 }
             }
 
-            // TODO: Optional caller-controlled support for a free text substring search
-
-            // TODO: We will want optional support (controlled by caller) for having a FAB to do "add"
-
             // TODO: We *might* want optional support for a delete action on items, but I suspect we
             // won't - deleting is rare and we don't want to make it too easy and it can be done
-            // from the "edit individual item" screen.
+            // from the "edit individual item" screen. Don't forget to implement this though!
         }
     }
 }
 
-// TODO: We I think ought to have ripple when these are tapped - that may be automatic, but check
 // TODO: We could optionally add switches or check boxes to the list items to allow them to be enabled or disabled - but this may well be better done at the edit X individual screen level
+// TODO: This function might well be better just folded into GeneralSelectorScreen
 @Composable
 fun GeneralSelectorListItem(id: Long, name: String, onItemSelected: (Long) -> Unit) {
-    /* TODO!?
-    Row {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color.Magenta /* TODO! */)
-                .height(oneLineListItemHeight)
-                .padding(horizontal = listItemHorizontalPadding)
-                .clickable { onItemSelected(id) }
-        )
-    }
-    */
     ListItem(
         headlineContent = { Text(name) },
         modifier = Modifier.clickable { onItemSelected(id) },
