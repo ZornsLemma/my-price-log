@@ -4273,30 +4273,24 @@ class SharedViewModel : ViewModel() {
 
     // TODO: ALL EXPERIMENTAL NEW BELOW HERE
 
-    // TODO: Following and their associated functions should maybe be plural
-    var generalSelectorScreenUIContentDataSet: GeneralSelectorScreenUIContent<DataSet>? = null
-    var generalSelectorScreenUIContentItem: GeneralSelectorScreenUIContent<Item>? = null
-    var generalSelectorScreenUIContentSource: GeneralSelectorScreenUIContent<Source>? = null
+    // TODO: Rename the following now they are just List<T>? not a UIContent structure
+    var generalSelectorScreenUIContentDataSet: List<DataSet>? = null
+    var generalSelectorScreenUIContentItem: List<Item>? = null
+    var generalSelectorScreenUIContentSource: List<Source>? = null
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentItem = GeneralSelectorScreenUIContent(
-            uiContent.itemList + uiContent.itemList
-        )
+        generalSelectorScreenUIContentItem =uiContent.itemList + uiContent.itemList
     }
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentDataSet(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentDataSet = GeneralSelectorScreenUIContent(
-            uiContent.dataSetList + uiContent.dataSetList
-        )
+        generalSelectorScreenUIContentDataSet = uiContent.dataSetList + uiContent.dataSetList
     }
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentSource(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentSource = GeneralSelectorScreenUIContent(
-            uiContent.sourceList + uiContent.sourceList
-        )
+        generalSelectorScreenUIContentSource = uiContent.sourceList + uiContent.sourceList
     }
 
     // TODO: MORE NEW EXPERIMENTAL
@@ -4304,8 +4298,6 @@ class SharedViewModel : ViewModel() {
     var editSourceScreenUIContent: EditSourceScreenUIContent? = null
 
     fun setEditSourceScreenContent( // TODO: name should include "FromBlah"? or maybe that's a silly convention?
-        generalSelectorScreenUiContent: GeneralSelectorScreenUIContent<Source>,
-        // TODO DELETE generalSelectorViewModel: GeneralSelectorViewModel<Source>,
         source: Source?,
         dataSetId: Long,
     ) {
@@ -4371,7 +4363,7 @@ class GeneralSelectorViewModel<T>(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
     private val getName: (T) -> String,
-    val uiContent: GeneralSelectorScreenUIContent<T>,
+    val initialList: List<T>?,
     private val initialQuery: Flow<List<T>>, // TODO: rename - it is not initial, it is "ongoing", maybe just call it dataQuery to match dataFlow
 ) : ViewModel() {
     // TODO: Need to test, but the idea here is that we emit the initialList handed to us by our
@@ -4390,7 +4382,7 @@ class GeneralSelectorViewModel<T>(
     // TODO: Just possibly we should say "query.trim()" in isCaseInsensitive... call?
     @OptIn(ExperimentalCoroutinesApi::class)
     val dataFlow = combine(
-        initialQuery.flatMapLatest { data -> /* TODO HACK delay(5000); */ flowOf(data) },
+        initialQuery.flatMapLatest { data -> /* TODO HACK */ delay(5000); flowOf(data) },
         searchStringFlow
     ) { data, query ->
         data.filter {
@@ -4409,7 +4401,7 @@ class GeneralSelectorViewModel<T>(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = uiContent.initialList ?: emptyList()
+            initialValue = initialList ?: emptyList()
         )
 
 }
@@ -4924,8 +4916,7 @@ fun AppNavigation() {
                         app.priceTrackerRepository,
                         savedStateHandle,
                         getName = { it -> it.name }, // TODO: not actually used, allow null?
-                        sharedViewModel.generalSelectorScreenUIContentDataSet!! /* TODO
-                            ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */,
+                        sharedViewModel.generalSelectorScreenUIContentDataSet,
                         initialQuery = app.priceTrackerRepository.getAllDataSets()
                     )
                 }
@@ -5040,8 +5031,7 @@ fun AppNavigation() {
                         app.priceTrackerRepository,
                         savedStateHandle,
                         getName = { it -> it.name }, // TODO: not actually used, allow null?
-                        sharedViewModel.generalSelectorScreenUIContentSource!! /* TODO
-                            ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */,
+                        sharedViewModel.generalSelectorScreenUIContentSource,
                         initialQuery = app.priceTrackerRepository.getAllSources(dataSetId)
                     )
                 }
@@ -5051,12 +5041,6 @@ fun AppNavigation() {
                 sharedViewModel.generalSelectorScreenUIContentItem = null
             }
 
-            // TODO: My intention is that this screen (which shows a list of named things and let's
-            // you pick one to do something with, or optionally to add a new one, and may have an
-            // optional search button and may take over from the modal bottom sheet for products in
-            // that form) is generic enough to be shared across data sets/items/sources. I will
-            // start writing in pseudo-specific to products, but I will name things generically and
-            // then I can try to factor things out later.
             GeneralSelectorScreen(
                 vm,
                 navController,
@@ -5066,7 +5050,7 @@ fun AppNavigation() {
                 onAddClick = { Log.d("MyAppGS", "Add source") },
                 onItemSelected = {
                     Log.d("MyAppGS", "selected $it")
-                    sharedViewModel.setEditSourceScreenContent(vm.uiContent, it, dataSetId)
+                    sharedViewModel.setEditSourceScreenContent(it, dataSetId)
                     navController.navigate("editSource")
                 })
         }
