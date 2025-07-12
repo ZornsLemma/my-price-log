@@ -4626,6 +4626,7 @@ fun AppNavigation() {
         // TODO: Lots of code duplication across the editStatic here
         composable(
             "editDataSets", enterTransition = { slideLeftTransition() },
+            popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
 
             ) { backStackEntry ->
@@ -4679,6 +4680,7 @@ fun AppNavigation() {
 
         composable(
             "editItems", enterTransition = { slideLeftTransition() },
+            popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
 
             ) { backStackEntry ->
@@ -4734,6 +4736,7 @@ fun AppNavigation() {
 
         composable(
             "editSources", enterTransition = { slideLeftTransition() },
+            popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
 
             ) { backStackEntry ->
@@ -5050,4 +5053,8 @@ Log.d("MyApp", baz.toString())
 
 // TODO: If I double click on e.g. Newco when editing sources, I seem to get the edit screen open twice. I suspect this is one of those cases where I need to add debouncing.
 
-// TODO: Note that when we save a source/dataset/item after editing, we need to refuse to save if there is another entry (excluding any old version of us) with the same name, and ideally with a "very similar" name (e.g. up to case and with inter-word whitespace squashed and leading/trailing space trimmed), to avoid confusion.
+// TODO: Note that when we save a source/dataset/item after editing, we need to refuse to save if
+// there is another entry (excluding any old version of us) with the same name, and ideally with a
+// "very similar" name (e.g. up to case and with inter-word whitespace squashed and leading/trailing
+// space trimmed), to avoid confusion. - OK, I think I have fixed this but test all the different
+// edit static screens later.
