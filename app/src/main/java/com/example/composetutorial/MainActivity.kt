@@ -4348,13 +4348,12 @@ class GeneralSelectorViewModel<T>(
         emitAll(priceTrackerRepository.getAllItems(1L /* TODO HARDCODING IS A HACK */))
     }.stateIn(scope = viewModelScope, started = SharingStarted.Eagerly,
     */
-    // TODO: delay(5000) is temp hack
     // This will *not* filter uiContent.initialList, but that's OK because we know the initial filter doesn't exclude anything.
     val searchStringFlow = MutableStateFlow("")
 
     // TODO: Just possibly we should say "query.trim()" in isCaseInsensitive... call?
     val dataFlow = combine(
-        initialQuery.flatMapLatest { data -> delay(5000); flowOf(data) },
+        initialQuery.flatMapLatest { data -> /* TODO HACK delay(5000); */ flowOf(data) },
         searchStringFlow
     ) { data, query ->
         data.filter {
