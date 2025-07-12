@@ -195,6 +195,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.singleOrNull
@@ -3679,10 +3680,12 @@ fun EditSourceScreen(
     ) {
         var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
+        Log.d("MyApp", "nameValidationRules $nameValidationRules")
         ValidatedTextField(
             label = { Text("Name") },
             value = name,
-            validationRules = nameValidationRules,
+            validationRules = nameValidationRules.value,
+            validationRulesKey = nameValidationRules.version,
             onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxSourceNameLength),
             onValueChange = {
                 name = it
@@ -4616,10 +4619,11 @@ class EditSourceViewModel(
     // present, which will pass (because no validation rules) and then they either insert invalid
     // data or get a database level constraint validation. If we have null, we can make sure the
     // validation rules *are present* during save validation.
-    val nameValidationRules: StateFlow<List<ValidationRule>> =
+    val nameValidationRules: StateFlow<Versioned<List<ValidationRule>>> =
         priceTrackerRepository.getAllSources(uiContent.editableSource.value.dataSetId)
             .map { sourceList -> buildNameValidationRules(sourceList) }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+            .withVersion()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
 
     private fun buildNameValidationRules(sourceList: List<Source>): List<ValidationRule> {
         return listOf(ValidationRule({ it -> 'x' in it }, "Must contain 'x' to be cool"))
@@ -5131,6 +5135,23 @@ fun getCurrencyFormat(dataSet: DataSet, locale: Locale): CurrencyFormat {
         )
     )
 }
+
+// TODO: Just possibly this could be used in the consistency hell stuff in home screen's flow pipeline
+data class Versioned<T>(
+    val version: Long,
+    val value: T
+)
+
+fun <T> Flow<T>.withVersion(): Flow<Versioned<T>> = flow {
+    var version = 0L
+    collect { value ->
+        emit(Versioned(version, value))
+        version++
+    }
+}
+
+fun <T> initialVersioned(initialValue: T): Versioned<T> =
+    Versioned(version = -1L, value = initialValue)
 
 /* TODO TEMP TEST CODE FOR MEASUREDVALUE
 val foo = MeasuredValue(5.0, MeasureUnit.KG)
