@@ -4704,7 +4704,7 @@ class EditSourceViewModel(
             // TODO! ValidationRule({ it -> 'x' in it }, "Must contain 'x' to be cool"),
         ) + sourceList.filter { source -> source.id != uiContent.editableSource.value.id }
             .map { source ->
-            ValidationRule({ candidateName -> !areHumanEqual(candidateName, source.name) }, "Name must be unique")
+            ValidationRule({ candidateName -> !areHumanEqual(candidateName, source.name) }, "Name must be unique") // TODO: Tweak wording?
         }
         //return emptyList() // TODO!
     }
