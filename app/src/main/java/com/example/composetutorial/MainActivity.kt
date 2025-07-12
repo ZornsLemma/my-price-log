@@ -4223,6 +4223,7 @@ class MainActivity : ComponentActivity() {
 }
 
 // Shared ViewModel to pass data between screens
+// TODO: Some inconsistency between "UIContent" and "Content" here - think about renaming.
 class SharedViewModel : ViewModel() {
     // This is only nullable to provide us with an easy initial value to use. In use
     // setEditPriceScreenState() should always have been called before it is used.
@@ -4234,7 +4235,7 @@ class SharedViewModel : ViewModel() {
     // user changes the locale while on the edit screen, we do *not* want to reflect that change
     // immediately because it makes parsing the strings ambiguous. (TODO: This is not heavily tested
     // and is not all that an important case, but I am at least trying to do things right.)
-    fun setEditPriceScreenContentFromHomeScreenContent(
+    fun setEditPriceScreenContent(
         uiContent: HomeScreenUIContent,
         frozenLocale: Locale
     ) {
@@ -4268,25 +4269,25 @@ class SharedViewModel : ViewModel() {
     // TODO: ALL EXPERIMENTAL NEW BELOW HERE
 
     // TODO: Rename the following now they are just List<T>? not a UIContent structure
-    var generalSelectorScreenUIContentDataSet: List<DataSet>? = null
-    var generalSelectorScreenUIContentItem: List<Item>? = null
-    var generalSelectorScreenUIContentSource: List<Source>? = null
+    var editDataSetsScreenUIContent: List<DataSet>? = null
+    var editItemsScreenUIContent: List<Item>? = null
+    var editSourcesScreenUIContent: List<Source>? = null
 
     // TODO: The "doubling" in the next three functions is a temporary hack to show that we use the
     // initial list and then it gets replaced by the query results from the database. The map step
     // is because we use the IDs as keys on LazyColumn and if there are duplicate IDs it gets upset;
     // of course with real data there won't be duplicate IDs at all.
 
-    fun setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent: HomeScreenUIContent) {
-        generalSelectorScreenUIContentItem = uiContent.itemList + uiContent.itemList.map { it -> it.copy(id = it.id * 1000) }
+    fun setEditDataSetsScreenContent(uiContent: HomeScreenUIContent) {
+        editDataSetsScreenUIContent = uiContent.dataSetList + uiContent.dataSetList.map { it -> it.copy(id = it.id * 1000) }
     }
 
-    fun setGeneralSelectorScreenContentFromHomeScreenContentDataSet(uiContent: HomeScreenUIContent) {
-        generalSelectorScreenUIContentDataSet = uiContent.dataSetList + uiContent.dataSetList.map { it -> it.copy(id = it.id * 1000) }
+    fun setEditItemsScreenContent(uiContent: HomeScreenUIContent) {
+        editItemsScreenUIContent = uiContent.itemList + uiContent.itemList.map { it -> it.copy(id = it.id * 1000) }
     }
 
-    fun setGeneralSelectorScreenContentFromHomeScreenContentSource(uiContent: HomeScreenUIContent) {
-        generalSelectorScreenUIContentSource = uiContent.sourceList  + uiContent.sourceList.map { it -> it.copy(id = it.id * 1000) }
+    fun setEditSourcesScreenContent(uiContent: HomeScreenUIContent) {
+        editSourcesScreenUIContent = uiContent.sourceList  + uiContent.sourceList.map { it -> it.copy(id = it.id * 1000) }
     }
 
     // TODO: MORE NEW EXPERIMENTAL
@@ -4818,26 +4819,26 @@ fun AppNavigation() {
             HomeScreen(
                 vm, navController,
                 onEditPriceClick = { uiContent ->
-                    sharedViewModel.setEditPriceScreenContentFromHomeScreenContent(
+                    sharedViewModel.setEditPriceScreenContent(
                         uiContent,
                         locale
                     )
                     navController.navigate("editPrice")
                 },
                 onEditDataSetsClick = { uiContent ->
-                    sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentDataSet(
+                    sharedViewModel.setEditDataSetsScreenContent(
                         uiContent
                     )
                     navController.navigate("editDataSets")
                 },
                 onEditProductsClick = { uiContent ->
-                    sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentItem(
+                    sharedViewModel.setEditItemsScreenContent(
                         uiContent
                     )
                     navController.navigate("editItems/${uiContent.dataSet!!.id}/${uiContent.dataSet!!.name}")
                 },
                 onEditSourcesClick = { uiContent ->
-                    sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentSource(
+                    sharedViewModel.setEditSourcesScreenContent(
                         uiContent
                     )
                     navController.navigate("editSources/${uiContent.dataSet!!.id}/${uiContent.dataSet!!.name}")
@@ -4870,14 +4871,14 @@ fun AppNavigation() {
                         app.priceTrackerRepository,
                         savedStateHandle,
                         getName = { it -> it.name }, // TODO: not actually used, allow null?
-                        sharedViewModel.generalSelectorScreenUIContentDataSet,
+                        sharedViewModel.editDataSetsScreenUIContent,
                         dataQuery = app.priceTrackerRepository.getAllDataSets()
                     )
                 }
             }
             val vm: GeneralSelectorViewModel<DataSet> = viewModel(backStackEntry, factory = factory)
             LaunchedEffect(Unit) {
-                sharedViewModel.generalSelectorScreenUIContentDataSet = null
+                sharedViewModel.editDataSetsScreenUIContent = null
             }
 
             GeneralSelectorScreen(
@@ -4908,14 +4909,14 @@ fun AppNavigation() {
                         app.priceTrackerRepository,
                         savedStateHandle,
                         getName = { it -> it.name },
-                        sharedViewModel.generalSelectorScreenUIContentItem,
+                        sharedViewModel.editItemsScreenUIContent,
                         dataQuery = app.priceTrackerRepository.getAllItems(dataSetId)
                     )
                 }
             }
             val vm: GeneralSelectorViewModel<Item> = viewModel(backStackEntry, factory = factory)
             LaunchedEffect(Unit) {
-                sharedViewModel.generalSelectorScreenUIContentItem = null
+                sharedViewModel.editItemsScreenUIContent = null
             }
 
             GeneralSelectorScreen(
@@ -4948,14 +4949,14 @@ fun AppNavigation() {
                         app.priceTrackerRepository,
                         savedStateHandle,
                         getName = { it -> it.name }, // TODO: not actually used, allow null?
-                        sharedViewModel.generalSelectorScreenUIContentSource,
+                        sharedViewModel.editSourcesScreenUIContent,
                         dataQuery = app.priceTrackerRepository.getAllSources(dataSetId)
                     )
                 }
             }
             val vm: GeneralSelectorViewModel<Source> = viewModel(backStackEntry, factory = factory)
             LaunchedEffect(Unit) {
-                sharedViewModel.generalSelectorScreenUIContentItem = null
+                sharedViewModel.editItemsScreenUIContent = null
             }
 
             GeneralSelectorScreen(
