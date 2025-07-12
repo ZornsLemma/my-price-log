@@ -196,6 +196,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
 import java.text.DecimalFormatSymbols
@@ -4031,10 +4032,9 @@ class SharedViewModel : ViewModel() {
 
     fun setEditSourceScreenContent( // TODO: name should include "FromBlah"? or maybe that's a silly convention?
         generalSelectorScreenUiContent: GeneralSelectorScreenUIContent<Source>,
-        sourceIdToEdit: Long
+        // TODO DELETE generalSelectorViewModel: GeneralSelectorViewModel<Source>,
+        source: Source?,
     ) {
-        // TODO: This is wrong - we don't want initialList, we want the "live" flow list, sigh
-        val source = generalSelectorScreenUiContent.initialList.singleOrNull { it.id == sourceIdToEdit }
         editSourceScreenUIContent = EditSourceScreenUIContent(editableSource = mutableStateOf(EditableSource.fromSource(source, generalSelectorScreenUiContent.dataSet!!.id)))
     }
 }
@@ -4179,7 +4179,8 @@ fun <T> GeneralSelectorScreen(
     getId: (T) -> Long,
     getName: (T) -> String,
     onAddClick: (() -> Unit)? = null,
-    onItemSelected: (Long) -> Unit,
+    // TODO: We pass the actual T to onItemSelected to try to avoid race conditions, I am not completely sure about this but let's see how it goes
+    onItemSelected: (T) -> Unit,
     showSearch: Boolean = false,
 ) {
     val dataList by vm.dataFlow.collectAsStateWithLifecycle()
@@ -4278,7 +4279,7 @@ fun <T> GeneralSelectorScreen(
                         GeneralSelectorListItem(
                             id = getId(item),
                             name = getName(item),
-                            onItemSelected = onItemSelected
+                            onItemSelected = { _ -> onItemSelected(item) }, // TODO: Note we are ignoring the ID passed to us, refactor to get rid of it if we stay like this
                         )
                     }
                 }
