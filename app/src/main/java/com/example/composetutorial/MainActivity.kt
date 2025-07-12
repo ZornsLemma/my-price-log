@@ -60,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -85,6 +86,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -4450,6 +4452,9 @@ fun <T> GeneralSelectorScreen(
 ) {
     val dataList by vm.dataFlow.collectAsStateWithLifecycle()
     val searchString by vm.searchStringFlow.collectAsStateWithLifecycle()
+    var isNavigating by remember(navController.currentBackStackEntry) {
+        mutableStateOf(false)
+    }
     Log.d("MyAppGS", "dataList $dataList")
 
     val floatingActionButton: (@Composable () -> Unit) = if (onAddClick == null) {
@@ -4459,7 +4464,7 @@ fun <T> GeneralSelectorScreen(
             // The commented out options here would (I think) be MD3 compliant (picking the
             // "default" colour combination) but they seem to be the defaults anyway.
             FloatingActionButton(
-                onClick = onAddClick,
+                onClick = { if (!isNavigating) { isNavigating = true; onAddClick() } },
 
                 // containerColor = MaterialTheme.colorScheme.primaryContainer,
                 // contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -4544,7 +4549,7 @@ fun <T> GeneralSelectorScreen(
                         GeneralSelectorListItem(
                             id = getId(item),
                             name = getName(item),
-                            onItemSelected = { _ -> onItemSelected(item) }, // TODO: Note we are ignoring the ID passed to us, refactor to get rid of it if we stay like this
+                            onItemSelected = { _ -> if (!isNavigating) { isNavigating = true; onItemSelected(item) } }, // TODO: Note we are ignoring the ID passed to us, refactor to get rid of it if we stay like this
                         )
                     }
                 }
