@@ -4682,6 +4682,13 @@ class EditSourceViewModel(
             .withVersion()
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
 
+    // TODO: Not here specifically, I almost wonder if the lambdas should have the *option* (not
+    // obligation) to modify the value for later lambdas in the chain, and the validation process
+    // returns the final one. This *might* provide a natural way to implement things like "strip
+    // spaces" or "strip insignificant fluff in a double-as-string" as an initial step, avoid
+    // redoing that work in subsequent lambdas which want the same sanitising and help to avoid the
+    // situation where for example the validation is all based on a trim()ed string but I forget to
+    // manually apply the trim() when writing the string to the database
     private fun buildNameValidationRules(sourceList: List<Source>): List<ValidationRule> {
         return listOf(
             ValidationRule({ it.isNotEmpty() }, "Must have a name"),
