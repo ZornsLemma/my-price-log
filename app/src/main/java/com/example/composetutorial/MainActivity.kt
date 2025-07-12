@@ -4357,7 +4357,6 @@ fun areHumanEqual(lhs: String, rhs: String) =
 
 // TODO: This may not actually need the repository passing in given we pass in a query
 class GeneralSelectorViewModel<T>(
-    private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
     private val getName: (T) -> String,
     private val initialList: List<T>?,
@@ -4868,10 +4867,9 @@ fun AppNavigation() {
                     val app =
                         extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
                     GeneralSelectorViewModel(
-                        app.priceTrackerRepository,
-                        savedStateHandle,
+                        savedStateHandle = savedStateHandle,
                         getName = { it -> it.name }, // TODO: not actually used, allow null?
-                        sharedViewModel.editDataSetsScreenUIContent,
+                        initialList = sharedViewModel.editDataSetsScreenUIContent,
                         dataQuery = app.priceTrackerRepository.getAllDataSets()
                     )
                 }
@@ -4906,8 +4904,7 @@ fun AppNavigation() {
                     val app =
                         extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
                     GeneralSelectorViewModel(
-                        app.priceTrackerRepository,
-                        savedStateHandle,
+                        savedStateHandle = savedStateHandle,
                         getName = { it -> it.name },
                         sharedViewModel.editItemsScreenUIContent,
                         dataQuery = app.priceTrackerRepository.getAllItems(dataSetId)
@@ -4946,8 +4943,7 @@ fun AppNavigation() {
                     val app =
                         extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
                     GeneralSelectorViewModel(
-                        app.priceTrackerRepository,
-                        savedStateHandle,
+                        savedStateHandle = savedStateHandle,
                         getName = { it -> it.name }, // TODO: not actually used, allow null?
                         sharedViewModel.editSourcesScreenUIContent,
                         dataQuery = app.priceTrackerRepository.getAllSources(dataSetId)
