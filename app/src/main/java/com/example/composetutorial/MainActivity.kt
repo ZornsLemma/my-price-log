@@ -3782,6 +3782,7 @@ fun EditSourceScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
+        Spacer(modifier = Modifier.height(16.dp))
         // TODO: EXperimental in appearance and also whether it belongs here or in GeneralEditScreen, though fairly sure it belongs here
         /* TODO DELETE
         TextButton(
@@ -3795,7 +3796,8 @@ fun EditSourceScreen(
         */
         OutlinedButton(
             onClick = { /* show confirm dialog */ },
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
         ) {
             Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
             Spacer(Modifier.width(8.dp))
@@ -5286,3 +5288,12 @@ Log.d("MyApp", baz.toString())
 // and in general you do not really want to delete stuff, unless you manage to add something
 // completely junky rather than just adding something with a typo and needing to edit it to fix it,
 // or cancelling the add before you finish it.
+
+// TODO: M3 recommends using a "container transform pattern" to transform FAB into a full-screen
+// dialog. Not sure if I can or should do this, but might be worth trying. (Do remember that as
+// noted elsewhere, my "full screen dialogs" are actually full screens in their own right and I don't
+// have enough hair to switch away from that, especially not just to make an animation work. The
+// animation may not depend on being a "true dialog", of course.) I do wonder - not seen
+// anything in docs - if this also suggests some kind of "expansion" animation should happen from
+// the clicked-on source/item/dataset into the full screen dialog to edit it. Currently the code is
+// doing the "standard" full screen dialog slide in from bottom animation anyway.
