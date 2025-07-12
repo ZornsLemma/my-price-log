@@ -4686,7 +4686,6 @@ class EditSourceViewModel(
     // validation rules *are present* during save validation.
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule>>> =
         priceTrackerRepository.getAllSources(uiContent.editableSource.value.dataSetId)
-            // TODO: WE NEED TO FILTER OUT OUR OWN ENTRY BUT WILL LEAVE THAT FOR NOW FOR TESTING ETC
             .map { sourceList -> buildNameValidationRules(sourceList) }
             .withVersion()
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
@@ -4703,7 +4702,8 @@ class EditSourceViewModel(
         return listOf(
             ValidationRule({ it.isNotEmpty() }, "Must have a name"),
             // TODO! ValidationRule({ it -> 'x' in it }, "Must contain 'x' to be cool"),
-        ) + sourceList.map { source ->
+        ) + sourceList.filter { source -> source.id != uiContent.editableSource.value.id }
+            .map { source ->
             ValidationRule({ candidateName -> !areHumanEqual(candidateName, source.name) }, "Name must be unique")
         }
         //return emptyList() // TODO!
