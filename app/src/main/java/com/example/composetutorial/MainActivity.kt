@@ -4278,19 +4278,21 @@ class SharedViewModel : ViewModel() {
     var generalSelectorScreenUIContentItem: List<Item>? = null
     var generalSelectorScreenUIContentSource: List<Source>? = null
 
+    // TODO: The "doubling" in the next three functions is a temporary hack to show that we use the
+    // initial list and then it gets replaced by the query results from the database. The map step
+    // is because we use the IDs as keys on LazyColumn and if there are duplicate IDs it gets upset;
+    // of course with real data there won't be duplicate IDs at all.
+
     fun setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent: HomeScreenUIContent) {
-        // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentItem =uiContent.itemList + uiContent.itemList
+        generalSelectorScreenUIContentItem = uiContent.itemList + uiContent.itemList.map { it -> it.copy(id = it.id * 1000) }
     }
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentDataSet(uiContent: HomeScreenUIContent) {
-        // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentDataSet = uiContent.dataSetList + uiContent.dataSetList
+        generalSelectorScreenUIContentDataSet = uiContent.dataSetList + uiContent.dataSetList.map { it -> it.copy(id = it.id * 1000) }
     }
 
     fun setGeneralSelectorScreenContentFromHomeScreenContentSource(uiContent: HomeScreenUIContent) {
-        // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
-        generalSelectorScreenUIContentSource = uiContent.sourceList + uiContent.sourceList
+        generalSelectorScreenUIContentSource = uiContent.sourceList  + uiContent.sourceList.map { it -> it.copy(id = it.id * 1000) }
     }
 
     // TODO: MORE NEW EXPERIMENTAL
@@ -4541,14 +4543,12 @@ fun <T> GeneralSelectorScreen(
                     .background(Color.Green /* TODO! */)
                     .fillMaxWidth()
             ) {
-
-                data class GeneralSelectorEntity(val id: Long, val name: String)
-
-                // TODO: Do I need to attach the IDs as keys to lazycolumn (as in that "movie" example in the docs somewhere)
-                // to minimise recomposition or other types of load in case the user's edits mean the list gets reordered (it
-                // is sorted by name, remember).
+                dataList.forEach { println("Item: $it, ID: ${getId(it)}") }
                 LazyColumn {
-                    items(dataList) { item ->
+                    items(
+                        items = dataList,
+                        key = { item -> getId(item) }
+                    ) { item ->
                         GeneralSelectorListItem(
                             id = getId(item),
                             name = getName(item),
