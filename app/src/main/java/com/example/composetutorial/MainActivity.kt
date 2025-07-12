@@ -3772,8 +3772,7 @@ fun EditSourceScreen(
             onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
-                uiContent.editableSource.value =
-                    uiContent.editableSource.value.copy(notes = it.text)
+                vm.setUIContentEditableSource(uiContent.editableSource.value.copy(notes = it.text))
             },
             modifier = Modifier.fillMaxWidth(),
         )
