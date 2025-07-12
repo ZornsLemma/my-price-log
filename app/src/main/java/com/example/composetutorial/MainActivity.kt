@@ -3453,7 +3453,8 @@ fun GeneralEditScreen(
     navController: NavHostController,
     title: @Composable () -> Unit,
     isDirty: () -> Boolean,
-    onSave: suspend () -> Unit,
+    validateForSave: suspend () -> Boolean,
+    performSave: () -> Unit,
     requestClose: () -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -3563,9 +3564,24 @@ fun GeneralEditScreen(
                     // isDirty first and just dismiss without saving if it returns false - but that
                     // might be confusing and it's maybe optimising a corner case
                     TextButton(enabled = !isSaving, onClick = {
+                        // TODO: I think the layout here is good and in fact better than it was,
+                        // but note that unlike the EditPrice stuff this is being based on, here
+                        // updateOrInsertFoo() does not (and proibably cannot, since it's an
+                        // internal detail here and not exposed) be messing with updating
+                        // saveStatus.
                         coroutineScope.launch {
-                            // TODO!?
-                            onSave()
+                            // If validateForSave() returns false, caller should probably have done
+                            // any auto-scroll or other UI highlighting to convey problem to user. TODO!?
+                            if (validateForSave()) {
+                                vm.saveStatus.update(EditPriceViewModel.SaveStatus.Saving)
+                                // delay(5000) // TODO HACK
+                                try {
+                                    performSave()
+                                    vm.saveStatus.update(EditPriceViewModel.SaveStatus.Success)
+                                } catch (e: Exception) {
+                                    vm.saveStatus.update(EditPriceViewModel.SaveStatus.Error) // TODO: can/should we preserve e and show it to user in UI?
+                                }
+                            }
                         }
                     }) {
                         if (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) {
@@ -3644,7 +3660,8 @@ fun EditSourceScreen(
         navController = navController,
         title = { Text("TODO: TITLE") },
         isDirty = { uiContent.editableSource.value != uiContent.originalSource },
-        onSave = { Log.d("MyAppESS", "Save") },
+        validateForSave = { Log.d("MyAppESS", "validateForSave"); true /* TODO! */ },
+        performSave = { Log.d("MyAppESS", "performSave") /* TODO! */ },
         requestClose = requestClose,
     ) {
         TextField(
