@@ -4327,12 +4327,15 @@ fun splitAroundDigits(input: String): Pair<String, String> {
 
 // TODO: ChatGPT magic
 inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
-    crossinline builder: (CreationExtras, SavedStateHandle) -> VM
+    crossinline builder: (MyApplication, SavedStateHandle) -> VM
 ): ViewModelProvider.Factory {
     return viewModelFactory {
         initializer {
             val handle = createSavedStateHandle()
-            builder(this, handle)
+            // As written by ChatGPT, this passed "this", a CreationExtras, as the first argument of
+            // builder. Given how we actually use this, it saves code duplication to just extract a
+            // MyApplication here and pass that instead.
+            builder(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication, handle)
         }
     }
 }
@@ -4863,9 +4866,7 @@ fun AppNavigation() {
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
-                viewModelFactoryWithHandle { extras, savedStateHandle ->
-                    val app =
-                        extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+                viewModelFactoryWithHandle { app, savedStateHandle ->
                     GeneralSelectorViewModel(
                         savedStateHandle = savedStateHandle,
                         getName = { it -> it.name }, // TODO: not actually used, allow null?
@@ -4900,9 +4901,7 @@ fun AppNavigation() {
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
-                viewModelFactoryWithHandle { extras, savedStateHandle ->
-                    val app =
-                        extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+                viewModelFactoryWithHandle { app, savedStateHandle ->
                     GeneralSelectorViewModel(
                         savedStateHandle = savedStateHandle,
                         getName = { it -> it.name },
@@ -4939,9 +4938,7 @@ fun AppNavigation() {
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
-                viewModelFactoryWithHandle { extras, savedStateHandle ->
-                    val app =
-                        extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+                viewModelFactoryWithHandle { app, savedStateHandle ->
                     GeneralSelectorViewModel(
                         savedStateHandle = savedStateHandle,
                         getName = { it -> it.name }, // TODO: not actually used, allow null?
@@ -4977,9 +4974,7 @@ fun AppNavigation() {
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
-                viewModelFactoryWithHandle { extras, savedStateHandle ->
-                    val app =
-                        extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+                viewModelFactoryWithHandle { app, savedStateHandle ->
                     // TODO: !! ON NEXT LINE FEELS A BIT HACKY BUT IS PROBABLY OK
                     EditPriceViewModel(
                         app.priceTrackerRepository,
@@ -5021,9 +5016,7 @@ fun AppNavigation() {
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
-                viewModelFactoryWithHandle { extras, savedStateHandle ->
-                    val app =
-                        extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+                viewModelFactoryWithHandle { app, savedStateHandle ->
                     // TODO: !! ON NEXT LINE FEELS A BIT HACKY BUT IS PROBABLY OK
                     EditSourceViewModel(
                         app.priceTrackerRepository,
