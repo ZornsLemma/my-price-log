@@ -185,11 +185,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.navigation.NavBackStackEntry
-import com.example.composetutorial.EditPriceScreenUIContent.Companion.DATA_SET_KEY
-import com.example.composetutorial.EditPriceScreenUIContent.Companion.ITEM_KEY
-import com.example.composetutorial.EditPriceScreenUIContent.Companion.LOCALE_TAG
-import com.example.composetutorial.EditPriceScreenUIContent.Companion.ORIGINAL_PRICE_KEY
-import com.example.composetutorial.EditPriceScreenUIContent.Companion.SOURCE_KEY
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -205,7 +200,6 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
-import java.io.IOException
 import java.text.DecimalFormatSymbols
 import java.util.concurrent.Executors
 
@@ -4365,35 +4359,28 @@ class GeneralSelectorViewModel<T>(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
     private val getName: (T) -> String,
-    val initialList: List<T>?,
-    private val initialQuery: Flow<List<T>>, // TODO: rename - it is not initial, it is "ongoing", maybe just call it dataQuery to match dataFlow
+    private val initialList: List<T>?,
+    private val dataQuery: Flow<List<T>>,
 ) : ViewModel() {
-    // TODO: Need to test, but the idea here is that we emit the initialList handed to us by our
-    // caller so we can get a good first composition, but we remain reactive to database state
-    // which is important if we are returned to after an edit operation has added, deleted or
-    // renamed something.
-    /* TODO DELETE
-    val dataFlow: StateFlow<List<Item>> = flow {
-        emit(uiContent.initialList)
-        emitAll(priceTrackerRepository.getAllItems(1L /* TODO HARDCODING IS A HACK */))
-    }.stateIn(scope = viewModelScope, started = SharingStarted.Eagerly,
-    */
+    // The idea here is that as we have no real state other than the results of dataQuery, we
+    // optimise by having our caller provide initialList to give a good first composition during
+    // normal navigation, but we can manage without it if we are reincarnated.
+
     // This will *not* filter uiContent.initialList, but that's OK because we know the initial filter doesn't exclude anything.
     // TODO: We could persist the search string via savedStateHandle. That might not be
     // unreasonable, and unless I gain a lot in the navcontroller by not making a savestatehandle
     // available there is probably no real downside, but I won't do it just yet until I finish the
-    // current refactor.
+    // current refactor. Might need to be careful to ensure we don't have a leftover search string when navigating in fresh, especially since we wouldn't even apply it.
     val searchStringFlow = MutableStateFlow("")
 
-    // TODO: Just possibly we should say "query.trim()" in isCaseInsensitive... call?
     @OptIn(ExperimentalCoroutinesApi::class)
     val dataFlow = combine(
-        initialQuery.flatMapLatest { data -> /* TODO HACK */ delay(5000); flowOf(data) },
+        dataQuery.flatMapLatest { data -> /* TODO HACK */ delay(5000); flowOf(data) },
         searchStringFlow
     ) { data, query ->
         data.filter {
             isCaseInsensitiveSubstring(
-                query,
+                query.trim(),
                 getName(it),
                 Locale.getDefault() /* TODO VERY TEMP HACK - WE ARE NOT SUPPOSED TO BE USING THIS FUNCTION */
             )
@@ -4409,7 +4396,6 @@ class GeneralSelectorViewModel<T>(
             started = SharingStarted.Eagerly,
             initialValue = initialList ?: emptyList()
         )
-
 }
 
 @Composable
@@ -4885,7 +4871,7 @@ fun AppNavigation() {
                         savedStateHandle,
                         getName = { it -> it.name }, // TODO: not actually used, allow null?
                         sharedViewModel.generalSelectorScreenUIContentDataSet,
-                        initialQuery = app.priceTrackerRepository.getAllDataSets()
+                        dataQuery = app.priceTrackerRepository.getAllDataSets()
                     )
                 }
             }
@@ -4923,7 +4909,7 @@ fun AppNavigation() {
                         savedStateHandle,
                         getName = { it -> it.name },
                         sharedViewModel.generalSelectorScreenUIContentItem,
-                        initialQuery = app.priceTrackerRepository.getAllItems(dataSetId)
+                        dataQuery = app.priceTrackerRepository.getAllItems(dataSetId)
                     )
                 }
             }
@@ -4963,7 +4949,7 @@ fun AppNavigation() {
                         savedStateHandle,
                         getName = { it -> it.name }, // TODO: not actually used, allow null?
                         sharedViewModel.generalSelectorScreenUIContentSource,
-                        initialQuery = app.priceTrackerRepository.getAllSources(dataSetId)
+                        dataQuery = app.priceTrackerRepository.getAllSources(dataSetId)
                     )
                 }
             }
