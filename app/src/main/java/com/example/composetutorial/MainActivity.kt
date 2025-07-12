@@ -82,12 +82,14 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -102,6 +104,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -3666,7 +3669,7 @@ fun GeneralEditScreen(
                 // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am
                 // struggling to find any non-LLM explanations here, but *maybe* *if we have
                 // scrolled away from the top* we should change the background to surfaceContainer
-                .background(Color.DarkGray /* TODO TEMP FOR DEBUG, SHOULD BE MaterialTheme.colorScheme.surface */) // because this is a full-screen dialog
+                .background(/* Color.DarkGray TODO TEMP FOR DEBUG, SHOULD BE */ MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = fullScreenDialogBorder)
@@ -3778,6 +3781,26 @@ fun EditSourceScreen(
             },
             modifier = Modifier.fillMaxWidth(),
         )
+
+        // TODO: EXperimental in appearance and also whether it belongs here or in GeneralEditScreen, though fairly sure it belongs here
+        /* TODO DELETE
+        TextButton(
+            onClick = { /* show confirm dialog */ },
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+        ) {
+            Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
+            Spacer(Modifier.width(8.dp))
+            Text("Delete product")
+        }
+        */
+        OutlinedButton(
+            onClick = { /* show confirm dialog */ },
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+        ) {
+            Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
+            Spacer(Modifier.width(8.dp))
+            Text("Delete product")
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -5255,3 +5278,11 @@ Log.d("MyApp", baz.toString())
 
 // TODO: Should we remember current product and source (remember they *may* be null anyway) for each
 // data set?
+
+// TODO: Maybe I should have a settings option which completely hides or just disables all the
+// "delete" buttons. Users can turn that off if it makes them feel safer. We could possibly, if it
+// isn't a UI nightmare, allow delete to be enabled for the next 10 minutes or something, then
+// automatically re-disable. My thinking here is deletes could be very destructive of valuable data
+// and in general you do not really want to delete stuff, unless you manage to add something
+// completely junky rather than just adding something with a typo and needing to edit it to fix it,
+// or cancelling the add before you finish it.
