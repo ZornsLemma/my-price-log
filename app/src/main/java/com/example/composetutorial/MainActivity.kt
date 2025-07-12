@@ -4281,8 +4281,6 @@ class SharedViewModel : ViewModel() {
     fun setGeneralSelectorScreenContentFromHomeScreenContentItem(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
         generalSelectorScreenUIContentItem = GeneralSelectorScreenUIContent(
-            "Edit products",
-            uiContent.dataSet,
             uiContent.itemList + uiContent.itemList
         )
     }
@@ -4290,8 +4288,6 @@ class SharedViewModel : ViewModel() {
     fun setGeneralSelectorScreenContentFromHomeScreenContentDataSet(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
         generalSelectorScreenUIContentDataSet = GeneralSelectorScreenUIContent(
-            "Edit collections",
-            null /* TODO? we use this to decide whether to show a dataset textfield at op uiContent.dataSet */,
             uiContent.dataSetList + uiContent.dataSetList
         )
     }
@@ -4299,8 +4295,6 @@ class SharedViewModel : ViewModel() {
     fun setGeneralSelectorScreenContentFromHomeScreenContentSource(uiContent: HomeScreenUIContent) {
         // TODO: Doubling the itemList is a temp hack to show that we do initialise with this data and then refresh with Room output - the idea is just to force the initial input to be different from Room output, which it usually isn't in practice coming from home screen
         generalSelectorScreenUIContentSource = GeneralSelectorScreenUIContent(
-            "Edit stores",
-            uiContent.dataSet,
             uiContent.sourceList + uiContent.sourceList
         )
     }
@@ -4313,8 +4307,9 @@ class SharedViewModel : ViewModel() {
         generalSelectorScreenUiContent: GeneralSelectorScreenUIContent<Source>,
         // TODO DELETE generalSelectorViewModel: GeneralSelectorViewModel<Source>,
         source: Source?,
+        dataSetId: Long,
     ) {
-        val editableSource = EditableSource.fromSource(source, generalSelectorScreenUiContent.dataSet!!.id)
+        val editableSource = EditableSource.fromSource(source, dataSetId)
         editSourceScreenUIContent = EditSourceScreenUIContent(
             editableSource = mutableStateOf(editableSource),
             originalSource = editableSource,
@@ -4354,9 +4349,7 @@ inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
 }
 
 data class GeneralSelectorScreenUIContent<T>(
-    val title: String,
-    val dataSet: DataSet?,
-    val initialList: List<T>
+    val initialList: List<T>?
 )
 
 // TODO: This function does not handle non-English languages very well. As far as I can tell from
@@ -4416,7 +4409,7 @@ class GeneralSelectorViewModel<T>(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
-            initialValue = uiContent.initialList
+            initialValue = uiContent.initialList ?: emptyList()
         )
 
 }
@@ -4464,6 +4457,7 @@ fun topAppBarTitle(title: String, subtitle: String?): @Composable (() -> Unit) =
 fun <T> GeneralSelectorScreen(
     vm: GeneralSelectorViewModel<T>,
     navController: NavHostController,
+    title: @Composable () -> Unit,
     getId: (T) -> Long,
     getName: (T) -> String,
     onAddClick: (() -> Unit)? = null,
@@ -4501,7 +4495,7 @@ fun <T> GeneralSelectorScreen(
         topBar = {
             // TODO: I am wondering if title and subtitle should swap roles here? Keep the data set name as the title as on the home screen? And if we go with this, *maybe* the subtitle is just "Products" (for example) not "Edit products"??
             TopAppBar(
-                title = topAppBarTitle(vm.uiContent.title, vm.uiContent.dataSet?.name),
+                title = title,
                 navigationIcon = {
 
                     IconButton(onClick = { navController.navigateUp() }) {
@@ -4882,13 +4876,13 @@ fun AppNavigation() {
                     sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentItem(
                         uiContent
                     )
-                    navController.navigate("editItems")
+                    navController.navigate("editItems/${uiContent.dataSet!!.id}/${uiContent.dataSet!!.name}")
                 },
                 onEditSourcesClick = { uiContent ->
                     sharedViewModel.setGeneralSelectorScreenContentFromHomeScreenContentSource(
                         uiContent
                     )
-                    navController.navigate("editSources")
+                    navController.navigate("editSources/${uiContent.dataSet!!.id}/${uiContent.dataSet!!.name}")
                 },
             )
         }
@@ -4950,6 +4944,7 @@ fun AppNavigation() {
             GeneralSelectorScreen(
                 vm,
                 navController,
+                title = topAppBarTitle("Edit collections", null),
                 getId = { it.id },
                 getName = { it.name },
                 onAddClick = { Log.d("MyAppGS", "Add data set") },
@@ -4957,11 +4952,13 @@ fun AppNavigation() {
         }
 
         composable(
-            "editItems", enterTransition = { slideLeftTransition() },
+            "editItems/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
 
             ) { backStackEntry ->
+            val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
+            val dataSetName = backStackEntry.arguments?.getString("dataSetName")
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
             // TODO: I am not actually going to use a savedStateHandle to start with - because this *can*
@@ -4986,7 +4983,7 @@ fun AppNavigation() {
                         getName = { it -> it.name },
                         sharedViewModel.generalSelectorScreenUIContentItem!! /* TODO
                             ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */,
-                        initialQuery = app.priceTrackerRepository.getAllItems(sharedViewModel.generalSelectorScreenUIContentItem!!.dataSet!!.id)
+                        initialQuery = app.priceTrackerRepository.getAllItems(dataSetId)
                     )
                 }
             }
@@ -5004,6 +5001,7 @@ fun AppNavigation() {
             GeneralSelectorScreen(
                 vm,
                 navController,
+                title = topAppBarTitle("Edit products", dataSetName),
                 getId = { it.id },
                 getName = { it.name },
                 onAddClick = { Log.d("MyAppGS", "Add item") },
@@ -5013,11 +5011,13 @@ fun AppNavigation() {
         }
 
         composable(
-            "editSources", enterTransition = { slideLeftTransition() },
+            "editSources/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
 
             ) { backStackEntry ->
+            val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
+            val dataSetName = backStackEntry.arguments?.getString("dataSetName")
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
             // TODO: I am not actually going to use a savedStateHandle to start with - because this *can*
@@ -5042,7 +5042,7 @@ fun AppNavigation() {
                         getName = { it -> it.name }, // TODO: not actually used, allow null?
                         sharedViewModel.generalSelectorScreenUIContentSource!! /* TODO
                             ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */,
-                        initialQuery = app.priceTrackerRepository.getAllSources(sharedViewModel.generalSelectorScreenUIContentSource!!.dataSet!!.id)
+                        initialQuery = app.priceTrackerRepository.getAllSources(dataSetId)
                     )
                 }
             }
@@ -5060,12 +5060,13 @@ fun AppNavigation() {
             GeneralSelectorScreen(
                 vm,
                 navController,
+                title = topAppBarTitle("Edit stores", dataSetName),
                 getId = { it.id },
                 getName = { it.name },
                 onAddClick = { Log.d("MyAppGS", "Add source") },
                 onItemSelected = {
                     Log.d("MyAppGS", "selected $it")
-                    sharedViewModel.setEditSourceScreenContent(vm.uiContent, it)
+                    sharedViewModel.setEditSourceScreenContent(vm.uiContent, it, dataSetId)
                     navController.navigate("editSource")
                 })
         }
