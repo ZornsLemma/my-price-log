@@ -5247,3 +5247,6 @@ Log.d("MyApp", baz.toString())
 // "very similar" name (e.g. up to case and with inter-word whitespace squashed and leading/trailing
 // space trimmed), to avoid confusion. - OK, I think I have fixed this but test all the different
 // edit static screens later.
+
+// TODO: Should we remember current product and source (remember they *may* be null anyway) for each
+// data set?
