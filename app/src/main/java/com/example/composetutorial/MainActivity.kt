@@ -3734,7 +3734,7 @@ fun EditSourceScreen(
 
     // TODO: We want option to delete the source - this may need to be on an overflow menu and
     // thus need tweaks to GeneralEditScreen.
-    
+
     GeneralEditScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
@@ -4952,7 +4952,11 @@ fun AppNavigation() {
                 title = topAppBarTitle("Edit stores", dataSetName),
                 getId = { it.id },
                 getName = { it.name },
-                onAddClick = { Log.d("MyAppGS", "Add source") },
+                onAddClick = {
+                    Log.d("MyAppGS", "Add source")
+                    sharedViewModel.setEditSourceScreenContent(null, dataSetId)
+                    navController.navigate("editSource")
+                },
                 onItemSelected = {
                     Log.d("MyAppGS", "selected $it")
                     sharedViewModel.setEditSourceScreenContent(it, dataSetId)
