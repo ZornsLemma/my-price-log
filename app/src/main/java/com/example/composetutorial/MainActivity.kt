@@ -3468,6 +3468,9 @@ fun GeneralEditScreen(
                 (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) ||
                 (saveStatus == EditPriceViewModel.SaveStatus.Success)
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var showErrorDialog by rememberSaveable { mutableStateOf(false) }
+    var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
+
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -3505,6 +3508,46 @@ fun GeneralEditScreen(
         }
     }
 
+    BackHandler {
+        if (!isSaving) {
+            requestDismiss()
+        } else {
+            // I've discussed this with LLMs and it's not clear if - from a UI perspective - we
+            // should do this or not, but I'll go with it for now.
+            showSavingSnackbar = true
+        }
+    }
+
+    LaunchedEffect(isSaving) {
+        if (isSaving) {
+            // We expect the save to complete quickly so we don't want the visual distraction
+            // of a progress indicator appearing straight away. Let the progress indicator kick
+            // in after a short delay if we're still here waiting for the save to complete.
+            delay(spinnerDelayMillis)
+            vm.saveStatus.update(EditPriceViewModel.SaveStatus.SavingSlowly)
+        }
+        // TODO: I don't think we need to set it back to false in else, but maybe revise all
+        // this later.
+    }
+
+    // TODO: ChatGPT magic more or less
+    LaunchedEffect(Unit) {
+        vm.saveStatus.events.collect { event ->
+            when (event) {
+                EditPriceViewModel.SaveStatus.Success -> {
+                    requestCloseDebounced()
+                }
+
+                EditPriceViewModel.SaveStatus.Error -> {
+                    vm.saveStatus.update(EditPriceViewModel.SaveStatus.Idle)
+                    showErrorDialog = true
+                }
+
+                else -> {}
+            }
+        }
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -3521,6 +3564,7 @@ fun GeneralEditScreen(
                     // might be confusing and it's maybe optimising a corner case
                     TextButton(enabled = !isSaving, onClick = {
                         coroutineScope.launch {
+                            // TODO!?
                             onSave()
                         }
                     }) {
@@ -3577,6 +3621,14 @@ fun GeneralEditScreen(
         )
     }
 
+    LaunchedEffect(showSavingSnackbar) {
+        if (showSavingSnackbar) {
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar("Saving, please wait...")
+                showSavingSnackbar = false
+            }
+        }
+    }
 }
 
 @Composable
