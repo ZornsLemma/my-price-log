@@ -751,7 +751,7 @@ class PriceTrackerRepositoryImpl(
     // reusing the database entities throughout all levels for simplicity - which we aren't with
     // Price). So this should take a *Price* and convert it to a PriceEntity for writing, and there
     // shouldn't be any user-error-catching validation here - this might go wrong, but it would be
-    // down to hardware failures or bugs in my code. The viewmodel-ish layer code is responsbile
+    // down to hardware failures or bugs in my code. The viewmodel-ish layer code is responsible
     // for turning an EditablePrice (a special variant domain level thing with nullness etc) into
     // a Price and *that* is where final validation occurs.
     override suspend fun updateOrInsertPrice(price: Price) {
@@ -1531,9 +1531,11 @@ val fullScreenDialogBorder = 16.dp
 // other menus?
 val menuLeftPadding = 16.dp
 
+/* TODO DELETE
 // MD3 standard values
 val oneLineListItemHeight = 56.dp
 val listItemHorizontalPadding = 16.dp
+*/
 
 // Seems best to make the right padding symmetrical.
 val menuRightPadding = menuLeftPadding
@@ -1547,7 +1549,6 @@ const val maxNotesLength = 60 // TODO TEMP FOR TESTING 1024
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    dataSet: DataSet?, dataSetList: List<DataSet>, onSelectedDataSetIdChange: (Long) -> Unit,
     item: Item?, itemList: List<Item>, onSelectedItemIdChange: (Long) -> Unit
 ) {
     var showItemSheet by remember { mutableStateOf(false) }
@@ -2870,9 +2871,6 @@ fun HomeScreenScaffold(
             ) {
 
                 MainScreen(
-                    dataSet = dataSet,
-                    dataSetList = dataSetList,
-                    onSelectedDataSetIdChange = onSelectedDataSetIdChange,
                     item = item,
                     itemList = itemList,
                     onSelectedItemIdChange = onSelectedItemIdChange
@@ -3724,8 +3722,6 @@ fun EditSourceScreen(
         performSave = { vm.performSave() },
         requestClose = requestClose,
     ) {
-        Spacer(modifier = Modifier.height(800.dp)) // TODO TEMP HACK
-
         var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
@@ -4349,6 +4345,7 @@ fun isCaseInsensitiveSubstring(lhs: String, rhs: String, locale: Locale) =
     rhs.lowercase(locale).contains(lhs.lowercase(locale))
 
 // TODO: We probably *can* do a half-decent job of implementing this locale-sensitive, probably something to do with collate(), but need to look into it. This is different to isCaseInsensitiveSubstring() because we are dealing with the string as a whole, not substrings. But for now I will hack it with this English-ish version.
+// TODO: Even in English-only, it might be good to squash sequences of whitespace down to a single space for comparison so "foo  bar" == "foo bar" != "foobar"
 fun areHumanEqual(lhs: String, rhs: String) =
     lhs.trim().lowercase() == rhs.trim().lowercase()
 
@@ -4374,6 +4371,7 @@ class GeneralSelectorViewModel<T>(
     val searchStringFlow = MutableStateFlow("")
 
     // TODO: Just possibly we should say "query.trim()" in isCaseInsensitive... call?
+    @OptIn(ExperimentalCoroutinesApi::class)
     val dataFlow = combine(
         initialQuery.flatMapLatest { data -> /* TODO HACK delay(5000); */ flowOf(data) },
         searchStringFlow
