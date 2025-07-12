@@ -192,6 +192,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.merge
@@ -1512,6 +1513,10 @@ val listItemHorizontalPadding = 16.dp
 
 // Seems best to make the right padding symmetrical.
 val menuRightPadding = menuLeftPadding
+
+// TODO: These arbitrary lengths are UI-only and are just intended to stop the user typing insane
+// amounts of text into TextFields and breaking layouts. They may well want to be tweaked later.
+const val maxSourceNameLength = 32
 
 // TODO: RENAME THIS IF IT SURVIVES REFACTORING
 @OptIn(ExperimentalMaterial3Api::class)
@@ -3441,6 +3446,14 @@ fun EditPriceScreen(
 }
 
 // TODO: Rename? This is not actually a ViewModel, though it plays a similar role (I think).
+// TODO: Can/should this be handled via rememberSaveable inside GeneralEditScreen? I think in some
+// sense this saving-duration kind of data should be in the caller's ViewModel (via composition). In
+// practice, especially given that we "trap" the user on the edit screen that isn't so important.
+// There might be considerations around app death and resurrection and being in the caller's
+// ViewModel (if they remember to serialise us) might help us survive, but "the process of actually
+// saving" cannot be serialised so even if a save somehow takes ages and that isn't actually
+// indicative of a serious problem, will it matter that our state has been serialised to a bundle!?
+// I need to thinka bout this later when it's maybe clearer.
 class GeneralEditScreenViewModel {
     val saveStatus = SyncedStateEvent(EditPriceViewModel.SaveStatus.Idle)
 }
@@ -3566,7 +3579,7 @@ fun GeneralEditScreen(
                     TextButton(enabled = !isSaving, onClick = {
                         // TODO: I think the layout here is good and in fact better than it was,
                         // but note that unlike the EditPrice stuff this is being based on, here
-                        // updateOrInsertFoo() does not (and proibably cannot, since it's an
+                        // updateOrInsertFoo() does not (and probably cannot, since it's an
                         // internal detail here and not exposed) be messing with updating
                         // saveStatus.
                         coroutineScope.launch {
@@ -3660,14 +3673,21 @@ fun EditSourceScreen(
         navController = navController,
         title = { Text("TODO: TITLE") },
         isDirty = { uiContent.editableSource.value != uiContent.originalSource },
-        validateForSave = { Log.d("MyAppESS", "validateForSave"); true /* TODO! */ },
+        validateForSave = { vm.validateForSave() },
         performSave = { Log.d("MyAppESS", "performSave") /* TODO! */ },
         requestClose = requestClose,
     ) {
-        TextField(
+        var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
+        val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
+        ValidatedTextField(
             label = { Text("Name") },
-            value = uiContent.editableSource.value.name,
-            onValueChange = { uiContent.editableSource.value = uiContent.editableSource.value.copy(name = it) },
+            value = name,
+            validationRules = nameValidationRules,
+            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxSourceNameLength),
+            onValueChange = {
+                name = it
+                uiContent.editableSource.value = uiContent.editableSource.value.copy(name = it.text)
+            },
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -3825,6 +3845,10 @@ fun NumericTextField(
         messageDelayMillis = messageDelayMillis
     )
 }
+
+fun makeOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
+    { it.length <= maxLength }
+
 
 @Composable
 fun ValidatedTextField(
@@ -4585,6 +4609,29 @@ class EditSourceViewModel(
     val uiContent: EditSourceScreenUIContent,
 ) : ViewModel() {
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
+
+    // TODO: There just might be an argument for not using emptyList() in stateIn, so we can head
+    // off a theoretical possibility of the user entering invalid data (maybe just leaving the
+    // form empty when creating a new entry) and starting a save before the validation rules are
+    // present, which will pass (because no validation rules) and then they either insert invalid
+    // data or get a database level constraint validation. If we have null, we can make sure the
+    // validation rules *are present* during save validation.
+    val nameValidationRules: StateFlow<List<ValidationRule>> =
+        priceTrackerRepository.getAllSources(uiContent.editableSource.value.dataSetId)
+            .map { sourceList -> buildNameValidationRules(sourceList) }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    private fun buildNameValidationRules(sourceList: List<Source>): List<ValidationRule> {
+        return listOf(ValidationRule({ it -> 'x' in it }, "Must contain 'x' to be cool"))
+        //return emptyList() // TODO!
+    }
+
+    suspend fun validateForSave() : Boolean {
+        Log.d("MyAppESS", "validateForSave")
+        val sourceList = priceTrackerRepository.getAllSources(uiContent.editableSource.value.dataSetId).first()
+        val otherSourceList = sourceList.filter { it.id != uiContent.editableSource.value.id }
+        return true /* TODO! */
+    }
 }
 
 // TODO: Navigation is a mess - I'm completely unclear how the mysterious back stack and routes and
