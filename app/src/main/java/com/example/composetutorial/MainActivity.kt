@@ -42,6 +42,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -72,6 +73,8 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -3669,6 +3672,8 @@ fun EditSourceScreen(
 ) {
     val uiContent = vm.uiContent
 
+    val nameScrollToFocusableHandle = rememberScrollToFocusable()
+
     GeneralEditScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
@@ -3678,6 +3683,7 @@ fun EditSourceScreen(
         performSave = { Log.d("MyAppESS", "performSave") /* TODO! */ },
         requestClose = requestClose,
     ) {
+        Spacer(modifier = Modifier.height(800.dp)) // TODO TEMP HACK
         var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
@@ -3691,7 +3697,7 @@ fun EditSourceScreen(
                 name = it
                 uiContent.editableSource.value = uiContent.editableSource.value.copy(name = it.text)
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().scrollToFocusable(nameScrollToFocusableHandle),
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -3707,6 +3713,12 @@ fun EditSourceScreen(
     val saveValidationError by vm.saveValidationError.collectAsStateWithLifecycle()
     LaunchedEffect(saveValidationError) {
         Log.d("MyApp", "LaunchedEffect(saveValidationError $saveValidationError)")
+        when (saveValidationError) {
+            EditSourceViewModel.EditableField.NAME -> {
+                scrollAndFocusTo(nameScrollToFocusableHandle)
+            }
+            else -> {} // TODO: OK!?
+        }
     }
 }
 
@@ -5167,6 +5179,32 @@ fun <T> Flow<T>.withVersion(): Flow<Versioned<T>> = flow {
 
 fun <T> initialVersioned(initialValue: T): Versioned<T> =
     Versioned(version = -1L, value = initialValue)
+
+class ScrollToFocusableHandle @OptIn(ExperimentalFoundationApi::class) constructor(
+    val focusRequester: FocusRequester = FocusRequester(),
+    val bringIntoViewRequester: BringIntoViewRequester = BringIntoViewRequester()
+)
+
+@OptIn(ExperimentalFoundationApi::class)
+fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle): Modifier {
+    return this
+        .focusRequester(handle.focusRequester)
+        .bringIntoViewRequester(handle.bringIntoViewRequester)
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+suspend fun scrollAndFocusTo(handle: ScrollToFocusableHandle) {
+    handle.bringIntoViewRequester.bringIntoView()
+    handle.focusRequester.requestFocus()
+}
+
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+fun rememberScrollToFocusable(): ScrollToFocusableHandle {
+    return remember {
+        ScrollToFocusableHandle()
+    }
+}
 
 /* TODO TEMP TEST CODE FOR MEASUREDVALUE
 val foo = MeasuredValue(5.0, MeasureUnit.KG)
