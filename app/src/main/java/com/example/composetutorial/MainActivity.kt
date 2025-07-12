@@ -3454,7 +3454,7 @@ fun GeneralEditScreen(
     title: @Composable () -> Unit,
     isDirty: () -> Boolean,
     validateForSave: suspend () -> Boolean,
-    performSave: () -> Unit,
+    performSave: () -> Unit, // not suspend, to encourage caller to run it on viewModelScope where it belongs
     requestClose: () -> Unit,
     content: @Composable () -> Unit
 ) {
