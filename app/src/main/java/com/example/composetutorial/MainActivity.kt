@@ -3449,7 +3449,10 @@ class GeneralEditScreenViewModel {
 @Composable
 fun GeneralEditScreen(
     vm: GeneralEditScreenViewModel,
+    navController: NavHostController,
     title: @Composable () -> Unit,
+    isDirty: () -> Boolean,
+    requestClose: () -> Unit,
     content: @Composable () -> Unit
 ) {
     val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
@@ -3462,18 +3465,50 @@ fun GeneralEditScreen(
         (saveStatus == EditPriceViewModel.SaveStatus.Saving) ||
                 (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) ||
                 (saveStatus == EditPriceViewModel.SaveStatus.Success)
+    var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // TODO: We may need to make this available to the content() so it can use it for scrolling to highlight errors, or it may be that we don't need it here at all and it can be entirely in the content()
     val scrollState = rememberScrollState()
 
+    // TODO: ChatGPT magic. This idea here is that a) currentBackStackEntry reflects the actual back
+    // stack, not merely "we have popped but it hasn't come into effect yet" b) this will force
+    // isNavigating to be initialised to false when we are re-entered "fresh" but not if e.g. a
+    // rotation occurs. I can't help thinking we can simplify this by storing a close-debounce flag
+    // in the ViewModel, which ought to be re-created from scratch every time we are "truly
+    // re-entered" (either because popBackStack() discards the old state or because the random UUID
+    // trick effectively guarantees this - I am far from clear what the actual reality of how
+    // popBackStack() works is).
+    var isNavigating by remember(navController.currentBackStackEntry) {
+        mutableStateOf(false)
+    }
+
+    fun requestCloseDebounced() {
+        // We need isNavigating to de-bounce the close button so we don't invoke requestClose()
+        // (which probably calls popBackStack() and is therefore not idempotent) if the user double
+        // taps the close button quickly. (We may not need this for other ways of closing, but it
+        // shouldn't hurt and is probably safer.)
+        if (!isNavigating) {
+            isNavigating = true
+            requestClose()
+        }
+    }
+
+    fun requestDismiss() {
+        if (isDirty()) {
+            showConfirmDialog = true
+        } else {
+            requestCloseDebounced()
+        }
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(enabled = !isSaving, onClick = { /* TODO requestDismiss() - here we need to call some callback to ask "is the content changed?" and use that to do something similar to editprice's requestDismiss internal version*/ }) {
+                    IconButton(enabled = !isSaving, onClick = { requestDismiss() }) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 },
@@ -3513,6 +3548,28 @@ fun GeneralEditScreen(
             content()
         }
     }
+
+    if (showConfirmDialog) {
+        // I copied the wording of this dialog directly from a screenshot in the M3 documentaion.
+        AlertDialog(
+            title = { Text("Discard unsaved changes?") },
+            text = { Text("You have changes that won't be saved if you close.") },
+            onDismissRequest = { showConfirmDialog = false },
+            dismissButton = {
+                TextButton(onClick = {
+                    showConfirmDialog = false
+                }) { Text("Keep editing") }
+            },
+            confirmButton = {
+                TextButton(onClick = { requestCloseDebounced() }) {
+                    Text(
+                        "Discard"
+                    )
+                }
+            },
+        )
+    }
+
 }
 
 @Composable
@@ -3525,7 +3582,10 @@ fun EditSourceScreen(
 
     GeneralEditScreen(
         vm = vm.generalEditScreenViewModel,
+        navController = navController,
         title = { Text("TODO: TITLE") },
+        isDirty = { true /* TODO! */ },
+        requestClose = { Log.d("MyAppGE", "requestClose") /* TODO! */ },
     ) {
         Text("TODO EDIT SOURCE STUFF")
 
