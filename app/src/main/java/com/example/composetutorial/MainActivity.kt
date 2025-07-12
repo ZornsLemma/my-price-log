@@ -3453,6 +3453,7 @@ fun GeneralEditScreen(
     navController: NavHostController,
     title: @Composable () -> Unit,
     isDirty: () -> Boolean,
+    onSave: suspend () -> Unit,
     requestClose: () -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -3467,7 +3468,7 @@ fun GeneralEditScreen(
                 (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) ||
                 (saveStatus == EditPriceViewModel.SaveStatus.Success)
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
     // TODO: We may need to make this available to the content() so it can use it for scrolling to highlight errors, or it may be that we don't need it here at all and it can be entirely in the content()
@@ -3515,9 +3516,13 @@ fun GeneralEditScreen(
                 },
                 title = title,
                 actions = {
+                    // TODO: Just possibly instead of always calling onSave, onClick should call
+                    // isDirty first and just dismiss without saving if it returns false - but that
+                    // might be confusing and it's maybe optimising a corner case
                     TextButton(enabled = !isSaving, onClick = {
-                        // TODO: Some sort of callback, need to think about this as this generic
-                        // code evolves
+                        coroutineScope.launch {
+                            onSave()
+                        }
                     }) {
                         if (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) {
                             CircularProgressIndicator(
@@ -3532,6 +3537,7 @@ fun GeneralEditScreen(
             )
         },
         snackbarHost = {
+            // TODO: Make sure we have generic code to show saving please wait message if back pressed during save
             SnackbarHost(hostState = snackbarHostState)
         },
     ) { innerPadding ->
@@ -3586,6 +3592,7 @@ fun EditSourceScreen(
         navController = navController,
         title = { Text("TODO: TITLE") },
         isDirty = { uiContent.editableSource.value != uiContent.originalSource },
+        onSave = { Log.d("MyAppESS", "Save") },
         requestClose = requestClose,
     ) {
         TextField(
