@@ -1521,6 +1521,7 @@ val menuRightPadding = menuLeftPadding
 // TODO: These arbitrary lengths are UI-only and are just intended to stop the user typing insane
 // amounts of text into TextFields and breaking layouts. They may well want to be tweaked later.
 const val maxSourceNameLength = 32
+const val maxNotesLength = 60 // TODO TEMP FOR TESTING 1024
 
 // TODO: RENAME THIS IF IT SURVIVES REFACTORING
 @OptIn(ExperimentalMaterial3Api::class)
@@ -3684,6 +3685,7 @@ fun EditSourceScreen(
         requestClose = requestClose,
     ) {
         Spacer(modifier = Modifier.height(800.dp)) // TODO TEMP HACK
+
         var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
@@ -3702,10 +3704,15 @@ fun EditSourceScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        TextField(
+        var notes by rememberSyncedTextFieldValue(uiContent.editableSource.value.notes)
+        ValidatedTextField(
             label = { Text("Notes") },
-            value = uiContent.editableSource.value.notes,
-            onValueChange = { uiContent.editableSource.value = uiContent.editableSource.value.copy(notes = it) },
+            value = notes,
+            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
+            onValueChange = {
+                notes = it
+                uiContent.editableSource.value = uiContent.editableSource.value.copy(notes = it.text)
+            },
             modifier = Modifier.fillMaxWidth(),
         )
     }
@@ -3866,6 +3873,22 @@ fun NumericTextField(
     )
 }
 
+// TODO: This function itself is fine, but it provides an easy demonstration that if the text is
+// *already* over the limit, we can not edit it to delete anything. In practice you shouldn't get
+// into this kind of hole, but it might be worth changing the API of onCandidateValueChange so
+// it receives the old text as well, so here we could allow the new text if it's shorter than the
+// old text even if it's still too long.
+// TODO: We don't show a current/maximum count on our ValidatedTextFields because the length limit
+// is just there to keep things tidy and in practice we don't expect a user to run up against it, so
+// it would be unwanted visual fluff (imagine a price field where the user thinks of it as a decimal
+// value which seems to be keen on counting characters - they don't use this function but do use
+// equivalent logic to impose a length limit). I think it's OK if a user does hit a text field size
+// limit that their keystrokes are just ignored, but it feels slightly off. I don't really see a
+// good way to communicate this though - the best I can think of is a transitory supportingText (not
+// generated via the more persistent validationrule stuff), but that might be annoying. It might
+// work and perhaps the biggest difficutly is combining it with the validation rule logic - so maybe
+// worth revisiting this later. Maybe just ignoring silently is actually best though, regardless of
+// the work involved - think about it fresh later.
 fun makeOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
     { it.length <= maxLength }
 
