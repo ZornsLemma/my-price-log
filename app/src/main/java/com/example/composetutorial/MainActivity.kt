@@ -184,6 +184,7 @@ import kotlin.math.abs
 import kotlin.math.log10
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.navigation.NavBackStackEntry
@@ -3052,6 +3053,8 @@ fun EditPriceScreen(
 // ought to be re-created from scratch every time we are "truly re-entered" (either because popBackStack()
 // discards the old state or because the random UUID trick effectively guarantees this - I am far from
 // clear what the actual reality of how popBackStack() works is).
+    // TODO: Can/should I use dropUnlessResumed for de-bouncing here? Or some similar function
+    // in the same set of tools?
     var isNavigating by remember(navController.currentBackStackEntry) {
         mutableStateOf(false)
     }
@@ -4452,9 +4455,6 @@ fun <T> GeneralSelectorScreen(
 ) {
     val dataList by vm.dataFlow.collectAsStateWithLifecycle()
     val searchString by vm.searchStringFlow.collectAsStateWithLifecycle()
-    var isNavigating by remember(navController.currentBackStackEntry) {
-        mutableStateOf(false)
-    }
     Log.d("MyAppGS", "dataList $dataList")
 
     val floatingActionButton: (@Composable () -> Unit) = if (onAddClick == null) {
@@ -4464,7 +4464,7 @@ fun <T> GeneralSelectorScreen(
             // The commented out options here would (I think) be MD3 compliant (picking the
             // "default" colour combination) but they seem to be the defaults anyway.
             FloatingActionButton(
-                onClick = { if (!isNavigating) { isNavigating = true; onAddClick() } },
+                onClick = dropUnlessResumed { onAddClick() },
 
                 // containerColor = MaterialTheme.colorScheme.primaryContainer,
                 // contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -4549,7 +4549,7 @@ fun <T> GeneralSelectorScreen(
                         GeneralSelectorListItem(
                             id = getId(item),
                             name = getName(item),
-                            onItemSelected = { _ -> if (!isNavigating) { isNavigating = true; onItemSelected(item) } }, // TODO: Note we are ignoring the ID passed to us, refactor to get rid of it if we stay like this
+                            onItemSelected = dropUnlessResumed { onItemSelected(item) },
                         )
                     }
                 }
@@ -4565,10 +4565,10 @@ fun <T> GeneralSelectorScreen(
 // TODO: We could optionally add switches or check boxes to the list items to allow them to be enabled or disabled - but this may well be better done at the edit X individual screen level
 // TODO: This function might well be better just folded into GeneralSelectorScreen
 @Composable
-fun GeneralSelectorListItem(id: Long, name: String, onItemSelected: (Long) -> Unit) {
+fun GeneralSelectorListItem(id: Long, name: String, onItemSelected: () -> Unit) {
     ListItem(
         headlineContent = { Text(name) },
-        modifier = Modifier.clickable { onItemSelected(id) },
+        modifier = Modifier.clickable { onItemSelected() },
     )
 }
 
