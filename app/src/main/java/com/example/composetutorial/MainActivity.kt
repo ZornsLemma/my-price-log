@@ -964,6 +964,18 @@ data class EditableSource(
     val name: String,
     val notes: String,
 ) {
+    fun toDomain(): Source? {
+        // It could get confusing if an empty name leaked into the database (it would be
+        // semi-invisible in the UI) so we'll check that here, even though we could generate a
+        // Source with such a name and this is not really validation code - we expect to have been
+        // called on a pre-validated EditableSource.
+        // TODO: *NOT* HERE, BUT WE DO NEED TO BE ENFORCING NON-EMPTY AFTER TRIMMING AND "DOING TRIMMING BEFORE INSERTING" SOMEWHERE
+        if (name.trim().isEmpty()) {
+            return null
+        }
+        return Source(id = id, dataSetId = dataSetId, name = name, notes = notes)
+    }
+
     companion object {
         fun fromSource(source: Source?, dataSetId: Long): EditableSource {
             if (source == null) {
@@ -3681,7 +3693,7 @@ fun EditSourceScreen(
         title = { Text("TODO: TITLE") },
         isDirty = { uiContent.editableSource.value != uiContent.originalSource },
         validateForSave = { vm.validateForSave() },
-        performSave = { Log.d("MyAppESS", "performSave") /* TODO! */ },
+        performSave = { vm.performSave() },
         requestClose = requestClose,
     ) {
         Spacer(modifier = Modifier.height(800.dp)) // TODO TEMP HACK
@@ -3722,6 +3734,7 @@ fun EditSourceScreen(
         Log.d("MyApp", "LaunchedEffect(saveValidationError $saveValidationError)")
         when (saveValidationError) {
             EditSourceViewModel.EditableField.NAME -> {
+                Log.d("MyApp", "scrolling to name")
                 scrollAndFocusTo(nameScrollToFocusableHandle)
             }
             else -> {} // TODO: OK!?
@@ -3794,7 +3807,7 @@ fun numericValidationRules(
         sanitiseCandidate(candidate).replace(decimalSeparator, '.').toDoubleOrNull()
 
     return listOfNotNull(
-        ValidationRule(
+         ValidationRule(
             { it.count { char -> char == decimalSeparator } <= maxDecimalSeparators },
             // TODO: Just possibly we should not consider a single decimal separator with nothing
             // significant following it as violating "only whole numbers allowed".
@@ -4304,6 +4317,10 @@ data class GeneralSelectorScreenUIContent<T>(
 fun isCaseInsensitiveSubstring(lhs: String, rhs: String, locale: Locale) =
     rhs.lowercase(locale).contains(lhs.lowercase(locale))
 
+// TODO: We probably *can* do a half-decent job of implementing this locale-sensitive, probably something to do with collate(), but need to look into it. This is different to isCaseInsensitiveSubstring() because we are dealing with the string as a whole, not substrings. But for now I will hack it with this English-ish version.
+fun areHumanEqual(lhs: String, rhs: String) =
+    lhs.trim().lowercase() == rhs.trim().lowercase()
+
 // TODO: This may not actually need the repository passing in given we pass in a query
 class GeneralSelectorViewModel<T>(
     private val priceTrackerRepository: PriceTrackerRepository,
@@ -4661,16 +4678,22 @@ class EditSourceViewModel(
     // validation rules *are present* during save validation.
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule>>> =
         priceTrackerRepository.getAllSources(uiContent.editableSource.value.dataSetId)
+            // TODO: WE NEED TO FILTER OUT OUR OWN ENTRY BUT WILL LEAVE THAT FOR NOW FOR TESTING ETC
             .map { sourceList -> buildNameValidationRules(sourceList) }
             .withVersion()
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
 
     private fun buildNameValidationRules(sourceList: List<Source>): List<ValidationRule> {
-        return listOf(ValidationRule({ it -> 'x' in it }, "Must contain 'x' to be cool"))
+        return listOf(
+            ValidationRule({ it.isNotEmpty() }, "Must have a name"),
+            // TODO! ValidationRule({ it -> 'x' in it }, "Must contain 'x' to be cool"),
+        ) + sourceList.map { source ->
+            ValidationRule({ candidateName -> !areHumanEqual(candidateName, source.name) }, "Name must be unique")
+        }
         //return emptyList() // TODO!
     }
 
-    enum class  EditableField {
+    enum class EditableField {
         NAME,
         NOTES
     }
@@ -4683,8 +4706,17 @@ class EditSourceViewModel(
             _saveValidationError.value = EditableField.NAME
             return false
         }
+        Log.d("MyAppESS", "validateForSave passed")
         // TODO: MORE
         return true
+    }
+
+    fun performSave() {
+        val source = uiContent.editableSource.value.toDomain()
+        if (source == null) {
+            throw IllegalStateException("performSave() called with an inconvertible EditableSource: ${uiContent.editableSource.value}")
+        }
+        TODO();
     }
 }
 
