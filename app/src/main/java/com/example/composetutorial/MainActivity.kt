@@ -4377,6 +4377,10 @@ class GeneralSelectorViewModel<T>(
     }.stateIn(scope = viewModelScope, started = SharingStarted.Eagerly,
     */
     // This will *not* filter uiContent.initialList, but that's OK because we know the initial filter doesn't exclude anything.
+    // TODO: We could persist the search string via savedStateHandle. That might not be
+    // unreasonable, and unless I gain a lot in the navcontroller by not making a savestatehandle
+    // available there is probably no real downside, but I won't do it just yet until I finish the
+    // current refactor.
     val searchStringFlow = MutableStateFlow("")
 
     // TODO: Just possibly we should say "query.trim()" in isCaseInsensitive... call?
@@ -4896,22 +4900,10 @@ fun AppNavigation() {
             ) { backStackEntry ->
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
-            // TODO: I am not actually going to use a savedStateHandle to start with - because this *can*
-            // get its data from the database (it's just an optimisation having it passed over on first
-            // navigation), it isn't so necessary. I may change my mind. If I *don't* change my mind,
-            // it *may* be that we can or should use a different simpler factory. (Although given this
-            // viewModelFactoryWithHandle thing already exists, maybe it's as well to use it even if
-            // we ignore the handle. And maybe it wouldn't be a big deal to use the handle for extra
-            // smoothness anyway.)
             val factory = remember(backStackEntry) {
                 viewModelFactoryWithHandle { extras, savedStateHandle ->
                     val app =
                         extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
-                    // TODO: !! ON sharedViewModel.generalSelectorScreenUIContent causes (probably)
-                    // crash in the kill-and-revive case - we (probably) either need savedStateHandle stuff
-                    // and/or we need to construct a GeneralSelectorScreenUIContent but without the
-                    // initial data list and just wait for the database to come through.
-                    // TODO: !! ON (COMMENTED OUT) FROM SAVED STATE FEELS A BIT HACKY BUT PROBABLY FINE
                     GeneralSelectorViewModel(
                         app.priceTrackerRepository,
                         savedStateHandle,
@@ -4926,12 +4918,6 @@ fun AppNavigation() {
                 sharedViewModel.generalSelectorScreenUIContentDataSet = null
             }
 
-            // TODO: My intention is that this screen (which shows a list of named things and let's
-            // you pick one to do something with, or optionally to add a new one, and may have an
-            // optional search button and may take over from the modal bottom sheet for products in
-            // that form) is generic enough to be shared across data sets/items/sources. I will
-            // start writing in pseudo-specific to products, but I will name things generically and
-            // then I can try to factor things out later.
             GeneralSelectorScreen(
                 vm,
                 navController,
@@ -4952,28 +4938,15 @@ fun AppNavigation() {
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
-            // TODO: I am not actually going to use a savedStateHandle to start with - because this *can*
-            // get its data from the database (it's just an optimisation having it passed over on first
-            // navigation), it isn't so necessary. I may change my mind. If I *don't* change my mind,
-            // it *may* be that we can or should use a different simpler factory. (Although given this
-            // viewModelFactoryWithHandle thing already exists, maybe it's as well to use it even if
-            // we ignore the handle. And maybe it wouldn't be a big deal to use the handle for extra
-            // smoothness anyway.)
             val factory = remember(backStackEntry) {
                 viewModelFactoryWithHandle { extras, savedStateHandle ->
                     val app =
                         extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
-                    // TODO: !! ON sharedViewModel.generalSelectorScreenUIContent causes (probably)
-                    // crash in the kill-and-revive case - we (probably) either need savedStateHandle stuff
-                    // and/or we need to construct a GeneralSelectorScreenUIContent but without the
-                    // initial data list and just wait for the database to come through.
-                    // TODO: !! ON (COMMENTED OUT) FROM SAVED STATE FEELS A BIT HACKY BUT PROBABLY FINE
                     GeneralSelectorViewModel(
                         app.priceTrackerRepository,
                         savedStateHandle,
                         getName = { it -> it.name },
-                        sharedViewModel.generalSelectorScreenUIContentItem!! /* TODO
-                            ?: GeneralSelectorScreenUIContent.fromSavedState(savedStateHandle)!! */,
+                        sharedViewModel.generalSelectorScreenUIContentItem,
                         initialQuery = app.priceTrackerRepository.getAllItems(dataSetId)
                     )
                 }
@@ -4983,12 +4956,6 @@ fun AppNavigation() {
                 sharedViewModel.generalSelectorScreenUIContentItem = null
             }
 
-            // TODO: My intention is that this screen (which shows a list of named things and let's
-            // you pick one to do something with, or optionally to add a new one, and may have an
-            // optional search button and may take over from the modal bottom sheet for products in
-            // that form) is generic enough to be shared across data sets/items/sources. I will
-            // start writing in pseudo-specific to products, but I will name things generically and
-            // then I can try to factor things out later.
             GeneralSelectorScreen(
                 vm,
                 navController,
@@ -5011,22 +4978,10 @@ fun AppNavigation() {
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
-            // TODO: I am not actually going to use a savedStateHandle to start with - because this *can*
-            // get its data from the database (it's just an optimisation having it passed over on first
-            // navigation), it isn't so necessary. I may change my mind. If I *don't* change my mind,
-            // it *may* be that we can or should use a different simpler factory. (Although given this
-            // viewModelFactoryWithHandle thing already exists, maybe it's as well to use it even if
-            // we ignore the handle. And maybe it wouldn't be a big deal to use the handle for extra
-            // smoothness anyway.)
             val factory = remember(backStackEntry) {
                 viewModelFactoryWithHandle { extras, savedStateHandle ->
                     val app =
                         extras[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
-                    // TODO: !! ON sharedViewModel.generalSelectorScreenUIContent causes (probably)
-                    // crash in the kill-and-revive case - we (probably) either need savedStateHandle stuff
-                    // and/or we need to construct a GeneralSelectorScreenUIContent but without the
-                    // initial data list and just wait for the database to come through.
-                    // TODO: !! ON (COMMENTED OUT) FROM SAVED STATE FEELS A BIT HACKY BUT PROBABLY FINE
                     GeneralSelectorViewModel(
                         app.priceTrackerRepository,
                         savedStateHandle,
