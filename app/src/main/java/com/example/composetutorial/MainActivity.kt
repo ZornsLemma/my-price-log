@@ -5,7 +5,6 @@ package com.example.composetutorial // TODO: change this!
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.ui.focus.FocusRequester
@@ -75,14 +74,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
@@ -192,16 +189,15 @@ import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
 import java.text.DecimalFormatSymbols
@@ -3723,21 +3719,24 @@ fun EditSourceScreen(
             onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
-                uiContent.editableSource.value = uiContent.editableSource.value.copy(notes = it.text)
+                uiContent.editableSource.value =
+                    uiContent.editableSource.value.copy(notes = it.text)
             },
             modifier = Modifier.fillMaxWidth(),
         )
     }
 
-    val saveValidationError by vm.saveValidationError.collectAsStateWithLifecycle()
-    LaunchedEffect(saveValidationError) {
-        Log.d("MyApp", "LaunchedEffect(saveValidationError $saveValidationError)")
-        when (saveValidationError) {
-            EditSourceViewModel.EditableField.NAME -> {
-                Log.d("MyApp", "scrolling to name")
-                scrollAndFocusTo(nameScrollToFocusableHandle)
+    LaunchedEffect(Unit) {
+        vm.saveValidationEvents.collect { field ->
+            Log.d("MyApp", "LaunchedEffect saveValidationError $field")
+            when (field) {
+                EditSourceViewModel.EditableField.NAME -> {
+                    Log.d("MyApp", "scrolling to name")
+                    scrollAndFocusTo(nameScrollToFocusableHandle)
+                }
+
+                else -> {} // TODO: OK!?
             }
-            else -> {} // TODO: OK!?
         }
     }
 }
@@ -4697,13 +4696,13 @@ class EditSourceViewModel(
         NAME,
         NOTES
     }
-    private val _saveValidationError = MutableStateFlow<EditableField?>(null)
-    val saveValidationError: StateFlow<EditableField?> = _saveValidationError.asStateFlow()
+    private val _saveValidationEvents = MutableSharedFlow<EditableField>()
+    val saveValidationEvents = _saveValidationEvents.asSharedFlow()
 
     suspend fun validateForSave() : Boolean {
         Log.d("MyAppESS", "validateForSave")
         if (!validationRulesOk(nameValidationRules.value.value, uiContent.editableSource.value.name)) {
-            _saveValidationError.value = EditableField.NAME
+            _saveValidationEvents.emit(EditableField.NAME)
             return false
         }
         Log.d("MyAppESS", "validateForSave passed")
@@ -5251,6 +5250,7 @@ fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle): Modifier {
 suspend fun scrollAndFocusTo(handle: ScrollToFocusableHandle) {
     handle.bringIntoViewRequester.bringIntoView()
     handle.focusRequester.requestFocus()
+    // TODO: Can/should we focus TextFields with the cursor at the end of the text?
 }
 
 @Composable
