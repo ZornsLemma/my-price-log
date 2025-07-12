@@ -2529,7 +2529,8 @@ data class EditPriceScreenUIContent(
 }
 
 data class EditSourceScreenUIContent(
-    val editableSource: MutableState<EditableSource>
+    val editableSource: MutableState<EditableSource>,
+    val originalSource: EditableSource,
 ) {
     companion object {
         fun fromSavedState(handle: SavedStateHandle): EditSourceScreenUIContent? {
@@ -3388,7 +3389,7 @@ fun EditPriceScreen(
         }
 
         if (showConfirmDialog) {
-            // I copied the wording of this dialog directly from a screenshot in the M3 documentaion.
+            // I copied the wording of this dialog directly from a screenshot in the M3 documentation.
             AlertDialog(
                 title = { Text("Discard unsaved changes?") },
                 text = { Text("You have changes that won't be saved if you close.") },
@@ -3584,11 +3585,9 @@ fun EditSourceScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
         title = { Text("TODO: TITLE") },
-        isDirty = { true /* TODO! */ },
-        requestClose = { Log.d("MyAppGE", "requestClose") /* TODO! */ },
+        isDirty = { uiContent.editableSource.value != uiContent.originalSource },
+        requestClose = requestClose,
     ) {
-        Text("TODO EDIT SOURCE STUFF")
-
         TextField(
             label = { Text("Name") },
             value = uiContent.editableSource.value.name,
@@ -4108,7 +4107,11 @@ class SharedViewModel : ViewModel() {
         // TODO DELETE generalSelectorViewModel: GeneralSelectorViewModel<Source>,
         source: Source?,
     ) {
-        editSourceScreenUIContent = EditSourceScreenUIContent(editableSource = mutableStateOf(EditableSource.fromSource(source, generalSelectorScreenUiContent.dataSet!!.id)))
+        val editableSource = EditableSource.fromSource(source, generalSelectorScreenUiContent.dataSet!!.id)
+        editSourceScreenUIContent = EditSourceScreenUIContent(
+            editableSource = mutableStateOf(editableSource),
+            originalSource = editableSource,
+        )
     }
 }
 
@@ -4829,6 +4832,7 @@ fun AppNavigation() {
                 })
         }
 
+        // TODO: The transition here when we close is wrong, we slide down but the underlying edit sources screen which is supposed to remain static also slides in from the right - of course it may be that composable("foo") which has the wrong transitions on
         composable(
             "editSource", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
