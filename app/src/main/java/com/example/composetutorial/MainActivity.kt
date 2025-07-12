@@ -4972,3 +4972,5 @@ Log.d("MyApp", baz.toString())
 // TODO: Eventually will need to remove misc Log.d() lines and/or replace them with permanent well-thought-out ones if that is not inefficient.
 
 // TODO: If I double click on e.g. Newco when editing sources, I seem to get the edit screen open twice. I suspect this is one of those cases where I need to add debouncing.
+
+// TODO: Note that when we save a source/dataset/item after editing, we need to refuse to save if there is another entry (excluding any old version of us) with the same name, and ideally with a "very similar" name (e.g. up to case and with inter-word whitespace squashed and leading/trailing space trimmed), to avoid confusion.
