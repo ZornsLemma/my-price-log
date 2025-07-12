@@ -719,6 +719,7 @@ interface PriceTrackerRepository {
 
     fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
 
+    suspend fun updateOrInsertSource(source: Source)
     suspend fun updateOrInsertPrice(price: Price)
 }
 
@@ -738,6 +739,10 @@ class PriceTrackerRepositoryImpl(
     override fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>> =
         priceDao.getPriceWithItemEntityForItem(dataSetId = dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
+
+    override suspend fun updateOrInsertSource(source: Source) {
+        sourceDao.upsert(source)
+    }
 
     // TODO: Tempish note (maybe make permanent) - I discussed with ChatGPT and it seemed to make
     // sense - the repository should take "validated domain level" entities (where we aren't just
@@ -961,15 +966,17 @@ data class EditableSource(
     val notes: String,
 ) {
     fun toDomain(): Source? {
+        val trimmedName = name.trim()
         // It could get confusing if an empty name leaked into the database (it would be
         // semi-invisible in the UI) so we'll check that here, even though we could generate a
         // Source with such a name and this is not really validation code - we expect to have been
         // called on a pre-validated EditableSource.
-        // TODO: *NOT* HERE, BUT WE DO NEED TO BE ENFORCING NON-EMPTY AFTER TRIMMING AND "DOING TRIMMING BEFORE INSERTING" SOMEWHERE
-        if (name.trim().isEmpty()) {
+        if (trimmedName.isEmpty()) {
             return null
         }
-        return Source(id = id, dataSetId = dataSetId, name = name, notes = notes)
+        // TODO: Is this a reasonable place to do trimming? Gut feeling is that yes it is, since
+        // validation doesn't care about this, it's just a bit of "tidying". But not sure.
+        return Source(id = id, dataSetId = dataSetId, name = trimmedName, notes = notes)
     }
 
     companion object {
@@ -1201,6 +1208,9 @@ interface ItemDao {
 interface SourceDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(dataSet: Source): Long
+
+    @Upsert
+    suspend fun upsert(source: Source)
 
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
     @Query("SELECT * FROM source WHERE data_set_id = :dataSetId ORDER BY name ASC")
@@ -4688,7 +4698,8 @@ class EditSourceViewModel(
     // spaces" or "strip insignificant fluff in a double-as-string" as an initial step, avoid
     // redoing that work in subsequent lambdas which want the same sanitising and help to avoid the
     // situation where for example the validation is all based on a trim()ed string but I forget to
-    // manually apply the trim() when writing the string to the database
+    // manually apply the trim() when writing the string to the database. On the other hand, applying
+    // the validation rule changes to a data class via copy() might be finicky and error prone.
     private fun buildNameValidationRules(sourceList: List<Source>): List<ValidationRule> {
         return listOf(
             ValidationRule({ it.isNotEmpty() }, "Must have a name"),
@@ -4722,7 +4733,11 @@ class EditSourceViewModel(
         if (source == null) {
             throw IllegalStateException("performSave() called with an inconvertible EditableSource: ${uiContent.editableSource.value}")
         }
-        TODO();
+
+        // TODONOW: DO I NEED TO WORRY ABOUT EXCEPTIONS HERE? NOTE THAT UNLIKE THE EDITPRICE CODE, WE HAVE SPLIT THE LOGIC UP DIFFERENTLY.
+        viewModelScope.launch {
+            priceTrackerRepository.updateOrInsertSource(source)
+        }
     }
 }
 
