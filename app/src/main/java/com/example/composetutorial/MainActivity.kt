@@ -3703,6 +3703,11 @@ fun EditSourceScreen(
             modifier = Modifier.fillMaxWidth(),
         )
     }
+
+    val saveValidationError by vm.saveValidationError.collectAsStateWithLifecycle()
+    LaunchedEffect(saveValidationError) {
+        Log.d("MyApp", "LaunchedEffect(saveValidationError $saveValidationError)")
+    }
 }
 
 // TODO: Maybe rename - the idea here is this does not insist the input is actually parseable as a
@@ -4630,11 +4635,21 @@ class EditSourceViewModel(
         //return emptyList() // TODO!
     }
 
+    enum class  EditableField {
+        NAME,
+        NOTES
+    }
+    private val _saveValidationError = MutableStateFlow<EditableField?>(null)
+    val saveValidationError: StateFlow<EditableField?> = _saveValidationError.asStateFlow()
+
     suspend fun validateForSave() : Boolean {
         Log.d("MyAppESS", "validateForSave")
-        val sourceList = priceTrackerRepository.getAllSources(uiContent.editableSource.value.dataSetId).first()
-        val otherSourceList = sourceList.filter { it.id != uiContent.editableSource.value.id }
-        return true /* TODO! */
+        if (!validationRulesOk(nameValidationRules.value.value, uiContent.editableSource.value.name)) {
+            _saveValidationError.value = EditableField.NAME
+            return false
+        }
+        // TODO: MORE
+        return true
     }
 }
 
