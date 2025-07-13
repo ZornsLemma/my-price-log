@@ -3765,6 +3765,7 @@ fun EditSourceScreen(
     GeneralEditScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
+        // TODO: Different title for add vs edit? Title should maybe show data set name?
         title = { Text("TODO: TITLE") },
         isDirty = { uiContent.editableSource.value != uiContent.originalSource },
         validateForSave = { vm.validateForSave() },
@@ -3807,7 +3808,6 @@ fun EditSourceScreen(
         // this form jank might be minimal). At a minimum, when clicked, the alert dialog should
         // distinguish the cases where the product has prices and where it doesn't - the latter being
         // a much less scary delete.
-        Spacer(modifier = Modifier.height(8.dp))
         // TODO: EXperimental in appearance and also whether it belongs here or in GeneralEditScreen, though fairly sure it belongs here
         /* TODO DELETE
         TextButton(
@@ -3832,14 +3832,20 @@ fun EditSourceScreen(
             }
         }
         */
-        OutlinedButton(
-            onClick = { /* show confirm dialog */ },
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-            // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
-        ) {
-            Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
-            Spacer(Modifier.width(8.dp))
-            Text("Delete store")
+        if (uiContent.editableSource.value.id != 0L) {
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = {
+                    /* show confirm dialog */
+                },
+                enabled = sourceReferenceCount != null,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
+                Spacer(Modifier.width(8.dp))
+                Text("Delete store")
+            }
         }
     }
 
