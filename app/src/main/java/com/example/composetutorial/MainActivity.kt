@@ -5339,7 +5339,10 @@ Log.d("MyApp", baz.toString())
 // automatically re-disable. My thinking here is deletes could be very destructive of valuable data
 // and in general you do not really want to delete stuff, unless you manage to add something
 // completely junky rather than just adding something with a typo and needing to edit it to fix it,
-// or cancelling the add before you finish it.
+// or cancelling the add before you finish it. We could also make the settings option tri-state, with
+// an intermediate setting (which could perhaps even be the default) where delete buttons are shown/enabled (whatever I think best)
+// for "non scary" deletes (product X is in the database *but no price data is attached* etc) but
+// hidden/disabled for "scary" deletes (price data exists which would get cascade deleted).
 
 // TODO: M3 recommends using a "container transform pattern" to transform FAB into a full-screen
 // dialog. Not sure if I can or should do this, but might be worth trying. (Do remember that as
