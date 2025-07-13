@@ -5331,3 +5331,12 @@ Log.d("MyApp", baz.toString())
 // standard slide in transform over a "container transform" was favoured 2:1 here. See how I feel
 // later, and I'm far from confident I can do the FAB container transofrm anyway and that would
 // definitely be the thing to try first (as it *is* called out in MD3 specs).)
+
+// TODO: I do wonder if I've over-exaggerated the need to pass data between screens for perfect
+// first compositions. For screens with complex data-dependent layouts I could see this, and
+// although there's no passing data in, the home screen probably would be janky without the "all or
+// nothing" combine-driven flow. For simple list type screens like the "Edit X" stuff it may be fine
+// (and I could experiment by removing the initial list pass through). For stuff like Edit price I
+// am not sure, but it's pssible these might look OK, although they might not (e.g. the text field
+// titles would "slide up" from the "no data" prompt position to the "label above actual data"
+// position as the data filled in.
