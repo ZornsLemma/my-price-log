@@ -3796,7 +3796,7 @@ fun EditSourceScreen(
         ) {
             Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
             Spacer(Modifier.width(8.dp))
-            Text("Delete product")
+            Text("Delete store")
         }
         */
         /*
@@ -3808,7 +3808,7 @@ fun EditSourceScreen(
             ) {
                 Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
                 Spacer(Modifier.width(8.dp))
-                Text("Delete product")
+                Text("Delete store")
             }
         }
         */
@@ -3819,7 +3819,7 @@ fun EditSourceScreen(
         ) {
             Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
             Spacer(Modifier.width(8.dp))
-            Text("Delete product")
+            Text("Delete store")
         }
     }
 
