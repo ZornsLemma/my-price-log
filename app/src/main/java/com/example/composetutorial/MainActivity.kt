@@ -1675,13 +1675,16 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     modifier: Modifier = Modifier,
     selectedId: ID?,
     onValueChange: (ID) -> Unit, // TODO: rename onItemSelected? is there a "standard" for e.g. the crappy MD3 experimental dropdown?
+    enabled: Boolean = true,
     label: @Composable () -> Unit, // TODO: rename to distinguish from getLabel type use?
     supportingText: @Composable (() -> Unit)? = null,
     items: List<T>,
     getId: (T) -> ID,
     getLabel: (T) -> String,
 ) {
+    // TODO: Will these remembers break as caller toggles enabled? In practice we'll probably get away with it but it makes me nervous.
     var textFieldWidth by remember { mutableIntStateOf(0) }
+    Log.d("MyApp", "textFieldWidth $textFieldWidth enabled $enabled")
     var isExpanded by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
@@ -1689,6 +1692,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             dropdownModifier = Modifier.width(with(LocalDensity.current) { textFieldWidth.toDp() }),
             selectedId = selectedId,
             onValueChange = onValueChange,
+            enabled = enabled,
             onExpand = { isExpanded = it },
             items = items,
             getId = getId,
@@ -1726,7 +1730,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
                 // have the TextField disabled in order to make it clickable, it doesn't seem to
                 // actually get focus (even when it gets that "it's focus but it's not focus" D-pad
                 // navigation focus) as far as onFocusChanged is concerned.
-                colors = myTextFieldColors(isExpanded)
+                colors = if (enabled) myTextFieldColors(isExpanded) else TextFieldDefaults.colors()
             )
         }
         // If we let TextField display supportingText itself, it gets included in the bounding box
@@ -1895,6 +1899,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     dropdownModifier: Modifier = Modifier, // TODO: OK!?
     @Suppress("UNUSED_PARAMETER") selectedId: ID?, // see above
     onValueChange: (ID) -> Unit, // TODO: follow naming convention of MyExposedDropdownMenUBox
+    enabled: Boolean = true,
     onExpand: (Boolean) -> Unit = {},
     items: List<T>,
     getId: (T) -> ID,
@@ -1904,11 +1909,15 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
 ) {
     // TODO: rememberSaveable? A simple dark mode toggle could lose this otherwise. But maybe that
     // is "expected", and users probably also expect the dropdown to close on rotation.
+    // TODO: Will these remembers break as caller toggles enabled? In practice we'll probably get
+    // away with it but it makes me nervous.
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.clickable {
-        expanded = true
-        @Suppress("KotlinConstantConditions") onExpand(expanded)
+        if (enabled) {
+            expanded = true
+            @Suppress("KotlinConstantConditions") onExpand(expanded)
+        }
     }) {
         content()
 
@@ -3049,6 +3058,8 @@ fun EditPriceScreen(
 
 // TODO: Some of this remember stuff should maybe move into the ViewModel
 
+    val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
+
     val packSizeScrollToFocusableHandle = rememberScrollToFocusable()
     val priceScrollToFocusableHandle = rememberScrollToFocusable()
 
@@ -3144,6 +3155,7 @@ fun EditPriceScreen(
                         onPackSizeOrPriceChange()
                     }
                 },
+                enabled = saveStatus.isNotBusy(),
                 onSupportingTextChange = { isError, supportingText ->
                     packSizeSupportingText = Pair(isError, supportingText)
                 },
@@ -3155,6 +3167,7 @@ fun EditPriceScreen(
             Spacer(modifier = Modifier.width(8.dp))
 
             MyExposedDropdownMenuBox(
+                enabled = saveStatus.isNotBusy(),
                 selectedId = uiContent.editablePrice.value.measureUnit.id,
                 onValueChange = {
                     val measureUnit = MeasureUnit.fromValue(it)
@@ -3231,6 +3244,7 @@ fun EditPriceScreen(
                     onPackSizeOrPriceChange()
                 }
             },
+            enabled = saveStatus.isNotBusy(),
             supportingText = "This is more supporting text just as a test.",
         )
 
@@ -3257,6 +3271,7 @@ fun EditPriceScreen(
                     )
                 }
                 Switch(
+                    enabled = saveStatus.isNotBusy(),
                     checked = uiContent.editablePrice.value.toConfirm,
                     onCheckedChange = {
                         vm.setUIContentEditablePrice(
@@ -3282,6 +3297,7 @@ fun EditPriceScreen(
             onValueChange = {
                 vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(details = it))
             },
+            enabled = saveStatus.isNotBusy(),
         )
     }
 
@@ -3579,8 +3595,6 @@ fun EditSourceScreen(
     // TODO: We want option to delete the source - this may need to be on an overflow menu and
     // thus need tweaks to GeneralEditScreen.
 
-    // TODO: Probably not a new bug but neither here nor in EditPrice are we disabling the text
-    // fields during save or delete any more!
     GeneralEditScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
@@ -3605,6 +3619,7 @@ fun EditSourceScreen(
                 name = it
                 vm.setUIContentEditableSource(uiContent.editableSource.value.copy(name = it.text))
             },
+            enabled = saveStatus.isNotBusy(),
             modifier = Modifier
                 .fillMaxWidth()
                 .scrollToFocusable(nameScrollToFocusableHandle),
@@ -3621,6 +3636,7 @@ fun EditSourceScreen(
                 notes = it
                 vm.setUIContentEditableSource(uiContent.editableSource.value.copy(notes = it.text))
             },
+            enabled = saveStatus.isNotBusy(),
             modifier = Modifier.fillMaxWidth(),
         )
 
@@ -3846,6 +3862,7 @@ fun NumericTextField(
     validationRules: List<ValidationRule>? = numericValidationRules(LocalConfiguration.current.locales[0]),
     validationRulesKey: Any? = null,
     onValueChange: (TextFieldValue) -> Unit,
+    enabled: Boolean = true,
     onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
     supportingText: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -3870,6 +3887,7 @@ fun NumericTextField(
         // two decimal places and a (manually entered) thousands separator.
         onCandidateValueChange = { isValidTransitionalDecimal(it) && it.length <= 11 },
         onValueChange = onValueChange,
+        enabled = enabled,
         onSupportingTextChange = onSupportingTextChange,
         modifier = modifier,
         supportingText = supportingText,
@@ -3910,6 +3928,7 @@ fun ValidatedTextField(
     validationRulesKey: Any? = null,
     onCandidateValueChange: ((String) -> Boolean),
     onValueChange: (TextFieldValue) -> Unit,
+    enabled: Boolean = true,
     onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
     supportingText: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -3925,6 +3944,8 @@ fun ValidatedTextField(
     Log.d("MyAppVTF", "validationRules?.size ${validationRules?.size}")
     Log.d("MyAppVTF", "fVST $failedValidationSupportingText")
     Log.d("MyAppVTF", "fVR $failedValidationRule")
+    // TODO: Will these (non-keyed) remembers break when the caller toggles out enabled flag? In
+    // practice we'll probably get away with it but it makes me nervous.
     var delayJob by remember { mutableStateOf<Job?>(null) }
     var isFocused by remember { mutableStateOf(false) }
 
@@ -4026,6 +4047,7 @@ fun ValidatedTextField(
                 onValueChange(newValue)
             }
         },
+        enabled = enabled,
         keyboardOptions = keyboardOptions,
         modifier = modifier.onFocusChanged { focusState ->
             Log.d("MyApp", "focus changed")
