@@ -1682,9 +1682,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     getId: (T) -> ID,
     getLabel: (T) -> String,
 ) {
-    // TODO: Will these remembers break as caller toggles enabled? In practice we'll probably get away with it but it makes me nervous.
     var textFieldWidth by remember { mutableIntStateOf(0) }
-    Log.d("MyApp", "textFieldWidth $textFieldWidth enabled $enabled")
     var isExpanded by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
@@ -1909,8 +1907,6 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
 ) {
     // TODO: rememberSaveable? A simple dark mode toggle could lose this otherwise. But maybe that
     // is "expected", and users probably also expect the dropdown to close on rotation.
-    // TODO: Will these remembers break as caller toggles enabled? In practice we'll probably get
-    // away with it but it makes me nervous.
     var expanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.clickable {
@@ -3944,8 +3940,6 @@ fun ValidatedTextField(
     Log.d("MyAppVTF", "validationRules?.size ${validationRules?.size}")
     Log.d("MyAppVTF", "fVST $failedValidationSupportingText")
     Log.d("MyAppVTF", "fVR $failedValidationRule")
-    // TODO: Will these (non-keyed) remembers break when the caller toggles out enabled flag? In
-    // practice we'll probably get away with it but it makes me nervous.
     var delayJob by remember { mutableStateOf<Job?>(null) }
     var isFocused by remember { mutableStateOf(false) }
 
