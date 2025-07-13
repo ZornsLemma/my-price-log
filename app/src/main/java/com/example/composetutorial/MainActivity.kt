@@ -2,6 +2,7 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import androidx.compose.ui.Alignment
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
@@ -124,7 +125,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -3623,6 +3623,11 @@ fun GeneralEditScreen(
                 },
                 title = title,
                 actions = {
+                    /* TODO DELETE
+                    IconButton(onClick = { /* showDeleteDialog = true */ }) { // TODO HIGHLY EXPERIMENTAL
+                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                    }
+                    */
                     // TODO: Just possibly instead of always calling onSave, onClick should call
                     // isDirty first and just dismiss without saving if it returns false - but that
                     // might be confusing and it's maybe optimising a corner case
@@ -3782,7 +3787,7 @@ fun EditSourceScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         // TODO: EXperimental in appearance and also whether it belongs here or in GeneralEditScreen, though fairly sure it belongs here
         /* TODO DELETE
         TextButton(
@@ -3792,6 +3797,19 @@ fun EditSourceScreen(
             Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
             Spacer(Modifier.width(8.dp))
             Text("Delete product")
+        }
+        */
+        /*
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+            OutlinedButton(
+                onClick = { /* show confirm dialog */ },
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
+                Spacer(Modifier.width(8.dp))
+                Text("Delete product")
+            }
         }
         */
         OutlinedButton(
