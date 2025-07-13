@@ -3542,7 +3542,7 @@ fun GeneralEditScreen(
         (saveStatus == SaveStatus.Saving) ||
                 (saveStatus == SaveStatus.SavingSlowly) ||
                 (saveStatus == SaveStatus.Success)
-    var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var showConfirmDiscardDialog by rememberSaveable { mutableStateOf(false) }
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
     var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
 
@@ -3577,7 +3577,7 @@ fun GeneralEditScreen(
 
     fun requestDismiss() {
         if (isDirty()) {
-            showConfirmDialog = true
+            showConfirmDiscardDialog = true
         } else {
             requestCloseDebounced()
         }
@@ -3695,15 +3695,15 @@ fun GeneralEditScreen(
         }
     }
 
-    if (showConfirmDialog) {
+    if (showConfirmDiscardDialog) {
         // I copied the wording of this dialog directly from a screenshot in the M3 documentaion.
         AlertDialog(
             title = { Text("Discard unsaved changes?") },
             text = { Text("You have changes that won't be saved if you close.") },
-            onDismissRequest = { showConfirmDialog = false },
+            onDismissRequest = { showConfirmDiscardDialog = false },
             dismissButton = {
                 TextButton(onClick = {
-                    showConfirmDialog = false
+                    showConfirmDiscardDialog = false
                 }) { Text("Keep editing") }
             },
             confirmButton = {
@@ -3716,6 +3716,9 @@ fun GeneralEditScreen(
         )
     }
 
+    // TODO: Do we want to "re-use" this dialog for e.g. delete errors too? If so, how will the
+    // change of wording be addressed? We may want to rename showErrorDialog to something more
+    // suggestive depending on what kinds of error this code handles.
     if (showErrorDialog) {
         // We use an AlertDialog not a snackbar here. This is a local database save which is
         // failing so it is very unlikely to be transient. We also don't want the user
