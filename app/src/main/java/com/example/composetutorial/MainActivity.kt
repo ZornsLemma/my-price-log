@@ -3792,6 +3792,12 @@ fun EditSourceScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
+        // TODO: We should take account of whether a product has any price data or not. Maybe not in
+        // terms of labelling the button etc (though we could, albeit minor jank prospects as we'd
+        // need to query async during recomposition, albeit the change might be small enough that on
+        // this form jank might be minimal). At a minimum, when clicked, the alert dialog should
+        // distinguish the cases where the product has prices and where it doesn't - the latter being
+        // a much less scary delete.
         Spacer(modifier = Modifier.height(8.dp))
         // TODO: EXperimental in appearance and also whether it belongs here or in GeneralEditScreen, though fairly sure it belongs here
         /* TODO DELETE
