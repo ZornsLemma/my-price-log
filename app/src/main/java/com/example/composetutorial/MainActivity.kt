@@ -4753,12 +4753,13 @@ class EditSourceViewModel(
         uiContent.saveState(savedStateHandle)
     }
 
-    val sourceReferenceFlow = (if (uiContent.editableSource.value.id != 0L)
-        priceTrackerRepository.countPricesForSource(uiContent.editableSource.value.id)
-            else
-                flowOf(0L) // flow<Long> { emit(0L) }
-            )
-            .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = null)
+    val sourceReferenceFlow = uiContent.editableSource.value.id.let { sourceId ->
+        if (sourceId != 0L) {
+            priceTrackerRepository.countPricesForSource(sourceId)
+        } else {
+            flowOf(0L) // Emit 0L for new sources
+        }
+    }.stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = null)
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
