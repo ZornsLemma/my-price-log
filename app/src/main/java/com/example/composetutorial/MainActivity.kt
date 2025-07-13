@@ -188,6 +188,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
+import com.example.composetutorial.EditSourceViewModel.EditableField
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -3047,103 +3048,9 @@ fun EditPriceScreen(
     val uiContent = vm.uiContent
 
 // TODO: Some of this remember stuff should maybe move into the ViewModel
-    val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
-    // We count "success" as saving here, since we don't want the "Save" button to re-enable
-    // briefly; it looks ugly, we already saved (so saving again makes no sense if the user does
-    // manage to click it) and we are about to close this screen.
-    // TODO: Arguably we should do something similar with the spinner - if we've ever been in
-    // SavingSlowly state, we should keep showing the spinner until we close.
-    val isBusySaving =
-        (saveStatus == SaveStatus.BusySaving) || (saveStatus == SaveStatus.BusySavingSlowly) || (saveStatus == SaveStatus.Success)
-    var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
-    var showErrorDialog by rememberSaveable { mutableStateOf(false) }
-    var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
-// TODO: ChatGPT magic. This idea here is that a) currentBackStackEntry reflects the actual
-// back stack, not merely "we have popped but it hasn't come into effect yet" b) this will force
-// isNavigating to be initialised to false when we are re-entered "fresh" but not if e.g. a rotation occurs.
-// I can't help thinking we can simplify this by storing a close-debounce flag in the ViewModel, which
-// ought to be re-created from scratch every time we are "truly re-entered" (either because popBackStack()
-// discards the old state or because the random UUID trick effectively guarantees this - I am far from
-// clear what the actual reality of how popBackStack() works is).
-    // TODO: Can/should I use dropUnlessResumed for de-bouncing here? Or some similar function
-    // in the same set of tools?
-    var isNavigating by remember(navController.currentBackStackEntry) {
-        mutableStateOf(false)
-    }
 
-    fun requestCloseDebounced() {
-        // We need isNavigating to de-bounce the close button so we don't invoke requestClose()
-        // (which probably calls popBackStack() and is therefore not idempotent) if the user double
-        // taps the close button quickly. (We may not need this for other ways of closing, but it
-        // shouldn't hurt and is probably safer.)
-        if (!isNavigating) {
-            isNavigating = true
-            requestClose()
-        }
-    }
-
-    fun requestDismiss() {
-        // We don't consider the toConfirm property relevant here - this avoids gratuitous "are you
-        // sure?" confirmations if for example the user deletes a digit of the price and then
-        // re-types it.
-        if (uiContent.editablePrice.value.copy(toConfirm = false) != uiContent.originalPrice.copy(
-                toConfirm = false
-            )
-        ) {
-            showConfirmDialog = true
-        } else {
-            requestCloseDebounced()
-        }
-    }
-
-    BackHandler {
-        if (!isBusySaving) {
-            requestDismiss()
-        } else {
-            // I've discussed this with LLMs and it's not clear if - from a UI perspective - we
-            // should do this or not, but I'll go with it for now.
-            showSavingSnackbar = true
-        }
-    }
-
-    LaunchedEffect(isBusySaving) {
-        if (isBusySaving) {
-            // We expect the save to complete quickly so we don't want the visual distraction
-            // of a progress indicator appearing straight away. Let the progress indicator kick
-            // in after a short delay if we're still here waiting for the save to complete.
-            delay(spinnerDelayMillis)
-            vm.saveStatus.update(SaveStatus.BusySavingSlowly)
-        }
-        // TODO: I don't think we need to set it back to false in else, but maybe revise all
-        // this later.
-    }
-
-// TODO: ChatGPT magic more or less
-    LaunchedEffect(Unit) {
-        vm.saveStatus.events.collect { event ->
-            when (event) {
-                SaveStatus.Success -> {
-                    requestCloseDebounced()
-                }
-
-                SaveStatus.Error -> {
-                    vm.saveStatus.update(SaveStatus.Idle)
-                    showErrorDialog = true
-                }
-
-                else -> {}
-            }
-        }
-    }
-
-    val coroutineScope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
-    val packSizeFocusRequester = remember { FocusRequester() }
-    var packSizeY by remember { mutableIntStateOf(0) }
-    val priceFocusRequester = remember { FocusRequester() }
-    var priceY by remember { mutableIntStateOf(0) }
+    val packSizeScrollToFocusableHandle = rememberScrollToFocusable()
+    val priceScrollToFocusableHandle = rememberScrollToFocusable()
 
     fun onPackSizeOrPriceChange() {
         // On the first change to the pack size or price, we set the "to confirm" switch to true, on
@@ -3161,347 +3068,238 @@ fun EditPriceScreen(
         }
     }
 
-// TODO: Grok suggests wrapping a Box with:
-//Modifier.semantics {
-//    role = Role.Dialog // Marks this as a dialog for TalkBack
-//    contentDescription = "Full-screen dialog for [task, e.g., entering details]" // Optional: describe purpose
-//    liveRegion = LiveRegionMode.Polite // Announce when dialog opens
-//} *around* the Scaffold. I am not entirely sure about flagging this as a dialog anyway - I sort of get the MD3 "full screen dialog" concept, but it feels very technical and not something a user (accessibility-using or not) is likely to be actively aware of. I suppose there is some argument that it clues the user in to expect (as there is) a close icon and a "confirm" type icon in the top bar.
-// I suspect I shouldn't provide a contentDescription unless/until I do this for other screens, and at the moment I am trying not to be actively accessibility-hostile but not go out of my way to add stuff that may not be helpful. If the app is released it will be open source and I'm happy to take advice/patches if someone actually is using this.
-// I would rather attach the modifier to the Scaffold if I can, but I don't know if that will work correctly. Maybe it
-// doesn't work with a Box either, I haven't tested that. (Perplexity.ai says this semantics modifier won't truly flag it
-// as a dialog, but the link it gives doesn't actually say that. It doesn't have a better option, short of actually
-// using Dialog, which I know to my cost is utterly impractical or I'd already be using it. Perplexity does say I can
-// attach the modifier to the Scaffold no problem. Perplexity also suggests the liveRegion thing is not necessary or appropriate here - it (I haven't tried to read up on this myself) is sort of related to visual things like scrims, and for a full screen dialog it's not appropriate.
-//
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            TopAppBar(
-                navigationIcon = {
-                    IconButton(enabled = !isBusySaving, onClick = { requestDismiss() }) {
-                        Icon(Icons.Default.Close, contentDescription = "Close")
-                    }
-                },
-                title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price" (even though we call it that internally, because it's the "price" table), you can also eg edit pack size and probably a free text notes field etc
-                actions = {
-                    TextButton(enabled = !isBusySaving, onClick = {
-                        coroutineScope.launch {
-                            // TODO: Maybe we shouldn't be passing editablePrice around as a
-                            // parameter so much, when it's implicit in the ViewModel? This would
-                            // apply elsewhere, not just here.
-                            when (vm.validateEditablePrice(uiContent.editablePrice.value)) {
-                                EditPriceViewModel.ValidationState.OK -> {
-                                    // delay(5000) // TODO HACK
-                                    vm.saveEditablePrice(uiContent.editablePrice.value)
-                                }
-                                // TODO: We could possibly try to "animate" the problematic text
-                                // field we just focused (e.g. pulse its border colour) to draw
-                                // attention to it further, but this feels surprisingly fiddly and I
-                                // am not sure it's ncessary. My inclination is to leave this for
-                                // now and let the code settle down first before maybe trying to add
-                                // it.
-                                EditPriceViewModel.ValidationState.PACK_SIZE_INVALID -> {
-                                    scrollState.animateScrollTo(packSizeY)
-                                    packSizeFocusRequester.requestFocus()
-                                    // TODO GENERATE ERROR - EG A SNACKBAR
-                                }
+    // TODO: We could possibly try to "animate" the problematic text
+    // field we just focused (e.g. pulse its border colour) to draw
+    // attention to it further, but this feels surprisingly fiddly and I
+    // am not sure it's necessary. My inclination is to leave this for
+    // now and let the code settle down first before maybe trying to add
+    // it.
+    GeneralEditScreen(
+        vm = vm.generalEditScreenViewModel,
+        navController = navController,
+        title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price" (even though we call it that internally, because it's the "price" table), you can also eg edit pack size and probably a free text notes field etc
+        isDirty = {
+            uiContent.editablePrice.value.copy(toConfirm = false) !=
+                    uiContent.originalPrice.copy(toConfirm = false)
+        },
+        validateForSave = { vm.validateForSave() },
+        performSave = { vm.performSave() },
+        requestClose = requestClose,
+    ) {
+        TextField(
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Product") },
+            value = uiContent.item.name,
+            enabled = false,
+            onValueChange = {})
 
-                                EditPriceViewModel.ValidationState.PRICE_INVALID -> {
-                                    scrollState.animateScrollTo(priceY)
-                                    priceFocusRequester.requestFocus()
-                                    // TODO GENERATE ERROR - EG A SNACKBAR
-                                }
-                            }
-                        }
-                    }) {
-                        if (saveStatus == SaveStatus.BusySavingSlowly) {
-                            SmallCircularProgressIndicator()
-                        } else {
-                            Text("Save")
-                        }
-                    }
-                },
+        Spacer(modifier = Modifier.height(8.dp))
+
+        TextField(
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Store") },
+            value = uiContent.source.name,
+            enabled = false,
+            onValueChange = {})
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        val units: List<MeasureUnit> =
+            remember(uiContent.dataSet, uiContent.item.defaultUnit.quantityType) {
+                getRelevantMeasureUnits(
+                    uiContent.dataSet,
+                    uiContent.item.defaultUnit.quantityType,
+                    includeDisplayOnly = false
+                )
+            }
+        var packSizeSupportingText by remember {
+            mutableStateOf<Pair<Boolean, String?>>(
+                Pair(
+                    false,
+                    null
+                )
             )
-        },
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
-        },
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am
-                // struggling to find any non-LLM explanations here, but *maybe* *if we have
-                // scrolled away from the top* we should change the background to surfaceContainer
-                .background(MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = fullScreenDialogBorder)
-                .verticalScroll(scrollState)
-        ) {
-            TextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Product") },
-                value = uiContent.item.name,
-                enabled = false,
-                onValueChange = {})
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            TextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Store") },
-                value = uiContent.source.name,
-                enabled = false,
-                onValueChange = {})
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            val units: List<MeasureUnit> =
-                remember(uiContent.dataSet, uiContent.item.defaultUnit.quantityType) {
-                    getRelevantMeasureUnits(
-                        uiContent.dataSet,
-                        uiContent.item.defaultUnit.quantityType,
-                        includeDisplayOnly = false
-                    )
-                }
-            var packSizeSupportingText by remember {
-                mutableStateOf<Pair<Boolean, String?>>(
-                    Pair(
-                        false,
-                        null
-                    )
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned { coordinates ->
-                        packSizeY = coordinates.positionInParent().y.toInt()
-                    }) {
-                Row {
-                    // TODO: Using weight to size the components is also sucky, since we really
-                    // just want "a reasonable fixed size" for the unit with
-                    // the product taking whatever's left, but this will do for now.
-                    var packSizeNumber by rememberSyncedTextFieldValue(
-                        uiContent.editablePrice.value.measureValue
-                    )
-                    NumericTextField(
-                        label = { Text("Pack size") },
-                        value = packSizeNumber,
-                        validationRules = vm.packSizeValidationRules,
-                        validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
-                        onValueChange = {
-                            packSizeNumber = it
-                            if (uiContent.editablePrice.value.measureValue != it.text) {
-                                vm.setUIContentEditablePrice(
-                                    uiContent.editablePrice.value.copy(
-                                        measureValue = it.text
-                                    )
-                                )
-                                onPackSizeOrPriceChange()
-                            }
-                        },
-                        onSupportingTextChange = { isError, supportingText ->
-                            packSizeSupportingText = Pair(isError, supportingText)
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .focusRequester(packSizeFocusRequester)
-                    )
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    MyExposedDropdownMenuBox(
-                        selectedId = uiContent.editablePrice.value.measureUnit.id,
-                        onValueChange = {
-                            val measureUnit = MeasureUnit.fromValue(it)
-                            devCheck(measureUnit != null) {
-                                "Expected non-null measureUnit to be selected; got $it"
-                            }
-                            if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
-                                vm.setUIContentEditablePrice(
-                                    uiContent.editablePrice.value.copy(
-                                        measureUnit = measureUnit
-                                    )
-                                )
-                                onPackSizeOrPriceChange()
-                            }
-                        },
-                        label = { Text("Unit") },
-                        items = units,
-                        modifier = Modifier.weight(0.5f),
-                        getId = { it.id },
-                        getLabel = { it.symbol },
-                    )
-                }
-            }
-            if (packSizeSupportingText.second != null) {
-                Text(
-                    text = packSizeSupportingText.second!!,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (packSizeSupportingText.first) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 4.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            /* TODO DELETE - JUST TEMP TO CHECK MY "FAKE" SUPPORTING TEXT MATCHES IN SPACING AND APPEARANCE
-    TextField(value="TODOTEMP", onValueChange = {}, modifier = Modifier.fillMaxWidth(), label={ Text("TODOTEMP") }, supportingText = { Text("Comparison supporting text") })
-    */
-            // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that
-            // would give a width for an arbitrary string and we could use something like that to
-            // size fields like this and/or the unit (albeit both have some extra window furniture -
-            // but we could for example compute a "notional text size" taking font size into account
-            // for " £  1234.00     " (spaces approximating margins/space for icons to pop in) and "
-            // litre    " (ditto) and use those sizes as the weights - we don't want both things
-            // fixed size as they won't fill the screen then, and we probably don't want one
-            // "minimal" and the other filling rest of space - but then again, if you do that, a
-            // fixed ratio is probably more or less the same since both will expand with font size
-            // just the same, so maybe that would be pointless
-            var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
-            Box(modifier = Modifier.onGloballyPositioned { coordinates ->
-                priceY = coordinates.positionInParent().y.toInt()
-            }) {
-                val currencyFormat = vm.currencyFormat
-                NumericTextField(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(priceFocusRequester),
-                    label = { Text("Pack price") },
-                    value = packPrice,
-                    prefix = textOrNull(currencyFormat.prefix),
-                    suffix = textOrNull(currencyFormat.suffix),
-                    // TODO: Is it correct to right-align like this? I will assume it is for now.
-                    // Maybe there's an argument since the unit on the pack size is pseudo-suffixy,
-                    // we should right-align the pack size - but I think that might look ugly. But
-                    // maybe that means this looks ugly. But maybe it's different if you're used to
-                    // the currency symbol being on the right. Or maybe the currency symbol should
-                    // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
-                    // wait for user feedback?
-                    textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
-                        textAlign = TextAlign.End
-                    ) else LocalTextStyle.current,
-                    validationRules = currencyFormat.validationRules,
-                    // We don't need a validationRulesKey here because the currency validation rules
-                    // cannot change while we are editing. They depend only on our DataSet and our
-                    // frozen locale.
-                    onValueChange = {
-                        packPrice = it
-                        if (uiContent.editablePrice.value.price != it.text) {
-                            vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
-                            onPackSizeOrPriceChange()
-                        }
-                    },
-                    supportingText = "This is more supporting text just as a test.",
-                )
-            }
-
-            // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
-            // why are we entering it?
-            if (uiContent.editablePrice.value.id != 0L) {
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        // TODO: WORDING FOR BOTH THESE MIGHT WANT TWEAKING
-                        Text(
-                            text = "Confirm pack size and price",
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "The above details are correct right now",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    Switch(
-                        checked = uiContent.editablePrice.value.toConfirm,
-                        onCheckedChange = {
-                            vm.setUIContentEditablePrice(
-                                uiContent.editablePrice.value.copy(
-                                    toConfirm = it
-                                )
-                            )
-                        })
-                }
-            } else {
-                devCheck(uiContent.editablePrice.value.toConfirm) {
-                    "Expected toConfirm to be true as this is the first price, but it's false"
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
-            TextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Notes") },
-                value = uiContent.editablePrice.value.details,
+        }
+        Row {
+            // TODO: Using weight to size the components is also sucky, since we really
+            // just want "a reasonable fixed size" for the unit with
+            // the product taking whatever's left, but this will do for now.
+            var packSizeNumber by rememberSyncedTextFieldValue(
+                uiContent.editablePrice.value.measureValue
+            )
+            NumericTextField(
+                label = { Text("Pack size") },
+                value = packSizeNumber,
+                validationRules = vm.packSizeValidationRules,
+                validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
                 onValueChange = {
-                    vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(details = it))
-                },
-            )
-        }
-
-        if (showConfirmDialog) {
-            // I copied the wording of this dialog directly from a screenshot in the M3 documentation.
-            AlertDialog(
-                title = { Text("Discard unsaved changes?") },
-                text = { Text("You have changes that won't be saved if you close.") },
-                onDismissRequest = { showConfirmDialog = false },
-                dismissButton = {
-                    TextButton(onClick = {
-                        showConfirmDialog = false
-                    }) { Text("Keep editing") }
-                },
-                confirmButton = {
-                    TextButton(onClick = { requestCloseDebounced() }) {
-                        Text(
-                            "Discard"
+                    packSizeNumber = it
+                    if (uiContent.editablePrice.value.measureValue != it.text) {
+                        vm.setUIContentEditablePrice(
+                            uiContent.editablePrice.value.copy(
+                                measureValue = it.text
+                            )
                         )
+                        onPackSizeOrPriceChange()
                     }
                 },
+                onSupportingTextChange = { isError, supportingText ->
+                    packSizeSupportingText = Pair(isError, supportingText)
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .scrollToFocusable(packSizeScrollToFocusableHandle)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            MyExposedDropdownMenuBox(
+                selectedId = uiContent.editablePrice.value.measureUnit.id,
+                onValueChange = {
+                    val measureUnit = MeasureUnit.fromValue(it)
+                    devCheck(measureUnit != null) {
+                        "Expected non-null measureUnit to be selected; got $it"
+                    }
+                    if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
+                        vm.setUIContentEditablePrice(
+                            uiContent.editablePrice.value.copy(
+                                measureUnit = measureUnit
+                            )
+                        )
+                        onPackSizeOrPriceChange()
+                    }
+                },
+                label = { Text("Unit") },
+                items = units,
+                modifier = Modifier.weight(0.5f),
+                getId = { it.id },
+                getLabel = { it.symbol },
+            )
+        }
+        if (packSizeSupportingText.second != null) {
+            Text(
+                text = packSizeSupportingText.second!!,
+                style = MaterialTheme.typography.bodySmall,
+                color = if (packSizeSupportingText.first) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 4.dp)
             )
         }
 
-        if (showErrorDialog) {
-            // We use an AlertDialog not a snackbar here. This is a local database save which is
-            // failing so it is very unlikely to be transient. We also don't want the user
-            // missing the snackbar, thinking the app is buggy ("I already saved, why didn't the
-            // dialog close?") and then tapping the close icon without realising their changes
-            // have not been saved. (If transient failure was a possibility - e.g. we needed to
-            // perform network activity - there might be value in showing a snackbar, maybe with
-            // a fallback to an AlertDialog if things keep failing.)
-            AlertDialog(
-                title = { Text("Unable to save changes") },
-                text = { Text("An error occurred while saving the changes.") },
-                onDismissRequest = { showErrorDialog = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showErrorDialog = false
-                    }) { Text("OK") }
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that
+        // would give a width for an arbitrary string and we could use something like that to
+        // size fields like this and/or the unit (albeit both have some extra window furniture -
+        // but we could for example compute a "notional text size" taking font size into account
+        // for " £  1234.00     " (spaces approximating margins/space for icons to pop in) and "
+        // litre    " (ditto) and use those sizes as the weights - we don't want both things
+        // fixed size as they won't fill the screen then, and we probably don't want one
+        // "minimal" and the other filling rest of space - but then again, if you do that, a
+        // fixed ratio is probably more or less the same since both will expand with font size
+        // just the same, so maybe that would be pointless
+        var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
+        val currencyFormat = vm.currencyFormat
+        NumericTextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .scrollToFocusable(priceScrollToFocusableHandle),
+            label = { Text("Pack price") },
+            value = packPrice,
+            prefix = textOrNull(currencyFormat.prefix),
+            suffix = textOrNull(currencyFormat.suffix),
+            // TODO: Is it correct to right-align like this? I will assume it is for now.
+            // Maybe there's an argument since the unit on the pack size is pseudo-suffixy,
+            // we should right-align the pack size - but I think that might look ugly. But
+            // maybe that means this looks ugly. But maybe it's different if you're used to
+            // the currency symbol being on the right. Or maybe the currency symbol should
+            // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
+            // wait for user feedback?
+            textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
+                textAlign = TextAlign.End
+            ) else LocalTextStyle.current,
+            validationRules = currencyFormat.validationRules,
+            // We don't need a validationRulesKey here because the currency validation rules
+            // cannot change while we are editing. They depend only on our DataSet and our
+            // frozen locale.
+            onValueChange = {
+                packPrice = it
+                if (uiContent.editablePrice.value.price != it.text) {
+                    vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
+                    onPackSizeOrPriceChange()
                 }
-            )
+            },
+            supportingText = "This is more supporting text just as a test.",
+        )
+
+        // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
+        // why are we entering it?
+        if (uiContent.editablePrice.value.id != 0L) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    // TODO: WORDING FOR BOTH THESE MIGHT WANT TWEAKING
+                    Text(
+                        text = "Confirm pack size and price",
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "The above details are correct right now",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                Switch(
+                    checked = uiContent.editablePrice.value.toConfirm,
+                    onCheckedChange = {
+                        vm.setUIContentEditablePrice(
+                            uiContent.editablePrice.value.copy(
+                                toConfirm = it
+                            )
+                        )
+                    })
+            }
+        } else {
+            devCheck(uiContent.editablePrice.value.toConfirm) {
+                "Expected toConfirm to be true as this is the first price, but it's false"
+            }
         }
 
-        LaunchedEffect(showSavingSnackbar) {
-            if (showSavingSnackbar) {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Saving, please wait...")
-                    showSavingSnackbar = false
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
+        TextField(
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Notes") },
+            value = uiContent.editablePrice.value.details,
+            onValueChange = {
+                vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(details = it))
+            },
+        )
+    }
+
+    LaunchedEffect(Unit) {
+        vm.saveValidationEvents.collect { field ->
+            Log.d("MyApp", "LaunchedEffect saveValidationError $field")
+            when (field) {
+                EditPriceViewModel.EditableField.PACK_SIZE -> {
+                    scrollAndFocusTo(packSizeScrollToFocusableHandle)
                 }
+                EditPriceViewModel.EditableField.PRICE -> {
+                    scrollAndFocusTo(priceScrollToFocusableHandle)
+                }
+
             }
         }
     }
 }
+
 
 // TODO: Rename? This is not actually a ViewModel, though it plays a similar role (I think).
 // TODO: Can/should this be handled via rememberSaveable inside GeneralEditScreen? I think in some
@@ -3536,8 +3334,6 @@ fun runGeneralEditScreenOperation(
     }
 }
 
-// TODO: The fantasy outcome would be to be able to use this to avoid duplication with/simplify
-// EditPriceScreen as well as the static data editing.
 @Composable
 fun GeneralEditScreen(
     vm: GeneralEditScreenViewModel,
@@ -3622,6 +3418,19 @@ fun GeneralEditScreen(
             }
         }
     }
+
+// TODO: Grok suggests wrapping a Box with:
+//Modifier.semantics {
+//    role = Role.Dialog // Marks this as a dialog for TalkBack
+//    contentDescription = "Full-screen dialog for [task, e.g., entering details]" // Optional: describe purpose
+//    liveRegion = LiveRegionMode.Polite // Announce when dialog opens
+//} *around* the Scaffold. I am not entirely sure about flagging this as a dialog anyway - I sort of get the MD3 "full screen dialog" concept, but it feels very technical and not something a user (accessibility-using or not) is likely to be actively aware of. I suppose there is some argument that it clues the user in to expect (as there is) a close icon and a "confirm" type icon in the top bar.
+// I suspect I shouldn't provide a contentDescription unless/until I do this for other screens, and at the moment I am trying not to be actively accessibility-hostile but not go out of my way to add stuff that may not be helpful. If the app is released it will be open source and I'm happy to take advice/patches if someone actually is using this.
+// I would rather attach the modifier to the Scaffold if I can, but I don't know if that will work correctly. Maybe it
+// doesn't work with a Box either, I haven't tested that. (Perplexity.ai says this semantics modifier won't truly flag it
+// as a dialog, but the link it gives doesn't actually say that. It doesn't have a better option, short of actually
+// using Dialog, which I know to my cost is utterly impractical or I'd already be using it. Perplexity does say I can
+// attach the modifier to the Scaffold no problem. Perplexity also suggests the liveRegion thing is not necessary or appropriate here - it (I haven't tried to read up on this myself) is sort of related to visual things like scrims, and for a full screen dialog it's not appropriate.
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -4703,6 +4512,9 @@ class EditPriceViewModel(
     val uiContent: EditPriceScreenUIContent,
 ) : ViewModel() {
     private val instanceId = UUID.randomUUID().toString() // TODO FOR DEBUG
+
+    val generalEditScreenViewModel = GeneralEditScreenViewModel()
+
     var packSizeValidationRules = generatePackSizeValidationRules()
     var currencyFormat = getCurrencyFormat(uiContent.dataSet, uiContent.frozenLocale)
 
@@ -4741,58 +4553,42 @@ class EditPriceViewModel(
     // into EditPriceScreenUIContent).
     var firstPackSizeOrPriceChangeOccurred: Boolean = false
 
-    enum class ValidationState {
-        OK,
-        PACK_SIZE_INVALID,
-        PRICE_INVALID
+    enum class EditableField {
+        PACK_SIZE,
+        PRICE
     }
+    private val _saveValidationEvents = MutableSharedFlow<EditableField>()
+    val saveValidationEvents = _saveValidationEvents.asSharedFlow()
 
     // TODO: It's tempting to think this should be on EditablePrice itself, but the whole point is
     // that it will apply (sharing as much as possible) the same validation rules that the
     // ValidatedTextFields are using - and those aren't available to EditablePrice, and based on
     // discussion with ChatGPT I think it's better to have this function here than pass this
     // ViewModel as an argument to EditablePrice.toDomain()
-    fun validateEditablePrice(editablePrice: EditablePrice): ValidationState {
-        if (!validationRulesOk(packSizeValidationRules, editablePrice.measureValue)) {
-            return ValidationState.PACK_SIZE_INVALID
+    suspend fun validateForSave(): Boolean {
+        if (!validationRulesOk(packSizeValidationRules, uiContent.editablePrice.value.measureValue)) {
+            _saveValidationEvents.emit(EditableField.PACK_SIZE)
+            return false
         }
-        if (!validationRulesOk(currencyFormat.validationRules, editablePrice.price)) {
-            return ValidationState.PRICE_INVALID
+        if (!validationRulesOk(currencyFormat.validationRules, uiContent.editablePrice.value.price)) {
+            _saveValidationEvents.emit(EditableField.PRICE)
+            return false
         }
-        // TODO: MORE?
-        return ValidationState.OK
+        return true
     }
 
-    fun saveEditablePrice(editablePrice: EditablePrice) {
-        val price = editablePrice.toDomain(uiContent.frozenLocale)
+    suspend fun performSave() {
+        val price = uiContent.editablePrice.value.toDomain(uiContent.frozenLocale)
         Log.d("MyApp", "saveEditablePrice price $price")
-        if (price != null) {
-            updateOrInsertPrice(price)
-        } else {
-            // This is an internal logic error. Our caller should have got confirmation from
-            // validateEditablePrice() that editablePrice is OK, and if that says it's OK toDomain()
-            // should not fail.
-            throw IllegalStateException("saveEditablePrice() called with an inconvertible editablePrice: $editablePrice")
+        if (price == null) {
+            throw IllegalStateException("saveEditablePrice() called with an inconvertible editablePrice: ${uiContent.editablePrice.value}")
         }
+        priceTrackerRepository.updateOrInsertPrice(price)
     }
 
     // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
 
-    val saveStatus = SyncedStateEvent(SaveStatus.Idle)
-
-    // TODO: Use upsert in name?
-    private fun updateOrInsertPrice(price: Price) {
-        viewModelScope.launch {
-            saveStatus.update(SaveStatus.BusySaving)
-            try {
-                //delay(3700); // TODO TEMP FOR DEBUGGING
-                priceTrackerRepository.updateOrInsertPrice(price)
-                saveStatus.update(SaveStatus.Success)
-            } catch (e: Exception) {
-                saveStatus.update(SaveStatus.Error) // TODO: how can we preserve e and show it to user in UI?
-            }
-        }
-    }
+    // TODO DELETE? val saveStatus = SyncedStateEvent(SaveStatus.Idle)
 }
 
 // TODO: This is not just a *save* status any more - rename
@@ -4814,7 +4610,7 @@ fun SmallCircularProgressIndicator() {
     )
 }
 
-    class EditSourceViewModel(
+class EditSourceViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
     val uiContent: EditSourceScreenUIContent,
