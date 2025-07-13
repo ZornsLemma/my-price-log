@@ -3562,27 +3562,8 @@ fun GeneralEditScreen(
     // TODO: We may need to make this available to the content() so it can use it for scrolling to highlight errors, or it may be that we don't need it here at all and it can be entirely in the content()
     val scrollState = rememberScrollState()
 
-    // TODO: ChatGPT magic. This idea here is that a) currentBackStackEntry reflects the actual back
-    // stack, not merely "we have popped but it hasn't come into effect yet" b) this will force
-    // isNavigating to be initialised to false when we are re-entered "fresh" but not if e.g. a
-    // rotation occurs. I can't help thinking we can simplify this by storing a close-debounce flag
-    // in the ViewModel, which ought to be re-created from scratch every time we are "truly
-    // re-entered" (either because popBackStack() discards the old state or because the random UUID
-    // trick effectively guarantees this - I am far from clear what the actual reality of how
-    // popBackStack() works is).
-    var isNavigating by remember(navController.currentBackStackEntry) {
-        mutableStateOf(false)
-    }
-
-    fun requestCloseDebounced() {
-        // We need isNavigating to de-bounce the close button so we don't invoke requestClose()
-        // (which probably calls popBackStack() and is therefore not idempotent) if the user double
-        // taps the close button quickly. (We may not need this for other ways of closing, but it
-        // shouldn't hurt and is probably safer.)
-        if (!isNavigating) {
-            isNavigating = true
-            requestClose()
-        }
+    val requestCloseDebounced = dropUnlessResumed {
+        requestClose()
     }
 
     fun requestDismiss() {
