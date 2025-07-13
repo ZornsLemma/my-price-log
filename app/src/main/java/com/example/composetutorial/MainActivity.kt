@@ -3054,7 +3054,7 @@ fun EditPriceScreen(
     // TODO: Arguably we should do something similar with the spinner - if we've ever been in
     // SavingSlowly state, we should keep showing the spinner until we close.
     val isSaving =
-        (saveStatus == EditPriceViewModel.SaveStatus.Saving) || (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) || (saveStatus == EditPriceViewModel.SaveStatus.Success)
+        (saveStatus == SaveStatus.Saving) || (saveStatus == SaveStatus.SavingSlowly) || (saveStatus == SaveStatus.Success)
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
     var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
@@ -3114,7 +3114,7 @@ fun EditPriceScreen(
             // of a progress indicator appearing straight away. Let the progress indicator kick
             // in after a short delay if we're still here waiting for the save to complete.
             delay(spinnerDelayMillis)
-            vm.saveStatus.update(EditPriceViewModel.SaveStatus.SavingSlowly)
+            vm.saveStatus.update(SaveStatus.SavingSlowly)
         }
         // TODO: I don't think we need to set it back to false in else, but maybe revise all
         // this later.
@@ -3124,12 +3124,12 @@ fun EditPriceScreen(
     LaunchedEffect(Unit) {
         vm.saveStatus.events.collect { event ->
             when (event) {
-                EditPriceViewModel.SaveStatus.Success -> {
+                SaveStatus.Success -> {
                     requestCloseDebounced()
                 }
 
-                EditPriceViewModel.SaveStatus.Error -> {
-                    vm.saveStatus.update(EditPriceViewModel.SaveStatus.Idle)
+                SaveStatus.Error -> {
+                    vm.saveStatus.update(SaveStatus.Idle)
                     showErrorDialog = true
                 }
 
@@ -3215,7 +3215,7 @@ fun EditPriceScreen(
                             }
                         }
                     }) {
-                        if (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) {
+                        if (saveStatus == SaveStatus.SavingSlowly) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
                                 strokeWidth = 2.dp,
@@ -3516,7 +3516,7 @@ fun EditPriceScreen(
 // indicative of a serious problem, will it matter that our state has been serialised to a bundle!?
 // I need to thinka bout this later when it's maybe clearer.
 class GeneralEditScreenViewModel {
-    val saveStatus = SyncedStateEvent(EditPriceViewModel.SaveStatus.Idle)
+    val saveStatus = SyncedStateEvent(SaveStatus.Idle)
 }
 
 // TODO: The fantasy outcome would be to be able to use this to avoid duplication with/simplify
@@ -3539,9 +3539,9 @@ fun GeneralEditScreen(
     // button re-appears, but it feels confusing to close while showing the spinner, since it might
     // suggest to the user we *haven't* finished but are for some reason closing anyway.)
     val isBusy =
-        (saveStatus == EditPriceViewModel.SaveStatus.Saving) ||
-                (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) ||
-                (saveStatus == EditPriceViewModel.SaveStatus.Success)
+        (saveStatus == SaveStatus.Saving) ||
+                (saveStatus == SaveStatus.SavingSlowly) ||
+                (saveStatus == SaveStatus.Success)
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
     var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
@@ -3599,7 +3599,7 @@ fun GeneralEditScreen(
             // of a progress indicator appearing straight away. Let the progress indicator kick
             // in after a short delay if we're still here waiting for the save to complete.
             delay(spinnerDelayMillis)
-            vm.saveStatus.update(EditPriceViewModel.SaveStatus.SavingSlowly)
+            vm.saveStatus.update(SaveStatus.SavingSlowly)
         }
         // TODO: I don't think we need to set it back to false in else, but maybe revise all
         // this later.
@@ -3609,12 +3609,12 @@ fun GeneralEditScreen(
     LaunchedEffect(Unit) {
         vm.saveStatus.events.collect { event ->
             when (event) {
-                EditPriceViewModel.SaveStatus.Success -> {
+                SaveStatus.Success -> {
                     requestCloseDebounced()
                 }
 
-                EditPriceViewModel.SaveStatus.Error -> {
-                    vm.saveStatus.update(EditPriceViewModel.SaveStatus.Idle)
+                SaveStatus.Error -> {
+                    vm.saveStatus.update(SaveStatus.Idle)
                     showErrorDialog = true
                 }
 
@@ -3652,18 +3652,18 @@ fun GeneralEditScreen(
                             // If validateForSave() returns false, caller should probably have done
                             // any auto-scroll or other UI highlighting to convey problem to user. TODO!?
                             if (validateForSave()) {
-                                vm.saveStatus.update(EditPriceViewModel.SaveStatus.Saving)
+                                vm.saveStatus.update(SaveStatus.Saving)
                                 delay(5000) // TODO HACK
                                 try {
                                     performSave()
-                                    vm.saveStatus.update(EditPriceViewModel.SaveStatus.Success)
+                                    vm.saveStatus.update(SaveStatus.Success)
                                 } catch (e: Exception) {
-                                    vm.saveStatus.update(EditPriceViewModel.SaveStatus.Error) // TODO: can/should we preserve e and show it to user in UI?
+                                    vm.saveStatus.update(SaveStatus.Error) // TODO: can/should we preserve e and show it to user in UI?
                                 }
                             }
                         }
                     }) {
-                        if (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) {
+                        if (saveStatus == SaveStatus.SavingSlowly) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
                                 strokeWidth = 2.dp,
@@ -3897,7 +3897,7 @@ fun EditSourceScreen(
                     // THE ACTUAL DELETE INSIDE A COROUTINE) CAN TRIGGER THE "SAVE" (TO BE RENAMED)
                     // TIMER AND DISABLE AND SPINNER LOGIC BY UPDATING THE STATEVENT THING HERE
                     vm.viewModelScope.launch {
-                        vm.generalEditScreenViewModel.saveStatus.update(EditPriceViewModel.SaveStatus.Saving)
+                        vm.generalEditScreenViewModel.saveStatus.update(SaveStatus.Saving)
                     }
                 }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
             },
@@ -4768,9 +4768,6 @@ class EditPriceViewModel(
 
     // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
 
-    // TODONOW: This should be moved outside EditPriceViewModel - it will be useful for other screens
-    enum class SaveStatus { Idle, Saving, SavingSlowly, Success, Error }
-
     val saveStatus = SyncedStateEvent(SaveStatus.Idle)
 
     // TODO: Use upsert in name?
@@ -4787,6 +4784,8 @@ class EditPriceViewModel(
         }
     }
 }
+
+enum class SaveStatus { Idle, Saving, SavingSlowly, Success, Error }
 
 class EditSourceViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
