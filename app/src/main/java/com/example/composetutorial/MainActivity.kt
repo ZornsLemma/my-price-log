@@ -3892,6 +3892,13 @@ fun EditSourceScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteConfirmDialog = false
+                    // TODO EXPERIMENTAL HACKERY - THE POINT BEING THAT THIS (OR PERHAPS ACTUALLY A
+                    // STANDARD HELPER FN TO ACCOMPANY GES ITSELF AND WHICH WILL CALL US BACK TO DO
+                    // THE ACTUAL DELETE INSIDE A COROUTINE) CAN TRIGGER THE "SAVE" (TO BE RENAMED)
+                    // TIMER AND DISABLE AND SPINNER LOGIC BY UPDATING THE STATEVENT THING HERE
+                    vm.viewModelScope.launch {
+                        vm.generalEditScreenViewModel.saveStatus.update(EditPriceViewModel.SaveStatus.Saving)
+                    }
                 }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
             },
         )
