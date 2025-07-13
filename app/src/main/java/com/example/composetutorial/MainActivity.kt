@@ -3870,7 +3870,7 @@ fun EditSourceScreen(
         AlertDialog(
             icon = if (isSimpleDelete) null else {
                 {
-                    Icon(
+                    Icon( // TODO: Do I need to set the size of this icon explicitly?
                         imageVector = Icons.Default.Warning,
                         contentDescription = "Warning",
                         tint = MaterialTheme.colorScheme.error
