@@ -2765,7 +2765,12 @@ fun HomeScreenScaffold(
     // TODO: I have tried to get the dimensions right as per M3 specs here, but I'm not that
     // confident. Although I think I have followed the font size/style advice, I am not sure it
     // doesn't look weird - it would maybe be good to e.g. compare with a modern-ish version of
-    // GMail and see what that looks like.
+    // GMail and see what that looks like. Playing with Material Files, I do wonder if the desired
+    // effect is just that the background of the drawer does go "behind" the top and bottom system
+    // bars but they continue to draw on top - in which case I probably can achieve this, if I
+    // get rid of my window insets or whatever at the very top level of my NavHost and move it into
+    // individual screens, so this screen can have full screen for the drawer and apply the insets
+    // to everything else.
     // TODO: Will this scroll nicely if we have loads of data sets?
     ModalNavigationDrawer(
         drawerState = drawerState,
