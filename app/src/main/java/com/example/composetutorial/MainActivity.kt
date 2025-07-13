@@ -1518,7 +1518,7 @@ enum class ThemePreference {
 // on-screen data is outdated, but we retain consistency. Even if the data retrieval is quicker than
 // spinnerDelay ms, we don't want a janky double-update where the dropdown's content changes
 // instantly then the associated data changes a few ms later.
-const val spinnerDelayMillis = 200L
+const val spinnerDelayMillis = 1000L // TODO SHOULD BE 200L
 
 // This value is a trade-off between showing the user validation failures ASAP and not annoying them
 // by showing transient validation failures while they are in the middle of actively editing. This
@@ -3533,12 +3533,12 @@ fun GeneralEditScreen(
     content: @Composable () -> Unit
 ) {
     val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
-    // We count "success" as saving here, since we don't want the "Save" button to re-enable
-    // briefly; it looks ugly, we already saved (so saving again makes no sense if the user does
-    // manage to click it) and we are about to close this screen.
-    // TODO: Arguably we should do something similar with the spinner - if we've ever been in
-    // SavingSlowly state, we should keep showing the spinner until we close.
-    val isSaving =
+    // We count "success" as busy here, since it doesn't make sense to re-enable the "Save" button
+    // after we already saved and are about to close. (We do get rid of the spinner when we reach
+    // "success"; this might cause a small but legitimate visual glitch as the disabled "Save"
+    // button re-appears, but it feels confusing to close while showing the spinner, since it might
+    // suggest to the user we *haven't* finished but are for some reason closing anyway.)
+    val isBusy =
         (saveStatus == EditPriceViewModel.SaveStatus.Saving) ||
                 (saveStatus == EditPriceViewModel.SaveStatus.SavingSlowly) ||
                 (saveStatus == EditPriceViewModel.SaveStatus.Success)
@@ -3584,7 +3584,7 @@ fun GeneralEditScreen(
     }
 
     BackHandler {
-        if (!isSaving) {
+        if (!isBusy) {
             requestDismiss()
         } else {
             // I've discussed this with LLMs and it's not clear if - from a UI perspective - we
@@ -3593,8 +3593,8 @@ fun GeneralEditScreen(
         }
     }
 
-    LaunchedEffect(isSaving) {
-        if (isSaving) {
+    LaunchedEffect(isBusy) {
+        if (isBusy) {
             // We expect the save to complete quickly so we don't want the visual distraction
             // of a progress indicator appearing straight away. Let the progress indicator kick
             // in after a short delay if we're still here waiting for the save to complete.
@@ -3628,7 +3628,7 @@ fun GeneralEditScreen(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(enabled = !isSaving, onClick = { requestDismiss() }) {
+                    IconButton(enabled = !isBusy, onClick = { requestDismiss() }) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 },
@@ -3642,7 +3642,7 @@ fun GeneralEditScreen(
                     // TODO: Just possibly instead of always calling onSave, onClick should call
                     // isDirty first and just dismiss without saving if it returns false - but that
                     // might be confusing and it's maybe optimising a corner case
-                    TextButton(enabled = !isSaving, onClick = {
+                    TextButton(enabled = !isBusy, onClick = {
                         // TODO: I think the layout here is good and in fact better than it was,
                         // but note that unlike the EditPrice stuff this is being based on, here
                         // updateOrInsertFoo() does not (and probably cannot, since it's an
@@ -3653,7 +3653,7 @@ fun GeneralEditScreen(
                             // any auto-scroll or other UI highlighting to convey problem to user. TODO!?
                             if (validateForSave()) {
                                 vm.saveStatus.update(EditPriceViewModel.SaveStatus.Saving)
-                                //delay(5000) // TODO HACK
+                                delay(5000) // TODO HACK
                                 try {
                                     performSave()
                                     vm.saveStatus.update(EditPriceViewModel.SaveStatus.Success)
