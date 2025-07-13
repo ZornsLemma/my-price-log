@@ -5325,4 +5325,9 @@ Log.d("MyApp", baz.toString())
 // animation may not depend on being a "true dialog", of course.) I do wonder - not seen
 // anything in docs - if this also suggests some kind of "expansion" animation should happen from
 // the clicked-on source/item/dataset into the full screen dialog to edit it. Currently the code is
-// doing the "standard" full screen dialog slide in from bottom animation anyway.
+// doing the "standard" full screen dialog slide in from bottom animation anyway. (I had some
+// discussions with LLMs about what to do for edit not add cases, where you click on a list item to
+// open the edit dialog - from a UI design perspective, not how/ease of implementation. Using the
+// standard slide in transform over a "container transform" was favoured 2:1 here. See how I feel
+// later, and I'm far from confident I can do the FAB container transofrm anyway and that would
+// definitely be the thing to try first (as it *is* called out in MD3 specs).)
