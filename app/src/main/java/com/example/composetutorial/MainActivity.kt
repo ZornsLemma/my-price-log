@@ -3643,8 +3643,6 @@ fun GeneralEditScreen(
                         // updateOrInsertFoo() does not (and probably cannot, since it's an
                         // internal detail here and not exposed) be messing with updating
                         // saveStatus.
-                        // TODO: We might want to pull this launch block out into a helper, pass the
-                        // two callbacks into it, and use that helper for the "delete initiated externally" case too.
                         runGeneralEditScreenOperation(
                             vm = vm,
                             coroutineScope = coroutineScope,
@@ -3656,10 +3654,11 @@ fun GeneralEditScreen(
                             }
                         )
                     }) {
-                        // We do get rid of the spinner when we reach
-                        // "success"; this might cause a small but legitimate visual glitch as the disabled "Save"
-                        // button re-enables, but it feels confusing to close while showing the spinner, since it might
-                        // suggest to the user we *haven't* finished but are for some reason closing anyway.
+                        // We do get rid of the spinner when we reach "success"; this might cause a
+                        // small but legitimate visual glitch as the disabled "Save" button
+                        // re-enables, but it feels confusing to close while showing the spinner,
+                        // since it might suggest to the user we *haven't* finished but are for some
+                        // reason closing anyway.
                         if (saveStatus == SaveStatus.BusySavingSlowly) {
                             SmallCircularProgressIndicator()
                         } else {
@@ -3726,9 +3725,7 @@ fun GeneralEditScreen(
             text = { Text("An error occurred while saving the changes.") },
             onDismissRequest = { showErrorDialog = false },
             confirmButton = {
-                TextButton(onClick = {
-                    showErrorDialog = false
-                }) { Text("OK") }
+                TextButton(onClick = { showErrorDialog = false }) { Text("OK") }
             }
         )
     }
