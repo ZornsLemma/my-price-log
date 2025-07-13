@@ -3216,10 +3216,7 @@ fun EditPriceScreen(
                         }
                     }) {
                         if (saveStatus == SaveStatus.BusySavingSlowly) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                            )
+                            SmallCircularProgressIndicator()
                         } else {
                             Text("Save")
                         }
@@ -3670,10 +3667,7 @@ fun GeneralEditScreen(
                         // should it just be disabled and the caller turn its own delete into a
                         // spinner? This affects a lot of what we actually might want to re-use.
                         if (saveStatus == SaveStatus.BusySavingSlowly) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
-                            )
+                            SmallCircularProgressIndicator()
                         } else {
                             Text("Save")
                         }
@@ -3859,10 +3853,7 @@ fun EditSourceScreen(
                 // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
             ) {
                 if (saveStatus == SaveStatus.BusyOtherSlowly) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(16.dp),
-                        strokeWidth = 2.dp,
-                    )
+                    SmallCircularProgressIndicator()
                 } else {
                     Icon(
                         Icons.Default.Delete,
@@ -4824,7 +4815,15 @@ enum class SaveStatus { Idle, BusySaving, BusySavingSlowly, Busy, BusyOtherSlowl
     }
 }
 
-class EditSourceViewModel(
+@Composable
+fun SmallCircularProgressIndicator() {
+    CircularProgressIndicator(
+        modifier = Modifier.size(16.dp),
+        strokeWidth = 2.dp,
+    )
+}
+
+    class EditSourceViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
     val uiContent: EditSourceScreenUIContent,
