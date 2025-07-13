@@ -3084,6 +3084,7 @@ fun EditPriceScreen(
         },
         validateForSave = { vm.validateForSave() },
         performSave = { vm.performSave() },
+        onIdle = {},
         requestClose = requestClose,
     ) {
         TextField(
@@ -3342,6 +3343,7 @@ fun GeneralEditScreen(
     isDirty: () -> Boolean,
     validateForSave: suspend () -> Boolean,
     performSave: suspend () -> Unit,
+    onIdle: () -> Unit,
     requestClose: () -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -3354,6 +3356,8 @@ fun GeneralEditScreen(
 
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    var saving by rememberSaveable { mutableStateOf(false) }
 
     // TODO: We may need to make this available to the content() so it can use it for scrolling to highlight errors, or it may be that we don't need it here at all and it can be entirely in the content()
     val scrollState = rememberScrollState()
@@ -3383,17 +3387,12 @@ fun GeneralEditScreen(
     LaunchedEffect(Unit) {
         vm.saveStatus.events.collect { event ->
             when (event) {
-                SaveStatus.BusySaving -> {
-                    // We expect the save to complete quickly so we don't want the visual distraction
+                SaveStatus.Busy -> {
+                    // We expect the operation to complete quickly so we don't want the visual distraction
                     // of a progress indicator appearing straight away. Let the progress indicator kick
-                    // in after a short delay if we're still here waiting for the save to complete.
+                    // in after a short delay if we're still here waiting.
                     delay(spinnerDelayMillis)
-                    vm.saveStatus.update(SaveStatus.BusySavingSlowly)
-                }
-
-                SaveStatus.BusyOther -> { // TODO: Rename BusyOther?
-                    delay(spinnerDelayMillis)
-                    vm.saveStatus.update(SaveStatus.BusyOtherSlowly)
+                    vm.saveStatus.update(SaveStatus.BusyForAWhile)
                 }
 
                 else -> {}
@@ -3405,6 +3404,11 @@ fun GeneralEditScreen(
     LaunchedEffect(Unit) {
         vm.saveStatus.events.collect { event ->
             when (event) {
+                SaveStatus.Idle -> {
+                    saving = false
+                    onIdle()
+                }
+
                 SaveStatus.Success -> {
                     requestCloseDebounced()
                 }
@@ -3456,8 +3460,9 @@ fun GeneralEditScreen(
                             vm = vm,
                             coroutineScope = coroutineScope,
                             isSafeToPerform = validateForSave,
-                            busySaveStatus = SaveStatus.BusySaving,
+                            busySaveStatus = SaveStatus.Busy, // TODO: WE MAY NOT NEED THIS ARG ANY MORE
                             perform = {
+                                saving = true
                                 delay(5000) // TODO HACK
                                 performSave()
                             }
@@ -3468,7 +3473,7 @@ fun GeneralEditScreen(
                         // re-enables, but it feels confusing to close while showing the spinner,
                         // since it might suggest to the user we *haven't* finished but are for some
                         // reason closing anyway.
-                        if (saveStatus == SaveStatus.BusySavingSlowly) {
+                        if (saving && saveStatus == SaveStatus.BusyForAWhile) {
                             SmallCircularProgressIndicator()
                         } else {
                             Text("Save")
@@ -3566,12 +3571,16 @@ fun EditSourceScreen(
     val nameScrollToFocusableHandle = rememberScrollToFocusable()
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var deleting by rememberSaveable { mutableStateOf( false) }
 
     val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
+
 
     // TODO: We want option to delete the source - this may need to be on an overflow menu and
     // thus need tweaks to GeneralEditScreen.
 
+    // TODO: Probably not a new bug but neither here nor in EditPrice are we disabling the text
+    // fields during save or delete any more!
     GeneralEditScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
@@ -3579,7 +3588,8 @@ fun EditSourceScreen(
         title = { Text("TODO: TITLE") },
         isDirty = { uiContent.editableSource.value != uiContent.originalSource },
         validateForSave = { vm.validateForSave() },
-        performSave = { vm.performSave() },
+        performSave = { vm.performSave(); throw IllegalArgumentException("TODO2") },
+        onIdle = { deleting = false },
         requestClose = requestClose,
     ) {
         var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
@@ -3652,7 +3662,7 @@ fun EditSourceScreen(
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
             ) {
-                if (saveStatus == SaveStatus.BusyOtherSlowly) {
+                if (deleting && saveStatus == SaveStatus.BusyForAWhile) {
                     SmallCircularProgressIndicator()
                 } else {
                     Icon(
@@ -3674,8 +3684,6 @@ fun EditSourceScreen(
                     Log.d("MyApp", "scrolling to name")
                     scrollAndFocusTo(nameScrollToFocusableHandle)
                 }
-
-                else -> {} // TODO: OK!?
             }
         }
     }
@@ -3712,9 +3720,11 @@ fun EditSourceScreen(
                         vm = vm.generalEditScreenViewModel,
                         coroutineScope = vm.viewModelScope,
                         isSafeToPerform = { true },
-                        busySaveStatus = SaveStatus.BusyOther,
+                        busySaveStatus = SaveStatus.Busy,
                         perform = {
+                            deleting = true
                             delay(5000) // TODO HACK
+                            throw IllegalStateException("TODO")
                             // TODO ACTUALLY DELETE!
                         }
                     )
@@ -4592,13 +4602,12 @@ class EditPriceViewModel(
 }
 
 // TODO: This is not just a *save* status any more - rename
-// TODO: May want to separate this so saving vs other is outside this, and "saving" is just an internal bool of GeneralEditScreen to distinguish busy saving from busy other
-enum class SaveStatus { Idle, BusySaving, BusySavingSlowly, BusyOther, BusyOtherSlowly, Success, Error;
+enum class SaveStatus { Idle, Busy, BusyForAWhile, Success, Error;
 
-    // We count "success" as busy here, since it doesn't make sense to re-enable buttons
-    // after we already saved and are about to close.
+    // We count "success" as busy here, since it doesn't make sense to re-enable buttons after we
+    // succeeded and are about to close.
     fun isNotBusy(): Boolean {
-        return this != BusySaving && this != BusySavingSlowly && this != BusyOther && this != BusyOtherSlowly && this != Success
+        return this != Busy && this != BusyForAWhile && this != Success
     }
 }
 
@@ -4667,7 +4676,6 @@ class EditSourceViewModel(
 
     enum class EditableField {
         NAME,
-        NOTES
     }
     private val _saveValidationEvents = MutableSharedFlow<EditableField>()
     val saveValidationEvents = _saveValidationEvents.asSharedFlow()
