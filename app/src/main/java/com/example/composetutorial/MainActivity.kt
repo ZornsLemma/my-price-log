@@ -61,7 +61,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -88,7 +87,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -189,7 +187,6 @@ import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
-import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.navigation.NavBackStackEntry
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -3757,7 +3754,7 @@ fun EditSourceScreen(
 ) {
     val uiContent = vm.uiContent
 
-    val sourceReferenceCount by vm.sourceReferenceFlow.collectAsStateWithLifecycle()
+    val sourceReferenceCount by vm.sourceReferenceCountFlow.collectAsStateWithLifecycle()
     Log.d("MyApp", "sourceReferenceCount $sourceReferenceCount")
 
     val nameScrollToFocusableHandle = rememberScrollToFocusable()
@@ -4753,11 +4750,11 @@ class EditSourceViewModel(
         uiContent.saveState(savedStateHandle)
     }
 
-    val sourceReferenceFlow = uiContent.editableSource.value.id.let { sourceId ->
+    val sourceReferenceCountFlow = uiContent.editableSource.value.id.let { sourceId ->
         if (sourceId != 0L) {
             priceTrackerRepository.countPricesForSource(sourceId)
         } else {
-            flowOf(0L) // Emit 0L for new sources
+            flowOf(0L) // new sources have no references
         }
     }.stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = null)
 
