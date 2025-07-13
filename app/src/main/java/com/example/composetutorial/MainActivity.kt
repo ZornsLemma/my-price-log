@@ -3516,6 +3516,26 @@ class GeneralEditScreenViewModel {
     val saveStatus = SyncedStateEvent(SaveStatus.Idle)
 }
 
+fun runGeneralEditScreenOperation(
+    vm: GeneralEditScreenViewModel,
+    coroutineScope: CoroutineScope,
+    isSafeToPerform: suspend () -> Boolean,
+    busySaveStatus: SaveStatus,
+    perform: suspend () -> Unit,
+) {
+    coroutineScope.launch {
+        if (isSafeToPerform()) {
+            vm.saveStatus.update(busySaveStatus)
+            try {
+                perform()
+                vm.saveStatus.update(SaveStatus.Success)
+            } catch (e: Exception) {
+                vm.saveStatus.update(SaveStatus.Error) // TODO: can/should we preserve e and show it to user in UI?
+            }
+        }
+    }
+}
+
 // TODO: The fantasy outcome would be to be able to use this to avoid duplication with/simplify
 // EditPriceScreen as well as the static data editing.
 @Composable
@@ -3594,7 +3614,7 @@ fun GeneralEditScreen(
                     vm.saveStatus.update(SaveStatus.BusySavingSlowly)
                 }
 
-                SaveStatus.Busy -> { // TODO: Rename BusyOther?
+                SaveStatus.BusyOther -> { // TODO: Rename BusyOther?
                     delay(spinnerDelayMillis)
                     vm.saveStatus.update(SaveStatus.BusyOtherSlowly)
                 }
@@ -3644,28 +3664,21 @@ fun GeneralEditScreen(
                         // saveStatus.
                         // TODO: We might want to pull this launch block out into a helper, pass the
                         // two callbacks into it, and use that helper for the "delete initiated externally" case too.
-                        coroutineScope.launch {
-                            // If validateForSave() returns false, caller should probably have done
-                            // any auto-scroll or other UI highlighting to convey problem to user. TODO!?
-                            if (validateForSave()) {
-                                vm.saveStatus.update(SaveStatus.BusySaving)
+                        runGeneralEditScreenOperation(
+                            vm = vm,
+                            coroutineScope = coroutineScope,
+                            isSafeToPerform = validateForSave,
+                            busySaveStatus = SaveStatus.BusySaving,
+                            perform = {
                                 delay(5000) // TODO HACK
-                                try {
-                                    performSave()
-                                    vm.saveStatus.update(SaveStatus.Success)
-                                } catch (e: Exception) {
-                                    vm.saveStatus.update(SaveStatus.Error) // TODO: can/should we preserve e and show it to user in UI?
-                                }
+                                performSave()
                             }
-                        }
+                        )
                     }) {
                         // We do get rid of the spinner when we reach
                         // "success"; this might cause a small but legitimate visual glitch as the disabled "Save"
-                        // button re-appears, but it feels confusing to close while showing the spinner, since it might
-                        // suggest to the user we *haven't* finished but are for some reason closing anyway.)
-                        // TODO: So if we are doing a delete, should *this* turn into a spinner, or
-                        // should it just be disabled and the caller turn its own delete into a
-                        // spinner? This affects a lot of what we actually might want to re-use.
+                        // button re-enables, but it feels confusing to close while showing the spinner, since it might
+                        // suggest to the user we *haven't* finished but are for some reason closing anyway.
                         if (saveStatus == SaveStatus.BusySavingSlowly) {
                             SmallCircularProgressIndicator()
                         } else {
@@ -3898,7 +3911,7 @@ fun EditSourceScreen(
                 { Text("This store has no associated prices so deleting it will not affect anything else.") }
             } else {
                 // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
-                { Text("Deleting this store will also delete product prices for it. This action cannot be undone.") }
+                { Text("Deleting this store will also delete its product prices. This action cannot be undone.") }
             },
             onDismissRequest = { showDeleteConfirmDialog = false },
             dismissButton = {
@@ -3908,16 +3921,16 @@ fun EditSourceScreen(
                 TextButton(onClick = {
                     showDeleteConfirmDialog = false
                     // TODO: Can probably factor this launch out with similar code inside GeneralEditScreen - the "validateForSave" callback would just be a no-op in this case
-                    vm.viewModelScope.launch {
-                        vm.generalEditScreenViewModel.saveStatus.update(SaveStatus.Busy)
-                        delay(5000) // TODO HACK
-                        try {
+                    runGeneralEditScreenOperation(
+                        vm = vm.generalEditScreenViewModel,
+                        coroutineScope = vm.viewModelScope,
+                        isSafeToPerform = { true },
+                        busySaveStatus = SaveStatus.BusyOther,
+                        perform = {
+                            delay(5000) // TODO HACK
                             // TODO ACTUALLY DELETE!
-                            vm.generalEditScreenViewModel.saveStatus.update(SaveStatus.Success)
-                        } catch (e: Exception) {
-                            vm.generalEditScreenViewModel.saveStatus.update(SaveStatus.Error) // TODO: can/should we preserve e and show it to user in UI?
                         }
-                    }
+                    )
                 }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
             },
         )
@@ -4806,12 +4819,12 @@ class EditPriceViewModel(
 
 // TODO: This is not just a *save* status any more - rename
 // TODO: May want to separate this so saving vs other is outside this, and "saving" is just an internal bool of GeneralEditScreen to distinguish busy saving from busy other
-enum class SaveStatus { Idle, BusySaving, BusySavingSlowly, Busy, BusyOtherSlowly, Success, Error;
+enum class SaveStatus { Idle, BusySaving, BusySavingSlowly, BusyOther, BusyOtherSlowly, Success, Error;
 
     // We count "success" as busy here, since it doesn't make sense to re-enable buttons
     // after we already saved and are about to close.
     fun isNotBusy(): Boolean {
-        return this != BusySaving && this != BusySavingSlowly && this != Busy && this != BusyOtherSlowly && this != Success
+        return this != BusySaving && this != BusySavingSlowly && this != BusyOther && this != BusyOtherSlowly && this != Success
     }
 }
 
