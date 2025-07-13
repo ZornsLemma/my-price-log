@@ -725,6 +725,8 @@ interface PriceTrackerRepository {
 
     fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
 
+    fun countPricesForSource(sourceId: Long) : Flow<Long>
+
     suspend fun updateOrInsertSource(source: Source)
     suspend fun updateOrInsertPrice(price: Price)
 }
@@ -745,6 +747,9 @@ class PriceTrackerRepositoryImpl(
     override fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>> =
         priceDao.getPriceWithItemEntityForItem(dataSetId = dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
+
+    override fun countPricesForSource(sourceId: Long) : Flow<Long> =
+        priceDao.countPricesForSource(sourceId)
 
     override suspend fun updateOrInsertSource(source: Source) {
         // throw IOException("Simulated database failure") // TODO TEMP
@@ -1241,6 +1246,10 @@ interface PriceDao {
         dataSetId: Long,
         itemId: Long,
     ): Flow<List<PriceWithItemEntity>>
+
+
+    @Query("SELECT COUNT(*) FROM price WHERE source_id = :sourceId")
+    fun countPricesForSource(sourceId: Long) : Flow<Long>
 }
 
 // TODO: ChatGPT semi-magic
@@ -3748,6 +3757,9 @@ fun EditSourceScreen(
 ) {
     val uiContent = vm.uiContent
 
+    val sourceReferenceCount by vm.sourceReferenceFlow.collectAsStateWithLifecycle()
+    Log.d("MyApp", "sourceReferenceCount $sourceReferenceCount")
+
     val nameScrollToFocusableHandle = rememberScrollToFocusable()
 
     // TODO: We want option to delete the source - this may need to be on an overflow menu and
@@ -4740,6 +4752,13 @@ class EditSourceViewModel(
     init {
         uiContent.saveState(savedStateHandle)
     }
+
+    val sourceReferenceFlow = (if (uiContent.editableSource.value.id != 0L)
+        priceTrackerRepository.countPricesForSource(uiContent.editableSource.value.id)
+            else
+                flowOf(0L) // flow<Long> { emit(0L) }
+            )
+            .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = null)
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
