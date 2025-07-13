@@ -5400,3 +5400,10 @@ Log.d("MyApp", baz.toString())
 // am not sure, but it's pssible these might look OK, although they might not (e.g. the text field
 // titles would "slide up" from the "no data" prompt position to the "label above actual data"
 // position as the data filled in.
+
+// TODO: If/when we have some kind of auto-backup or export state thing, it might be nice to hook
+// this into delete operations (perhaps just cascading ones???) and auto-backup before deleting.
+// Minor concern here if the user is doing a lot of deletions that we don't end up with lots of
+// auto-backups, we could just possibly try to be clever and only do this if we haven't done an
+// auto-backup within the last hour or so. This limits the window of data loss while keeping backup
+// volume down.
