@@ -3053,8 +3053,8 @@ fun EditPriceScreen(
     // manage to click it) and we are about to close this screen.
     // TODO: Arguably we should do something similar with the spinner - if we've ever been in
     // SavingSlowly state, we should keep showing the spinner until we close.
-    val isSaving =
-        (saveStatus == SaveStatus.Saving) || (saveStatus == SaveStatus.SavingSlowly) || (saveStatus == SaveStatus.Success)
+    val isBusySaving =
+        (saveStatus == SaveStatus.BusySaving) || (saveStatus == SaveStatus.BusySavingSlowly) || (saveStatus == SaveStatus.Success)
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
     var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
@@ -3099,7 +3099,7 @@ fun EditPriceScreen(
     }
 
     BackHandler {
-        if (!isSaving) {
+        if (!isBusySaving) {
             requestDismiss()
         } else {
             // I've discussed this with LLMs and it's not clear if - from a UI perspective - we
@@ -3108,13 +3108,13 @@ fun EditPriceScreen(
         }
     }
 
-    LaunchedEffect(isSaving) {
-        if (isSaving) {
+    LaunchedEffect(isBusySaving) {
+        if (isBusySaving) {
             // We expect the save to complete quickly so we don't want the visual distraction
             // of a progress indicator appearing straight away. Let the progress indicator kick
             // in after a short delay if we're still here waiting for the save to complete.
             delay(spinnerDelayMillis)
-            vm.saveStatus.update(SaveStatus.SavingSlowly)
+            vm.saveStatus.update(SaveStatus.BusySavingSlowly)
         }
         // TODO: I don't think we need to set it back to false in else, but maybe revise all
         // this later.
@@ -3179,13 +3179,13 @@ fun EditPriceScreen(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(enabled = !isSaving, onClick = { requestDismiss() }) {
+                    IconButton(enabled = !isBusySaving, onClick = { requestDismiss() }) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 },
                 title = { Text("TODO: Dialog Title") }, // TODO: Do not use "Edit price" (even though we call it that internally, because it's the "price" table), you can also eg edit pack size and probably a free text notes field etc
                 actions = {
-                    TextButton(enabled = !isSaving, onClick = {
+                    TextButton(enabled = !isBusySaving, onClick = {
                         coroutineScope.launch {
                             // TODO: Maybe we shouldn't be passing editablePrice around as a
                             // parameter so much, when it's implicit in the ViewModel? This would
@@ -3215,7 +3215,7 @@ fun EditPriceScreen(
                             }
                         }
                     }) {
-                        if (saveStatus == SaveStatus.SavingSlowly) {
+                        if (saveStatus == SaveStatus.BusySavingSlowly) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
                                 strokeWidth = 2.dp,
@@ -3533,18 +3533,11 @@ fun GeneralEditScreen(
     content: @Composable () -> Unit
 ) {
     val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
-    // We count "success" as busy here, since it doesn't make sense to re-enable the "Save" button
-    // after we already saved and are about to close. (We do get rid of the spinner when we reach
-    // "success"; this might cause a small but legitimate visual glitch as the disabled "Save"
-    // button re-appears, but it feels confusing to close while showing the spinner, since it might
-    // suggest to the user we *haven't* finished but are for some reason closing anyway.)
-    val isBusy =
-        (saveStatus == SaveStatus.Saving) ||
-                (saveStatus == SaveStatus.SavingSlowly) ||
-                (saveStatus == SaveStatus.Success)
+
+    val isBusy = !saveStatus.isNotBusy() // TODO: Add a isBusy()? get rid of isNotBusy()?
     var showConfirmDiscardDialog by rememberSaveable { mutableStateOf(false) }
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
-    var showSavingSnackbar by rememberSaveable { mutableStateOf(false) }
+    var showBusySnackbar by rememberSaveable { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -3589,20 +3582,29 @@ fun GeneralEditScreen(
         } else {
             // I've discussed this with LLMs and it's not clear if - from a UI perspective - we
             // should do this or not, but I'll go with it for now.
-            showSavingSnackbar = true
+            showBusySnackbar = true
         }
     }
 
-    LaunchedEffect(isBusy) {
-        if (isBusy) {
-            // We expect the save to complete quickly so we don't want the visual distraction
-            // of a progress indicator appearing straight away. Let the progress indicator kick
-            // in after a short delay if we're still here waiting for the save to complete.
-            delay(spinnerDelayMillis)
-            vm.saveStatus.update(SaveStatus.SavingSlowly)
+    LaunchedEffect(Unit) {
+        vm.saveStatus.events.collect { event ->
+            when (event) {
+                SaveStatus.BusySaving -> {
+                    // We expect the save to complete quickly so we don't want the visual distraction
+                    // of a progress indicator appearing straight away. Let the progress indicator kick
+                    // in after a short delay if we're still here waiting for the save to complete.
+                    delay(spinnerDelayMillis)
+                    vm.saveStatus.update(SaveStatus.BusySavingSlowly)
+                }
+
+                SaveStatus.Busy -> { // TODO: Rename BusyOther?
+                    delay(spinnerDelayMillis)
+                    vm.saveStatus.update(SaveStatus.BusyOtherSlowly)
+                }
+
+                else -> {}
+            }
         }
-        // TODO: I don't think we need to set it back to false in else, but maybe revise all
-        // this later.
     }
 
     // TODO: ChatGPT magic more or less
@@ -3649,7 +3651,7 @@ fun GeneralEditScreen(
                             // If validateForSave() returns false, caller should probably have done
                             // any auto-scroll or other UI highlighting to convey problem to user. TODO!?
                             if (validateForSave()) {
-                                vm.saveStatus.update(SaveStatus.Saving)
+                                vm.saveStatus.update(SaveStatus.BusySaving)
                                 delay(5000) // TODO HACK
                                 try {
                                     performSave()
@@ -3660,10 +3662,14 @@ fun GeneralEditScreen(
                             }
                         }
                     }) {
+                        // We do get rid of the spinner when we reach
+                        // "success"; this might cause a small but legitimate visual glitch as the disabled "Save"
+                        // button re-appears, but it feels confusing to close while showing the spinner, since it might
+                        // suggest to the user we *haven't* finished but are for some reason closing anyway.)
                         // TODO: So if we are doing a delete, should *this* turn into a spinner, or
                         // should it just be disabled and the caller turn its own delete into a
                         // spinner? This affects a lot of what we actually might want to re-use.
-                        if (saveStatus == SaveStatus.SavingSlowly) {
+                        if (saveStatus == SaveStatus.BusySavingSlowly) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
                                 strokeWidth = 2.dp,
@@ -3739,12 +3745,14 @@ fun GeneralEditScreen(
         )
     }
 
-    // TODO: This may need to be delete-aware?
-    LaunchedEffect(showSavingSnackbar) {
-        if (showSavingSnackbar) {
+    LaunchedEffect(showBusySnackbar) {
+        if (showBusySnackbar) {
             coroutineScope.launch {
-                snackbarHostState.showSnackbar("Saving, please wait...")
-                showSavingSnackbar = false
+                // TODO: It's probably OK to just say "Busy" (we could be saving, or generically
+                // busy doing something like a delete which we don't control directly) but maybe
+                // we need to make this string more controllable.
+                snackbarHostState.showSnackbar("Busy, please wait...")
+                showBusySnackbar = false
             }
         }
     }
@@ -3764,6 +3772,8 @@ fun EditSourceScreen(
     val nameScrollToFocusableHandle = rememberScrollToFocusable()
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
+
+    val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
 
     // TODO: We want option to delete the source - this may need to be on an overflow menu and
     // thus need tweaks to GeneralEditScreen.
@@ -3844,11 +3854,21 @@ fun EditSourceScreen(
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedButton(
                 onClick = { showDeleteConfirmDialog = true },
-                enabled = sourceReferenceCount != null,
+                enabled = saveStatus.isNotBusy() && sourceReferenceCount != null,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
             ) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
+                if (saveStatus == SaveStatus.BusyOtherSlowly) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Delete"
+                    ) // TODO: tweak wording?
+                }
                 Spacer(Modifier.width(8.dp))
                 Text("Delete store")
             }
@@ -3896,12 +3916,16 @@ fun EditSourceScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteConfirmDialog = false
-                    // TODO EXPERIMENTAL HACKERY - THE POINT BEING THAT THIS (OR PERHAPS ACTUALLY A
-                    // STANDARD HELPER FN TO ACCOMPANY GES ITSELF AND WHICH WILL CALL US BACK TO DO
-                    // THE ACTUAL DELETE INSIDE A COROUTINE) CAN TRIGGER THE "SAVE" (TO BE RENAMED)
-                    // TIMER AND DISABLE AND SPINNER LOGIC BY UPDATING THE STATEVENT THING HERE
+                    // TODO: Can probably factor this launch out with similar code inside GeneralEditScreen - the "validateForSave" callback would just be a no-op in this case
                     vm.viewModelScope.launch {
-                        vm.generalEditScreenViewModel.saveStatus.update(SaveStatus.Saving)
+                        vm.generalEditScreenViewModel.saveStatus.update(SaveStatus.Busy)
+                        delay(5000) // TODO HACK
+                        try {
+                            // TODO ACTUALLY DELETE!
+                            vm.generalEditScreenViewModel.saveStatus.update(SaveStatus.Success)
+                        } catch (e: Exception) {
+                            vm.generalEditScreenViewModel.saveStatus.update(SaveStatus.Error) // TODO: can/should we preserve e and show it to user in UI?
+                        }
                     }
                 }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
             },
@@ -4500,7 +4524,7 @@ class GeneralSelectorViewModel<T>(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val dataFlow = combine(
-        dataQuery.flatMapLatest { data -> /* TODO HACK */ delay(5000); flowOf(data) },
+        dataQuery.flatMapLatest { data -> /* TODO HACK delay(5000); */ flowOf(data) },
         searchStringFlow
     ) { data, query ->
         data.filter {
@@ -4777,7 +4801,7 @@ class EditPriceViewModel(
     // TODO: Use upsert in name?
     private fun updateOrInsertPrice(price: Price) {
         viewModelScope.launch {
-            saveStatus.update(SaveStatus.Saving)
+            saveStatus.update(SaveStatus.BusySaving)
             try {
                 //delay(3700); // TODO TEMP FOR DEBUGGING
                 priceTrackerRepository.updateOrInsertPrice(price)
@@ -4789,7 +4813,16 @@ class EditPriceViewModel(
     }
 }
 
-enum class SaveStatus { Idle, Saving, SavingSlowly, Success, Error }
+// TODO: This is not just a *save* status any more - rename
+// TODO: May want to separate this so saving vs other is outside this, and "saving" is just an internal bool of GeneralEditScreen to distinguish busy saving from busy other
+enum class SaveStatus { Idle, BusySaving, BusySavingSlowly, Busy, BusyOtherSlowly, Success, Error;
+
+    // We count "success" as busy here, since it doesn't make sense to re-enable buttons
+    // after we already saved and are about to close.
+    fun isNotBusy(): Boolean {
+        return this != BusySaving && this != BusySavingSlowly && this != Busy && this != BusyOtherSlowly && this != Success
+    }
+}
 
 class EditSourceViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
