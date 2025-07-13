@@ -3759,6 +3759,8 @@ fun EditSourceScreen(
 
     val nameScrollToFocusableHandle = rememberScrollToFocusable()
 
+    var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
+
     // TODO: We want option to delete the source - this may need to be on an overflow menu and
     // thus need tweaks to GeneralEditScreen.
 
@@ -3785,7 +3787,9 @@ fun EditSourceScreen(
                 name = it
                 vm.setUIContentEditableSource(uiContent.editableSource.value.copy(name = it.text))
             },
-            modifier = Modifier.fillMaxWidth().scrollToFocusable(nameScrollToFocusableHandle),
+            modifier = Modifier
+                .fillMaxWidth()
+                .scrollToFocusable(nameScrollToFocusableHandle),
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -3811,7 +3815,7 @@ fun EditSourceScreen(
         // TODO: EXperimental in appearance and also whether it belongs here or in GeneralEditScreen, though fairly sure it belongs here
         /* TODO DELETE
         TextButton(
-            onClick = { /* show confirm dialog */ },
+            onClick = { showDeleteConfirmDialog = true },
             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
         ) {
             Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
@@ -3835,9 +3839,7 @@ fun EditSourceScreen(
         if (uiContent.editableSource.value.id != 0L) {
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedButton(
-                onClick = {
-                    /* show confirm dialog */
-                },
+                onClick = { showDeleteConfirmDialog = true },
                 enabled = sourceReferenceCount != null,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -3861,6 +3863,38 @@ fun EditSourceScreen(
                 else -> {} // TODO: OK!?
             }
         }
+    }
+
+    if (showDeleteConfirmDialog) {
+        val isSimpleDelete = sourceReferenceCount == 0L
+        AlertDialog(
+            icon = if (isSimpleDelete) null else {
+                {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Warning",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            title = if (isSimpleDelete) {{ Text("Delete store?") }} else {{ Text("Delete store and prices?") }},
+            // TODO: USE BOLD FOR PART OF CASCADING DELETE TEXT? At least according to ChatGPT this is a bit fiddly without building it in code which won't fit well with string resource use.
+            text = if (isSimpleDelete) {
+                { Text("This store has no associated prices so deleting it will not affect anything else.") }
+            } else {
+                // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
+                { Text("Deleting this store will also delete product prices for it. This action cannot be undone.") }
+            },
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmDialog = false }) { Text("Cancel") }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirmDialog = false
+                }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
+            },
+        )
     }
 }
 
