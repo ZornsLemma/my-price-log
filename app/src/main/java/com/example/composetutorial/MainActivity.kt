@@ -3634,11 +3634,6 @@ fun GeneralEditScreen(
                 },
                 title = title,
                 actions = {
-                    /* TODO DELETE
-                    IconButton(onClick = { /* showDeleteDialog = true */ }) { // TODO HIGHLY EXPERIMENTAL
-                        Icon(Icons.Default.Delete, contentDescription = "Delete")
-                    }
-                    */
                     // TODO: Just possibly instead of always calling onSave, onClick should call
                     // isDirty first and just dismiss without saving if it returns false - but that
                     // might be confusing and it's maybe optimising a corner case
@@ -3648,6 +3643,8 @@ fun GeneralEditScreen(
                         // updateOrInsertFoo() does not (and probably cannot, since it's an
                         // internal detail here and not exposed) be messing with updating
                         // saveStatus.
+                        // TODO: We might want to pull this launch block out into a helper, pass the
+                        // two callbacks into it, and use that helper for the "delete initiated externally" case too.
                         coroutineScope.launch {
                             // If validateForSave() returns false, caller should probably have done
                             // any auto-scroll or other UI highlighting to convey problem to user. TODO!?
@@ -3663,6 +3660,9 @@ fun GeneralEditScreen(
                             }
                         }
                     }) {
+                        // TODO: So if we are doing a delete, should *this* turn into a spinner, or
+                        // should it just be disabled and the caller turn its own delete into a
+                        // spinner? This affects a lot of what we actually might want to re-use.
                         if (saveStatus == SaveStatus.SavingSlowly) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
@@ -3739,6 +3739,7 @@ fun GeneralEditScreen(
         )
     }
 
+    // TODO: This may need to be delete-aware?
     LaunchedEffect(showSavingSnackbar) {
         if (showSavingSnackbar) {
             coroutineScope.launch {
