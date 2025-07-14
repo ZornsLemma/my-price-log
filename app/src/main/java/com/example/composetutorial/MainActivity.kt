@@ -105,8 +105,11 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -120,6 +123,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -3947,7 +3951,23 @@ fun EditDataSetScreen(
         // TODO: MD3 Expressive deprecates this and says we should use a connected button group, but
         // the relevant library version is still in alpha so I'll just do it the old MD3 way for now
         // with a segmented button group.
-        SegmentedButtonGroup(listOf("TODO1", "TODO2", "TODO3"), 0, onOptionSelected = {})
+        //SegmentedButtonGroup(listOf("TODO1", "TODO2", "TODO3"), 0, onOptionSelected = {})
+        val options = listOf("TODO1", "TODO2", "TODO3")
+        val checkedStates = remember { mutableStateListOf(true, true, false) }
+        MultiChoiceSegmentedButtonRow {
+            options.forEachIndexed { index, label ->
+                SegmentedButton(
+                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                    onCheckedChange = { checkedStates[index] = it },
+                    checked = checkedStates[index],
+                    colors = SegmentedButtonDefaults.colors(),
+                    icon = { SegmentedButtonDefaults.Icon(active = checkedStates[index]) },
+                    enabled = true
+                ) {
+                    Text(label)
+                }
+            }
+        }
 
         var notes by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.notes)
         ValidatedTextField(
