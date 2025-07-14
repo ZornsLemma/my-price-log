@@ -4126,6 +4126,11 @@ fun getCurrencyForLocale(locale: Locale): Currency? {
     }
 }
 
+// In Spanish, the display names are all lower case with no initial capital. ChatGPT assures me that
+// this is what a native speaker would expect, so I'm not coercing the first character into upper
+// case to appease my native English speaker brain. I will trust that getDisplayName() does the
+// right thing for the current locale, until an actual native speaker of some non-English language
+// tells me otherwise.
 fun buildCurrencyList(locales: LocaleList): List<Pair<String, String>> {
     fun buildPair(currency: Currency): Pair<String, String> {
         val currencyCode = currency.currencyCode
