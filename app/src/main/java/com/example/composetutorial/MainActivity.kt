@@ -1259,6 +1259,7 @@ class SyncedStateEvent<T>(initialState: T) {
     private val _state = MutableStateFlow(initialState)
     private val _events = MutableSharedFlow<T>(extraBufferCapacity = 1)
 
+    val state: StateFlow<T> = _state
     val events: SharedFlow<T> = _events
 
     @Composable
@@ -3411,10 +3412,10 @@ fun GeneralEditScreen(
                     // of a progress indicator appearing straight away. Let the progress indicator kick
                     // in after a short delay if we're still here waiting.
                     delay(spinnerDelayMillis)
-                    // TODO: Is there any danger of a race condition where this fires at just the
-                    // wrong moment and overwrites a terminal state (success or error, or the idle
-                    // we transition to after error) and we get stuck?!
-                    vm.saveStatus.update(SaveStatus.BusyForAWhile)
+                    // The state might not be busy any more, so check first before updating to avoid a race condition.
+                    if (vm.saveStatus.state.value == SaveStatus.Busy) {
+                        vm.saveStatus.update(SaveStatus.BusyForAWhile)
+                    }
                 }
 
                 else -> {}
@@ -3494,7 +3495,7 @@ fun GeneralEditScreen(
                             busySaveStatus = SaveStatus.Busy, // TODO: WE MAY NOT NEED THIS ARG ANY MORE
                             perform = {
                                 saving = true
-                                //delay(5000) // TODO HACK
+                                delay(5000) // TODO HACK
                                 performSave()
                             }
                         )
