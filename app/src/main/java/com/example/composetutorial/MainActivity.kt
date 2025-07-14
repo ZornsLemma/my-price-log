@@ -3629,7 +3629,7 @@ fun GeneralEditScreen(
                 // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am
                 // struggling to find any non-LLM explanations here, but *maybe* *if we have
                 // scrolled away from the top* we should change the background to surfaceContainer
-                .background(/* Color.DarkGray TODO TEMP FOR DEBUG, SHOULD BE */ MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
+                .background(Color.Cyan /*TODO TEMP FOR DEBUG, SHOULD BE MaterialTheme.colorScheme.surface */) // because this is a full-screen dialog
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = fullScreenDialogBorder)
@@ -3689,37 +3689,6 @@ fun GeneralEditScreen(
                 // we need to make this string more controllable.
                 snackbarHostState.showSnackbar("Busy, please wait...")
                 showBusySnackbar = false
-            }
-        }
-    }
-}
-
-// TODO: ChatGPT code, review carefully if keep
-@Composable
-fun SegmentedButtonGroup( // TODO: Rename "SegmentedButton" as that seems to be what docs call it?
-    options: List<String>,
-    selectedIndex: Int,
-    onOptionSelected: (Int) -> Unit
-) {
-    Row {
-        options.forEachIndexed { index, option ->
-            OutlinedButton(
-                onClick = { onOptionSelected(index) },
-                shape = when (index) {
-                    0 -> RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp)
-                    options.lastIndex -> RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp)
-                    else -> RoundedCornerShape(0.dp)
-                },
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = if (index == selectedIndex) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent,
-                    contentColor = if (index == selectedIndex) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                ),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(40.dp)
-            ) {
-                Text(text = option, style = MaterialTheme.typography.labelLarge)
             }
         }
     }
@@ -3944,21 +3913,36 @@ fun EditDataSetScreen(
                 .scrollToFocusable(nameScrollToFocusableHandle),
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // TODO: OTHER FIELDS!
 
         // TODO: MD3 Expressive deprecates this and says we should use a connected button group, but
         // the relevant library version is still in alpha so I'll just do it the old MD3 way for now
         // with a segmented button group.
-        //SegmentedButtonGroup(listOf("TODO1", "TODO2", "TODO3"), 0, onOptionSelected = {})
-        val options = listOf("TODO1", "TODO2", "TODO3")
+        // TODO: I'm far from sure what typography or colour this caption should have, but this
+        // matches the caption on the TextFields so it is probably not a terrible choice.
+        Text("Measurement units", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) // TODO TWEAK TEXT, FONT, SIZE
+        // "US Customary" doesn't fit (on my test "small" emulated phone) but based on a discussion
+        // with ChatGPT "US Units" is better for a casual user anyway, even if we could fit "US
+        // Customary".
+        val options = listOf("Metric", "Imperial", "US units")
         val checkedStates = remember { mutableStateListOf(true, true, false) }
-        MultiChoiceSegmentedButtonRow {
+        // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and 2 as imperial/US
+        MultiChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             options.forEachIndexed { index, label ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                    onCheckedChange = { checkedStates[index] = it },
+                    onCheckedChange = {
+                        checkedStates[index] = it
+                        // Don't allow Imperial and US Customary to be selected together. (We use
+                        // the common but ambiguous names for the units, so this would cause UI
+                        // confusion. And we don't want to be showing "pint (US)" or "pt (US)" all
+                        // the time to disambiguate.
+                        if (index > 0 && checkedStates[index]) {
+                            checkedStates[if (index == 1) 2 else 1] = false
+                        }
+                        },
                     checked = checkedStates[index],
                     colors = SegmentedButtonDefaults.colors(),
                     icon = { SegmentedButtonDefaults.Icon(active = checkedStates[index]) },
@@ -3968,6 +3952,8 @@ fun EditDataSetScreen(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         var notes by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.notes)
         ValidatedTextField(
