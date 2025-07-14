@@ -3692,7 +3692,7 @@ fun GeneralEditScreen(
 
 // TODO: ChatGPT code, review carefully if keep
 @Composable
-fun SegmentedButtonGroup(
+fun SegmentedButtonGroup( // TODO: Rename "SegmentedButton" as that seems to be what docs call it?
     options: List<String>,
     selectedIndex: Int,
     onOptionSelected: (Int) -> Unit
