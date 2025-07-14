@@ -42,6 +42,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -75,6 +76,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -3688,6 +3690,37 @@ fun GeneralEditScreen(
     }
 }
 
+// TODO: ChatGPT code, review carefully if keep
+@Composable
+fun SegmentedButtonGroup(
+    options: List<String>,
+    selectedIndex: Int,
+    onOptionSelected: (Int) -> Unit
+) {
+    Row {
+        options.forEachIndexed { index, option ->
+            OutlinedButton(
+                onClick = { onOptionSelected(index) },
+                shape = when (index) {
+                    0 -> RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp)
+                    options.lastIndex -> RoundedCornerShape(topEnd = 12.dp, bottomEnd = 12.dp)
+                    else -> RoundedCornerShape(0.dp)
+                },
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = if (index == selectedIndex) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else Color.Transparent,
+                    contentColor = if (index == selectedIndex) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                ),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(40.dp)
+            ) {
+                Text(text = option, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+    }
+}
+
 @Composable
 fun EditSourceScreen(
     vm: EditSourceViewModel,
@@ -3910,6 +3943,11 @@ fun EditDataSetScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // TODO: OTHER FIELDS!
+
+        // TODO: MD3 Expressive deprecates this and says we should use a connected button group, but
+        // the relevant library version is still in alpha so I'll just do it the old MD3 way for now
+        // with a segmented button group.
+        SegmentedButtonGroup(listOf("TODO1", "TODO2", "TODO3"), 0, onOptionSelected = {})
 
         var notes by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.notes)
         ValidatedTextField(
