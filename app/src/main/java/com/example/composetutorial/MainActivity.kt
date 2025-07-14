@@ -3877,6 +3877,7 @@ fun EditDataSetScreen(
     Log.d("MyApp", "dataSetReferenceCount $dataSetReferenceCount")
 
     val nameScrollToFocusableHandle = rememberScrollToFocusable()
+    val currencyCodeScrollToFocusableHandle = rememberScrollToFocusable()
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var deleting by rememberSaveable { mutableStateOf( false) }
@@ -3911,6 +3912,26 @@ fun EditDataSetScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .scrollToFocusable(nameScrollToFocusableHandle),
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        var currencyCode by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.currencyCode)
+        val maxCurrencyCodeLength = 3 // TODO? We may want to allow more for editing-in-place - TBH this maybe should be a dropdown or something fancier
+        ValidatedTextField(
+            label = { Text( "Currency code") },
+            value = currencyCode,
+            validationRules = emptyList(), // TODO!
+            validationRulesKey = 42, // TODO! may not even be needed
+            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxCurrencyCodeLength),
+            onValueChange = {
+                currencyCode = it
+                vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(currencyCode = it.text))
+            },
+            enabled = saveStatus.isNotBusy(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .scrollToFocusable(currencyCodeScrollToFocusableHandle),
         )
 
         Spacer(modifier = Modifier.height(16.dp))
