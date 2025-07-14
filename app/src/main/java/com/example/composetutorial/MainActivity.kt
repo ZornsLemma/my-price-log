@@ -24,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
 import android.app.Application
 import android.content.Context
+import android.icu.text.Collator
 import androidx.activity.compose.BackHandler
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
@@ -43,7 +44,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -77,7 +77,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -134,7 +133,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -195,7 +193,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
-import com.example.composetutorial.EditSourceViewModel.EditableField
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -1761,7 +1758,8 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     items: List<T>,
     getId: (T) -> ID,
     getLabel: (T) -> String,
-) {
+    getDividerBetween: ((T, T) -> Boolean)? = null,
+    ) {
     var textFieldWidth by remember { mutableIntStateOf(0) }
     var isExpanded by remember { mutableStateOf(false) }
 
@@ -1775,6 +1773,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             items = items,
             getId = getId,
             getLabel = getLabel,
+            getDividerBetween = getDividerBetween,
         ) {
             val itemMap = items.associateBy { getId(it) }
             val todoPulledOut: String = if (selectedId == null) "" else {
@@ -3917,44 +3916,57 @@ fun EditDataSetScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        val allCurrencyCodes = Currency.getAvailableCurrencies()
-            .map { it.currencyCode } // TODO: There's also it.symbol which we could nclude in brackets
-            .sorted()
-        // TODO: See also getUserPreferredCurrencyCodes() below - I think the right thing to do is probably to put the user's *current* locale currency right at the top, then any others from that get function, then the rest - perhaps with a divider.
-        // The dropdown is going to be insanely long but for a first cut this is not too bad. In the longer term I might want to
-        // allow an option to type a 3 letter currency code or to have a fancier picker and/or to have a "don't worry about 3 letter
-        // codes and system support, I want my own currency with prefix X and suffix Y and n decimal places", but we don't need
-        // that yet.
-        // TODO: We could of course write out own pop-up (probably not full screen, but who knows?) "currency picker" or dig up a third party once, but as currencies are not a prime focus right now I think that's getting into YAGNI territory. We could also re-use our already search-capable GeneralSelectorScreen thingy, but again this is probably not an immediate priority.
-        // TODO: ChatGPT copy and paste:
-        // val currency = Currency.getInstance("USD")
-        // val code = currency.currencyCode        // "USD"
-        // val symbol = currency.getSymbol(locale) // "$" or "US$"
-        // val name = currency.getDisplayName(locale) // "US Dollar"
-        // It may well be that for our initial drop-down given we are user facing not in some financial app that we should sort by display name, using getDisplayName(LocalConfiguration.current.locales[0])
-        Log.d("MyApp", "allCurrencyCodes $allCurrencyCodes")
+        // TODO: According to a long comment I wrote elsewhere, we probably should be using a frozen
+        // LocalConfiguration from when this screen was first opened here. However, at present it
+        // includes no floating point values that are awkward if the locale changes, and being
+        // responsive to any locale changes is both easy and may be helpful. If I keep doing it this
+        // way, I need to update that long comment elsewhere accordingly and make a permanent note
+        // here too.
+        val currentLocalConfiguration = LocalConfiguration.current
+        val currencyList = remember(currentLocalConfiguration.locales) {
+            // TODO: Test this updates if we change locales on the fly?
+            buildCurrencyList(currentLocalConfiguration.locales)
+        }
 
-        var currencyCode by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.currencyCode)
-        val maxCurrencyCodeLength = 3 // TODO? We may want to allow more for editing-in-place - TBH this maybe should be a dropdown or something fancier
-        ValidatedTextField(
-            label = { Text( "Currency code") },
-            value = currencyCode,
-            validationRules = emptyList(), // TODO!
-            validationRulesKey = 42, // TODO! may not even be needed
-            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxCurrencyCodeLength),
-            onValueChange = {
-                currencyCode = it
-                vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(currencyCode = it.text))
-            },
+        // TODO: Without getting sidetracked just yet into e.g. third party libraries to support
+        // currency selection between, we try to do half-decent job by showing a gigantic list in
+        // an unwieldy dropdown but putting the currencies the user is likely to care about at the
+        // top. In the longer term apart from maybe investigating third party libraries I see two
+        // options:
+        // 1 - optionally allow the user to just enter a three letter currency code directly
+        // 2 - optionally allow the user to define their own currency (in which case we don't care
+        //     about three letter codes) by specifying prefix, suffix and decimal places
+        // If option 2 is available, there may be no real need for option 1. We'd probably still
+        // support currency selection in some form, but the specific escape hatch of being able to
+        // type in a three letter code is not so important. But maybe we'd do both.
+        //
+        // We could of course create our own pop-up (probably not full screen) dialog to pick a
+        // currency, but the chances are curating a list which isn't bloated with historical
+        // currencies (which are not relevant to us) is something best left to a third party library
+        // which is actively interested in this. For us it's rather tangential.
+        //
+        // We could also use our existing item selection dialog - which is substring search capable
+        // - to help the user pick something out of the gigantic list of currencies instead of
+        // scrolling through a giant dropdown.
+
+        // TODO: This may expose a lurking bug in MyExposedDropdownMenuBox - the very last (I think)
+        // item in the list is *not* entirely shown. I don't know if the same thing will happen with
+        // other dropdowns which get long enough to need scrolling, but should definitely test as it
+        // matters much more there. It's ugly and annoying and concerning here too, of course.
+        MyExposedDropdownMenuBox(
+            modifier = Modifier.fillMaxWidth(),
+            selectedId  = if (uiContent.editableDataSet.value.currencyCode != "") uiContent.editableDataSet.value.currencyCode else null,
+            onValueChange = { vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(currencyCode = it)) },
             enabled = saveStatus.isNotBusy(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .scrollToFocusable(currencyCodeScrollToFocusableHandle),
+            label = { Text("Currency") },
+            // TODO: supportingText?
+            items = currencyList,
+            getId = { it.first },
+            getLabel = { it.second },
+            // TODO: getDividerBetween to separate "special" ones at top from rest
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        // TODO: OTHER FIELDS!
 
         // TODO: MD3 Expressive deprecates this and says we should use a connected button group, but
         // the relevant library version is still in alpha so I'll just do it the old MD3 way for now
@@ -4103,6 +4115,51 @@ fun getUserPreferredCurrencyCodes(): List<String> {
     }
 
     return currencySet.toList()
+}
+
+fun getCurrencyForLocale(locale: Locale): Currency? {
+    try {
+        return Currency.getInstance(locale)
+    } catch (e: IllegalArgumentException) {
+        // Some locales (e.g. zz_ZZ) might not have a valid currency.
+        return null
+    }
+}
+
+fun buildCurrencyList(locales: LocaleList): List<Pair<String, String>> {
+    fun buildPair(currency: Currency): Pair<String, String> {
+        val currencyCode = currency.currencyCode
+        val displayName = currency.getDisplayName(locales[0])
+        if (displayName.contains(currencyCode)) {
+            Log.d("MyApp", "not adding $currencyCode for $displayName")
+            return Pair(currency.currencyCode, displayName)
+        } else {
+            return Pair(currency.currencyCode, "$displayName ($currencyCode)")
+        }
+    }
+
+    var mainCurrencyList = mutableListOf<Pair<String, String>>()
+    var mainCurrencyCodeSet = mutableSetOf<String>()
+    for (i in 0 until locales.size()) {
+        val locale = locales[i]
+        val currency = getCurrencyForLocale(locale)
+        if (currency != null && currency.currencyCode !in mainCurrencyCodeSet) {
+            mainCurrencyList.add(buildPair(currency))
+            mainCurrencyCodeSet.add(currency.currencyCode)
+        }
+    }
+
+    // TODO: WE NEED TO "RECORD" THIS POINT SO WE CAN PUT A DIVIDER IN THE DROPDOWN
+    val otherCurrencyList =
+        Currency.getAvailableCurrencies().mapNotNull { currency ->
+            if (currency.currencyCode in mainCurrencyCodeSet) null else buildPair(currency)
+        }
+
+    // TODO: ChatGPT magic, check later
+    val collator = Collator.getInstance(locales[0]).apply {
+        strength = Collator.PRIMARY // case-insensitive, diacritic-aware
+    }
+    return mainCurrencyList.toList() + otherCurrencyList.sortedWith { lhs, rhs -> collator.compare(lhs.second, rhs.second) }
 }
 
 // TODO: Maybe rename - the idea here is this does not insist the input is actually parseable as a
@@ -4268,6 +4325,7 @@ fun NumericTextField(
 // work and perhaps the biggest difficutly is combining it with the validation rule logic - so maybe
 // worth revisiting this later. Maybe just ignoring silently is actually best though, regardless of
 // the work involved - think about it fresh later.
+// TODO: Maybe "build" instead of "make" (in other places too) would be more idiomatic?
 fun makeOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
     { it.length <= maxLength }
 
