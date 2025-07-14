@@ -195,6 +195,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
@@ -3338,9 +3339,12 @@ fun runGeneralEditScreenOperation(
         if (isSafeToPerform()) {
             vm.saveStatus.update(busySaveStatus)
             try {
+                Log.d("MyAppRGE", "runGeneralEditScreenOperation about to call perform")
                 perform()
+                delay(5000) // TODO HACK - DONE AFTER PERFORM SO IT GETS A CHANCE TO SET SAVING/DELETING FLAG TO TRUE
                 vm.saveStatus.update(SaveStatus.Success)
             } catch (e: Exception) {
+                Log.d("MyAppRGE", "runGeneralEditScreenOperation caught exception")
                 vm.saveStatus.update(SaveStatus.Error) // TODO: can/should we preserve e and show it to user in UI?
             }
         }
@@ -3360,6 +3364,7 @@ fun GeneralEditScreen(
     content: @Composable () -> Unit
 ) {
     val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
+    Log.d("MyAppRGE", "GeneralEditScreen saveStatus=$saveStatus")
 
     val isBusy = !saveStatus.isNotBusy() // TODO: Add a isBusy()? get rid of isNotBusy()?
     var showConfirmDiscardDialog by rememberSaveable { mutableStateOf(false) }
@@ -3397,13 +3402,18 @@ fun GeneralEditScreen(
     }
 
     LaunchedEffect(Unit) {
-        vm.saveStatus.events.collect { event ->
+        // TODO: I have thrown in a buffer() here voodoo-style based on an actual observed problem
+        // in the case below. Come back to this later.
+        vm.saveStatus.events.buffer().collect { event ->
             when (event) {
                 SaveStatus.Busy -> {
                     // We expect the operation to complete quickly so we don't want the visual distraction
                     // of a progress indicator appearing straight away. Let the progress indicator kick
                     // in after a short delay if we're still here waiting.
                     delay(spinnerDelayMillis)
+                    // TODO: Is there any danger of a race condition where this fires at just the
+                    // wrong moment and overwrites a terminal state (success or error, or the idle
+                    // we transition to after error) and we get stuck?!
                     vm.saveStatus.update(SaveStatus.BusyForAWhile)
                 }
 
@@ -3414,19 +3424,28 @@ fun GeneralEditScreen(
 
     // TODO: ChatGPT magic more or less
     LaunchedEffect(Unit) {
-        vm.saveStatus.events.collect { event ->
+        // TODO: We use buffer here because we want to update() in the error case while we are
+        // already collecting; we get a deadlock otherwise. I *think* this is OK, but be good to
+        // come back to it later.
+        vm.saveStatus.events.buffer().collect { event ->
             when (event) {
                 SaveStatus.Idle -> {
+                    Log.d("MyAppRGE", "collected idle")
                     saving = false
+                    Log.d("MyAppRGE", "set saving to false")
                     onIdle()
+                    Log.d("MyAppRGE", "called onIdle")
                 }
 
                 SaveStatus.Success -> {
+                    Log.d("MyAppRGE", "collected success")
                     requestCloseDebounced()
                 }
 
                 SaveStatus.Error -> {
+                    Log.d("MyAppRGE", "collected error")
                     vm.saveStatus.update(SaveStatus.Idle)
+                    Log.d("MyAppRGE", "set state to idle")
                     showErrorDialog = true
                 }
 
@@ -3475,7 +3494,7 @@ fun GeneralEditScreen(
                             busySaveStatus = SaveStatus.Busy, // TODO: WE MAY NOT NEED THIS ARG ANY MORE
                             perform = {
                                 saving = true
-                                delay(5000) // TODO HACK
+                                //delay(5000) // TODO HACK
                                 performSave()
                             }
                         )
@@ -3735,8 +3754,8 @@ fun EditSourceScreen(
                         busySaveStatus = SaveStatus.Busy,
                         perform = {
                             deleting = true
-                            delay(5000) // TODO HACK
-                            throw IllegalStateException("TODO")
+                            //delay(5000) // TODO HACK
+                            //throw IllegalStateException("TODO")
                             // TODO ACTUALLY DELETE!
                         }
                     )
