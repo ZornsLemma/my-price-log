@@ -554,7 +554,8 @@ suspend fun populateDemoData(context: Context) {
                 currencyCode = "EUR", // TODO TEMP HACK Currency.getInstance(Locale.getDefault()).currencyCode,
                 allowMetric = true,
                 allowImperial = true,
-                allowUSCustomary = false
+                allowUSCustomary = false,
+                notes = "A sample collection of unrealistic grocery prices for imaginary stores. This is intended to give you something to play with when you first install the app.",
             )
         )
         val dataSetId2 = db.dataSetDao().insert(
@@ -563,7 +564,8 @@ suspend fun populateDemoData(context: Context) {
                 currencyCode = "AUD",
                 allowMetric = true,
                 allowImperial = false,
-                allowUSCustomary = true
+                allowUSCustomary = true,
+                notes ="",
             )
         ) // TODO TEMP HACK
         db.dataSetDao().insert(
@@ -572,7 +574,8 @@ suspend fun populateDemoData(context: Context) {
                 currencyCode = "AUD",
                 allowMetric = true,
                 allowImperial = false,
-                allowUSCustomary = true
+                allowUSCustomary = true,
+                notes = "",
             )
         ) // TODO TEMP HACK
         db.productDao().insert(
@@ -726,9 +729,11 @@ interface PriceTrackerRepository {
 
     fun countPricesForSource(sourceId: Long) : Flow<Long>
 
+    suspend fun updateOrInsertDataSet(dataSet: DataSet)
     suspend fun updateOrInsertSource(source: Source)
     suspend fun updateOrInsertPrice(price: Price)
 
+    suspend fun deleteDataSetById(dataSetId: Long): Int
     suspend fun deleteSourceById(sourceId: Long): Int
 }
 
@@ -752,10 +757,16 @@ class PriceTrackerRepositoryImpl(
     override fun countPricesForSource(sourceId: Long) : Flow<Long> =
         priceDao.countPricesForSource(sourceId)
 
+    override suspend fun updateOrInsertDataSet(dataSet: DataSet) {
+        dataSetDao.upsert(dataSet)
+    }
+
     override suspend fun updateOrInsertSource(source: Source) {
         // throw IOException("Simulated database failure") // TODO TEMP
         sourceDao.upsert(source)
     }
+
+    override suspend fun deleteDataSetById(dataSetId: Long): Int = dataSetDao.deleteById(dataSetId)
 
     override suspend fun deleteSourceById(sourceId: Long): Int = sourceDao.deleteById(sourceId)
 
@@ -915,8 +926,53 @@ data class DataSet(
     // to use system formatting is good, and that will probably always be the default.
     @ColumnInfo(name = "allow_metric") val allowMetric: Boolean,
     @ColumnInfo(name = "allow_imperial") val allowImperial: Boolean,
-    @ColumnInfo(name = "allow_us_customary") val allowUSCustomary: Boolean
+    @ColumnInfo(name = "allow_us_customary") val allowUSCustomary: Boolean,
+    val notes: String,
 ) : Parcelable
+
+@Parcelize
+data class EditableDataSet(
+    val id: Long,
+    val name: String,
+    val currencyCode: String,
+    val allowMetric: Boolean,
+    val allowImperial: Boolean,
+    val allowUSCustomary: Boolean,
+    val notes: String,
+) : Parcelable {
+    fun toDomain(): DataSet? {
+        val trimmedName = name.trim()
+        // It could get confusing if an empty name leaked into the database (it would be
+        // semi-invisible in the UI) so we'll check that here, even though we could generate a
+        // Source with such a name and this is not really validation code - we expect to have been
+        // called on a pre-validated EditableSource.
+        if (trimmedName.isEmpty()) {
+            return null
+        }
+        // TODO: Is this a reasonable place to do trimming? Gut feeling is that yes it is, since
+        // validation doesn't care about this, it's just a bit of "tidying". But not sure.
+        return DataSet(
+            id = id,
+            name = trimmedName,
+            currencyCode = currencyCode,
+            allowMetric = allowMetric,
+            allowImperial = allowImperial,
+            allowUSCustomary = allowUSCustomary,
+            notes = notes
+        )
+    }
+
+    companion object {
+        fun fromDataSet(dataSet: DataSet?): EditableDataSet {
+            if (dataSet == null) {
+                // TODO: The default "allowX" values should probably be configured in settings - will just hard-code something I like for now
+                return EditableDataSet(0, "", "", allowMetric = true, allowImperial = true, allowUSCustomary = false, notes = "")
+            } else {
+                return EditableDataSet(id = dataSet.id, name=dataSet.name, currencyCode=dataSet.currencyCode, allowMetric=dataSet.allowMetric, allowImperial = dataSet.allowImperial, allowUSCustomary = dataSet.allowUSCustomary, notes = dataSet.notes)
+            }
+        }
+    }
+}
 
 @Entity(
     tableName = "item", foreignKeys = [
@@ -1198,10 +1254,16 @@ interface DataSetDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(dataSet: DataSet): Long
 
+    @Upsert
+    suspend fun upsert(dataSet: DataSet)
+
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't
     // need this order by here
     @Query("SELECT * FROM data_set ORDER BY name ASC")
     fun getAllDataSets(): Flow<List<DataSet>>
+
+    @Query("DELETE FROM data_set WHERE id = :dataSetId")
+    suspend fun deleteById(dataSetId: Long): Int
 }
 
 @Dao
@@ -1564,8 +1626,9 @@ val menuRightPadding = menuLeftPadding
 
 // TODO: These arbitrary lengths are UI-only and are just intended to stop the user typing insane
 // amounts of text into TextFields and breaking layouts. They may well want to be tweaked later.
+const val maxDataSetNameLength = 32 // TODO: just possibly shorter than others due to use of nav drawer to show these?!
 const val maxSourceNameLength = 32
-const val maxNotesLength = 60 // TODO TEMP FOR TESTING 1024
+const val maxNotesLength = 200 // TODO TEMP FOR TESTING 1024
 
 // TODO: RENAME THIS IF IT SURVIVES REFACTORING
 @OptIn(ExperimentalMaterial3Api::class)
@@ -2616,6 +2679,36 @@ data class EditSourceScreenUIContent(
     }
 }
 
+data class EditDataSetScreenUIContent(
+    val editableDataSet: MutableState<EditableDataSet>,
+    val originalDataSet: EditableDataSet,
+) {
+    fun saveState(savedStateHandle: SavedStateHandle) {
+        saveEditableDataSetState(savedStateHandle)
+        savedStateHandle[ORIGINAL_DATA_SET_KEY] = originalDataSet
+    }
+
+    // This is a separate function to minimise the amount of work done after every user edit.
+    fun saveEditableDataSetState(savedStateHandle: SavedStateHandle) {
+        savedStateHandle[EDITABLE_DATA_SET_KEY] = editableDataSet.value
+    }
+
+    companion object {
+        private const val EDITABLE_DATA_SET_KEY = "editableDataSet"
+        private const val ORIGINAL_DATA_SET_KEY = "originalDataSet"
+
+        fun fromSavedState(savedStateHandle: SavedStateHandle): EditDataSetScreenUIContent? {
+            val savedEditableDataSet: EditableDataSet? = savedStateHandle[EDITABLE_DATA_SET_KEY]
+            val savedOriginalDataSet: EditableDataSet? = savedStateHandle[ORIGINAL_DATA_SET_KEY]
+            if (savedEditableDataSet != null && savedOriginalDataSet != null) {
+                return EditDataSetScreenUIContent(mutableStateOf(savedEditableDataSet), savedOriginalDataSet)
+            } else {
+                return null
+            }
+        }
+    }
+}
+
 @Composable
 fun HomeScreen(
     vm: HomeViewModel,
@@ -3612,10 +3705,6 @@ fun EditSourceScreen(
 
     val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
 
-
-    // TODO: We want option to delete the source - this may need to be on an overflow menu and
-    // thus need tweaks to GeneralEditScreen.
-
     GeneralEditScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
@@ -3623,7 +3712,7 @@ fun EditSourceScreen(
         title = { Text("TODO: TITLE") },
         isDirty = { uiContent.editableSource.value != uiContent.originalSource },
         validateForSave = { vm.validateForSave() },
-        performSave = { vm.performSave(); throw IllegalArgumentException("TODO2") },
+        performSave = { vm.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
         onIdle = { deleting = false },
         requestClose = requestClose,
     ) {
@@ -3744,6 +3833,150 @@ fun EditSourceScreen(
             } else {
                 // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
                 { Text("Deleting this store will also delete its product prices. This action cannot be undone.") }
+            },
+            onDismissRequest = { showDeleteConfirmDialog = false },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmDialog = false }) { Text("Cancel") }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirmDialog = false
+                    runGeneralEditScreenOperation(
+                        vm = vm.generalEditScreenViewModel,
+                        coroutineScope = vm.viewModelScope,
+                        isSafeToPerform = { true },
+                        perform = {
+                            deleting = true
+                            //delay(5000) // TODO HACK
+                            //throw IllegalStateException("TODO")
+                            vm.performDelete()
+                        }
+                    )
+                }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
+            },
+        )
+    }
+}
+
+@Composable
+fun EditDataSetScreen(
+    vm: EditDataSetViewModel,
+    navController: NavHostController,
+    requestClose: () -> Unit
+) {
+    val uiContent = vm.uiContent
+
+    val dataSetReferenceCount by vm.dataSetReferenceCountFlow.collectAsStateWithLifecycle()
+    Log.d("MyApp", "dataSetReferenceCount $dataSetReferenceCount")
+
+    val nameScrollToFocusableHandle = rememberScrollToFocusable()
+
+    var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var deleting by rememberSaveable { mutableStateOf( false) }
+
+    val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
+
+    GeneralEditScreen(
+        vm = vm.generalEditScreenViewModel,
+        navController = navController,
+        // TODO: Different title for add vs edit?
+        title = { Text("TODO: TITLE") },
+        isDirty = { uiContent.editableDataSet.value != uiContent.originalDataSet },
+        validateForSave = { vm.validateForSave() },
+        performSave = { vm.performSave(); throw IllegalArgumentException("TODO2") },
+        onIdle = { deleting = false },
+        requestClose = requestClose,
+    ) {
+        var name by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.name)
+        val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
+        Log.d("MyApp", "nameValidationRules $nameValidationRules")
+        ValidatedTextField(
+            label = { Text("Name") },
+            value = name,
+            validationRules = nameValidationRules.value,
+            validationRulesKey = nameValidationRules.version,
+            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxDataSetNameLength),
+            onValueChange = {
+                name = it
+                vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(name = it.text))
+            },
+            enabled = saveStatus.isNotBusy(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .scrollToFocusable(nameScrollToFocusableHandle),
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // TODO: OTHER FIELDS!
+
+        var notes by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.notes)
+        ValidatedTextField(
+            label = { Text("Notes") },
+            value = notes,
+            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
+            onValueChange = {
+                notes = it
+                vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(notes = it.text))
+            },
+            enabled = saveStatus.isNotBusy(),
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        if (uiContent.editableDataSet.value.id != 0L) {
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = { showDeleteConfirmDialog = true },
+                enabled = saveStatus.isNotBusy() && dataSetReferenceCount != null,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+            ) {
+                if (deleting && saveStatus == SaveStatus.BusyForAWhile) {
+                    SmallCircularProgressIndicator()
+                } else {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Delete"
+                    ) // TODO: tweak wording?
+                }
+                Spacer(Modifier.width(8.dp))
+                Text("Delete collection")
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        vm.saveValidationEvents.collect { field ->
+            Log.d("MyApp", "LaunchedEffect saveValidationError $field")
+            when (field) {
+                EditDataSetViewModel.EditableField.NAME -> {
+                    Log.d("MyApp", "scrolling to name")
+                    scrollAndFocusTo(nameScrollToFocusableHandle)
+                }
+            }
+        }
+    }
+
+    if (showDeleteConfirmDialog) {
+        val isSimpleDelete = dataSetReferenceCount == 0L
+        AlertDialog(
+            icon = if (isSimpleDelete) null else {
+                {
+                    Icon( // TODO: Do I need to set the size of this icon explicitly?
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Warning",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            // TODO: WORDING FOR ALL OF THIS IS PARTICULARLY BAD AND NEEDS THOUGHT
+            title = if (isSimpleDelete) {{ Text("Delete collection?") }} else {{ Text("Delete collection and products, stores and prices?") }},
+            // TODO: USE BOLD FOR PART OF CASCADING DELETE TEXT? At least according to ChatGPT this is a bit fiddly without building it in code which won't fit well with string resource use.
+            text = if (isSimpleDelete) {
+                { Text("This collection has no associated TODODATA so deleting it will not affect anything else.") }
+            } else {
+                // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
+                { Text("Deleting this collection will also delete its TODOASSOCIATEDDATA. This action cannot be undone.") }
             },
             onDismissRequest = { showDeleteConfirmDialog = false },
             dismissButton = {
@@ -4290,6 +4523,16 @@ class SharedViewModel : ViewModel() {
             originalSource = editableSource,
         )
     }
+
+    var editDataSetScreenUIContent: EditDataSetScreenUIContent? = null
+
+    fun setEditDataSetScreenContent(dataSet: DataSet?) {
+        val editableDataSet = EditableDataSet.fromDataSet(dataSet)
+        editDataSetScreenUIContent = EditDataSetScreenUIContent(
+            editableDataSet = mutableStateOf(editableDataSet),
+            originalDataSet = editableDataSet,
+        )
+    }
 }
 
 // Return the non-digit prefix and suffix around a digit-containing string. Given "foo123bar4 baz56
@@ -4690,28 +4933,12 @@ class EditSourceViewModel(
     // validation rules *are present* during save validation.
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule>>> =
         priceTrackerRepository.getAllSources(uiContent.editableSource.value.dataSetId)
-            .map { sourceList -> buildNameValidationRules(sourceList) }
+            .map { sourceList -> buildNameValidationRules(
+                sourceList.filter { source -> source.id != uiContent.editableSource.value.id }
+                    .map { source -> source.name }
+            ) }
             .withVersion()
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
-
-    // TODO: Not here specifically, I almost wonder if the lambdas should have the *option* (not
-    // obligation) to modify the value for later lambdas in the chain, and the validation process
-    // returns the final one. This *might* provide a natural way to implement things like "strip
-    // spaces" or "strip insignificant fluff in a double-as-string" as an initial step, avoid
-    // redoing that work in subsequent lambdas which want the same sanitising and help to avoid the
-    // situation where for example the validation is all based on a trim()ed string but I forget to
-    // manually apply the trim() when writing the string to the database. On the other hand, applying
-    // the validation rule changes to a data class via copy() might be finicky and error prone.
-    private fun buildNameValidationRules(sourceList: List<Source>): List<ValidationRule> {
-        return listOf(
-            ValidationRule({ it.isNotEmpty() }, "Must have a name"),
-            // TODO! ValidationRule({ it -> 'x' in it }, "Must contain 'x' to be cool"),
-        ) + sourceList.filter { source -> source.id != uiContent.editableSource.value.id }
-            .map { source ->
-            ValidationRule({ candidateName -> !areHumanEqual(candidateName, source.name) }, "Name must be unique") // TODO: Tweak wording?
-        }
-        //return emptyList() // TODO!
-    }
 
     enum class EditableField {
         NAME,
@@ -4744,6 +4971,102 @@ class EditSourceViewModel(
         devCheck(sourceId != 0L) { "Expected to delete an actual source but have ID 0" }
         val rowsDeleted = priceTrackerRepository.deleteSourceById(sourceId)
         Log.d("MyApp", "Deleted $rowsDeleted rows with sourceId $sourceId")
+    }
+}
+
+// TODO: Not here specifically, I almost wonder if the lambdas should have the *option* (not
+// obligation) to modify the value for later lambdas in the chain, and the validation process
+// returns the final one. This *might* provide a natural way to implement things like "strip
+// spaces" or "strip insignificant fluff in a double-as-string" as an initial step, avoid
+// redoing that work in subsequent lambdas which want the same sanitising and help to avoid the
+// situation where for example the validation is all based on a trim()ed string but I forget to
+// manually apply the trim() when writing the string to the database. On the other hand, applying
+// the validation rule changes to a data class via copy() might be finicky and error prone.
+fun buildNameValidationRules(existingNameList: List<String>): List<ValidationRule> {
+    return listOf(
+        ValidationRule({ it.isNotEmpty() }, "Must have a name"),
+        // TODO! ValidationRule({ it -> 'x' in it }, "Must contain 'x' to be cool"),
+    ) + existingNameList.map { name ->
+            ValidationRule({ candidateName -> !areHumanEqual(candidateName, name) }, "Name must be unique") // TODO: Tweak wording?
+        }
+}
+
+// TODO: There is a huge amount of pseudo copy and paste in all the Edit*{Screen,ViewModel} stuff.
+// Probably just going to accept it as I do the initial implementation so I don't tie myself in
+// knots coping with generic attempts that don't quite match reality, but later on it would be good
+// to see what can be factored out.
+class EditDataSetViewModel(
+    private val priceTrackerRepository: PriceTrackerRepository,
+    private val savedStateHandle: SavedStateHandle,
+    val uiContent: EditDataSetScreenUIContent,
+) : ViewModel() {
+    init {
+        uiContent.saveState(savedStateHandle)
+    }
+
+    // TODO: 42 is obviously a hack. Data sets can be referenced by items, source *and* prices. In
+    // some ways being referenced by prices is "scariest", but it's also not nice if the user wipes
+    // out a dataset with items and sources associated even if they are no prices. I need to decide
+    // what I will consider here, which is all about generating warnings to the user. I could just
+    // sum the counts across all three reference types for example. I may want to count each thing
+    // separately and tweak the UI delete warnings accordingly.
+    val dataSetReferenceCountFlow = flowOf(42L)
+        .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = null)
+
+    val generalEditScreenViewModel = GeneralEditScreenViewModel()
+
+    fun setUIContentEditableDataSet(newEditableDataSet: EditableDataSet) {
+        uiContent.editableDataSet.value = newEditableDataSet
+        uiContent.saveEditableDataSetState(savedStateHandle)
+    }
+
+    // TODO: There just might be an argument for not using emptyList() in stateIn, so we can head
+    // off a theoretical possibility of the user entering invalid data (maybe just leaving the
+    // form empty when creating a new entry) and starting a save before the validation rules are
+    // present, which will pass (because no validation rules) and then they either insert invalid
+    // data or get a database level constraint validation. If we have null, we can make sure the
+    // validation rules *are present* during save validation.
+    val nameValidationRules: StateFlow<Versioned<List<ValidationRule>>> =
+        priceTrackerRepository.getAllDataSets()
+            .map { dataSetList -> buildNameValidationRules(
+                dataSetList.filter { dataSet -> dataSet.id != uiContent.editableDataSet.value.id }
+                    .map { dataSet -> dataSet.name }
+            ) }
+            .withVersion()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
+
+    enum class EditableField {
+        NAME,
+        // TODO: MORE
+    }
+    private val _saveValidationEvents = MutableSharedFlow<EditableField>()
+    val saveValidationEvents = _saveValidationEvents.asSharedFlow()
+
+    suspend fun validateForSave() : Boolean {
+        Log.d("MyAppESS", "validateForSave")
+        if (!validationRulesOk(nameValidationRules.value.value, uiContent.editableDataSet.value.name)) {
+            _saveValidationEvents.emit(EditableField.NAME)
+            return false
+        }
+        Log.d("MyAppESS", "validateForSave passed")
+        // TODO: MORE
+        return true
+    }
+
+    suspend fun performSave() {
+        val dataSet = uiContent.editableDataSet.value.toDomain()
+        if (dataSet == null) {
+            throw IllegalStateException("performSave() called with an inconvertible EditableDataSet: ${uiContent.editableDataSet.value}")
+        }
+        priceTrackerRepository.updateOrInsertDataSet(dataSet)
+    }
+
+    suspend fun performDelete() {
+        Log.d("MyApp", "entered performDelete")
+        val dataSetId = uiContent.editableDataSet.value.id
+        devCheck(dataSetId != 0L) { "Expected to delete an actual data set but have ID 0" }
+        val rowsDeleted = priceTrackerRepository.deleteDataSetById(dataSetId)
+        Log.d("MyApp", "Deleted $rowsDeleted rows with dataSetId $dataSetId")
     }
 }
 
@@ -4883,7 +5206,11 @@ fun AppNavigation() {
                 getId = { it.id },
                 getName = { it.name },
                 onAddClick = { Log.d("MyAppGS", "Add data set") },
-                onItemSelected = { Log.d("MyAppGS", "selected $it") })
+                onItemSelected = {
+                    Log.d("MyAppGS", "selected $it")
+                    sharedViewModel.setEditDataSetScreenContent(it)
+                    navController.navigate("editDataSet")
+                })
         }
 
         composable(
@@ -4996,7 +5323,35 @@ fun AppNavigation() {
                 })
         }
 
-        // TODO: The transition here when we close is wrong, we slide down but the underlying edit sources screen which is supposed to remain static also slides in from the right - of course it may be that composable("foo") which has the wrong transitions on
+        composable(
+            "editDataSet", enterTransition = { slideUpTransition() },
+            popExitTransition = { slideDownTransition() },
+        ) { backStackEntry ->
+            // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
+            // backStackEntry) - this avoids stale data causing problems.
+            val factory = remember(backStackEntry) {
+                viewModelFactoryWithHandle { app, savedStateHandle ->
+                    // TODO: !! ON NEXT LINE FEELS A BIT HACKY BUT IS PROBABLY OK
+                    EditDataSetViewModel(
+                        app.priceTrackerRepository,
+                        savedStateHandle,
+                        sharedViewModel.editDataSetScreenUIContent
+                            ?: EditDataSetScreenUIContent.fromSavedState(savedStateHandle)!!
+                    )
+                }
+            }
+            LaunchedEffect(Unit) {
+                sharedViewModel.editDataSetScreenUIContent = null
+            }
+
+            EditDataSetScreen(
+                viewModel(backStackEntry, factory = factory), navController,
+                requestClose = {
+                    navController.popBackStack()
+                })
+        }
+
+
         composable(
             "editSource", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
@@ -5015,7 +5370,7 @@ fun AppNavigation() {
                 }
             }
             LaunchedEffect(Unit) {
-                sharedViewModel.editPriceScreenUIContent = null
+                sharedViewModel.editSourceScreenUIContent = null
             }
 
             EditSourceScreen(
