@@ -3340,12 +3340,11 @@ fun runGeneralEditScreenOperation(
     vm: GeneralEditScreenViewModel,
     coroutineScope: CoroutineScope,
     isSafeToPerform: suspend () -> Boolean,
-    busySaveStatus: SaveStatus,
     perform: suspend () -> Unit,
 ) {
     coroutineScope.launch {
         if (isSafeToPerform()) {
-            vm.saveStatus.update(busySaveStatus)
+            vm.saveStatus.update(SaveStatus.Busy)
             try {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation about to call perform")
                 perform()
@@ -3499,7 +3498,6 @@ fun GeneralEditScreen(
                             vm = vm,
                             coroutineScope = coroutineScope,
                             isSafeToPerform = validateForSave,
-                            busySaveStatus = SaveStatus.Busy, // TODO: WE MAY NOT NEED THIS ARG ANY MORE
                             perform = {
                                 saving = true
                                 delay(5000) // TODO HACK
@@ -3758,7 +3756,6 @@ fun EditSourceScreen(
                         vm = vm.generalEditScreenViewModel,
                         coroutineScope = vm.viewModelScope,
                         isSafeToPerform = { true },
-                        busySaveStatus = SaveStatus.Busy,
                         perform = {
                             deleting = true
                             //delay(5000) // TODO HACK
