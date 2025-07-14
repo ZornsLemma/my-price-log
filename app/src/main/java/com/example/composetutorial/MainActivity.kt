@@ -728,6 +728,8 @@ interface PriceTrackerRepository {
 
     suspend fun updateOrInsertSource(source: Source)
     suspend fun updateOrInsertPrice(price: Price)
+
+    suspend fun deleteSourceById(sourceId: Long): Int
 }
 
 class PriceTrackerRepositoryImpl(
@@ -754,6 +756,8 @@ class PriceTrackerRepositoryImpl(
         // throw IOException("Simulated database failure") // TODO TEMP
         sourceDao.upsert(source)
     }
+
+    override suspend fun deleteSourceById(sourceId: Long): Int = sourceDao.deleteById(sourceId)
 
     // TODO: Tempish note (maybe make permanent) - I discussed with ChatGPT and it seemed to make
     // sense - the repository should take "validated domain level" entities (where we aren't just
@@ -1227,6 +1231,9 @@ interface SourceDao {
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
     @Query("SELECT * FROM source WHERE data_set_id = :dataSetId ORDER BY name ASC")
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
+
+    @Query("DELETE FROM source WHERE id = :sourceId")
+    suspend fun deleteById(sourceId: Long): Int
 }
 
 @Dao
@@ -3747,7 +3754,6 @@ fun EditSourceScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteConfirmDialog = false
-                    // TODO: Can probably factor this launch out with similar code inside GeneralEditScreen - the "validateForSave" callback would just be a no-op in this case
                     runGeneralEditScreenOperation(
                         vm = vm.generalEditScreenViewModel,
                         coroutineScope = vm.viewModelScope,
@@ -3757,7 +3763,7 @@ fun EditSourceScreen(
                             deleting = true
                             //delay(5000) // TODO HACK
                             //throw IllegalStateException("TODO")
-                            // TODO ACTUALLY DELETE!
+                            vm.performDelete()
                         }
                     )
                 }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
@@ -4733,6 +4739,14 @@ class EditSourceViewModel(
             throw IllegalStateException("performSave() called with an inconvertible EditableSource: ${uiContent.editableSource.value}")
         }
         priceTrackerRepository.updateOrInsertSource(source)
+    }
+
+    suspend fun performDelete() {
+        Log.d("MyApp", "entered performDelete")
+        val sourceId = uiContent.editableSource.value.id
+        devCheck(sourceId != 0L) { "Expected to delete an actual source but have ID 0" }
+        val rowsDeleted = priceTrackerRepository.deleteSourceById(sourceId)
+        Log.d("MyApp", "Deleted $rowsDeleted rows with sourceId $sourceId")
     }
 }
 
