@@ -965,6 +965,7 @@ data class EditableDataSet(
     companion object {
         fun fromDataSet(dataSet: DataSet?): EditableDataSet {
             if (dataSet == null) {
+                // TODO: The currencyCode should default to current locale
                 // TODO: The default "allowX" values should probably be configured in settings - will just hard-code something I like for now
                 return EditableDataSet(0, "", "", allowMetric = true, allowImperial = true, allowUSCustomary = false, notes = "")
             } else {
