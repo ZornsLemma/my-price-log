@@ -5280,3 +5280,17 @@ Log.d("MyApp", baz.toString())
 // auto-backups, we could just possibly try to be clever and only do this if we haven't done an
 // auto-backup within the last hour or so. This limits the window of data loss while keeping backup
 // volume down.
+
+// TODO: When I finally write some actual code to "analyse" the price data coming back from the db
+// on the home screen (inside the viewmodel, probably inside its data pipeline before we emit to the
+// UI), it will probably be fine as the calculation is unlikely to be that heavy but I should keep
+// an eye open for the possibility of needing to move that work over to a new thread
+// (Dispatchers.IO) with some care about thread sync at that point, so as not to block the main
+// thread - if my code runs on the main thread and is not calling suspend functions, that blocks all
+// the other stuff including the Ui and may make it unresonsive. There is value in the UI being
+// responsive because at least the user can e.g. change the current item or source if they change
+// their mind without being blocked. But don't rush into making this multi-threaded for no reason,
+// as I say the calculation is probably pretty light, just be aware and maybe put a TODO in the
+// final version if it isn't multi-threaded to keep an eye on this once it's maybe pulling a bit
+// more data in a "realistic" database. Probably fine even then, given we're filtered down to a
+// single product and there can only be one price per store.
