@@ -3296,10 +3296,7 @@ fun EditPriceScreen(
             )
         }
         if (packSizeSupportingText.second != null) {
-            Text(
-                text = packSizeSupportingText.second!!,
-                style = MaterialTheme.typography.bodySmall,
-                color = if (packSizeSupportingText.first) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            SupportingText(text = packSizeSupportingText.second!!, isError = packSizeSupportingText.first,
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .padding(top = 4.dp)
@@ -3422,6 +3419,14 @@ fun EditPriceScreen(
     }
 }
 
+@Composable
+fun SupportingText(text: String, isError: Boolean, modifier: Modifier = Modifier) {
+    Text(
+        text = text, modifier = modifier,
+        style = MaterialTheme.typography.bodySmall,
+        color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
 
 // TODO: Rename? This is not actually a ViewModel, though it plays a similar role (I think).
 // TODO: Can/should this be handled via rememberSaveable inside GeneralEditScreen? I think in some
@@ -3978,7 +3983,7 @@ fun EditDataSetScreen(
         // with ChatGPT "US Units" is better for a casual user anyway, even if we could fit "US
         // Customary".
         val options = listOf("Metric", "Imperial", "US units")
-        val checkedStates = remember { mutableStateListOf(true, true, false) }
+        val checkedStates = remember { mutableStateListOf(uiContent.editableDataSet.value.allowMetric, uiContent.editableDataSet.value.allowImperial, uiContent.editableDataSet.value.allowUSCustomary) }
         // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and 2 as imperial/US
         MultiChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             options.forEachIndexed { index, label ->
@@ -3988,11 +3993,12 @@ fun EditDataSetScreen(
                         checkedStates[index] = it
                         // Don't allow Imperial and US Customary to be selected together. (We use
                         // the common but ambiguous names for the units, so this would cause UI
-                        // confusion. And we don't want to be showing "pint (US)" or "pt (US)" all
-                        // the time to disambiguate.
+                        // confusion. We don't want to be showing "pint (US)" or "pt (US)" all the
+                        // time to disambiguate.
                         if (index > 0 && checkedStates[index]) {
                             checkedStates[if (index == 1) 2 else 1] = false
                         }
+                        vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(allowMetric = checkedStates[0], allowImperial = checkedStates[1], allowUSCustomary = checkedStates[2]))
                         },
                     checked = checkedStates[index],
                     colors = SegmentedButtonDefaults.colors(),
@@ -4003,7 +4009,11 @@ fun EditDataSetScreen(
                 }
             }
         }
-        // TODO: Remember the above is just a dummy and doesn't populate or save its data to db!
+        SupportingText(text = "TODO SUPPORTING TEXT FOR ERROR", isError = true /* TODO */,
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(top = 4.dp)
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -5218,8 +5228,17 @@ class EditDataSetViewModel(
 
     suspend fun validateForSave() : Boolean {
         Log.d("MyAppESS", "validateForSave")
-        if (!validationRulesOk(nameValidationRules.value.value, uiContent.editableDataSet.value.name)) {
+        val editableDataSet = uiContent.editableDataSet.value
+        if (!validationRulesOk(nameValidationRules.value.value, editableDataSet.name)) {
             _saveValidationEvents.emit(EditableField.NAME)
+            return false
+        }
+        if (!editableDataSet.allowMetric && !editableDataSet.allowImperial && !editableDataSet.allowUSCustomary) {
+            // TODO!
+            return false
+        }
+        if (editableDataSet.allowImperial && editableDataSet.allowUSCustomary) {
+            // TODO!
             return false
         }
         Log.d("MyAppESS", "validateForSave passed")
