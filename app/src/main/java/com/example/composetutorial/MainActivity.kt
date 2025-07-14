@@ -3960,10 +3960,10 @@ fun EditDataSetScreen(
             enabled = saveStatus.isNotBusy(),
             label = { Text("Currency") },
             // TODO: supportingText?
-            items = currencyList,
+            items = currencyList.second,
             getId = { it.first },
             getLabel = { it.second },
-            // TODO: getDividerBetween to separate "special" ones at top from rest
+            getDividerBetween = { firstItem, _ -> firstItem.first == currencyList.first },
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -4126,12 +4126,16 @@ fun getCurrencyForLocale(locale: Locale): Currency? {
     }
 }
 
+// Returns a list of (currency codes as IDs, currency display names) with the most likely ones (based
+// on the current locales) at the top. The last of the "most likely" currency codes is also returned
+// as a string so we can use it to add a divider after this entry.
+//
 // In Spanish, the display names are all lower case with no initial capital. ChatGPT assures me that
 // this is what a native speaker would expect, so I'm not coercing the first character into upper
 // case to appease my native English speaker brain. I will trust that getDisplayName() does the
 // right thing for the current locale, until an actual native speaker of some non-English language
 // tells me otherwise.
-fun buildCurrencyList(locales: LocaleList): List<Pair<String, String>> {
+fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, String>>> {
     fun buildPair(currency: Currency): Pair<String, String> {
         val currencyCode = currency.currencyCode
         val displayName = currency.getDisplayName(locales[0])
@@ -4153,8 +4157,6 @@ fun buildCurrencyList(locales: LocaleList): List<Pair<String, String>> {
             mainCurrencyCodeSet.add(currency.currencyCode)
         }
     }
-    // TODO: WE NEED TO "RECORD" THIS POINT SO WE CAN PUT A DIVIDER IN THE DROPDOWN
-
     // TODO: A small but worthwhile tweak might be filtering out anything where the display name
     // includes four digit numbers - these are almost certainly years and are therefore almost
     // certainly historical currencies of no interest to us.
@@ -4167,7 +4169,7 @@ fun buildCurrencyList(locales: LocaleList): List<Pair<String, String>> {
     val collator = Collator.getInstance(locales[0]).apply {
         strength = Collator.PRIMARY // case-insensitive, diacritic-aware
     }
-    return mainCurrencyList.toList() + otherCurrencyList.sortedWith { lhs, rhs -> collator.compare(lhs.second, rhs.second) }
+    return Pair(mainCurrencyList.last().first, mainCurrencyList.toList() + otherCurrencyList.sortedWith { lhs, rhs -> collator.compare(lhs.second, rhs.second) })
 }
 
 // TODO: Maybe rename - the idea here is this does not insist the input is actually parseable as a
