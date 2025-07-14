@@ -4157,12 +4157,14 @@ fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Strin
             mainCurrencyCodeSet.add(currency.currencyCode)
         }
     }
-    // TODO: A small but worthwhile tweak might be filtering out anything where the display name
-    // includes four digit numbers - these are almost certainly years and are therefore almost
-    // certainly historical currencies of no interest to us.
+
+    // We filter out currencies with display names including four digit values; these are almost
+    // certainly historical currencies of no interest to us. (This still leaves plenty of historical
+    // currencies, but this is easy and every little helps.)
+    val yearRegex = Regex("\\b\\d{4}\\b")
     val otherCurrencyList =
         Currency.getAvailableCurrencies().mapNotNull { currency ->
-            if (currency.currencyCode in mainCurrencyCodeSet) null else buildPair(currency)
+            if (currency.currencyCode in mainCurrencyCodeSet || yearRegex.containsMatchIn(currency.getDisplayName(locales[0]))) null else buildPair(currency)
         }
 
     // TODO: ChatGPT magic, check later
