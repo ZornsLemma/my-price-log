@@ -3925,7 +3925,7 @@ fun EditDataSetScreen(
         // allow an option to type a 3 letter currency code or to have a fancier picker and/or to have a "don't worry about 3 letter
         // codes and system support, I want my own currency with prefix X and suffix Y and n decimal places", but we don't need
         // that yet.
-        // TODO: We could of course write out own pop-up (probably not full screen, but who knows?) "currency picker" or dig up a third party once, but as currencies are not a prime focus right now I think that's getting into YAGNI territory.
+        // TODO: We could of course write out own pop-up (probably not full screen, but who knows?) "currency picker" or dig up a third party once, but as currencies are not a prime focus right now I think that's getting into YAGNI territory. We could also re-use our already search-capable GeneralSelectorScreen thingy, but again this is probably not an immediate priority.
         Log.d("MyApp", "allCurrencyCodes $allCurrencyCodes")
 
         var currencyCode by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.currencyCode)
