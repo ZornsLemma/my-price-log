@@ -4153,8 +4153,11 @@ fun buildCurrencyList(locales: LocaleList): List<Pair<String, String>> {
             mainCurrencyCodeSet.add(currency.currencyCode)
         }
     }
-
     // TODO: WE NEED TO "RECORD" THIS POINT SO WE CAN PUT A DIVIDER IN THE DROPDOWN
+
+    // TODO: A small but worthwhile tweak might be filtering out anything where the display name
+    // includes four digit numbers - these are almost certainly years and are therefore almost
+    // certainly historical currencies of no interest to us.
     val otherCurrencyList =
         Currency.getAvailableCurrencies().mapNotNull { currency ->
             if (currency.currencyCode in mainCurrencyCodeSet) null else buildPair(currency)
