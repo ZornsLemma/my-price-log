@@ -3926,6 +3926,12 @@ fun EditDataSetScreen(
         // codes and system support, I want my own currency with prefix X and suffix Y and n decimal places", but we don't need
         // that yet.
         // TODO: We could of course write out own pop-up (probably not full screen, but who knows?) "currency picker" or dig up a third party once, but as currencies are not a prime focus right now I think that's getting into YAGNI territory. We could also re-use our already search-capable GeneralSelectorScreen thingy, but again this is probably not an immediate priority.
+        // TODO: ChatGPT copy and paste:
+        // val currency = Currency.getInstance("USD")
+        // val code = currency.currencyCode        // "USD"
+        // val symbol = currency.getSymbol(locale) // "$" or "US$"
+        // val name = currency.getDisplayName(locale) // "US Dollar"
+        // It may well be that for our initial drop-down given we are user facing not in some financial app that we should sort by display name, using getDisplayName(LocalConfiguration.current.locales[0])
         Log.d("MyApp", "allCurrencyCodes $allCurrencyCodes")
 
         var currencyCode by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.currencyCode)
@@ -4207,7 +4213,8 @@ fun NumericTextField(
     // TODO: I am not completely happy about defaulting to the current locale here, since I am
     // generally trying to make sure I think about the correct locale when I need one. This is a
     // theoretically re-usable component and this isn't a ridiculous default in general, but it's
-    // not ideal for this app.
+    // not ideal for this app. There might - I'm not sure - also be performance considerations if
+    // the list of rules is regenerated every re-composition.
     validationRules: List<ValidationRule>? = numericValidationRules(LocalConfiguration.current.locales[0]),
     validationRulesKey: Any? = null,
     onValueChange: (TextFieldValue) -> Unit,
