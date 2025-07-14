@@ -5705,3 +5705,8 @@ Log.d("MyApp", baz.toString())
 // final version if it isn't multi-threaded to keep an eye on this once it's maybe pulling a bit
 // more data in a "realistic" database. Probably fine even then, given we're filtered down to a
 // single product and there can only be one price per store.
+
+// TODO: What happens/should happen if e.g. a user's "display unit" for a save price is in imperial
+// and then they turn imperial off for the collection? Will we still show in imperial by default but
+// not allow it in the drop down? Will we force display into a unit (picking the best on a
+// significant digits basis or something) in an allowed system?
