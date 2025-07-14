@@ -27,6 +27,7 @@ import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
+import android.os.LocaleList
 import android.os.Parcelable
 import android.os.StrictMode
 import android.text.format.DateUtils
@@ -3916,6 +3917,16 @@ fun EditDataSetScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        val allCurrencyCodes = Currency.getAvailableCurrencies()
+            .map { it.currencyCode } // TODO: There's also it.symbol which we could nclude in brackets
+            .sorted()
+        // TODO: See also getUserPreferredCurrencyCodes() below - I think the right thing to do is probably to put the user's *current* locale currency right at the top, then any others from that get function, then the rest - perhaps with a divider.
+        // The dropdown is going to be insanely long but for a first cut this is not too bad. In the longer term I might want to
+        // allow an option to type a 3 letter currency code or to have a fancier picker and/or to have a "don't worry about 3 letter
+        // codes and system support, I want my own currency with prefix X and suffix Y and n decimal places", but we don't need
+        // that yet.
+        Log.d("MyApp", "allCurrencyCodes $allCurrencyCodes")
+
         var currencyCode by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.currencyCode)
         val maxCurrencyCodeLength = 3 // TODO? We may want to allow more for editing-in-place - TBH this maybe should be a dropdown or something fancier
         ValidatedTextField(
@@ -3973,6 +3984,7 @@ fun EditDataSetScreen(
                 }
             }
         }
+        // TODO: Remember the above is just a dummy and doesn't populate or save its data to db!
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -4066,6 +4078,24 @@ fun EditDataSetScreen(
             },
         )
     }
+}
+
+// TODO: ChatGPT code, review if keep.
+fun getUserPreferredCurrencyCodes(): List<String> {
+    val locales = LocaleList.getDefault() // TODO: For up-to-dateness in Compose we should probably use LocalConfiguration.current.locales
+    val currencySet = mutableSetOf<String>()
+
+    for (i in 0 until locales.size()) {
+        val locale = locales[i]
+        try {
+            val currency = Currency.getInstance(locale)
+            currencySet.add(currency.currencyCode)
+        } catch (e: IllegalArgumentException) {
+            // Some locales (e.g. zz_ZZ) might not have a valid currency
+        }
+    }
+
+    return currencySet.toList()
 }
 
 // TODO: Maybe rename - the idea here is this does not insist the input is actually parseable as a
