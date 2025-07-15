@@ -4010,6 +4010,40 @@ fun EditDataSetScreen(
             }
         }
 
+        // TODO: Just thinking out loud, I wonder if the correct abstraction here - which we'd also
+        // use with ValidatedTextField - is that the "parent" composable does something like:
+        //
+        // val someEditFieldSupportingErrorText by remember { mutableStateOf("") }
+        // validate(valueToValidate, validationRules, onSupportingTextChange = { someEditFieldSupportingErrorText = it })
+        //
+        // and then conditionally shows (if it's not "") the supporting text or passes it to e.g. a
+        // TextField's supportingText (which would maybe argue for null for nothing instead of empty
+        // string, BTW) and it should just recompose automatically.
+        //
+        // I am not sure off the top of my head if validate() (which I think could be Composable)
+        // would be able to call the onSupportingTextChange callback from a coroutine after a delay
+        // to allow for deferring supportingText until the problem has persisted for 500ms or
+        // whatever. I also don't know if it would be able to save internal state to make the
+        // message we are showing stable in the face of multiple candidates, though that's probably
+        // fine - it could just rememberSaveable() the failed rule or something.
+        //
+        // I had a quick chat with ChatGPT and this should probably use LaunchedEffect internally,
+        // this sketch it gave me doesn't address things like "delay, but not always" but FWIW:
+        // @Composable
+        //fun <T> ValidateEffect(
+        //    value: T,
+        //    rules: List<ValidationRule<T>>,
+        //    onSupportingTextChange: (String?) -> Unit
+        //) {
+        //    LaunchedEffect(value) {
+        //        delay(500)
+        //        val failedRule = rules.firstOrNull { !it.predicate(value) }
+        //        onSupportingTextChange(failedRule?.message)
+        //    }
+        //}
+        //
+        // This also avoids corner cases as there will only be one coroutine and it will be cancelled
+        // if value changes.
         ValidationRuleSupportingText(
             value = Triple(uiContent.editableDataSet.value.allowMetric, uiContent.editableDataSet.value.allowImperial,uiContent.editableDataSet.value.allowUSCustomary),
             validationRules = vm.measurementSystemValidationRules,
