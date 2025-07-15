@@ -6098,6 +6098,24 @@ fun ErrorHighlightBox(
         content()
     }
 }
+/* TODO: Perplexity fragment which says it uses dp. for reference/tweaking later:
+Box(
+    modifier = modifier.drawWithContent {
+        drawContent()
+        if (hasError) {
+            val borderWidthPx = 2.dp.toPx()
+            val offsetPx = borderWidthPx / 2
+            drawRect(
+                color = pulseColor.copy(alpha = borderAlpha),
+                style = Stroke(width = borderWidthPx),
+                topLeft = Offset(-offsetPx, -offsetPx),
+                size = Size(size.width + borderWidthPx, size.height + borderWidthPx)
+            )
+        }
+    }
+)
+
+*/
 
 /* TODO TEMP TEST CODE FOR MEASUREDVALUE
 val foo = MeasuredValue(5.0, MeasureUnit.KG)
