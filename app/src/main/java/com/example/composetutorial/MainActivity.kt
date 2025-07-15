@@ -69,6 +69,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -3998,7 +3999,7 @@ fun EditDataSetScreen(
         // with a segmented button group.
         // TODO: I'm far from sure what typography or colour this caption should have, but this
         // matches the caption on the TextFields so it is probably not a terrible choice.
-        Box {
+        BoxWithConstraints {
             Column {
                 Text(
                     "Measurement units",
@@ -4100,9 +4101,15 @@ fun EditDataSetScreen(
                     modifier = Modifier.padding(horizontal = 16.dp) //.padding(top = 4.dp)
                 )
             }
+
             if (true) {
+                val extra = 4.dp
                 Box(
-                    modifier = Modifier.matchParentSize()
+                    modifier = Modifier
+                        .size(width = this.maxWidth  + (extra * 2),
+                    height = this.maxHeight + (extra * 2))
+
+                    .align(Alignment.Center)
                         .border(width = 2.dp, color = Color.Red, shape = RoundedCornerShape(4.dp))
                         .zIndex(1f)
                 )
