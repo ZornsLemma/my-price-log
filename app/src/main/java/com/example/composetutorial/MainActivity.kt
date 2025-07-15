@@ -46,6 +46,7 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -79,6 +80,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -144,6 +146,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -3995,80 +3998,117 @@ fun EditDataSetScreen(
         // with a segmented button group.
         // TODO: I'm far from sure what typography or colour this caption should have, but this
         // matches the caption on the TextFields so it is probably not a terrible choice.
-        Text("Measurement units", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) // TODO TWEAK TEXT, FONT, SIZE
-        // "US Customary" doesn't fit (on my test "small" emulated phone) but based on a discussion
-        // with ChatGPT "US Units" is better for a casual user anyway, even if we could fit "US
-        // Customary".
-        val options = listOf("Metric", "Imperial", "US units")
-        val checkedStates = remember { mutableStateListOf(uiContent.editableDataSet.value.allowMetric, uiContent.editableDataSet.value.allowImperial, uiContent.editableDataSet.value.allowUSCustomary) }
-        // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and 2 as imperial/US
-        MultiChoiceSegmentedButtonRow(modifier = Modifier
-            .fillMaxWidth()
-            .scrollToFocusable(measurementSystemScrollToFocusableHandle),) {
-            options.forEachIndexed { index, label ->
-                SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                    onCheckedChange = {
-                        checkedStates[index] = it
-                        // Don't allow Imperial and US Customary to be selected together. (We use
-                        // the common but ambiguous names for the units, so this would cause UI
-                        // confusion. We don't want to be showing "pint (US)" or "pt (US)" all the
-                        // time to disambiguate.
-                        if (index > 0 && checkedStates[index]) {
-                            checkedStates[if (index == 1) 2 else 1] = false
-                        }
-                        vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(allowMetric = checkedStates[0], allowImperial = checkedStates[1], allowUSCustomary = checkedStates[2]))
-                        },
-                    checked = checkedStates[index],
-                    colors = SegmentedButtonDefaults.colors(),
-                    icon = { SegmentedButtonDefaults.Icon(active = checkedStates[index]) },
-                    enabled = true
-                ) {
-                    Text(label)
+        Box {
+            Column {
+                Text(
+                    "Measurement units",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                ) // TODO TWEAK TEXT, FONT, SIZE
+                // "US Customary" doesn't fit (on my test "small" emulated phone) but based on a discussion
+                // with ChatGPT "US Units" is better for a casual user anyway, even if we could fit "US
+                // Customary".
+                val options = listOf("Metric", "Imperial", "US units")
+                val checkedStates = remember {
+                    mutableStateListOf(
+                        uiContent.editableDataSet.value.allowMetric,
+                        uiContent.editableDataSet.value.allowImperial,
+                        uiContent.editableDataSet.value.allowUSCustomary
+                    )
                 }
+                // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and 2 as imperial/US
+                MultiChoiceSegmentedButtonRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .scrollToFocusable(measurementSystemScrollToFocusableHandle),
+                ) {
+                    options.forEachIndexed { index, label ->
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = options.size
+                            ),
+                            onCheckedChange = {
+                                checkedStates[index] = it
+                                // Don't allow Imperial and US Customary to be selected together. (We use
+                                // the common but ambiguous names for the units, so this would cause UI
+                                // confusion. We don't want to be showing "pint (US)" or "pt (US)" all the
+                                // time to disambiguate.
+                                if (index > 0 && checkedStates[index]) {
+                                    checkedStates[if (index == 1) 2 else 1] = false
+                                }
+                                vm.setUIContentEditableDataSet(
+                                    uiContent.editableDataSet.value.copy(
+                                        allowMetric = checkedStates[0],
+                                        allowImperial = checkedStates[1],
+                                        allowUSCustomary = checkedStates[2]
+                                    )
+                                )
+                            },
+                            checked = checkedStates[index],
+                            colors = SegmentedButtonDefaults.colors(),
+                            icon = { SegmentedButtonDefaults.Icon(active = checkedStates[index]) },
+                            enabled = true
+                        ) {
+                            Text(label)
+                        }
+                    }
+                }
+
+                // TODO: Just thinking out loud, I wonder if the correct abstraction here - which we'd also
+                // use with ValidatedTextField - is that the "parent" composable does something like:
+                //
+                // val someEditFieldSupportingErrorText by remember { mutableStateOf("") }
+                // validate(valueToValidate, validationRules, onSupportingTextChange = { someEditFieldSupportingErrorText = it })
+                //
+                // and then conditionally shows (if it's not "") the supporting text or passes it to e.g. a
+                // TextField's supportingText (which would maybe argue for null for nothing instead of empty
+                // string, BTW) and it should just recompose automatically.
+                //
+                // I am not sure off the top of my head if validate() (which I think could be Composable)
+                // would be able to call the onSupportingTextChange callback from a coroutine after a delay
+                // to allow for deferring supportingText until the problem has persisted for 500ms or
+                // whatever. I also don't know if it would be able to save internal state to make the
+                // message we are showing stable in the face of multiple candidates, though that's probably
+                // fine - it could just rememberSaveable() the failed rule or something.
+                //
+                // I had a quick chat with ChatGPT and this should probably use LaunchedEffect internally,
+                // this sketch it gave me doesn't address things like "delay, but not always" but FWIW:
+                // @Composable
+                //fun <T> ValidateEffect(
+                //    value: T,
+                //    rules: List<ValidationRule<T>>,
+                //    onSupportingTextChange: (String?) -> Unit
+                //) {
+                //    LaunchedEffect(value) {
+                //        delay(500)
+                //        val failedRule = rules.firstOrNull { !it.predicate(value) }
+                //        onSupportingTextChange(failedRule?.message)
+                //    }
+                //}
+                //
+                // This also avoids corner cases as there will only be one coroutine and it will be cancelled
+                // if value changes.
+                ValidationRuleSupportingText(
+                    value = Triple(
+                        uiContent.editableDataSet.value.allowMetric,
+                        uiContent.editableDataSet.value.allowImperial,
+                        uiContent.editableDataSet.value.allowUSCustomary
+                    ),
+                    validationRules = vm.measurementSystemValidationRules,
+                    // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
+                    modifier = Modifier.padding(horizontal = 16.dp) //.padding(top = 4.dp)
+                )
+            }
+            if (true) {
+                Box(
+                    modifier = Modifier.matchParentSize()
+                        .border(width = 2.dp, color = Color.Red, shape = RoundedCornerShape(4.dp))
+                        .zIndex(1f)
+                )
             }
         }
 
-        // TODO: Just thinking out loud, I wonder if the correct abstraction here - which we'd also
-        // use with ValidatedTextField - is that the "parent" composable does something like:
-        //
-        // val someEditFieldSupportingErrorText by remember { mutableStateOf("") }
-        // validate(valueToValidate, validationRules, onSupportingTextChange = { someEditFieldSupportingErrorText = it })
-        //
-        // and then conditionally shows (if it's not "") the supporting text or passes it to e.g. a
-        // TextField's supportingText (which would maybe argue for null for nothing instead of empty
-        // string, BTW) and it should just recompose automatically.
-        //
-        // I am not sure off the top of my head if validate() (which I think could be Composable)
-        // would be able to call the onSupportingTextChange callback from a coroutine after a delay
-        // to allow for deferring supportingText until the problem has persisted for 500ms or
-        // whatever. I also don't know if it would be able to save internal state to make the
-        // message we are showing stable in the face of multiple candidates, though that's probably
-        // fine - it could just rememberSaveable() the failed rule or something.
-        //
-        // I had a quick chat with ChatGPT and this should probably use LaunchedEffect internally,
-        // this sketch it gave me doesn't address things like "delay, but not always" but FWIW:
-        // @Composable
-        //fun <T> ValidateEffect(
-        //    value: T,
-        //    rules: List<ValidationRule<T>>,
-        //    onSupportingTextChange: (String?) -> Unit
-        //) {
-        //    LaunchedEffect(value) {
-        //        delay(500)
-        //        val failedRule = rules.firstOrNull { !it.predicate(value) }
-        //        onSupportingTextChange(failedRule?.message)
-        //    }
-        //}
-        //
-        // This also avoids corner cases as there will only be one coroutine and it will be cancelled
-        // if value changes.
-        ValidationRuleSupportingText(
-            value = Triple(uiContent.editableDataSet.value.allowMetric, uiContent.editableDataSet.value.allowImperial,uiContent.editableDataSet.value.allowUSCustomary),
-            validationRules = vm.measurementSystemValidationRules,
-            // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
-            modifier = Modifier.padding(horizontal = 16.dp) //.padding(top = 4.dp)
-        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
