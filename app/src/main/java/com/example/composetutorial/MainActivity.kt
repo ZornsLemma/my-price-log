@@ -4232,9 +4232,9 @@ fun rememberValidationThing(
     val interactionSource = remember { MutableInteractionSource() }
     val validationResult = remember { mutableStateOf<String?>(null) }
     val isFocused by interactionSource.collectIsFocusedAsState()
-
     var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule<String>?>(null) }
-    LaunchedEffect(value, isFocused) {
+
+    LaunchedEffect(value, validationRulesKey, isFocused) {
         if (isFocused) delay(delayMillis)
 
         val reorderedValidations =
