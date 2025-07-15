@@ -4199,6 +4199,12 @@ fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Strin
     // We filter out currencies with display names including four digit values; these are almost
     // certainly historical currencies of no interest to us. (This still leaves plenty of historical
     // currencies, but this is easy and every little helps.)
+    // TODO: We could simply blacklist "known historical or irrelevant" currencies (e.g. XDR) and
+    // then if a new currency turns up we will pick it up from the system list, but we will avoid
+    // showing so much historical fluff. I would hope - and remember this is all "95% good", not
+    // aiming for a perfect solution right now - a new currency would not re-use an old previously
+    // historical code. In any case, it isn't as if new currencies come along every five minutes so
+    // the chances of us seriously incommoding a user are slim.
     val yearRegex = Regex("\\b\\d{4}\\b")
     val otherCurrencyList =
         Currency.getAvailableCurrencies().mapNotNull { currency ->
