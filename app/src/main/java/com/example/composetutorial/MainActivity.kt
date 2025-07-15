@@ -3882,7 +3882,7 @@ fun EditDataSetScreen(
     Log.d("MyApp", "dataSetReferenceCount $dataSetReferenceCount")
 
     val nameScrollToFocusableHandle = rememberScrollToFocusable()
-    val currencyCodeScrollToFocusableHandle = rememberScrollToFocusable()
+    val measurementSystemScrollToFocusableHandle = rememberScrollToFocusable()
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var deleting by rememberSaveable { mutableStateOf( false) }
@@ -3985,7 +3985,7 @@ fun EditDataSetScreen(
         val options = listOf("Metric", "Imperial", "US units")
         val checkedStates = remember { mutableStateListOf(uiContent.editableDataSet.value.allowMetric, uiContent.editableDataSet.value.allowImperial, uiContent.editableDataSet.value.allowUSCustomary) }
         // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and 2 as imperial/US
-        MultiChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        MultiChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().scrollToFocusable(measurementSystemScrollToFocusableHandle),) {
             options.forEachIndexed { index, label ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
@@ -4009,17 +4009,12 @@ fun EditDataSetScreen(
                 }
             }
         }
-        // TODO: These validation rules probably shouldn't be here, if nothing else we don't want to regenrate the list every time we are recomposed, but let's hack for now and move this into ViewMOdel later
-        val measurementSystemValidationRules = listOf(
-            ValidationRule<Triple<Boolean, Boolean, Boolean>>({ it -> it.first || it.second || it.third }, "At least one measurement unit must be selected"),
-            // TODO: This next rule is prevented by GUI logic, but it's probably not a bad thing to have a check for it here, especially if (as we should) this list of validations is enforced by the pre-save check
-            ValidationRule<Triple<Boolean, Boolean, Boolean>>({ !(it.second && it.third) }, "Imperial and US units cannot be selected together"),
-        )
+
         ValidationRuleSupportingText(
             value = Triple(uiContent.editableDataSet.value.allowMetric, uiContent.editableDataSet.value.allowImperial,uiContent.editableDataSet.value.allowUSCustomary),
-            validationRules = measurementSystemValidationRules,
-            // TODO: This modifier is not necessarily right for our formatting, just copy and pasted for now
-            modifier = Modifier.padding(horizontal = 16.dp).padding(top = 4.dp)
+            validationRules = vm.measurementSystemValidationRules,
+            // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
+            modifier = Modifier.padding(horizontal = 16.dp) //.padding(top = 4.dp)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -4066,6 +4061,10 @@ fun EditDataSetScreen(
                 EditDataSetViewModel.EditableField.NAME -> {
                     Log.d("MyApp", "scrolling to name")
                     scrollAndFocusTo(nameScrollToFocusableHandle)
+                }
+                EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM -> {
+                    Log.d("MyApp", "scrolling to measurement system")
+                    scrollAndFocusTo(measurementSystemScrollToFocusableHandle)
                 }
             }
         }
@@ -5263,8 +5262,20 @@ class EditDataSetViewModel(
             .withVersion()
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
 
+    // TODO: I should probably replace the Triple<3xBoolean> with a data class for readability.
+    // Maybe it should even be used in a domain-level DataSet class with the current raw database
+    // one being renamed DataSetEntity? We could potentially pass it into various functions and that
+    // might simplify the code - but check before blindly doing this, it may not be a big enough
+    // win.
+    val measurementSystemValidationRules = listOf(
+        ValidationRule<Triple<Boolean, Boolean, Boolean>>({ it -> it.first || it.second || it.third }, "At least one measurement unit must be selected"),
+        // This next rule is enforced by UI logic, but let's go belt and braces.
+        ValidationRule<Triple<Boolean, Boolean, Boolean>>({ !(it.second && it.third) }, "Imperial and US units cannot be selected together"),
+    )
+
     enum class EditableField {
         NAME,
+        MEASUREMENT_SYSTEM,
         // TODO: MORE
     }
     private val _saveValidationEvents = MutableSharedFlow<EditableField>()
@@ -5277,12 +5288,10 @@ class EditDataSetViewModel(
             _saveValidationEvents.emit(EditableField.NAME)
             return false
         }
-        if (!editableDataSet.allowMetric && !editableDataSet.allowImperial && !editableDataSet.allowUSCustomary) {
-            // TODO!
-            return false
-        }
-        if (editableDataSet.allowImperial && editableDataSet.allowUSCustomary) {
-            // TODO!
+        // TODO: We will need to validate currencyCode is not empty, for the add new data set case
+        // TODO: Should maybe factor out forming this Boolean Triple from editableDataSet into a function
+        if (!validationRulesOk(measurementSystemValidationRules, Triple(editableDataSet.allowMetric, editableDataSet.allowImperial, editableDataSet.allowUSCustomary))) {
+            _saveValidationEvents.emit(EditableField.MEASUREMENT_SYSTEM)
             return false
         }
         Log.d("MyAppESS", "validateForSave passed")
