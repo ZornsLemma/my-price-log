@@ -49,6 +49,7 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -152,6 +153,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
@@ -4173,6 +4175,7 @@ fun EditDataSetScreen(
         }
     }
 
+    val focusManager = LocalFocusManager.current
     LaunchedEffect(Unit) {
         vm.saveValidationEvents.collect { field ->
             Log.d("MyApp", "LaunchedEffect saveValidationError $field")
@@ -4183,6 +4186,10 @@ fun EditDataSetScreen(
                 }
                 EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM -> {
                     Log.d("MyApp", "scrolling to measurement system")
+                    // We can't focus a segmented button, but we can remove focus from anything that
+                    // has it to avoid giving a misleading impression of what we're trying to direct
+                    // the user's attention to.
+                    focusManager.clearFocus()
                     scrollAndFocusTo(measurementSystemScrollToFocusableHandle)
 
                     launch {
@@ -6036,7 +6043,7 @@ fun rememberScrollToFocusable(): ScrollToFocusableHandle {
     }
 }
 
-// TODO: Grok magic, tweaked with help from my own brain and ChatGPT
+// TODO: Grok magic, tweaked with help from my own brain and ChatGPT and Perplexity
 @Composable
 fun ErrorHighlightBox(
     hasError: Boolean,
@@ -6054,7 +6061,7 @@ fun ErrorHighlightBox(
             initialValue = pulseColor1,
             targetValue = pulseColor2,
             animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 400, easing = LinearEasing),
+                animation = tween(durationMillis = 1000, easing = LinearEasing),
                 repeatMode = RepeatMode.Reverse
             ),
             label = "PulseColorAnimation"
@@ -6064,12 +6071,9 @@ fun ErrorHighlightBox(
         remember { mutableStateOf(pulseColor1) }
     }
 
-    // Animate the border color based on hasError
-    val borderColor by animateColorAsState(
-        targetValue = if (hasError) pulseColor else Color.Transparent,
-        animationSpec = tween(durationMillis = 300),
-        label = "BorderColorAnimation"
-    )
+    // Animate the border alpha based on hasError
+    val targetAlpha = if (hasError) 1f else 0f
+    val borderAlpha by animateFloatAsState(targetValue = targetAlpha, animationSpec = tween(durationMillis = 1000))
 
     Box(
         modifier = modifier
@@ -6081,7 +6085,7 @@ fun ErrorHighlightBox(
                     // TODO: Is this using d.p. or will the thickness vary inappropriately with different screen resolutions? Looks like it is all pixel-based, yay! need to fix that probably.
                     val todo = 4f
                     drawRect(
-                        color = borderColor,
+                        color = pulseColor.copy(alpha = borderAlpha),
                         style = Stroke(width = todo),
                         topLeft = androidx.compose.ui.geometry.Offset(-2*todo, -2*todo),
                         size = size.copy(width = size.width + 4*todo, height = size.height + 4*todo)
