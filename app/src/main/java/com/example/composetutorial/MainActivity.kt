@@ -6043,33 +6043,33 @@ fun ErrorHighlightBox(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    // Define the colors for pulsing when hasError is true
+// Define colors for pulsing
     val pulseColor1 = Color.Red
     val pulseColor2 = Color.Green
 
-    // Infinite transition for pulsing effect
+    // Create an InfiniteTransition, but only enable it when hasError is true
     val infiniteTransition = rememberInfiniteTransition(label = "PulseTransition")
-    val pulseColor by infiniteTransition.animateColor(
-        initialValue = pulseColor1,
-        targetValue = pulseColor2,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 400, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "PulseColorAnimation"
-    )
-    //Log.d("MyApp", "pulseColor $pulseColor")
+    val pulseColor by if (hasError) {
+        infiniteTransition.animateColor(
+            initialValue = pulseColor1,
+            targetValue = pulseColor2,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 400, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "PulseColorAnimation"
+        )
+    } else {
+        // When hasError is false, use a static color (will be overridden by animateColorAsState)
+        remember { mutableStateOf(pulseColor1) }
+    }
 
-    // Determine the target color based on hasError
-    val targetColor = if (hasError) pulseColor else Color.Transparent
-
-    // Animate to the target color (pulsing color or transparent)
+    // Animate the border color based on hasError
     val borderColor by animateColorAsState(
-        targetValue = targetColor,
+        targetValue = if (hasError) pulseColor else Color.Transparent,
         animationSpec = tween(durationMillis = 300),
         label = "BorderColorAnimation"
     )
-    Log.d("MyApp", "borderColor $borderColor")
 
     Box(
         modifier = modifier
