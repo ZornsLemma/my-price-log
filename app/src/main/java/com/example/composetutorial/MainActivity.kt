@@ -3316,7 +3316,6 @@ fun EditPriceScreen(
         val validationThing1 = rememberValidationThing(
             value = packPrice.text,
             validationRules = currencyFormat.validationRules,
-            delayMillis = 500,
             allowEmpty = true /* TODO: should wire this up so true iff we have clicked Save at least once */
         )
         // TODO: END EXPERIMENTAL CHUNK
@@ -4226,7 +4225,7 @@ fun rememberValidationThing(
     value: String,
     validationRules: List<ValidationRule<String>>,
     validationRulesKey: Any? = null,
-    delayMillis: Long = 500,
+    delayMillis: Long = defaultValidationMessageDelayMillis,
     allowEmpty: Boolean = false
 ): ValidationThing {
     val interactionSource = remember { MutableInteractionSource() }
@@ -4240,10 +4239,12 @@ fun rememberValidationThing(
         val reorderedValidations =
             listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
         failedValidationRule = null
-        for (validationRule in reorderedValidations) {
-            if (!validationRule.validate(value)) {
-                failedValidationRule = validationRule
-                break
+        if (!allowEmpty || value.isNotEmpty()) {
+            for (validationRule in reorderedValidations) {
+                if (!validationRule.validate(value)) {
+                    failedValidationRule = validationRule
+                    break
+                }
             }
         }
 
