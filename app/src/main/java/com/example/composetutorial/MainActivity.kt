@@ -4065,6 +4065,12 @@ fun EditDataSetScreen(
                 EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM -> {
                     Log.d("MyApp", "scrolling to measurement system")
                     scrollAndFocusTo(measurementSystemScrollToFocusableHandle)
+                    // TODO: Because you *can't* focus the segmented button, this is a bit wappy in
+                    // terms of making the error obvious to the user - if it's on screen and focus
+                    // is in a text field, *nothing* may actually happen when we do this
+                    // scrollAndFocusTo. This is where we'd really start to benefit from some kind
+                    // of pulsing red highlight to accompany the existing scroll and focus
+                    // behaviour.
                 }
             }
         }
@@ -4115,24 +4121,6 @@ fun EditDataSetScreen(
     }
 }
 
-// TODO: ChatGPT code, review if keep.
-fun getUserPreferredCurrencyCodes(): List<String> {
-    val locales = LocaleList.getDefault() // TODO: For up-to-dateness in Compose we should probably use LocalConfiguration.current.locales
-    val currencySet = mutableSetOf<String>()
-
-    for (i in 0 until locales.size()) {
-        val locale = locales[i]
-        try {
-            val currency = Currency.getInstance(locale)
-            currencySet.add(currency.currencyCode)
-        } catch (e: IllegalArgumentException) {
-            // Some locales (e.g. zz_ZZ) might not have a valid currency
-        }
-    }
-
-    return currencySet.toList()
-}
-
 fun getCurrencyForLocale(locale: Locale): Currency? {
     try {
         return Currency.getInstance(locale)
@@ -4163,8 +4151,8 @@ fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Strin
         }
     }
 
-    var mainCurrencyList = mutableListOf<Pair<String, String>>()
-    var mainCurrencyCodeSet = mutableSetOf<String>()
+    val mainCurrencyList = mutableListOf<Pair<String, String>>()
+    val mainCurrencyCodeSet = mutableSetOf<String>()
     for (i in 0 until locales.size()) {
         val locale = locales[i]
         val currency = getCurrencyForLocale(locale)
@@ -4534,20 +4522,24 @@ fun <T> ValidationRuleSupportingText(
     value: T,
     modifier: Modifier = Modifier,
     validationRules: List<ValidationRule<T>>? = null, // TODO: no point allowing null!?
-    validationRulesKey: Any? = null,
+    // TODO: DELETE? validationRulesKey: Any? = null,
 ) {
+    /* TODO: DELETE?
     var failedValidationSupportingText by rememberSaveable(validationRulesKey) {
         mutableStateOf<String?>(
             null
         )
     }
     var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule<T>?>(null) } // TODO: redundant?
+    */
 
-    // TODO: Currently we don't try to "preserve" which failed validation rule we are showing a
-    // message for - that may be relevant here, or it may not in the "less demanding" non-string
-    // case. Not sure, feeling my way.
+    // TODO: ValidatedTextField has code to ensure that if multiple validation rules fail, we
+    // are stable with regard to which rule's message we show. That is potentially useful here, but
+    // unless/until I get a case where the rules are complex enough for this to happen it is
+    // probably not worth adding untestable complexity here. The exception might be if doing this
+    // would allow this code to be shared with ValidatedTextField.
 
-    failedValidationRule = null
+    var failedValidationRule: ValidationRule<T>? = null
     for (validationRule in validationRules ?: emptyList()) {
         if (!validationRule.validate(value)) {
             failedValidationRule = validationRule
@@ -5268,7 +5260,13 @@ class EditDataSetViewModel(
     // might simplify the code - but check before blindly doing this, it may not be a big enough
     // win.
     val measurementSystemValidationRules = listOf(
-        ValidationRule<Triple<Boolean, Boolean, Boolean>>({ it -> it.first || it.second || it.third }, "At least one measurement unit must be selected"),
+        // We say "measurement system" in the error message here even though the caption above the
+        // segmented button is "measurement units". The former is technically correct, the latter is
+        // more colloquial and I think it works well as a caption, but I think in this error message
+        // context, "measurement unit" does not work - it sounds as if the user is expected to
+        // choose at least one thing like "miles" or "litres". If "measurement system" is a bit
+        // technical, I hope the overall context with the caption above will make it clear.
+        ValidationRule<Triple<Boolean, Boolean, Boolean>>({ it -> it.first || it.second || it.third }, "At least one measurement system must be selected"),
         // This next rule is enforced by UI logic, but let's go belt and braces.
         ValidationRule<Triple<Boolean, Boolean, Boolean>>({ !(it.second && it.third) }, "Imperial and US units cannot be selected together"),
     )
