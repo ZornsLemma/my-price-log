@@ -126,6 +126,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -3349,6 +3350,16 @@ fun EditPriceScreen(
             enabled = saveStatus.isNotBusy(),
             supportingText = "This is more supporting text just as a test.",
         )
+        // TODO: START TEMP EXPERIMENTAL
+        var todoTempSupportingText by remember { mutableStateOf("") }
+        Text("todoTempSupportingText: $todoTempSupportingText")
+        ValidationEffect(
+            packPrice.text,
+            currencyFormat.validationRules,
+            onValidationResultChange = { todoTempSupportingText = it ?: "null" },
+            allowEmptyValue = true /* TODO: should wire this up so true iff we have clicked Save at least once */
+        )
+        // TODO: END TEMP EXPERIMENTAL
 
         // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
         // why are we entering it?
@@ -3985,7 +3996,9 @@ fun EditDataSetScreen(
         val options = listOf("Metric", "Imperial", "US units")
         val checkedStates = remember { mutableStateListOf(uiContent.editableDataSet.value.allowMetric, uiContent.editableDataSet.value.allowImperial, uiContent.editableDataSet.value.allowUSCustomary) }
         // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and 2 as imperial/US
-        MultiChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth().scrollToFocusable(measurementSystemScrollToFocusableHandle),) {
+        MultiChoiceSegmentedButtonRow(modifier = Modifier
+            .fillMaxWidth()
+            .scrollToFocusable(measurementSystemScrollToFocusableHandle),) {
             options.forEachIndexed { index, label ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
@@ -4153,6 +4166,47 @@ fun EditDataSetScreen(
             },
         )
     }
+}
+
+// TODO: This needs some way to be wired in to a lost focus event - we may want to do this "in
+// cooperation with" a somewhat optional ValidatedBox wrapper which will also help with on save
+// error indication animation
+@Composable
+fun ValidationEffect(
+    value: String, // TODO: Should probably be generic T
+    validationRules: List<ValidationRule<String>>,
+    validationRulesKey: Any? = null,
+    onValidationResultChange: (String?) -> Unit,
+    allowEmptyValue: Boolean,
+) {
+    // TODO ADD NEW ARGS TO KEY AS NECESSARY
+    //key(validationRulesKey) {
+
+
+    // TODO: I don't think this needs rememberSaveable because we can recompute it on recomposition.
+    // TODO: Do we need an explicit remember key though?
+    var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule<String>?>(null) }
+
+    val reorderedValidations =
+        listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
+    failedValidationRule = null
+    for (validationRule in reorderedValidations) {
+        if (!validationRule.validate(value)) {
+            failedValidationRule = validationRule
+            break
+        }
+    }
+
+    val newValidationMessage = failedValidationRule?.message
+    var validationMessage by remember { mutableStateOf<String?>(null) }
+    if (newValidationMessage != validationMessage) {
+        onValidationResultChange(newValidationMessage)
+        validationMessage = newValidationMessage
+    }
+
+
+    //}
+
 }
 
 fun getCurrencyForLocale(locale: Locale): Currency? {
