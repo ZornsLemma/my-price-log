@@ -4168,6 +4168,7 @@ fun getCurrencyForLocale(locale: Locale): Currency? {
 // https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-two.doc)
 // and list three (historic currencies and funds,
 // https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-three.xls).
+// @formatter:off
 val blacklistedCurrencyCodes = setOf(
     "ADP", "AFA", "ALK", "ANG", "AOK", "AON", "AOR", "ARA", "ARP", "ARY", "ATS", "AYM", "AZM",
     "BAD", "BEC", "BEF", "BEL", "BGJ", "BGK", "BGL", "BOP", "BOV", "BRB", "BRC", "BRE", "BRN",
@@ -4182,6 +4183,7 @@ val blacklistedCurrencyCodes = setOf(
     "XFO", "XFU", "XRE", "YDD", "YUD", "YUM", "YUN", "ZAL", "ZMK", "ZRN", "ZRZ", "ZWC", "ZWD",
     "ZWL", "ZWN", "ZWR"
 )
+// @formatter:on
 
 // Returns a list of (currency codes as IDs, currency display names) with the most likely ones (based
 // on the current locales) at the top. The last of the "most likely" currency codes is also returned
