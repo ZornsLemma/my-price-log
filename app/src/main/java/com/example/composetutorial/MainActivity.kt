@@ -4194,7 +4194,7 @@ fun EditDataSetScreen(
 
                     launch {
                         highlightMeasurementSystemError = true
-                        delay(50000)
+                        delay(1000)
                         highlightMeasurementSystemError = false
                     }
                     // TODO: Because you *can't* focus the segmented button, this is a bit wappy in
@@ -6080,15 +6080,15 @@ fun ErrorHighlightBox(
             .drawWithContent {
                 // Draw the content (e.g., TextField or SegmentedButton)
                 drawContent()
-                if (true /* hasError */) {
-                    // Draw a red outline slightly larger than the content
-                    // TODO: Is this using d.p. or will the thickness vary inappropriately with different screen resolutions? Looks like it is all pixel-based, yay! need to fix that probably.
-                    val todo = 4f
+                if (true /* hasError */) { // TODO: GET RID OF IF
+                    // Draw an outline slightly larger than the content
+                    val borderWidthPx = 2.dp.toPx()
+                    val offsetPx = 4.dp.toPx()
                     drawRect(
                         color = pulseColor.copy(alpha = borderAlpha),
-                        style = Stroke(width = todo),
-                        topLeft = androidx.compose.ui.geometry.Offset(-2*todo, -2*todo),
-                        size = size.copy(width = size.width + 4*todo, height = size.height + 4*todo)
+                        style = Stroke(width = borderWidthPx),
+                        topLeft = androidx.compose.ui.geometry.Offset(-offsetPx, -offsetPx),
+                        size = size.copy(width = size.width + 2*offsetPx, height = size.height + 2*offsetPx)
                     )
                 }
             }
