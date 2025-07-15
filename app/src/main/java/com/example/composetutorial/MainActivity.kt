@@ -4233,6 +4233,7 @@ fun rememberValidationThing(
     val isFocused by interactionSource.collectIsFocusedAsState()
     var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule<String>?>(null) }
 
+    // TODO: This does not have the "change validation text immediately if there is already some and the text changes" behaviour of my existing implementation - think about it, we probably *do* want that
     LaunchedEffect(value, validationRulesKey, isFocused) {
         if (isFocused) delay(delayMillis)
 
