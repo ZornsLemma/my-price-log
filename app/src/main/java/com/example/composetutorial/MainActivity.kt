@@ -4082,7 +4082,7 @@ fun EditDataSetScreen(
                         contentDescription = "Delete"
                     ) // TODO: tweak wording?
                 }
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(8.dp)) // TODO: Maybe 16.dp given spacing around measurement units?
                 Text("Delete collection")
             }
         }
