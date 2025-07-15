@@ -63,6 +63,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -3306,6 +3308,19 @@ fun EditPriceScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+
+        var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
+        val currencyFormat = vm.currencyFormat
+
+        // TODO: START TEMP EXPERIMENTAL
+        val validationThing1 = rememberValidationThing(
+            value = packPrice.text,
+            validationRules = currencyFormat.validationRules,
+            delayMillis = 500,
+            allowEmpty = true /* TODO: should wire this up so true iff we have clicked Save at least once */
+        )
+        // TODO: END EXPERIMENTAL CHUNK
+
         // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that
         // would give a width for an arbitrary string and we could use something like that to
         // size fields like this and/or the unit (albeit both have some extra window furniture -
@@ -3316,8 +3331,6 @@ fun EditPriceScreen(
         // "minimal" and the other filling rest of space - but then again, if you do that, a
         // fixed ratio is probably more or less the same since both will expand with font size
         // just the same, so maybe that would be pointless
-        var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
-        val currencyFormat = vm.currencyFormat
         NumericTextField(
             modifier = Modifier
                 .fillMaxWidth()
@@ -3349,16 +3362,10 @@ fun EditPriceScreen(
             },
             enabled = saveStatus.isNotBusy(),
             supportingText = "This is more supporting text just as a test.",
+            interactionSource = validationThing1.interactionSource,
         )
         // TODO: START TEMP EXPERIMENTAL
-        var todoTempSupportingText by remember { mutableStateOf("") }
-        Text("todoTempSupportingText: $todoTempSupportingText")
-        ValidationEffect(
-            packPrice.text,
-            currencyFormat.validationRules,
-            onValidationResultChange = { todoTempSupportingText = it ?: "null" },
-            allowEmptyValue = true /* TODO: should wire this up so true iff we have clicked Save at least once */
-        )
+        Text("todoTempSupportingText: ${validationThing1.validationResult.value ?: "null"}")
         // TODO: END TEMP EXPERIMENTAL
 
         // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
@@ -4209,6 +4216,44 @@ fun ValidationEffect(
 
 }
 
+class ValidationThing(
+    val interactionSource: MutableInteractionSource = MutableInteractionSource(),
+    val validationResult: State<String?> // or Flow/LiveData/etc
+)
+
+@Composable
+fun rememberValidationThing(
+    value: String,
+    validationRules: List<ValidationRule<String>>,
+    validationRulesKey: Any? = null,
+    delayMillis: Long = 500,
+    allowEmpty: Boolean = false
+): ValidationThing {
+    val interactionSource = remember { MutableInteractionSource() }
+    val validationResult = remember { mutableStateOf<String?>(null) }
+    val isFocused by interactionSource.collectIsFocusedAsState()
+
+    var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule<String>?>(null) }
+    LaunchedEffect(value, isFocused) {
+        if (isFocused) delay(delayMillis)
+
+        val reorderedValidations =
+            listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
+        failedValidationRule = null
+        for (validationRule in reorderedValidations) {
+            if (!validationRule.validate(value)) {
+                failedValidationRule = validationRule
+                break
+            }
+        }
+
+        validationResult.value = failedValidationRule?.message
+    }
+
+    return ValidationThing(interactionSource, validationResult)
+}
+
+
 fun getCurrencyForLocale(locale: Locale): Currency? {
     try {
         return Currency.getInstance(locale)
@@ -4412,6 +4457,7 @@ fun NumericTextField(
     supportingText: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
     messageDelayMillis: Long = defaultValidationMessageDelayMillis,
+    interactionSource: MutableInteractionSource? = null,
 ) {
     ValidatedTextField(
         label = label,
@@ -4437,7 +4483,8 @@ fun NumericTextField(
         modifier = modifier,
         supportingText = supportingText,
         keyboardOptions = keyboardOptions,
-        messageDelayMillis = messageDelayMillis
+        messageDelayMillis = messageDelayMillis,
+        interactionSource = interactionSource,
     )
 }
 
@@ -4479,6 +4526,7 @@ fun ValidatedTextField(
     supportingText: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     messageDelayMillis: Long = defaultValidationMessageDelayMillis,
+    interactionSource: MutableInteractionSource? = null
 ) {
     Log.d("MyAppVTF", "input == previousInput? ${remember { validationRules }} == $validationRules")
     var failedValidationSupportingText by rememberSaveable(validationRulesKey) {
@@ -4615,7 +4663,8 @@ fun ValidatedTextField(
                 )
             }
         } else null,
-        isError = failedValidationSupportingText != null
+        isError = failedValidationSupportingText != null,
+        interactionSource = interactionSource,
     )
 
     if (onSupportingTextChange != null) {
