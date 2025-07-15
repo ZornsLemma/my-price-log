@@ -2,6 +2,8 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.ModalDrawerSheet
@@ -135,6 +137,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -145,6 +148,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
@@ -3910,6 +3914,7 @@ fun EditDataSetScreen(
 
     val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
 
+
     GeneralEditScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
@@ -3999,8 +4004,9 @@ fun EditDataSetScreen(
         // with a segmented button group.
         // TODO: I'm far from sure what typography or colour this caption should have, but this
         // matches the caption on the TextFields so it is probably not a terrible choice.
-        BoxWithConstraints {
-            Column {
+        var textFieldSize by remember { mutableStateOf(IntSize.Zero) }
+        ErrorHighlightBox(hasError = true) {
+            Column(modifier = Modifier.onGloballyPositioned { coordinates -> textFieldSize = coordinates.size }) {
                 Text(
                     "Measurement units",
                     style = MaterialTheme.typography.bodySmall,
@@ -4102,18 +4108,6 @@ fun EditDataSetScreen(
                 )
             }
 
-            if (true) {
-                val extra = 4.dp
-                Box(
-                    modifier = Modifier
-                        .size(width = this.maxWidth  + (extra * 2),
-                    height = this.maxHeight + (extra * 2))
-
-                    .align(Alignment.Center)
-                        .border(width = 2.dp, color = Color.Red, shape = RoundedCornerShape(4.dp))
-                        .zIndex(1f)
-                )
-            }
         }
 
 
@@ -6008,6 +6002,35 @@ suspend fun scrollAndFocusTo(handle: ScrollToFocusableHandle) {
 fun rememberScrollToFocusable(): ScrollToFocusableHandle {
     return remember {
         ScrollToFocusableHandle()
+    }
+}
+
+// TODO: Grok magic
+@Composable
+fun ErrorHighlightBox(
+    hasError: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .drawWithContent {
+                // Draw the content (e.g., TextField or SegmentedButton)
+                drawContent()
+                if (hasError) {
+                    // Draw a red outline slightly larger than the content
+                    drawRect(
+                        color = Color.Red,
+                        style = Stroke(width = 2f),
+                        topLeft = androidx.compose.ui.geometry.Offset(-4f, -4f),
+                        size = size.copy(width = size.width + 8f, height = size.height + 8f)
+                    )
+                }
+            }
+            // Add padding to ensure the outline isn't clipped
+            //.padding(4.dp)
+    ) {
+        content()
     }
 }
 
