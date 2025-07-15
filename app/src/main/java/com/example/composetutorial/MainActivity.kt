@@ -4004,9 +4004,18 @@ fun EditDataSetScreen(
         // with a segmented button group.
         // TODO: I'm far from sure what typography or colour this caption should have, but this
         // matches the caption on the TextFields so it is probably not a terrible choice.
-        var textFieldSize by remember { mutableStateOf(IntSize.Zero) }
-        ErrorHighlightBox(hasError = true) {
-            Column(modifier = Modifier.onGloballyPositioned { coordinates -> textFieldSize = coordinates.size }) {
+        val validationThing2 = rememberValidationThing(
+            value = Triple(
+                uiContent.editableDataSet.value.allowMetric,
+                uiContent.editableDataSet.value.allowImperial,
+                uiContent.editableDataSet.value.allowUSCustomary
+            ),
+            validationRules = vm.measurementSystemValidationRules
+        )
+
+        // TODO: We don't actually want this highlight box to be wired up to validationThing2 - this is just a hack to test. We want it to be animated temporarily on and off when a save validation on this field fails.
+        ErrorHighlightBox(hasError = validationThing2.validationResult.value != null) {
+            Column() { // TODO: Added this column as a hack, we may or may not need it
                 Text(
                     "Measurement units",
                     style = MaterialTheme.typography.bodySmall,
@@ -4096,6 +4105,7 @@ fun EditDataSetScreen(
                 //
                 // This also avoids corner cases as there will only be one coroutine and it will be cancelled
                 // if value changes.
+                /* TODO
                 ValidationRuleSupportingText(
                     value = Triple(
                         uiContent.editableDataSet.value.allowMetric,
@@ -4106,6 +4116,12 @@ fun EditDataSetScreen(
                     // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
                     modifier = Modifier.padding(horizontal = 16.dp) //.padding(top = 4.dp)
                 )
+                */
+                val supportingText = validationThing2.validationResult.value
+                if (supportingText != null) {
+                    // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
+                    SupportingText(supportingText, isError = true, modifier = Modifier.padding(horizontal = 16.dp))
+                }
             }
 
         }
@@ -4262,9 +4278,9 @@ class ValidationThing(
 )
 
 @Composable
-fun rememberValidationThing(
-    value: String,
-    validationRules: List<ValidationRule<String>>,
+fun <T> rememberValidationThing(
+    value: T,
+    validationRules: List<ValidationRule<T>>,
     validationRulesKey: Any? = null,
     delayMillis: Long = defaultValidationMessageDelayMillis,
     allowEmpty: Boolean = false
@@ -4272,7 +4288,7 @@ fun rememberValidationThing(
     val interactionSource = remember { MutableInteractionSource() }
     val validationResult = remember { mutableStateOf<String?>(null) }
     val isFocused by interactionSource.collectIsFocusedAsState()
-    var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule<String>?>(null) }
+    var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule<T>?>(null) }
 
     // TODO: This does not have the "change validation text immediately if there is already some and the text changes" behaviour of my existing implementation - think about it, we probably *do* want that
     LaunchedEffect(value, validationRulesKey, isFocused) {
@@ -4281,7 +4297,7 @@ fun rememberValidationThing(
         val reorderedValidations =
             listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
         failedValidationRule = null
-        if (!allowEmpty || value.isNotEmpty()) {
+        if (true /* TODO !allowEmpty || value.isNotEmpty() */) {
             for (validationRule in reorderedValidations) {
                 if (!validationRule.validate(value)) {
                     failedValidationRule = validationRule
