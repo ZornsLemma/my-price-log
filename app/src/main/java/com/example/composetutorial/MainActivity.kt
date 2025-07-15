@@ -42,11 +42,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.animateColor
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -4181,7 +4187,7 @@ fun EditDataSetScreen(
 
                     launch {
                         highlightMeasurementSystemError = true
-                        delay(5000)
+                        delay(50000)
                         highlightMeasurementSystemError = false
                     }
                     // TODO: Because you *can't* focus the segmented button, this is a bit wappy in
@@ -6030,15 +6036,41 @@ fun rememberScrollToFocusable(): ScrollToFocusableHandle {
     }
 }
 
-// TODO: Grok magic
+// TODO: Grok magic, tweaked with help from my own brain and ChatGPT
 @Composable
 fun ErrorHighlightBox(
     hasError: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    var targetColor = if (hasError) Color.Red else Color.Transparent
-    val borderColor by animateColorAsState(targetValue = targetColor, animationSpec = tween(durationMillis = 300))
+    // Define the colors for pulsing when hasError is true
+    val pulseColor1 = Color.Red
+    val pulseColor2 = Color.Green
+
+    // Infinite transition for pulsing effect
+    val infiniteTransition = rememberInfiniteTransition(label = "PulseTransition")
+    val pulseColor by infiniteTransition.animateColor(
+        initialValue = pulseColor1,
+        targetValue = pulseColor2,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 400, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "PulseColorAnimation"
+    )
+    //Log.d("MyApp", "pulseColor $pulseColor")
+
+    // Determine the target color based on hasError
+    val targetColor = if (hasError) pulseColor else Color.Transparent
+
+    // Animate to the target color (pulsing color or transparent)
+    val borderColor by animateColorAsState(
+        targetValue = targetColor,
+        animationSpec = tween(durationMillis = 300),
+        label = "BorderColorAnimation"
+    )
+    Log.d("MyApp", "borderColor $borderColor")
+
     Box(
         modifier = modifier
             .drawWithContent {
@@ -6046,11 +6078,13 @@ fun ErrorHighlightBox(
                 drawContent()
                 if (true /* hasError */) {
                     // Draw a red outline slightly larger than the content
+                    // TODO: Is this using d.p. or will the thickness vary inappropriately with different screen resolutions? Looks like it is all pixel-based, yay! need to fix that probably.
+                    val todo = 4f
                     drawRect(
                         color = borderColor,
-                        style = Stroke(width = 2f),
-                        topLeft = androidx.compose.ui.geometry.Offset(-4f, -4f),
-                        size = size.copy(width = size.width + 8f, height = size.height + 8f)
+                        style = Stroke(width = todo),
+                        topLeft = androidx.compose.ui.geometry.Offset(-2*todo, -2*todo),
+                        size = size.copy(width = size.width + 4*todo, height = size.height + 4*todo)
                     )
                 }
             }
