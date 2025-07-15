@@ -3919,7 +3919,7 @@ fun EditDataSetScreen(
                 .scrollToFocusable(nameScrollToFocusableHandle),
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp)) // TODO: Maybe 16.dp given general structure of this screen?
 
         // TODO: According to a long comment I wrote elsewhere, we probably should be using a frozen
         // LocalConfiguration from when this screen was first opened here. However, at present it
@@ -4164,6 +4164,25 @@ fun getCurrencyForLocale(locale: Locale): Currency? {
     }
 }
 
+// This list is a combination of the currency codes from list two (fund codes,
+// https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-two.doc)
+// and list three (historic currencies and funds,
+// https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-three.xls).
+val blacklistedCurrencyCodes = setOf(
+    "ADP", "AFA", "ALK", "ANG", "AOK", "AON", "AOR", "ARA", "ARP", "ARY", "ATS", "AYM", "AZM",
+    "BAD", "BEC", "BEF", "BEL", "BGJ", "BGK", "BGL", "BOP", "BOV", "BRB", "BRC", "BRE", "BRN",
+    "BRR", "BUK", "BYB", "BYR", "CHC", "CHE", "CHW", "CLF", "COU", "CSD", "CSJ", "CSK", "CUC",
+    "CYP", "DDM", "DEM", "ECS", "ECV", "EEK", "ESA", "ESB", "ESP", "EUR", "FIM", "FRF", "GEK",
+    "GHC", "GHP", "GNE", "GNS", "GQE", "GRD", "GWE", "GWP", "HRD", "HRK", "IDR", "IEP", "ILP",
+    "ILR", "ISJ", "ITL", "LAJ", "LSM", "LTL", "LTT", "LUC", "LUF", "LUL", "LVL", "LVR", "MGF",
+    "MLF", "MRO", "MTL", "MTP", "MVQ", "MWK", "MXP", "MXV", "MZE", "MZM", "NIC", "NLG", "PEH",
+    "PEI", "PEN", "PES", "PLZ", "PTE", "RHD", "ROK", "ROL", "RON", "RUR", "SDD", "SDG", "SDP",
+    "SIT", "SKK", "SLL", "SRG", "STD", "SUR", "SZL", "TJR", "TMM", "TPE", "TRL", "TRY", "UAK",
+    "UGS", "UGW", "USN", "USS", "UYI", "UYN", "UYP", "UYW", "VEB", "VEF", "VNC", "XAD", "XEU",
+    "XFO", "XFU", "XRE", "YDD", "YUD", "YUM", "YUN", "ZAL", "ZMK", "ZRN", "ZRZ", "ZWC", "ZWD",
+    "ZWL", "ZWN", "ZWR"
+)
+
 // Returns a list of (currency codes as IDs, currency display names) with the most likely ones (based
 // on the current locales) at the top. The last of the "most likely" currency codes is also returned
 // as a string so we can use it to add a divider after this entry.
@@ -4196,19 +4215,18 @@ fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Strin
         }
     }
 
-    // We filter out currencies with display names including four digit values; these are almost
-    // certainly historical currencies of no interest to us. (This still leaves plenty of historical
-    // currencies, but this is easy and every little helps.)
-    // TODO: We could simply blacklist "known historical or irrelevant" currencies (e.g. XDR) and
-    // then if a new currency turns up we will pick it up from the system list, but we will avoid
-    // showing so much historical fluff. I would hope - and remember this is all "95% good", not
-    // aiming for a perfect solution right now - a new currency would not re-use an old previously
-    // historical code. In any case, it isn't as if new currencies come along every five minutes so
-    // the chances of us seriously incommoding a user are slim.
-    val yearRegex = Regex("\\b\\d{4}\\b")
+    // getAvailableCurrencies() seems to return a lot of junk. At some point it's likely to be
+    // easier just to use a curated list as the starting point, but for now let's persist with the
+    // system values in the name of flexibility. We blacklist some specific codes which we know to
+    // be historic or for funds instead of currencies; it seems fair to assume these will never be
+    // used in a context we're interested in. We also filter out currency codes starting with X and
+    // currency codes where the system re-uses the currency code as the display name.
     val otherCurrencyList =
         Currency.getAvailableCurrencies().mapNotNull { currency ->
-            if (currency.currencyCode in mainCurrencyCodeSet || yearRegex.containsMatchIn(currency.getDisplayName(locales[0]))) null else buildPair(currency)
+            if (currency.currencyCode in mainCurrencyCodeSet ||
+                currency.currencyCode.startsWith("X") ||
+                currency.getDisplayName(locales[0]) == currency.currencyCode ||
+                currency.currencyCode in blacklistedCurrencyCodes) null else buildPair(currency)
         }
 
     // TODO: ChatGPT magic, check later
@@ -4217,6 +4235,8 @@ fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Strin
     }
     return Pair(mainCurrencyList.last().first, mainCurrencyList.toList() + otherCurrencyList.sortedWith { lhs, rhs -> collator.compare(lhs.second, rhs.second) })
 }
+
+
 
 // TODO: Maybe rename - the idea here is this does not insist the input is actually parseable as a
 // decimal (for example, we allow "24.2.3" so the user can enter a new decimal point *and then later
