@@ -3916,6 +3916,7 @@ fun EditDataSetScreen(
     val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
 
 
+    var highlightMeasurementSystemError by remember { mutableStateOf(false) }
     GeneralEditScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
@@ -3927,6 +3928,7 @@ fun EditDataSetScreen(
         onIdle = { deleting = false },
         requestClose = requestClose,
     ) {
+
         var name by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
@@ -4015,7 +4017,7 @@ fun EditDataSetScreen(
         )
 
         // TODO: We don't actually want this highlight box to be wired up to validationThing2 - this is just a hack to test. We want it to be animated temporarily on and off when a save validation on this field fails.
-        ErrorHighlightBox(hasError = validationThing2.validationResult.value != null) {
+        ErrorHighlightBox(hasError = highlightMeasurementSystemError) {
             Column() { // TODO: Added this column as a hack, we may or may not need it
                 Text(
                     "Measurement units",
@@ -4176,6 +4178,12 @@ fun EditDataSetScreen(
                 EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM -> {
                     Log.d("MyApp", "scrolling to measurement system")
                     scrollAndFocusTo(measurementSystemScrollToFocusableHandle)
+
+                    launch {
+                        highlightMeasurementSystemError = true
+                        delay(5000)
+                        highlightMeasurementSystemError = false
+                    }
                     // TODO: Because you *can't* focus the segmented button, this is a bit wappy in
                     // terms of making the error obvious to the user - if it's on screen and focus
                     // is in a text field, *nothing* may actually happen when we do this
