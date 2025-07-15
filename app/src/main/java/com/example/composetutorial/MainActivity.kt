@@ -4009,10 +4009,17 @@ fun EditDataSetScreen(
                 }
             }
         }
-        SupportingText(text = "TODO SUPPORTING TEXT FOR ERROR", isError = true /* TODO */,
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(top = 4.dp)
+        // TODO: These validation rules probably shouldn't be here, if nothing else we don't want to regenrate the list every time we are recomposed, but let's hack for now and move this into ViewMOdel later
+        val measurementSystemValidationRules = listOf(
+            ValidationRule<Triple<Boolean, Boolean, Boolean>>({ it -> it.first || it.second || it.third }, "At least one measurement unit must be selected"),
+            // TODO: This next rule is prevented by GUI logic, but it's probably not a bad thing to have a check for it here, especially if (as we should) this list of validations is enforced by the pre-save check
+            ValidationRule<Triple<Boolean, Boolean, Boolean>>({ !(it.second && it.third) }, "Imperial and US units cannot be selected together"),
+        )
+        ValidationRuleSupportingText(
+            value = Triple(uiContent.editableDataSet.value.allowMetric, uiContent.editableDataSet.value.allowImperial,uiContent.editableDataSet.value.allowUSCustomary),
+            validationRules = measurementSystemValidationRules,
+            // TODO: This modifier is not necessarily right for our formatting, just copy and pasted for now
+            modifier = Modifier.padding(horizontal = 16.dp).padding(top = 4.dp)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -4196,9 +4203,9 @@ fun isValidTransitionalDecimal(input: String): Boolean {
 }
 
 @Parcelize // TODO: May not be needed now - are we still using these in rememberSaveable?
-data class ValidationRule(val validate: (String) -> Boolean, val message: String) : Parcelable
+data class ValidationRule<T>(val validate: (T) -> Boolean, val message: String) : Parcelable
 
-fun validationRulesOk(validationRules: List<ValidationRule>, value: String): Boolean {
+fun <T> validationRulesOk(validationRules: List<ValidationRule<T>>, value: T): Boolean {
     for (validationRule in validationRules) {
         if (!validationRule.validate(value)) {
             return false
@@ -4238,7 +4245,7 @@ fun numericValidationRules(
     allowDecimals: Boolean = true,
     allowZero: Boolean = true,
     maxDecimals: Int? = null,
-): List<ValidationRule> {
+): List<ValidationRule<String>> {
     val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
     val maxDecimalSeparators = if (allowDecimals) 1 else 0
 
@@ -4294,7 +4301,7 @@ fun NumericTextField(
     // theoretically re-usable component and this isn't a ridiculous default in general, but it's
     // not ideal for this app. There might - I'm not sure - also be performance considerations if
     // the list of rules is regenerated every re-composition.
-    validationRules: List<ValidationRule>? = numericValidationRules(LocalConfiguration.current.locales[0]),
+    validationRules: List<ValidationRule<String>>? = numericValidationRules(LocalConfiguration.current.locales[0]),
     validationRulesKey: Any? = null,
     onValueChange: (TextFieldValue) -> Unit,
     enabled: Boolean = true,
@@ -4360,7 +4367,7 @@ fun ValidatedTextField(
     prefix: @Composable (() -> Unit)? = null,
     suffix: @Composable (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
-    validationRules: List<ValidationRule>? = null,
+    validationRules: List<ValidationRule<String>>? = null,
     validationRulesKey: Any? = null,
     onCandidateValueChange: ((String) -> Boolean),
     onValueChange: (TextFieldValue) -> Unit,
@@ -4376,7 +4383,7 @@ fun ValidatedTextField(
             null
         )
     }
-    var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule?>(null) }
+    var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule<String>?>(null) }
     Log.d("MyAppVTF", "validationRules?.size ${validationRules?.size}")
     Log.d("MyAppVTF", "fVST $failedValidationSupportingText")
     Log.d("MyAppVTF", "fVR $failedValidationRule")
@@ -4517,6 +4524,43 @@ fun ValidatedTextField(
                 onSupportingTextChange(false, supportingText)
             }
         }
+    }
+}
+
+// TODO: Can we use this inside ValidatedTextField to reduce duplication? Feeling my way right now.
+// TODO: I think this could probably benefit from delayed errors as in ValidatedTextField - e.g. it's
+// annoying to deselect one measurement unit intending to select another but see an error pop up
+@Composable
+fun <T> ValidationRuleSupportingText(
+    value: T,
+    modifier: Modifier = Modifier,
+    validationRules: List<ValidationRule<T>>? = null, // TODO: no point allowing null!?
+    validationRulesKey: Any? = null,
+) {
+    var failedValidationSupportingText by rememberSaveable(validationRulesKey) {
+        mutableStateOf<String?>(
+            null
+        )
+    }
+    var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule<T>?>(null) } // TODO: redundant?
+
+    // TODO: Currently we don't try to "preserve" which failed validation rule we are showing a
+    // message for - that may be relevant here, or it may not in the "less demanding" non-string
+    // case. Not sure, feeling my way.
+
+    failedValidationRule = null
+    for (validationRule in validationRules ?: emptyList()) {
+        if (!validationRule.validate(value)) {
+            failedValidationRule = validationRule
+            Log.d("MyAppVRST", "inside ufvr $failedValidationRule")
+            break
+        }
+    }
+
+    if (failedValidationRule != null) {
+        SupportingText(text = failedValidationRule!!.message, isError = true,
+            modifier = modifier
+        )
     }
 }
 
@@ -5014,7 +5058,7 @@ class EditPriceViewModel(
     // packSizeValidationRules property. I think I am generally a bit inconsistent in naming here
     // anyway (e.g. numericValidationRules() also performs work) and some kind of tidying up of the
     // naming generally might be in order.
-    private fun generatePackSizeValidationRules(): List<ValidationRule> {
+    private fun generatePackSizeValidationRules(): List<ValidationRule<String>> {
         val maxDecimals = uiContent.editablePrice.value.measureUnit.maxDecimals
         return numericValidationRules(
             uiContent.frozenLocale,
@@ -5115,7 +5159,7 @@ class EditSourceViewModel(
     // present, which will pass (because no validation rules) and then they either insert invalid
     // data or get a database level constraint validation. If we have null, we can make sure the
     // validation rules *are present* during save validation.
-    val nameValidationRules: StateFlow<Versioned<List<ValidationRule>>> =
+    val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
         priceTrackerRepository.getAllSources(uiContent.editableSource.value.dataSetId)
             .map { sourceList -> buildNameValidationRules(
                 sourceList.filter { source -> source.id != uiContent.editableSource.value.id }
@@ -5166,9 +5210,9 @@ class EditSourceViewModel(
 // situation where for example the validation is all based on a trim()ed string but I forget to
 // manually apply the trim() when writing the string to the database. On the other hand, applying
 // the validation rule changes to a data class via copy() might be finicky and error prone.
-fun buildNameValidationRules(existingNameList: List<String>): List<ValidationRule> {
+fun buildNameValidationRules(existingNameList: List<String>): List<ValidationRule<String>> {
     return listOf(
-        ValidationRule({ it.isNotEmpty() }, "Must have a name"),
+        ValidationRule<String>({ it.isNotEmpty() }, "Must have a name"),
         // TODO! ValidationRule({ it -> 'x' in it }, "Must contain 'x' to be cool"),
     ) + existingNameList.map { name ->
             ValidationRule({ candidateName -> !areHumanEqual(candidateName, name) }, "Name must be unique") // TODO: Tweak wording?
@@ -5210,7 +5254,7 @@ class EditDataSetViewModel(
     // present, which will pass (because no validation rules) and then they either insert invalid
     // data or get a database level constraint validation. If we have null, we can make sure the
     // validation rules *are present* during save validation.
-    val nameValidationRules: StateFlow<Versioned<List<ValidationRule>>> =
+    val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
         priceTrackerRepository.getAllDataSets()
             .map { dataSetList -> buildNameValidationRules(
                 dataSetList.filter { dataSet -> dataSet.id != uiContent.editableDataSet.value.id }
@@ -5670,7 +5714,7 @@ data class CurrencyFormat(
     val decimalPlaces: Int, // TODO: We may not actually need this, if it's baked into validation rules and not used elsewhere
     val prefix: String?,
     val suffix: String?,
-    val validationRules: List<ValidationRule>
+    val validationRules: List<ValidationRule<String>>
 )
 
 // TODO: This takes a DataSet not a currency code because later on a DataSet may allow custom
