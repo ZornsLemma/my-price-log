@@ -42,6 +42,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -6028,15 +6029,17 @@ fun ErrorHighlightBox(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
+    var targetColor = if (hasError) Color.Red else Color.Transparent
+    val borderColor by animateColorAsState(targetValue = targetColor, animationSpec = tween(durationMillis = 300))
     Box(
         modifier = modifier
             .drawWithContent {
                 // Draw the content (e.g., TextField or SegmentedButton)
                 drawContent()
-                if (hasError) {
+                if (true /* hasError */) {
                     // Draw a red outline slightly larger than the content
                     drawRect(
-                        color = Color.Red,
+                        color = borderColor,
                         style = Stroke(width = 2f),
                         topLeft = androidx.compose.ui.geometry.Offset(-4f, -4f),
                         size = size.copy(width = size.width + 8f, height = size.height + 8f)
