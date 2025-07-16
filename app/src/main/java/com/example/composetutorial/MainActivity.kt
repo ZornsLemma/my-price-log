@@ -3277,14 +3277,6 @@ fun EditPriceScreen(
                     includeDisplayOnly = false
                 )
             }
-        var packSizeSupportingText by remember {
-            mutableStateOf<Pair<Boolean, String?>>(
-                Pair(
-                    false,
-                    null
-                )
-            )
-        }
         var packSizeNumber by rememberSyncedTextFieldValue(
             uiContent.editablePrice.value.measureValue
         )
@@ -3302,7 +3294,7 @@ fun EditPriceScreen(
         // should increase the vertical spacing of the components on this screen and then make this
         // 6.dp.
         ErrorHighlightBox(
-            hasError = true,
+            hasError = packSizeScrollToFocusableHandle.errorHighlightBoxVisible.value, // TODO: validationTarget argument makes this redundant?
             offset = 4.dp,
             validationTarget = packSizeScrollToFocusableHandle
         ) { // TODO!
@@ -3314,9 +3306,6 @@ fun EditPriceScreen(
                     NumericTextField(
                         label = { Text("Pack size") },
                         value = packSizeNumber,
-                        // TODO: All this validation stuff wants ripping out
-                        validationRules = vm.packSizeValidationRules,
-                        validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
                         onValueChange = {
                             packSizeNumber = it
                             if (uiContent.editablePrice.value.measureValue != it.text) {
@@ -3329,9 +3318,6 @@ fun EditPriceScreen(
                             }
                         },
                         enabled = saveStatus.isNotBusy(),
-                        onSupportingTextChange = { isError, supportingText ->
-                            packSizeSupportingText = Pair(isError, supportingText)
-                        },
                         modifier = Modifier
                             .weight(1f)
                             .focusRequester(packSizeScrollToFocusableHandle),
@@ -3364,12 +3350,14 @@ fun EditPriceScreen(
                         getLabel = { it.symbol },
                     )
                 }
+
                 if (validationThing3.validationResult.value != null) {
                     SupportingText(
                         text = validationThing3.validationResult.value!!, isError = true,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .padding(top = 4.dp)
+                            .background(Color.Cyan) // TODO HACK
                     )
 
                 }
@@ -6181,6 +6169,7 @@ class ScrollToFocusableHandle @OptIn(ExperimentalFoundationApi::class) construct
     val bringIntoViewRequester: BringIntoViewRequester = BringIntoViewRequester(),
     var bringIntoViewOffset: Float = 0f,
     var bringIntoViewHeight: Int = 0,
+    val errorHighlightBoxVisible: MutableState<Boolean> = mutableStateOf(false),
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -6217,11 +6206,16 @@ suspend fun scrollAndFocusTo(handle: ScrollToFocusableHandle) {
             bottom = handle.bringIntoViewHeight + 2 * handle.bringIntoViewOffset
         )
     )
+
     // I am a bit unsure as to why, but it seems to work much better to do requestFocus() *after*
     // bringIntoView(). The precise behaviour depends on whether the control already has the focus
     // and maybe whether there is a keyboard on screen already and what type it is.
     handle.focusRequester.requestFocus()
     // TODO: Can/should we focus TextFields with the cursor at the end of the text?
+
+        handle.errorHighlightBoxVisible.value = true
+        delay(10000)
+        handle.errorHighlightBoxVisible.value = false
 }
 
 @Composable
@@ -6261,7 +6255,7 @@ fun ErrorHighlightBox(
             }
         } else {
             // Fade out smoothly once we're no longer animating.
-            // TODO: It would maybe be nice if we could always get to 0.1f *then* do this fade out
+            // TODO: It would maybe be nice if we could always get to 1f *then* do this fade out
             // but it's probably faffy as hell.
             alpha.animateTo(targetValue = 0f, animationSpec = tween(500))
         }
