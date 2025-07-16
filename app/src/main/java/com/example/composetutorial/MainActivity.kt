@@ -3289,7 +3289,7 @@ fun EditPriceScreen(
             offset = 4.dp,
             validationTarget = packSizeScrollToFocusableHandle
         ) { // TODO!
-            Column(modifier = Modifier.animateContentSize(animationSpec = tween(150))) // TODO EXPERIMENTAL - I QUITE LIKE THIS, WE NEED TO DO IT CONSISTENTLY EVERYWHERE IF WE KEEP IT - IN CASE IT'S NOT CLEAR, THIS SMOOTHES OUT THE JARRING APPAEARANCE/DISAPPEARANCE OF SUPPORTINGTEXT ON ERROR
+            Column(modifier = Modifier.animateContentSize(/* animationSpec = tween(150) */)) // TODO EXPERIMENTAL - I QUITE LIKE THIS, WE NEED TO DO IT CONSISTENTLY EVERYWHERE IF WE KEEP IT - IN CASE IT'S NOT CLEAR, THIS SMOOTHES OUT THE JARRING APPAEARANCE/DISAPPEARANCE OF SUPPORTINGTEXT ON ERROR
             { // TODO: Should ErrorHighlightBox include a Column? If so, take it out of all callers
                 Row {
                     // TODO: Using weight to size the components is also sucky, since we really
@@ -3344,16 +3344,16 @@ fun EditPriceScreen(
                     )
                 }
 
-                //if (validationThing3.validationResult.value != null) {
-                    AnimatedSupportingText(
-                        text = validationThing3.validationResult.value, // TODO: isError = true,
+                if (validationThing3.validationResult.value != null) {
+                    SupportingText(
+                        text = validationThing3.validationResult.value!!, isError = true,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .padding(top = 4.dp)
                             //.background(Color.Cyan) // TODO HACK
                     )
 
-                //}
+                }
             }
         }
         //Spacer(modifier = Modifier.height(500.dp))
@@ -6277,3 +6277,6 @@ Log.d("MyApp", baz.toString())
 
 // TODO: ErrorHighlightBoxes and their offsets and the general layout of the forms they highlight is
 // probably a bit inconsistent and could do with a review.
+
+// TODO: General Kotlin point which may simplify my code - unlike in say C++, you can apparently
+// "call methods" on nulls, e.g. stringvariable.orEmpty().
