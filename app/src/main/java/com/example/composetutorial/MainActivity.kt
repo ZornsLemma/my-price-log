@@ -4118,7 +4118,7 @@ fun EditDataSetScreen(
 
         ErrorHighlightBox(hasError = measurementSystemScrollToFocusableHandle.errorHighlightBoxVisible.value,
             validationTarget = measurementSystemScrollToFocusableHandle) {
-            Column() { // TODO: Added this column as a hack, we may or may not need it
+            Column(modifier = Modifier.animateContentSize()) { // TODO: Added this column as a hack, we may or may not need it
                 Text(
                     "Measurement units",
                     style = MaterialTheme.typography.bodySmall,
@@ -4189,6 +4189,9 @@ fun EditDataSetScreen(
                 val supportingText = validationThing2.validationResult.value
                 if (supportingText != null) {
                     // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
+                    // TODO: Should we show a red warning triangle e.g. at left or right of this text? Not sure, but we
+                    // do show one in the case of TextFields so although the layout isn't quite the same, maybe showing
+                    // one here is not a bad idea.
                     SupportingText(
                         supportingText,
                         isError = true,
