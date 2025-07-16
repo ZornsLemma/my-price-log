@@ -3242,6 +3242,10 @@ fun EditPriceScreen(
         onIdle = {},
         requestClose = requestClose,
     ) {
+        // TODO: Probably have a note elsewhere but these two disabled text fields are perhaps a bit ugly
+        // and maybe not MD3-ish. Moving these into the title and subtitle of the top bar may be the
+        // way to go. Or something else, but I do feel they look a bit ugly and maybe even confusing,
+        // as the user might wonder "how" they could become enabled.
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Product") },
