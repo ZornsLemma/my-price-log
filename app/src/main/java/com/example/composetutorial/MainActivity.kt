@@ -158,6 +158,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
@@ -3258,71 +3259,83 @@ fun EditPriceScreen(
                 )
             )
         }
-        Row {
-            // TODO: Using weight to size the components is also sucky, since we really
-            // just want "a reasonable fixed size" for the unit with
-            // the product taking whatever's left, but this will do for now.
-            var packSizeNumber by rememberSyncedTextFieldValue(
-                uiContent.editablePrice.value.measureValue
-            )
-            NumericTextField(
-                label = { Text("Pack size") },
-                value = packSizeNumber,
-                validationRules = vm.packSizeValidationRules,
-                validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
-                onValueChange = {
-                    packSizeNumber = it
-                    if (uiContent.editablePrice.value.measureValue != it.text) {
-                        vm.setUIContentEditablePrice(
-                            uiContent.editablePrice.value.copy(
-                                measureValue = it.text
+        // TODO: This box could just be around the actual "Pack size" text field, but I think it
+        // makes sense for it to also cover the supportingText showing the actual problem. That
+        // visually requires it to cover the whole screen width.
+        // TODO: I wonder if this screen is actually a bit vertically squashed together, now I see
+        // that I "need" offset = 4.dp here instead of the current default 6.dp. It might be I
+        // should increase the vertical spacing of the components on this screen and then make this
+        // 6.dp.
+        ErrorHighlightBox(hasError = true, offset = 4.dp) { // TODO!
+            Column { // TODO: Should ErrorHighlightBox include a Column? If so, take it out of all callers
+            Row {
+                // TODO: Using weight to size the components is also sucky, since we really
+                // just want "a reasonable fixed size" for the unit with
+                // the product taking whatever's left, but this will do for now.
+                var packSizeNumber by rememberSyncedTextFieldValue(
+                    uiContent.editablePrice.value.measureValue
+                )
+                NumericTextField(
+                    label = { Text("Pack size") },
+                    value = packSizeNumber,
+                    validationRules = vm.packSizeValidationRules,
+                    validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
+                    onValueChange = {
+                        packSizeNumber = it
+                        if (uiContent.editablePrice.value.measureValue != it.text) {
+                            vm.setUIContentEditablePrice(
+                                uiContent.editablePrice.value.copy(
+                                    measureValue = it.text
+                                )
                             )
-                        )
-                        onPackSizeOrPriceChange()
-                    }
-                },
-                enabled = saveStatus.isNotBusy(),
-                onSupportingTextChange = { isError, supportingText ->
-                    packSizeSupportingText = Pair(isError, supportingText)
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .scrollToFocusable(packSizeScrollToFocusableHandle)
-            )
+                            onPackSizeOrPriceChange()
+                        }
+                    },
+                    enabled = saveStatus.isNotBusy(),
+                    onSupportingTextChange = { isError, supportingText ->
+                        packSizeSupportingText = Pair(isError, supportingText)
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .scrollToFocusable(packSizeScrollToFocusableHandle)
+                )
 
-            Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
-            MyExposedDropdownMenuBox(
-                enabled = saveStatus.isNotBusy(),
-                selectedId = uiContent.editablePrice.value.measureUnit.id,
-                onValueChange = {
-                    val measureUnit = MeasureUnit.fromValue(it)
-                    devCheck(measureUnit != null) {
-                        "Expected non-null measureUnit to be selected; got $it"
-                    }
-                    if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
-                        vm.setUIContentEditablePrice(
-                            uiContent.editablePrice.value.copy(
-                                measureUnit = measureUnit
+                MyExposedDropdownMenuBox(
+                    enabled = saveStatus.isNotBusy(),
+                    selectedId = uiContent.editablePrice.value.measureUnit.id,
+                    onValueChange = {
+                        val measureUnit = MeasureUnit.fromValue(it)
+                        devCheck(measureUnit != null) {
+                            "Expected non-null measureUnit to be selected; got $it"
+                        }
+                        if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
+                            vm.setUIContentEditablePrice(
+                                uiContent.editablePrice.value.copy(
+                                    measureUnit = measureUnit
+                                )
                             )
-                        )
-                        onPackSizeOrPriceChange()
-                    }
-                },
-                label = { Text("Unit") },
-                items = units,
-                modifier = Modifier.weight(0.5f),
-                getId = { it.id },
-                getLabel = { it.symbol },
-            )
+                            onPackSizeOrPriceChange()
+                        }
+                    },
+                    label = { Text("Unit") },
+                    items = units,
+                    modifier = Modifier.weight(0.5f),
+                    getId = { it.id },
+                    getLabel = { it.symbol },
+                )
+            }
+            if (packSizeSupportingText.second != null) {
+                SupportingText(
+                    text = packSizeSupportingText.second!!, isError = packSizeSupportingText.first,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 4.dp)
+                )
+            }
         }
-        if (packSizeSupportingText.second != null) {
-            SupportingText(text = packSizeSupportingText.second!!, isError = packSizeSupportingText.first,
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 4.dp)
-            )
-        }
+    }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -6069,6 +6082,8 @@ fun rememberScrollToFocusable(): ScrollToFocusableHandle {
 @Composable
 fun ErrorHighlightBox(
     hasError: Boolean, // TODO: rename "visible" or something, what's standard? "enabled"? It's not about "having an error", it's about our visibility.
+    borderWidth: Dp = 2.dp,
+    offset: Dp = 6.dp,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -6105,8 +6120,8 @@ fun ErrorHighlightBox(
                 drawContent()
                 if (true /* hasError */) { // TODO: GET RID OF IF
                     // Draw an outline slightly larger than the content
-                    val borderWidthPx = 2.dp.toPx()
-                    val offsetPx = 6.dp.toPx()
+                    val borderWidthPx = borderWidth.toPx()
+                    val offsetPx = offset.toPx()
                     drawRect(
                         color = borderColor,
                         alpha = alpha.value,
