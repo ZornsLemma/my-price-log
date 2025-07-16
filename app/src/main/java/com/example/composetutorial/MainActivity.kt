@@ -4353,6 +4353,16 @@ fun <T> rememberValidationThing(
     // the text changes" behaviour of my existing implementation - think about it, we probably *do*
     // want that. Likewise we probably want something here so there's no delay if the input has just
     // become valid. Do think about both of these though.
+    // TODO: So what do we *want*?
+    // - if validationRulesKey or allowEmpty changes (which is almost a form of validationRulesKey
+    //   changing, just tracked separately), we should probably update immediately - these do not
+    //   happen during "casual" editing (certainly not *of the field being validated*)
+    // - if value changes that is going to be the user typing. We should evaluate immediately and
+    //   if everything is OK, immediately update (to nothing). If something is wrong and a different
+    //   something was wrong we should immediately update. Maybe. If the user is typing maybe we
+    //   should minimise distractions and flicker and not change anything at all until they stop. but
+    //   it does feel like there's an argument for not having an out of date error sticking around
+    //   for 500ms or whatever after they finish typing.
     LaunchedEffect(value, validationRulesKey, allowEmpty, isFocused) {
         // TODO: The delay is breaking things a bit here when e.g. we have an empty "pack size" string
         // and click save - the validation message becomes eligible for display as allowEmpty is now
@@ -4363,13 +4373,12 @@ fun <T> rememberValidationThing(
         val reorderedValidations =
             listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
         failedValidationRule = null
-        var shouldValidate = false
+        var shouldValidate = false // TODO: rename skipValidation or something to flip sense?
         when (value) {
             is String -> shouldValidate = !(allowEmpty && value.trim().isEmpty())
             else -> {} // allowEmpty has no meaning for other types
         }
         if (shouldValidate) {
-            Log.d("MyAppV", "inside shouldValidate")
             for (validationRule in reorderedValidations) {
                 if (!validationRule.validate(value)) {
                     failedValidationRule = validationRule
