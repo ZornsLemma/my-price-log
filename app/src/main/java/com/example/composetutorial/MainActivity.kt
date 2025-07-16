@@ -3820,7 +3820,7 @@ fun EditSourceScreen(
             hasError = nameScrollToFocusableHandle.errorHighlightBoxVisible.value,
             validationTarget = nameScrollToFocusableHandle
         ) {
-            ValidatedTextField(
+            FilteredTextField(
                 label = { Text("Name") },
                 value = name,
                 onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxSourceNameLength),
@@ -3841,7 +3841,7 @@ fun EditSourceScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         var notes by rememberSyncedTextFieldValue(uiContent.editableSource.value.notes)
-        ValidatedTextField(
+        FilteredTextField(
             label = { Text("Notes") },
             value = notes,
             onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
@@ -4010,7 +4010,7 @@ fun EditDataSetScreen(
             hasError = nameScrollToFocusableHandle.errorHighlightBoxVisible.value,
             validationTarget = nameScrollToFocusableHandle
         ) {
-            ValidatedTextField(
+            FilteredTextField(
                 label = { Text("Name") },
                 value = name,
                 onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxDataSetNameLength),
@@ -4141,7 +4141,7 @@ fun EditDataSetScreen(
                                 // Don't allow Imperial and US Customary to be selected together. (We use
                                 // the common but ambiguous names for the units, so this would cause UI
                                 // confusion. We don't want to be showing "pint (US)" or "pt (US)" all the
-                                // time to disambiguate.
+                                // time to disambiguate.)
                                 if (index > 0 && checkedStates[index]) {
                                     checkedStates[if (index == 1) 2 else 1] = false
                                 }
@@ -4192,7 +4192,7 @@ fun EditDataSetScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         var notes by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.notes)
-        ValidatedTextField(
+        FilteredTextField(
             label = { Text("Notes") },
             value = notes,
             onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
@@ -4608,6 +4608,7 @@ fun numericValidationRules(
     )
 }
 
+// A simple wrapper around FilteredTextField which performs filtering for numeric input.
 @Composable
 fun NumericTextField(
     modifier: Modifier = Modifier,
@@ -4623,7 +4624,7 @@ fun NumericTextField(
     keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
     interactionSource: MutableInteractionSource? = null,
 ) {
-    ValidatedTextField(
+    FilteredTextField(
         label = label,
         value = value,
         prefix = prefix,
@@ -4670,9 +4671,12 @@ fun makeOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
     { it.length <= maxLength }
 
 
-// TODO: RENAME THIS NOW IT DOESN'T VALIDATE AS SUCH - IT IS STILL USEFUL AS IT CAN IMPOSE A LENGTH LIMIT AND FILTER INPUT CHARACTERS ETC BUT NAME IS MISLEADING
+// Like TextField, but with some simple logic to allow input to be filtered and discarded via an
+// onCandidateValueChange callback. It also - although this is just a convenience and isn't
+// fundamental - automatically drives the internal TextField's trailingIcon from the isError
+// parameter.
 @Composable
-fun ValidatedTextField(
+fun FilteredTextField(
     modifier: Modifier = Modifier,
     label: @Composable (() -> Unit)? = null,
     value: TextFieldValue,
@@ -6276,3 +6280,6 @@ Log.d("MyApp", baz.toString())
 // and then they turn imperial off for the collection? Will we still show in imperial by default but
 // not allow it in the drop down? Will we force display into a unit (picking the best on a
 // significant digits basis or something) in an allowed system?
+
+// TODO: ErrorHighlightBoxes and their offsets and the general layout of the forms they highlight is
+// probably a bit inconsistent and could do with a review.
