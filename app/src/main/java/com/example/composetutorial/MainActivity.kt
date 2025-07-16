@@ -3287,7 +3287,8 @@ fun EditPriceScreen(
             offset = 4.dp,
             validationTarget = packSizeScrollToFocusableHandle
         ) { // TODO!
-            Column { // TODO: Should ErrorHighlightBox include a Column? If so, take it out of all callers
+            Column(modifier = Modifier.animateContentSize(animationSpec = tween(150))) // TODO EXPERIMENTAL - I QUITE LIKE THIS, WE NEED TO DO IT CONSISTENTLY EVERYWHERE IF WE KEEP IT - IN CASE IT'S NOT CLEAR, THIS SMOOTHES OUT THE JARRING APPAEARANCE/DISAPPEARANCE OF SUPPORTINGTEXT ON ERROR
+            { // TODO: Should ErrorHighlightBox include a Column? If so, take it out of all callers
                 Row {
                     // TODO: Using weight to size the components is also sucky, since we really
                     // just want "a reasonable fixed size" for the unit with
@@ -3347,7 +3348,7 @@ fun EditPriceScreen(
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .padding(top = 4.dp)
-                            .background(Color.Cyan) // TODO HACK
+                            //.background(Color.Cyan) // TODO HACK
                     )
 
                 }
