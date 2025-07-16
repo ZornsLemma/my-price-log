@@ -3390,6 +3390,10 @@ fun EditPriceScreen(
         // "minimal" and the other filling rest of space - but then again, if you do that, a
         // fixed ratio is probably more or less the same since both will expand with font size
         // just the same, so maybe that would be pointless
+        // TODO: TEMP NOTE PRESERVED FROM NUMERICTEXTFIELD TO BE MOVE INTO VALIDATIONTHING REWRITE We don't need a validationRulesKey here because the currency validation rules
+        // cannot change while we are editing. They depend only on our DataSet and our
+        // frozen locale.
+
         NumericTextField(
             modifier = Modifier
                 .fillMaxWidth()
@@ -3408,10 +3412,6 @@ fun EditPriceScreen(
             textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
                 textAlign = TextAlign.End
             ) else LocalTextStyle.current,
-            validationRules = currencyFormat.validationRules,
-            // We don't need a validationRulesKey here because the currency validation rules
-            // cannot change while we are editing. They depend only on our DataSet and our
-            // frozen locale.
             onValueChange = {
                 packPrice = it
                 if (uiContent.editablePrice.value.price != it.text) {
@@ -4623,19 +4623,10 @@ fun NumericTextField(
     prefix: @Composable (() -> Unit)? = null,
     suffix: @Composable (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
-    // TODO: I am not completely happy about defaulting to the current locale here, since I am
-    // generally trying to make sure I think about the correct locale when I need one. This is a
-    // theoretically re-usable component and this isn't a ridiculous default in general, but it's
-    // not ideal for this app. There might - I'm not sure - also be performance considerations if
-    // the list of rules is regenerated every re-composition.
-    validationRules: List<ValidationRule<String>>? = numericValidationRules(LocalConfiguration.current.locales[0]),
-    validationRulesKey: Any? = null,
     onValueChange: (TextFieldValue) -> Unit,
     enabled: Boolean = true,
-    onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
     supportingText: String? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-    messageDelayMillis: Long = defaultValidationMessageDelayMillis,
     interactionSource: MutableInteractionSource? = null,
 ) {
     ValidatedTextField(
@@ -4644,8 +4635,6 @@ fun NumericTextField(
         prefix = prefix,
         suffix = suffix,
         textStyle = textStyle,
-        validationRules = (validationRules ?: emptyList()),
-        validationRulesKey = validationRulesKey,
         // TODO: We don't (we could, but probably no point) allow arbitrary onCandidateValueChange
         // functions to be supplied by our caller. We just hardcode this for now. We could
         // potentially accept some options from our caller which say whether decimal point (locale
@@ -4658,11 +4647,9 @@ fun NumericTextField(
         onCandidateValueChange = { isValidTransitionalDecimal(it) && it.length <= 11 },
         onValueChange = onValueChange,
         enabled = enabled,
-        onSupportingTextChange = onSupportingTextChange,
         modifier = modifier,
         supportingText = supportingText,
         keyboardOptions = keyboardOptions,
-        messageDelayMillis = messageDelayMillis,
         interactionSource = interactionSource,
     )
 }
