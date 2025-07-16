@@ -161,6 +161,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.times
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
@@ -3272,7 +3273,7 @@ fun EditPriceScreen(
         // that I "need" offset = 4.dp here instead of the current default 6.dp. It might be I
         // should increase the vertical spacing of the components on this screen and then make this
         // 6.dp.
-        ErrorHighlightBox(hasError = true, offset = 4.dp) { // TODO!
+        ErrorHighlightBox(hasError = true, offset = 4.dp, validationTarget = packSizeScrollToFocusableHandle) { // TODO!
             Column { // TODO: Should ErrorHighlightBox include a Column? If so, take it out of all callers
             Row {
                 // TODO: Using weight to size the components is also sucky, since we really
@@ -3301,7 +3302,7 @@ fun EditPriceScreen(
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .scrollToFocusable(packSizeScrollToFocusableHandle, offset = 8.dp),
+                        .focusRequester(packSizeScrollToFocusableHandle),
                     interactionSource = validationThing3.interactionSource
                 )
 
@@ -3342,8 +3343,11 @@ fun EditPriceScreen(
                 }
         }
     }
+        Spacer(modifier = Modifier.height(500.dp))
 
-        Spacer(modifier = Modifier.height(8.dp))
+
+
+        //TODO!?Spacer(modifier = Modifier.height(8.dp))
 
 
         var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
@@ -4045,7 +4049,7 @@ fun EditDataSetScreen(
         )
 
         // TODO: We don't actually want this highlight box to be wired up to validationThing2 - this is just a hack to test. We want it to be animated temporarily on and off when a save validation on this field fails.
-        ErrorHighlightBox(hasError = highlightMeasurementSystemError) {
+        Box { // TODO  ErrorHighlightBox(hasError = highlightMeasurementSystemError) {
             Column() { // TODO: Added this column as a hack, we may or may not need it
                 Text(
                     "Measurement units",
@@ -6056,6 +6060,7 @@ fun <T> Flow<T>.withVersion(): Flow<Versioned<T>> = flow {
 fun <T> initialVersioned(initialValue: T): Versioned<T> =
     Versioned(version = -1L, value = initialValue)
 
+// TODO: Rename something like ValidationTargetHandle?
 class ScrollToFocusableHandle @OptIn(ExperimentalFoundationApi::class) constructor(
     val focusRequester: FocusRequester = FocusRequester(),
     val bringIntoViewRequester: BringIntoViewRequester = BringIntoViewRequester(),
@@ -6073,17 +6078,20 @@ fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle, offset: Dp = 0.d
     // split the two things up we're losing a lot of the convenience of having it all in one place.
         handle.bringIntoViewOffset =     with(LocalDensity.current) { offset.toPx() }
         return this
-            .focusRequester(handle.focusRequester)
+            //.focusRequester(handle.focusRequester)
             .onGloballyPositioned { coordinates -> handle.bringIntoViewHeight = coordinates.size.height }
             .bringIntoViewRequester(handle.bringIntoViewRequester)
 
 }
 
+fun Modifier.focusRequester(handle: ScrollToFocusableHandle): Modifier {
+    return this.focusRequester(handle.focusRequester)
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 suspend fun scrollAndFocusTo(handle: ScrollToFocusableHandle) {
-    // TODO: Will this do the right thing if we're scrolling in *either* direction to get to the
-    // target? I wonder if this offset might mean we don't scroll far enough in one direction. Yes,
-    // it is broken, because we have zero height I think.
+    Log.d("MyAppScroll", "${handle.bringIntoViewOffset} ${handle.bringIntoViewHeight}")
+    val totalBorderThickness = handle.bringIntoViewOffset
         handle.bringIntoViewRequester.bringIntoView(
             Rect(
                 left = 0f,
@@ -6092,8 +6100,10 @@ suspend fun scrollAndFocusTo(handle: ScrollToFocusableHandle) {
                 bottom = handle.bringIntoViewHeight + 2 * handle.bringIntoViewOffset
             )
         )
+    // I am a bit unsure as to why, but it seems to work much better to do requestFocus() *after*
+    // bringIntoView(). The precise behaviour depends on whether the control already has the focused
+    // and maybe whether there is a keyboard on screen already and what type it is.
     handle.focusRequester.requestFocus()
-    // TODO: It may be desirable (either here or when saving the handle) to try to save a point slightly "above" the top of the nominal control to allow space for a flashing red border to also show.
     // TODO: Can/should we focus TextFields with the cursor at the end of the text?
 }
 
@@ -6112,6 +6122,7 @@ fun ErrorHighlightBox(
     borderWidth: Dp = 2.dp,
     offset: Dp = 6.dp,
     modifier: Modifier = Modifier,
+    validationTarget: ScrollToFocusableHandle,
     content: @Composable () -> Unit
 ) {
     var alpha = remember { Animatable(0f) }
@@ -6158,6 +6169,7 @@ fun ErrorHighlightBox(
                     )
                 }
             }
+            .scrollToFocusable(validationTarget, offset = offset + 2 * borderWidth)
             // Add padding to ensure the outline isn't clipped
             //.padding(4.dp)
     ) {
