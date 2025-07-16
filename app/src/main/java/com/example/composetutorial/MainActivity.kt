@@ -2633,11 +2633,11 @@ data class EditablePrice(
     }
 }
 
-fun textOrNull(string: String?): @Composable (() -> Unit)? {
+fun textOrNull(string: String?, modifier: Modifier = Modifier, color: Color = Color.Unspecified): @Composable (() -> Unit)? {
     if (string == null) {
         return string
     } else {
-        return { Text(string) }
+        return { Text(string, modifier = modifier, color = color) }
     }
 }
 
@@ -3420,12 +3420,9 @@ fun EditPriceScreen(
                 }
             },
             enabled = saveStatus.isNotBusy(),
-            supportingText = "This is more supporting text just as a test.",
+            supportingText = textOrNull(validationThing1.validationResult.value, color = MaterialTheme.colorScheme.error),
             interactionSource = validationThing1.interactionSource,
         )
-        // TODO: START TEMP EXPERIMENTAL
-        Text("todoTempSupportingText: ${validationThing1.validationResult.value ?: "null"}")
-        // TODO: END TEMP EXPERIMENTAL
 
         // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
         // why are we entering it?
@@ -3812,8 +3809,10 @@ fun EditSourceScreen(
         ValidatedTextField(
             label = { Text("Name") },
             value = name,
+            /* TODO DELETE
             validationRules = nameValidationRules.value,
             validationRulesKey = nameValidationRules.version,
+            */
             onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxSourceNameLength),
             onValueChange = {
                 name = it
@@ -3991,8 +3990,10 @@ fun EditDataSetScreen(
         ValidatedTextField(
             label = { Text("Name") },
             value = name,
+            /* TODO
             validationRules = nameValidationRules.value,
             validationRulesKey = nameValidationRules.version,
+            */
             onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxDataSetNameLength),
             onValueChange = {
                 name = it
@@ -4625,7 +4626,7 @@ fun NumericTextField(
     textStyle: TextStyle = LocalTextStyle.current,
     onValueChange: (TextFieldValue) -> Unit,
     enabled: Boolean = true,
-    supportingText: String? = null,
+    supportingText: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
     interactionSource: MutableInteractionSource? = null,
 ) {
@@ -4675,6 +4676,7 @@ fun makeOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
     { it.length <= maxLength }
 
 
+// TODO: RENAME THIS NOW IT DOESN'T VALIDATE AS SUCH - IT IS STILL USEFUL AS IT CAN IMPOSE A LENGTH LIMIT AND FILTER INPUT CHARACTERS ETC BUT NAME IS MISLEADING
 @Composable
 fun ValidatedTextField(
     modifier: Modifier = Modifier,
@@ -4683,147 +4685,29 @@ fun ValidatedTextField(
     prefix: @Composable (() -> Unit)? = null,
     suffix: @Composable (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
-    validationRules: List<ValidationRule<String>>? = null,
-    validationRulesKey: Any? = null,
     onCandidateValueChange: ((String) -> Boolean),
     onValueChange: (TextFieldValue) -> Unit,
     enabled: Boolean = true,
-    onSupportingTextChange: ((Boolean, String?) -> Unit)? = null,
-    supportingText: String? = null,
+    supportingText: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    messageDelayMillis: Long = defaultValidationMessageDelayMillis,
     interactionSource: MutableInteractionSource? = null
 ) {
-    Log.d("MyAppVTF", "input == previousInput? ${remember { validationRules }} == $validationRules")
-    var failedValidationSupportingText by rememberSaveable(validationRulesKey) {
-        mutableStateOf<String?>(
-            null
-        )
-    }
-    var failedValidationRule by remember(validationRulesKey) {
-        mutableStateOf<ValidationRule<String>?>(
-            null
-        )
-    }
-    Log.d("MyAppVTF", "validationRules?.size ${validationRules?.size}")
-    Log.d("MyAppVTF", "fVST $failedValidationSupportingText")
-    Log.d("MyAppVTF", "fVR $failedValidationRule")
-    var delayJob by remember { mutableStateOf<Job?>(null) }
-    var isFocused by remember { mutableStateOf(false) }
-
-    // TODO: RENAME THIS FN IF NEW STRUCTURE WORKS
-    fun updateFailedValidationRule(newValue: String, innerMessageDelayMillis: Long) {
-        // We don't want to generate validation failures just because the field is empty. For the
-        // moment we consider the field empty if it's nothing but whitespace. At least for my
-        // purposes here I think this is fine. Obviously we could add a parameter to allow the
-        // caller to configure this.
-        // TODO: Possibly once the user clicks "Save" and gets validation failures, we should pass
-        // a flag into this composable to tell it not to filter out empty strings, and make sure
-        // the validation rules do include "Cannot be empty" validations? That way we won't nag the
-        // user with a sea of red "Cannot be empty" validations on first appearance, but they will
-        // get a message if they try to save without realising the value is mandatory.
-        if (newValue.trim().isEmpty()) {
-            failedValidationRule = null
-            failedValidationSupportingText = null
-            return
-        }
-
-        // In order to give "consistent" supportingText, we give precedence  whichever
-        // validation generated the current supporting text.
-        val reorderedValidations =
-            listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
-        failedValidationRule = null
-        for (validationRule in reorderedValidations) {
-            if (!validationRule.validate(newValue)) {
-                failedValidationRule = validationRule
-                Log.d("MyAppVTF", "inside ufvr $failedValidationRule")
-                break
-            }
-        }
-
-        Log.d("MyAppVTF", "after ufvr $failedValidationRule")
-        if (failedValidationRule == null) {
-            // Everything's OK. Clear any supporting text immediately.
-            failedValidationSupportingText = null
-        } else {
-            // Something's wrong.
-            //
-            // If there is currently no supporting text and the user is actively editing (as
-            // determined by our caller passing a non-0 value for innerMessageDelayMillis), we don't
-            // want to distract the user by popping some in when they may be in the middle of typing
-            // and will correct the problem themselves, so we only show supporting text after
-            // they've stopped typing. (Imagine they are moving the decimal point; they type in a
-            // "new" one in the correct place and then go to delete the "old" one. It's annoying if
-            // a nagging message pops up after typing the new one telling them they have two decimal
-            // points when they were already addressing the problem.)
-            //
-            // If there is already supporting text, it's probably less annoying to keep
-            // showing some (currently valid) supporting text, rather than removing it while
-            // the user types and possibly having it pop back in again afterwards.
-            if (failedValidationSupportingText == null && innerMessageDelayMillis != 0L) {
-                delayJob = CoroutineScope(Dispatchers.Main).launch {
-                    delay(innerMessageDelayMillis)
-                    failedValidationSupportingText = failedValidationRule!!.message
-                }
-            } else {
-                failedValidationSupportingText = failedValidationRule!!.message
-            }
-        }
-    }
-
-    LaunchedEffect(validationRulesKey) {
-        Log.d("MyAppVTF", "LAUNCHED EFFECT")
-        updateFailedValidationRule(value.text, 0)
-    }
-
-    // We have this function to make it easier to pass a literal null to TextField's supportingText
-    // when we don't want anything, to prevent it allocating visual space for supportingText. TODO:
-    // Some overlap with TextOrNull()?
-    fun getSupportingText(): @Composable (() -> Unit)? {
-        if (onSupportingTextChange == null) {
-            if (failedValidationSupportingText != null) {
-                return {
-                    Text(
-                        failedValidationSupportingText!!,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-            } else if (supportingText != null) {
-                return { Text(supportingText) }
-            }
-        }
-        return null
-    }
     TextField(
         label = label,
         value = value,
         prefix = prefix,
         suffix = suffix,
         textStyle = textStyle,
-        onValueChange = { newValue ->
-            delayJob?.cancel()
+        onValueChange = { newValue: TextFieldValue ->
             if (onCandidateValueChange(newValue.text)) {
-                updateFailedValidationRule(newValue.text, messageDelayMillis)
-
-
                 onValueChange(newValue)
             }
         },
         enabled = enabled,
         keyboardOptions = keyboardOptions,
-        modifier = modifier.onFocusChanged { focusState ->
-            Log.d("MyApp", "focus changed")
-            isFocused = focusState.isFocused
-            if (!focusState.isFocused) {
-                Log.d("MyApp", "lost focus")
-                // This case occurs when we are first composed, so we get to immediately show any
-                // supportingText then, as well as doing it when we lose focus and want to show
-                // any previously-delayed message.
-                updateFailedValidationRule(value.text, 0)
-                // TODO? failedValidationSupportingText = failedValidationRule?.message
-            }
-        },
-        supportingText = getSupportingText(),
+        modifier = modifier,
+        supportingText = supportingText,
+        /* TODO THIS ISN'T RIGHT NOW BUT WE'LL NEED SOME WAY TO DO THIS AND IT MAY BE HELPFUL IF THIS COMPOSABLE MAKES IT A SIMPLE BOOL
         trailingIcon = if (failedValidationSupportingText != null) {
             {
                 Icon(
@@ -4833,20 +4717,12 @@ fun ValidatedTextField(
                 )
             }
         } else null,
-        isError = failedValidationSupportingText != null,
+        */
+        isError = false, // TODO TEMP HACK
+        trailingIcon = null, // TODO TEMP HACK
+        // TODO WE'LL NEED THIS CONTROLLING TOO isError = failedValidationSupportingText != null,
         interactionSource = interactionSource,
     )
-
-    if (onSupportingTextChange != null) {
-        LaunchedEffect(failedValidationSupportingText) {
-            Log.d("MyAppVTF", "LE $failedValidationSupportingText")
-            if (failedValidationSupportingText != null) {
-                onSupportingTextChange(true, failedValidationSupportingText)
-            } else {
-                onSupportingTextChange(false, supportingText)
-            }
-        }
-    }
 }
 
 // TODO: Can we use this inside ValidatedTextField to reduce duplication? Feeling my way right now.
