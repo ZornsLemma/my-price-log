@@ -3259,6 +3259,10 @@ fun EditPriceScreen(
                 )
             )
         }
+        var packSizeNumber by rememberSyncedTextFieldValue(
+            uiContent.editablePrice.value.measureValue
+        )
+        val validationThing3 = rememberValidationThing(value = packSizeNumber.text, validationRules = vm.packSizeValidationRules, validationRulesKey = uiContent.editablePrice.value.measureUnit.id, /* TODO allowEmpty */)
         // TODO: This box could just be around the actual "Pack size" text field, but I think it
         // makes sense for it to also cover the supportingText showing the actual problem. That
         // visually requires it to cover the whole screen width.
@@ -3272,9 +3276,6 @@ fun EditPriceScreen(
                 // TODO: Using weight to size the components is also sucky, since we really
                 // just want "a reasonable fixed size" for the unit with
                 // the product taking whatever's left, but this will do for now.
-                var packSizeNumber by rememberSyncedTextFieldValue(
-                    uiContent.editablePrice.value.measureValue
-                )
                 NumericTextField(
                     label = { Text("Pack size") },
                     value = packSizeNumber,
@@ -3297,7 +3298,8 @@ fun EditPriceScreen(
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .scrollToFocusable(packSizeScrollToFocusableHandle)
+                        .scrollToFocusable(packSizeScrollToFocusableHandle),
+                    interactionSource = validationThing3.interactionSource
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -3326,14 +3328,15 @@ fun EditPriceScreen(
                     getLabel = { it.symbol },
                 )
             }
-            if (packSizeSupportingText.second != null) {
-                SupportingText(
-                    text = packSizeSupportingText.second!!, isError = packSizeSupportingText.first,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 4.dp)
-                )
-            }
+                if (validationThing3.validationResult.value != null) {
+                    SupportingText(
+                        text = validationThing3.validationResult.value!!, isError = true,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .padding(top = 4.dp)
+                    )
+
+                }
         }
     }
 
