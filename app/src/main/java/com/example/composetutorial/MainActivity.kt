@@ -45,6 +45,7 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -3668,7 +3669,7 @@ fun GeneralEditScreen(
                 // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am
                 // struggling to find any non-LLM explanations here, but *maybe* *if we have
                 // scrolled away from the top* we should change the background to surfaceContainer
-                .background(Color.Cyan /*TODO TEMP FOR DEBUG, SHOULD BE MaterialTheme.colorScheme.surface */) // because this is a full-screen dialog
+                .background(/* Color.Cyan TODO TEMP FOR DEBUG, SHOULD BE */MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = fullScreenDialogBorder)
@@ -4194,7 +4195,7 @@ fun EditDataSetScreen(
 
                     launch {
                         highlightMeasurementSystemError = true
-                        delay(1000)
+                        delay(10000)
                         highlightMeasurementSystemError = false
                     }
                     // TODO: Because you *can't* focus the segmented button, this is a bit wappy in
@@ -6032,6 +6033,7 @@ fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle): Modifier {
 suspend fun scrollAndFocusTo(handle: ScrollToFocusableHandle) {
     handle.bringIntoViewRequester.bringIntoView()
     handle.focusRequester.requestFocus()
+    // TODO: It may be desirable (either here or when saving the handle) to try to save a point slightly "above" the top of the nominal control to allow space for a flashing red border to also show.
     // TODO: Can/should we focus TextFields with the cursor at the end of the text?
 }
 
@@ -6046,35 +6048,36 @@ fun rememberScrollToFocusable(): ScrollToFocusableHandle {
 // TODO: Grok magic, tweaked with help from my own brain and ChatGPT and Perplexity
 @Composable
 fun ErrorHighlightBox(
-    hasError: Boolean,
+    hasError: Boolean, // TODO: rename "visible" or something, what's standard? "enabled"? It's not about "having an error", it's about our visibility.
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-// Define colors for pulsing
-    val pulseColor1 = Color.Red
-    val pulseColor2 = Color.Green
+    var alpha = remember { Animatable(0f) }
+    LaunchedEffect(hasError) {
+        if (hasError) {
+            // Start animating from completely transparent.
+            alpha.snapTo(0f)
 
-    // Create an InfiniteTransition, but only enable it when hasError is true
-    val infiniteTransition = rememberInfiniteTransition(label = "PulseTransition")
-    val pulseColor by if (hasError) {
-        infiniteTransition.animateColor(
-            initialValue = pulseColor1,
-            targetValue = pulseColor2,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 1000, easing = LinearEasing),
-                repeatMode = RepeatMode.Reverse
-            ),
-            label = "PulseColorAnimation"
-        )
-    } else {
-        // When hasError is false, use a static color (will be overridden by animateColorAsState)
-        remember { mutableStateOf(pulseColor1) }
+            // Pulse alpha while we're supposed to be visible.
+            while (hasError) {
+                alpha.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(1000, easing = LinearEasing)
+                )
+                alpha.animateTo(
+                    targetValue = 0.1f, // TODO: experimental, was 0f
+                    animationSpec = tween(1000, easing = LinearEasing)
+                )
+            }
+        } else {
+            // Fade out smoothly once we're no longer animating.
+            // TODO: It would maybe be nice if we could always get to 0.1f *then* do this fade out
+            // but it's probably faffy as hell.
+            alpha.animateTo(targetValue = 0f, animationSpec = tween(500))
+        }
     }
 
-    // Animate the border alpha based on hasError
-    val targetAlpha = if (hasError) 1f else 0f
-    val borderAlpha by animateFloatAsState(targetValue = targetAlpha, animationSpec = tween(durationMillis = 1000))
-
+    val borderColor = MaterialTheme.colorScheme.error
     Box(
         modifier = modifier
             .drawWithContent {
@@ -6083,9 +6086,10 @@ fun ErrorHighlightBox(
                 if (true /* hasError */) { // TODO: GET RID OF IF
                     // Draw an outline slightly larger than the content
                     val borderWidthPx = 2.dp.toPx()
-                    val offsetPx = 4.dp.toPx()
+                    val offsetPx = 6.dp.toPx()
                     drawRect(
-                        color = pulseColor.copy(alpha = borderAlpha),
+                        color = borderColor,
+                        alpha = alpha.value,
                         style = Stroke(width = borderWidthPx),
                         topLeft = androidx.compose.ui.geometry.Offset(-offsetPx, -offsetPx),
                         size = size.copy(width = size.width + 2*offsetPx, height = size.height + 2*offsetPx)
