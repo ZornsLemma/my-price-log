@@ -4019,27 +4019,32 @@ fun EditDataSetScreen(
         )
         ErrorHighlightBox(
             hasError = nameScrollToFocusableHandle.errorHighlightBoxVisible.value,
-            validationTarget = nameScrollToFocusableHandle
+            validationTarget = nameScrollToFocusableHandle,
+            // TODO: doesn't seem to work here modifier = Modifier.animateContentSize(),
         ) {
-            FilteredTextField(
-                label = { Text("Name") },
-                value = name,
-                onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxDataSetNameLength),
-                onValueChange = {
-                    name = it
-                    vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(name = it.text))
-                },
-                enabled = saveStatus.isNotBusy(),
-                isError = validationThing5.validationResult.value != null,
-                supportingText = textOrNull(
-                    validationThing5.validationResult.value,
-                    color = MaterialTheme.colorScheme.error
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .validationFocusRequester(nameScrollToFocusableHandle),
-                interactionSource = validationThing5.interactionSource
-            )
+            Column(modifier = Modifier.animateContentSize()) {
+                FilteredTextField(
+                    label = { Text("Name") },
+                    value = name,
+                    onCandidateValueChange = makeOnCandidateValueChangeMaxLength(
+                        maxDataSetNameLength
+                    ),
+                    onValueChange = {
+                        name = it
+                        vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(name = it.text))
+                    },
+                    enabled = saveStatus.isNotBusy(),
+                    isError = validationThing5.validationResult.value != null,
+                    supportingText = textOrNull(
+                        validationThing5.validationResult.value,
+                        color = MaterialTheme.colorScheme.error
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .validationFocusRequester(nameScrollToFocusableHandle),
+                    interactionSource = validationThing5.interactionSource
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp)) // TODO: Maybe 16.dp given general structure of this screen?
