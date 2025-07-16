@@ -4321,6 +4321,7 @@ fun <T> rememberValidationThing(
         val reorderedValidations =
             listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
         failedValidationRule = null
+        // TODO: The allowEmpty below doesn't work for generic T - we should probably have the caller pass in some kind of lambda which allows them to specify "values we just accept and don't ask the validation rules for judgement on"
         if (true /* TODO !allowEmpty || value.isNotEmpty() */) {
             for (validationRule in reorderedValidations) {
                 if (!validationRule.validate(value)) {
