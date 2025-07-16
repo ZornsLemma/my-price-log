@@ -6059,7 +6059,8 @@ fun <T> initialVersioned(initialValue: T): Versioned<T> =
 class ScrollToFocusableHandle @OptIn(ExperimentalFoundationApi::class) constructor(
     val focusRequester: FocusRequester = FocusRequester(),
     val bringIntoViewRequester: BringIntoViewRequester = BringIntoViewRequester(),
-    var bringIntoViewOffset: Float = 0f
+    var bringIntoViewOffset: Float = 0f,
+    var bringIntoViewHeight: Int = 0,
 )
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -6070,10 +6071,12 @@ fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle, offset: Dp = 0.d
     // TODO: Maybe we should attach this modifier to the ErrorHighlightBox, but there's tension
     // there as we also want to attach it to the "real" composable for focusing purposes, and if we
     // split the two things up we're losing a lot of the convenience of having it all in one place.
-    handle.bringIntoViewOffset = with(LocalDensity.current) { -offset.toPx() }
-    return this
-        .focusRequester(handle.focusRequester)
-        .bringIntoViewRequester(handle.bringIntoViewRequester)
+        handle.bringIntoViewOffset =     with(LocalDensity.current) { offset.toPx() }
+        return this
+            .focusRequester(handle.focusRequester)
+            .onGloballyPositioned { coordinates -> handle.bringIntoViewHeight = coordinates.size.height }
+            .bringIntoViewRequester(handle.bringIntoViewRequester)
+
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -6084,9 +6087,9 @@ suspend fun scrollAndFocusTo(handle: ScrollToFocusableHandle) {
         handle.bringIntoViewRequester.bringIntoView(
             Rect(
                 left = 0f,
-                top = handle.bringIntoViewOffset,
+                top = -handle.bringIntoViewOffset,
                 right = 0f,
-                bottom = 0f
+                bottom = handle.bringIntoViewHeight + 2 * handle.bringIntoViewOffset
             )
         )
     handle.focusRequester.requestFocus()
