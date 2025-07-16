@@ -1627,6 +1627,10 @@ const val spinnerDelayMillis = 1000L // TODO SHOULD BE 200L
 // feels reasonable-ish and we can always tweak it later.
 const val defaultValidationMessageDelayMillis = 1000L
 
+// TODO: If this is too long, the user can break something different, click Save again and have to
+// wait until the first animation finishes.
+val errorHighlightBoxVisibleTimeMillis = 1000L
+
 // TODO: https://m3.material.io/foundations/layout/applying-layout/compact says 16dp left and right
 // margins - maybe change this? Then again there are placed where I've used edge-to-edge for lists
 // so I just don't know. For that matter, are there 16.dp margins supposed to be added to left and
@@ -6073,7 +6077,7 @@ suspend fun scrollAndFocusTo(handle: ScrollToFocusableHandle) {
     // TODO: Can/should we focus TextFields with the cursor at the end of the text?
 
         handle.errorHighlightBoxVisible.value = true
-        delay(10000)
+        delay(errorHighlightBoxVisibleTimeMillis)
         handle.errorHighlightBoxVisible.value = false
 }
 
