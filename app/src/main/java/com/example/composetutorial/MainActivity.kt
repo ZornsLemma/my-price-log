@@ -47,6 +47,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -135,6 +136,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -3342,16 +3344,16 @@ fun EditPriceScreen(
                     )
                 }
 
-                if (validationThing3.validationResult.value != null) {
-                    SupportingText(
-                        text = validationThing3.validationResult.value!!, isError = true,
+                //if (validationThing3.validationResult.value != null) {
+                    AnimatedSupportingText(
+                        text = validationThing3.validationResult.value, // TODO: isError = true,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .padding(top = 4.dp)
                             //.background(Color.Cyan) // TODO HACK
                     )
 
-                }
+                //}
             }
         }
         //Spacer(modifier = Modifier.height(500.dp))
@@ -6110,6 +6112,55 @@ Box(
 )
 
 */
+
+// TODO: ChatGPT magic, review if keep - have hacked animations from 150ms to 1500ms just to test
+@Composable
+fun AnimatedSupportingText(
+    text: String?,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.error,
+    style: TextStyle = MaterialTheme.typography.bodySmall
+) {
+    var lastNonNullText by remember { mutableStateOf<String?>(null) }
+    val visible = text != null
+    val alpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(durationMillis = 1500),
+        label = "supportingTextAlpha"
+    )
+
+    // Update the last known good message only when new text is non-null
+    if (text != null) {
+        lastNonNullText = text
+    }
+
+    // Only show the text if it's supposed to be visible or still fading out
+    if (lastNonNullText != null && alpha > 0f) {
+        Box(
+            modifier = modifier
+                .animateContentSize(animationSpec = tween(1500))
+                .alpha(alpha)
+        ) {
+            Text(
+                text = lastNonNullText!!,
+                color = color,
+                style = style
+            )
+        }
+    } else if (text != null) {
+        // fresh message with alpha = 1
+        Box(
+            modifier = modifier
+                //.animateContentSize(animationSpec = tween(1500))
+        ) {
+            Text(
+                text = text,
+                color = color,
+                style = style
+            )
+        }
+    }
+}
 
 /* TODO TEMP TEST CODE FOR MEASUREDVALUE
 val foo = MeasuredValue(5.0, MeasureUnit.KG)
