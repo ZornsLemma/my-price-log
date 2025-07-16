@@ -3306,6 +3306,7 @@ fun EditPriceScreen(
                             }
                         },
                         enabled = saveStatus.isNotBusy(),
+                        isError = validationThing3.validationResult.value != null,
                         modifier = Modifier
                             .weight(1f)
                             .validationFocusRequester(packSizeScrollToFocusableHandle),
@@ -3414,6 +3415,7 @@ fun EditPriceScreen(
                         }
                     },
                     enabled = saveStatus.isNotBusy(),
+                    isError = validationThing1.validationResult.value != null,
                     supportingText = textOrNull(
                         validationThing1.validationResult.value,
                         color = MaterialTheme.colorScheme.error
@@ -4625,6 +4627,7 @@ fun NumericTextField(
     textStyle: TextStyle = LocalTextStyle.current,
     onValueChange: (TextFieldValue) -> Unit,
     enabled: Boolean = true,
+    isError: Boolean = false,
     supportingText: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
     interactionSource: MutableInteractionSource? = null,
@@ -4647,6 +4650,7 @@ fun NumericTextField(
         onCandidateValueChange = { isValidTransitionalDecimal(it) && it.length <= 11 },
         onValueChange = onValueChange,
         enabled = enabled,
+        isError = isError,
         modifier = modifier,
         supportingText = supportingText,
         keyboardOptions = keyboardOptions,
@@ -4687,6 +4691,7 @@ fun ValidatedTextField(
     onCandidateValueChange: ((String) -> Boolean),
     onValueChange: (TextFieldValue) -> Unit,
     enabled: Boolean = true,
+    isError: Boolean = false,
     supportingText: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     interactionSource: MutableInteractionSource? = null
@@ -4706,8 +4711,7 @@ fun ValidatedTextField(
         keyboardOptions = keyboardOptions,
         modifier = modifier,
         supportingText = supportingText,
-        /* TODO THIS ISN'T RIGHT NOW BUT WE'LL NEED SOME WAY TO DO THIS AND IT MAY BE HELPFUL IF THIS COMPOSABLE MAKES IT A SIMPLE BOOL
-        trailingIcon = if (failedValidationSupportingText != null) {
+        trailingIcon = if (isError) {
             {
                 Icon(
                     imageVector = Icons.Default.Warning,
@@ -4716,10 +4720,7 @@ fun ValidatedTextField(
                 )
             }
         } else null,
-        */
-        isError = false, // TODO TEMP HACK
-        trailingIcon = null, // TODO TEMP HACK
-        // TODO WE'LL NEED THIS CONTROLLING TOO isError = failedValidationSupportingText != null,
+        isError = isError,
         interactionSource = interactionSource,
     )
 }
