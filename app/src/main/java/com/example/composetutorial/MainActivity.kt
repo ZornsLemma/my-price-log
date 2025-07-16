@@ -149,6 +149,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
@@ -3262,6 +3263,7 @@ fun EditPriceScreen(
         var packSizeNumber by rememberSyncedTextFieldValue(
             uiContent.editablePrice.value.measureValue
         )
+        Spacer(modifier = Modifier.height(500.dp))
         val validationThing3 = rememberValidationThing(value = packSizeNumber.text, validationRules = vm.packSizeValidationRules, validationRulesKey = uiContent.editablePrice.value.measureUnit.id, /* TODO allowEmpty */)
         // TODO: This box could just be around the actual "Pack size" text field, but I think it
         // makes sense for it to also cover the supportingText showing the actual problem. That
@@ -3279,6 +3281,7 @@ fun EditPriceScreen(
                 NumericTextField(
                     label = { Text("Pack size") },
                     value = packSizeNumber,
+                    // TODO: All this validation stuff wants ripping out
                     validationRules = vm.packSizeValidationRules,
                     validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
                     onValueChange = {
@@ -3298,7 +3301,7 @@ fun EditPriceScreen(
                     },
                     modifier = Modifier
                         .weight(1f)
-                        .scrollToFocusable(packSizeScrollToFocusableHandle),
+                        .scrollToFocusable(packSizeScrollToFocusableHandle, offset = 8.dp),
                     interactionSource = validationThing3.interactionSource
                 )
 
@@ -6055,11 +6058,19 @@ fun <T> initialVersioned(initialValue: T): Versioned<T> =
 
 class ScrollToFocusableHandle @OptIn(ExperimentalFoundationApi::class) constructor(
     val focusRequester: FocusRequester = FocusRequester(),
-    val bringIntoViewRequester: BringIntoViewRequester = BringIntoViewRequester()
+    val bringIntoViewRequester: BringIntoViewRequester = BringIntoViewRequester(),
+    var bringIntoViewOffset: Float = 0f
 )
 
 @OptIn(ExperimentalFoundationApi::class)
-fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle): Modifier {
+@Composable
+fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle, offset: Dp = 0.dp): Modifier {
+    // Specifying a negative offset allows us to scroll to a bit above this composable. This is
+    // useful when it may be wrapped in an ErrorHighlightBox.
+    // TODO: Maybe we should attach this modifier to the ErrorHighlightBox, but there's tension
+    // there as we also want to attach it to the "real" composable for focusing purposes, and if we
+    // split the two things up we're losing a lot of the convenience of having it all in one place.
+    handle.bringIntoViewOffset = with(LocalDensity.current) { -offset.toPx() }
     return this
         .focusRequester(handle.focusRequester)
         .bringIntoViewRequester(handle.bringIntoViewRequester)
@@ -6067,7 +6078,17 @@ fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle): Modifier {
 
 @OptIn(ExperimentalFoundationApi::class)
 suspend fun scrollAndFocusTo(handle: ScrollToFocusableHandle) {
-    handle.bringIntoViewRequester.bringIntoView()
+    // TODO: Will this do the right thing if we're scrolling in *either* direction to get to the
+    // target? I wonder if this offset might mean we don't scroll far enough in one direction. Yes,
+    // it is broken, because we have zero height I think.
+        handle.bringIntoViewRequester.bringIntoView(
+            Rect(
+                left = 0f,
+                top = handle.bringIntoViewOffset,
+                right = 0f,
+                bottom = 0f
+            )
+        )
     handle.focusRequester.requestFocus()
     // TODO: It may be desirable (either here or when saving the handle) to try to save a point slightly "above" the top of the nominal control to allow space for a flashing red border to also show.
     // TODO: Can/should we focus TextFields with the cursor at the end of the text?
