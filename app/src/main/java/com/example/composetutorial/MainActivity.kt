@@ -1627,7 +1627,8 @@ const val spinnerDelayMillis = 1000L // TODO SHOULD BE 200L
 // This value is a trade-off between showing the user validation failures ASAP and not annoying them
 // by showing transient validation failures while they are in the middle of actively editing. This
 // feels reasonable-ish and we can always tweak it later.
-const val defaultValidationMessageDelayMillis = 1000L
+// TODO: a whole second feels insanely slow
+const val defaultValidationMessageDelayMillis = 200L
 
 // TODO: If this is too long, the user can break something different, click Save again and have to
 // wait until the first animation finishes.
@@ -4366,11 +4367,22 @@ fun <T> rememberValidationThing(
     //   should minimise distractions and flicker and not change anything at all until they stop. but
     //   it does feel like there's an argument for not having an out of date error sticking around
     //   for 500ms or whatever after they finish typing.
+    // - maybe simply waiting (say) 200ms after user input before we do anything and then doing it is
+    //   the way to go. And just maybe have a setting option to switch between "slow" and "fast"
+    //   validation or something like that. it may be best not to try being overly-clever up front,
+    //   e.g. even if I am the only user, I won't really know how I feel about this until I've used
+    //   it in anger on an actual smartphone with a touchscreen rather than typing on keyboard on
+    //   PC or clicking awkwardly with the mouse on the on-screen keyboard on emulator.
     LaunchedEffect(value, validationRulesKey, allowEmpty, isFocused) {
         // TODO: The delay is breaking things a bit here when e.g. we have an empty "pack size" string
         // and click save - the validation message becomes eligible for display as allowEmpty is now
         // true, but it doesn't appear straight away and so it "misses" the highlight box and it
-        // generally looks bad and a bit confusing
+        // generally looks bad and a bit confusing. (This is less of a visual issue now I've dropped
+        // the delay from 1000ms to 200ms, but it's probably best to address it properly. Maybe
+        // put the delay back to 1000ms temporarily when working on this.) I suspect the fix is to
+        // have a remembered oldValue, say "if (value != oldValue)" here instead of controlling based
+        // on isFocused, and the obviously set oldValue = value after. Not tested this, maybe too
+        // simplistic.
         if (isFocused) delay(delayMillis)
 
         val reorderedValidations =
