@@ -3273,7 +3273,7 @@ fun EditPriceScreen(
             value = packSizeNumber.text,
             validationRules = vm.packSizeValidationRules,
             validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
-            shouldValidate = { vm.generalEditScreenViewModel.saveAttempted.value || it.trim().isNotEmpty() }
+            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value
         )
         // TODO: This box could just be around the actual "Pack size" text field, but I think it
         // makes sense for it to also cover the supportingText showing the actual problem. That
@@ -4338,7 +4338,7 @@ fun <T> rememberValidationThing(
     validationRules: List<ValidationRule<T>>,
     validationRulesKey: Any? = null,
     delayMillis: Long = defaultValidationMessageDelayMillis,
-    shouldValidate: ((T) -> Boolean) = { true },
+    allowEmpty: Boolean = true // TODO: Not thought about default and we should prob remove it but hacking to get it to compile for now
 ): ValidationThing {
     val interactionSource = remember { MutableInteractionSource() }
     val validationResult = remember { mutableStateOf<String?>(null) }
@@ -4353,7 +4353,11 @@ fun <T> rememberValidationThing(
     // the text changes" behaviour of my existing implementation - think about it, we probably *do*
     // want that. Likewise we probably want something here so there's no delay if the input has just
     // become valid. Do think about both of these though.
-    LaunchedEffect(value, validationRulesKey, isFocused) {
+    LaunchedEffect(value, validationRulesKey, allowEmpty, isFocused) {
+        // TODO: The delay is breaking things a bit here when e.g. we have an empty "pack size" string
+        // and click save - the validation message becomes eligible for display as allowEmpty is now
+        // true, but it doesn't appear straight away and so it "misses" the highlight box and it
+        // generally looks bad and a bit confusing
         if (isFocused) delay(delayMillis)
 
         val reorderedValidations =
@@ -4363,7 +4367,12 @@ fun <T> rememberValidationThing(
         // caller pass in some kind of lambda which allows them to specify "values we just accept
         // and don't ask the validation rules for judgement on"
         Log.d("MyAppV", "value $value")
-        if (shouldValidate(value)) {
+        var shouldValidate = false
+        when (value) {
+            is String -> shouldValidate = !(allowEmpty && value.trim().isEmpty())
+            else -> {}
+        }
+        if (shouldValidate) {
             Log.d("MyAppV", "inside shouldValidate")
             for (validationRule in reorderedValidations) {
                 if (!validationRule.validate(value)) {
