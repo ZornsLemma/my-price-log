@@ -42,22 +42,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.animateColor
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -80,7 +72,6 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -92,7 +83,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -142,13 +132,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.key
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -160,11 +147,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
-import androidx.compose.ui.zIndex
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -219,7 +204,6 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -3320,7 +3304,7 @@ fun EditPriceScreen(
                         enabled = saveStatus.isNotBusy(),
                         modifier = Modifier
                             .weight(1f)
-                            .focusRequester(packSizeScrollToFocusableHandle),
+                            .validationFocusRequester(packSizeScrollToFocusableHandle),
                         interactionSource = validationThing3.interactionSource
                     )
 
@@ -3394,35 +3378,46 @@ fun EditPriceScreen(
         // cannot change while we are editing. They depend only on our DataSet and our
         // frozen locale.
 
-        NumericTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .scrollToFocusable(priceScrollToFocusableHandle),
-            label = { Text("Pack price") },
-            value = packPrice,
-            prefix = textOrNull(currencyFormat.prefix),
-            suffix = textOrNull(currencyFormat.suffix),
-            // TODO: Is it correct to right-align like this? I will assume it is for now.
-            // Maybe there's an argument since the unit on the pack size is pseudo-suffixy,
-            // we should right-align the pack size - but I think that might look ugly. But
-            // maybe that means this looks ugly. But maybe it's different if you're used to
-            // the currency symbol being on the right. Or maybe the currency symbol should
-            // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
-            // wait for user feedback?
-            textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
-                textAlign = TextAlign.End
-            ) else LocalTextStyle.current,
-            onValueChange = {
-                packPrice = it
-                if (uiContent.editablePrice.value.price != it.text) {
-                    vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
-                    onPackSizeOrPriceChange()
-                }
-            },
-            enabled = saveStatus.isNotBusy(),
-            supportingText = textOrNull(validationThing1.validationResult.value, color = MaterialTheme.colorScheme.error),
-            interactionSource = validationThing1.interactionSource,
-        )
+        ErrorHighlightBox(
+            hasError = priceScrollToFocusableHandle.errorHighlightBoxVisible.value, // TODO: validationTarget argument makes this redundant?
+            offset = 4.dp,
+            validationTarget = priceScrollToFocusableHandle
+        ) { // TODO!
+            Column {
+                NumericTextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .validationFocusRequester(priceScrollToFocusableHandle),
+                    label = { Text("Pack price") },
+                    value = packPrice,
+                    prefix = textOrNull(currencyFormat.prefix),
+                    suffix = textOrNull(currencyFormat.suffix),
+                    // TODO: Is it correct to right-align like this? I will assume it is for now.
+                    // Maybe there's an argument since the unit on the pack size is pseudo-suffixy,
+                    // we should right-align the pack size - but I think that might look ugly. But
+                    // maybe that means this looks ugly. But maybe it's different if you're used to
+                    // the currency symbol being on the right. Or maybe the currency symbol should
+                    // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
+                    // wait for user feedback?
+                    textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
+                        textAlign = TextAlign.End
+                    ) else LocalTextStyle.current,
+                    onValueChange = {
+                        packPrice = it
+                        if (uiContent.editablePrice.value.price != it.text) {
+                            vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
+                            onPackSizeOrPriceChange()
+                        }
+                    },
+                    enabled = saveStatus.isNotBusy(),
+                    supportingText = textOrNull(
+                        validationThing1.validationResult.value,
+                        color = MaterialTheme.colorScheme.error
+                    ),
+                    interactionSource = validationThing1.interactionSource,
+                )
+            }
+        }
 
         // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
         // why are we entering it?
@@ -6053,7 +6048,8 @@ fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle, offset: Dp = 0.d
 
 }
 
-fun Modifier.focusRequester(handle: ScrollToFocusableHandle): Modifier {
+// TODO: Not necessarily the best name, but although we could overload the focusRequester name, it feels confusing to do it.
+fun Modifier.validationFocusRequester(handle: ScrollToFocusableHandle): Modifier {
     return this.focusRequester(handle.focusRequester)
 }
 
