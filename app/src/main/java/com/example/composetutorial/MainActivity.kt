@@ -4363,14 +4363,10 @@ fun <T> rememberValidationThing(
         val reorderedValidations =
             listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
         failedValidationRule = null
-        // TODO: The allowEmpty below doesn't work for generic T - we should probably have the
-        // caller pass in some kind of lambda which allows them to specify "values we just accept
-        // and don't ask the validation rules for judgement on"
-        Log.d("MyAppV", "value $value")
         var shouldValidate = false
         when (value) {
             is String -> shouldValidate = !(allowEmpty && value.trim().isEmpty())
-            else -> {}
+            else -> {} // allowEmpty has no meaning for other types
         }
         if (shouldValidate) {
             Log.d("MyAppV", "inside shouldValidate")
