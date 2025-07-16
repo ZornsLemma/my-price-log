@@ -3810,23 +3810,33 @@ fun EditSourceScreen(
         var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
-        ValidatedTextField(
-            label = { Text("Name") },
-            value = name,
-            /* TODO DELETE
+        val validationThing4 = rememberValidationThing(
+            value = name.text,
             validationRules = nameValidationRules.value,
             validationRulesKey = nameValidationRules.version,
-            */
-            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxSourceNameLength),
-            onValueChange = {
-                name = it
-                vm.setUIContentEditableSource(uiContent.editableSource.value.copy(name = it.text))
-            },
-            enabled = saveStatus.isNotBusy(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .scrollToFocusable(nameScrollToFocusableHandle),
         )
+        // TODO: Presumably because this is *right* at the top (maybe another reason to add a separation betwen it and top bar), the error highlight box gets clipped at the top
+        ErrorHighlightBox(
+            hasError = nameScrollToFocusableHandle.errorHighlightBoxVisible.value,
+            validationTarget = nameScrollToFocusableHandle
+        ) {
+            ValidatedTextField(
+                label = { Text("Name") },
+                value = name,
+                onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxSourceNameLength),
+                onValueChange = {
+                    name = it
+                    vm.setUIContentEditableSource(uiContent.editableSource.value.copy(name = it.text))
+                },
+                enabled = saveStatus.isNotBusy(),
+                isError = validationThing4.validationResult.value != null,
+                supportingText = textOrNull(validationThing4.validationResult.value, color=MaterialTheme.colorScheme.error),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .validationFocusRequester(nameScrollToFocusableHandle),
+                interactionSource = validationThing4.interactionSource
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
