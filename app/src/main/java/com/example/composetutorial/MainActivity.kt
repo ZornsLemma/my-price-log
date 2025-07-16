@@ -4295,7 +4295,21 @@ fun ValidationEffect(
 
 }
 
-// TODO: Rename validationResult for brevity? And/or add a @Composable helper which returns validationResult.value to simplify callers?
+// TODO: Rename validationResult for brevity? And/or add a @Composable helper which returns
+// validationResult.value to simplify callers?
+// TODO: We could *maybe* include  MutableState<Boolean> in ValidationThing which is used to trigger
+// the *on-save only* highlight boxes (not "there is an error but you haven't clicked save yet"
+// case) - this might help keep things tidy and also provide somewhere I could shove a "launch {
+// =true; delay; =false }" helper which would have the MutableState handy and thus *could* modify
+// generically. We would of course still have the option to use the error highlight box with "var
+// foo by remember { mutableStateOf(false) }" if we wanted, this would just be a convenient way to
+// keep things together.
+// TODO: So I suppose maybe we could also put a ScrollToFocusableHandle in here too??
+// TODO: NumericTextField and ValidatedTextField want paring down to omit the validation and just do
+// "input restriction", and their callers either using rememberValidationThing directly or we create
+// some kind of new NumericTextField2/ValidatedTextField2 which wraps those pared-down input
+// restriction only things with this. I'd probably have to start actually modifying the code to see
+// what really works.
 class ValidationThing(
     val interactionSource: MutableInteractionSource = MutableInteractionSource(),
     val validationResult: State<String?> // or Flow/LiveData/etc
