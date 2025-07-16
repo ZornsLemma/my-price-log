@@ -4392,7 +4392,7 @@ fun <T> rememberValidationThing(
         val reorderedValidations =
             listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
         failedValidationRule = null
-        var shouldValidate = false // TODO: rename skipValidation or something to flip sense?
+        var shouldValidate = true// TODO: rename skipValidation or something to flip sense?
         when (value) {
             is String -> shouldValidate = !(allowEmpty && value.trim().isEmpty())
             else -> {} // allowEmpty has no meaning for other types
