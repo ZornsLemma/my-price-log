@@ -4295,6 +4295,7 @@ fun ValidationEffect(
 
 }
 
+// TODO: Rename validationResult for brevity? And/or add a @Composable helper which returns validationResult.value to simplify callers?
 class ValidationThing(
     val interactionSource: MutableInteractionSource = MutableInteractionSource(),
     val validationResult: State<String?> // or Flow/LiveData/etc
@@ -4350,6 +4351,7 @@ fun getCurrencyForLocale(locale: Locale): Currency? {
 // and list three (historic currencies and funds,
 // https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-three.xls).
 // @formatter:off
+// TODO: WTF? "EUR" is in here! It's in list 3 for "Serbia and Montenegro" as well as CSD. It might be a good idea to check for things on list 1 which are in this blacklist and manually decidce if they should be de-blacklisted.
 val blacklistedCurrencyCodes = setOf(
     "ADP", "AFA", "ALK", "ANG", "AOK", "AON", "AOR", "ARA", "ARP", "ARY", "ATS", "AYM", "AZM",
     "BAD", "BEC", "BEF", "BEL", "BGJ", "BGK", "BGL", "BOP", "BOV", "BRB", "BRC", "BRE", "BRN",
