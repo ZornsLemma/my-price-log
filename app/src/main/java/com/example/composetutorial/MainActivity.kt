@@ -3480,6 +3480,9 @@ fun EditPriceScreen(
 
     LaunchedEffect(Unit) {
         vm.saveValidationEvents.collect { field ->
+            // TODO: It is probably hard, but *if* the a field with a validation error is currently
+            // focused, it would be nice to animate the error highlight box and scroll to it if
+            // necessary but *not* jump the focus to a different field with an error.
             Log.d("MyApp", "LaunchedEffect saveValidationError $field")
             when (field) {
                 EditPriceViewModel.EditableField.PACK_SIZE -> {
