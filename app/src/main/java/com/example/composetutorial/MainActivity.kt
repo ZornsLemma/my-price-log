@@ -4191,7 +4191,11 @@ fun EditDataSetScreen(
                     // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
                     // TODO: Should we show a red warning triangle e.g. at left or right of this text? Not sure, but we
                     // do show one in the case of TextFields so although the layout isn't quite the same, maybe showing
-                    // one here is not a bad idea.
+                    // one here is not a bad idea. Current gut feeling following some LLM discussion is that the
+                    // warning triangle is probably not a good idea, but it should be at the left if I do add it. And
+                    // maybe I should make the border of the segmented button red if we're in an error state as well,
+                    // although my inclination is that this might look ugly and is not particularly blessed as
+                    // standard.
                     SupportingText(
                         supportingText,
                         isError = true,
