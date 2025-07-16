@@ -4360,15 +4360,14 @@ val blacklistedCurrencyCodes = setOf(
     "ADP", "AFA", "ALK", "ANG", "AOK", "AON", "AOR", "ARA", "ARP", "ARY", "ATS", "AYM", "AZM",
     "BAD", "BEC", "BEF", "BEL", "BGJ", "BGK", "BGL", "BOP", "BOV", "BRB", "BRC", "BRE", "BRN",
     "BRR", "BUK", "BYB", "BYR", "CHC", "CHE", "CHW", "CLF", "COU", "CSD", "CSJ", "CSK", "CUC",
-    "CYP", "DDM", "DEM", "ECS", "ECV", "EEK", "ESA", "ESB", "ESP", "FIM", "FRF", "GEK",
-    "GHC", "GHP", "GNE", "GNS", "GQE", "GRD", "GWE", "GWP", "HRD", "HRK", "IDR", "IEP", "ILP",
-    "ILR", "ISJ", "ITL", "LAJ", "LSM", "LTL", "LTT", "LUC", "LUF", "LUL", "LVL", "LVR", "MGF",
-    "MLF", "MRO", "MTL", "MTP", "MVQ",  "MXP", "MXV", "MZE", "MZM", "NIC", "NLG", "PEH",
-    "PEI",  "PES", "PLZ", "PTE", "RHD", "ROK", "ROL",  "RUR", "SDD", "SDP",
-    "SIT", "SKK", "SLL", "SRG", "STD", "SUR",  "TJR", "TMM", "TPE", "TRL",  "UAK",
-    "UGS", "UGW", "USN", "USS", "UYI", "UYN", "UYP", "UYW", "VEB", "VEF", "VNC", "XAD", "XEU",
-    "XFO", "XFU", "XRE", "YDD", "YUD", "YUM", "YUN", "ZAL", "ZMK", "ZRN", "ZRZ", "ZWC", "ZWD",
-    "ZWL", "ZWN", "ZWR"
+    "CYP", "DDM", "DEM", "ECS", "ECV", "EEK", "ESA", "ESB", "ESP", "FIM", "FRF", "GEK", "GHC",
+    "GHP", "GNE", "GNS", "GQE", "GRD", "GWE", "GWP", "HRD", "HRK", "IDR", "IEP", "ILP", "ILR",
+    "ISJ", "ITL", "LAJ", "LSM", "LTL", "LTT", "LUC", "LUF", "LUL", "LVL", "LVR", "MGF", "MLF",
+    "MRO", "MTL", "MTP", "MVQ", "MXP", "MXV", "MZE", "MZM", "NIC", "NLG", "PEH", "PEI", "PES",
+    "PLZ", "PTE", "RHD", "ROK", "ROL", "RUR", "SDD", "SDP", "SIT", "SKK", "SLL", "SRG", "STD",
+    "SUR", "TJR", "TMM", "TPE", "TRL", "UAK", "UGS", "UGW", "USN", "USS", "UYI", "UYN", "UYP",
+    "UYW", "VEB", "VEF", "VNC", "XAD", "XEU", "XFO", "XFU", "XRE", "YDD", "YUD", "YUM", "YUN",
+    "ZAL", "ZMK", "ZRN", "ZRZ", "ZWC", "ZWD", "ZWL", "ZWN", "ZWR"
 )
 // @formatter:on
 
