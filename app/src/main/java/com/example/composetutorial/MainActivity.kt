@@ -3272,7 +3272,8 @@ fun EditPriceScreen(
         val validationThing3 = rememberValidationThing(
             value = packSizeNumber.text,
             validationRules = vm.packSizeValidationRules,
-            validationRulesKey = uiContent.editablePrice.value.measureUnit.id, /* TODO allowEmpty */
+            validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
+            shouldValidate = { vm.generalEditScreenViewModel.saveAttempted.value || it.trim().isNotEmpty() }
         )
         // TODO: This box could just be around the actual "Pack size" text field, but I think it
         // makes sense for it to also cover the supportingText showing the actual problem. That
@@ -3365,7 +3366,7 @@ fun EditPriceScreen(
         val validationThing1 = rememberValidationThing(
             value = packPrice.text,
             validationRules = currencyFormat.validationRules,
-            allowEmpty = true /* TODO: should wire this up so true iff we have clicked Save at least once */
+            // TODO allowEmpty = true /* TODO: should wire this up so true iff we have clicked Save at least once */
         )
         // TODO: END EXPERIMENTAL CHUNK
 
@@ -3518,6 +3519,7 @@ fun SupportingText(text: String, isError: Boolean, modifier: Modifier = Modifier
 // I need to thinka bout this later when it's maybe clearer.
 class GeneralEditScreenViewModel {
     val saveStatus = SyncedStateEvent(SaveStatus.Idle)
+    var saveAttempted: MutableState<Boolean> = mutableStateOf(false)
 }
 
 fun runGeneralEditScreenOperation(
@@ -3678,6 +3680,7 @@ fun GeneralEditScreen(
                         // updateOrInsertFoo() does not (and probably cannot, since it's an
                         // internal detail here and not exposed) be messing with updating
                         // saveStatus.
+                        vm.saveAttempted.value = true
                         runGeneralEditScreenOperation(
                             vm = vm,
                             coroutineScope = coroutineScope,
@@ -4335,7 +4338,7 @@ fun <T> rememberValidationThing(
     validationRules: List<ValidationRule<T>>,
     validationRulesKey: Any? = null,
     delayMillis: Long = defaultValidationMessageDelayMillis,
-    allowEmpty: Boolean = false
+    shouldValidate: ((T) -> Boolean) = { true },
 ): ValidationThing {
     val interactionSource = remember { MutableInteractionSource() }
     val validationResult = remember { mutableStateOf<String?>(null) }
@@ -4359,7 +4362,9 @@ fun <T> rememberValidationThing(
         // TODO: The allowEmpty below doesn't work for generic T - we should probably have the
         // caller pass in some kind of lambda which allows them to specify "values we just accept
         // and don't ask the validation rules for judgement on"
-        if (true /* TODO !allowEmpty || value.isNotEmpty() */) {
+        Log.d("MyAppV", "value $value")
+        if (shouldValidate(value)) {
+            Log.d("MyAppV", "inside shouldValidate")
             for (validationRule in reorderedValidations) {
                 if (!validationRule.validate(value)) {
                     failedValidationRule = validationRule
@@ -4529,7 +4534,7 @@ fun numericValidationRules(
     val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
     val maxDecimalSeparators = if (allowDecimals) 1 else 0
 
-// Create a function to strip fluff like spaces and the grouping symbol if the user typed it in.
+    // Create a function to strip fluff like spaces and the grouping symbol if the user typed it in.
     val insignificantCharsRegex = "[^-0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
     fun sanitiseCandidate(candidate: String) = candidate.replace(insignificantCharsRegex, "")
     fun attemptedParse(candidate: String): Double? =
