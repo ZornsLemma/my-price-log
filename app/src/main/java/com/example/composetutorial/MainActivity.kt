@@ -593,7 +593,7 @@ suspend fun populateDemoData(context: Context) {
                 allowMetric = true,
                 allowImperial = false,
                 allowUSCustomary = true,
-                notes ="",
+                notes = "",
             )
         ) // TODO TEMP HACK
         db.dataSetDao().insert(
@@ -755,7 +755,7 @@ interface PriceTrackerRepository {
 
     fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
 
-    fun countPricesForSource(sourceId: Long) : Flow<Long>
+    fun countPricesForSource(sourceId: Long): Flow<Long>
 
     suspend fun updateOrInsertDataSet(dataSet: DataSet)
     suspend fun updateOrInsertSource(source: Source)
@@ -782,7 +782,7 @@ class PriceTrackerRepositoryImpl(
         priceDao.getPriceWithItemEntityForItem(dataSetId = dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
 
-    override fun countPricesForSource(sourceId: Long) : Flow<Long> =
+    override fun countPricesForSource(sourceId: Long): Flow<Long> =
         priceDao.countPricesForSource(sourceId)
 
     override suspend fun updateOrInsertDataSet(dataSet: DataSet) {
@@ -995,9 +995,25 @@ data class EditableDataSet(
             if (dataSet == null) {
                 // TODO: The currencyCode should default to current locale
                 // TODO: The default "allowX" values should probably be configured in settings - will just hard-code something I like for now
-                return EditableDataSet(0, "", "", allowMetric = true, allowImperial = true, allowUSCustomary = false, notes = "")
+                return EditableDataSet(
+                    0,
+                    "",
+                    "",
+                    allowMetric = true,
+                    allowImperial = true,
+                    allowUSCustomary = false,
+                    notes = ""
+                )
             } else {
-                return EditableDataSet(id = dataSet.id, name=dataSet.name, currencyCode=dataSet.currencyCode, allowMetric=dataSet.allowMetric, allowImperial = dataSet.allowImperial, allowUSCustomary = dataSet.allowUSCustomary, notes = dataSet.notes)
+                return EditableDataSet(
+                    id = dataSet.id,
+                    name = dataSet.name,
+                    currencyCode = dataSet.currencyCode,
+                    allowMetric = dataSet.allowMetric,
+                    allowImperial = dataSet.allowImperial,
+                    allowUSCustomary = dataSet.allowUSCustomary,
+                    notes = dataSet.notes
+                )
             }
         }
     }
@@ -1093,6 +1109,7 @@ data class EditableSource(
         }
     }
 }
+
 // TODO: This needs history tracking stuff adding, either on this table or via a separate table.
 @Entity(
     tableName = "price", foreignKeys = [
@@ -1346,7 +1363,7 @@ interface PriceDao {
 
 
     @Query("SELECT COUNT(*) FROM price WHERE source_id = :sourceId")
-    fun countPricesForSource(sourceId: Long) : Flow<Long>
+    fun countPricesForSource(sourceId: Long): Flow<Long>
 }
 
 // TODO: ChatGPT semi-magic
@@ -1655,7 +1672,8 @@ val menuRightPadding = menuLeftPadding
 
 // TODO: These arbitrary lengths are UI-only and are just intended to stop the user typing insane
 // amounts of text into TextFields and breaking layouts. They may well want to be tweaked later.
-const val maxDataSetNameLength = 32 // TODO: just possibly shorter than others due to use of nav drawer to show these?!
+const val maxDataSetNameLength =
+    32 // TODO: just possibly shorter than others due to use of nav drawer to show these?!
 const val maxSourceNameLength = 32
 const val maxNotesLength = 200 // TODO TEMP FOR TESTING 1024
 
@@ -1783,7 +1801,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     getId: (T) -> ID,
     getLabel: (T) -> String,
     getDividerBetween: ((T, T) -> Boolean)? = null,
-    ) {
+) {
     var textFieldWidth by remember { mutableIntStateOf(0) }
     var isExpanded by remember { mutableStateOf(false) }
 
@@ -2702,7 +2720,10 @@ data class EditSourceScreenUIContent(
             val savedEditableSource: EditableSource? = savedStateHandle[EDITABLE_SOURCE_KEY]
             val savedOriginalSource: EditableSource? = savedStateHandle[ORIGINAL_SOURCE_KEY]
             if (savedEditableSource != null && savedOriginalSource != null) {
-                return EditSourceScreenUIContent(mutableStateOf(savedEditableSource), savedOriginalSource)
+                return EditSourceScreenUIContent(
+                    mutableStateOf(savedEditableSource),
+                    savedOriginalSource
+                )
             } else {
                 return null
             }
@@ -2732,7 +2753,10 @@ data class EditDataSetScreenUIContent(
             val savedEditableDataSet: EditableDataSet? = savedStateHandle[EDITABLE_DATA_SET_KEY]
             val savedOriginalDataSet: EditableDataSet? = savedStateHandle[ORIGINAL_DATA_SET_KEY]
             if (savedEditableDataSet != null && savedOriginalDataSet != null) {
-                return EditDataSetScreenUIContent(mutableStateOf(savedEditableDataSet), savedOriginalDataSet)
+                return EditDataSetScreenUIContent(
+                    mutableStateOf(savedEditableDataSet),
+                    savedOriginalDataSet
+                )
             } else {
                 return null
             }
@@ -3264,8 +3288,12 @@ fun EditPriceScreen(
         var packSizeNumber by rememberSyncedTextFieldValue(
             uiContent.editablePrice.value.measureValue
         )
-        Spacer(modifier = Modifier.height(500.dp))
-        val validationThing3 = rememberValidationThing(value = packSizeNumber.text, validationRules = vm.packSizeValidationRules, validationRulesKey = uiContent.editablePrice.value.measureUnit.id, /* TODO allowEmpty */)
+        //Spacer(modifier = Modifier.height(500.dp))
+        val validationThing3 = rememberValidationThing(
+            value = packSizeNumber.text,
+            validationRules = vm.packSizeValidationRules,
+            validationRulesKey = uiContent.editablePrice.value.measureUnit.id, /* TODO allowEmpty */
+        )
         // TODO: This box could just be around the actual "Pack size" text field, but I think it
         // makes sense for it to also cover the supportingText showing the actual problem. That
         // visually requires it to cover the whole screen width.
@@ -3273,65 +3301,69 @@ fun EditPriceScreen(
         // that I "need" offset = 4.dp here instead of the current default 6.dp. It might be I
         // should increase the vertical spacing of the components on this screen and then make this
         // 6.dp.
-        ErrorHighlightBox(hasError = true, offset = 4.dp, validationTarget = packSizeScrollToFocusableHandle) { // TODO!
+        ErrorHighlightBox(
+            hasError = true,
+            offset = 4.dp,
+            validationTarget = packSizeScrollToFocusableHandle
+        ) { // TODO!
             Column { // TODO: Should ErrorHighlightBox include a Column? If so, take it out of all callers
-            Row {
-                // TODO: Using weight to size the components is also sucky, since we really
-                // just want "a reasonable fixed size" for the unit with
-                // the product taking whatever's left, but this will do for now.
-                NumericTextField(
-                    label = { Text("Pack size") },
-                    value = packSizeNumber,
-                    // TODO: All this validation stuff wants ripping out
-                    validationRules = vm.packSizeValidationRules,
-                    validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
-                    onValueChange = {
-                        packSizeNumber = it
-                        if (uiContent.editablePrice.value.measureValue != it.text) {
-                            vm.setUIContentEditablePrice(
-                                uiContent.editablePrice.value.copy(
-                                    measureValue = it.text
+                Row {
+                    // TODO: Using weight to size the components is also sucky, since we really
+                    // just want "a reasonable fixed size" for the unit with
+                    // the product taking whatever's left, but this will do for now.
+                    NumericTextField(
+                        label = { Text("Pack size") },
+                        value = packSizeNumber,
+                        // TODO: All this validation stuff wants ripping out
+                        validationRules = vm.packSizeValidationRules,
+                        validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
+                        onValueChange = {
+                            packSizeNumber = it
+                            if (uiContent.editablePrice.value.measureValue != it.text) {
+                                vm.setUIContentEditablePrice(
+                                    uiContent.editablePrice.value.copy(
+                                        measureValue = it.text
+                                    )
                                 )
-                            )
-                            onPackSizeOrPriceChange()
-                        }
-                    },
-                    enabled = saveStatus.isNotBusy(),
-                    onSupportingTextChange = { isError, supportingText ->
-                        packSizeSupportingText = Pair(isError, supportingText)
-                    },
-                    modifier = Modifier
-                        .weight(1f)
-                        .focusRequester(packSizeScrollToFocusableHandle),
-                    interactionSource = validationThing3.interactionSource
-                )
+                                onPackSizeOrPriceChange()
+                            }
+                        },
+                        enabled = saveStatus.isNotBusy(),
+                        onSupportingTextChange = { isError, supportingText ->
+                            packSizeSupportingText = Pair(isError, supportingText)
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .focusRequester(packSizeScrollToFocusableHandle),
+                        interactionSource = validationThing3.interactionSource
+                    )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                MyExposedDropdownMenuBox(
-                    enabled = saveStatus.isNotBusy(),
-                    selectedId = uiContent.editablePrice.value.measureUnit.id,
-                    onValueChange = {
-                        val measureUnit = MeasureUnit.fromValue(it)
-                        devCheck(measureUnit != null) {
-                            "Expected non-null measureUnit to be selected; got $it"
-                        }
-                        if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
-                            vm.setUIContentEditablePrice(
-                                uiContent.editablePrice.value.copy(
-                                    measureUnit = measureUnit
+                    MyExposedDropdownMenuBox(
+                        enabled = saveStatus.isNotBusy(),
+                        selectedId = uiContent.editablePrice.value.measureUnit.id,
+                        onValueChange = {
+                            val measureUnit = MeasureUnit.fromValue(it)
+                            devCheck(measureUnit != null) {
+                                "Expected non-null measureUnit to be selected; got $it"
+                            }
+                            if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
+                                vm.setUIContentEditablePrice(
+                                    uiContent.editablePrice.value.copy(
+                                        measureUnit = measureUnit
+                                    )
                                 )
-                            )
-                            onPackSizeOrPriceChange()
-                        }
-                    },
-                    label = { Text("Unit") },
-                    items = units,
-                    modifier = Modifier.weight(0.5f),
-                    getId = { it.id },
-                    getLabel = { it.symbol },
-                )
-            }
+                                onPackSizeOrPriceChange()
+                            }
+                        },
+                        label = { Text("Unit") },
+                        items = units,
+                        modifier = Modifier.weight(0.5f),
+                        getId = { it.id },
+                        getLabel = { it.symbol },
+                    )
+                }
                 if (validationThing3.validationResult.value != null) {
                     SupportingText(
                         text = validationThing3.validationResult.value!!, isError = true,
@@ -3341,13 +3373,12 @@ fun EditPriceScreen(
                     )
 
                 }
+            }
         }
-    }
-        Spacer(modifier = Modifier.height(500.dp))
+        //Spacer(modifier = Modifier.height(500.dp))
 
 
-
-        //TODO!?Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
 
         var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
@@ -3468,6 +3499,7 @@ fun EditPriceScreen(
                 EditPriceViewModel.EditableField.PACK_SIZE -> {
                     scrollAndFocusTo(packSizeScrollToFocusableHandle)
                 }
+
                 EditPriceViewModel.EditableField.PRICE -> {
                     scrollAndFocusTo(priceScrollToFocusableHandle)
                 }
@@ -3771,7 +3803,7 @@ fun EditSourceScreen(
     val nameScrollToFocusableHandle = rememberScrollToFocusable()
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
-    var deleting by rememberSaveable { mutableStateOf( false) }
+    var deleting by rememberSaveable { mutableStateOf(false) }
 
     val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
 
@@ -3896,7 +3928,11 @@ fun EditSourceScreen(
                     )
                 }
             },
-            title = if (isSimpleDelete) {{ Text("Delete store?") }} else {{ Text("Delete store and prices?") }},
+            title = if (isSimpleDelete) {
+                { Text("Delete store?") }
+            } else {
+                { Text("Delete store and prices?") }
+            },
             // TODO: USE BOLD FOR PART OF CASCADING DELETE TEXT? At least according to ChatGPT this is a bit fiddly without building it in code which won't fit well with string resource use.
             text = if (isSimpleDelete) {
                 { Text("This store has no associated prices so deleting it will not affect anything else.") }
@@ -3943,7 +3979,7 @@ fun EditDataSetScreen(
     val measurementSystemScrollToFocusableHandle = rememberScrollToFocusable()
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
-    var deleting by rememberSaveable { mutableStateOf( false) }
+    var deleting by rememberSaveable { mutableStateOf(false) }
 
     val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
 
@@ -4021,8 +4057,14 @@ fun EditDataSetScreen(
         // matters much more there. It's ugly and annoying and concerning here too, of course.
         MyExposedDropdownMenuBox(
             modifier = Modifier.fillMaxWidth(),
-            selectedId  = if (uiContent.editableDataSet.value.currencyCode != "") uiContent.editableDataSet.value.currencyCode else null,
-            onValueChange = { vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(currencyCode = it)) },
+            selectedId = if (uiContent.editableDataSet.value.currencyCode != "") uiContent.editableDataSet.value.currencyCode else null,
+            onValueChange = {
+                vm.setUIContentEditableDataSet(
+                    uiContent.editableDataSet.value.copy(
+                        currencyCode = it
+                    )
+                )
+            },
             enabled = saveStatus.isNotBusy(),
             label = { Text("Currency") },
             // TODO: supportingText?
@@ -4155,7 +4197,11 @@ fun EditDataSetScreen(
                 val supportingText = validationThing2.validationResult.value
                 if (supportingText != null) {
                     // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
-                    SupportingText(supportingText, isError = true, modifier = Modifier.padding(horizontal = 16.dp))
+                    SupportingText(
+                        supportingText,
+                        isError = true,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
                 }
             }
 
@@ -4208,6 +4254,7 @@ fun EditDataSetScreen(
                     Log.d("MyApp", "scrolling to name")
                     scrollAndFocusTo(nameScrollToFocusableHandle)
                 }
+
                 EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM -> {
                     Log.d("MyApp", "scrolling to measurement system")
                     // We can't focus a segmented button, but we can remove focus from anything that
@@ -4245,7 +4292,11 @@ fun EditDataSetScreen(
                 }
             },
             // TODO: WORDING FOR ALL OF THIS IS PARTICULARLY BAD AND NEEDS THOUGHT
-            title = if (isSimpleDelete) {{ Text("Delete collection?") }} else {{ Text("Delete collection and products, stores and prices?") }},
+            title = if (isSimpleDelete) {
+                { Text("Delete collection?") }
+            } else {
+                { Text("Delete collection and products, stores and prices?") }
+            },
             // TODO: USE BOLD FOR PART OF CASCADING DELETE TEXT? At least according to ChatGPT this is a bit fiddly without building it in code which won't fit well with string resource use.
             text = if (isSimpleDelete) {
                 { Text("This collection has no associated TODODATA so deleting it will not affect anything else.") }
@@ -4294,7 +4345,11 @@ fun ValidationEffect(
 
     // TODO: I don't think this needs rememberSaveable because we can recompute it on recomposition.
     // TODO: Do we need an explicit remember key though?
-    var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule<String>?>(null) }
+    var failedValidationRule by remember(validationRulesKey) {
+        mutableStateOf<ValidationRule<String>?>(
+            null
+        )
+    }
 
     val reorderedValidations =
         listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
@@ -4349,7 +4404,11 @@ fun <T> rememberValidationThing(
     val interactionSource = remember { MutableInteractionSource() }
     val validationResult = remember { mutableStateOf<String?>(null) }
     val isFocused by interactionSource.collectIsFocusedAsState()
-    var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule<T>?>(null) }
+    var failedValidationRule by remember(validationRulesKey) {
+        mutableStateOf<ValidationRule<T>?>(
+            null
+        )
+    }
 
     // TODO: This does not have the "change validation text immediately if there is already some and the text changes" behaviour of my existing implementation - think about it, we probably *do* want that
     LaunchedEffect(value, validationRulesKey, isFocused) {
@@ -4452,16 +4511,23 @@ fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Strin
             if (currency.currencyCode in mainCurrencyCodeSet ||
                 currency.currencyCode.startsWith("X") ||
                 currency.getDisplayName(locales[0]) == currency.currencyCode ||
-                currency.currencyCode in blacklistedCurrencyCodes) null else buildPair(currency)
+                currency.currencyCode in blacklistedCurrencyCodes
+            ) null else buildPair(currency)
         }
 
     // TODO: ChatGPT magic, check later
     val collator = Collator.getInstance(locales[0]).apply {
         strength = Collator.PRIMARY // case-insensitive, diacritic-aware
     }
-    return Pair(mainCurrencyList.last().first, mainCurrencyList.toList() + otherCurrencyList.sortedWith { lhs, rhs -> collator.compare(lhs.second, rhs.second) })
+    return Pair(
+        mainCurrencyList.last().first,
+        mainCurrencyList.toList() + otherCurrencyList.sortedWith { lhs, rhs ->
+            collator.compare(
+                lhs.second,
+                rhs.second
+            )
+        })
 }
-
 
 
 // TODO: Maybe rename - the idea here is this does not insist the input is actually parseable as a
@@ -4529,7 +4595,7 @@ fun numericValidationRules(
         sanitiseCandidate(candidate).replace(decimalSeparator, '.').toDoubleOrNull()
 
     return listOfNotNull(
-         ValidationRule(
+        ValidationRule(
             { it.count { char -> char == decimalSeparator } <= maxDecimalSeparators },
             // TODO: Just possibly we should not consider a single decimal separator with nothing
             // significant following it as violating "only whole numbers allowed".
@@ -4659,7 +4725,11 @@ fun ValidatedTextField(
             null
         )
     }
-    var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule<String>?>(null) }
+    var failedValidationRule by remember(validationRulesKey) {
+        mutableStateOf<ValidationRule<String>?>(
+            null
+        )
+    }
     Log.d("MyAppVTF", "validationRules?.size ${validationRules?.size}")
     Log.d("MyAppVTF", "fVST $failedValidationSupportingText")
     Log.d("MyAppVTF", "fVR $failedValidationRule")
@@ -4839,7 +4909,8 @@ fun <T> ValidationRuleSupportingText(
     }
 
     if (failedValidationRule != null) {
-        SupportingText(text = failedValidationRule!!.message, isError = true,
+        SupportingText(
+            text = failedValidationRule!!.message, isError = true,
             modifier = modifier
         )
     }
@@ -5007,22 +5078,26 @@ class SharedViewModel : ViewModel() {
     // of course with real data there won't be duplicate IDs at all.
 
     fun setEditDataSetsScreenContent(uiContent: HomeScreenUIContent) {
-        editDataSetsScreenUIContent = uiContent.dataSetList + uiContent.dataSetList.map { it -> it.copy(id = it.id * 1000) }
+        editDataSetsScreenUIContent =
+            uiContent.dataSetList + uiContent.dataSetList.map { it -> it.copy(id = it.id * 1000) }
     }
 
     fun setEditItemsScreenContent(uiContent: HomeScreenUIContent) {
-        editItemsScreenUIContent = uiContent.itemList + uiContent.itemList.map { it -> it.copy(id = it.id * 1000) }
+        editItemsScreenUIContent =
+            uiContent.itemList + uiContent.itemList.map { it -> it.copy(id = it.id * 1000) }
     }
 
     fun setEditSourcesScreenContent(uiContent: HomeScreenUIContent) {
-        editSourcesScreenUIContent = uiContent.sourceList  + uiContent.sourceList.map { it -> it.copy(id = it.id * 1000) }
+        editSourcesScreenUIContent =
+            uiContent.sourceList + uiContent.sourceList.map { it -> it.copy(id = it.id * 1000) }
     }
 
     // TODO: MORE NEW EXPERIMENTAL
 
     var editSourceScreenUIContent: EditSourceScreenUIContent? = null
 
-    fun setEditSourceScreenContent( // TODO: name should include "FromBlah"? or maybe that's a silly convention?
+    fun setEditSourceScreenContent(
+        // TODO: name should include "FromBlah"? or maybe that's a silly convention?
         source: Source?,
         dataSetId: Long,
     ) {
@@ -5073,7 +5148,10 @@ inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
             // As written by ChatGPT, this passed "this", a CreationExtras, as the first argument of
             // builder. Given how we actually use this, it saves code duplication to just extract a
             // MyApplication here and pass that instead.
-            builder(this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication, handle)
+            builder(
+                this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication,
+                handle
+            )
         }
     }
 }
@@ -5358,6 +5436,7 @@ class EditPriceViewModel(
         PACK_SIZE,
         PRICE
     }
+
     private val _saveValidationEvents = MutableSharedFlow<EditableField>()
     val saveValidationEvents = _saveValidationEvents.asSharedFlow()
 
@@ -5367,11 +5446,19 @@ class EditPriceViewModel(
     // discussion with ChatGPT I think it's better to have this function here than pass this
     // ViewModel as an argument to EditablePrice.toDomain()
     suspend fun validateForSave(): Boolean {
-        if (!validationRulesOk(packSizeValidationRules, uiContent.editablePrice.value.measureValue)) {
+        if (!validationRulesOk(
+                packSizeValidationRules,
+                uiContent.editablePrice.value.measureValue
+            )
+        ) {
             _saveValidationEvents.emit(EditableField.PACK_SIZE)
             return false
         }
-        if (!validationRulesOk(currencyFormat.validationRules, uiContent.editablePrice.value.price)) {
+        if (!validationRulesOk(
+                currencyFormat.validationRules,
+                uiContent.editablePrice.value.price
+            )
+        ) {
             _saveValidationEvents.emit(EditableField.PRICE)
             return false
         }
@@ -5393,7 +5480,8 @@ class EditPriceViewModel(
 }
 
 // TODO: This is not just a *save* status any more - rename
-enum class SaveStatus { Idle, Busy, BusyForAWhile, Success, Error;
+enum class SaveStatus {
+    Idle, Busy, BusyForAWhile, Success, Error;
 
     // We count "success" as busy here, since it doesn't make sense to re-enable buttons after we
     // succeeded and are about to close.
@@ -5442,22 +5530,29 @@ class EditSourceViewModel(
     // validation rules *are present* during save validation.
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
         priceTrackerRepository.getAllSources(uiContent.editableSource.value.dataSetId)
-            .map { sourceList -> buildNameValidationRules(
-                sourceList.filter { source -> source.id != uiContent.editableSource.value.id }
-                    .map { source -> source.name }
-            ) }
+            .map { sourceList ->
+                buildNameValidationRules(
+                    sourceList.filter { source -> source.id != uiContent.editableSource.value.id }
+                        .map { source -> source.name }
+                )
+            }
             .withVersion()
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
 
     enum class EditableField {
         NAME,
     }
+
     private val _saveValidationEvents = MutableSharedFlow<EditableField>()
     val saveValidationEvents = _saveValidationEvents.asSharedFlow()
 
-    suspend fun validateForSave() : Boolean {
+    suspend fun validateForSave(): Boolean {
         Log.d("MyAppESS", "validateForSave")
-        if (!validationRulesOk(nameValidationRules.value.value, uiContent.editableSource.value.name)) {
+        if (!validationRulesOk(
+                nameValidationRules.value.value,
+                uiContent.editableSource.value.name
+            )
+        ) {
             _saveValidationEvents.emit(EditableField.NAME)
             return false
         }
@@ -5496,8 +5591,11 @@ fun buildNameValidationRules(existingNameList: List<String>): List<ValidationRul
         ValidationRule<String>({ it.isNotEmpty() }, "Must have a name"),
         // TODO! ValidationRule({ it -> 'x' in it }, "Must contain 'x' to be cool"),
     ) + existingNameList.map { name ->
-            ValidationRule({ candidateName -> !areHumanEqual(candidateName, name) }, "Name must be unique") // TODO: Tweak wording?
-        }
+        ValidationRule(
+            { candidateName -> !areHumanEqual(candidateName, name) },
+            "Name must be unique"
+        ) // TODO: Tweak wording?
+    }
 }
 
 // TODO: There is a huge amount of pseudo copy and paste in all the Edit*{Screen,ViewModel} stuff.
@@ -5537,10 +5635,12 @@ class EditDataSetViewModel(
     // validation rules *are present* during save validation.
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
         priceTrackerRepository.getAllDataSets()
-            .map { dataSetList -> buildNameValidationRules(
-                dataSetList.filter { dataSet -> dataSet.id != uiContent.editableDataSet.value.id }
-                    .map { dataSet -> dataSet.name }
-            ) }
+            .map { dataSetList ->
+                buildNameValidationRules(
+                    dataSetList.filter { dataSet -> dataSet.id != uiContent.editableDataSet.value.id }
+                        .map { dataSet -> dataSet.name }
+                )
+            }
             .withVersion()
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
 
@@ -5556,9 +5656,15 @@ class EditDataSetViewModel(
         // context, "measurement unit" does not work - it sounds as if the user is expected to
         // choose at least one thing like "miles" or "litres". If "measurement system" is a bit
         // technical, I hope the overall context with the caption above will make it clear.
-        ValidationRule<Triple<Boolean, Boolean, Boolean>>({ it -> it.first || it.second || it.third }, "At least one measurement system must be selected"),
+        ValidationRule<Triple<Boolean, Boolean, Boolean>>(
+            { it -> it.first || it.second || it.third },
+            "At least one measurement system must be selected"
+        ),
         // This next rule is enforced by UI logic, but let's go belt and braces.
-        ValidationRule<Triple<Boolean, Boolean, Boolean>>({ !(it.second && it.third) }, "Imperial and US units cannot be selected together"),
+        ValidationRule<Triple<Boolean, Boolean, Boolean>>(
+            { !(it.second && it.third) },
+            "Imperial and US units cannot be selected together"
+        ),
     )
 
     enum class EditableField {
@@ -5566,10 +5672,11 @@ class EditDataSetViewModel(
         MEASUREMENT_SYSTEM,
         // TODO: MORE
     }
+
     private val _saveValidationEvents = MutableSharedFlow<EditableField>()
     val saveValidationEvents = _saveValidationEvents.asSharedFlow()
 
-    suspend fun validateForSave() : Boolean {
+    suspend fun validateForSave(): Boolean {
         Log.d("MyAppESS", "validateForSave")
         val editableDataSet = uiContent.editableDataSet.value
         if (!validationRulesOk(nameValidationRules.value.value, editableDataSet.name)) {
@@ -5578,7 +5685,15 @@ class EditDataSetViewModel(
         }
         // TODO: We will need to validate currencyCode is not empty, for the add new data set case
         // TODO: Should maybe factor out forming this Boolean Triple from editableDataSet into a function
-        if (!validationRulesOk(measurementSystemValidationRules, Triple(editableDataSet.allowMetric, editableDataSet.allowImperial, editableDataSet.allowUSCustomary))) {
+        if (!validationRulesOk(
+                measurementSystemValidationRules,
+                Triple(
+                    editableDataSet.allowMetric,
+                    editableDataSet.allowImperial,
+                    editableDataSet.allowUSCustomary
+                )
+            )
+        ) {
             _saveValidationEvents.emit(EditableField.MEASUREMENT_SYSTEM)
             return false
         }
@@ -5706,7 +5821,7 @@ fun AppNavigation() {
         composable(
             "settings", enterTransition = { slideLeftTransition() },
             popExitTransition = { slideRightTransition() },
-            ) {
+        ) {
             SettingsScreen(navController)
         }
 
@@ -5715,7 +5830,7 @@ fun AppNavigation() {
             "editDataSets", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
-            ) { backStackEntry ->
+        ) { backStackEntry ->
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
@@ -5751,7 +5866,7 @@ fun AppNavigation() {
             "editItems/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
-            ) { backStackEntry ->
+        ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
@@ -5787,7 +5902,7 @@ fun AppNavigation() {
             "editSources/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
-            ) { backStackEntry ->
+        ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
@@ -5828,7 +5943,7 @@ fun AppNavigation() {
         composable(
             "editPrice", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
-            ) { backStackEntry ->
+        ) { backStackEntry ->
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
@@ -5889,7 +6004,7 @@ fun AppNavigation() {
         composable(
             "editSource", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
-            ) { backStackEntry ->
+        ) { backStackEntry ->
             // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
             // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
@@ -6076,11 +6191,13 @@ fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle, offset: Dp = 0.d
     // TODO: Maybe we should attach this modifier to the ErrorHighlightBox, but there's tension
     // there as we also want to attach it to the "real" composable for focusing purposes, and if we
     // split the two things up we're losing a lot of the convenience of having it all in one place.
-        handle.bringIntoViewOffset =     with(LocalDensity.current) { offset.toPx() }
-        return this
-            //.focusRequester(handle.focusRequester)
-            .onGloballyPositioned { coordinates -> handle.bringIntoViewHeight = coordinates.size.height }
-            .bringIntoViewRequester(handle.bringIntoViewRequester)
+    handle.bringIntoViewOffset = with(LocalDensity.current) { offset.toPx() }
+    return this
+        //.focusRequester(handle.focusRequester)
+        .onGloballyPositioned { coordinates ->
+            handle.bringIntoViewHeight = coordinates.size.height
+        }
+        .bringIntoViewRequester(handle.bringIntoViewRequester)
 
 }
 
@@ -6092,16 +6209,16 @@ fun Modifier.focusRequester(handle: ScrollToFocusableHandle): Modifier {
 suspend fun scrollAndFocusTo(handle: ScrollToFocusableHandle) {
     Log.d("MyAppScroll", "${handle.bringIntoViewOffset} ${handle.bringIntoViewHeight}")
     val totalBorderThickness = handle.bringIntoViewOffset
-        handle.bringIntoViewRequester.bringIntoView(
-            Rect(
-                left = 0f,
-                top = -handle.bringIntoViewOffset,
-                right = 0f,
-                bottom = handle.bringIntoViewHeight + 2 * handle.bringIntoViewOffset
-            )
+    handle.bringIntoViewRequester.bringIntoView(
+        Rect(
+            left = 0f,
+            top = -handle.bringIntoViewOffset,
+            right = 0f,
+            bottom = handle.bringIntoViewHeight + 2 * handle.bringIntoViewOffset
         )
+    )
     // I am a bit unsure as to why, but it seems to work much better to do requestFocus() *after*
-    // bringIntoView(). The precise behaviour depends on whether the control already has the focused
+    // bringIntoView(). The precise behaviour depends on whether the control already has the focus
     // and maybe whether there is a keyboard on screen already and what type it is.
     handle.focusRequester.requestFocus()
     // TODO: Can/should we focus TextFields with the cursor at the end of the text?
@@ -6165,13 +6282,16 @@ fun ErrorHighlightBox(
                         alpha = alpha.value,
                         style = Stroke(width = borderWidthPx),
                         topLeft = androidx.compose.ui.geometry.Offset(-offsetPx, -offsetPx),
-                        size = size.copy(width = size.width + 2*offsetPx, height = size.height + 2*offsetPx)
+                        size = size.copy(
+                            width = size.width + 2 * offsetPx,
+                            height = size.height + 2 * offsetPx
+                        )
                     )
                 }
             }
             .scrollToFocusable(validationTarget, offset = offset + 2 * borderWidth)
-            // Add padding to ensure the outline isn't clipped
-            //.padding(4.dp)
+        // Add padding to ensure the outline isn't clipped
+        //.padding(4.dp)
     ) {
         content()
     }
