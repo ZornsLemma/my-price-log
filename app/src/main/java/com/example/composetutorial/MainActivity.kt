@@ -4001,23 +4001,35 @@ fun EditDataSetScreen(
         var name by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
-        ValidatedTextField(
-            label = { Text("Name") },
-            value = name,
-            /* TODO
+        val validationThing5 = rememberValidationThing(
+            value = name.text,
             validationRules = nameValidationRules.value,
             validationRulesKey = nameValidationRules.version,
-            */
-            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxDataSetNameLength),
-            onValueChange = {
-                name = it
-                vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(name = it.text))
-            },
-            enabled = saveStatus.isNotBusy(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .scrollToFocusable(nameScrollToFocusableHandle),
         )
+        ErrorHighlightBox(
+            hasError = nameScrollToFocusableHandle.errorHighlightBoxVisible.value,
+            validationTarget = nameScrollToFocusableHandle
+        ) {
+            ValidatedTextField(
+                label = { Text("Name") },
+                value = name,
+                onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxDataSetNameLength),
+                onValueChange = {
+                    name = it
+                    vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(name = it.text))
+                },
+                enabled = saveStatus.isNotBusy(),
+                isError = validationThing5.validationResult.value != null,
+                supportingText = textOrNull(
+                    validationThing5.validationResult.value,
+                    color = MaterialTheme.colorScheme.error
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .validationFocusRequester(nameScrollToFocusableHandle),
+                interactionSource = validationThing5.interactionSource
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp)) // TODO: Maybe 16.dp given general structure of this screen?
 
@@ -4093,8 +4105,8 @@ fun EditDataSetScreen(
             validationRules = vm.measurementSystemValidationRules
         )
 
-        // TODO: We don't actually want this highlight box to be wired up to validationThing2 - this is just a hack to test. We want it to be animated temporarily on and off when a save validation on this field fails.
-        Box { // TODO  ErrorHighlightBox(hasError = highlightMeasurementSystemError) {
+        ErrorHighlightBox(hasError = measurementSystemScrollToFocusableHandle.errorHighlightBoxVisible.value,
+            validationTarget = measurementSystemScrollToFocusableHandle) {
             Column() { // TODO: Added this column as a hack, we may or may not need it
                 Text(
                     "Measurement units",
@@ -4116,7 +4128,7 @@ fun EditDataSetScreen(
                 MultiChoiceSegmentedButtonRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .scrollToFocusable(measurementSystemScrollToFocusableHandle),
+                    .validationFocusRequester(measurementSystemScrollToFocusableHandle),
                 ) {
                     options.forEachIndexed { index, label ->
                         SegmentedButton(
@@ -4151,40 +4163,6 @@ fun EditDataSetScreen(
                     }
                 }
 
-                // TODO: Just thinking out loud, I wonder if the correct abstraction here - which we'd also
-                // use with ValidatedTextField - is that the "parent" composable does something like:
-                //
-                // val someEditFieldSupportingErrorText by remember { mutableStateOf("") }
-                // validate(valueToValidate, validationRules, onSupportingTextChange = { someEditFieldSupportingErrorText = it })
-                //
-                // and then conditionally shows (if it's not "") the supporting text or passes it to e.g. a
-                // TextField's supportingText (which would maybe argue for null for nothing instead of empty
-                // string, BTW) and it should just recompose automatically.
-                //
-                // I am not sure off the top of my head if validate() (which I think could be Composable)
-                // would be able to call the onSupportingTextChange callback from a coroutine after a delay
-                // to allow for deferring supportingText until the problem has persisted for 500ms or
-                // whatever. I also don't know if it would be able to save internal state to make the
-                // message we are showing stable in the face of multiple candidates, though that's probably
-                // fine - it could just rememberSaveable() the failed rule or something.
-                //
-                // I had a quick chat with ChatGPT and this should probably use LaunchedEffect internally,
-                // this sketch it gave me doesn't address things like "delay, but not always" but FWIW:
-                // @Composable
-                //fun <T> ValidateEffect(
-                //    value: T,
-                //    rules: List<ValidationRule<T>>,
-                //    onSupportingTextChange: (String?) -> Unit
-                //) {
-                //    LaunchedEffect(value) {
-                //        delay(500)
-                //        val failedRule = rules.firstOrNull { !it.predicate(value) }
-                //        onSupportingTextChange(failedRule?.message)
-                //    }
-                //}
-                //
-                // This also avoids corner cases as there will only be one coroutine and it will be cancelled
-                // if value changes.
                 /* TODO
                 ValidationRuleSupportingText(
                     value = Triple(
