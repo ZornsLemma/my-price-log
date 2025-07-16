@@ -4309,51 +4309,6 @@ fun EditDataSetScreen(
     }
 }
 
-// TODO: This needs some way to be wired in to a lost focus event - we may want to do this "in
-// cooperation with" a somewhat optional ValidatedBox wrapper which will also help with on save
-// error indication animation
-@Composable
-fun ValidationEffect(
-    value: String, // TODO: Should probably be generic T
-    validationRules: List<ValidationRule<String>>,
-    validationRulesKey: Any? = null,
-    onValidationResultChange: (String?) -> Unit,
-    allowEmptyValue: Boolean,
-) {
-    // TODO ADD NEW ARGS TO KEY AS NECESSARY
-    //key(validationRulesKey) {
-
-
-    // TODO: I don't think this needs rememberSaveable because we can recompute it on recomposition.
-    // TODO: Do we need an explicit remember key though?
-    var failedValidationRule by remember(validationRulesKey) {
-        mutableStateOf<ValidationRule<String>?>(
-            null
-        )
-    }
-
-    val reorderedValidations =
-        listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
-    failedValidationRule = null
-    for (validationRule in reorderedValidations) {
-        if (!validationRule.validate(value)) {
-            failedValidationRule = validationRule
-            break
-        }
-    }
-
-    val newValidationMessage = failedValidationRule?.message
-    var validationMessage by remember { mutableStateOf<String?>(null) }
-    if (newValidationMessage != validationMessage) {
-        onValidationResultChange(newValidationMessage)
-        validationMessage = newValidationMessage
-    }
-
-
-    //}
-
-}
-
 // TODO: Rename validationResult for brevity? And/or add a @Composable helper which returns
 // validationResult.value to simplify callers?
 // TODO: We could *maybe* include  MutableState<Boolean> in ValidationThing which is used to trigger
@@ -4391,14 +4346,19 @@ fun <T> rememberValidationThing(
         )
     }
 
-    // TODO: This does not have the "change validation text immediately if there is already some and the text changes" behaviour of my existing implementation - think about it, we probably *do* want that
+    // TODO: This does not have the "change validation text immediately if there is already some and
+    // the text changes" behaviour of my existing implementation - think about it, we probably *do*
+    // want that. Likewise we probably want something here so there's no delay if the input has just
+    // become valid. Do think about both of these though.
     LaunchedEffect(value, validationRulesKey, isFocused) {
         if (isFocused) delay(delayMillis)
 
         val reorderedValidations =
             listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
         failedValidationRule = null
-        // TODO: The allowEmpty below doesn't work for generic T - we should probably have the caller pass in some kind of lambda which allows them to specify "values we just accept and don't ask the validation rules for judgement on"
+        // TODO: The allowEmpty below doesn't work for generic T - we should probably have the
+        // caller pass in some kind of lambda which allows them to specify "values we just accept
+        // and don't ask the validation rules for judgement on"
         if (true /* TODO !allowEmpty || value.isNotEmpty() */) {
             for (validationRule in reorderedValidations) {
                 if (!validationRule.validate(value)) {
@@ -4718,48 +4678,6 @@ fun FilteredTextField(
         isError = isError,
         interactionSource = interactionSource,
     )
-}
-
-// TODO: Can we use this inside ValidatedTextField to reduce duplication? Feeling my way right now.
-// TODO: I think this could probably benefit from delayed errors as in ValidatedTextField - e.g. it's
-// annoying to deselect one measurement unit intending to select another but see an error pop up
-@Composable
-fun <T> ValidationRuleSupportingText(
-    value: T,
-    modifier: Modifier = Modifier,
-    validationRules: List<ValidationRule<T>>? = null, // TODO: no point allowing null!?
-    // TODO: DELETE? validationRulesKey: Any? = null,
-) {
-    /* TODO: DELETE?
-    var failedValidationSupportingText by rememberSaveable(validationRulesKey) {
-        mutableStateOf<String?>(
-            null
-        )
-    }
-    var failedValidationRule by remember(validationRulesKey) { mutableStateOf<ValidationRule<T>?>(null) } // TODO: redundant?
-    */
-
-    // TODO: ValidatedTextField has code to ensure that if multiple validation rules fail, we
-    // are stable with regard to which rule's message we show. That is potentially useful here, but
-    // unless/until I get a case where the rules are complex enough for this to happen it is
-    // probably not worth adding untestable complexity here. The exception might be if doing this
-    // would allow this code to be shared with ValidatedTextField.
-
-    var failedValidationRule: ValidationRule<T>? = null
-    for (validationRule in validationRules ?: emptyList()) {
-        if (!validationRule.validate(value)) {
-            failedValidationRule = validationRule
-            Log.d("MyAppVRST", "inside ufvr $failedValidationRule")
-            break
-        }
-    }
-
-    if (failedValidationRule != null) {
-        SupportingText(
-            text = failedValidationRule!!.message, isError = true,
-            modifier = modifier
-        )
-    }
 }
 
 // Format a double to be edited by the user as a string in a TextField. Grouping is *not* used -
