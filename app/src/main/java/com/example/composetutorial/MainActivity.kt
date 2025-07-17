@@ -4049,6 +4049,7 @@ fun EditDataSetScreen(
 
         Spacer(modifier = Modifier.height(8.dp)) // TODO: Maybe 16.dp given general structure of this screen?
 
+        // TODO: When we do the "add data set" case, note that currency will be able to be null and we need to validate it isn't null on save.
         // TODO: According to a long comment I wrote elsewhere, we probably should be using a frozen
         // LocalConfiguration from when this screen was first opened here. However, at present it
         // includes no floating point values that are awkward if the locale changes, and being
