@@ -3295,7 +3295,7 @@ fun EditPriceScreen(
             validationTarget = packSizeScrollToFocusableHandle
         ) { // TODO!
             Column(modifier = Modifier.animateContentSize(/* animationSpec = tween(150) */)) // TODO EXPERIMENTAL - I QUITE LIKE THIS, WE NEED TO DO IT CONSISTENTLY EVERYWHERE IF WE KEEP IT - IN CASE IT'S NOT CLEAR, THIS SMOOTHES OUT THE JARRING APPAEARANCE/DISAPPEARANCE OF SUPPORTINGTEXT ON ERROR
-            { // TODO: Should ErrorHighlightBox include a Column? If so, take it out of all callers
+            { // TODO: Should ErrorHighlightBox include a Column? If so, take it out of all callers. I am not absolutely sure about this, but it would allow us to "automate" the inclusion of the animateContentSize and prevent it being forgotten.
                 Row {
                     // TODO: Using weight to size the components is also sucky, since we really
                     // just want "a reasonable fixed size" for the unit with
@@ -3374,7 +3374,7 @@ fun EditPriceScreen(
         val validationThing1 = rememberValidationThing(
             value = packPrice.text,
             validationRules = currencyFormat.validationRules,
-            // TODO allowEmpty = true /* TODO: should wire this up so true iff we have clicked Save at least once */
+            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value
         )
         // TODO: END EXPERIMENTAL CHUNK
 
@@ -3397,7 +3397,7 @@ fun EditPriceScreen(
             offset = 4.dp,
             validationTarget = priceScrollToFocusableHandle
         ) { // TODO!
-            Column {
+            Column(modifier = Modifier.animateContentSize()) {
                 NumericTextField(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -3825,28 +3825,34 @@ fun EditSourceScreen(
             value = name.text,
             validationRules = nameValidationRules.value,
             validationRulesKey = nameValidationRules.version,
+            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value
         )
         // TODO: Presumably because this is *right* at the top (maybe another reason to add a separation betwen it and top bar), the error highlight box gets clipped at the top
         ErrorHighlightBox(
             hasError = nameScrollToFocusableHandle.errorHighlightBoxVisible.value,
             validationTarget = nameScrollToFocusableHandle
         ) {
-            FilteredTextField(
-                label = { Text("Name") },
-                value = name,
-                onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxSourceNameLength),
-                onValueChange = {
-                    name = it
-                    vm.setUIContentEditableSource(uiContent.editableSource.value.copy(name = it.text))
-                },
-                enabled = saveStatus.isNotBusy(),
-                isError = validationThing4.validationResult.value != null,
-                supportingText = textOrNull(validationThing4.validationResult.value, color=MaterialTheme.colorScheme.error),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .validationFocusRequester(nameScrollToFocusableHandle),
-                interactionSource = validationThing4.interactionSource
-            )
+            Column(modifier = Modifier.animateContentSize()) {
+                FilteredTextField(
+                    label = { Text("Name") },
+                    value = name,
+                    onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxSourceNameLength),
+                    onValueChange = {
+                        name = it
+                        vm.setUIContentEditableSource(uiContent.editableSource.value.copy(name = it.text))
+                    },
+                    enabled = saveStatus.isNotBusy(),
+                    isError = validationThing4.validationResult.value != null,
+                    supportingText = textOrNull(
+                        validationThing4.validationResult.value,
+                        color = MaterialTheme.colorScheme.error
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .validationFocusRequester(nameScrollToFocusableHandle),
+                    interactionSource = validationThing4.interactionSource
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -4390,7 +4396,11 @@ fun <T> rememberValidationThing(
     validationRules: List<ValidationRule<T>>,
     validationRulesKey: Any? = null,
     delayMillis: Long = defaultValidationMessageDelayMillis,
-    allowEmpty: Boolean = true // TODO: Not thought about default and we should prob remove it but hacking to get it to compile for now
+    // We default allowEmpty to false since this will be relatively obvious if we forget to specify
+    // it somewhere it ought to have a more sophisticated condition ("add new X" will immediately
+    // show a "name is emtpy" warning without waiting for a save attempt first). It is just about
+    // worth having a default so cases where this isn't meaningful don't have to specify it.
+    allowEmpty: Boolean = false
 ): ValidationThing {
     val interactionSource = remember { MutableInteractionSource() }
     val validationResult = remember { mutableStateOf<String?>(null) }
