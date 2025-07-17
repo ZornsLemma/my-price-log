@@ -2916,12 +2916,6 @@ fun HomeScreenScaffold(
     var menuExpanded by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-    // TODO: M3 docs appear to show this covering the status bar at the top of the phone. ChatGPT
-    // assures me this is essentially impossible to implement. (Obviously my high-level padding to
-    // avoid the status bar stops me doing it, but if I remove that, the clock draws over the
-    // drawer rather than being obscured by it.) Also, it feels a bit aggressive and experimenting
-    // in the emulator the status bar can still be dragged down to open the usual stuff and the
-    // bottom slide-finger type bar still works, so I don't see why we should be covering these up.
     // TODO: I have tried to get the dimensions right as per M3 specs here, but I'm not that
     // confident. Although I think I have followed the font size/style advice, I am not sure it
     // doesn't look weird - it would maybe be good to e.g. compare with a modern-ish version of
@@ -4874,7 +4868,7 @@ class MainActivity : ComponentActivity() {
                         .fillMaxSize()/* .safeDrawingPadding() */.imePadding(),
                     color = Color.Green /* MaterialTheme.colorScheme.background */
                 ) {
-                    Box(modifier = Modifier.safeDrawingPadding()) {
+                    Box(/* TODO: Delete modifier = Modifier.safeDrawingPadding() */) {
                         AppNavigation()
                     }
                 }
