@@ -2945,7 +2945,7 @@ fun HomeScreenScaffold(
                     .widthIn(max = LocalConfiguration.current.screenWidthDp.dp * 2f / 3f)
             ) {
                 // TODO: Probably need to set font style/colour for this "heading"
-                Column {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     Box(
                         modifier = Modifier
                             .height(56.dp)
