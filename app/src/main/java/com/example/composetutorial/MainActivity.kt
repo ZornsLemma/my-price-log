@@ -6317,4 +6317,12 @@ Log.d("MyApp", baz.toString())
 // originall was" concern. In practice this is unlikely and not a huge deal. I do half wonder if we
 // should show the original name somewhere in the top app bar, but then that could get confusing
 // when they are editing it ("which is current?"). Probably best as it is, but wanted to make a note
-// to think about this.
+// to think about this. One possibility might be for the delete confirmation dialog to mention the
+// original name *if* it has been changed, but that might also be confusing (especially if the
+// change is minor, not a wholesale replacement of "Coffee" with "Eggs" or somethimg like that) and
+// it might be slightly fiddly to implement. We could also potentially show the original name of
+// the item on the main form (indented or greyed out or whatever), although right now that feels a
+// bit awkward. (I suppose we could maybe use the name textfield's supportingText for this when it
+// isn't showing an error, although I am still not sure it would look right even ignoring the error
+// use, and users might find themselves wondering how to get back to the grey message when an error
+// occurs, although again probably not and we can only second-guess hapless user behaviour so much.)
