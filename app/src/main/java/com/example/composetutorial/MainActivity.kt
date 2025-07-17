@@ -4144,7 +4144,7 @@ fun EditDataSetScreen(
                 MultiChoiceSegmentedButtonRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                    .validationFocusRequester(measurementSystemScrollToFocusableHandle),
+                    .validationFocusRequester(measurementSystemScrollToFocusableHandle), // TODO: this probably does nothing, get rid of it?
                 ) {
                     options.forEachIndexed { index, label ->
                         SegmentedButton(
@@ -4264,6 +4264,11 @@ fun EditDataSetScreen(
                     // We can't focus a segmented button, but we can remove focus from anything that
                     // has it to avoid giving a misleading impression of what we're trying to direct
                     // the user's attention to.
+                    // TODO: Could we track whether we have called (ideally, have called
+                    // *successfully*, ie got something useful back, but I suspect we can't do that)
+                    // validationFocusRequester() and inside scrollAndFocusTo() we do this
+                    // clearFocus() when we haven't called validationFocusRequeter() instead of
+                    // setting focus which turns into a no-op, then this logic can be the same?
                     focusManager.clearFocus()
                     scrollAndFocusTo(measurementSystemScrollToFocusableHandle)
 
