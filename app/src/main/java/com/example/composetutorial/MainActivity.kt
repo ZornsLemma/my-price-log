@@ -5524,7 +5524,7 @@ class EditDataSetViewModel(
 
     enum class EditableField {
         NAME,
-        CURRENCY_CODE,
+        CURRENCY_CODE, // TODO: Just "CURRENCY"? THAT'S WHAT FIELD-ON-SCREEN AND SOME OTHER VARS ARE CALLED
         MEASUREMENT_SYSTEM,
         // TODO: MORE
     }
