@@ -6308,3 +6308,13 @@ Log.d("MyApp", baz.toString())
 
 // TODO: General Kotlin point which may simplify my code - unlike in say C++, you can apparently
 // "call methods" on nulls, e.g. stringvariable.orEmpty().
+
+// TODO: General note: when we're editing a thing and changing its name, there is some possibility
+// of the user getting confused e.g. about what they are deleting or (wrt the "unique name" check)
+// what the name "should be". Wrt deleting, this problem is solved by having the delete on the list
+// screen not the edit screen, but I really don't like that as I don't want delete to be that
+// "prominent". This doesn't solve the "user changed name on screen and doesn't know what it
+// originall was" concern. In practice this is unlikely and not a huge deal. I do half wonder if we
+// should show the original name somewhere in the top app bar, but then that could get confusing
+// when they are editing it ("which is current?"). Probably best as it is, but wanted to make a note
+// to think about this.
