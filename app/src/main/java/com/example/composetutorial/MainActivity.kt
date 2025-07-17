@@ -2931,7 +2931,6 @@ fun HomeScreenScaffold(
     // get rid of my window insets or whatever at the very top level of my NavHost and move it into
     // individual screens, so this screen can have full screen for the drawer and apply the insets
     // to everything else.
-    // TODO: Will this scroll nicely if we have loads of data sets? *No*, it appears it does not! Not tried fixing it yet.
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -2945,7 +2944,7 @@ fun HomeScreenScaffold(
                     .widthIn(max = LocalConfiguration.current.screenWidthDp.dp * 2f / 3f)
             ) {
                 // TODO: Probably need to set font style/colour for this "heading"
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                Column() {
                     Box(
                         modifier = Modifier
                             .height(56.dp)
@@ -2959,27 +2958,29 @@ fun HomeScreenScaffold(
                             //modifier = Modifier.padding(start = 16.dp).height(56.dp) // TODO!?
                         ) // TODO: 16dp right/necessary?
                     }
-                    dataSetList.forEach { item ->
-                        val selected = dataSet?.id == item.id
-                        // TODO: Should these have some kind of generic bullet-style icon? The half
-                        // cut off "labels" gmail screenshot in m3 docs hints at this. But it might
-                        // also look a bit weird to have these.
-                        NavigationDrawerItem(
-                            modifier = Modifier
-                                .padding(horizontal = 12.dp)
-                                .height(56.dp),
-                            label = {
-                                Text(
-                                    item.name,
-                                    // color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                            },
-                            selected = selected,
-                            onClick = {
-                                coroutineScope.launch { onSelectedDataSetIdChange(item.id); drawerState.close() }
-                            }
-                        )
+                    LazyColumn {
+                        items(dataSetList) { item ->
+                            val selected = dataSet?.id == item.id
+                            // TODO: Should these have some kind of generic bullet-style icon? The half
+                            // cut off "labels" gmail screenshot in m3 docs hints at this. But it might
+                            // also look a bit weird to have these.
+                            NavigationDrawerItem(
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp)
+                                    .height(56.dp),
+                                label = {
+                                    Text(
+                                        item.name,
+                                        // color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                },
+                                selected = selected,
+                                onClick = {
+                                    coroutineScope.launch { onSelectedDataSetIdChange(item.id); drawerState.close() }
+                                }
+                            )
+                        }
                     }
                 }
             }
