@@ -4863,11 +4863,14 @@ class MainActivity : ComponentActivity() {
                 // the individual screens. Honestly don't know any more. There might be some slightly odd colours on the O6 but maybe
                 // they are just its theme. I will have to play around with this and maybe it will become clearer as I write more code
                 // etc. fillMaxHeight() is perhaps a bit unusual here but I was experimenting and thought I'd leave it in for now.
+                // TODO: We may not need this surface any more, I can't see the test green colour
+                // appearing.
                 Surface(
                     modifier = Modifier
                         .fillMaxSize()/* .safeDrawingPadding() */.imePadding(),
                     color = Color.Green /* MaterialTheme.colorScheme.background */
                 ) {
+                    // TODO: It may be we can get rid of this Box now it does nothing
                     Box(/* TODO: Delete modifier = Modifier.safeDrawingPadding() */) {
                         AppNavigation()
                     }
