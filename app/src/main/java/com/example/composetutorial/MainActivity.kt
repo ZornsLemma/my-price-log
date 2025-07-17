@@ -2931,7 +2931,7 @@ fun HomeScreenScaffold(
     // get rid of my window insets or whatever at the very top level of my NavHost and move it into
     // individual screens, so this screen can have full screen for the drawer and apply the insets
     // to everything else.
-    // TODO: Will this scroll nicely if we have loads of data sets?
+    // TODO: Will this scroll nicely if we have loads of data sets? *No*, it appears it does not! Not tried fixing it yet.
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -3542,7 +3542,7 @@ fun runGeneralEditScreenOperation(
             try {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation about to call perform")
                 perform()
-                delay(5000) // TODO HACK - DONE AFTER PERFORM SO IT GETS A CHANCE TO SET SAVING/DELETING FLAG TO TRUE
+                // delay(5000) // TODO HACK - DONE AFTER PERFORM SO IT GETS A CHANCE TO SET SAVING/DELETING FLAG TO TRUE
                 vm.saveStatus.update(SaveStatus.Success)
             } catch (e: Exception) {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation caught exception")
@@ -3988,6 +3988,7 @@ fun EditDataSetScreen(
     Log.d("MyApp", "dataSetReferenceCount $dataSetReferenceCount")
 
     val nameScrollToFocusableHandle = rememberScrollToFocusable()
+    val currencyScrollToFocusableHandle = rememberScrollToFocusable()
     val measurementSystemScrollToFocusableHandle = rememberScrollToFocusable()
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
@@ -4004,7 +4005,7 @@ fun EditDataSetScreen(
         title = { Text("TODO: TITLE") },
         isDirty = { uiContent.editableDataSet.value != uiContent.originalDataSet },
         validateForSave = { vm.validateForSave() },
-        performSave = { vm.performSave(); throw IllegalArgumentException("TODO2") },
+        performSave = { vm.performSave(); /* throw IllegalArgumentException("TODO2") */ },
         onIdle = { deleting = false },
         requestClose = requestClose,
     ) {
@@ -4016,6 +4017,7 @@ fun EditDataSetScreen(
             value = name.text,
             validationRules = nameValidationRules.value,
             validationRulesKey = nameValidationRules.version,
+            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
         )
         ErrorHighlightBox(
             hasError = nameScrollToFocusableHandle.errorHighlightBoxVisible.value,
@@ -4049,62 +4051,80 @@ fun EditDataSetScreen(
 
         Spacer(modifier = Modifier.height(8.dp)) // TODO: Maybe 16.dp given general structure of this screen?
 
-        // TODO: When we do the "add data set" case, note that currency will be able to be null and we need to validate it isn't null on save.
-        // TODO: According to a long comment I wrote elsewhere, we probably should be using a frozen
-        // LocalConfiguration from when this screen was first opened here. However, at present it
-        // includes no floating point values that are awkward if the locale changes, and being
-        // responsive to any locale changes is both easy and may be helpful. If I keep doing it this
-        // way, I need to update that long comment elsewhere accordingly and make a permanent note
-        // here too.
-        val currentLocalConfiguration = LocalConfiguration.current
-        val currencyList = remember(currentLocalConfiguration.locales) {
-            // TODO: Test this updates if we change locales on the fly?
-            buildCurrencyList(currentLocalConfiguration.locales)
-        }
-
-        // TODO: Without getting sidetracked just yet into e.g. third party libraries to support
-        // currency selection between, we try to do half-decent job by showing a gigantic list in
-        // an unwieldy dropdown but putting the currencies the user is likely to care about at the
-        // top. In the longer term apart from maybe investigating third party libraries I see two
-        // options:
-        // 1 - optionally allow the user to just enter a three letter currency code directly
-        // 2 - optionally allow the user to define their own currency (in which case we don't care
-        //     about three letter codes) by specifying prefix, suffix and decimal places
-        // If option 2 is available, there may be no real need for option 1. We'd probably still
-        // support currency selection in some form, but the specific escape hatch of being able to
-        // type in a three letter code is not so important. But maybe we'd do both.
-        //
-        // We could of course create our own pop-up (probably not full screen) dialog to pick a
-        // currency, but the chances are curating a list which isn't bloated with historical
-        // currencies (which are not relevant to us) is something best left to a third party library
-        // which is actively interested in this. For us it's rather tangential.
-        //
-        // We could also use our existing item selection dialog - which is substring search capable
-        // - to help the user pick something out of the gigantic list of currencies instead of
-        // scrolling through a giant dropdown.
-
-        // TODO: This may expose a lurking bug in MyExposedDropdownMenuBox - the very last (I think)
-        // item in the list is *not* entirely shown. I don't know if the same thing will happen with
-        // other dropdowns which get long enough to need scrolling, but should definitely test as it
-        // matters much more there. It's ugly and annoying and concerning here too, of course.
-        MyExposedDropdownMenuBox(
-            modifier = Modifier.fillMaxWidth(),
-            selectedId = if (uiContent.editableDataSet.value.currencyCode != "") uiContent.editableDataSet.value.currencyCode else null,
-            onValueChange = {
-                vm.setUIContentEditableDataSet(
-                    uiContent.editableDataSet.value.copy(
-                        currencyCode = it
-                    )
-                )
-            },
-            enabled = saveStatus.isNotBusy(),
-            label = { Text("Currency") },
-            // TODO: supportingText?
-            items = currencyList.second,
-            getId = { it.first },
-            getLabel = { it.second },
-            getDividerBetween = { firstItem, _ -> firstItem.first == currencyList.first },
+        val validationThing6 = rememberValidationThing(
+            value = uiContent.editableDataSet.value.currencyCode,
+            validationRules = vm.currencyValidationRules,
+            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
         )
+        ErrorHighlightBox(
+            hasError = currencyScrollToFocusableHandle.errorHighlightBoxVisible.value,
+            validationTarget = currencyScrollToFocusableHandle,
+        ) {
+            Column(modifier = Modifier.animateContentSize()) {
+                // TODO: When we do the "add data set" case, note that currency will be able to be null and we need to validate it isn't null on save.
+                // TODO: According to a long comment I wrote elsewhere, we probably should be using a frozen
+                // LocalConfiguration from when this screen was first opened here. However, at present it
+                // includes no floating point values that are awkward if the locale changes, and being
+                // responsive to any locale changes is both easy and may be helpful. If I keep doing it this
+                // way, I need to update that long comment elsewhere accordingly and make a permanent note
+                // here too.
+                val currentLocalConfiguration = LocalConfiguration.current
+                val currencyList = remember(currentLocalConfiguration.locales) {
+                    // TODO: Test this updates if we change locales on the fly?
+                    buildCurrencyList(currentLocalConfiguration.locales)
+                }
+
+                // TODO: Without getting sidetracked just yet into e.g. third party libraries to support
+                // currency selection between, we try to do half-decent job by showing a gigantic list in
+                // an unwieldy dropdown but putting the currencies the user is likely to care about at the
+                // top. In the longer term apart from maybe investigating third party libraries I see two
+                // options:
+                // 1 - optionally allow the user to just enter a three letter currency code directly
+                // 2 - optionally allow the user to define their own currency (in which case we don't care
+                //     about three letter codes) by specifying prefix, suffix and decimal places
+                // If option 2 is available, there may be no real need for option 1. We'd probably still
+                // support currency selection in some form, but the specific escape hatch of being able to
+                // type in a three letter code is not so important. But maybe we'd do both.
+                //
+                // We could of course create our own pop-up (probably not full screen) dialog to pick a
+                // currency, but the chances are curating a list which isn't bloated with historical
+                // currencies (which are not relevant to us) is something best left to a third party library
+                // which is actively interested in this. For us it's rather tangential.
+                //
+                // We could also use our existing item selection dialog - which is substring search capable
+                // - to help the user pick something out of the gigantic list of currencies instead of
+                // scrolling through a giant dropdown.
+
+                // TODO: This may expose a lurking bug in MyExposedDropdownMenuBox - the very last (I think)
+                // item in the list is *not* entirely shown. I don't know if the same thing will happen with
+                // other dropdowns which get long enough to need scrolling, but should definitely test as it
+                // matters much more there. It's ugly and annoying and concerning here too, of course.
+                MyExposedDropdownMenuBox(
+                    modifier = Modifier.fillMaxWidth()
+                        .validationFocusRequester(currencyScrollToFocusableHandle),
+
+                    selectedId = if (uiContent.editableDataSet.value.currencyCode != "") uiContent.editableDataSet.value.currencyCode else null,
+                    onValueChange = {
+                        vm.setUIContentEditableDataSet(
+                            uiContent.editableDataSet.value.copy(
+                                currencyCode = it
+                            )
+                        )
+                    },
+                    enabled = saveStatus.isNotBusy(),
+                    label = { Text("Currency") },
+                    items = currencyList.second,
+                    getId = { it.first },
+                    getLabel = { it.second },
+                    getDividerBetween = { firstItem, _ -> firstItem.first == currencyList.first },
+                    supportingText = textOrNull(
+                        validationThing6.validationResult.value,
+                        color = MaterialTheme.colorScheme.error,
+                    ),
+                    // TODO!? interactionSource = validationThing5.interactionSource
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -4260,6 +4280,10 @@ fun EditDataSetScreen(
                     scrollAndFocusTo(nameScrollToFocusableHandle)
                 }
 
+                EditDataSetViewModel.EditableField.CURRENCY_CODE -> {
+                    scrollAndFocusTo(currencyScrollToFocusableHandle)
+                }
+
                 EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM -> {
                     Log.d("MyApp", "scrolling to measurement system")
                     // We can't focus a segmented button, but we can remove focus from anything that
@@ -4273,6 +4297,7 @@ fun EditDataSetScreen(
                     focusManager.clearFocus()
                     scrollAndFocusTo(measurementSystemScrollToFocusableHandle)
 
+                    /* TODO: DELETE - ALREADY HANDLED BY SCROLLADNFOCUSTO?
                     launch {
                         highlightMeasurementSystemError = true
                         delay(10000)
@@ -4284,6 +4309,7 @@ fun EditDataSetScreen(
                     // scrollAndFocusTo. This is where we'd really start to benefit from some kind
                     // of pulsing red highlight to accompany the existing scroll and focus
                     // behaviour.
+                    */
                 }
             }
         }
@@ -5469,6 +5495,10 @@ class EditDataSetViewModel(
             .withVersion()
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
 
+    val currencyValidationRules = listOf(
+        ValidationRule<String>({ it.isNotEmpty() }, "Currency must be specified") // TODO: poor wording?
+    )
+
     // TODO: I should probably replace the Triple<3xBoolean> with a data class for readability.
     // Maybe it should even be used in a domain-level DataSet class with the current raw database
     // one being renamed DataSetEntity? We could potentially pass it into various functions and that
@@ -5494,6 +5524,7 @@ class EditDataSetViewModel(
 
     enum class EditableField {
         NAME,
+        CURRENCY_CODE,
         MEASUREMENT_SYSTEM,
         // TODO: MORE
     }
@@ -5508,6 +5539,12 @@ class EditDataSetViewModel(
             _saveValidationEvents.emit(EditableField.NAME)
             return false
         }
+
+        if (!validationRulesOk(currencyValidationRules, editableDataSet.currencyCode)) {
+            _saveValidationEvents.emit(EditableField.CURRENCY_CODE)
+            return false
+        }
+
         // TODO: We will need to validate currencyCode is not empty, for the add new data set case
         // TODO: Should maybe factor out forming this Boolean Triple from editableDataSet into a function
         if (!validationRulesOk(
@@ -5679,7 +5716,11 @@ fun AppNavigation() {
                 title = topAppBarTitle("Edit collections", null),
                 getId = { it.id },
                 getName = { it.name },
-                onAddClick = { Log.d("MyAppGS", "Add data set") },
+                onAddClick = {
+                    Log.d("MyAppGS", "Add data set")
+                    sharedViewModel.setEditDataSetScreenContent(null)
+                    navController.navigate("editDataSet")
+                },
                 onItemSelected = {
                     Log.d("MyAppGS", "selected $it")
                     sharedViewModel.setEditDataSetScreenContent(it)
