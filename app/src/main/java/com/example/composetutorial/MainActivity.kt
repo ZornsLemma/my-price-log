@@ -1631,8 +1631,8 @@ const val spinnerDelayMillis = 1000L // TODO SHOULD BE 200L
 const val defaultValidationMessageDelayMillis = 200L
 
 // TODO: If this is too long, the user can break something different, click Save again and have to
-// wait until the first animation finishes.
-val errorHighlightBoxVisibleTimeMillis = 1000L
+// wait until the first animation finishes. Let's start with 1000 and see how it goes.
+const val errorHighlightBoxVisibleTimeMillis = 1000L
 
 // TODO: https://m3.material.io/foundations/layout/applying-layout/compact says 16dp left and right
 // margins - maybe change this? Then again there are placed where I've used edge-to-edge for lists
@@ -1667,6 +1667,8 @@ const val maxDataSetNameLength =
     32 // TODO: just possibly shorter than others due to use of nav drawer to show these?!
 const val maxSourceNameLength = 32
 const val maxNotesLength = 200 // TODO TEMP FOR TESTING 1024
+
+// TODO: UP TO HERE WITH REVIEW
 
 // TODO: RENAME THIS IF IT SURVIVES REFACTORING
 @OptIn(ExperimentalMaterial3Api::class)
