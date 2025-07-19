@@ -4583,7 +4583,6 @@ fun <T> validationRulesOk(validationRules: List<ValidationRule<T>>, value: T): B
     }
     return true
 }
-// TODO: UP TO HERE WITH REVIEW
 
 
 // TODO: This duplicates code in numericValidationRules(). It may be as well to move some of these
@@ -4884,6 +4883,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+// TODO: UP TO HERE WITH REVIEW
 
 // Shared ViewModel to pass data between screens
 // TODO: Some inconsistency between "UIContent" and "Content" here - think about renaming.
