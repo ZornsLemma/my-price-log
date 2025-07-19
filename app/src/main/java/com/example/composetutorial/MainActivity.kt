@@ -3502,7 +3502,6 @@ fun EditPriceScreen(
         }
     }
 }
-// TODO: UP TO HERE WITH REVIEW
 
 @Composable
 fun SupportingText(text: String, isError: Boolean, modifier: Modifier = Modifier) {
@@ -3785,6 +3784,7 @@ fun GeneralEditScreen(
         }
     }
 }
+// TODO: UP TO HERE WITH REVIEW
 
 @Composable
 fun EditSourceScreen(
@@ -6383,3 +6383,5 @@ Log.d("MyApp", baz.toString())
 // isn't showing an error, although I am still not sure it would look right even ignoring the error
 // use, and users might find themselves wondering how to get back to the grey message when an error
 // occurs, although again probably not and we can only second-guess hapless user behaviour so much.)
+
+// TODO: On Lenovo laptop, the "main" Android Studio text window with the two toolbar things down the left and right would fit better with 95 character lines than 100. Since there's not much in it, maybe we should adopt that as our standard line width?
