@@ -1666,9 +1666,7 @@ val menuRightPadding = menuLeftPadding
 const val maxDataSetNameLength =
     32 // TODO: just possibly shorter than others due to use of nav drawer to show these?!
 const val maxSourceNameLength = 32
-const val maxNotesLength = 200 // TODO TEMP FOR TESTING 1024
-
-// TODO: UP TO HERE WITH REVIEW
+const val maxNotesLength = 200 // TODO TEMP FOR TESTING, SHOULD BE 1024
 
 // TODO: RENAME THIS IF IT SURVIVES REFACTORING
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1769,6 +1767,7 @@ fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
     else
         MaterialTheme.colorScheme.onSurfaceVariant,
 )
+
 
 // TODO: We *may* want to disable the on click ripple whatsit for this, based on how the
 // "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about
@@ -2634,6 +2633,7 @@ fun textOrNull(string: String?, modifier: Modifier = Modifier, color: Color = Co
     }
 }
 
+// TODO: UP TO HERE WITH REVIEW
 data class EditPriceScreenUIContent(
     val editablePrice: MutableState<EditablePrice>,
     val originalPrice: EditablePrice,
