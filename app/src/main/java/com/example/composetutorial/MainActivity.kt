@@ -3784,7 +3784,6 @@ fun GeneralEditScreen(
         }
     }
 }
-// TODO: UP TO HERE WITH REVIEW
 
 @Composable
 fun EditSourceScreen(
@@ -4574,6 +4573,8 @@ fun isValidTransitionalDecimal(input: String): Boolean {
 @Parcelize // TODO: May not be needed now - are we still using these in rememberSaveable?
 data class ValidationRule<T>(val validate: (T) -> Boolean, val message: String) : Parcelable
 
+// TODO: Do we use this everywhere we could? Would returning failed rule or null make it
+// more reusable?
 fun <T> validationRulesOk(validationRules: List<ValidationRule<T>>, value: T): Boolean {
     for (validationRule in validationRules) {
         if (!validationRule.validate(value)) {
@@ -4582,6 +4583,8 @@ fun <T> validationRulesOk(validationRules: List<ValidationRule<T>>, value: T): B
     }
     return true
 }
+// TODO: UP TO HERE WITH REVIEW
+
 
 // TODO: This duplicates code in numericValidationRules(). It may be as well to move some of these
 // functions and associated logic onto the ViewModel, as it is already locale-aware and is notified
