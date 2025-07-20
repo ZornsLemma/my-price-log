@@ -5246,7 +5246,6 @@ fun GeneralSelectorListItem(id: Long, name: String, onItemSelected: () -> Unit) 
     )
 }
 
-// TODO: UP TO HERE WITH REVIEW
 // TODO: Here, and possibly in other ViewModels, there is a tendency to be passing parameters into
 // functions which are actually just taken out of the ViewModel's own state anyway. It may well be
 // worth removing these redundant parameters, but I will hold off for now on the vague grounds that
@@ -5364,6 +5363,7 @@ fun SmallCircularProgressIndicator() {
         strokeWidth = 2.dp,
     )
 }
+// TODO: UP TO HERE WITH REVIEW
 
 class EditSourceViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
