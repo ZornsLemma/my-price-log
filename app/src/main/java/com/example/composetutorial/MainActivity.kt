@@ -5040,7 +5040,6 @@ fun isCaseInsensitiveSubstring(lhs: String, rhs: String, locale: Locale) =
 fun areHumanEqual(lhs: String, rhs: String) =
     lhs.trim().lowercase() == rhs.trim().lowercase()
 
-// TODO: UP TO HERE WITH REVIEW
 // TODO: This may not actually need the repository passing in given we pass in a query
 class GeneralSelectorViewModel<T>(
     private val savedStateHandle: SavedStateHandle,
@@ -5236,6 +5235,7 @@ fun <T> GeneralSelectorScreen(
         }
     }
 }
+// TODO: UP TO HERE WITH REVIEW
 
 // TODO: We could optionally add switches or check boxes to the list items to allow them to be enabled or disabled - but this may well be better done at the edit X individual screen level
 // TODO: This function might well be better just folded into GeneralSelectorScreen
