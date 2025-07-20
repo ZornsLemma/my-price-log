@@ -4722,7 +4722,7 @@ fun NumericTextField(
 // work and perhaps the biggest difficutly is combining it with the validation rule logic - so maybe
 // worth revisiting this later. Maybe just ignoring silently is actually best though, regardless of
 // the work involved - think about it fresh later.
-// TODO: Maybe "build" instead of "make" (in other places too) would be more idiomatic?
+// TODO: Maybe "build" instead of "make" (in other places too) would be more idiomatic? I suspect "create" might be most idiomatic.
 fun makeOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
     { it.length <= maxLength }
 
@@ -5235,7 +5235,6 @@ fun <T> GeneralSelectorScreen(
         }
     }
 }
-// TODO: UP TO HERE WITH REVIEW
 
 // TODO: We could optionally add switches or check boxes to the list items to allow them to be enabled or disabled - but this may well be better done at the edit X individual screen level
 // TODO: This function might well be better just folded into GeneralSelectorScreen
@@ -5247,6 +5246,7 @@ fun GeneralSelectorListItem(id: Long, name: String, onItemSelected: () -> Unit) 
     )
 }
 
+// TODO: UP TO HERE WITH REVIEW
 // TODO: Here, and possibly in other ViewModels, there is a tendency to be passing parameters into
 // functions which are actually just taken out of the ViewModel's own state anyway. It may well be
 // worth removing these redundant parameters, but I will hold off for now on the vague grounds that
