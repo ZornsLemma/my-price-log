@@ -6390,6 +6390,12 @@ Log.d("MyApp", baz.toString())
 // use, and users might find themselves wondering how to get back to the grey message when an error
 // occurs, although again probably not and we can only second-guess hapless user behaviour so much.)
 
-// TODO: On Lenovo laptop, the "main" Android Studio text window with the two toolbar things down the left and right would fit better with 95 character lines than 100. Since there's not much in it, maybe we should adopt that as our standard line width?
+// TODO: On Lenovo laptop, the "main" Android Studio text window with the two toolbar things down
+// the left and right would fit better with 95 character lines than 100. Since there's not much in
+// it, maybe we should adopt that as our standard line width?
 
-// TODO: May want to semi-formally document that "state" for a screen is "what's in the screen's view model" (and arguably also in remembered stuff in composable etc), while "content" is what gets passed in from the "caller" via the sharedviewmodel mechanism. This may help me feel better and be more consistent about naming variables functions around the whole sharedviewmodel thing and also the resulting structure inside the fooscreenviewmodel.
+// TODO: May want to semi-formally document that "state" for a screen is "what's in the screen's
+// view model" (and arguably also in remembered stuff in composable etc), while "content" is what
+// gets passed in from the "caller" via the sharedviewmodel mechanism. This may help me feel better
+// and be more consistent about naming variables functions around the whole sharedviewmodel thing
+// and also the resulting structure inside the fooscreenviewmodel.
