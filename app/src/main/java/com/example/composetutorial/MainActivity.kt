@@ -4931,6 +4931,9 @@ class SharedViewModel : ViewModel() {
 
     // TODO: ALL EXPERIMENTAL NEW BELOW HERE
 
+    // TODO: Not just here, but e.g. EditSourceScreen vs EditSource*s*Screen is way too subtle for this already rather confusing code. Might (apart from other possible improvements) be better to
+    // talk about "Edit source" (singular) but "List sources" (plural) internally, even if we continue to use "Edit sources" in the UI labels.
+
     // TODO: Rename the following now they are just List<T>? not a UIContent structure
     var editDataSetsScreenUIContent: List<DataSet>? = null
     var editItemsScreenUIContent: List<Item>? = null
