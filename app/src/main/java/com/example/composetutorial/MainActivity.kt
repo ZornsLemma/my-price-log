@@ -4883,7 +4883,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-// TODO: UP TO HERE WITH REVIEW
 
 // Shared ViewModel to pass data between screens
 // TODO: Some inconsistency between "UIContent" and "Content" here - think about renaming.
@@ -5041,6 +5040,7 @@ fun isCaseInsensitiveSubstring(lhs: String, rhs: String, locale: Locale) =
 fun areHumanEqual(lhs: String, rhs: String) =
     lhs.trim().lowercase() == rhs.trim().lowercase()
 
+// TODO: UP TO HERE WITH REVIEW
 // TODO: This may not actually need the repository passing in given we pass in a query
 class GeneralSelectorViewModel<T>(
     private val savedStateHandle: SavedStateHandle,
