@@ -5363,7 +5363,6 @@ fun SmallCircularProgressIndicator() {
         strokeWidth = 2.dp,
     )
 }
-// TODO: UP TO HERE WITH REVIEW
 
 class EditSourceViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
@@ -6013,6 +6012,7 @@ data class CurrencyFormat(
 
 // TODO: This takes a DataSet not a currency code because later on a DataSet may allow custom
 // currency formatting which overrides whatever the current locale wants to do.
+// TODO: Rename this from "getFoo" syntax to make it clear it's not "cheap"?
 fun getCurrencyFormat(dataSet: DataSet, locale: Locale): CurrencyFormat {
     val currencyInstance = Currency.getInstance(dataSet.currencyCode)
     // currencyInstance will give us the number of decimal places, but it won't give us a
