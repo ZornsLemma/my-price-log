@@ -3950,7 +3950,7 @@ fun EditSourceScreen(
 }
 
 @Composable
-fun ValidatedTextField(
+fun <T> ValidatedTextField(
     label: @Composable () (() -> Unit)? = null,
     value: TextFieldValue,
     maxLength: Int,
@@ -3959,8 +3959,8 @@ fun ValidatedTextField(
     validationRules: List<ValidationRule<String>>,
     validationRulesKey: Any? = null,
     allowEmpty: Boolean = false,
-    validationFlow: SharedFlow<EditSourceViewModel.EditableField>, // TODO: Can and probably should make this a Flow<T> but let's keep it simple just for the moment
-    validationFlowFieldId: EditSourceViewModel.EditableField // TODO: ditto
+    validationFlow: SharedFlow<T>,
+    validationFlowFieldId: T
 ) {
     val scrollToFocusableHandle = rememberScrollToFocusable()
 
@@ -4045,42 +4045,22 @@ fun EditDataSetScreen(
 
         var name by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
-        Log.d("MyApp", "nameValidationRules $nameValidationRules")
-        val validationThing5 = rememberValidationThing(
-            value = name.text,
+        // TODO: Presumably because this is *right* at the top (maybe another reason to add a separation betwen it and top bar), the error highlight box gets clipped at the top
+        ValidatedTextField(
+            label = { Text("Name") },
+            value = name,
+            maxLength = maxDataSetNameLength,
+            onValueChange = {
+                name = it
+                vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(name = it.text))
+            },
+            enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value,
             validationRulesKey = nameValidationRules.version,
             allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+            validationFlow = vm.saveValidationEvents,
+            validationFlowFieldId = EditDataSetViewModel.EditableField.NAME
         )
-        ErrorHighlightBox(
-            hasError = nameScrollToFocusableHandle.errorHighlightBoxVisible.value,
-            validationTarget = nameScrollToFocusableHandle,
-            // TODO: doesn't seem to work here modifier = Modifier.animateContentSize(),
-        ) {
-            Column(modifier = Modifier.animateContentSize()) {
-                FilteredTextField(
-                    label = { Text("Name") },
-                    value = name,
-                    onCandidateValueChange = makeOnCandidateValueChangeMaxLength(
-                        maxDataSetNameLength
-                    ),
-                    onValueChange = {
-                        name = it
-                        vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(name = it.text))
-                    },
-                    enabled = saveStatus.isNotBusy(),
-                    isError = validationThing5.validationResult.value != null,
-                    supportingText = textOrNull(
-                        validationThing5.validationResult.value,
-                        color = MaterialTheme.colorScheme.error
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .validationFocusRequester(nameScrollToFocusableHandle),
-                    interactionSource = validationThing5.interactionSource
-                )
-            }
-        }
 
         Spacer(modifier = Modifier.height(8.dp)) // TODO: Maybe 16.dp given general structure of this screen?
 
@@ -4308,11 +4288,6 @@ fun EditDataSetScreen(
         vm.saveValidationEvents.collect { field ->
             Log.d("MyApp", "LaunchedEffect saveValidationError $field")
             when (field) {
-                EditDataSetViewModel.EditableField.NAME -> {
-                    Log.d("MyApp", "scrolling to name")
-                    scrollAndFocusTo(nameScrollToFocusableHandle)
-                }
-
                 EditDataSetViewModel.EditableField.CURRENCY_CODE -> {
                     scrollAndFocusTo(currencyScrollToFocusableHandle)
                 }
@@ -4344,6 +4319,8 @@ fun EditDataSetScreen(
                     // behaviour.
                     */
                 }
+
+                else -> {}
             }
         }
     }
