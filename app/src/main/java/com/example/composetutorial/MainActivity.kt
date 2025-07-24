@@ -3796,7 +3796,6 @@ fun EditSourceScreen(
     val sourceReferenceCount by vm.sourceReferenceCountFlow.collectAsStateWithLifecycle()
     Log.d("MyApp", "sourceReferenceCount $sourceReferenceCount")
 
-    val nameScrollToFocusableHandle = rememberScrollToFocusable()
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var deleting by rememberSaveable { mutableStateOf(false) }
@@ -3817,39 +3816,22 @@ fun EditSourceScreen(
         var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
-        val validationThing4 = rememberValidationThing(
-            value = name.text,
+        // TODO: Presumably because this is *right* at the top (maybe another reason to add a separation betwen it and top bar), the error highlight box gets clipped at the top
+        ValidatedTextField(
+            label = { Text("Name") },
+            value = name,
+            maxLength = maxSourceNameLength,
+            onValueChange = {
+                name = it
+                vm.setUIContentEditableSource(uiContent.editableSource.value.copy(name = it.text))
+            },
+            enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value,
             validationRulesKey = nameValidationRules.version,
-            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value
+            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+            validationFlow = vm.saveValidationEvents,
+            validationFlowFieldId = EditSourceViewModel.EditableField.NAME
         )
-        // TODO: Presumably because this is *right* at the top (maybe another reason to add a separation betwen it and top bar), the error highlight box gets clipped at the top
-        ErrorHighlightBox(
-            hasError = nameScrollToFocusableHandle.errorHighlightBoxVisible.value,
-            validationTarget = nameScrollToFocusableHandle
-        ) {
-            Column(modifier = Modifier.animateContentSize()) {
-                FilteredTextField(
-                    label = { Text("Name") },
-                    value = name,
-                    onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxSourceNameLength),
-                    onValueChange = {
-                        name = it
-                        vm.setUIContentEditableSource(uiContent.editableSource.value.copy(name = it.text))
-                    },
-                    enabled = saveStatus.isNotBusy(),
-                    isError = validationThing4.validationResult.value != null,
-                    supportingText = textOrNull(
-                        validationThing4.validationResult.value,
-                        color = MaterialTheme.colorScheme.error
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .validationFocusRequester(nameScrollToFocusableHandle),
-                    interactionSource = validationThing4.interactionSource
-                )
-            }
-        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -3918,17 +3900,6 @@ fun EditSourceScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        vm.saveValidationEvents.collect { field ->
-            Log.d("MyApp", "LaunchedEffect saveValidationError $field")
-            when (field) {
-                EditSourceViewModel.EditableField.NAME -> {
-                    Log.d("MyApp", "scrolling to name")
-                    scrollAndFocusTo(nameScrollToFocusableHandle)
-                }
-            }
-        }
-    }
 
     if (showDeleteConfirmDialog) {
         val isSimpleDelete = sourceReferenceCount == 0L
@@ -3975,6 +3946,66 @@ fun EditSourceScreen(
                 }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
             },
         )
+    }
+}
+
+@Composable
+fun ValidatedTextField(
+    label: @Composable () (() -> Unit)? = null,
+    value: TextFieldValue,
+    maxLength: Int,
+    onValueChange: (TextFieldValue) -> Unit,
+    enabled: Boolean,
+    validationRules: List<ValidationRule<String>>,
+    validationRulesKey: Any? = null,
+    allowEmpty: Boolean = false,
+    validationFlow: SharedFlow<EditSourceViewModel.EditableField>, // TODO: Can and probably should make this a Flow<T> but let's keep it simple just for the moment
+    validationFlowFieldId: EditSourceViewModel.EditableField // TODO: ditto
+) {
+    val scrollToFocusableHandle = rememberScrollToFocusable()
+
+    val validationThing200 = rememberValidationThing(
+        value = value.text,
+        validationRules = validationRules,
+        validationRulesKey = validationRulesKey,
+        allowEmpty = allowEmpty
+    )
+
+    ErrorHighlightBox(
+        hasError = scrollToFocusableHandle.errorHighlightBoxVisible.value,
+        validationTarget = scrollToFocusableHandle
+    ) {
+        Column(modifier = Modifier.animateContentSize()) {
+            FilteredTextField(
+                label = label,
+                value = value,
+                onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxLength),
+                onValueChange = onValueChange,
+                enabled = enabled,
+                isError = validationThing200.validationResult.value != null,
+                supportingText = textOrNull(
+                    validationThing200.validationResult.value,
+                    color = MaterialTheme.colorScheme.error
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .validationFocusRequester(scrollToFocusableHandle),
+                interactionSource = validationThing200.interactionSource
+            )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        validationFlow.collect { field ->
+            Log.d("MyApp", "LaunchedEffect saveValidationError $field")
+            when (field) {
+                validationFlowFieldId -> {
+                    Log.d("MyApp", "scrolling to name")
+                    scrollAndFocusTo(scrollToFocusableHandle)
+                }
+                else -> {}
+            }
+        }
     }
 }
 
