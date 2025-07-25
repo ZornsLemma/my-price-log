@@ -3769,13 +3769,10 @@ fun GeneralEditAndDeleteScreen(
     performSave: suspend () -> Unit,
     onIdle: () -> Unit,
     requestClose: () -> Unit,
-    allowDelete: Boolean, // TODO: rename "deleteEnabled?"
     deleteConfirmationDetails: Triple<Boolean, @Composable () -> Unit, @Composable () -> Unit>?,
     requestDelete: suspend () -> Unit,
     requestDeleteCancel: () -> Unit,
-    content: @Composable (
-        deleteEnabled: Boolean,
-        showDeleteSpinner: Boolean) -> Unit,
+    content: @Composable (showDeleteSpinner: Boolean) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     var deleting by rememberSaveable { mutableStateOf(false) }
@@ -3795,7 +3792,6 @@ fun GeneralEditAndDeleteScreen(
         requestClose = requestClose,
     ) {
         content(
-            saveStatus.isNotBusy() && allowDelete,
             deleting && saveStatus == SaveStatus.BusyForAWhile,
             // TODO: NEEDED? deleting = deleting,
             /* TODO DELETE
@@ -3879,7 +3875,6 @@ fun EditSourceScreen(
         performSave = { vm.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
         onIdle = {},
         requestClose = requestClose,
-        allowDelete = sourceReferenceCount != null,
         deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
             isSimpleDelete,
             if (isSimpleDelete) {
@@ -3896,7 +3891,7 @@ fun EditSourceScreen(
         ),
         requestDelete = { vm.performDelete() },
         requestDeleteCancel = { showDeleteConfirmDialog = false },
-    ) { deleteEnabled, showDeleteSpinner ->
+    ) { showDeleteSpinner ->
         var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
@@ -3942,7 +3937,7 @@ fun EditSourceScreen(
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedButton(
                 onClick = { showDeleteConfirmDialog = true },
-                enabled = deleteEnabled,
+                enabled = saveStatus.isNotBusy() && sourceReferenceCount != null,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
             ) {
