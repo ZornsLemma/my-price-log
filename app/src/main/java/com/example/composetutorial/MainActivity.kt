@@ -6407,3 +6407,11 @@ Log.d("MyApp", baz.toString())
 // gets passed in from the "caller" via the sharedviewmodel mechanism. This may help me feel better
 // and be more consistent about naming variables functions around the whole sharedviewmodel thing
 // and also the resulting structure inside the fooscreenviewmodel.
+
+// TODO: We should probably implement a "recycle bin" type delete - have a "deleted" flag on all the
+// tables, and when something is deleted we set that. (We would not cascade-set this if we e.g.
+// delete a data set.) We can then undelete (subject to verifying names are still unique - deleted
+// things would not count towards uniqueness checks). This is a UI faff because it means three-ish
+// screens to select thigns to undelete, and maybe some other facility somewhere else to purge
+// some/all waste bin things for real. But it probably is the way to go long term, even if it's not
+// part of MVP.
