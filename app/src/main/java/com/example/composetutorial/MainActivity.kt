@@ -137,6 +137,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -3962,13 +3963,13 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
         }
     }
 
+    val focusManager = LocalFocusManager.current
     LaunchedEffect(Unit) {
         validationFlow.collect { field ->
             Log.d("MyApp", "LaunchedEffect saveValidationError $field")
             when (field) {
                 validationFlowFieldId -> {
-                    Log.d("MyApp", "scrolling to name")
-                    scrollAndFocusTo(scrollToFocusableHandle)
+                    scrollAndFocusTo(focusManager, scrollToFocusableHandle)
                 }
                 else -> {}
             }
@@ -4174,10 +4175,11 @@ fun EditDataSetScreen(
                 )
             }
             // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and 2 as imperial/US
+
+            // We *don't* call Modifier.validationFocusRequester() as you can't focus a segmented button,
+            // and this will force a clear focus to happen instead.
             MultiChoiceSegmentedButtonRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .validationFocusRequester(scrollToFocusableHandle), // TODO: this probably does nothing, get rid of it?
+                modifier = Modifier.fillMaxWidth()
             ) {
                 options.forEachIndexed { index, label ->
                     SegmentedButton(
@@ -4277,19 +4279,6 @@ fun EditDataSetScreen(
             }
         }
     }
-
-    // We can't focus a segmented button, but we can remove focus from anything that
-    // has it to avoid giving a misleading impression of what we're trying to direct
-    // the user's attention to.
-    // TODO: Could we track whether we have called (ideally, have called
-    // *successfully*, ie got something useful back, but I suspect we can't do that)
-    // validationFocusRequester() and inside scrollAndFocusTo() we do this
-    // clearFocus() when we haven't called validationFocusRequeter() instead of
-    // setting focus which turns into a no-op, then this logic can be the same?
-    /* TODO: WE NEED TO DO
-    val focusManager = LocalFocusManager.current
-    focusManager.clearFocus()
-    BEFORE SCROLLANDFOCUSTO ON THE MEASUREMENTSYSTEM */
 
     if (showDeleteConfirmDialog) {
         val isSimpleDelete = dataSetReferenceCount == 0L
@@ -6032,8 +6021,13 @@ fun <T> initialVersioned(initialValue: T): Versioned<T> =
     Versioned(version = -1L, value = initialValue)
 
 // TODO: Rename something like ValidationTargetHandle?
+// TODO: Might be nice to make members private, which probably requires moving to a file on its own
+// along with the custom Modifier and using internal vsibility. This would stop e.g. "accidentally"
+// passing the FocusRequester to Modifier.focusRequester() and avoiding the initialisation flag
+// being updated.
 class ScrollToFocusableHandle @OptIn(ExperimentalFoundationApi::class) constructor(
     val focusRequester: FocusRequester = FocusRequester(),
+    var focusRequesterInitialised: Boolean = false,
     val bringIntoViewRequester: BringIntoViewRequester = BringIntoViewRequester(),
     var bringIntoViewOffset: Float = 0f,
     var bringIntoViewHeight: Int = 0,
@@ -6060,11 +6054,12 @@ fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle, offset: Dp = 0.d
 
 // TODO: Not necessarily the best name, but although we could overload the focusRequester name, it feels confusing to do it.
 fun Modifier.validationFocusRequester(handle: ScrollToFocusableHandle): Modifier {
+    handle.focusRequesterInitialised = true
     return this.focusRequester(handle.focusRequester)
 }
 
 @OptIn(ExperimentalFoundationApi::class)
-suspend fun scrollAndFocusTo(handle: ScrollToFocusableHandle) {
+suspend fun scrollAndFocusTo(focusManager: FocusManager, handle: ScrollToFocusableHandle) {
     Log.d("MyAppScroll", "${handle.bringIntoViewOffset} ${handle.bringIntoViewHeight}")
     val totalBorderThickness = handle.bringIntoViewOffset
     handle.bringIntoViewRequester.bringIntoView(
@@ -6076,11 +6071,20 @@ suspend fun scrollAndFocusTo(handle: ScrollToFocusableHandle) {
         )
     )
 
-    // I am a bit unsure as to why, but it seems to work much better to do requestFocus() *after*
-    // bringIntoView(). The precise behaviour depends on whether the control already has the focus
-    // and maybe whether there is a keyboard on screen already and what type it is.
-    handle.focusRequester.requestFocus()
-    // TODO: Can/should we focus TextFields with the cursor at the end of the text?
+    if (handle.focusRequesterInitialised) {
+        // I am a bit unsure as to why, but it seems to work much better to do requestFocus() *after*
+        // bringIntoView(). The precise behaviour depends on whether the control already has the focus
+        // and maybe whether there is a keyboard on screen already and what type it is.
+        Log.d("MyApp", "requestFocus")
+        handle.focusRequester.requestFocus()
+        // TODO: Can/should we focus TextFields with the cursor at the end of the text?
+    } else {
+        // If we didn't (couldn't meaningfully) initialise the focusRequester, that means the target
+        // can't be focused. We therefore content ourselves with removing the focus from anything
+        // else that has it.
+        Log.d("MyApp", "clearFocus")
+        focusManager.clearFocus()
+    }
 
         handle.errorHighlightBoxVisible.value = true
         delay(errorHighlightBoxVisibleTimeMillis)
