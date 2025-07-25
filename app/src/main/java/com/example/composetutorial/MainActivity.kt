@@ -3924,9 +3924,9 @@ fun EditSourceScreen(
 
 // TODO: This might turn out to be more re-usable than for just TextFields
 @Composable
-fun <T> BaseValidatedTextField(
-    value: String,
-    validationRules: List<ValidationRule<String>>,
+fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
+    value: U,
+    validationRules: List<ValidationRule<U>>,
     validationRulesKey: Any? = null,
     allowEmpty: Boolean = false,
     validationFlow: SharedFlow<T>,
@@ -4035,7 +4035,6 @@ fun EditDataSetScreen(
     val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
 
 
-    var highlightMeasurementSystemError by remember { mutableStateOf(false) }
     GeneralEditScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
@@ -4148,105 +4147,99 @@ fun EditDataSetScreen(
         // with a segmented button group.
         // TODO: I'm far from sure what typography or colour this caption should have, but this
         // matches the caption on the TextFields so it is probably not a terrible choice.
-        val validationThing2 = rememberValidationThing(
+        BaseValidatedTextField(
             value = Triple(
                 uiContent.editableDataSet.value.allowMetric,
                 uiContent.editableDataSet.value.allowImperial,
                 uiContent.editableDataSet.value.allowUSCustomary
             ),
-            validationRules = vm.measurementSystemValidationRules
-        )
-
-        ErrorHighlightBox(hasError = measurementSystemScrollToFocusableHandle.errorHighlightBoxVisible.value,
-            validationTarget = measurementSystemScrollToFocusableHandle) {
-            Column(modifier = Modifier.animateContentSize()) { // TODO: Added this column as a hack, we may or may not need it
-                Text(
-                    "Measurement units",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                ) // TODO TWEAK TEXT, FONT, SIZE
-                // "US Customary" doesn't fit (on my test "small" emulated phone) but based on a discussion
-                // with ChatGPT "US Units" is better for a casual user anyway, even if we could fit "US
-                // Customary".
-                val options = listOf("Metric", "Imperial", "US units")
-                val checkedStates = remember {
-                    mutableStateListOf(
-                        uiContent.editableDataSet.value.allowMetric,
-                        uiContent.editableDataSet.value.allowImperial,
-                        uiContent.editableDataSet.value.allowUSCustomary
-                    )
-                }
-                // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and 2 as imperial/US
-                MultiChoiceSegmentedButtonRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                    .validationFocusRequester(measurementSystemScrollToFocusableHandle), // TODO: this probably does nothing, get rid of it?
-                ) {
-                    options.forEachIndexed { index, label ->
-                        SegmentedButton(
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = options.size
-                            ),
-                            onCheckedChange = {
-                                checkedStates[index] = it
-                                // Don't allow Imperial and US Customary to be selected together. (We use
-                                // the common but ambiguous names for the units, so this would cause UI
-                                // confusion. We don't want to be showing "pint (US)" or "pt (US)" all the
-                                // time to disambiguate.)
-                                if (index > 0 && checkedStates[index]) {
-                                    checkedStates[if (index == 1) 2 else 1] = false
-                                }
-                                vm.setUIContentEditableDataSet(
-                                    uiContent.editableDataSet.value.copy(
-                                        allowMetric = checkedStates[0],
-                                        allowImperial = checkedStates[1],
-                                        allowUSCustomary = checkedStates[2]
-                                    )
-                                )
-                            },
-                            checked = checkedStates[index],
-                            colors = SegmentedButtonDefaults.colors(),
-                            icon = { SegmentedButtonDefaults.Icon(active = checkedStates[index]) },
-                            enabled = true
-                        ) {
-                            Text(label)
-                        }
-                    }
-                }
-
-                /* TODO
-                ValidationRuleSupportingText(
-                    value = Triple(
-                        uiContent.editableDataSet.value.allowMetric,
-                        uiContent.editableDataSet.value.allowImperial,
-                        uiContent.editableDataSet.value.allowUSCustomary
-                    ),
-                    validationRules = vm.measurementSystemValidationRules,
-                    // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
-                    modifier = Modifier.padding(horizontal = 16.dp) //.padding(top = 4.dp)
+            validationRules = vm.measurementSystemValidationRules,
+            validationFlow = vm.saveValidationEvents,
+            validationFlowFieldId = EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM
+        ) { validationResult, interactionSource, scrollToFocusableHandle ->
+            Text(
+                "Measurement units",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            ) // TODO TWEAK TEXT, FONT, SIZE
+            // "US Customary" doesn't fit (on my test "small" emulated phone) but based on a discussion
+            // with ChatGPT "US Units" is better for a casual user anyway, even if we could fit "US
+            // Customary".
+            val options = listOf("Metric", "Imperial", "US units")
+            val checkedStates = remember {
+                mutableStateListOf(
+                    uiContent.editableDataSet.value.allowMetric,
+                    uiContent.editableDataSet.value.allowImperial,
+                    uiContent.editableDataSet.value.allowUSCustomary
                 )
-                */
-                val supportingText = validationThing2.validationResult.value
-                if (supportingText != null) {
-                    // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
-                    // TODO: Should we show a red warning triangle e.g. at left or right of this text? Not sure, but we
-                    // do show one in the case of TextFields so although the layout isn't quite the same, maybe showing
-                    // one here is not a bad idea. Current gut feeling following some LLM discussion is that the
-                    // warning triangle is probably not a good idea, but it should be at the left if I do add it. And
-                    // maybe I should make the border of the segmented button red if we're in an error state as well,
-                    // although my inclination is that this might look ugly and is not particularly blessed as
-                    // standard.
-                    SupportingText(
-                        supportingText,
-                        isError = true,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
+            }
+            // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and 2 as imperial/US
+            MultiChoiceSegmentedButtonRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .validationFocusRequester(scrollToFocusableHandle), // TODO: this probably does nothing, get rid of it?
+            ) {
+                options.forEachIndexed { index, label ->
+                    SegmentedButton(
+                        shape = SegmentedButtonDefaults.itemShape(
+                            index = index,
+                            count = options.size
+                        ),
+                        onCheckedChange = {
+                            checkedStates[index] = it
+                            // Don't allow Imperial and US Customary to be selected together. (We use
+                            // the common but ambiguous names for the units, so this would cause UI
+                            // confusion. We don't want to be showing "pint (US)" or "pt (US)" all the
+                            // time to disambiguate.)
+                            if (index > 0 && checkedStates[index]) {
+                                checkedStates[if (index == 1) 2 else 1] = false
+                            }
+                            vm.setUIContentEditableDataSet(
+                                uiContent.editableDataSet.value.copy(
+                                    allowMetric = checkedStates[0],
+                                    allowImperial = checkedStates[1],
+                                    allowUSCustomary = checkedStates[2]
+                                )
+                            )
+                        },
+                        checked = checkedStates[index],
+                        colors = SegmentedButtonDefaults.colors(),
+                        icon = { SegmentedButtonDefaults.Icon(active = checkedStates[index]) },
+                        enabled = true
+                    ) {
+                        Text(label)
+                    }
                 }
             }
 
+            /* TODO
+            ValidationRuleSupportingText(
+                value = Triple(
+                    uiContent.editableDataSet.value.allowMetric,
+                    uiContent.editableDataSet.value.allowImperial,
+                    uiContent.editableDataSet.value.allowUSCustomary
+                ),
+                validationRules = vm.measurementSystemValidationRules,
+                // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
+                modifier = Modifier.padding(horizontal = 16.dp) //.padding(top = 4.dp)
+            )
+            */
+            if (validationResult != null) {
+                // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
+                // TODO: Should we show a red warning triangle e.g. at left or right of this text? Not sure, but we
+                // do show one in the case of TextFields so although the layout isn't quite the same, maybe showing
+                // one here is not a bad idea. Current gut feeling following some LLM discussion is that the
+                // warning triangle is probably not a good idea, but it should be at the left if I do add it. And
+                // maybe I should make the border of the segmented button red if we're in an error state as well,
+                // although my inclination is that this might look ugly and is not particularly blessed as
+                // standard.
+                SupportingText(
+                    validationResult,
+                    isError = true,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
         }
-
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -4285,43 +4278,18 @@ fun EditDataSetScreen(
         }
     }
 
+    // We can't focus a segmented button, but we can remove focus from anything that
+    // has it to avoid giving a misleading impression of what we're trying to direct
+    // the user's attention to.
+    // TODO: Could we track whether we have called (ideally, have called
+    // *successfully*, ie got something useful back, but I suspect we can't do that)
+    // validationFocusRequester() and inside scrollAndFocusTo() we do this
+    // clearFocus() when we haven't called validationFocusRequeter() instead of
+    // setting focus which turns into a no-op, then this logic can be the same?
+    /* TODO: WE NEED TO DO
     val focusManager = LocalFocusManager.current
-    LaunchedEffect(Unit) {
-        vm.saveValidationEvents.collect { field ->
-            Log.d("MyApp", "LaunchedEffect saveValidationError $field")
-            when (field) {
-                EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM -> {
-                    Log.d("MyApp", "scrolling to measurement system")
-                    // We can't focus a segmented button, but we can remove focus from anything that
-                    // has it to avoid giving a misleading impression of what we're trying to direct
-                    // the user's attention to.
-                    // TODO: Could we track whether we have called (ideally, have called
-                    // *successfully*, ie got something useful back, but I suspect we can't do that)
-                    // validationFocusRequester() and inside scrollAndFocusTo() we do this
-                    // clearFocus() when we haven't called validationFocusRequeter() instead of
-                    // setting focus which turns into a no-op, then this logic can be the same?
-                    focusManager.clearFocus()
-                    scrollAndFocusTo(measurementSystemScrollToFocusableHandle)
-
-                    /* TODO: DELETE - ALREADY HANDLED BY SCROLLADNFOCUSTO?
-                    launch {
-                        highlightMeasurementSystemError = true
-                        delay(10000)
-                        highlightMeasurementSystemError = false
-                    }
-                    // TODO: Because you *can't* focus the segmented button, this is a bit wappy in
-                    // terms of making the error obvious to the user - if it's on screen and focus
-                    // is in a text field, *nothing* may actually happen when we do this
-                    // scrollAndFocusTo. This is where we'd really start to benefit from some kind
-                    // of pulsing red highlight to accompany the existing scroll and focus
-                    // behaviour.
-                    */
-                }
-
-                else -> {}
-            }
-        }
-    }
+    focusManager.clearFocus()
+    BEFORE SCROLLANDFOCUSTO ON THE MEASUREMENTSYSTEM */
 
     if (showDeleteConfirmDialog) {
         val isSimpleDelete = dataSetReferenceCount == 0L
