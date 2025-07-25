@@ -4017,66 +4017,6 @@ fun <T> ValidatedTextField2(
 }
 
 @Composable
-fun <T> ValidatedTextField(
-    label: @Composable () (() -> Unit)? = null,
-    value: TextFieldValue,
-    maxLength: Int,
-    onValueChange: (TextFieldValue) -> Unit,
-    enabled: Boolean,
-    validationRules: List<ValidationRule<String>>,
-    validationRulesKey: Any? = null,
-    allowEmpty: Boolean = false,
-    validationFlow: SharedFlow<T>,
-    validationFlowFieldId: T
-) {
-    val scrollToFocusableHandle = rememberScrollToFocusable()
-
-    val validationThing200 = rememberValidationThing(
-        value = value.text,
-        validationRules = validationRules,
-        validationRulesKey = validationRulesKey,
-        allowEmpty = allowEmpty
-    )
-
-    ErrorHighlightBox(
-        hasError = scrollToFocusableHandle.errorHighlightBoxVisible.value,
-        validationTarget = scrollToFocusableHandle
-    ) {
-        Column(modifier = Modifier.animateContentSize()) {
-            FilteredTextField(
-                label = label,
-                value = value,
-                onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxLength),
-                onValueChange = onValueChange,
-                enabled = enabled,
-                isError = validationThing200.validationResult.value != null,
-                supportingText = textOrNull(
-                    validationThing200.validationResult.value,
-                    color = MaterialTheme.colorScheme.error
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .validationFocusRequester(scrollToFocusableHandle),
-                interactionSource = validationThing200.interactionSource
-            )
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        validationFlow.collect { field ->
-            Log.d("MyApp", "LaunchedEffect saveValidationError $field")
-            when (field) {
-                validationFlowFieldId -> {
-                    Log.d("MyApp", "scrolling to name")
-                    scrollAndFocusTo(scrollToFocusableHandle)
-                }
-                else -> {}
-            }
-        }
-    }
-}
-
-@Composable
 fun EditDataSetScreen(
     vm: EditDataSetViewModel,
     navController: NavHostController,
