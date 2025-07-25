@@ -3817,7 +3817,7 @@ fun EditSourceScreen(
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
         // TODO: Presumably because this is *right* at the top (maybe another reason to add a separation betwen it and top bar), the error highlight box gets clipped at the top
-        ValidatedTextField(
+        ValidatedTextField2(
             label = { Text("Name") },
             value = name,
             maxLength = maxSourceNameLength,
@@ -3949,6 +3949,98 @@ fun EditSourceScreen(
     }
 }
 
+// TODO: This might turn out to be more re-usable than for just TextFields
+@Composable
+fun <T> BaseValidatedTextField(
+    value: String,
+    validationRules: List<ValidationRule<String>>,
+    validationRulesKey: Any? = null,
+    allowEmpty: Boolean = false,
+    validationFlow: SharedFlow<T>,
+    validationFlowFieldId: T,
+    content: @Composable (
+        validationResult: String?,
+        interactionSource: MutableInteractionSource,
+        scrollToFocusableHandle: ScrollToFocusableHandle,
+    ) -> Unit
+) {
+    val scrollToFocusableHandle = rememberScrollToFocusable()
+
+    val validationThing201 = rememberValidationThing(
+        value = value,
+        validationRules = validationRules,
+        validationRulesKey = validationRulesKey,
+        allowEmpty = allowEmpty
+    )
+
+    ErrorHighlightBox(
+        hasError = scrollToFocusableHandle.errorHighlightBoxVisible.value,
+        validationTarget = scrollToFocusableHandle
+    ) {
+        Column(modifier = Modifier.animateContentSize()) {
+            // TODO: We could possibly pass validationThing201 directly. We could also maybe pass a Modifier.validationFocusRequester() instead of scrollToFocusableHandle.
+            content(
+                validationThing201.validationResult.value,
+                validationThing201.interactionSource,
+                scrollToFocusableHandle,
+            )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        validationFlow.collect { field ->
+            Log.d("MyApp", "LaunchedEffect saveValidationError $field")
+            when (field) {
+                validationFlowFieldId -> {
+                    Log.d("MyApp", "scrolling to name")
+                    scrollAndFocusTo(scrollToFocusableHandle)
+                }
+                else -> {}
+            }
+        }
+    }
+}
+
+@Composable
+fun <T> ValidatedTextField2(
+    label: @Composable () (() -> Unit)? = null,
+    value: TextFieldValue,
+    maxLength: Int,
+    onValueChange: (TextFieldValue) -> Unit,
+    enabled: Boolean,
+    validationRules: List<ValidationRule<String>>,
+    validationRulesKey: Any? = null,
+    allowEmpty: Boolean = false,
+    validationFlow: SharedFlow<T>,
+    validationFlowFieldId: T
+) {
+    BaseValidatedTextField(
+        value = value.text,
+        validationRules = validationRules,
+        validationRulesKey = validationRulesKey,
+        allowEmpty = allowEmpty,
+        validationFlow = validationFlow,
+        validationFlowFieldId = validationFlowFieldId,
+    ) { validationResult, interactionSource, scrollToFocusableHandle ->
+        FilteredTextField(
+            label = label,
+            value = value,
+            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxLength),
+            onValueChange = onValueChange,
+            enabled = enabled,
+            isError = validationResult != null,
+            supportingText = textOrNull(
+                validationResult,
+                color = MaterialTheme.colorScheme.error
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .validationFocusRequester(scrollToFocusableHandle),
+            interactionSource = interactionSource
+        )
+    }
+}
+
 @Composable
 fun <T> ValidatedTextField(
     label: @Composable () (() -> Unit)? = null,
@@ -4046,7 +4138,7 @@ fun EditDataSetScreen(
         var name by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         // TODO: Presumably because this is *right* at the top (maybe another reason to add a separation betwen it and top bar), the error highlight box gets clipped at the top
-        ValidatedTextField(
+        ValidatedTextField2(
             label = { Text("Name") },
             value = name,
             maxLength = maxDataSetNameLength,
