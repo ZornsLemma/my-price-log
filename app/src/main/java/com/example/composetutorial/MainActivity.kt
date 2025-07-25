@@ -3770,7 +3770,6 @@ fun EditSourceScreen(
     val sourceReferenceCount by vm.sourceReferenceCountFlow.collectAsStateWithLifecycle()
     Log.d("MyApp", "sourceReferenceCount $sourceReferenceCount")
 
-
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var deleting by rememberSaveable { mutableStateOf(false) }
 
@@ -3849,7 +3848,6 @@ fun EditSourceScreen(
             }
         }
     }
-
 
     if (showDeleteConfirmDialog) {
         val isSimpleDelete = sourceReferenceCount == 0L
@@ -4003,8 +4001,6 @@ fun EditDataSetScreen(
 
     val dataSetReferenceCount by vm.dataSetReferenceCountFlow.collectAsStateWithLifecycle()
     Log.d("MyApp", "dataSetReferenceCount $dataSetReferenceCount")
-
-    val measurementSystemScrollToFocusableHandle = rememberScrollToFocusable()
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
     var deleting by rememberSaveable { mutableStateOf(false) }
