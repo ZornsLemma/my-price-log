@@ -6061,6 +6061,19 @@ fun Modifier.validationFocusRequester(handle: ScrollToFocusableHandle): Modifier
 @OptIn(ExperimentalFoundationApi::class)
 suspend fun scrollAndFocusTo(focusManager: FocusManager, handle: ScrollToFocusableHandle) {
     Log.d("MyAppScroll", "${handle.bringIntoViewOffset} ${handle.bringIntoViewHeight}")
+
+    if (!handle.focusRequesterInitialised) {
+        // If we didn't (couldn't meaningfully) initialise the focusRequester, that means the target
+        // can't be focused. We therefore content ourselves with removing the focus from anything
+        // else that has it. We do this before calling bringIntoView() since it may dismiss the
+        // on-screen keyboard and in practice it looks much nicer to do it in this order.
+        // TODO: I half wonder if we should be using Modifier.focusTarget() to make it possible to
+        // focus things like segmented buttons. However, this seems to work and I haven't
+        // experimented with alternatives.
+        Log.d("MyApp", "clearFocus")
+        focusManager.clearFocus()
+    }
+
     val totalBorderThickness = handle.bringIntoViewOffset
     handle.bringIntoViewRequester.bringIntoView(
         Rect(
@@ -6078,12 +6091,6 @@ suspend fun scrollAndFocusTo(focusManager: FocusManager, handle: ScrollToFocusab
         Log.d("MyApp", "requestFocus")
         handle.focusRequester.requestFocus()
         // TODO: Can/should we focus TextFields with the cursor at the end of the text?
-    } else {
-        // If we didn't (couldn't meaningfully) initialise the focusRequester, that means the target
-        // can't be focused. We therefore content ourselves with removing the focus from anything
-        // else that has it.
-        Log.d("MyApp", "clearFocus")
-        focusManager.clearFocus()
     }
 
         handle.errorHighlightBoxVisible.value = true
