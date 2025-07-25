@@ -3271,13 +3271,6 @@ fun EditPriceScreen(
         var packSizeNumber by rememberSyncedTextFieldValue(
             uiContent.editablePrice.value.measureValue
         )
-        //Spacer(modifier = Modifier.height(500.dp))
-        val validationThing3 = rememberValidationThing(
-            value = packSizeNumber.text,
-            validationRules = vm.packSizeValidationRules,
-            validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
-            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value
-        )
         // TODO: This box could just be around the actual "Pack size" text field, but I think it
         // makes sense for it to also cover the supportingText showing the actual problem. That
         // visually requires it to cover the whole screen width.
@@ -3285,78 +3278,81 @@ fun EditPriceScreen(
         // that I "need" offset = 4.dp here instead of the current default 6.dp. It might be I
         // should increase the vertical spacing of the components on this screen and then make this
         // 6.dp.
-        ErrorHighlightBox(
-            hasError = packSizeScrollToFocusableHandle.errorHighlightBoxVisible.value, // TODO: validationTarget argument makes this redundant?
-            offset = 4.dp,
-            validationTarget = packSizeScrollToFocusableHandle
-        ) { // TODO!
-            Column(modifier = Modifier.animateContentSize(/* animationSpec = tween(150) */)) // TODO EXPERIMENTAL - I QUITE LIKE THIS, WE NEED TO DO IT CONSISTENTLY EVERYWHERE IF WE KEEP IT - IN CASE IT'S NOT CLEAR, THIS SMOOTHES OUT THE JARRING APPAEARANCE/DISAPPEARANCE OF SUPPORTINGTEXT ON ERROR
-            { // TODO: Should ErrorHighlightBox include a Column? If so, take it out of all callers. I am not absolutely sure about this, but it would allow us to "automate" the inclusion of the animateContentSize and prevent it being forgotten.
-                Row {
-                    // TODO: Using weight to size the components is also sucky, since we really
-                    // just want "a reasonable fixed size" for the unit with
-                    // the product taking whatever's left, but this will do for now.
-                    NumericTextField(
-                        label = { Text("Pack size") },
-                        value = packSizeNumber,
-                        onValueChange = {
-                            packSizeNumber = it
-                            if (uiContent.editablePrice.value.measureValue != it.text) {
-                                vm.setUIContentEditablePrice(
-                                    uiContent.editablePrice.value.copy(
-                                        measureValue = it.text
-                                    )
+        BaseValidatedTextField(
+            value = packSizeNumber.text,
+            validationRules = vm.packSizeValidationRules,
+            validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
+            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+            validationFlow = vm.saveValidationEvents,
+            validationFlowFieldId = EditPriceViewModel.EditableField.PACK_SIZE,
+            errorHighlightOffset = 4.dp,
+        ) { validationResult, interactionSource, scrollToFocusableHandle ->
+            Row {
+                // TODO: Using weight to size the components is also sucky, since we really
+                // just want "a reasonable fixed size" for the unit with
+                // the product taking whatever's left, but this will do for now.
+                NumericTextField(
+                    label = { Text("Pack size") },
+                    value = packSizeNumber,
+                    onValueChange = {
+                        packSizeNumber = it
+                        if (uiContent.editablePrice.value.measureValue != it.text) {
+                            vm.setUIContentEditablePrice(
+                                uiContent.editablePrice.value.copy(
+                                    measureValue = it.text
                                 )
-                                onPackSizeOrPriceChange()
-                            }
-                        },
-                        enabled = saveStatus.isNotBusy(),
-                        isError = validationThing3.validationResult.value != null,
-                        modifier = Modifier
-                            .weight(1f)
-                            .validationFocusRequester(packSizeScrollToFocusableHandle),
-                        interactionSource = validationThing3.interactionSource
-                    )
+                            )
+                            onPackSizeOrPriceChange()
+                        }
+                    },
+                    enabled = saveStatus.isNotBusy(),
+                    isError = validationResult != null,
+                    modifier = Modifier
+                        .weight(1f)
+                        .validationFocusRequester(scrollToFocusableHandle),
+                    interactionSource = interactionSource
+                )
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
-                    MyExposedDropdownMenuBox(
-                        enabled = saveStatus.isNotBusy(),
-                        selectedId = uiContent.editablePrice.value.measureUnit.id,
-                        onValueChange = {
-                            val measureUnit = MeasureUnit.fromValue(it)
-                            devCheck(measureUnit != null) {
-                                "Expected non-null measureUnit to be selected; got $it"
-                            }
-                            if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
-                                vm.setUIContentEditablePrice(
-                                    uiContent.editablePrice.value.copy(
-                                        measureUnit = measureUnit
-                                    )
+                MyExposedDropdownMenuBox(
+                    enabled = saveStatus.isNotBusy(),
+                    selectedId = uiContent.editablePrice.value.measureUnit.id,
+                    onValueChange = {
+                        val measureUnit = MeasureUnit.fromValue(it)
+                        devCheck(measureUnit != null) {
+                            "Expected non-null measureUnit to be selected; got $it"
+                        }
+                        if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
+                            vm.setUIContentEditablePrice(
+                                uiContent.editablePrice.value.copy(
+                                    measureUnit = measureUnit
                                 )
-                                onPackSizeOrPriceChange()
-                            }
-                        },
-                        label = { Text("Unit") },
-                        items = units,
-                        modifier = Modifier.weight(0.5f),
-                        getId = { it.id },
-                        getLabel = { it.symbol },
-                    )
-                }
+                            )
+                            onPackSizeOrPriceChange()
+                        }
+                    },
+                    label = { Text("Unit") },
+                    items = units,
+                    modifier = Modifier.weight(0.5f),
+                    getId = { it.id },
+                    getLabel = { it.symbol },
+                )
+            }
 
-                if (validationThing3.validationResult.value != null) {
-                    SupportingText(
-                        text = validationThing3.validationResult.value!!, isError = true,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .padding(top = 4.dp)
-                            //.background(Color.Cyan) // TODO HACK
-                    )
+            if (validationResult != null) {
+                SupportingText(
+                    text = validationResult!!, isError = true,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 4.dp)
+                    //.background(Color.Cyan) // TODO HACK
+                )
 
-                }
             }
         }
+
+
         //Spacer(modifier = Modifier.height(500.dp))
 
 
@@ -3490,14 +3486,11 @@ fun EditPriceScreen(
             // necessary but *not* jump the focus to a different field with an error.
             Log.d("MyApp", "LaunchedEffect saveValidationError $field")
             when (field) {
-                EditPriceViewModel.EditableField.PACK_SIZE -> {
-                    scrollAndFocusTo(packSizeScrollToFocusableHandle)
-                }
-
                 EditPriceViewModel.EditableField.PRICE -> {
                     scrollAndFocusTo(priceScrollToFocusableHandle)
                 }
 
+                else -> {}
             }
         }
     }
@@ -3951,6 +3944,7 @@ fun EditSourceScreen(
 
 // TODO: This might turn out to be more re-usable than for just TextFields
 @Composable
+// TODO: This probably needs to take an optional offset for ErrorHighlightBox
 fun <T> BaseValidatedTextField(
     value: String,
     validationRules: List<ValidationRule<String>>,
@@ -3958,6 +3952,7 @@ fun <T> BaseValidatedTextField(
     allowEmpty: Boolean = false,
     validationFlow: SharedFlow<T>,
     validationFlowFieldId: T,
+    errorHighlightOffset: Dp = 6.dp, // TODO: keep default in sync with ErrorHighlightBox - or can I avoid *having to* by e.g. allowing null to mean default?? is that idiomatic kotlin?
     content: @Composable (
         validationResult: String?,
         interactionSource: MutableInteractionSource,
@@ -3975,6 +3970,7 @@ fun <T> BaseValidatedTextField(
 
     ErrorHighlightBox(
         hasError = scrollToFocusableHandle.errorHighlightBoxVisible.value,
+        offset = errorHighlightOffset,
         validationTarget = scrollToFocusableHandle
     ) {
         Column(modifier = Modifier.animateContentSize()) {
