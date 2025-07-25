@@ -3760,6 +3760,96 @@ fun GeneralEditScreen(
 }
 
 @Composable
+fun GeneralEditAndDeleteScreen(
+    vm: GeneralEditScreenViewModel,
+    navController: NavHostController,
+    title: @Composable () -> Unit,
+    isDirty: () -> Boolean,
+    validateForSave: suspend () -> Boolean,
+    performSave: suspend () -> Unit,
+    onIdle: () -> Unit,
+    requestClose: () -> Unit,
+    allowDelete: Boolean, // TODO: rename "deleteEnabled?"
+    deleteConfirmationDetails: Triple<Boolean, @Composable () -> Unit, @Composable () -> Unit>?,
+    requestDelete: () -> Unit,
+    requestDeleteCancel: () -> Unit,
+    content: @Composable (
+        deleteEnabled: Boolean) -> Unit,
+) {
+    val coroutineScope = rememberCoroutineScope()
+    var deleting by rememberSaveable { mutableStateOf(false) }
+    val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
+
+    GeneralEditScreen(
+        vm = vm,
+        navController = navController,
+        title = title,
+        isDirty = isDirty,
+        validateForSave = validateForSave,
+        performSave = performSave,
+        onIdle = {
+            deleting = false
+            onIdle()
+        },
+        requestClose = requestClose,
+    ) {
+        content(
+             saveStatus.isNotBusy() && allowDelete,
+            // TODO: NEEDED? deleting = deleting,
+            /* TODO DELETE
+            { isSimpleDelete: Boolean, dialogTitle: @Composable () -> Unit, dialogText: @Composable () -> Unit ->
+                showDeleteConfirmDialog = true
+                isSimpleDeleteTODO = isSimpleDelete
+                dialogTitleTODO = dialogTitle
+                dialogTextTODO = dialogText
+            }, */
+
+        )
+    }
+    // TODO (isSimpleDelete: Boolean, dialogTitle: @Composable () -> Unit, dialogText: @Composable () -> Unit),
+
+    if (deleteConfirmationDetails != null) {
+        val isSimpleDelete = deleteConfirmationDetails.first
+        val dialogTitle = deleteConfirmationDetails.second
+        val dialogText = deleteConfirmationDetails.third
+
+        AlertDialog(
+            icon = if (isSimpleDelete) null else {
+                {
+                    Icon( // TODO: Do I need to set the size of this icon explicitly?
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Warning",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            title = dialogTitle,
+            text = dialogText,
+            onDismissRequest = { requestDeleteCancel() },
+            dismissButton = {
+                TextButton(onClick = { requestDeleteCancel() }) { Text("Cancel") }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    requestDeleteCancel() // TODO: is it confusing to do this? rename "request no dialog" or similar??
+                    runGeneralEditScreenOperation(
+                        vm = vm,
+                        coroutineScope = coroutineScope,
+                        isSafeToPerform = { true },
+                        perform = {
+                            deleting = true
+                            //delay(5000) // TODO HACK
+                            //throw IllegalStateException("TODO")
+                            requestDelete()
+                        }
+                    )
+                }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
+            },
+        )
+    }
+}
+
+@Composable
 fun EditSourceScreen(
     vm: EditSourceViewModel,
     navController: NavHostController,
@@ -4088,7 +4178,8 @@ fun EditDataSetScreen(
             // other dropdowns which get long enough to need scrolling, but should definitely test as it
             // matters much more there. It's ugly and annoying and concerning here too, of course.
             MyExposedDropdownMenuBox(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .validationFocusRequester(scrollToFocusableHandle),
 
                 selectedId = if (uiContent.editableDataSet.value.currencyCode != "") uiContent.editableDataSet.value.currencyCode else null,
