@@ -1652,6 +1652,8 @@ val fullScreenDialogBorder = 16.dp
 // other menus?
 val menuLeftPadding = 16.dp
 
+val defaultErrorHighlightOffset = 6.dp
+
 /* TODO DELETE
 // MD3 standard values
 val oneLineListItemHeight = 56.dp
@@ -3929,7 +3931,7 @@ fun <T> BaseValidatedTextField(
     allowEmpty: Boolean = false,
     validationFlow: SharedFlow<T>,
     validationFlowFieldId: T,
-    errorHighlightOffset: Dp = 6.dp, // TODO: keep default in sync with ErrorHighlightBox - or can I avoid *having to* by e.g. allowing null to mean default?? is that idiomatic kotlin?
+    errorHighlightOffset: Dp = defaultErrorHighlightOffset,
     content: @Composable (
         validationResult: String?,
         interactionSource: MutableInteractionSource,
@@ -6199,7 +6201,7 @@ fun rememberScrollToFocusable(): ScrollToFocusableHandle {
 fun ErrorHighlightBox(
     hasError: Boolean, // TODO: rename "visible" or something, what's standard? "enabled"? It's not about "having an error", it's about our visibility.
     borderWidth: Dp = 2.dp,
-    offset: Dp = 6.dp,
+    offset: Dp = defaultErrorHighlightOffset,
     modifier: Modifier = Modifier,
     validationTarget: ScrollToFocusableHandle,
     content: @Composable () -> Unit
