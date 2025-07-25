@@ -3828,30 +3828,6 @@ fun EditSourceScreen(
         // this form jank might be minimal). At a minimum, when clicked, the alert dialog should
         // distinguish the cases where the product has prices and where it doesn't - the latter being
         // a much less scary delete.
-        // TODO: EXperimental in appearance and also whether it belongs here or in GeneralEditScreen, though fairly sure it belongs here
-        /* TODO DELETE
-        TextButton(
-            onClick = { showDeleteConfirmDialog = true },
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-        ) {
-            Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
-            Spacer(Modifier.width(8.dp))
-            Text("Delete store")
-        }
-        */
-        /*
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            OutlinedButton(
-                onClick = { /* show confirm dialog */ },
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
-            ) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete") // TODO: tweak wording?
-                Spacer(Modifier.width(8.dp))
-                Text("Delete store")
-            }
-        }
-        */
         if (uiContent.editableSource.value.id != 0L) {
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedButton(
@@ -4214,18 +4190,6 @@ fun EditDataSetScreen(
                 }
             }
 
-            /* TODO
-            ValidationRuleSupportingText(
-                value = Triple(
-                    uiContent.editableDataSet.value.allowMetric,
-                    uiContent.editableDataSet.value.allowImperial,
-                    uiContent.editableDataSet.value.allowUSCustomary
-                ),
-                validationRules = vm.measurementSystemValidationRules,
-                // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
-                modifier = Modifier.padding(horizontal = 16.dp) //.padding(top = 4.dp)
-            )
-            */
             if (validationResult != null) {
                 // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
                 // TODO: Should we show a red warning triangle e.g. at left or right of this text? Not sure, but we
