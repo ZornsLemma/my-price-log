@@ -3922,7 +3922,6 @@ fun EditSourceScreen(
 
 // TODO: This might turn out to be more re-usable than for just TextFields
 @Composable
-// TODO: This probably needs to take an optional offset for ErrorHighlightBox
 fun <T> BaseValidatedTextField(
     value: String,
     validationRules: List<ValidationRule<String>>,
