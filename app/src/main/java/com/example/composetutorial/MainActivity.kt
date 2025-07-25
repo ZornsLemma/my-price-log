@@ -3771,10 +3771,11 @@ fun GeneralEditAndDeleteScreen(
     requestClose: () -> Unit,
     allowDelete: Boolean, // TODO: rename "deleteEnabled?"
     deleteConfirmationDetails: Triple<Boolean, @Composable () -> Unit, @Composable () -> Unit>?,
-    requestDelete: () -> Unit,
+    requestDelete: suspend () -> Unit,
     requestDeleteCancel: () -> Unit,
     content: @Composable (
-        deleteEnabled: Boolean) -> Unit,
+        deleteEnabled: Boolean,
+        showDeleteSpinner: Boolean) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     var deleting by rememberSaveable { mutableStateOf(false) }
@@ -3794,7 +3795,8 @@ fun GeneralEditAndDeleteScreen(
         requestClose = requestClose,
     ) {
         content(
-             saveStatus.isNotBusy() && allowDelete,
+            saveStatus.isNotBusy() && allowDelete,
+            deleting && saveStatus == SaveStatus.BusyForAWhile,
             // TODO: NEEDED? deleting = deleting,
             /* TODO DELETE
             { isSimpleDelete: Boolean, dialogTitle: @Composable () -> Unit, dialogText: @Composable () -> Unit ->
@@ -3838,7 +3840,7 @@ fun GeneralEditAndDeleteScreen(
                         isSafeToPerform = { true },
                         perform = {
                             deleting = true
-                            //delay(5000) // TODO HACK
+                            delay(5000) // TODO HACK
                             //throw IllegalStateException("TODO")
                             requestDelete()
                         }
@@ -3861,11 +3863,13 @@ fun EditSourceScreen(
     Log.d("MyApp", "sourceReferenceCount $sourceReferenceCount")
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
-    var deleting by rememberSaveable { mutableStateOf(false) }
 
+    // TODO: Since we still saveStatus for our other stuff, maybe we should also use it to control
+    // delete visibility etc rather than letting GeneralEditAndDeleteScreen try to help us?
     val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
 
-    GeneralEditScreen(
+    val isSimpleDelete = sourceReferenceCount == 0L
+    GeneralEditAndDeleteScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
         // TODO: Different title for add vs edit? Title should maybe show data set name?
@@ -3873,9 +3877,26 @@ fun EditSourceScreen(
         isDirty = { uiContent.editableSource.value != uiContent.originalSource },
         validateForSave = { vm.validateForSave() },
         performSave = { vm.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
-        onIdle = { deleting = false },
+        onIdle = {},
         requestClose = requestClose,
-    ) {
+        allowDelete = sourceReferenceCount != null,
+        deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
+            isSimpleDelete,
+            if (isSimpleDelete) {
+                { Text("Delete store?") }
+            } else {
+                { Text("Delete store and prices?") }
+            },
+            if (isSimpleDelete) {
+                { Text("This store has no associated prices so deleting it will not affect anything else.") }
+            } else {
+                // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
+                { Text("Deleting this store will also delete its product prices. This action cannot be undone.") }
+            }
+        ),
+        requestDelete = { vm.performDelete() },
+        requestDeleteCancel = { showDeleteConfirmDialog = false },
+    ) { deleteEnabled, showDeleteSpinner ->
         var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
@@ -3921,11 +3942,11 @@ fun EditSourceScreen(
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedButton(
                 onClick = { showDeleteConfirmDialog = true },
-                enabled = saveStatus.isNotBusy() && sourceReferenceCount != null,
+                enabled = deleteEnabled,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
             ) {
-                if (deleting && saveStatus == SaveStatus.BusyForAWhile) {
+                if (showDeleteSpinner) {
                     SmallCircularProgressIndicator()
                 } else {
                     Icon(
@@ -3937,53 +3958,6 @@ fun EditSourceScreen(
                 Text("Delete store")
             }
         }
-    }
-
-    if (showDeleteConfirmDialog) {
-        val isSimpleDelete = sourceReferenceCount == 0L
-        AlertDialog(
-            icon = if (isSimpleDelete) null else {
-                {
-                    Icon( // TODO: Do I need to set the size of this icon explicitly?
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = "Warning",
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                }
-            },
-            title = if (isSimpleDelete) {
-                { Text("Delete store?") }
-            } else {
-                { Text("Delete store and prices?") }
-            },
-            // TODO: USE BOLD FOR PART OF CASCADING DELETE TEXT? At least according to ChatGPT this is a bit fiddly without building it in code which won't fit well with string resource use.
-            text = if (isSimpleDelete) {
-                { Text("This store has no associated prices so deleting it will not affect anything else.") }
-            } else {
-                // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
-                { Text("Deleting this store will also delete its product prices. This action cannot be undone.") }
-            },
-            onDismissRequest = { showDeleteConfirmDialog = false },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = false }) { Text("Cancel") }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDeleteConfirmDialog = false
-                    runGeneralEditScreenOperation(
-                        vm = vm.generalEditScreenViewModel,
-                        coroutineScope = vm.viewModelScope,
-                        isSafeToPerform = { true },
-                        perform = {
-                            deleting = true
-                            //delay(5000) // TODO HACK
-                            //throw IllegalStateException("TODO")
-                            vm.performDelete()
-                        }
-                    )
-                }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
-            },
-        )
     }
 }
 
