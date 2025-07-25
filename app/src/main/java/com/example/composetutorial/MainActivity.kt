@@ -3200,9 +3200,6 @@ fun EditPriceScreen(
 
     val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
 
-    val packSizeScrollToFocusableHandle = rememberScrollToFocusable()
-    val priceScrollToFocusableHandle = rememberScrollToFocusable()
-
     fun onPackSizeOrPriceChange() {
         // On the first change to the pack size or price, we set the "to confirm" switch to true, on
         // the grounds that if the user is changing these values, they must be getting them from
@@ -3362,13 +3359,48 @@ fun EditPriceScreen(
         var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
         val currencyFormat = vm.currencyFormat
 
-        // TODO: START TEMP EXPERIMENTAL
-        val validationThing1 = rememberValidationThing(
+        BaseValidatedTextField(
             value = packPrice.text,
             validationRules = currencyFormat.validationRules,
-            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value
-        )
-        // TODO: END EXPERIMENTAL CHUNK
+            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+            validationFlow = vm.saveValidationEvents,
+            validationFlowFieldId = EditPriceViewModel.EditableField.PRICE,
+            errorHighlightOffset = 4.dp,
+        ) { validationResult, interactionSource, scrollToFocusableHandle ->
+            NumericTextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .validationFocusRequester(scrollToFocusableHandle),
+                label = { Text("Pack price") },
+                value = packPrice,
+                prefix = textOrNull(currencyFormat.prefix),
+                suffix = textOrNull(currencyFormat.suffix),
+                // TODO: Is it correct to right-align like this? I will assume it is for now.
+                // Maybe there's an argument since the unit on the pack size is pseudo-suffixy,
+                // we should right-align the pack size - but I think that might look ugly. But
+                // maybe that means this looks ugly. But maybe it's different if you're used to
+                // the currency symbol being on the right. Or maybe the currency symbol should
+                // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
+                // wait for user feedback?
+                textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
+                    textAlign = TextAlign.End
+                ) else LocalTextStyle.current,
+                onValueChange = {
+                    packPrice = it
+                    if (uiContent.editablePrice.value.price != it.text) {
+                        vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
+                        onPackSizeOrPriceChange()
+                    }
+                },
+                enabled = saveStatus.isNotBusy(),
+                isError = validationResult != null,
+                supportingText = textOrNull(
+                    validationResult,
+                    color = MaterialTheme.colorScheme.error
+                ),
+                interactionSource = interactionSource,
+            )
+        }
 
         // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that
         // would give a width for an arbitrary string and we could use something like that to
@@ -3383,48 +3415,6 @@ fun EditPriceScreen(
         // TODO: TEMP NOTE PRESERVED FROM NUMERICTEXTFIELD TO BE MOVE INTO VALIDATIONTHING REWRITE We don't need a validationRulesKey here because the currency validation rules
         // cannot change while we are editing. They depend only on our DataSet and our
         // frozen locale.
-
-        ErrorHighlightBox(
-            hasError = priceScrollToFocusableHandle.errorHighlightBoxVisible.value, // TODO: validationTarget argument makes this redundant?
-            offset = 4.dp,
-            validationTarget = priceScrollToFocusableHandle
-        ) { // TODO!
-            Column(modifier = Modifier.animateContentSize()) {
-                NumericTextField(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .validationFocusRequester(priceScrollToFocusableHandle),
-                    label = { Text("Pack price") },
-                    value = packPrice,
-                    prefix = textOrNull(currencyFormat.prefix),
-                    suffix = textOrNull(currencyFormat.suffix),
-                    // TODO: Is it correct to right-align like this? I will assume it is for now.
-                    // Maybe there's an argument since the unit on the pack size is pseudo-suffixy,
-                    // we should right-align the pack size - but I think that might look ugly. But
-                    // maybe that means this looks ugly. But maybe it's different if you're used to
-                    // the currency symbol being on the right. Or maybe the currency symbol should
-                    // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
-                    // wait for user feedback?
-                    textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
-                        textAlign = TextAlign.End
-                    ) else LocalTextStyle.current,
-                    onValueChange = {
-                        packPrice = it
-                        if (uiContent.editablePrice.value.price != it.text) {
-                            vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
-                            onPackSizeOrPriceChange()
-                        }
-                    },
-                    enabled = saveStatus.isNotBusy(),
-                    isError = validationThing1.validationResult.value != null,
-                    supportingText = textOrNull(
-                        validationThing1.validationResult.value,
-                        color = MaterialTheme.colorScheme.error
-                    ),
-                    interactionSource = validationThing1.interactionSource,
-                )
-            }
-        }
 
         // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
         // why are we entering it?
@@ -3479,21 +3469,9 @@ fun EditPriceScreen(
         )
     }
 
-    LaunchedEffect(Unit) {
-        vm.saveValidationEvents.collect { field ->
-            // TODO: It is probably hard, but *if* the a field with a validation error is currently
-            // focused, it would be nice to animate the error highlight box and scroll to it if
-            // necessary but *not* jump the focus to a different field with an error.
-            Log.d("MyApp", "LaunchedEffect saveValidationError $field")
-            when (field) {
-                EditPriceViewModel.EditableField.PRICE -> {
-                    scrollAndFocusTo(priceScrollToFocusableHandle)
-                }
-
-                else -> {}
-            }
-        }
-    }
+    // TODO: It is probably hard, but *if* the a field with a validation error is currently
+    // focused, it would be nice to animate the error highlight box and scroll to it if
+    // necessary but *not* jump the focus to a different field with an error.
 }
 
 @Composable
