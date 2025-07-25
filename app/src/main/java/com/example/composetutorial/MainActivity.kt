@@ -3807,7 +3807,7 @@ fun GeneralEditAndDeleteScreen(
     // TODO (isSimpleDelete: Boolean, dialogTitle: @Composable () -> Unit, dialogText: @Composable () -> Unit),
 
     if (deleteConfirmationDetails != null) {
-        val isSimpleDelete = deleteConfirmationDetails.first
+        val isSimpleDelete = deleteConfirmationDetails.first // TODO: Rename "showWarningIcon"?
         val dialogTitle = deleteConfirmationDetails.second
         val dialogText = deleteConfirmationDetails.third
 
