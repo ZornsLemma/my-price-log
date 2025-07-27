@@ -5849,26 +5849,22 @@ fun AppNavigation() {
             "editDataSet", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            val factory = remember(backStackEntry) {
-                viewModelFactoryWithHandle { app, savedStateHandle ->
-                    // TODO: !! ON NEXT LINE FEELS A BIT HACKY BUT IS PROBABLY OK
+            screenWithViewModel<EditDataSetViewModel, EditDataSetScreenUIContent>(
+                backStackEntry = backStackEntry,
+                clearUIContent = { sharedViewModel.editDataSetScreenUIContent = null },
+                buildViewModel = { app, handle ->
                     EditDataSetViewModel(
-                        app.priceTrackerRepository,
-                        savedStateHandle,
-                        sharedViewModel.editDataSetScreenUIContent
-                            ?: EditDataSetScreenUIContent.fromSavedState(savedStateHandle)!!
+                        app.priceTrackerRepository, handle, sharedViewModel.editDataSetScreenUIContent
+                            ?: EditDataSetScreenUIContent.fromSavedState(handle)!!
                     )
                 }
+            ) { viewModel ->
+                EditDataSetScreen(
+                    viewModel, navController,
+                    requestClose = {
+                        navController.popBackStack()
+                    })
             }
-            LaunchedEffect(Unit) {
-                sharedViewModel.editDataSetScreenUIContent = null
-            }
-
-            EditDataSetScreen(
-                viewModel(backStackEntry, factory = factory), navController,
-                requestClose = {
-                    navController.popBackStack()
-                })
         }
 
         /* TODO: ChatGPT suggestion for factoring out editX screen commonality (it didn't have full context so the ideas is the thing not the code):
