@@ -125,6 +125,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisallowComposableCalls
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -5579,6 +5580,38 @@ class EditDataSetViewModel(
     }
 }
 
+// TODO: ChatGPT magic
+@Composable
+inline fun <reified VM : ViewModel, UIContent> screenWithViewModel(
+    backStackEntry: NavBackStackEntry,
+    noinline uiContentFromSavedState: @DisallowComposableCalls (SavedStateHandle) -> UIContent?,
+    noinline getUIContent: @DisallowComposableCalls () -> UIContent?,
+    noinline clearUIContent: () -> Unit,
+    noinline buildViewModel: @DisallowComposableCalls  (MyApplication, SavedStateHandle, UIContent) -> VM,
+    crossinline content: @Composable (VM) -> Unit
+) {
+    // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
+    // backStackEntry) - this avoids stale data causing problems.
+    val factory = remember(backStackEntry) {
+        viewModelFactoryWithHandle { app, handle ->
+            // TODO: Would we be as well to merge getUIContent and uiContentFromSavedState into a single lambda? For that matter, maybe buildViewModel() should be merged into that lambda too.
+            val uiContent = getUIContent() ?: uiContentFromSavedState(handle)
+            buildViewModel(app, handle, uiContent!!) // TODO: !! IS HACK, MAYBE OK
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        clearUIContent()
+    }
+
+    val vm: VM = viewModel(
+        viewModelStoreOwner = backStackEntry,
+        factory = factory
+    )
+
+    content(vm)
+}
+
 // TODO: Navigation is a mess - I'm completely unclear how the mysterious back stack and routes and
 // viewmodels being reused and various different kinds of composition and activity and process
 // destruction and reconstruction are supposed to interact.
@@ -5762,6 +5795,7 @@ fun AppNavigation() {
             )
         }
 
+        // TODO: Can we factor out a lot of the commonality in the GeneralSelector-based composables here?
         composable(
             "editSources/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
@@ -5808,32 +5842,22 @@ fun AppNavigation() {
             "editPrice", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
-            // backStackEntry) - this avoids stale data causing problems.
-            val factory = remember(backStackEntry) {
-                viewModelFactoryWithHandle { app, savedStateHandle ->
-                    // TODO: !! ON NEXT LINE FEELS A BIT HACKY BUT IS PROBABLY OK
-                    EditPriceViewModel(
-                        app.priceTrackerRepository,
-                        savedStateHandle,
-                        sharedViewModel.editPriceScreenUIContent
-                            ?: EditPriceScreenUIContent.fromSavedState(savedStateHandle)!!
-                    )
+            screenWithViewModel<EditPriceViewModel, EditPriceScreenUIContent>(
+                backStackEntry = backStackEntry,
+                uiContentFromSavedState = EditPriceScreenUIContent::fromSavedState,
+                getUIContent = { sharedViewModel.editPriceScreenUIContent },
+                clearUIContent = { sharedViewModel.editPriceScreenUIContent = null },
+                buildViewModel = { app, handle, uiContent ->
+                    EditPriceViewModel(app.priceTrackerRepository, handle, uiContent)
                 }
+            ) { viewModel ->
+                // TODO: Be good to test fairly late on with two datasets with different currencies - I vaguely wonder
+                // if re-use of this composable (maybe prevented via randomUUID route hack?) will not pick up the
+                // changes.
+                EditPriceScreen(viewModel, navController,
+                    requestClose = { navController.popBackStack() }
+                )
             }
-            LaunchedEffect(Unit) {
-                sharedViewModel.editPriceScreenUIContent = null
-            }
-
-            // TODO: Be good to test fairly late on with two datasets with different currencies - I vaguely wonder
-            // if re-use of this composable (maybe prevented via randomUUID route hack?) will not pick up the
-            // changes.
-
-            EditPriceScreen(
-                viewModel(backStackEntry, factory = factory), navController,
-                requestClose = {
-                    navController.popBackStack()
-                })
         }
 
         composable(
