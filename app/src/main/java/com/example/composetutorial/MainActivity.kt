@@ -3939,7 +3939,11 @@ fun EditSourceScreen(
             // TODO: elevation???
         ) {
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                Text("Loyalty scheme benefit:") // TODO: Should this used a different font?
+                // TODO: I'm far from sure what typography or colour this caption should have, but this
+                // matches the caption on the TextFields so it is probably not a terrible choice.
+                Text("Loyalty scheme benefit:",
+                        style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(8.dp))
                 options.forEach { option ->
                     Row(
@@ -3953,7 +3957,7 @@ fun EditSourceScreen(
                             onClick = { selectedOption = option }
                         )
                         // TODO: Clicking on the text probably ought to change the radio button too - but let's just go with this ChatGPT-derived code as I experiment with the visual appearance for now
-                        Text(text = option, modifier = Modifier.padding(start = 8.dp))
+                        Text(text = option, modifier = Modifier.padding(start = 8.dp), style = MaterialTheme.typography.labelLarge, /* TODO: seems to be default anyway: color = MaterialTheme.colorScheme.onSurface */)
                     }
                 }
             }
@@ -4243,6 +4247,7 @@ fun EditDataSetScreen(
         // TODO: MD3 Expressive deprecates this and says we should use a connected button group, but
         // the relevant library version is still in alpha so I'll just do it the old MD3 way for now
         // with a segmented button group.
+        // TODO: Should this maybe be on a Card to help it match the "style" of the filledtextfields?
         // TODO: I'm far from sure what typography or colour this caption should have, but this
         // matches the caption on the TextFields so it is probably not a terrible choice.
         BaseValidatedTextField(
