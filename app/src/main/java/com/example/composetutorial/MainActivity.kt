@@ -2764,6 +2764,8 @@ data class EditDataSetScreenUIContent(
     }
 }
 
+// TODO: Now I've increased the inter-field vertical spacing from 8.dp to 16.dp in the various edit
+// screens, this one might look a little cramped by comparison. Come back to this later.
 @Composable
 fun HomeScreen(
     vm: HomeViewModel,
@@ -3254,7 +3256,8 @@ fun EditPriceScreen(
             enabled = false,
             onValueChange = {})
 
-        Spacer(modifier = Modifier.height(8.dp))
+        // TODO: Maybe pull this 16.dp form vertical spacing value out into a named constant.
+        Spacer(modifier = Modifier.height(16.dp))
 
         TextField(
             modifier = Modifier.fillMaxWidth(),
@@ -3263,7 +3266,7 @@ fun EditPriceScreen(
             enabled = false,
             onValueChange = {})
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         val units: List<MeasureUnit> =
             remember(uiContent.dataSet, uiContent.item.defaultUnit.quantityType) {
@@ -3357,12 +3360,8 @@ fun EditPriceScreen(
             }
         }
 
-
         //Spacer(modifier = Modifier.height(500.dp))
-
-
-        Spacer(modifier = Modifier.height(8.dp))
-
+        Spacer(modifier = Modifier.height(16.dp))
 
         var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
         val currencyFormat = vm.currencyFormat
@@ -3427,7 +3426,7 @@ fun EditPriceScreen(
         // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
         // why are we entering it?
         if (uiContent.editablePrice.value.id != 0L) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -3463,7 +3462,7 @@ fun EditPriceScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
         TextField(
@@ -3910,7 +3909,6 @@ fun EditSourceScreen(
         var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
-        // TODO: Presumably because this is *right* at the top (maybe another reason to add a separation betwen it and top bar), the error highlight box gets clipped at the top
         ValidatedTextField2(
             label = { Text("Name") },
             value = name,
@@ -3927,7 +3925,7 @@ fun EditSourceScreen(
             validationFlowFieldId = EditSourceViewModel.EditableField.NAME
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         var notes by rememberSyncedTextFieldValue(uiContent.editableSource.value.notes)
         FilteredTextField(
@@ -3949,7 +3947,7 @@ fun EditSourceScreen(
         // distinguish the cases where the product has prices and where it doesn't - the latter being
         // a much less scary delete.
         if (uiContent.editableSource.value.id != 0L) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
                 onClick = { showDeleteConfirmDialog = true },
                 enabled = saveStatus.isNotBusy() && sourceReferenceCount != null,
@@ -4111,7 +4109,6 @@ fun EditDataSetScreen(
     ) { showDeleteSpinner ->
         var name by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
-        // TODO: Presumably because this is *right* at the top (maybe another reason to add a separation betwen it and top bar), the error highlight box gets clipped at the top
         ValidatedTextField2(
             label = { Text("Name") },
             value = name,
@@ -4128,7 +4125,7 @@ fun EditDataSetScreen(
             validationFlowFieldId = EditDataSetViewModel.EditableField.NAME
         )
 
-        Spacer(modifier = Modifier.height(8.dp)) // TODO: Maybe 16.dp given general structure of this screen?
+        Spacer(modifier = Modifier.height(16.dp)) // TODO: Maybe 16.dp given general structure of this screen?
 
         // TODO: Should we specify an offset of 4.dp here? Or should we perhaps just improve spacing?
         BaseValidatedTextField(
@@ -4309,7 +4306,7 @@ fun EditDataSetScreen(
         )
 
         if (uiContent.editableDataSet.value.id != 0L) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
                 onClick = { showDeleteConfirmDialog = true },
                 enabled = saveStatus.isNotBusy() && dataSetReferenceCount != null,
