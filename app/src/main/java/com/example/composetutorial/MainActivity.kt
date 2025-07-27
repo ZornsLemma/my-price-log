@@ -3699,7 +3699,7 @@ fun GeneralEditScreen(
                 // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am
                 // struggling to find any non-LLM explanations here, but *maybe* *if we have
                 // scrolled away from the top* we should change the background to surfaceContainer
-                .background(Color.Cyan /*TODO TEMP FOR DEBUG, SHOULD BE MaterialTheme.colorScheme.surface */) // because this is a full-screen dialog
+                .background(/* Color.Cyan TODO TEMP FOR DEBUG, SHOULD BE */ MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = fullScreenDialogBorder)
