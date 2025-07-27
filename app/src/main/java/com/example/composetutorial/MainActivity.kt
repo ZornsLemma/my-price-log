@@ -3932,27 +3932,34 @@ fun EditSourceScreen(
         val options = listOf("None", "Bonus/cashback", "Discount")
         var selectedOption by remember { mutableStateOf(options[0]) }
 
-        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-            Text("Loyalty scheme benefit:") // TODO: Should this used a different font?
-            Spacer(modifier = Modifier.height(8.dp))
-            options.forEach { option ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(40.dp) // MD3 spec
-                ) {
-                    RadioButton(
-                        selected = (option == selectedOption),
-                        onClick = { selectedOption = option }
-                    )
-                    // TODO: Clicking on the text probably ought to change the radio button too - but let's just go with this ChatGPT-derived code as I experiment with the visual appearance for now
-                    Text(text = option, modifier = Modifier.padding(start = 8.dp))
+        Card(modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest)
+
+            // TODO: colors?
+            // TODO: elevation???
+        ) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                Text("Loyalty scheme benefit:") // TODO: Should this used a different font?
+                Spacer(modifier = Modifier.height(8.dp))
+                options.forEach { option ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp) // MD3 spec
+                    ) {
+                        RadioButton(
+                            selected = (option == selectedOption),
+                            onClick = { selectedOption = option }
+                        )
+                        // TODO: Clicking on the text probably ought to change the radio button too - but let's just go with this ChatGPT-derived code as I experiment with the visual appearance for now
+                        Text(text = option, modifier = Modifier.padding(start = 8.dp))
+                    }
                 }
             }
-        }
 
-        // TODO: We need a TextField for % - perhaps conditionally shown below the radio buttons when non-"None" option is selected
+            // TODO: We need a TextField for % - perhaps conditionally shown below the radio buttons when non-"None" option is selected
+        }
 
         // TODO END EXPERIMENTAL
 
