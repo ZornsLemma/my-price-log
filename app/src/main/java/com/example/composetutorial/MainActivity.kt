@@ -5810,37 +5810,35 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
-            val factory = remember(backStackEntry) {
-                viewModelFactoryWithHandle { app, savedStateHandle ->
+            screenWithViewModel<GeneralSelectorViewModel<Source>, Int /* TODO DUMMY */>(
+                backStackEntry = backStackEntry,
+                clearUIContent = { sharedViewModel.editSourcesScreenUIContent = null },
+                buildViewModel = { app, handle ->
                     GeneralSelectorViewModel(
-                        savedStateHandle = savedStateHandle,
-                        getName = { it -> it.name }, // TODO: not actually used, allow null?
-                        sharedViewModel.editSourcesScreenUIContent,
+                        savedStateHandle = handle,
+                        getName = { it -> it.name },
+                        initialList = sharedViewModel.editSourcesScreenUIContent,
                         dataQuery = app.priceTrackerRepository.getAllSources(dataSetId)
                     )
                 }
+            ) { viewModel ->
+                GeneralSelectorScreen(
+                    viewModel,
+                    navController,
+                    title = topAppBarTitle("Edit stores", dataSetName),
+                    getId = { it.id },
+                    getName = { it.name },
+                    onAddClick = {
+                        Log.d("MyAppGS", "Add source")
+                        sharedViewModel.setEditSourceScreenContent(null, dataSetId)
+                        navController.navigate("editSource")
+                    },
+                    onItemSelected = {
+                        Log.d("MyAppGS", "selected $it")
+                        sharedViewModel.setEditSourceScreenContent(it, dataSetId)
+                        navController.navigate("editSource")
+                    })
             }
-            LaunchedEffect(Unit) {
-                sharedViewModel.editItemsScreenUIContent = null
-            }
-
-            val vm: GeneralSelectorViewModel<Source> = viewModel(backStackEntry, factory = factory)
-            GeneralSelectorScreen(
-                vm,
-                navController,
-                title = topAppBarTitle("Edit stores", dataSetName),
-                getId = { it.id },
-                getName = { it.name },
-                onAddClick = {
-                    Log.d("MyAppGS", "Add source")
-                    sharedViewModel.setEditSourceScreenContent(null, dataSetId)
-                    navController.navigate("editSource")
-                },
-                onItemSelected = {
-                    Log.d("MyAppGS", "selected $it")
-                    sharedViewModel.setEditSourceScreenContent(it, dataSetId)
-                    navController.navigate("editSource")
-                })
         }
 
         composable(
