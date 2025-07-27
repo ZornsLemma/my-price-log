@@ -51,6 +51,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -1647,7 +1648,10 @@ val screenBorder = 8.dp
 // edges don't line up with the right hand edge of the "Save" text button. Some of the screenshots
 // in the documentation seem to show some but not all of these misalignments. It just feels
 // half-baked and inconsistent so I'm going to go with this.
-val fullScreenDialogBorder = 16.dp
+val fullScreenDialogBorder = 16.dp // TODO: rename ...HorizontalBorder?
+
+val fullScreenDialogVerticalBorder = 8.dp
+
 
 // MD3 says 12.dp but MyExposedDropdownMenuBox's dropdown item text doesn't line up with the parent
 // TextField text with that. TODO: We could override it for that specific case and use 12.dp for
@@ -3695,13 +3699,25 @@ fun GeneralEditScreen(
                 // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am
                 // struggling to find any non-LLM explanations here, but *maybe* *if we have
                 // scrolled away from the top* we should change the background to surfaceContainer
-                .background(/* Color.Cyan TODO TEMP FOR DEBUG, SHOULD BE */MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
+                .background(Color.Cyan /*TODO TEMP FOR DEBUG, SHOULD BE MaterialTheme.colorScheme.surface */) // because this is a full-screen dialog
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = fullScreenDialogBorder)
                 .verticalScroll(scrollState)
         ) {
+            // The two vertical spacers here are to create a vertical border which we *can* draw
+            // over using ErrorHighlightBox. (If we add "vertical = fullScreenDialogVerticalBorder"
+            // to the parent Column's .padding(), we can't draw over it.) I have been unable to find
+            // a really clear answer if we should have a vertical space between the top app bar and
+            // the first "real" thing (e.g. a TextField) in the content, so I am going to let the
+            // need to be able to draw an ErrorHighlightBox around the first thing in the content
+            // make the decision for me. We apply this here for consistency across all dialogs. (In
+            // practice the top app bar's background and the content's background are the same, so
+            // it isn't normally that noticeable either way. You can see the difference more easily
+            // by using a non-standard background for the dialog.)
+            Spacer(modifier = Modifier.height(fullScreenDialogVerticalBorder))
             content()
+            Spacer(modifier = Modifier.height(fullScreenDialogVerticalBorder))
         }
     }
 
