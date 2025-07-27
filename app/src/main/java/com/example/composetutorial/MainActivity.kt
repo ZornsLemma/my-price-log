@@ -6458,3 +6458,9 @@ Log.d("MyApp", baz.toString())
 // screens to select thigns to undelete, and maybe some other facility somewhere else to purge
 // some/all waste bin things for real. But it probably is the way to go long term, even if it's not
 // part of MVP.
+
+// TODO: The list of prices for product across stores at bottom of home screen should probably be
+// clickable per item to expand into a read-only explanation of how the "effective price" was
+// arrived at (store level discounts, pseudo-inflation penalties, etc) and maybe also the same
+// "Good/bad/whatever price" recommendation we show in the "specific store" card (calculated the
+// same way).
