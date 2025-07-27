@@ -5588,8 +5588,6 @@ inline fun <reified VM : ViewModel, UIContent> screenWithViewModel(
     noinline buildViewModel: @DisallowComposableCalls (MyApplication, SavedStateHandle) -> VM,
     crossinline content: @Composable (VM) -> Unit
 ) {
-    // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
-    // backStackEntry) - this avoids stale data causing problems.
     val factory = remember(backStackEntry) {
         viewModelFactoryWithHandle { app, handle -> buildViewModel(app, handle) }
     }
@@ -5667,6 +5665,9 @@ fun AppNavigation() {
                 )
             )
 
+        // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
+        // backStackEntry) - this avoids stale data causing problems.
+
         composable(
             "home",
             exitTransition = { ExitTransition.None },
@@ -5718,8 +5719,6 @@ fun AppNavigation() {
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
-            // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
-            // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
                 viewModelFactoryWithHandle { app, savedStateHandle ->
                     GeneralSelectorViewModel(
@@ -5760,8 +5759,6 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
-            // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
-            // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
                 viewModelFactoryWithHandle { app, savedStateHandle ->
                     GeneralSelectorViewModel(
@@ -5797,8 +5794,6 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
-            // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
-            // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
                 viewModelFactoryWithHandle { app, savedStateHandle ->
                     GeneralSelectorViewModel(
@@ -5854,8 +5849,6 @@ fun AppNavigation() {
             "editDataSet", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
-            // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
                 viewModelFactoryWithHandle { app, savedStateHandle ->
                     // TODO: !! ON NEXT LINE FEELS A BIT HACKY BUT IS PROBABLY OK
@@ -5954,8 +5947,6 @@ This may be complete crap. The example of how to use it is probably as long as t
             "editSource", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
-            // backStackEntry) - this avoids stale data causing problems.
             val factory = remember(backStackEntry) {
                 viewModelFactoryWithHandle { app, savedStateHandle ->
                     // TODO: !! ON NEXT LINE FEELS A BIT HACKY BUT IS PROBABLY OK
