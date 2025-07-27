@@ -5582,7 +5582,7 @@ class EditDataSetViewModel(
 
 // TODO: ChatGPT magic
 @Composable
-inline fun <reified VM : ViewModel, UIContent> screenWithViewModel(
+inline fun <reified VM : ViewModel, UIContent> screenWithViewModel( // TODO: UNUSED TYPE ARG!
     backStackEntry: NavBackStackEntry,
     noinline clearUIContent: () -> Unit,
     noinline buildViewModel: @DisallowComposableCalls (MyApplication, SavedStateHandle) -> VM,
@@ -5602,6 +5602,24 @@ inline fun <reified VM : ViewModel, UIContent> screenWithViewModel(
     )
 
     content(vm)
+}
+
+@Composable
+// TODO inline fun <reified VM : ViewModel, UIContent> todoRenameMe(
+// TODO: I suspect this shows that it makes more sense just to use screenWithViewModel directly and how to do it
+fun <T> todoRenameMe(
+    backStackEntry: NavBackStackEntry,
+    clearUIContent: () -> Unit,
+    buildViewModel: (MyApplication, SavedStateHandle) -> GeneralSelectorViewModel<T>,
+    content: @Composable (GeneralSelectorViewModel<T>) -> Unit // TODO: crossinline is copy and paste voodoo
+) {
+    screenWithViewModel<GeneralSelectorViewModel<T>, Int>(
+        backStackEntry = backStackEntry,
+        clearUIContent = clearUIContent,
+        buildViewModel = buildViewModel,
+    ) { vm ->
+        content(vm)
+    }
 }
 
 // TODO: Navigation is a mess - I'm completely unclear how the mysterious back stack and routes and
