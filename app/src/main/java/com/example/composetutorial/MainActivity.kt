@@ -3861,8 +3861,6 @@ fun EditSourceScreen(
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
-    // TODO: Since we still saveStatus for our other stuff, maybe we should also use it to control
-    // delete visibility etc rather than letting GeneralEditAndDeleteScreen try to help us?
     val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = sourceReferenceCount == 0L
@@ -4063,12 +4061,11 @@ fun EditDataSetScreen(
     Log.d("MyApp", "dataSetReferenceCount $dataSetReferenceCount")
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
-    var deleting by rememberSaveable { mutableStateOf(false) }
 
     val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
 
-
-    GeneralEditScreen(
+    val isSimpleDelete = dataSetReferenceCount == 0L
+    GeneralEditAndDeleteScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
         // TODO: Different title for add vs edit?
@@ -4076,10 +4073,26 @@ fun EditDataSetScreen(
         isDirty = { uiContent.editableDataSet.value != uiContent.originalDataSet },
         validateForSave = { vm.validateForSave() },
         performSave = { vm.performSave(); /* throw IllegalArgumentException("TODO2") */ },
-        onIdle = { deleting = false },
+        onIdle = {},
         requestClose = requestClose,
-    ) {
-
+        // TODO: WORDING FOR ALL OF THIS IS PARTICULARLY BAD AND NEEDS THOUGHT
+        deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
+            isSimpleDelete,
+            if (isSimpleDelete) {
+                { Text("Delete collection?") }
+            } else {
+                { Text("Delete collection and products, stores and prices?") }
+            },
+            if (isSimpleDelete) {
+                { Text("This collection has no associated TODODATA so deleting it will not affect anything else.") }
+            } else {
+                // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
+                { Text("Deleting this collection will also delete its TODOASSOCIATEDDATA. This action cannot be undone.") }
+            }
+        ),
+        requestDelete = { vm.performDelete() },
+        requestDeleteCancel = { showDeleteConfirmDialog = false },
+    ) { showDeleteSpinner ->
         var name by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         // TODO: Presumably because this is *right* at the top (maybe another reason to add a separation betwen it and top bar), the error highlight box gets clipped at the top
@@ -4287,7 +4300,7 @@ fun EditDataSetScreen(
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
             ) {
-                if (deleting && saveStatus == SaveStatus.BusyForAWhile) {
+                if (showDeleteSpinner) {
                     SmallCircularProgressIndicator()
                 } else {
                     Icon(
@@ -4299,54 +4312,6 @@ fun EditDataSetScreen(
                 Text("Delete collection")
             }
         }
-    }
-
-    if (showDeleteConfirmDialog) {
-        val isSimpleDelete = dataSetReferenceCount == 0L
-        AlertDialog(
-            icon = if (isSimpleDelete) null else {
-                {
-                    Icon( // TODO: Do I need to set the size of this icon explicitly?
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = "Warning",
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                }
-            },
-            // TODO: WORDING FOR ALL OF THIS IS PARTICULARLY BAD AND NEEDS THOUGHT
-            title = if (isSimpleDelete) {
-                { Text("Delete collection?") }
-            } else {
-                { Text("Delete collection and products, stores and prices?") }
-            },
-            // TODO: USE BOLD FOR PART OF CASCADING DELETE TEXT? At least according to ChatGPT this is a bit fiddly without building it in code which won't fit well with string resource use.
-            text = if (isSimpleDelete) {
-                { Text("This collection has no associated TODODATA so deleting it will not affect anything else.") }
-            } else {
-                // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
-                { Text("Deleting this collection will also delete its TODOASSOCIATEDDATA. This action cannot be undone.") }
-            },
-            onDismissRequest = { showDeleteConfirmDialog = false },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = false }) { Text("Cancel") }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDeleteConfirmDialog = false
-                    runGeneralEditScreenOperation(
-                        vm = vm.generalEditScreenViewModel,
-                        coroutineScope = vm.viewModelScope,
-                        isSafeToPerform = { true },
-                        perform = {
-                            deleting = true
-                            //delay(5000) // TODO HACK
-                            //throw IllegalStateException("TODO")
-                            vm.performDelete()
-                        }
-                    )
-                }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
-            },
-        )
     }
 }
 
