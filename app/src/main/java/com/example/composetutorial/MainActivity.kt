@@ -5943,26 +5943,24 @@ This may be complete crap. The example of how to use it is probably as long as t
             "editSource", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            val factory = remember(backStackEntry) {
-                viewModelFactoryWithHandle { app, savedStateHandle ->
-                    // TODO: !! ON NEXT LINE FEELS A BIT HACKY BUT IS PROBABLY OK
+            screenWithViewModel<EditSourceViewModel, EditSourceScreenUIContent>(
+                backStackEntry = backStackEntry,
+                clearUIContent = { sharedViewModel.editSourceScreenUIContent = null },
+                buildViewModel = { app, handle ->
                     EditSourceViewModel(
                         app.priceTrackerRepository,
-                        savedStateHandle,
+                        handle,
                         sharedViewModel.editSourceScreenUIContent
-                            ?: EditSourceScreenUIContent.fromSavedState(savedStateHandle)!!
+                            ?: EditSourceScreenUIContent.fromSavedState(handle)!!
                     )
                 }
+            ) { viewModel ->
+                EditSourceScreen(
+                    viewModel, navController,
+                    requestClose = {
+                        navController.popBackStack()
+                    })
             }
-            LaunchedEffect(Unit) {
-                sharedViewModel.editSourceScreenUIContent = null
-            }
-
-            EditSourceScreen(
-                viewModel(backStackEntry, factory = factory), navController,
-                requestClose = {
-                    navController.popBackStack()
-                })
         }
     }
 }
