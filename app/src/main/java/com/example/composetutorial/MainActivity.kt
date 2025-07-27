@@ -5731,43 +5731,40 @@ fun AppNavigation() {
             SettingsScreen(navController)
         }
 
-        // TODO: Lots of code duplication across the editStatic here
         composable(
             "editDataSets", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
-            val factory = remember(backStackEntry) {
-                viewModelFactoryWithHandle { app, savedStateHandle ->
+            screenWithViewModel<GeneralSelectorViewModel<DataSet>, Int /* TODO DUMMY */>(
+                backStackEntry = backStackEntry,
+                clearUIContent = { sharedViewModel.editDataSetsScreenUIContent = null },
+                buildViewModel = { app, handle ->
                     GeneralSelectorViewModel(
-                        savedStateHandle = savedStateHandle,
-                        getName = { it -> it.name }, // TODO: not actually used, allow null?
+                        savedStateHandle = handle,
+                        getName = { it -> it.name },  // TODO: not actually used, allow null?
                         initialList = sharedViewModel.editDataSetsScreenUIContent,
                         dataQuery = app.priceTrackerRepository.getAllDataSets()
                     )
                 }
+            ) { viewModel ->
+                GeneralSelectorScreen(
+                    viewModel,
+                    navController,
+                    title = topAppBarTitle("Edit collections", null),
+                    getId = { it.id },
+                    getName = { it.name },
+                    onAddClick = {
+                        Log.d("MyAppGS", "Add data set")
+                        sharedViewModel.setEditDataSetScreenContent(null)
+                        navController.navigate("editDataSet")
+                    },
+                    onItemSelected = {
+                        Log.d("MyAppGS", "selected $it")
+                        sharedViewModel.setEditDataSetScreenContent(it)
+                        navController.navigate("editDataSet")
+                    })
             }
-            LaunchedEffect(Unit) {
-                sharedViewModel.editDataSetsScreenUIContent = null
-            }
-
-            val vm: GeneralSelectorViewModel<DataSet> = viewModel(backStackEntry, factory = factory)
-            GeneralSelectorScreen(
-                vm,
-                navController,
-                title = topAppBarTitle("Edit collections", null),
-                getId = { it.id },
-                getName = { it.name },
-                onAddClick = {
-                    Log.d("MyAppGS", "Add data set")
-                    sharedViewModel.setEditDataSetScreenContent(null)
-                    navController.navigate("editDataSet")
-                },
-                onItemSelected = {
-                    Log.d("MyAppGS", "selected $it")
-                    sharedViewModel.setEditDataSetScreenContent(it)
-                    navController.navigate("editDataSet")
-                })
         }
 
         composable(
