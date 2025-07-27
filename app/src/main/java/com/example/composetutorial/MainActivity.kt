@@ -5777,31 +5777,29 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
-            val factory = remember(backStackEntry) {
-                viewModelFactoryWithHandle { app, savedStateHandle ->
+            screenWithViewModel<GeneralSelectorViewModel<Item>, Int /* TODO DUMMY */>(
+                backStackEntry = backStackEntry,
+                clearUIContent = { sharedViewModel.editItemsScreenUIContent = null },
+                buildViewModel = { app, handle ->
                     GeneralSelectorViewModel(
-                        savedStateHandle = savedStateHandle,
+                        savedStateHandle = handle,
                         getName = { it -> it.name },
-                        sharedViewModel.editItemsScreenUIContent,
+                        initialList = sharedViewModel.editItemsScreenUIContent,
                         dataQuery = app.priceTrackerRepository.getAllItems(dataSetId)
                     )
                 }
+            ) { viewModel ->
+                GeneralSelectorScreen(
+                    viewModel,
+                    navController,
+                    title = topAppBarTitle("Edit products", dataSetName),
+                    getId = { it.id },
+                    getName = { it.name },
+                    onAddClick = { Log.d("MyAppGS", "Add item") },
+                    onItemSelected = { Log.d("MyAppGS", "selected $it") },
+                    showSearch = true
+                )
             }
-            LaunchedEffect(Unit) {
-                sharedViewModel.editItemsScreenUIContent = null
-            }
-
-            val vm: GeneralSelectorViewModel<Item> = viewModel(backStackEntry, factory = factory)
-            GeneralSelectorScreen(
-                vm,
-                navController,
-                title = topAppBarTitle("Edit products", dataSetName),
-                getId = { it.id },
-                getName = { it.name },
-                onAddClick = { Log.d("MyAppGS", "Add item") },
-                onItemSelected = { Log.d("MyAppGS", "selected $it") },
-                showSearch = true
-            )
         }
 
         // TODO: Can we factor out a lot of the commonality in the GeneralSelector-based composables here?
