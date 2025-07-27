@@ -5584,20 +5584,14 @@ class EditDataSetViewModel(
 @Composable
 inline fun <reified VM : ViewModel, UIContent> screenWithViewModel(
     backStackEntry: NavBackStackEntry,
-    noinline uiContentFromSavedState: @DisallowComposableCalls (SavedStateHandle) -> UIContent?,
-    noinline getUIContent: @DisallowComposableCalls () -> UIContent?,
     noinline clearUIContent: () -> Unit,
-    noinline buildViewModel: @DisallowComposableCalls  (MyApplication, SavedStateHandle, UIContent) -> VM,
+    noinline buildViewModel: @DisallowComposableCalls (MyApplication, SavedStateHandle) -> VM,
     crossinline content: @Composable (VM) -> Unit
 ) {
     // Note that we explicitly request a fresh ViewModel each time (because it's tied to the
     // backStackEntry) - this avoids stale data causing problems.
     val factory = remember(backStackEntry) {
-        viewModelFactoryWithHandle { app, handle ->
-            // TODO: Would we be as well to merge getUIContent and uiContentFromSavedState into a single lambda? For that matter, maybe buildViewModel() should be merged into that lambda too.
-            val uiContent = getUIContent() ?: uiContentFromSavedState(handle)
-            buildViewModel(app, handle, uiContent!!) // TODO: !! IS HACK, MAYBE OK
-        }
+        viewModelFactoryWithHandle { app, handle -> buildViewModel(app, handle) }
     }
 
     LaunchedEffect(Unit) {
@@ -5844,12 +5838,8 @@ fun AppNavigation() {
         ) { backStackEntry ->
             screenWithViewModel<EditPriceViewModel, EditPriceScreenUIContent>(
                 backStackEntry = backStackEntry,
-                uiContentFromSavedState = EditPriceScreenUIContent::fromSavedState,
-                getUIContent = { sharedViewModel.editPriceScreenUIContent },
                 clearUIContent = { sharedViewModel.editPriceScreenUIContent = null },
-                buildViewModel = { app, handle, uiContent ->
-                    EditPriceViewModel(app.priceTrackerRepository, handle, uiContent)
-                }
+                buildViewModel = { app, handle -> EditPriceViewModel(app.priceTrackerRepository, handle, sharedViewModel.editPriceScreenUIContent ?: EditPriceScreenUIContent.fromSavedState(handle)!!) }, // TODO !! IS MAYBE A HACK - TBH COULD I JUST MAKE FROMSAVEDSTATE RETURN NON-NULL? NOT TOO KEEN
             ) { viewModel ->
                 // TODO: Be good to test fairly late on with two datasets with different currencies - I vaguely wonder
                 // if re-use of this composable (maybe prevented via randomUUID route hack?) will not pick up the
