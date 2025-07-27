@@ -3938,11 +3938,12 @@ fun EditSourceScreen(
             // TODO: colors?
             // TODO: elevation???
         ) {
+            // TODO: Probably want animate content size here to allow for % textfield appearing/disappearing
             Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                 // TODO: I'm far from sure what typography or colour this caption should have, but this
-                // matches the caption on the TextFields so it is probably not a terrible choice.
-                Text("Loyalty scheme benefit:",
-                        style = MaterialTheme.typography.bodySmall,
+                // matches the caption on the TextFields so it is probably not a terrible choice. TODO: THIS IS FOR bodySmall - I can't help thinking titleSmall maybe looks better though. I am a bit worried the fonts are all over the place in general, but since MD3 is conspicuously silent outside of some very specific cases it is really hard to know what to do.
+                Text("Loyalty scheme benefit",
+                        style = MaterialTheme.typography.titleSmall /* bodySmall */,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(8.dp))
                 options.forEach { option ->
@@ -3957,7 +3958,7 @@ fun EditSourceScreen(
                             onClick = { selectedOption = option }
                         )
                         // TODO: Clicking on the text probably ought to change the radio button too - but let's just go with this ChatGPT-derived code as I experiment with the visual appearance for now
-                        Text(text = option, modifier = Modifier.padding(start = 8.dp), style = MaterialTheme.typography.labelLarge, /* TODO: seems to be default anyway: color = MaterialTheme.colorScheme.onSurface */)
+                        Text(text = option, modifier = Modifier.padding(start = 8.dp), /* TODO: not sure this looks right: style = MaterialTheme.typography.labelLarge, */ /* TODO: seems to be default anyway: color = MaterialTheme.colorScheme.onSurface */)
                     }
                 }
             }
