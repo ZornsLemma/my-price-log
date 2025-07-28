@@ -208,6 +208,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
+import com.example.composetutorial.EditPriceScreenUIContent.Companion
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -1065,11 +1066,20 @@ data class Source(
     val notes: String,
 ) : Parcelable
 
+enum class LoyaltyDiscountType(val id: Long) {
+    NONE(1),
+    BONUS(2),
+    DISCOUNT(3)
+}
+
+// TODO: IN THE DB AND IN "SOURCE", THE LOYALTYDISCOUNTTYPE WILL BE STORED BUT THE PERCENTAGE WILL BE STORED AS A LOYALTY_MULTIPLER WHICH IS JUST APPLIED VIA A MULT AND DOESN'T NEED TO BE TREATED DIFFERENTLY DEPEND ING ON LOYALTHY TYPE
 @Parcelize
 data class EditableSource(
     val id: Long,
     val dataSetId: Long,
     val name: String,
+    val loyaltyDiscountType: LoyaltyDiscountType,
+    val loyaltyPercentage: String, // TODO: NEED TO ADD THIS TO NON-EDITABLE TOO! WE ALSO NEED TO STORE THE NONE/BONUS/DISCOUNT FLAG HERE
     val notes: String,
 ) : Parcelable {
     fun toDomain(): Source? {
@@ -1089,12 +1099,12 @@ data class EditableSource(
     companion object {
         fun fromSource(source: Source?, dataSetId: Long): EditableSource {
             if (source == null) {
-                return EditableSource(0, dataSetId, "", "")
+                return EditableSource(0, dataSetId, "", LoyaltyDiscountType.NONE,"", "")
             } else {
                 devCheck(dataSetId == source.dataSetId) {
                     "Expected identical dataSetIds but have dataSetId $dataSetId and source.dataSetid ${source.dataSetId}"
                 }
-                return EditableSource(source.id, dataSetId, source.name, source.notes)
+                return EditableSource(source.id, dataSetId, source.name, LoyaltyDiscountType.NONE /* TODO HACK */,"" /* TODO HACK */, source.notes)
             }
         }
     }
@@ -2702,10 +2712,12 @@ data class EditPriceScreenUIContent(
 data class EditSourceScreenUIContent(
     val editableSource: MutableState<EditableSource>,
     val originalSource: EditableSource,
+    val frozenLocale: Locale,
 ) {
     fun saveState(savedStateHandle: SavedStateHandle) {
         saveEditableSourceState(savedStateHandle)
         savedStateHandle[ORIGINAL_SOURCE_KEY] = originalSource
+        savedStateHandle[LOCALE_TAG] = frozenLocale.toLanguageTag()
     }
 
     // This is a separate function to minimise the amount of work done after every user edit.
@@ -2716,14 +2728,17 @@ data class EditSourceScreenUIContent(
     companion object {
         private const val EDITABLE_SOURCE_KEY = "editableSource"
         private const val ORIGINAL_SOURCE_KEY = "originalSource"
+        private const val LOCALE_TAG = "localeTag"
 
         fun fromSavedState(savedStateHandle: SavedStateHandle): EditSourceScreenUIContent? {
             val savedEditableSource: EditableSource? = savedStateHandle[EDITABLE_SOURCE_KEY]
             val savedOriginalSource: EditableSource? = savedStateHandle[ORIGINAL_SOURCE_KEY]
-            if (savedEditableSource != null && savedOriginalSource != null) {
+            val savedLocaleTag: String? = savedStateHandle[LOCALE_TAG]
+            if (savedEditableSource != null && savedOriginalSource != null && savedLocaleTag != null) {
                 return EditSourceScreenUIContent(
                     mutableStateOf(savedEditableSource),
-                    savedOriginalSource
+                    savedOriginalSource,
+                    Locale.forLanguageTag(savedLocaleTag)
                 )
             } else {
                 return null
@@ -3929,8 +3944,11 @@ fun EditSourceScreen(
         // TODO: START EXPERIMENTAL
         Spacer(modifier = Modifier.height(16.dp))
 
-        val options = listOf("None", "Bonus/cashback", "Discount")
-        var selectedOption by remember { mutableStateOf(options[0]) }
+        // TODO: We should almost certainly be doing this via an integer ID - we now have LoyaltyDiscountType
+        // TODO: Can I put these string versions inside LoyaltyDiscountType or won't that play well with i18n?
+        val options = listOf(Pair(LoyaltyDiscountType.NONE, "None"), Pair(LoyaltyDiscountType.BONUS, "Bonus/cashback"), Pair(LoyaltyDiscountType.DISCOUNT,  "Discount"))
+        var selectedOption = uiContent.editableSource.value.loyaltyDiscountType
+        // TODO: This radio group needs to be enabled iff saveStatus.isNotBusy()
 
         Card(modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest)
@@ -3946,7 +3964,7 @@ fun EditSourceScreen(
                         style = MaterialTheme.typography.titleSmall /* bodySmall */,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(8.dp))
-                options.forEach { option ->
+                options.forEach { (id, name) ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -3954,12 +3972,38 @@ fun EditSourceScreen(
                             .height(40.dp) // MD3 spec
                     ) {
                         RadioButton(
-                            selected = (option == selectedOption),
-                            onClick = { selectedOption = option }
+                            selected = (selectedOption == id),
+                            onClick = { vm.setUIContentEditableSource(uiContent.editableSource.value.copy(loyaltyDiscountType = id)) }
                         )
                         // TODO: Clicking on the text probably ought to change the radio button too - but let's just go with this ChatGPT-derived code as I experiment with the visual appearance for now
-                        Text(text = option, modifier = Modifier.padding(start = 8.dp), /* TODO: not sure this looks right: style = MaterialTheme.typography.labelLarge, */ /* TODO: seems to be default anyway: color = MaterialTheme.colorScheme.onSurface */)
+                        Text(text = name, modifier = Modifier.padding(start = 8.dp), /* TODO: not sure this looks right: style = MaterialTheme.typography.labelLarge, */ /* TODO: seems to be default anyway: color = MaterialTheme.colorScheme.onSurface */)
                     }
+                }
+
+                if (selectedOption != LoyaltyDiscountType.NONE) {
+                    var loyaltyPercentage by rememberSyncedTextFieldValue(uiContent.editableSource.value.loyaltyPercentage)
+                    // TODO: This is a UI design nightmare. I put a background on the card to "match" the filledtextfields above
+                    // and below it, but now you can't see the background of *this* filledtextfield on the card.
+                    // TODO: This should have a % suffix on it
+                    ValidatedTextField2(
+                        label = { Text("TODOLABEL") },
+                        value = loyaltyPercentage,
+                        maxLength = 10, // TODO HACK
+                        onValueChange = {
+                            loyaltyPercentage = it
+                            vm.setUIContentEditableSource(
+                                uiContent.editableSource.value.copy(
+                                    loyaltyPercentage = it.text
+                                )
+                            )
+                        },
+                        enabled = saveStatus.isNotBusy(),
+                        validationRules = vm.loyaltyPercentageValidationRules,
+                        allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+                        validationFlow = vm.saveValidationEvents,
+                        validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE
+                        // TODO: WE NEED TO SPECIFY A KEYBOARDSOURCE AND WE NEED TO RESTRICT INPUT TO NUMERIC - SHOULD WE BE USING A NUMERICTEXTFIELD HERE? MAYBE WITH SOME TWEAKS FOR PERCENTAGES? OR SHOULD WE BE MODIFYING VTF2 TO HANDLE WHAT WE NEED?
+                    )
                 }
             }
 
@@ -4972,11 +5016,13 @@ class SharedViewModel : ViewModel() {
         // TODO: name should include "FromBlah"? or maybe that's a silly convention?
         source: Source?,
         dataSetId: Long,
+        frozenLocale: Locale
     ) {
         val editableSource = EditableSource.fromSource(source, dataSetId)
         editSourceScreenUIContent = EditSourceScreenUIContent(
             editableSource = mutableStateOf(editableSource),
             originalSource = editableSource,
+            frozenLocale = frozenLocale,
         )
     }
 
@@ -5411,8 +5457,12 @@ class EditSourceViewModel(
             .withVersion()
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
 
+    // TODO: Maybe we should allow zero here? We might need to tweak some messages accordingly. Zero isn't necessary as you can choose "None", but maybe it's a bit persnickety not to allow the user just to type 0 directly with one of the other options as well.
+    val loyaltyPercentageValidationRules = numericValidationRules(uiContent.frozenLocale, allowDecimals = true, allowZero = false, maxDecimals = 2)
+
     enum class EditableField {
         NAME,
+        LOYALTY_PERCENTAGE,
     }
 
     private val _saveValidationEvents = MutableSharedFlow<EditableField>()
@@ -5426,6 +5476,14 @@ class EditSourceViewModel(
             )
         ) {
             _saveValidationEvents.emit(EditableField.NAME)
+            return false
+        }
+        // TODO: IS IT OK TO EXPLCIITLY CHECK loyaltyDiscountType HERE? CAN/SHOULD THIS BE FOLDED INTO VALIODATION RULES, E.G. BY VALIDATING A PAIR<DISCOUNTTYPE,STRINGDISCOUNTPERCENTAGE>??
+        if (uiContent.editableSource.value.loyaltyDiscountType != LoyaltyDiscountType.NONE && !validationRulesOk(
+                loyaltyPercentageValidationRules,
+                uiContent.editableSource.value.loyaltyPercentage)
+        ) {
+            _saveValidationEvents.emit(EditableField.LOYALTY_PERCENTAGE)
             return false
         }
         Log.d("MyAppESS", "validateForSave passed")
@@ -5841,6 +5899,10 @@ fun AppNavigation() {
                     )
                 }
             ) { viewModel ->
+                // TODO: Is this locale wrong? Will this *pick up* changes to the locale, defeating the
+                // whole point of having a frozen locale? Do we need to be setting this in the navhost screen which *calls* us? That's
+                // what (albeit via sharedViewModel - do we have to use that here now?) happens for the edit price screen.
+                val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
                 GeneralSelectorScreen(
                     viewModel,
                     navController,
@@ -5849,12 +5911,12 @@ fun AppNavigation() {
                     getName = { it.name },
                     onAddClick = {
                         Log.d("MyAppGS", "Add source")
-                        sharedViewModel.setEditSourceScreenContent(null, dataSetId)
+                        sharedViewModel.setEditSourceScreenContent(null, dataSetId, locale)
                         navController.navigate("editSource")
                     },
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
-                        sharedViewModel.setEditSourceScreenContent(it, dataSetId)
+                        sharedViewModel.setEditSourceScreenContent(it, dataSetId, locale)
                         navController.navigate("editSource")
                     })
             }
