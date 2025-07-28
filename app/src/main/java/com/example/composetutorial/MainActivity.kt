@@ -6274,6 +6274,7 @@ suspend fun scrollAndFocusTo(focusManager: FocusManager, handle: ScrollToFocusab
         // bringIntoView(). The precise behaviour depends on whether the control already has the focus
         // and maybe whether there is a keyboard on screen already and what type it is.
         Log.d("MyApp", "requestFocus")
+        // TODO: Should we maybe do a clearfocus first? That may or may not help if the problematic control already has the focus.
         handle.focusRequester.requestFocus()
         // TODO: Can/should we focus TextFields with the cursor at the end of the text?
     }
