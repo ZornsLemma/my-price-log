@@ -6278,6 +6278,7 @@ suspend fun scrollAndFocusTo(focusManager: FocusManager, handle: ScrollToFocusab
         // TODO: Can/should we focus TextFields with the cursor at the end of the text?
     }
 
+    // TODO: Highly speculative, but would a small delay before doing this give things like the keyboard time to appear first and improve visual appeareance? Or maybe we should set it to visible right at the top of this function so it's fully visible and gets a chance to influence things like bringinto view!??!?! probably doesn't work that way but maybe worth experimenting
         handle.errorHighlightBoxVisible.value = true
         delay(errorHighlightBoxVisibleTimeMillis)
         handle.errorHighlightBoxVisible.value = false
