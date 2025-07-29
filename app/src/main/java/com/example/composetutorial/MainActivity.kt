@@ -157,6 +157,10 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+//import androidx.compose.ui.semantics.SemanticsProperties.Role
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
@@ -4027,32 +4031,42 @@ fun EditSourceScreen(
             // TODO: colors?
             // TODO: elevation???
         ) {
+            // We would like to use horizontal padding of 16.dp on this Column, but we don't want
+            // the ripple effect on the radio button Rows to "stop" at the left edge of the circular
+            // radio buttons. So we have to use 8.dp here and manually apply the remaining 8.dp
+            // padding on each individual composable. I am not completely sure this looks great -
+            // maybe it's a bit weird the ripple effect is "wider" than everything else - but it's
+            // probably OK.
             Column(modifier = Modifier
                 // NB: We must do .animateContentSize() *before* .padding(), otherwise the clipping
                 // bounds the former imposes are too tight and will prevent ErrorHighlightBox
                 // drawing correctly.
                 .animateContentSize()
-                .padding(horizontal = 16.dp, vertical = 12.dp)) {
+                .padding(horizontal = 8.dp, vertical = 12.dp)) {
                 // TODO: I'm far from sure what typography or colour this caption should have, but this
                 // matches the caption on the TextFields so it is probably not a terrible choice. TODO: THIS IS FOR bodySmall - I can't help thinking titleSmall maybe looks better though. I am a bit worried the fonts are all over the place in general, but since MD3 is conspicuously silent outside of some very specific cases it is really hard to know what to do.
                 Text("Loyalty scheme",
                         style = MaterialTheme.typography.titleSmall /* bodySmall */,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp))
                 //Spacer(modifier = Modifier.height(8.dp))
                 options.forEach { (id, name, supportingText) ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
+                            //.background(Color.Blue)
+                            .clickable { vm.setUIContentEditableSource(uiContent.editableSource.value.copy(loyaltyDiscountType = id)) }
+                            .padding(horizontal = 8.dp)
                             .height(48.dp) // 40.dp is MD3 spec but we want extra space for our supporting text while still having some spacing between items
                             //.padding(8.dp) // TODO: ChatGPT value to try to space things out now we have supportingText
+                            .semantics { role = Role.RadioButton }, // for TalkBack / screen readers, since this is clickable not the RadioButton
                     ) {
                         RadioButton(
                             selected = (selectedOption == id),
-                            onClick = { vm.setUIContentEditableSource(uiContent.editableSource.value.copy(loyaltyDiscountType = id)) }
+                            onClick = null // TODO onClick
                         )
                         Column(modifier = Modifier.padding(start = 8.dp)) {
-                            // TODO: Clicking on the text probably ought to change the radio button too - but let's just go with this ChatGPT-derived code as I experiment with the visual appearance for now
                             Text(
                                 text = name,
                                 /* TODO: not sure this looks right: style = MaterialTheme.typography.labelLarge, */ /* TODO: seems to be default anyway: color = MaterialTheme.colorScheme.onSurface */
@@ -4074,7 +4088,7 @@ fun EditSourceScreen(
 
                     var loyaltyPercentage by rememberSyncedTextFieldValue(uiContent.editableSource.value.loyaltyPercentage)
                     // TODO: Can/should we factor out this BaseValidatedTextField+NumericTextField combo?
-                    // TODO: The error highlight box is not drawing properly here
+                    // TODO: The error highlight box is "too wide" here, not quite sure why
                     BaseValidatedTextField(
                         value = loyaltyPercentage.text,
                         validationRules = vm.loyaltyPercentageValidationRules,
@@ -4085,7 +4099,8 @@ fun EditSourceScreen(
                         NumericTextField(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .validationFocusRequester(scrollToFocusableHandle),
+                                .validationFocusRequester(scrollToFocusableHandle)
+                                .padding(horizontal = 8.dp),
                             label = { Text("Loyalty scheme reward") },
                             value = loyaltyPercentage,
                             suffix = { Text("%") },
