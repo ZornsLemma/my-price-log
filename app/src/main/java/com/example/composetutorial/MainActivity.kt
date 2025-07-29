@@ -209,6 +209,7 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
 import com.example.composetutorial.EditPriceScreenUIContent.Companion
+import com.example.composetutorial.MeasureUnit.Companion.measureUnitById
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -917,6 +918,16 @@ class Converters {
     fun toInstant(value: Long?): Instant? {
         return value?.let { Instant.ofEpochMilli(it) }
     }
+
+    @TypeConverter
+    fun fromLoyaltyDiscountType(loyaltyDiscountType: LoyaltyDiscountType?): Long? {
+        return loyaltyDiscountType?.id
+    }
+
+    @TypeConverter
+    fun toLoyaltyDiscountType(value: Long?): LoyaltyDiscountType? {
+        return value?.let { LoyaltyDiscountType.fromValue(it) }
+    }
 }
 
 // TODO: General naming note for databases - both Perplexity and ChatGPT agreed that "_id" suffix on
@@ -1071,7 +1082,13 @@ data class Source(
 enum class LoyaltyDiscountType(val id: Long) {
     NONE(1),
     BONUS(2),
-    DISCOUNT(3)
+    DISCOUNT(3);
+
+    companion object {
+        private val loyaltyDiscountTypeById = LoyaltyDiscountType.entries.associateBy { it.id }
+
+        fun fromValue(loyaltyDiscountTypeId: Long): LoyaltyDiscountType? = loyaltyDiscountTypeById[loyaltyDiscountTypeId]
+    }
 }
 
 // TODO: IN THE DB AND IN "SOURCE", THE LOYALTYDISCOUNTTYPE WILL BE STORED BUT THE PERCENTAGE WILL BE STORED AS A LOYALTY_MULTIPLER WHICH IS JUST APPLIED VIA A MULT AND DOESN'T NEED TO BE TREATED DIFFERENTLY DEPEND ING ON LOYALTHY TYPE
