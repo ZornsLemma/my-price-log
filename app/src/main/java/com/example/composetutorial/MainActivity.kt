@@ -4009,7 +4009,7 @@ fun EditSourceScreen(
         // TODO: This radio group needs to be enabled iff saveStatus.isNotBusy()
 
         Card(modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
 
             // TODO: colors?
             // TODO: elevation???
@@ -4022,7 +4022,7 @@ fun EditSourceScreen(
                 Text("Loyalty scheme",
                         style = MaterialTheme.typography.titleSmall /* bodySmall */,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Spacer(modifier = Modifier.height(8.dp))
+                //Spacer(modifier = Modifier.height(8.dp))
                 options.forEach { (id, name, supportingText) ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -4054,6 +4054,8 @@ fun EditSourceScreen(
                 }
 
                 if (selectedOption != LoyaltyDiscountType.NONE) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     var loyaltyPercentage by rememberSyncedTextFieldValue(uiContent.editableSource.value.loyaltyPercentage)
                     // TODO: This is a UI design nightmare. I put a background on the card to "match" the filledtextfields above
                     // and below it, but now you can't see the background of *this* filledtextfield on the card.
