@@ -1123,14 +1123,36 @@ data class EditableSource(
     }
 
     companion object {
-        fun fromSource(source: Source?, dataSetId: Long): EditableSource {
+        fun fromSource(source: Source?, dataSetId: Long, locale: Locale): EditableSource {
             if (source == null) {
                 return EditableSource(0, dataSetId, "", LoyaltyDiscountType.NONE,"", "")
             } else {
                 devCheck(dataSetId == source.dataSetId) {
                     "Expected identical dataSetIds but have dataSetId $dataSetId and source.dataSetid ${source.dataSetId}"
                 }
-                return EditableSource(source.id, dataSetId, source.name, LoyaltyDiscountType.NONE /* TODO HACK */,"" /* TODO HACK */, source.notes)
+                val loyaltyPercentage = when (source.loyaltyDiscountType) {
+                    LoyaltyDiscountType.NONE -> {
+                        ""
+                    }
+
+                    LoyaltyDiscountType.BONUS -> {
+                        formatDoubleForEditing(
+                            100.0 / source.loyaltyMultiplier - 100.0,
+                            minDecimals = 0,
+                            maxDecimals = 2,
+                            locale
+                        )
+                    } // TODO CHECK AGAIN LATER
+                    LoyaltyDiscountType.DISCOUNT -> {
+                        formatDoubleForEditing(
+                            100.0 * (1 - source.loyaltyMultiplier),
+                            minDecimals = 0,
+                            maxDecimals = 2,
+                            locale
+                        )
+                    }
+                }
+                return EditableSource(source.id, dataSetId, source.name, source.loyaltyDiscountType,loyaltyPercentage, source.notes)
             }
         }
     }
@@ -5043,7 +5065,7 @@ class SharedViewModel : ViewModel() {
         dataSetId: Long,
         frozenLocale: Locale
     ) {
-        val editableSource = EditableSource.fromSource(source, dataSetId)
+        val editableSource = EditableSource.fromSource(source, dataSetId, frozenLocale)
         editSourceScreenUIContent = EditSourceScreenUIContent(
             editableSource = mutableStateOf(editableSource),
             originalSource = editableSource,
