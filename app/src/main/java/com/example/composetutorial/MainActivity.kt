@@ -140,10 +140,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.PaintingStyle
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -153,6 +161,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
@@ -6445,6 +6454,92 @@ fun ErrorHighlightBox(
     ) {
         content()
     }
+
+    /* TODO DELETE
+
+    val borderColor = MaterialTheme.colorScheme.error
+    val density = LocalDensity.current
+    val borderWidth = 2.dp
+    val borderPadding = 2.dp
+    var contentSize by remember { mutableStateOf(IntSize.Zero) }
+
+    Box(
+        modifier = modifier
+            .graphicsLayer(clip = false)
+            .drawWithContent {
+                drawContent()
+                if (hasError) {
+                    val strokeWidth = borderWidth.toPx()
+                    val padding = borderPadding.toPx()
+
+                    drawRect(
+                        color = borderColor,
+                        style = Stroke(width = strokeWidth),
+                        topLeft = Offset(0f /* -padding */, -padding),
+                        size = Size(
+                            width = contentSize.width.toFloat()/* + 2 * padding*/,
+                            height = contentSize.height.toFloat() + 2 * padding
+                        )
+                    )
+                }
+            }
+    ) {
+        // SubcomposeLayout gives us size of actual content
+        SubcomposeLayout { constraints ->
+            val placeables = subcompose("content", content).map {
+                it.measure(constraints)
+            }
+
+            val width = placeables.maxOfOrNull { it.width } ?: 0
+            val height = placeables.maxOfOrNull { it.height } ?: 0
+
+            // Update size used by drawBehind
+            contentSize = IntSize(width, height)
+
+            layout(width, height) {
+                placeables.forEach { it.place(0, 0) }
+            }
+        }
+    }
+
+    */
+
+    /* TODO DELETE
+    val borderWidth = 2.dp
+    val borderPadding = 2.dp
+    val borderColor = MaterialTheme.colorScheme.error
+    val density = LocalDensity.current
+    val strokeWidthPx = with(density) { borderWidth.toPx() }
+    val paddingPx = with(density) { borderPadding.toPx() }
+
+    Layout(
+        content = content,
+        modifier = modifier.graphicsLayer(clip = false).drawWithContent {
+            drawRect(Color.Green.copy(alpha = 0.3f))
+            drawContent()
+            if (hasError) {
+                drawRect(
+                    color = borderColor,
+                    style = Stroke(width = strokeWidthPx),
+                    topLeft = Offset.Zero,
+                    size = Size(size.width, size.height)
+                )
+            }
+        }
+    ) { measurables, constraints ->
+
+        val placeable = measurables.first().measure(constraints)
+
+        // Increase size by borderPadding * 2 to reserve space around child
+        val width = placeable.width + (paddingPx * 2).toInt()
+        val height = placeable.height + (paddingPx * 2).toInt()
+
+        layout(width, height) {
+            // Place the child inset by borderPadding, so it doesn't get shrunk
+            placeable.place(paddingPx.toInt(), paddingPx.toInt())
+        }
+    }
+    */
 }
 /* TODO: Perplexity fragment which says it uses dp. for reference/tweaking later:
 Box(
