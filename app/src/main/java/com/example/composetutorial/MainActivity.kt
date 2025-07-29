@@ -4002,8 +4002,8 @@ fun EditSourceScreen(
         // TODO: Can I put these string versions inside LoyaltyDiscountType or won't that play well with i18n?
         val options = listOf(
             Triple(LoyaltyDiscountType.NONE, "None", null),
-            Triple(LoyaltyDiscountType.BONUS, "Store points or credit", "Reward is tied to this store"),
-            Triple(LoyaltyDiscountType.DISCOUNT, "Discount or true cashback", "If cashback, paid as real cash or equivalent")
+            Triple(LoyaltyDiscountType.BONUS, "Store rewards", "Points or credit usable only at this store"),
+            Triple(LoyaltyDiscountType.DISCOUNT, "Store discount", "Discount on basket or money back")
         )
         var selectedOption = uiContent.editableSource.value.loyaltyDiscountType
         // TODO: This radio group needs to be enabled iff saveStatus.isNotBusy()
@@ -4019,7 +4019,7 @@ fun EditSourceScreen(
                 .animateContentSize()) {
                 // TODO: I'm far from sure what typography or colour this caption should have, but this
                 // matches the caption on the TextFields so it is probably not a terrible choice. TODO: THIS IS FOR bodySmall - I can't help thinking titleSmall maybe looks better though. I am a bit worried the fonts are all over the place in general, but since MD3 is conspicuously silent outside of some very specific cases it is really hard to know what to do.
-                Text("Loyalty scheme benefit",
+                Text("Loyalty scheme",
                         style = MaterialTheme.typography.titleSmall /* bodySmall */,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(8.dp))
@@ -4028,7 +4028,7 @@ fun EditSourceScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(40.dp) // MD3 spec
+                            .height(48.dp) // 40.dp is MD3 spec but we want extra space for our supporting text while still having some spacing between items
                             //.padding(8.dp) // TODO: ChatGPT value to try to space things out now we have supportingText
                     ) {
                         RadioButton(
