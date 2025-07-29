@@ -4057,28 +4057,39 @@ fun EditSourceScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     var loyaltyPercentage by rememberSyncedTextFieldValue(uiContent.editableSource.value.loyaltyPercentage)
-                    // TODO: This is a UI design nightmare. I put a background on the card to "match" the filledtextfields above
-                    // and below it, but now you can't see the background of *this* filledtextfield on the card.
-                    // TODO: This should have a % suffix on it
-                    ValidatedTextField2(
-                        label = { Text("TODOLABEL") },
-                        value = loyaltyPercentage,
-                        maxLength = 10, // TODO HACK
-                        onValueChange = {
-                            loyaltyPercentage = it
-                            vm.setUIContentEditableSource(
-                                uiContent.editableSource.value.copy(
-                                    loyaltyPercentage = it.text
-                                )
-                            )
-                        },
-                        enabled = saveStatus.isNotBusy(),
+                    // TODO: Can/should we factor out this BaseValidatedTextField+NumericTextField combo?
+                    // TODO: The error highlight box is not drawing properly here
+                    BaseValidatedTextField(
+                        value = loyaltyPercentage.text,
                         validationRules = vm.loyaltyPercentageValidationRules,
                         allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
                         validationFlow = vm.saveValidationEvents,
-                        validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE
-                        // TODO: WE NEED TO SPECIFY A KEYBOARDSOURCE AND WE NEED TO RESTRICT INPUT TO NUMERIC - SHOULD WE BE USING A NUMERICTEXTFIELD HERE? MAYBE WITH SOME TWEAKS FOR PERCENTAGES? OR SHOULD WE BE MODIFYING VTF2 TO HANDLE WHAT WE NEED?
-                    )
+                        validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
+                    ) { validationResult, interactionSource, scrollToFocusableHandle ->
+                        NumericTextField(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .validationFocusRequester(scrollToFocusableHandle),
+                            label = { Text("Loyalty scheme reward") },
+                            value = loyaltyPercentage,
+                            suffix = { Text("%") },
+                            onValueChange = {
+                                loyaltyPercentage = it
+                                vm.setUIContentEditableSource(
+                                    uiContent.editableSource.value.copy(
+                                        loyaltyPercentage = it.text
+                                    )
+                                )
+                            },
+                            enabled = saveStatus.isNotBusy(),
+                            isError = validationResult != null,
+                            supportingText = textOrNull(
+                                validationResult,
+                                color = MaterialTheme.colorScheme.error
+                            ),
+                            interactionSource = interactionSource,
+                        )
+                    }
                 }
             }
 
