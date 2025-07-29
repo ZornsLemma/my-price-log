@@ -4027,8 +4027,11 @@ fun EditSourceScreen(
             // TODO: elevation???
         ) {
             Column(modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .animateContentSize()) {
+                // NB: We must do .animateContentSize() *before* .padding(), otherwise the clipping
+                // bounds the former imposes are too tight and will prevent ErrorHighlightBox
+                // drawing correctly.
+                .animateContentSize()
+                .padding(horizontal = 16.dp, vertical = 12.dp)) {
                 // TODO: I'm far from sure what typography or colour this caption should have, but this
                 // matches the caption on the TextFields so it is probably not a terrible choice. TODO: THIS IS FOR bodySmall - I can't help thinking titleSmall maybe looks better though. I am a bit worried the fonts are all over the place in general, but since MD3 is conspicuously silent outside of some very specific cases it is really hard to know what to do.
                 Text("Loyalty scheme",
