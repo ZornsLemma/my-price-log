@@ -1113,11 +1113,14 @@ data class EditableSource(
         }
         // TODO: Is this a reasonable place to do trimming? Gut feeling is that yes it is, since
         // validation doesn't care about this, it's just a bit of "tidying". But not sure.
-        val loyaltyPercentage = parseStringAsDoubleOrNull(locale, loyaltyPercentage) ?: return null
+        val loyaltyPercentage = parseStringAsDoubleOrNull(locale, loyaltyPercentage)
         val loyaltyMultiplier = when(loyaltyDiscountType) {
-            LoyaltyDiscountType.NONE -> { 1.0 }
-            LoyaltyDiscountType.BONUS -> { 100.0 / (100.0 + loyaltyPercentage) } // TODO: double check this calculation later - I think I am confusing myself and there may not be a difference between bonus and discount, but I am really not sure any more - hmm, *maybe* this is right, and maybe the insight is that a discount is a discount, but with cashback I don't actually get my 5% or whatever *on the cashback* (it's not literal cash back so I can't spend it again for another 5%) - still very unsure though
-            LoyaltyDiscountType.DISCOUNT -> (1.0 - loyaltyPercentage / 100.0)
+            LoyaltyDiscountType.NONE -> 1.0
+            LoyaltyDiscountType.BONUS -> if (loyaltyPercentage != null) 100.0 / (100.0 + loyaltyPercentage) else null // TODO: double check this calculation later - I think I am confusing myself and there may not be a difference between bonus and discount, but I am really not sure any more - hmm, *maybe* this is right, and maybe the insight is that a discount is a discount, but with cashback I don't actually get my 5% or whatever *on the cashback* (it's not literal cash back so I can't spend it again for another 5%) - still very unsure though
+            LoyaltyDiscountType.DISCOUNT -> if (loyaltyPercentage != null) 1.0 - (loyaltyPercentage / 100.0) else null
+        }
+        if (loyaltyMultiplier == null) {
+            return null
         }
         return Source(id = id, dataSetId = dataSetId, name = trimmedName, loyaltyDiscountType = loyaltyDiscountType, loyaltyMultiplier = loyaltyMultiplier, notes = notes)
     }
