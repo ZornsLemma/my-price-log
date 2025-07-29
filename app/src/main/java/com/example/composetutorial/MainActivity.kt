@@ -4015,6 +4015,7 @@ fun EditSourceScreen(
         val options = listOf(
             Triple(LoyaltyDiscountType.NONE, "None", null),
             Triple(LoyaltyDiscountType.BONUS, "Store rewards", "Points or credit usable only at this store"),
+            // TODO: Just "Discount" not "Store discount"???
             Triple(LoyaltyDiscountType.DISCOUNT, "Store discount", "Discount on basket or money back")
         )
         var selectedOption = uiContent.editableSource.value.loyaltyDiscountType
