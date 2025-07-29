@@ -4088,38 +4088,38 @@ fun EditSourceScreen(
 
                     var loyaltyPercentage by rememberSyncedTextFieldValue(uiContent.editableSource.value.loyaltyPercentage)
                     // TODO: Can/should we factor out this BaseValidatedTextField+NumericTextField combo?
-                    // TODO: The error highlight box is "too wide" here, not quite sure why
-                    BaseValidatedTextField(
-                        value = loyaltyPercentage.text,
-                        validationRules = vm.loyaltyPercentageValidationRules,
-                        allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
-                        validationFlow = vm.saveValidationEvents,
-                        validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
-                    ) { validationResult, interactionSource, scrollToFocusableHandle ->
-                        NumericTextField(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .validationFocusRequester(scrollToFocusableHandle)
-                                .padding(horizontal = 8.dp),
-                            label = { Text("Loyalty scheme reward") },
-                            value = loyaltyPercentage,
-                            suffix = { Text("%") },
-                            onValueChange = {
-                                loyaltyPercentage = it
-                                vm.setUIContentEditableSource(
-                                    uiContent.editableSource.value.copy(
-                                        loyaltyPercentage = it.text
+                    Box(modifier = Modifier.padding(8.dp)) {
+                        BaseValidatedTextField(
+                            value = loyaltyPercentage.text,
+                            validationRules = vm.loyaltyPercentageValidationRules,
+                            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+                            validationFlow = vm.saveValidationEvents,
+                            validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
+                        ) { validationResult, interactionSource, scrollToFocusableHandle ->
+                            NumericTextField(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .validationFocusRequester(scrollToFocusableHandle),
+                                label = { Text("Loyalty scheme reward") },
+                                value = loyaltyPercentage,
+                                suffix = { Text("%") },
+                                onValueChange = {
+                                    loyaltyPercentage = it
+                                    vm.setUIContentEditableSource(
+                                        uiContent.editableSource.value.copy(
+                                            loyaltyPercentage = it.text
+                                        )
                                     )
-                                )
-                            },
-                            enabled = saveStatus.isNotBusy(),
-                            isError = validationResult != null,
-                            supportingText = textOrNull(
-                                validationResult,
-                                color = MaterialTheme.colorScheme.error
-                            ),
-                            interactionSource = interactionSource,
-                        )
+                                },
+                                enabled = saveStatus.isNotBusy(),
+                                isError = validationResult != null,
+                                supportingText = textOrNull(
+                                    validationResult,
+                                    color = MaterialTheme.colorScheme.error
+                                ),
+                                interactionSource = interactionSource,
+                            )
+                        }
                     }
                 }
             }
@@ -6450,6 +6450,7 @@ fun ErrorHighlightBox(
         modifier = modifier
             .drawWithContent {
                 // Draw the content (e.g., TextField or SegmentedButton)
+                // Useful for debugging: drawRect(Color.Green.copy(alpha=0.3f))
                 drawContent()
                 if (true /* hasError */) { // TODO: GET RID OF IF
                     // Draw an outline slightly larger than the content
