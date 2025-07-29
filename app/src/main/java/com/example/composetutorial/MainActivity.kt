@@ -627,11 +627,11 @@ suspend fun populateDemoData(context: Context) {
         )
         // TODO: Do some web searches and confirm these are not real supermarket names
         val sourceIdValueMart = db.sourceDao()
-            .insert(Source(dataSetId = dataSetId, name = "ValueMart", notes = ""))
+            .insert(Source(dataSetId = dataSetId, name = "ValueMart", loyaltyDiscountType = LoyaltyDiscountType.NONE, loyaltyMultiplier = 1.0, notes = ""))
         val sourceIdSuperiorStore = db.sourceDao().insert(
             Source(
                 dataSetId = dataSetId,
-                name = "SuperiorStore",
+                name = "SuperiorStore",loyaltyDiscountType = LoyaltyDiscountType.NONE, loyaltyMultiplier = 1.0,
                 notes = ""
             )
         )
@@ -639,7 +639,7 @@ suspend fun populateDemoData(context: Context) {
         db.sourceDao().insert(
             Source(
                 dataSetId = dataSetId,
-                name = "Newco",
+                name = "Newco",loyaltyDiscountType = LoyaltyDiscountType.NONE, loyaltyMultiplier = 1.0,
                 notes = "Only just opened but I hope their prices will be good."
             )
         )
@@ -1063,6 +1063,8 @@ data class Source(
     val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId: Long,
     val name: String,
+    @ColumnInfo(name = "loyalty_discount_type") val loyaltyDiscountType: LoyaltyDiscountType, // TODO: JUST GET RID OF "DISCOUNT" FROM NAMES HERE INCL THE ENUM CLASS?
+    @ColumnInfo(name = "loyalty_multiplier") val loyaltyMultiplier: Double,
     val notes: String,
 ) : Parcelable
 
@@ -1079,10 +1081,11 @@ data class EditableSource(
     val dataSetId: Long,
     val name: String,
     val loyaltyDiscountType: LoyaltyDiscountType,
+    // TODO: In general I am inconsistent about loyaltyPercentage vs loyaltyDiscountPercentage naming etc - note that the percentage is *not* in general a "discount" percentage, it may be a bonus percentage
     val loyaltyPercentage: String, // TODO: NEED TO ADD THIS TO NON-EDITABLE TOO! WE ALSO NEED TO STORE THE NONE/BONUS/DISCOUNT FLAG HERE
     val notes: String,
 ) : Parcelable {
-    fun toDomain(): Source? {
+    fun toDomain(locale: Locale): Source? {
         val trimmedName = name.trim()
         // It could get confusing if an empty name leaked into the database (it would be
         // semi-invisible in the UI) so we'll check that here, even though we could generate a
@@ -1093,7 +1096,13 @@ data class EditableSource(
         }
         // TODO: Is this a reasonable place to do trimming? Gut feeling is that yes it is, since
         // validation doesn't care about this, it's just a bit of "tidying". But not sure.
-        return Source(id = id, dataSetId = dataSetId, name = trimmedName, notes = notes)
+        val loyaltyPercentage = parseStringAsDoubleOrNull(locale, loyaltyPercentage) ?: return null
+        val loyaltyMultiplier = when(loyaltyDiscountType) {
+            LoyaltyDiscountType.NONE -> { 1.0 }
+            LoyaltyDiscountType.BONUS -> { 100.0 / (100.0 + loyaltyPercentage) } // TODO: double check this calculation later - I think I am confusing myself and there may not be a difference between bonus and discount, but I am really not sure any more - hmm, *maybe* this is right, and maybe the insight is that a discount is a discount, but with cashback I don't actually get my 5% or whatever *on the cashback* (it's not literal cash back so I can't spend it again for another 5%) - still very unsure though
+            LoyaltyDiscountType.DISCOUNT -> (1.0 - loyaltyPercentage / 100.0)
+        }
+        return Source(id = id, dataSetId = dataSetId, name = trimmedName, loyaltyDiscountType = loyaltyDiscountType, loyaltyMultiplier = loyaltyMultiplier, notes = notes)
     }
 
     companion object {
@@ -5491,7 +5500,7 @@ class EditSourceViewModel(
     }
 
     suspend fun performSave() {
-        val source = uiContent.editableSource.value.toDomain()
+        val source = uiContent.editableSource.value.toDomain(uiContent.frozenLocale)
         if (source == null) {
             throw IllegalStateException("performSave() called with an inconvertible EditableSource: ${uiContent.editableSource.value}")
         }
