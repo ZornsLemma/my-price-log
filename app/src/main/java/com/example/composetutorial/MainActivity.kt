@@ -4000,7 +4000,11 @@ fun EditSourceScreen(
 
         // TODO: We should almost certainly be doing this via an integer ID - we now have LoyaltyDiscountType
         // TODO: Can I put these string versions inside LoyaltyDiscountType or won't that play well with i18n?
-        val options = listOf(Pair(LoyaltyDiscountType.NONE, "None"), Pair(LoyaltyDiscountType.BONUS, "Bonus"), Pair(LoyaltyDiscountType.DISCOUNT,  "Discount/cashback"))
+        val options = listOf(
+            Triple(LoyaltyDiscountType.NONE, "None", null),
+            Triple(LoyaltyDiscountType.BONUS, "Store points or credit", "Reward is tied to this store"),
+            Triple(LoyaltyDiscountType.DISCOUNT, "Discount or true cashback", "If cashback, paid as real cash or equivalent")
+        )
         var selectedOption = uiContent.editableSource.value.loyaltyDiscountType
         // TODO: This radio group needs to be enabled iff saveStatus.isNotBusy()
 
@@ -4010,26 +4014,42 @@ fun EditSourceScreen(
             // TODO: colors?
             // TODO: elevation???
         ) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp).animateContentSize()) {
+            Column(modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .animateContentSize()) {
                 // TODO: I'm far from sure what typography or colour this caption should have, but this
                 // matches the caption on the TextFields so it is probably not a terrible choice. TODO: THIS IS FOR bodySmall - I can't help thinking titleSmall maybe looks better though. I am a bit worried the fonts are all over the place in general, but since MD3 is conspicuously silent outside of some very specific cases it is really hard to know what to do.
                 Text("Loyalty scheme benefit",
                         style = MaterialTheme.typography.titleSmall /* bodySmall */,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(modifier = Modifier.height(8.dp))
-                options.forEach { (id, name) ->
+                options.forEach { (id, name, supportingText) ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(40.dp) // MD3 spec
+                            //.padding(8.dp) // TODO: ChatGPT value to try to space things out now we have supportingText
                     ) {
                         RadioButton(
                             selected = (selectedOption == id),
                             onClick = { vm.setUIContentEditableSource(uiContent.editableSource.value.copy(loyaltyDiscountType = id)) }
                         )
-                        // TODO: Clicking on the text probably ought to change the radio button too - but let's just go with this ChatGPT-derived code as I experiment with the visual appearance for now
-                        Text(text = name, modifier = Modifier.padding(start = 8.dp), /* TODO: not sure this looks right: style = MaterialTheme.typography.labelLarge, */ /* TODO: seems to be default anyway: color = MaterialTheme.colorScheme.onSurface */)
+                        Column(modifier = Modifier.padding(start = 8.dp)) {
+                            // TODO: Clicking on the text probably ought to change the radio button too - but let's just go with this ChatGPT-derived code as I experiment with the visual appearance for now
+                            Text(
+                                text = name,
+                                /* TODO: not sure this looks right: style = MaterialTheme.typography.labelLarge, */ /* TODO: seems to be default anyway: color = MaterialTheme.colorScheme.onSurface */
+                            )
+                            Log.d("MyApp", "supportingText $supportingText")
+                            if (supportingText != null) {
+                                Text(
+                                    text = supportingText,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
                 }
 
