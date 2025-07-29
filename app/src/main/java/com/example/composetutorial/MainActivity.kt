@@ -6788,3 +6788,6 @@ Log.d("MyApp", baz.toString())
 // arrived at (store level discounts, pseudo-inflation penalties, etc) and maybe also the same
 // "Good/bad/whatever price" recommendation we show in the "specific store" card (calculated the
 // same way).
+
+// TODO: For the record, I used scaling 61% when importing app-icon-4.svg as a new image asset for
+// the icon.
