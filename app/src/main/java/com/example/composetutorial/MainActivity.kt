@@ -1122,6 +1122,12 @@ data class EditableSource(
         return Source(id = id, dataSetId = dataSetId, name = trimmedName, loyaltyDiscountType = loyaltyDiscountType, loyaltyMultiplier = loyaltyMultiplier, notes = notes)
     }
 
+    // 5% bonus is not the same as 5% discount/cashback. Suppose we want to buy something costing £100.
+    // - If there is a 5% discount, the price is £95 and we hand over £95.
+    // - If we get 5% cashback,  we hand over £100 and get £5 back, so £95 net.
+    // - If we get 5% bonus in some "store account", we need to deposit £95.24 and the 5% bonus makes that up to the £100 we need.
+    // - If we get 5% bonus as points on our spending, we "theoretically" spend £95.24, get 5% bonus as points and that makes up the £100 we need. (In reality you can't do this, but I think in the long term it works out as if you can.) I think an alternate way of looking at this is that you spend £100, get £5 worth of points but those points are not quite as good as cash because you don't get 5% back when you spend those points, so we value the points at £4.76 instead of £5.
+    // TODO: Revisit this later as I have found myself flip-flopping
     companion object {
         fun fromSource(source: Source?, dataSetId: Long, locale: Locale): EditableSource {
             if (source == null) {
@@ -3994,7 +4000,7 @@ fun EditSourceScreen(
 
         // TODO: We should almost certainly be doing this via an integer ID - we now have LoyaltyDiscountType
         // TODO: Can I put these string versions inside LoyaltyDiscountType or won't that play well with i18n?
-        val options = listOf(Pair(LoyaltyDiscountType.NONE, "None"), Pair(LoyaltyDiscountType.BONUS, "Bonus/cashback"), Pair(LoyaltyDiscountType.DISCOUNT,  "Discount"))
+        val options = listOf(Pair(LoyaltyDiscountType.NONE, "None"), Pair(LoyaltyDiscountType.BONUS, "Bonus"), Pair(LoyaltyDiscountType.DISCOUNT,  "Discount/cashback"))
         var selectedOption = uiContent.editableSource.value.loyaltyDiscountType
         // TODO: This radio group needs to be enabled iff saveStatus.isNotBusy()
 
