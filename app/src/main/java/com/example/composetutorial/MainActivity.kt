@@ -1143,6 +1143,8 @@ data class EditableItem(
         if (defaultUnit == null) {
             return null
         }
+        // This is a devCheck not a "return null" check because it indicates an internal error.
+        devCheck(quantityType == defaultUnit.quantityType) { "Expected consistent quantity types on EditableItem but have $quantityType and $defaultUnit" }
         return Item(
             id = id,
             dataSetId = dataSetId,
