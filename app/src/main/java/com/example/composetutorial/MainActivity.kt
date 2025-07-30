@@ -7537,3 +7537,13 @@ Log.d("MyApp", baz.toString())
 // could just delete the store, but it's nice to give them the choice to delete just some prices -
 // maybe the store sells some items nowhere else does, so keeping *those* item prices around is
 // worth something.
+
+// TODO: I am thinking following extensive and confusing discussion with ChatGPT that we make
+// good/OK/bad judgements based on Buffered IQR=[Q1×(1−k), Q3×(1+k)] where k =0.05 or 0.1 (configurable by user of course). Q1 is 25th percentile, Q3 is 75th percentile.
+// We only ever offer judgement if:
+// - our store's price is <=inflation threshold (30?) days old (if it's older, our "judgement" is "Stale price - please check")
+// - there are two other stores with prices <=old data threshold (180 days?)
+// - our judgement is "good" if adjusted price is < low end of buffered IQR, "OK" if inside buffered IQR, "bad" if > high end of buffered IQR
+// - if all prices are "OK" we don't offer any judgement (though I guess we could? not sure)
+// The idea of buffered IQR is that if the data is tightly clustered, the 5th percentile or whatever is not really significantly "better" than the 95th percentile. We don't want to use absolute amounts to make this kind of judgement.
+// We should probably call our inflation "pessimistic inflation rate" in UI, and default it to 5% or 10% per year. For prices >inflation thresold old, we start applying it compounded daily *from the threshold* (not from day 0) - we don't want a sudden big inflation jump just because a price became "eligible" for inflation.
