@@ -1108,7 +1108,7 @@ data class EditableItem(
     val dataSetId: Long,
     val name: String,
     val quantityType: QuantityType,
-    val defaultUnit: MeasureUnit?, // TODO: maybe this doesn't need to be nullable? kind of depends how UI evolves
+    val defaultUnit: MeasureUnit, // TODO: maybe this does/doesn't need to be nullable? kind of depends how UI evolves - gut feeling is that since it can be freely changed at any point and is only a default for new prices, it's less faffy for user if it always defaults to something rather than forcing them to choose it
     val notes: String,
 ) : Parcelable {
     fun toDomain(): Item? { // TODO: not just here - would "toItem" pair better with fromItem?!
@@ -4300,7 +4300,30 @@ fun EditItemScreen(
                         }
                     }
                     */
-                    Text("TODO: UNIT DROPDOWN")
+                    // TODO: Not just here, but the use of abbreviations for units is maybe not ideal here, it's a bit confusing to just see e.g. a bare "l" instead of "litre"
+                    MyExposedDropdownMenuBox(
+                        enabled = saveStatus.isNotBusy(),
+                        selectedId = uiContent.editableItem.value.defaultUnit.id,
+                        onValueChange = {
+                            val defaultUnit = MeasureUnit.fromValue(it)
+                            devCheck(defaultUnit != null) {
+                                "Expected non-null defaultUnit to be selected; got $it"
+                            }
+                            if (uiContent.editableItem.value.defaultUnit != defaultUnit!!) {
+                                vm.setUIContentEditableItem(
+                                    uiContent.editableItem.value.copy(
+                                        defaultUnit = defaultUnit
+                                    )
+                                )
+                            }
+                        },
+                        label = { Text("Typical pack unit") },
+                        supportingText = { Text("This is just a default; any unit can be used when entering a price." ) }, // TODO: POOR WORDING
+                        items = MeasureUnit.entries, // TODO: We need getRelevantMeasureUnits but don't currently have a dataSet available
+                        modifier = Modifier.fillMaxWidth(),
+                        getId = { it.id },
+                        getLabel = { it.symbol },
+                    )
                     // TODO: If it's not too faffy, we should maybe remember the unit dropdown value (only in the edit UI of course) per-quantityType, so if the user flips back and forth between weight and volume they don't lose their previous selection
                 }
             }
