@@ -5124,6 +5124,20 @@ class SharedViewModel : ViewModel() {
 
     // TODO: MORE NEW EXPERIMENTAL
 
+    var editDataSetScreenUIContent: EditDataSetScreenUIContent? = null
+
+    fun setEditDataSetScreenContent(dataSet: DataSet?) {
+        val editableDataSet = EditableDataSet.fromDataSet(dataSet)
+        editDataSetScreenUIContent = EditDataSetScreenUIContent(
+            editableDataSet = mutableStateOf(editableDataSet),
+            originalDataSet = editableDataSet,
+        )
+    }
+
+    fun setEditItemScreenContent(item: Item?, dataSetId: Long) {
+        TODO()
+    }
+
     var editSourceScreenUIContent: EditSourceScreenUIContent? = null
 
     fun setEditSourceScreenContent(
@@ -5137,16 +5151,6 @@ class SharedViewModel : ViewModel() {
             editableSource = mutableStateOf(editableSource),
             originalSource = editableSource,
             frozenLocale = frozenLocale,
-        )
-    }
-
-    var editDataSetScreenUIContent: EditDataSetScreenUIContent? = null
-
-    fun setEditDataSetScreenContent(dataSet: DataSet?) {
-        val editableDataSet = EditableDataSet.fromDataSet(dataSet)
-        editDataSetScreenUIContent = EditDataSetScreenUIContent(
-            editableDataSet = mutableStateOf(editableDataSet),
-            originalDataSet = editableDataSet,
         )
     }
 }
@@ -5986,8 +5990,16 @@ fun AppNavigation() {
                     title = topAppBarTitle("Edit products", dataSetName),
                     getId = { it.id },
                     getName = { it.name },
-                    onAddClick = { Log.d("MyAppGS", "Add item") },
-                    onItemSelected = { Log.d("MyAppGS", "selected $it") },
+                    onAddClick = {
+                        Log.d("MyAppGS", "Add item")
+                        sharedViewModel.setEditItemScreenContent(null, dataSetId)
+                        navController.navigate("editItem")
+                    },
+                    onItemSelected = {
+                        Log.d("MyAppGS", "selected $it")
+                        sharedViewModel.setEditItemScreenContent(it, dataSetId)
+                        navController.navigate("editItem")
+                    },
                     showSearch = true
                 )
             }
