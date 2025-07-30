@@ -1168,6 +1168,14 @@ data class EditableItem private constructor(
             notes = notes
         )
     }
+    // TODO: I have had some intermittent crashes when on the "Edit product" screen and I put it in
+    // background, adb kill it and then return to it via the overview menu. The error in logcat is
+    // fairly consistently "java.lang.IllegalArgumentException: No enum constant
+    // com.example.composetutorial.MeasureUnit.ĭ????" with almost nothing helpful in the gigantic
+    // stack backtrace. This does not seem very easy to reproduce, but has cropped up once or twice.
+    // I really don't know what's going on. About all I can do is leave this note here to remind
+    // me in case I spot something later or if this does go wrong again or to spend some more time
+    // trying to reproduce this later.
 
     companion object {
         fun fromItem(item: Item?, dataSet: DataSet): EditableItem {
