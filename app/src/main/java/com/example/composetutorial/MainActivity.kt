@@ -6174,6 +6174,7 @@ class EditSourceViewModel(
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
 
     // TODO: Maybe we should allow zero here? We might need to tweak some messages accordingly. Zero isn't necessary as you can choose "None", but maybe it's a bit persnickety not to allow the user just to type 0 directly with one of the other options as well.
+    // TODO: Should we impose an upper bound? At the very least something like 100% is probably safe.
     val loyaltyPercentageValidationRules = numericValidationRules(
         uiContent.frozenLocale,
         allowDecimals = true,
