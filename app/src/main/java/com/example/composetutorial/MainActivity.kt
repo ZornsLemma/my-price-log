@@ -4122,8 +4122,6 @@ fun EditSourceScreen(
                     }
                 }
             }
-
-            // TODO: We need a TextField for % - perhaps conditionally shown below the radio buttons when non-"None" option is selected
         }
 
         // TODO END EXPERIMENTAL
