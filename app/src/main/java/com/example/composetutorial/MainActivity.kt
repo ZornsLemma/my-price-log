@@ -7530,3 +7530,10 @@ Log.d("MyApp", baz.toString())
 // empty", "Must specify a pack size", "Invalid number" - I just made these up talking to ChatGPT,
 // they are not necessarily what the code actually says, I didn't check.) Perhaps don't use "Please"
 // - it may seem repetitive if we have lots of validation failures.
+
+// TODO: It may be desirable for users to be able to outright delete the price of a product at a
+// store - imagine they haven't visitied the store in a year and don't plan to and are sick of
+// seeing the outdated inflation-adjusted price with little connection to reality. Of course they
+// could just delete the store, but it's nice to give them the choice to delete just some prices -
+// maybe the store sells some items nowhere else does, so keeping *those* item prices around is
+// worth something.
