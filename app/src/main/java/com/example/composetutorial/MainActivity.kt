@@ -5502,7 +5502,29 @@ class MainActivity : ComponentActivity() {
 data class EditItemsScreenUIContent(
     val itemList: List<Item>,
     val dataSet: DataSet
-)
+) {
+    fun saveState(handle: SavedStateHandle) {
+        handle[ITEM_LIST_KEY] = itemList
+        handle[DATA_SET_KEY] = dataSet
+    }
+
+    companion object {
+        private const val ITEM_LIST_KEY = "itemList"
+        private const val DATA_SET_KEY = "dataSet"
+
+        fun fromSavedState(handle: SavedStateHandle): EditItemsScreenUIContent? {
+            val savedItemList: List<Item>? = handle[ITEM_LIST_KEY]
+            val savedDataSet: DataSet? = handle[DATA_SET_KEY]
+            if (savedItemList != null && savedDataSet != null) {
+                Log.d("MyApp", "reconstructed EditItemsScreenUIContent")
+                return EditItemsScreenUIContent(savedItemList, savedDataSet)
+            } else {
+                Log.d("MyApp", "couldn't reconstruct EditItemsScreenUIContent")
+                return null
+            }
+        }
+    }
+}
 
 // Shared ViewModel to pass data between screens
 // TODO: Some inconsistency between "UIContent" and "Content" here - think about renaming.
@@ -5678,10 +5700,14 @@ fun areHumanEqual(lhs: String, rhs: String) =
 class EditItemsViewModel(
     savedStateHandle: SavedStateHandle,
     getName: (Item) -> String,
-    initialList: List<Item>?,
+    val uiContent: EditItemsScreenUIContent,
+    // TODO DELETE initialList: List<Item>?,
     dataQuery: Flow<List<Item>>,
-    public val dataSet: DataSet
-) : GeneralSelectorViewModel<Item>(savedStateHandle, getName, initialList, dataQuery) {
+    // TODO DELETE public val dataSet: DataSet
+) : GeneralSelectorViewModel<Item>(savedStateHandle, getName, uiContent.itemList /* TODO: rename initialList for consistency with other cases? */, dataQuery) {
+    init {
+        uiContent.saveState(savedStateHandle)
+    }
 }
 
 // TODO: This may not actually need the repository passing in given we pass in a query
@@ -5694,6 +5720,9 @@ open class GeneralSelectorViewModel<T>(
     // The idea here is that as we have no real state other than the results of dataQuery, we
     // optimise by having our caller provide initialList to give a good first composition during
     // normal navigation, but we can manage without it if we are reincarnated.
+    // TODO: This works and it is probably fine but not that for EditItemsViewModel we do actually
+    // serialise, even though the general code doesn't require it. (We need it so we can pass a
+    // DataSet through to EditItemScreen.)
 
     // This will *not* filter uiContent.initialList, but that's OK because we know the initial filter doesn't exclude anything.
     // TODO: We could persist the search string via savedStateHandle. That might not be
@@ -6543,10 +6572,10 @@ fun AppNavigation() {
                     EditItemsViewModel(
                         savedStateHandle = handle,
                         getName = { it -> it.name },
-                        initialList = sharedViewModel.editItemsScreenUIContent?.itemList,
+                        sharedViewModel.editItemsScreenUIContent ?: EditItemsScreenUIContent.fromSavedState(handle)!!,
+                        // TODO: DELETE initialList = sharedViewModel.editItemsScreenUIContent?.itemList,
                         dataQuery = app.priceTrackerRepository.getAllItems(dataSetId),
-                        // TODO: !! in the next line *is* a hack - if we have been killed and resurrected we won't have it and we need it, so we are going to need to add savedstatehandle store/load, but hacking for the moment
-                        dataSet = sharedViewModel.editItemsScreenUIContent!!.dataSet
+                        // TODO: DELETE dataSet = sharedViewModel.editItemsScreenUIContent!!.dataSet
                     )
                 }
             ) { viewModel ->
@@ -6558,12 +6587,12 @@ fun AppNavigation() {
                     getName = { it.name },
                     onAddClick = {
                         Log.d("MyAppGS", "Add item")
-                        sharedViewModel.setEditItemScreenContent(null, viewModel.dataSet)
+                        sharedViewModel.setEditItemScreenContent(null, viewModel.uiContent.dataSet)
                         navController.navigate("editItem")
                     },
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
-                        sharedViewModel.setEditItemScreenContent(it, viewModel.dataSet)
+                        sharedViewModel.setEditItemScreenContent(it, viewModel.uiContent.dataSet)
                         navController.navigate("editItem")
                     },
                     showSearch = true
