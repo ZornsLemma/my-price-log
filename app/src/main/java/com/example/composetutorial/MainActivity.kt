@@ -615,29 +615,34 @@ suspend fun populateDemoData(context: Context) {
             Item(
                 dataSetId = dataSetId2,
                 name = "Demo 2 Item",
-                defaultUnit = MeasureUnit.G
+                defaultUnit = MeasureUnit.G,
+                notes = "",
             )
         )
         val itemIdGroundCoffee = db.productDao().insert(
             Item(
                 dataSetId = dataSetId,
                 name = "Coffee (ground)",
-                defaultUnit = MeasureUnit.G
+                defaultUnit = MeasureUnit.G,
+                        notes = ""
             )
         )
         val itemIdWholeMilk = db.productDao().insert(
             Item(
                 dataSetId = dataSetId,
                 name = "Milk (whole)",
-                defaultUnit = MeasureUnit.L
-            )
+                defaultUnit = MeasureUnit.L,
+                notes = "",
+                )
         )
         val itemIdTeabags = db.productDao().insert(
             Item(
                 dataSetId = dataSetId,
                 name = "Teabags",
-                defaultUnit = MeasureUnit.EACH
-            )
+                defaultUnit = MeasureUnit.EACH,
+                        notes = "",
+
+                )
         )
         // TODO: Do some web searches and confirm these are not real supermarket names
         val sourceIdValueMart = db.sourceDao()
@@ -772,13 +777,17 @@ interface PriceTrackerRepository {
 
     fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
 
+    fun countPricesForItem(itemId: Long): Flow<Long>
     fun countPricesForSource(sourceId: Long): Flow<Long>
 
     suspend fun updateOrInsertDataSet(dataSet: DataSet)
+    suspend fun updateOrInsertItem(item: Item)
     suspend fun updateOrInsertSource(source: Source)
     suspend fun updateOrInsertPrice(price: Price)
 
+    // TODO: Should these really return Long just to be super paranoid/vaguely consistent with use of Long for IDs (if IDs "don't fit" in 32 bits, neither do deletion counts)
     suspend fun deleteDataSetById(dataSetId: Long): Int
+    suspend fun deleteItemById(itemId: Long): Int
     suspend fun deleteSourceById(sourceId: Long): Int
 }
 
@@ -799,11 +808,18 @@ class PriceTrackerRepositoryImpl(
         priceDao.getPriceWithItemEntityForItem(dataSetId = dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
 
+    override fun countPricesForItem(itemId: Long): Flow<Long> =
+        priceDao.countPricesForItem(itemId)
+
     override fun countPricesForSource(sourceId: Long): Flow<Long> =
         priceDao.countPricesForSource(sourceId)
 
     override suspend fun updateOrInsertDataSet(dataSet: DataSet) {
         dataSetDao.upsert(dataSet)
+    }
+
+    override suspend fun updateOrInsertItem(item: Item) {
+        itemDao.upsert(item)
     }
 
     override suspend fun updateOrInsertSource(source: Source) {
@@ -812,6 +828,8 @@ class PriceTrackerRepositoryImpl(
     }
 
     override suspend fun deleteDataSetById(dataSetId: Long): Int = dataSetDao.deleteById(dataSetId)
+
+    override suspend fun deleteItemById(itemId: Long): Int = itemDao.deleteById(itemId)
 
     override suspend fun deleteSourceById(sourceId: Long): Int = sourceDao.deleteById(sourceId)
 
@@ -1068,6 +1086,7 @@ data class Item(
     // TODO: GUI should probably restrict and/or warn before changing default_unit between
     // MeasureUnits - maybe if you have no prices yet you can do it. (It's completely fine to change
     // within a MeasureUnit.)
+    val notes: String,
 ) : Parcelable
 // TODO: Will temporarily make a note here - I may simply (especially in v1) refuse to allow changes
 // of quantity_type in the product edit screen. There is no trivial way to convert. If the user gets
@@ -1082,6 +1101,57 @@ data class Item(
 // the "fake" ml values via an oz->gramme conversion to fix up the prices in the database, as
 // weights are stored as grammes in there). Not saying a fix it up option won't ever appear if there
 // is any demand for it, but even if it exists we probably don't want to over-encourage its use.
+
+@Parcelize
+data class EditableItem(
+    val id: Long,
+    val dataSetId: Long,
+    val name: String,
+    val defaultUnit: MeasureUnit?,
+    val notes: String,
+) : Parcelable {
+    fun toDomain(): Item? { // TODO: not just here - would "toItem" pair better with fromItem?!
+        val trimmedName = name.trim()
+        // It could get confusing if an empty name leaked into the database (it would be
+        // semi-invisible in the UI) so we'll check that here, even though we could generate a
+        // Source with such a name and this is not really validation code - we expect to have been
+        // called on a pre-validated EditableSource.
+        if (trimmedName.isEmpty()) {
+            return null
+        }
+        // TODO: Is this a reasonable place to do trimming? Gut feeling is that yes it is, since
+        // validation doesn't care about this, it's just a bit of "tidying". But not sure.
+        if (defaultUnit == null) {
+            return null
+        }
+        return Item(
+            id = id,
+            dataSetId = dataSetId,
+            name = trimmedName,
+            defaultUnit = defaultUnit,
+            notes = notes
+        )
+    }
+
+    companion object {
+        fun fromItem(item: Item?, dataSetId: Long): EditableItem {
+            if (item == null) {
+                return EditableItem(0, dataSetId, "", null , "")
+            } else {
+                devCheck(dataSetId == item.dataSetId) {
+                    "Expected identical dataSetIds but have dataSetId $dataSetId and item.dataSetid ${item.dataSetId}"
+                }
+                return EditableItem(
+                    item.id,
+                    dataSetId,
+                    item.name,
+                    item.defaultUnit,
+                    item.notes
+                )
+            }
+        }
+    }
+}
 
 @Entity(
     tableName = "source", foreignKeys = [
@@ -1414,15 +1484,23 @@ interface ItemDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(item: Item): Long
 
+    @Upsert
+    suspend fun upsert(item: Item)
+
+    /* TODO DELETE?
     @Update
     suspend fun update(item: Item)
 
     @Delete
     suspend fun delete(item: Item)
+    */
 
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
     @Query("SELECT * FROM item WHERE data_set_id = :dataSetId ORDER BY name ASC")
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
+
+    @Query("DELETE FROM item WHERE id = :itemId")
+    suspend fun deleteById(itemId: Long): Int
 }
 
 @Dao
@@ -1458,6 +1536,8 @@ interface PriceDao {
         itemId: Long,
     ): Flow<List<PriceWithItemEntity>>
 
+    @Query("SELECT COUNT(*) FROM price WHERE item_id = :itemId")
+    fun countPricesForItem(itemId: Long): Flow<Long>
 
     @Query("SELECT COUNT(*) FROM price WHERE source_id = :sourceId")
     fun countPricesForSource(sourceId: Long): Flow<Long>
@@ -1781,6 +1861,7 @@ val menuRightPadding = menuLeftPadding
 // amounts of text into TextFields and breaking layouts. They may well want to be tweaked later.
 const val maxDataSetNameLength =
     32 // TODO: just possibly shorter than others due to use of nav drawer to show these?!
+const val maxItemNameLength = 32
 const val maxSourceNameLength = 32
 const val maxNotesLength = 200 // TODO TEMP FOR TESTING, SHOULD BE 1024
 
@@ -2804,6 +2885,45 @@ data class EditPriceScreenUIContent(
                 )
             } else {
                 Log.d("MyApp", "couldn't reconstruct EditPriceScreenUIContent")
+                return null
+            }
+        }
+    }
+}
+
+// TODO: I wonder if these EditFooScreenUIContent classes are similar enough we can use generics to save duplicating code.
+data class EditItemScreenUIContent(
+    val editableItem: MutableState<EditableItem>,
+    val originalItem: EditableItem,
+    // TODO: delete if not needed val frozenLocale: Locale,
+) {
+    fun saveState(savedStateHandle: SavedStateHandle) {
+        saveEditableItemState(savedStateHandle)
+        savedStateHandle[ORIGINAL_ITEM_KEY] = originalItem
+        // TODO: delete if not needed savedStateHandle[LOCALE_TAG] = frozenLocale.toLanguageTag()
+    }
+
+    // This is a separate function to minimise the amount of work done after every user edit.
+    fun saveEditableItemState(savedStateHandle: SavedStateHandle) {
+        savedStateHandle[EDITABLE_ITEM_KEY] = editableItem.value
+    }
+
+    companion object {
+        private const val EDITABLE_ITEM_KEY = "editableItem"
+        private const val ORIGINAL_ITEM_KEY = "originalItem"
+        // TODO: delete if not needed private const val LOCALE_TAG = "localeTag"
+
+        fun fromSavedState(savedStateHandle: SavedStateHandle): EditItemScreenUIContent? {
+            val savedEditableItem: EditableItem? = savedStateHandle[EDITABLE_ITEM_KEY]
+            val savedOriginalItem: EditableItem? = savedStateHandle[ORIGINAL_ITEM_KEY]
+            // TODO: delete val savedLocaleTag: String? = savedStateHandle[LOCALE_TAG]
+            if (savedEditableItem != null && savedOriginalItem != null /* TODO && savedLocaleTag != null */) {
+                return EditItemScreenUIContent(
+                    mutableStateOf(savedEditableItem),
+                    savedOriginalItem,
+                    // TODO delete Locale.forLanguageTag(savedLocaleTag)
+                )
+            } else {
                 return null
             }
         }
@@ -3977,6 +4097,112 @@ fun GeneralEditAndDeleteScreen(
                 }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
             },
         )
+    }
+}
+
+@Composable
+fun EditItemScreen(
+    vm: EditItemViewModel,
+    navController: NavHostController,
+    requestClose: () -> Unit
+) {
+    val uiContent = vm.uiContent
+
+    val itemReferenceCount by vm.itemReferenceCountFlow.collectAsStateWithLifecycle()
+    Log.d("MyApp", "itemReferenceCount $itemReferenceCount")
+
+    var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
+
+    val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
+
+    val isSimpleDelete = itemReferenceCount == 0L
+    GeneralEditAndDeleteScreen(
+        vm = vm.generalEditScreenViewModel,
+        navController = navController,
+        // TODO: Different title for add vs edit? Title should maybe show data set name?
+        title = { Text("TODO: TITLE") },
+        isDirty = { uiContent.editableItem.value != uiContent.originalItem },
+        validateForSave = { vm.validateForSave() },
+        performSave = { vm.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
+        onIdle = {},
+        requestClose = requestClose,
+        deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
+            isSimpleDelete,
+            if (isSimpleDelete) {
+                { Text("Delete product?") }
+            } else {
+                { Text("Delete product and prices?") }
+            },
+            if (isSimpleDelete) {
+                { Text("This product has no associated prices so deleting it will not affect anything else.") }
+            } else {
+                // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
+                { Text("Deleting this product will also delete its store prices. This action cannot be undone.") }
+            }
+        ),
+        requestDelete = { vm.performDelete() },
+        requestDeleteCancel = { showDeleteConfirmDialog = false },
+    ) { showDeleteSpinner ->
+        var name by rememberSyncedTextFieldValue(uiContent.editableItem.value.name)
+        val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
+        Log.d("MyApp", "nameValidationRules $nameValidationRules")
+        ValidatedTextField2(
+            label = { Text("Name") },
+            value = name,
+            maxLength = maxItemNameLength,
+            onValueChange = {
+                name = it
+                vm.setUIContentEditableItem(uiContent.editableItem.value.copy(name = it.text))
+            },
+            enabled = saveStatus.isNotBusy(),
+            validationRules = nameValidationRules.value,
+            validationRulesKey = nameValidationRules.version,
+            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+            validationFlow = vm.saveValidationEvents,
+            validationFlowFieldId = EditItemViewModel.EditableField.NAME
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        var notes by rememberSyncedTextFieldValue(uiContent.editableItem.value.notes)
+        FilteredTextField(
+            label = { Text("Notes") },
+            value = notes,
+            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
+            onValueChange = {
+                notes = it
+                vm.setUIContentEditableItem(uiContent.editableItem.value.copy(notes = it.text))
+            },
+            enabled = saveStatus.isNotBusy(),
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        // TODO: We should take account of whether a product has any price data or not. Maybe not in
+        // terms of labelling the button etc (though we could, albeit minor jank prospects as we'd
+        // need to query async during recomposition, albeit the change might be small enough that on
+        // this form jank might be minimal). At a minimum, when clicked, the alert dialog should
+        // distinguish the cases where the product has prices and where it doesn't - the latter being
+        // a much less scary delete.
+        if (uiContent.editableItem.value.id != 0L) {
+            Spacer(modifier = Modifier.height(16.dp))
+            OutlinedButton(
+                onClick = { showDeleteConfirmDialog = true },
+                enabled = saveStatus.isNotBusy() && itemReferenceCount != null,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+            ) {
+                if (showDeleteSpinner) {
+                    SmallCircularProgressIndicator()
+                } else {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Delete"
+                    ) // TODO: tweak wording?
+                }
+                Spacer(Modifier.width(8.dp))
+                Text("Delete product")
+            }
+        }
     }
 }
 
@@ -5183,8 +5409,14 @@ class SharedViewModel : ViewModel() {
         )
     }
 
+    var editItemScreenUIContent: EditItemScreenUIContent? = null
+
     fun setEditItemScreenContent(item: Item?, dataSetId: Long) {
-        TODO()
+        val editableItem = EditableItem.fromItem(item, dataSetId)
+        editItemScreenUIContent = EditItemScreenUIContent(
+            editableItem = mutableStateOf(editableItem),
+            originalItem = editableItem
+        )
     }
 
     var editSourceScreenUIContent: EditSourceScreenUIContent? = null
@@ -5678,6 +5910,86 @@ class EditSourceViewModel(
         devCheck(sourceId != 0L) { "Expected to delete an actual source but have ID 0" }
         val rowsDeleted = priceTrackerRepository.deleteSourceById(sourceId)
         Log.d("MyApp", "Deleted $rowsDeleted rows with sourceId $sourceId")
+    }
+}
+
+class EditItemViewModel(
+    private val priceTrackerRepository: PriceTrackerRepository,
+    private val savedStateHandle: SavedStateHandle,
+    val uiContent: EditItemScreenUIContent,
+) : ViewModel() {
+    init {
+        uiContent.saveState(savedStateHandle)
+    }
+
+    val itemReferenceCountFlow = uiContent.editableItem.value.id.let { itemId ->
+        if (itemId != 0L) {
+            priceTrackerRepository.countPricesForItem(itemId)
+        } else {
+            flowOf(0L) // new items have no references
+        }
+    }.stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = null)
+
+    val generalEditScreenViewModel = GeneralEditScreenViewModel()
+
+    fun setUIContentEditableItem(newEditableItem: EditableItem) {
+        uiContent.editableItem.value = newEditableItem
+        uiContent.saveEditableItemState(savedStateHandle)
+    }
+
+    // TODO: There just might be an argument for not using emptyList() in stateIn, so we can head
+    // off a theoretical possibility of the user entering invalid data (maybe just leaving the
+    // form empty when creating a new entry) and starting a save before the validation rules are
+    // present, which will pass (because no validation rules) and then they either insert invalid
+    // data or get a database level constraint validation. If we have null, we can make sure the
+    // validation rules *are present* during save validation.
+    val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
+        priceTrackerRepository.getAllItems(uiContent.editableItem.value.dataSetId)
+            .map { itemList ->
+                buildNameValidationRules(
+                    itemList.filter { item -> item.id != uiContent.editableItem.value.id }
+                        .map { item -> item.name }
+                )
+            }
+            .withVersion()
+            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
+
+    enum class EditableField {
+        NAME
+    }
+
+    private val _saveValidationEvents = MutableSharedFlow<EditableField>()
+    val saveValidationEvents = _saveValidationEvents.asSharedFlow()
+
+    suspend fun validateForSave(): Boolean {
+        Log.d("MyAppESS", "validateForSave")
+        if (!validationRulesOk(
+                nameValidationRules.value.value,
+                uiContent.editableItem.value.name
+            )
+        ) {
+            _saveValidationEvents.emit(EditableField.NAME)
+            return false
+        }
+        // TODO: MORE
+        Log.d("MyAppESS", "validateForSave passed")
+        return true
+    }
+
+    suspend fun performSave() {
+        val item = uiContent.editableItem.value.toDomain()
+        if (item == null) {
+            throw IllegalStateException("performSave() called with an inconvertible EditableItem: ${uiContent.editableItem.value}")
+        }
+        priceTrackerRepository.updateOrInsertItem(item)
+    }
+
+    suspend fun performDelete() {
+        Log.d("MyApp", "entered performDelete")
+        val itemId = uiContent.editableItem.value.id
+        devCheck(itemId != 0L) { "Expected to delete an actual item but have ID 0" }
+        val rowsDeleted = priceTrackerRepository.deleteItemById(itemId)
+        Log.d("MyApp", "Deleted $rowsDeleted rows with itemId $itemId")
     }
 }
 
@@ -6226,6 +6538,29 @@ This may be complete crap. The example of how to use it is probably as long as t
 
 */
 
+        composable(
+            "editItem", enterTransition = { slideUpTransition() },
+            popExitTransition = { slideDownTransition() },
+        ) { backStackEntry ->
+            screenWithViewModel<EditItemViewModel, EditItemScreenUIContent>(
+                backStackEntry = backStackEntry,
+                clearUIContent = { sharedViewModel.editItemScreenUIContent = null },
+                buildViewModel = { app, handle ->
+                    EditItemViewModel(
+                        app.priceTrackerRepository,
+                        handle,
+                        sharedViewModel.editItemScreenUIContent
+                            ?: EditItemScreenUIContent.fromSavedState(handle)!!
+                    )
+                }
+            ) { viewModel ->
+                EditItemScreen(
+                    viewModel, navController,
+                    requestClose = {
+                        navController.popBackStack()
+                    })
+            }
+        }
 
 
         composable(
