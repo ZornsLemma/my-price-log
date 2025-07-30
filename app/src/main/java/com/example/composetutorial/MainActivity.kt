@@ -570,6 +570,23 @@ abstract class InventoryDatabase : RoomDatabase() {
         }
     }
 }
+/* TODO: I had a chat with ChatGPT and I can probably arrange to start each table's ID counter at a different value with something like:
+
+    val roomCallback = object : RoomDatabase.Callback() {
+    override fun onCreate(db: SupportSQLiteDatabase) {
+        super.onCreate(db)
+
+        // Seed the auto-increment for Foo table to start at 999 (next will be 1000)
+        db.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('Foo', 999)")
+
+        // For Bar table, start at 1999 (next will be 2000)
+        db.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('Bar', 1999)")
+    }
+}
+
+This adds "free" debuggability by making it more obvious if an ID is misused or is reported in an error with no context on which table it's from. Gut feeling is I should allocate say 1000 IDs to each of the basic static data things and start prices (which will be way the biggest table) at say 10000.
+
+*/
 
 suspend fun populateDemoData(context: Context) {
     val db = InventoryDatabase.getDatabase(context)
@@ -1106,7 +1123,7 @@ data class Item(
 @Parcelize
 data class EditableItem(
     val id: Long,
-    val dataSetId: Long,
+    val dataSetId: Long, // TODO: although the non-editable Item has a dataSetId and that is probably a strong argument for keeping this is, I half wonder if we should just shove our full DataSet object in here. OTOH it will slightly add to the serialisation burden and we do serialise this every time anything changes.
     val name: String,
     val quantityType: QuantityType,
     val defaultUnit: MeasureUnit, // TODO: maybe this does/doesn't need to be nullable? kind of depends how UI evolves - gut feeling is that since it can be freely changed at any point and is only a default for new prices, it's less faffy for user if it always defaults to something rather than forcing them to choose it
@@ -1136,20 +1153,20 @@ data class EditableItem(
     }
 
     companion object {
-        fun fromItem(item: Item?, dataSetId: Long): EditableItem {
+        fun fromItem(item: Item?, dataSet: DataSet): EditableItem {
             if (item == null) {
                 // It's probably reasonable to default to sold by weight, and it's nice not to have
                 // the possibility of a null state.
                 val quantityType = QuantityType.WEIGHT
-                val defaultUnit = MeasureUnit.G // TODO: We need to do the following (metric may not be enabled for this data set, so G is not always even valid) but I need plumbing to *have* dataSet: getRelevantMeasureUnits(dataSet, quantityType, includeDisplayOnly = false).first()
-                return EditableItem(0, dataSetId, "", QuantityType.WEIGHT , defaultUnit,"")
+                val defaultUnit = getRelevantMeasureUnits(dataSet, quantityType, includeDisplayOnly = false).first()
+                return EditableItem(0, dataSet.id, "", QuantityType.WEIGHT, defaultUnit,"")
             } else {
-                devCheck(dataSetId == item.dataSetId) {
-                    "Expected identical dataSetIds but have dataSetId $dataSetId and item.dataSetid ${item.dataSetId}"
+                devCheck(dataSet.id == item.dataSetId) {
+                    "Expected identical dataSetIds but have dataSet.id ${dataSet.id} and item.dataSetid ${item.dataSetId}"
                 }
                 return EditableItem(
                     item.id,
-                    dataSetId,
+                    dataSet.id,
                     item.name,
                     item.defaultUnit.quantityType,
                     item.defaultUnit,
@@ -5638,7 +5655,7 @@ class SharedViewModel : ViewModel() {
     var editItemScreenUIContent: EditItemScreenUIContent? = null
 
     fun setEditItemScreenContent(item: Item?, dataSet: DataSet) {
-        val editableItem = EditableItem.fromItem(item, dataSet.id)
+        val editableItem = EditableItem.fromItem(item, dataSet)
         editItemScreenUIContent = EditItemScreenUIContent(
             editableItem = mutableStateOf(editableItem),
             originalItem = editableItem,
