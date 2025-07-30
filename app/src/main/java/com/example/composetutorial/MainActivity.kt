@@ -1107,6 +1107,7 @@ data class EditableItem(
     val id: Long,
     val dataSetId: Long,
     val name: String,
+    val quantityType: QuantityType?,
     val defaultUnit: MeasureUnit?,
     val notes: String,
 ) : Parcelable {
@@ -1136,7 +1137,7 @@ data class EditableItem(
     companion object {
         fun fromItem(item: Item?, dataSetId: Long): EditableItem {
             if (item == null) {
-                return EditableItem(0, dataSetId, "", null , "")
+                return EditableItem(0, dataSetId, "", null , null,"")
             } else {
                 devCheck(dataSetId == item.dataSetId) {
                     "Expected identical dataSetIds but have dataSetId $dataSetId and item.dataSetid ${item.dataSetId}"
@@ -1145,6 +1146,7 @@ data class EditableItem(
                     item.id,
                     dataSetId,
                     item.name,
+                    item.defaultUnit.quantityType,
                     item.defaultUnit,
                     item.notes
                 )
@@ -4161,6 +4163,146 @@ fun EditItemScreen(
             validationFlow = vm.saveValidationEvents,
             validationFlowFieldId = EditItemViewModel.EditableField.NAME
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // TODO: Probably can/should factor out a lot of this radio button stuff which I have just
+        // copied and pasted from EditSourceScreen for now.
+
+        // TODO: Can I put these string versions inside QuantityType or won't that play well with i18n?
+        val options = listOf(
+            Triple(QuantityType.WEIGHT, "Weight", null),
+            Triple(
+                QuantityType.VOLUME,
+                "Volume",
+                null,
+            ),
+            // TODO: Don't be over-eager to have supportingText here - if we don't need it for any of them items that is fine, and we can then avoid this maybe-nonstandardness in this case at least, and revert to the standard item height of 40.dp - "Item" alone may be a fine option, or "Item or group of items" or something like that would probably be a fine option with no supporting text - think carefully about wording but don't assume we need supportingText
+            Triple(QuantityType.ITEM, "Item", "Per item or pack of items") // TODO: POOR WORDING FOR BOTH SHORT NAME AND SUPPORTING TEXT? THINK
+        )
+        var selectedOption = uiContent.editableItem.value.quantityType
+        // TODO: This radio group needs to be enabled iff saveStatus.isNotBusy()
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+
+            // TODO: colors?
+            // TODO: elevation???
+        ) {
+            // We would like to use horizontal padding of 16.dp on this Column, but we don't want
+            // the ripple effect on the radio button Rows to "stop" at the left edge of the circular
+            // radio buttons. So we have to use 8.dp here and manually apply the remaining 8.dp
+            // padding on each individual composable. I am not completely sure this looks great -
+            // maybe it's a bit weird the ripple effect is "wider" than everything else - but it's
+            // probably OK.
+            Column(
+                modifier = Modifier
+                    // NB: We must do .animateContentSize() *before* .padding(), otherwise the clipping
+                    // bounds the former imposes are too tight and will prevent ErrorHighlightBox
+                    // drawing correctly.
+                    .animateContentSize()
+                    .padding(horizontal = 8.dp, vertical = 12.dp)
+            ) {
+                // TODO: I'm far from sure what typography or colour this caption should have, but this
+                // matches the caption on the TextFields so it is probably not a terrible choice. TODO: THIS IS FOR bodySmall - I can't help thinking titleSmall maybe looks better though. I am a bit worried the fonts are all over the place in general, but since MD3 is conspicuously silent outside of some very specific cases it is really hard to know what to do.
+                Text(
+                    "Product sold by", // TODO: Not necessarily great wording, especially since we also have a specific unit selection further down for weight/volume - not the only aspect, but maybe just "Sold by" would be fine (the whole dialog is about products and probably even says "product" in top app bar)
+                    style = MaterialTheme.typography.titleSmall /* bodySmall */,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+                //Spacer(modifier = Modifier.height(8.dp))
+                options.forEach { (id, name, supportingText) ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            //.background(Color.Blue)
+                            .clickable {
+                                vm.setUIContentEditableItem(
+                                    uiContent.editableItem.value.copy(
+                                        quantityType = id
+                                    )
+                                    // TODO: We also need to null-out the default unit or maybe give it a "default default", if this is a *change* of quantityType (not if it's just a reselection of same quantityType)
+                                )
+                            }
+                            .padding(horizontal = 8.dp)
+                            .height(48.dp) // 40.dp is MD3 spec but we want extra space for our supporting text while still having some spacing between items
+                            //.padding(8.dp) // TODO: ChatGPT value to try to space things out now we have supportingText
+                            .semantics {
+                                role = Role.RadioButton
+                            }, // for TalkBack / screen readers, since this is clickable not the RadioButton
+                    ) {
+                        RadioButton(
+                            selected = (selectedOption == id),
+                            onClick = null // TODO onClick
+                        )
+                        Column(modifier = Modifier.padding(start = 8.dp)) {
+                            Text(
+                                text = name,
+                                /* TODO: not sure this looks right: style = MaterialTheme.typography.labelLarge, */ /* TODO: seems to be default anyway: color = MaterialTheme.colorScheme.onSurface */
+                            )
+                            Log.d("MyApp", "supportingText $supportingText")
+                            if (supportingText != null) {
+                                Text(
+                                    text = supportingText,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (selectedOption != QuantityType.ITEM) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    /* TODO COPY AND PASTE DELETE KEPT JUST IN CASE USEFUL FOR REF BUT PROBABLY NOT
+                    var loyaltyPercentage by rememberSyncedTextFieldValue(uiContent.editableSource.value.loyaltyPercentage)
+                    // TODO: Can/should we factor out this BaseValidatedTextField+NumericTextField combo?
+                    Box(modifier = Modifier.padding(8.dp)) {
+                        BaseValidatedTextField(
+                            value = loyaltyPercentage.text,
+                            validationRules = vm.loyaltyPercentageValidationRules,
+                            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+                            validationFlow = vm.saveValidationEvents,
+                            validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
+                        ) { validationResult, interactionSource, scrollToFocusableHandle ->
+                            NumericTextField(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .validationFocusRequester(scrollToFocusableHandle),
+                                // TODO: I can't help feeling this looks a bit confusing when it's empty, maybe it's just lack of a "%" or something.
+                                label = { Text("Loyalty scheme reward") },
+                                value = loyaltyPercentage,
+                                suffix = { Text("%") },
+                                onValueChange = {
+                                    loyaltyPercentage = it
+                                    vm.setUIContentEditableSource(
+                                        uiContent.editableSource.value.copy(
+                                            loyaltyPercentage = it.text
+                                        )
+                                    )
+                                },
+                                enabled = saveStatus.isNotBusy(),
+                                isError = validationResult != null,
+                                supportingText = textOrNull(
+                                    validationResult,
+                                    color = MaterialTheme.colorScheme.error
+                                ),
+                                interactionSource = interactionSource,
+                            )
+                        }
+                    }
+                    */
+                    Text("TODO: UNIT DROPDOWN")
+                    // TODO: If it's not too faffy, we should maybe remember the unit dropdown value (only in the edit UI of course) per-quantityType, so if the user flips back and forth between weight and volume they don't lose their previous selection
+                }
+            }
+        }
+
+        // TODO END COPY-AND-PASTE-ISH RADIO BUTTON CHUNK
 
         Spacer(modifier = Modifier.height(16.dp))
 
