@@ -641,11 +641,21 @@ suspend fun populateDemoData(context: Context) {
         )
         // TODO: Do some web searches and confirm these are not real supermarket names
         val sourceIdValueMart = db.sourceDao()
-            .insert(Source(dataSetId = dataSetId, name = "ValueMart", loyaltyDiscountType = LoyaltyDiscountType.NONE, loyaltyMultiplier = 1.0, notes = ""))
+            .insert(
+                Source(
+                    dataSetId = dataSetId,
+                    name = "ValueMart",
+                    loyaltyDiscountType = LoyaltyDiscountType.NONE,
+                    loyaltyMultiplier = 1.0,
+                    notes = ""
+                )
+            )
         val sourceIdSuperiorStore = db.sourceDao().insert(
             Source(
                 dataSetId = dataSetId,
-                name = "SuperiorStore",loyaltyDiscountType = LoyaltyDiscountType.NONE, loyaltyMultiplier = 1.0,
+                name = "SuperiorStore",
+                loyaltyDiscountType = LoyaltyDiscountType.NONE,
+                loyaltyMultiplier = 1.0,
                 notes = ""
             )
         )
@@ -653,7 +663,9 @@ suspend fun populateDemoData(context: Context) {
         db.sourceDao().insert(
             Source(
                 dataSetId = dataSetId,
-                name = "Newco",loyaltyDiscountType = LoyaltyDiscountType.NONE, loyaltyMultiplier = 1.0,
+                name = "Newco",
+                loyaltyDiscountType = LoyaltyDiscountType.NONE,
+                loyaltyMultiplier = 1.0,
                 notes = "Only just opened but I hope their prices will be good."
             )
         )
@@ -1100,7 +1112,8 @@ enum class LoyaltyDiscountType(val id: Long) {
     companion object {
         private val loyaltyDiscountTypeById = LoyaltyDiscountType.entries.associateBy { it.id }
 
-        fun fromValue(loyaltyDiscountTypeId: Long): LoyaltyDiscountType? = loyaltyDiscountTypeById[loyaltyDiscountTypeId]
+        fun fromValue(loyaltyDiscountTypeId: Long): LoyaltyDiscountType? =
+            loyaltyDiscountTypeById[loyaltyDiscountTypeId]
     }
 }
 
@@ -1127,7 +1140,7 @@ data class EditableSource(
         // TODO: Is this a reasonable place to do trimming? Gut feeling is that yes it is, since
         // validation doesn't care about this, it's just a bit of "tidying". But not sure.
         val loyaltyPercentage = parseStringAsDoubleOrNull(locale, loyaltyPercentage)
-        val loyaltyMultiplier = when(loyaltyDiscountType) {
+        val loyaltyMultiplier = when (loyaltyDiscountType) {
             LoyaltyDiscountType.NONE -> 1.0
             LoyaltyDiscountType.BONUS -> if (loyaltyPercentage != null) 100.0 / (100.0 + loyaltyPercentage) else null // TODO: double check this calculation later - I think I am confusing myself and there may not be a difference between bonus and discount, but I am really not sure any more - hmm, *maybe* this is right, and maybe the insight is that a discount is a discount, but with cashback I don't actually get my 5% or whatever *on the cashback* (it's not literal cash back so I can't spend it again for another 5%) - still very unsure though
             LoyaltyDiscountType.DISCOUNT -> if (loyaltyPercentage != null) 1.0 - (loyaltyPercentage / 100.0) else null
@@ -1135,7 +1148,14 @@ data class EditableSource(
         if (loyaltyMultiplier == null) {
             return null
         }
-        return Source(id = id, dataSetId = dataSetId, name = trimmedName, loyaltyDiscountType = loyaltyDiscountType, loyaltyMultiplier = loyaltyMultiplier, notes = notes)
+        return Source(
+            id = id,
+            dataSetId = dataSetId,
+            name = trimmedName,
+            loyaltyDiscountType = loyaltyDiscountType,
+            loyaltyMultiplier = loyaltyMultiplier,
+            notes = notes
+        )
     }
 
     // 5% bonus is not the same as 5% discount/cashback. Suppose we want to buy something costing £100.
@@ -1147,7 +1167,7 @@ data class EditableSource(
     companion object {
         fun fromSource(source: Source?, dataSetId: Long, locale: Locale): EditableSource {
             if (source == null) {
-                return EditableSource(0, dataSetId, "", LoyaltyDiscountType.NONE,"", "")
+                return EditableSource(0, dataSetId, "", LoyaltyDiscountType.NONE, "", "")
             } else {
                 devCheck(dataSetId == source.dataSetId) {
                     "Expected identical dataSetIds but have dataSetId $dataSetId and source.dataSetid ${source.dataSetId}"
@@ -1174,7 +1194,14 @@ data class EditableSource(
                         )
                     }
                 }
-                return EditableSource(source.id, dataSetId, source.name, source.loyaltyDiscountType,loyaltyPercentage, source.notes)
+                return EditableSource(
+                    source.id,
+                    dataSetId,
+                    source.name,
+                    source.loyaltyDiscountType,
+                    loyaltyPercentage,
+                    source.notes
+                )
             }
         }
     }
@@ -2714,7 +2741,11 @@ data class EditablePrice(
     }
 }
 
-fun textOrNull(string: String?, modifier: Modifier = Modifier, color: Color = Color.Unspecified): @Composable (() -> Unit)? {
+fun textOrNull(
+    string: String?,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified
+): @Composable (() -> Unit)? {
     if (string == null) {
         return string
     } else {
@@ -3035,7 +3066,7 @@ fun HomeScreenScaffold(
                     .widthIn(max = LocalConfiguration.current.screenWidthDp.dp * 2f / 3f)
             ) {
                 // TODO: Probably need to set font style/colour for this "heading"
-                Column() {
+                Column {
                     Box(
                         modifier = Modifier
                             .height(56.dp)
@@ -3436,7 +3467,7 @@ fun EditPriceScreen(
 
             if (validationResult != null) {
                 SupportingText(
-                    text = validationResult!!, isError = true,
+                    text = validationResult, isError = true,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .padding(top = 4.dp)
@@ -4018,13 +4049,18 @@ fun EditSourceScreen(
         // TODO: Can I put these string versions inside LoyaltyDiscountType or won't that play well with i18n?
         val options = listOf(
             Triple(LoyaltyDiscountType.NONE, "None", null),
-            Triple(LoyaltyDiscountType.BONUS, "Store rewards", "Points or credit usable only at this store"),
+            Triple(
+                LoyaltyDiscountType.BONUS,
+                "Store rewards",
+                "Points or credit usable only at this store"
+            ),
             Triple(LoyaltyDiscountType.DISCOUNT, "Discount", "Discount on basket or money back")
         )
         var selectedOption = uiContent.editableSource.value.loyaltyDiscountType
         // TODO: This radio group needs to be enabled iff saveStatus.isNotBusy()
 
-        Card(modifier = Modifier.fillMaxWidth(),
+        Card(
+            modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
 
             // TODO: colors?
@@ -4036,18 +4072,22 @@ fun EditSourceScreen(
             // padding on each individual composable. I am not completely sure this looks great -
             // maybe it's a bit weird the ripple effect is "wider" than everything else - but it's
             // probably OK.
-            Column(modifier = Modifier
-                // NB: We must do .animateContentSize() *before* .padding(), otherwise the clipping
-                // bounds the former imposes are too tight and will prevent ErrorHighlightBox
-                // drawing correctly.
-                .animateContentSize()
-                .padding(horizontal = 8.dp, vertical = 12.dp)) {
+            Column(
+                modifier = Modifier
+                    // NB: We must do .animateContentSize() *before* .padding(), otherwise the clipping
+                    // bounds the former imposes are too tight and will prevent ErrorHighlightBox
+                    // drawing correctly.
+                    .animateContentSize()
+                    .padding(horizontal = 8.dp, vertical = 12.dp)
+            ) {
                 // TODO: I'm far from sure what typography or colour this caption should have, but this
                 // matches the caption on the TextFields so it is probably not a terrible choice. TODO: THIS IS FOR bodySmall - I can't help thinking titleSmall maybe looks better though. I am a bit worried the fonts are all over the place in general, but since MD3 is conspicuously silent outside of some very specific cases it is really hard to know what to do.
-                Text("Loyalty scheme",
-                        style = MaterialTheme.typography.titleSmall /* bodySmall */,
+                Text(
+                    "Loyalty scheme",
+                    style = MaterialTheme.typography.titleSmall /* bodySmall */,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 8.dp))
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
                 //Spacer(modifier = Modifier.height(8.dp))
                 options.forEach { (id, name, supportingText) ->
                     Row(
@@ -4055,11 +4095,19 @@ fun EditSourceScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             //.background(Color.Blue)
-                            .clickable { vm.setUIContentEditableSource(uiContent.editableSource.value.copy(loyaltyDiscountType = id)) }
+                            .clickable {
+                                vm.setUIContentEditableSource(
+                                    uiContent.editableSource.value.copy(
+                                        loyaltyDiscountType = id
+                                    )
+                                )
+                            }
                             .padding(horizontal = 8.dp)
                             .height(48.dp) // 40.dp is MD3 spec but we want extra space for our supporting text while still having some spacing between items
                             //.padding(8.dp) // TODO: ChatGPT value to try to space things out now we have supportingText
-                            .semantics { role = Role.RadioButton }, // for TalkBack / screen readers, since this is clickable not the RadioButton
+                            .semantics {
+                                role = Role.RadioButton
+                            }, // for TalkBack / screen readers, since this is clickable not the RadioButton
                     ) {
                         RadioButton(
                             selected = (selectedOption == id),
@@ -4218,6 +4266,7 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
                 validationFlowFieldId -> {
                     scrollAndFocusTo(focusManager, scrollToFocusableHandle)
                 }
+
                 else -> {}
             }
         }
@@ -4226,7 +4275,7 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
 
 @Composable
 fun <T> ValidatedTextField2(
-    label: @Composable () (() -> Unit)? = null,
+    label: @Composable() (() -> Unit)? = null,
     value: TextFieldValue,
     maxLength: Int,
     onValueChange: (TextFieldValue) -> Unit,
@@ -4604,7 +4653,7 @@ fun <T> rememberValidationThing(
         if (isFocused) delay(delayMillis)
 
         val reorderedValidations =
-            listOfNotNull(failedValidationRule) + (validationRules ?: emptyList())
+            listOfNotNull(failedValidationRule) + validationRules
         failedValidationRule = null
         var shouldValidate = true// TODO: rename skipValidation or something to flip sense?
         when (value) {
@@ -5576,7 +5625,12 @@ class EditSourceViewModel(
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
 
     // TODO: Maybe we should allow zero here? We might need to tweak some messages accordingly. Zero isn't necessary as you can choose "None", but maybe it's a bit persnickety not to allow the user just to type 0 directly with one of the other options as well.
-    val loyaltyPercentageValidationRules = numericValidationRules(uiContent.frozenLocale, allowDecimals = true, allowZero = false, maxDecimals = 2)
+    val loyaltyPercentageValidationRules = numericValidationRules(
+        uiContent.frozenLocale,
+        allowDecimals = true,
+        allowZero = false,
+        maxDecimals = 2
+    )
 
     enum class EditableField {
         NAME,
@@ -5599,7 +5653,8 @@ class EditSourceViewModel(
         // TODO: IS IT OK TO EXPLCIITLY CHECK loyaltyDiscountType HERE? CAN/SHOULD THIS BE FOLDED INTO VALIODATION RULES, E.G. BY VALIDATING A PAIR<DISCOUNTTYPE,STRINGDISCOUNTPERCENTAGE>??
         if (uiContent.editableSource.value.loyaltyDiscountType != LoyaltyDiscountType.NONE && !validationRulesOk(
                 loyaltyPercentageValidationRules,
-                uiContent.editableSource.value.loyaltyPercentage)
+                uiContent.editableSource.value.loyaltyPercentage
+            )
         ) {
             _saveValidationEvents.emit(EditableField.LOYALTY_PERCENTAGE)
             return false
@@ -5693,7 +5748,10 @@ class EditDataSetViewModel(
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
 
     val currencyValidationRules = listOf(
-        ValidationRule<String>({ it.isNotEmpty() }, "Currency must be specified") // TODO: poor wording?
+        ValidationRule<String>(
+            { it.isNotEmpty() },
+            "Currency must be specified"
+        ) // TODO: poor wording?
     )
 
     // TODO: I should probably replace the Triple<3xBoolean> with a data class for readability.
@@ -5911,13 +5969,13 @@ fun AppNavigation() {
                     sharedViewModel.setEditItemsScreenContent(
                         uiContent
                     )
-                    navController.navigate("editItems/${uiContent.dataSet!!.id}/${uiContent.dataSet!!.name}")
+                    navController.navigate("editItems/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
                 },
                 onEditSourcesClick = { uiContent ->
                     sharedViewModel.setEditSourcesScreenContent(
                         uiContent
                     )
-                    navController.navigate("editSources/${uiContent.dataSet!!.id}/${uiContent.dataSet!!.name}")
+                    navController.navigate("editSources/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
                 },
             )
         }
@@ -6055,12 +6113,20 @@ fun AppNavigation() {
             screenWithViewModel<EditPriceViewModel, EditPriceScreenUIContent>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.editPriceScreenUIContent = null },
-                buildViewModel = { app, handle -> EditPriceViewModel(app.priceTrackerRepository, handle, sharedViewModel.editPriceScreenUIContent ?: EditPriceScreenUIContent.fromSavedState(handle)!!) }, // TODO !! IS MAYBE A HACK - TBH COULD I JUST MAKE FROMSAVEDSTATE RETURN NON-NULL? NOT TOO KEEN
+                buildViewModel = { app, handle ->
+                    EditPriceViewModel(
+                        app.priceTrackerRepository,
+                        handle,
+                        sharedViewModel.editPriceScreenUIContent
+                            ?: EditPriceScreenUIContent.fromSavedState(handle)!!
+                    )
+                }, // TODO !! IS MAYBE A HACK - TBH COULD I JUST MAKE FROMSAVEDSTATE RETURN NON-NULL? NOT TOO KEEN
             ) { viewModel ->
                 // TODO: Be good to test fairly late on with two datasets with different currencies - I vaguely wonder
                 // if re-use of this composable (maybe prevented via randomUUID route hack?) will not pick up the
                 // changes.
-                EditPriceScreen(viewModel, navController,
+                EditPriceScreen(
+                    viewModel, navController,
                     requestClose = { navController.popBackStack() }
                 )
             }
@@ -6075,7 +6141,9 @@ fun AppNavigation() {
                 clearUIContent = { sharedViewModel.editDataSetScreenUIContent = null },
                 buildViewModel = { app, handle ->
                     EditDataSetViewModel(
-                        app.priceTrackerRepository, handle, sharedViewModel.editDataSetScreenUIContent
+                        app.priceTrackerRepository,
+                        handle,
+                        sharedViewModel.editDataSetScreenUIContent
                             ?: EditDataSetScreenUIContent.fromSavedState(handle)!!
                     )
                 }
@@ -6406,9 +6474,9 @@ suspend fun scrollAndFocusTo(focusManager: FocusManager, handle: ScrollToFocusab
     }
 
     // TODO: Highly speculative, but would a small delay before doing this give things like the keyboard time to appear first and improve visual appeareance? Or maybe we should set it to visible right at the top of this function so it's fully visible and gets a chance to influence things like bringinto view!??!?! probably doesn't work that way but maybe worth experimenting
-        handle.errorHighlightBoxVisible.value = true
-        delay(errorHighlightBoxVisibleTimeMillis)
-        handle.errorHighlightBoxVisible.value = false
+    handle.errorHighlightBoxVisible.value = true
+    delay(errorHighlightBoxVisibleTimeMillis)
+    handle.errorHighlightBoxVisible.value = false
 }
 
 @Composable
@@ -6469,7 +6537,7 @@ fun ErrorHighlightBox(
                         color = borderColor,
                         alpha = alpha.value,
                         style = Stroke(width = borderWidthPx),
-                        topLeft = androidx.compose.ui.geometry.Offset(-offsetPx, -offsetPx),
+                        topLeft = Offset(-offsetPx, -offsetPx),
                         size = size.copy(
                             width = size.width + 2 * offsetPx,
                             height = size.height + 2 * offsetPx
@@ -6627,7 +6695,7 @@ fun AnimatedSupportingText(
         // fresh message with alpha = 1
         Box(
             modifier = modifier
-                //.animateContentSize(animationSpec = tween(1500))
+            //.animateContentSize(animationSpec = tween(1500))
         ) {
             Text(
                 text = text,
