@@ -4338,6 +4338,7 @@ fun EditItemScreen(
                             )
                         }
                     MyExposedDropdownMenuBox(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                         enabled = saveStatus.isNotBusy(),
                         selectedId = uiContent.editableItem.value.defaultUnit.id,
                         onValueChange = {
@@ -4353,8 +4354,8 @@ fun EditItemScreen(
                                 )
                             }
                         },
-                        label = { Text("Typical pack unit") },
-                        supportingText = { Text("This is just a default; any unit can be used when entering a price." ) }, // TODO: POOR WORDING
+                        label = { Text("Default unit") },
+                        supportingText = { Text("Used only as a default when entering a price for the first time. You can still choose another unit." ) },
                         items = relevantUnitList,
                         // Show dividers between unit families TODO: Copy and paste of code in ItemSourceInfo
                         getDividerBetween = { previousItem, item ->
@@ -4364,7 +4365,6 @@ fun EditItemScreen(
                                 item.unitFamilies.intersect(relevantUnitFamilies)
                             previousItemUnitFamily != itemUnitFamily
                         },
-                        modifier = Modifier.fillMaxWidth(),
                         getId = { it.id },
                         getLabel = { it.symbol },
                     )
@@ -7467,3 +7467,9 @@ Log.d("MyApp", baz.toString())
 
 // TODO: For the record, I used scaling 61% when importing app-icon-4.svg as a new image asset for
 // the icon.
+
+// TODO: Validation text might be slightly warmer but still brief (which I think is desirable) e.g.
+// "Please enter a value" or "Pack size is required" or "Enter a valid number". (vs "Can't be
+// empty", "Must specify a pack size", "Invalid number" - I just made these up talking to ChatGPT,
+// they are not necessarily what the code actually says, I didn't check.) Perhaps don't use "Please"
+// - it may seem repetitive if we have lots of validation failures.
