@@ -4307,6 +4307,19 @@ fun EditItemScreen(
                     }
                     */
                     // TODO: Not just here, but the use of abbreviations for units is maybe not ideal here, it's a bit confusing to just see e.g. a bare "l" instead of "litre"
+
+                    // TODO: RelevantUnit* here are sort of copy and paste from ItemSourceInfo and could possibly be factored out along with the code using them
+                    val relevantUnitFamilies =
+                        remember(vm.uiContent.dataSet) { getRelevantUnitFamilies(vm.uiContent.dataSet) }
+
+                    val relevantUnitList =
+                        remember(vm.uiContent.dataSet, vm.uiContent.editableItem.value.quantityType) {
+                            getRelevantMeasureUnits(
+                                vm.uiContent.dataSet,
+                                vm.uiContent.editableItem.value.quantityType,
+                                includeDisplayOnly = false
+                            )
+                        }
                     MyExposedDropdownMenuBox(
                         enabled = saveStatus.isNotBusy(),
                         selectedId = uiContent.editableItem.value.defaultUnit.id,
@@ -4325,7 +4338,15 @@ fun EditItemScreen(
                         },
                         label = { Text("Typical pack unit") },
                         supportingText = { Text("This is just a default; any unit can be used when entering a price." ) }, // TODO: POOR WORDING
-                        items = MeasureUnit.entries, // TODO: We need getRelevantMeasureUnits but don't currently have a dataSet available
+                        items = relevantUnitList,
+                        // Show dividers between unit families TODO: Copy and paste of code in ItemSourceInfo
+                        getDividerBetween = { previousItem, item ->
+                            val previousItemUnitFamily =
+                                previousItem.unitFamilies.intersect(relevantUnitFamilies)
+                            val itemUnitFamily =
+                                item.unitFamilies.intersect(relevantUnitFamilies)
+                            previousItemUnitFamily != itemUnitFamily
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         getId = { it.id },
                         getLabel = { it.symbol },
