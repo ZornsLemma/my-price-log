@@ -222,6 +222,7 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
 import com.example.composetutorial.EditPriceScreenUIContent.Companion
+import com.example.composetutorial.EditPriceScreenUIContent.Companion.DATA_SET_KEY
 import com.example.composetutorial.MeasureUnit.Companion.measureUnitById
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -2901,11 +2902,13 @@ data class EditPriceScreenUIContent(
 data class EditItemScreenUIContent(
     val editableItem: MutableState<EditableItem>,
     val originalItem: EditableItem,
+    val dataSet: DataSet,
     // TODO: delete if not needed val frozenLocale: Locale,
 ) {
     fun saveState(savedStateHandle: SavedStateHandle) {
         saveEditableItemState(savedStateHandle)
         savedStateHandle[ORIGINAL_ITEM_KEY] = originalItem
+        savedStateHandle[DATA_SET_KEY] = dataSet
         // TODO: delete if not needed savedStateHandle[LOCALE_TAG] = frozenLocale.toLanguageTag()
     }
 
@@ -2917,16 +2920,19 @@ data class EditItemScreenUIContent(
     companion object {
         private const val EDITABLE_ITEM_KEY = "editableItem"
         private const val ORIGINAL_ITEM_KEY = "originalItem"
+        private const val DATA_SET_KEY = "dataSet"
         // TODO: delete if not needed private const val LOCALE_TAG = "localeTag"
 
         fun fromSavedState(savedStateHandle: SavedStateHandle): EditItemScreenUIContent? {
             val savedEditableItem: EditableItem? = savedStateHandle[EDITABLE_ITEM_KEY]
             val savedOriginalItem: EditableItem? = savedStateHandle[ORIGINAL_ITEM_KEY]
+            val savedDataSet: DataSet? = savedStateHandle[DATA_SET_KEY]
             // TODO: delete val savedLocaleTag: String? = savedStateHandle[LOCALE_TAG]
-            if (savedEditableItem != null && savedOriginalItem != null /* TODO && savedLocaleTag != null */) {
+            if (savedEditableItem != null && savedOriginalItem != null && savedDataSet != null /* TODO && savedLocaleTag != null */) {
                 return EditItemScreenUIContent(
                     mutableStateOf(savedEditableItem),
                     savedOriginalItem,
+                    savedDataSet
                     // TODO delete Locale.forLanguageTag(savedLocaleTag)
                 )
             } else {
@@ -5493,6 +5499,11 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+data class EditItemsScreenUIContent(
+    val itemList: List<Item>,
+    val dataSet: DataSet
+)
+
 // Shared ViewModel to pass data between screens
 // TODO: Some inconsistency between "UIContent" and "Content" here - think about renaming.
 class SharedViewModel : ViewModel() {
@@ -5544,7 +5555,7 @@ class SharedViewModel : ViewModel() {
 
     // TODO: Rename the following now they are just List<T>? not a UIContent structure
     var editDataSetsScreenUIContent: List<DataSet>? = null
-    var editItemsScreenUIContent: List<Item>? = null
+    var editItemsScreenUIContent: EditItemsScreenUIContent? = null
     var editSourcesScreenUIContent: List<Source>? = null
 
     // TODO: The "doubling" in the next three functions is a temporary hack to show that we use the
@@ -5558,8 +5569,10 @@ class SharedViewModel : ViewModel() {
     }
 
     fun setEditItemsScreenContent(uiContent: HomeScreenUIContent) {
-        editItemsScreenUIContent =
-            uiContent.itemList + uiContent.itemList.map { it -> it.copy(id = it.id * 1000) }
+        editItemsScreenUIContent = EditItemsScreenUIContent(
+            uiContent.itemList + uiContent.itemList.map { it -> it.copy(id = it.id * 1000) },
+            uiContent.dataSet!!
+        )
     }
 
     fun setEditSourcesScreenContent(uiContent: HomeScreenUIContent) {
@@ -5581,11 +5594,12 @@ class SharedViewModel : ViewModel() {
 
     var editItemScreenUIContent: EditItemScreenUIContent? = null
 
-    fun setEditItemScreenContent(item: Item?, dataSetId: Long) {
-        val editableItem = EditableItem.fromItem(item, dataSetId)
+    fun setEditItemScreenContent(item: Item?, dataSet: DataSet) {
+        val editableItem = EditableItem.fromItem(item, dataSet.id)
         editItemScreenUIContent = EditItemScreenUIContent(
             editableItem = mutableStateOf(editableItem),
-            originalItem = editableItem
+            originalItem = editableItem,
+            dataSet = dataSet,
         )
     }
 
@@ -5661,8 +5675,17 @@ fun isCaseInsensitiveSubstring(lhs: String, rhs: String, locale: Locale) =
 fun areHumanEqual(lhs: String, rhs: String) =
     lhs.trim().lowercase() == rhs.trim().lowercase()
 
+class EditItemsViewModel(
+    savedStateHandle: SavedStateHandle,
+    getName: (Item) -> String,
+    initialList: List<Item>?,
+    dataQuery: Flow<List<Item>>,
+    public val dataSet: DataSet
+) : GeneralSelectorViewModel<Item>(savedStateHandle, getName, initialList, dataQuery) {
+}
+
 // TODO: This may not actually need the repository passing in given we pass in a query
-class GeneralSelectorViewModel<T>(
+open class GeneralSelectorViewModel<T>(
     private val savedStateHandle: SavedStateHandle,
     private val getName: (T) -> String,
     private val initialList: List<T>?,
@@ -6510,17 +6533,20 @@ fun AppNavigation() {
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
+            // TODO: We now have an actual DataSet passed to us so we can and perhaps should get rid of dataSetId and dataSetName
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
-            screenWithViewModel<GeneralSelectorViewModel<Item>, Int /* TODO DUMMY */>(
+            screenWithViewModel<EditItemsViewModel, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.editItemsScreenUIContent = null },
                 buildViewModel = { app, handle ->
-                    GeneralSelectorViewModel(
+                    EditItemsViewModel(
                         savedStateHandle = handle,
                         getName = { it -> it.name },
-                        initialList = sharedViewModel.editItemsScreenUIContent,
-                        dataQuery = app.priceTrackerRepository.getAllItems(dataSetId)
+                        initialList = sharedViewModel.editItemsScreenUIContent?.itemList,
+                        dataQuery = app.priceTrackerRepository.getAllItems(dataSetId),
+                        // TODO: !! in the next line *is* a hack - if we have been killed and resurrected we won't have it and we need it, so we are going to need to add savedstatehandle store/load, but hacking for the moment
+                        dataSet = sharedViewModel.editItemsScreenUIContent!!.dataSet
                     )
                 }
             ) { viewModel ->
@@ -6532,12 +6558,12 @@ fun AppNavigation() {
                     getName = { it.name },
                     onAddClick = {
                         Log.d("MyAppGS", "Add item")
-                        sharedViewModel.setEditItemScreenContent(null, dataSetId)
+                        sharedViewModel.setEditItemScreenContent(null, viewModel.dataSet)
                         navController.navigate("editItem")
                     },
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
-                        sharedViewModel.setEditItemScreenContent(it, dataSetId)
+                        sharedViewModel.setEditItemScreenContent(it, viewModel.dataSet)
                         navController.navigate("editItem")
                     },
                     showSearch = true
