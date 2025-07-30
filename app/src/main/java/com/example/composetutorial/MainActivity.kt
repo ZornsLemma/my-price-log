@@ -407,6 +407,7 @@ enum class MeasureUnit(
     companion object {
         private val measureUnitById = entries.associateBy { it.id }
 
+        // TODO: Rename "fromId"?
         fun fromValue(measureUnitId: Long): MeasureUnit? = measureUnitById[measureUnitId]
     }
 }
@@ -1120,31 +1121,45 @@ data class Item(
 // weights are stored as grammes in there). Not saying a fix it up option won't ever appear if there
 // is any demand for it, but even if it exists we probably don't want to over-encourage its use.
 
+// Note that we have the suprisingly horrific code around defaultUnitIdByQuantityTypeOrdinal instead
+// of a simple "val defaultUnit: MeasureUnit" because I thought it would be user-friendly to keep
+// the selected unit for each quantity type while the user is editing, and then it turns into a
+// nightmare of un-parcelizable types and working with ordinals and IDs rather than enum class
+// objects themselves. It probably isn't that bad in hindsight, but the code is way more complex
+// than feels necessary.
 @Parcelize
-data class EditableItem(
+data class EditableItem private constructor(
     val id: Long,
     val dataSetId: Long, // TODO: although the non-editable Item has a dataSetId and that is probably a strong argument for keeping this is, I half wonder if we should just shove our full DataSet object in here. OTOH it will slightly add to the serialisation burden and we do serialise this every time anything changes.
     val name: String,
     val quantityType: QuantityType,
-    val defaultUnit: MeasureUnit, // TODO: maybe this does/doesn't need to be nullable? kind of depends how UI evolves - gut feeling is that since it can be freely changed at any point and is only a default for new prices, it's less faffy for user if it always defaults to something rather than forcing them to choose it
+    val defaultUnitIdByQuantityTypeOrdinal: List<Long>,
     val notes: String,
 ) : Parcelable {
+    /* TODO DELETE
+    // Note this is indexed by QuantityType.ordinal, not QuantityType.value.
+    val defaultUnitArray = QuantityType.entries.map { quantityType ->
+        getRelevantMeasureUnits(dataSet, quantityType, includeDisplayOnly = false).first()
+    }
+    */
+
+    val defaultUnit: MeasureUnit get() = MeasureUnit.fromValue(defaultUnitIdByQuantityTypeOrdinal[quantityType.ordinal])!!
+
     fun toDomain(): Item? { // TODO: not just here - would "toItem" pair better with fromItem?!
         val trimmedName = name.trim()
         // It could get confusing if an empty name leaked into the database (it would be
-        // semi-invisible in the UI) so we'll check that here, even though we could generate a
-        // Source with such a name and this is not really validation code - we expect to have been
-        // called on a pre-validated EditableSource.
+        // semi-invisible in the UI) so we'll check that here, even though we could generate an
+        // Item with such a name and this is not really validation code - we expect to have been
+        // called on a pre-validated EditableItem.
         if (trimmedName.isEmpty()) {
             return null
         }
         // TODO: Is this a reasonable place to do trimming? Gut feeling is that yes it is, since
         // validation doesn't care about this, it's just a bit of "tidying". But not sure.
-        if (defaultUnit == null) {
-            return null
-        }
+
         // This is a devCheck not a "return null" check because it indicates an internal error.
-        devCheck(quantityType == defaultUnit.quantityType) { "Expected consistent quantity types on EditableItem but have $quantityType and $defaultUnit" }
+        devCheck(quantityType == defaultUnit.quantityType) {
+            "Expected consistent quantity types on EditableItem but have $quantityType and $defaultUnit" }
         return Item(
             id = id,
             dataSetId = dataSetId,
@@ -1156,22 +1171,26 @@ data class EditableItem(
 
     companion object {
         fun fromItem(item: Item?, dataSet: DataSet): EditableItem {
+            val defaultUnitIdByQuantityTypeOrdinal = QuantityType.entries.map { quantityType ->
+                getRelevantMeasureUnits(dataSet, quantityType, includeDisplayOnly = false).first().id
+            }.toMutableList()
             if (item == null) {
                 // It's probably reasonable to default to sold by weight, and it's nice not to have
                 // the possibility of a null state.
                 val quantityType = QuantityType.WEIGHT
-                val defaultUnit = getRelevantMeasureUnits(dataSet, quantityType, includeDisplayOnly = false).first()
-                return EditableItem(0, dataSet.id, "", QuantityType.WEIGHT, defaultUnit,"")
+                // TODO DELETE getRelevantMeasureUnits(dataSet, quantityType, includeDisplayOnly = false).first()
+                return EditableItem(0, dataSet.id, "", QuantityType.WEIGHT, defaultUnitIdByQuantityTypeOrdinal,"")
             } else {
                 devCheck(dataSet.id == item.dataSetId) {
                     "Expected identical dataSetIds but have dataSet.id ${dataSet.id} and item.dataSetid ${item.dataSetId}"
                 }
+                defaultUnitIdByQuantityTypeOrdinal[item.defaultUnit.quantityType.ordinal] = item.defaultUnit.id
                 return EditableItem(
                     item.id,
                     dataSet.id,
                     item.name,
                     item.defaultUnit.quantityType,
-                    item.defaultUnit,
+                    defaultUnitIdByQuantityTypeOrdinal,
                     item.notes
                 )
             }
@@ -2860,6 +2879,18 @@ fun textOrNull(
     }
 }
 
+// TODO: Apparently Android will cheerfully kill my app, upgrade it *and then restart it with the
+// saved state from the old app*. And of course this has to be handled, even though it utterly
+// destroys whatever remaining app logic or coherence there is after it's been through the async and
+// random revival shredder, but it must be handled. Because. So if - and it feels increasingly
+// unlikely I am not going to rage quit - I ever release this app, if I need to update the content
+// of any of these savedstatehandle things, I need to find some magic way (can't go to the database -
+// async!) to not just version stuff but magically cope with state that simply has potentially
+// critical data missing. The immediate upshot of this is that in v1 I probably need to be at least
+// serialising a version number so I can *detect* when Android has shot me in the foot (not the back
+// of the head - that would kill me and the issue would not arise - it deliberately wants me
+// crippled but alive). And maybe I can just bomb out with "Crashing because dealing with this rare
+// case is too fucking horrific, please restart" message at worst.
 data class EditPriceScreenUIContent(
     val editablePrice: MutableState<EditablePrice>,
     val originalPrice: EditablePrice,
@@ -4349,9 +4380,11 @@ fun EditItemScreen(
                                 "Expected non-null defaultUnit to be selected; got $it"
                             }
                             if (uiContent.editableItem.value.defaultUnit != defaultUnit!!) {
+                                val defaultUnitIdByQuantityTypeOrdinal =  uiContent.editableItem.value.defaultUnitIdByQuantityTypeOrdinal.toMutableList().also { it[uiContent.editableItem.value.quantityType.ordinal] = defaultUnit.id }
+                                // TODO DELETE defaultUnitIdByQuantityTypeOrdinal[uiContent.editableItem.value.quantityType.ordinal] = defaultUnit.id
                                 vm.setUIContentEditableItem(
                                     uiContent.editableItem.value.copy(
-                                        defaultUnit = defaultUnit
+                                        defaultUnitIdByQuantityTypeOrdinal = defaultUnitIdByQuantityTypeOrdinal
                                     )
                                 )
                             }
