@@ -1107,8 +1107,8 @@ data class EditableItem(
     val id: Long,
     val dataSetId: Long,
     val name: String,
-    val quantityType: QuantityType?,
-    val defaultUnit: MeasureUnit?,
+    val quantityType: QuantityType,
+    val defaultUnit: MeasureUnit?, // TODO: maybe this doesn't need to be nullable? kind of depends how UI evolves
     val notes: String,
 ) : Parcelable {
     fun toDomain(): Item? { // TODO: not just here - would "toItem" pair better with fromItem?!
@@ -1137,7 +1137,11 @@ data class EditableItem(
     companion object {
         fun fromItem(item: Item?, dataSetId: Long): EditableItem {
             if (item == null) {
-                return EditableItem(0, dataSetId, "", null , null,"")
+                // It's probably reasonable to default to sold by weight, and it's nice not to have
+                // the possibility of a null state.
+                val quantityType = QuantityType.WEIGHT
+                val defaultUnit = MeasureUnit.G // TODO: We need to do the following (metric may not be enabled for this data set, so G is not always even valid) but I need plumbing to *have* dataSet: getRelevantMeasureUnits(dataSet, quantityType, includeDisplayOnly = false).first()
+                return EditableItem(0, dataSetId, "", QuantityType.WEIGHT , defaultUnit,"")
             } else {
                 devCheck(dataSetId == item.dataSetId) {
                     "Expected identical dataSetIds but have dataSetId $dataSetId and item.dataSetid ${item.dataSetId}"
