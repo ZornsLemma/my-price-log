@@ -4373,6 +4373,7 @@ fun EditSourceScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .validationFocusRequester(scrollToFocusableHandle),
+                                // TODO: I can't help feeling this looks a bit confusing when it's empty, maybe it's just lack of a "%" or something.
                                 label = { Text("Loyalty scheme reward") },
                                 value = loyaltyPercentage,
                                 suffix = { Text("%") },
