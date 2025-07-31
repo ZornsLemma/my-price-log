@@ -7786,3 +7786,9 @@ Log.d("MyApp", baz.toString())
 // TODO: I am starting to think (and have already said so in other TODOs, probably) that the
 // ItemSourceInfo card should perhaps be expanded a bit and have text messages saying things like
 // "Price is old, please try to update it" *as well as* the judgement (if any).
+
+// TODO: Maybe it would be OK to use *just* icons to indicate both judgement and age in the by-store
+// list at the bottom of the home screen *if* those *exact same icons with the same colouring*  were
+// used on the "specific store" card - the judgement one next to our text judgement, and the age one
+// in the "confirmed" box ()where we might then get rid of the coloured text if it's old and just
+// stick with the icon)
