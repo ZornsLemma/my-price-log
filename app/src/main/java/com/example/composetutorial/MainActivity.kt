@@ -3499,7 +3499,7 @@ fun HomeScreenScaffold(
                             DataTable(
                                 header = header, rows = data,
                                 // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
-                                columnWeights = listOf(1.6f, 1f, 2.2f)
+                                columnWeights = listOf(1.7f, 1f, 1f)
                             )
                         }
                     }
