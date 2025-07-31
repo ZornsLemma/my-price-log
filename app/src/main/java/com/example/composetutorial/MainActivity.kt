@@ -7791,4 +7791,6 @@ Log.d("MyApp", baz.toString())
 // list at the bottom of the home screen *if* those *exact same icons with the same colouring*  were
 // used on the "specific store" card - the judgement one next to our text judgement, and the age one
 // in the "confirmed" box ()where we might then get rid of the coloured text if it's old and just
-// stick with the icon)
+// stick with the icon) Part of my thinking here is that with e.g. "Sainsbury's Local" on a single
+// line in that unit-price-by-store list, after shwoing the unit price as well, even "(tick) Good
+// price" is a real push to fit in the remaining space on my small emulated phone.
