@@ -3439,7 +3439,7 @@ fun HomeScreenScaffold(
                 val header = listOf("Source", "£/100g", "Notes")
                 // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
                 val data = priceAnalysis.augmentedPriceList.map { augmentedPrice ->
-                    listOf(augmentedPrice.basePrice.sourceId.toString(), augmentedPrice.unitPrice.toString(), "TODO") }
+                    listOf(augmentedPrice.sourceName, augmentedPrice.unitPrice.toString(), "TODO") }
                 /* TODO DELETE
                     listOf(
                         "Tesco", "£2.13", "Tesco Finest is actually cheapest"
@@ -7390,6 +7390,7 @@ data class PriceAnalysis(
 // TODO: We may want to return a Price with swizzled internal double price value rather than having a custom AugmentedPrice, let's see how it goes.
 data class AugmentedPrice( // TODO: not sure about name but experimenting
     val basePrice: Price, // TODO: just possibly we don't even want this embedded in here
+    val sourceName: String, // saves faffing with associatedBy and remember in UI code
     val loyaltyPrice: Double,
     val ageDays: Long,
     val inflatedLoyaltyPrice: Double,
@@ -7439,6 +7440,7 @@ fun augmentPrice(price: Price, source: Source): AugmentedPrice {
     val inflatedLoyaltyPrice = inflationAdjustedPrice(loyaltyPrice, ageDays)
     return AugmentedPrice(
         basePrice = price,
+        sourceName = source.name,
         loyaltyPrice = loyaltyPrice,
         ageDays = ageDays,
         inflatedLoyaltyPrice = inflatedLoyaltyPrice,
