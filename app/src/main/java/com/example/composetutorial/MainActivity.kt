@@ -1779,7 +1779,7 @@ class HomeViewModel(
                     )
 
                     // TODO: I suspect in practice this analysis is lightweight enough we are fine doing it in this coroutine on the main thread, but just possibly we should shift (probably the whole database flow, but maybe just this work) onto a coroutine on a worker thread?
-                    val analysedPriceList = analysePrices(priceList, sourceList)
+                    val priceAnalysis = analysePrices(priceList, sourceList)
                     /* TODO: Temp note for reference - will want something like this in UI when picking out a specific supermarket:
                     val sortedSupermarkets: List<Pair<Supermarket, PriceData>> = ...
 val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
@@ -1799,7 +1799,7 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
                             source,
                             sourceList,
                             priceList,
-                            // TODO: put this in analysedPriceList,
+                            priceAnalysis
                         )
                     )
                 }
@@ -2777,6 +2777,7 @@ data class HomeScreenUIContent(
     val source: Source?,
     val sourceList: List<Source>,
     val priceList: List<Price>,
+    val priceAnalysis: PriceAnalysis,
 ) {
     companion object {
         fun createEmpty(): HomeScreenUIContent {
@@ -2788,6 +2789,7 @@ data class HomeScreenUIContent(
                 source = null,
                 sourceList = emptyList(),
                 priceList = emptyList(),
+                priceAnalysis = PriceAnalysis(emptyList(), null),
             )
         }
     }
@@ -3135,6 +3137,7 @@ fun HomeScreen(
             vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
         },
         uiContent.priceList,
+        uiContent.priceAnalysis,
         onEditPriceClick = { onEditPriceClick(uiContent) } /* TODO DELETE (uiContent)
             vm.setEditPriceScreenStateFromHomeScreenState(uiContent)
             // TODO: I don't know if this random UUID is necessary or helpful or harmful any more,
@@ -3226,6 +3229,7 @@ fun HomeScreenScaffold(
     sourceList: List<Source>,
     onSelectedSourceIdChange: (Long?) -> Unit,
     priceList: List<Price>,
+    priceAnalysis: PriceAnalysis,
     onEditPriceClick: () -> Unit,
     onEditDataSetsClick: () -> Unit,
     onEditItemsClick: () -> Unit,
@@ -3434,7 +3438,9 @@ fun HomeScreenScaffold(
                 // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
                 val header = listOf("Source", "£/100g", "Notes")
                 // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
-                val data = listOf(
+                val data = priceAnalysis.augmentedPriceList.map { augmentedPrice ->
+                    listOf(augmentedPrice.basePrice.sourceId.toString(), augmentedPrice.inflatedLoyaltyPrice.toString(), "TODO") }
+                /* TODO DELETE
                     listOf(
                         "Tesco", "£2.13", "Tesco Finest is actually cheapest"
                     ),
@@ -3443,6 +3449,7 @@ fun HomeScreenScaffold(
                     listOf("Iceland", "£2.38", ""),
                     // …
                 )
+                    */
 
                 // TODO: Price column should be right-aligned, of course
                 Card(
