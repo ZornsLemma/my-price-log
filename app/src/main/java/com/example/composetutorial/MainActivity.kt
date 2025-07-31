@@ -2167,7 +2167,10 @@ fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's O
         DateUtils.MINUTE_IN_MILLIS,
         DateUtils.FORMAT_ABBREV_RELATIVE
     ).toString()
-    Text(relativeTime)
+    // TODO: Not 100% sure about coloring this with no further indication to show it's "stale" and
+    // try to encourage action, maybe we need a supportingText or a different layout or both. I'll
+    // leave the code in for now anyway.
+    Text(relativeTime, color = if (ageInSeconds < inflationThresholdDays * secondsPerDay) Color.Unspecified else MaterialTheme.colorScheme.error)
 }
 
 fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
@@ -7428,14 +7431,14 @@ data class AugmentedPrice( // TODO: not sure about name but experimenting
     val priceJudgement: PriceJudgement,
 )
 
+val inflationThresholdDays = 30L // TODO: rename staleThreshold or something? we use it for inflation, but it's about how we define "stale" really, and inflation only kicks in for stale prices
 fun inflationAdjustedPrice(price: Double, ageDays: Long): Double {
     // TODO: Hard-coded threshold and inflation rate should be taken from settings
-    val inflationThreshold = 30L
-    if (ageDays < inflationThreshold) {
+    if (ageDays < inflationThresholdDays) {
         return price
     } else {
         val annualInflationPercent = 5.0
-        return price * (1.0 + annualInflationPercent / 100.0).pow((ageDays - inflationThreshold) / 365.25)
+        return price * (1.0 + annualInflationPercent / 100.0).pow((ageDays - inflationThresholdDays) / 365.25)
     }
 }
 
