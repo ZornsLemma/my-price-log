@@ -3452,6 +3452,7 @@ fun HomeScreenScaffold(
                     */
 
                 // TODO: Price column should be right-aligned, of course
+                // TODO: This is based on an early hack and we should probably not be generating miscellaneous lists but instead just working directly with our AugmentedPrice objects or something
                 Card(
                     modifier = Modifier
                         //.weight(1f, fill=false) // only component with weight, so fills all remaining space
