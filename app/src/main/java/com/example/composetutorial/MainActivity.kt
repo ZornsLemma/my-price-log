@@ -241,6 +241,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
 import java.text.DecimalFormatSymbols
 import java.util.concurrent.Executors
+import kotlin.math.pow
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
 // weight or volume. This is fundamental as we make no effort to convert between them using some
@@ -1790,6 +1791,18 @@ class HomeViewModel(
                         "MyFlow",
                         "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
                     )
+
+                    // TODO: I suspect in practice this analysis is lightweight enough we are fine doing it in this coroutine on the main thread, but just possibly we should shift (probably the whole database flow, but maybe just this work) onto a coroutine on a worker thread?
+                    val analysedPriceList = analysePrices(priceList, sourceList)
+                    /* TODO: Temp note for reference - will want something like this in UI when picking out a specific supermarket:
+                    val sortedSupermarkets: List<Pair<Supermarket, PriceData>> = ...
+val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
+    sortedSupermarkets.firstOrNull { it.first == selectedSupermarket }
+}
+*/
+
+                    Log.d("MyFlow", "derived analysedPriceList")
+
                     // delay(5000) // TODO HACK
                     flowOf(
                         HomeScreenUIContent(
@@ -1799,7 +1812,8 @@ class HomeViewModel(
                             itemList,
                             source,
                             sourceList,
-                            priceList
+                            priceList,
+                            // TODO: put this in analysedPriceList,
                         )
                     )
                 }
@@ -2195,7 +2209,18 @@ fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
 
 // TODO: EXPERIMENTAL
 // TODO: HOW WILL WE HANDLE "/100G" ETC? WILL WE MAKE THESE FIRST CLASS MEASUREUNITS BUT FLAG THEM AS "MULTIPLES" SO WE OMIT THEM FROM MANY CASES, OR WILL WE MAKE IT A LIST<PAIR<MULT,MEASUREUNIT>>?
-data class UnitPrice(val numerator: Double, val denominator: MeasureUnit)
+// TODO: A UnitPrice *isn't* a MeasuredValue in some sense (the value is price *per* unit, not X units), but in practice it might work nicely to represent it as one, at least internally. Not sure.
+data class UnitPrice(val numerator: Double, val denominator: MeasureUnit) : Comparable<UnitPrice> {
+    override fun compareTo(other: UnitPrice): Int {
+        // TODO: It feels like using MeasuredValue here is slightly technically incorrect, but it
+        // does do what we want and it is probably OK. Maybe it's not even technically incorrect,
+        // think about it fresh.
+        val thisAsMeasuredValue = MeasuredValue(this.numerator, this.denominator)
+        val otherAsMeasuredValue = MeasuredValue(other.numerator, other.denominator)
+        val baseUnit = baseUnitForQuantityType(thisAsMeasuredValue.unit.quantityType)
+        return thisAsMeasuredValue.asValue(baseUnit).compareTo(otherAsMeasuredValue.asValue(baseUnit))
+    }
+}
 
 fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUnit): UnitPrice =
     UnitPrice(amount / measure.asValue(denominator), denominator)
@@ -7360,6 +7385,58 @@ fun AnimatedSupportingText(
             )
         }
     }
+}
+
+data class AnalysedPrice(
+    val TODO: Double
+)
+
+
+// TODO: We may want to return a Price with swizzled internal double price value rather than having a custom AugmentedPrice, let's see how it goes.
+data class AugmentedPrice( // TODO: not sure about name but experimenting
+    val basePrice: Price, // TODO: just possibly we don't even want this embedded in here
+    val loyaltyPrice: Double,
+    val ageDays: Long,
+    val inflatedLoyaltyPrice: Double,
+    val unitPrice: UnitPrice
+)
+
+fun inflationAdjustedPrice(price: Double, ageDays: Long): Double {
+    // TODO: Hard-coded threshold and inflation rate should be taken from settings
+    val inflationThreshold = 30L
+    if (ageDays < inflationThreshold) {
+        return price
+    } else {
+        val annualInflationPercent = 5.0
+        val dailyInflationMultiplier = (1.0 + (annualInflationPercent / 100.0)).pow(1.0 / 365.25)
+        return price * dailyInflationMultiplier.pow((ageDays - inflationThreshold).toDouble())
+    }
+}
+
+fun augmentPrice(price: Price, source: Source): AugmentedPrice {
+    val loyaltyPrice = price.price * source.loyaltyMultiplier
+    // TODO: We could convert to floating point ageDays by getting .seconds and dividing by 86400, but it probably makes little difference in practice.
+    val ageDays = Duration.between(price.confirmed, Instant.now()).toDays()
+    val inflatedLoyaltyPrice = inflationAdjustedPrice(loyaltyPrice, ageDays)
+    return AugmentedPrice(
+        basePrice = price,
+        loyaltyPrice = loyaltyPrice,
+        ageDays = ageDays,
+        inflatedLoyaltyPrice = inflatedLoyaltyPrice,
+        // TODO: It feels slightly off that we have to specify a denominator for our unit prices here, but I suppose it's OK - but maybe we could improve the API. We can't choose a "friendly" unit at this point since we don't have all the data across all sources yet (we're building it up).
+        unitPrice = getUnitPrice(inflatedLoyaltyPrice, price.measure, baseUnitForQuantityType(price.measure.unit.quantityType))
+    )
+}
+
+fun analysePrices(priceList: List<Price>, sourceList: List<Source>): List<Pair<Long /* sourceId */, AnalysedPrice>> {
+    val sourceById = sourceList.associateBy { it.id }
+    val augmentedPriceList = priceList.mapNotNull { price ->
+        // TODO: I don't think we can really be in a case where we have a Price but do not have the corresponding Source, but probably best to play it safe. (We fetched all the data "atomically" by combining flows so we shouldn't still be waiting for a query result, but maybe there's a corner case.)
+        sourceById[price.sourceId]?.let { source ->
+            augmentPrice(price, source)
+        }
+    }.sortedBy { it.unitPrice }
+    TODO()
 }
 
 /* TODO TEMP TEST CODE FOR MEASUREDVALUE
