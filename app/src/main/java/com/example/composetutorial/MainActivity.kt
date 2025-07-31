@@ -7794,3 +7794,9 @@ Log.d("MyApp", baz.toString())
 // stick with the icon) Part of my thinking here is that with e.g. "Sainsbury's Local" on a single
 // line in that unit-price-by-store list, after shwoing the unit price as well, even "(tick) Good
 // price" is a real push to fit in the remaining space on my small emulated phone.
+
+// TODO: Just possibly each entry in the unit-price-by-store list could show the percentage increase
+// from the previous item? Or the percentage increase compared to the best price? But even the fact
+// I can think of these two interpretations might mean this is unnecessarily confusing, and does the
+// user really need/want to know this percentage difference that badly? They can see the price is
+// "a pound extra per 100" or "nearly double" or whatever, I guess.
