@@ -7373,8 +7373,9 @@ fun AnimatedSupportingText(
     }
 }
 
-data class AnalysedPrice(
-    val TODO: Double
+data class PriceAnalysis(
+    val augmentedPriceList: List<AugmentedPrice>,
+    val priceClassificationThresholds: PriceClassificationThresholds?
 )
 
 
@@ -7462,13 +7463,11 @@ fun quantile(sortedValues: List<Double>, q: Double): Double {
     return sortedValues[lowerIndex] * (1 - fractionalIndex) + sortedValues[upperIndex] * fractionalIndex
 }
 
- val tooOldThresholdDays = 180L // TODO: should be in settings
+val tooOldThresholdDays = 180L // TODO: should be in settings
 
-// TODO: Should this return an AnalysedPriceList object which wraps the List but also allows us to put in some extra information like the PriceClassificationThresholds so we have them available to show to the user in a stats for nerds screen etc?
-// TODO: Should we just put a sourceId inside AnalysedPrice (which should maybe be merged with AugmentedPrice anyway) and return a List of those?
-fun analysePrices(priceList: List<Price>, sourceList: List<Source>): List<Pair<Long /* sourceId */, AnalysedPrice>> {
+fun analysePrices(priceList: List<Price>, sourceList: List<Source>): PriceAnalysis {
     val sourceById = sourceList.associateBy { it.id }
-    val augmentedPriceList = priceList.mapNotNull { price ->
+    var augmentedPriceList = priceList.mapNotNull { price ->
         // TODO: I don't think we can really be in a case where we have a Price but do not have the corresponding Source, but probably best to play it safe. (We fetched all the data "atomically" by combining flows so we shouldn't still be waiting for a query result, but maybe there's a corner case.)
         sourceById[price.sourceId]?.let { source ->
             augmentPrice(price, source)
@@ -7483,8 +7482,11 @@ fun analysePrices(priceList: List<Price>, sourceList: List<Source>): List<Pair<L
         val k = 0.1 // TODO: should be in settings?
         PriceClassificationThresholds(lowerQuartile * (1 - k), upperQuartile * (1 + k))
     }
-
-    val analysedPriceList = augmentedPriceList.map { augmentedPrice ->
+    // TODO: This will happily return "all-OK" judgements if the prices are clustered. I think this
+    // is probably a good thing - if we think the price is OK, we should have the at-a-glance
+    // indicator say so, rathern than the user wondering if it's missing because we don't have
+    // enough data or we're just in an "all OK, none good or bad" case.
+    augmentedPriceList = augmentedPriceList.map { augmentedPrice ->
         // TODO: This *will* classify prices even if they are themselves stale - this is probably good, *but* the UI should show
         // the "confirmed x days ago" thing in error color if the price is stale. (We do want to show the recommendation anyway,
         // since maybe the user is checking the store out at home before deciding if they want to go there, so showing the
@@ -7492,8 +7494,7 @@ fun analysePrices(priceList: List<Price>, sourceList: List<Source>): List<Pair<L
         augmentedPrice.copy(priceJudgement = judgePrice(augmentedPrice, priceClassificationThresholds))
 
     }
-
-    TODO()
+    return PriceAnalysis(augmentedPriceList, priceClassificationThresholds)
 }
 
 /* TODO TEMP TEST CODE FOR MEASUREDVALUE
