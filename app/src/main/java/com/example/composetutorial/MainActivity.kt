@@ -3496,6 +3496,7 @@ fun HomeScreenScaffold(
                                 horizontal = 8.dp, vertical = 12.dp
                             )
                         ) {
+                            // TODO: This list may not need dividers between items if it is now simpler and doesn't show "Notes", which could have pushed us into multi-line items fairly easily, whereas now only very long store names or very big fonts on very small screens are likely to do it.
                             DataTable(
                                 header = header, rows = data,
                                 // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
