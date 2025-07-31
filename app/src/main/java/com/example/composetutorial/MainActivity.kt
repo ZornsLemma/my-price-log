@@ -2392,6 +2392,11 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 // - make it easy for the user to confirm our current price or update it
 // - (borderline?) do we have up-to-date prices for other sources? if not it's hard to know if this is well-priced or not no matter how up to the date the price at this source is.
 // TODO: This is quite a long function and might benefit from subcomposables being factored out.
+// TODO: Just possibly this should show the "adjusted (effective) unit price" *as well as* the "raw"
+// (don't call it that) price we already show (and must, since it's what the user is seeing on the
+// shelf in front of them if the data is correct). It isn't so much that the user necessarily
+// directly cares, *but* that this might resolve the visual discrepancy between the (currently only
+// shown) "raw" unit price here and the adjusted price in the by-source list below ItemSourceInfo
 @Composable
 fun ItemSourceInfo(
     dataSet: DataSet,
@@ -7757,3 +7762,5 @@ Log.d("MyApp", baz.toString())
 // - if all prices are "OK" we don't offer any judgement (though I guess we could? not sure)
 // The idea of buffered IQR is that if the data is tightly clustered, the 5th percentile or whatever is not really significantly "better" than the 95th percentile. We don't want to use absolute amounts to make this kind of judgement.
 // We should probably call our inflation "pessimistic inflation rate" in UI, and default it to 5% or 10% per year. For prices >inflation thresold old, we start applying it compounded daily *from the threshold* (not from day 0) - we don't want a sudden big inflation jump just because a price became "eligible" for inflation.
+
+// TODO: "effective price" (after loyalty scheme and inflation) may be better than the "adjusted price" terminology I think I have been using
