@@ -7774,7 +7774,7 @@ Log.d("MyApp", baz.toString())
 // TODO: Possibly tapping on a row in the list of unit price by store should either a) open a "stats
 // for nerds" page (maybe not too heavy a one), which might for example help the user understand
 // what any icons-with-no-text (e.g. "this is stale") icons mean and/or might show where the
-// effective price comes from.
+// effective price comes from. Or b) set the "Store" dropdown to that store??
 
 // TODO: I am half wondering if I could somehow (the full-width dropdown doesn't help) squeeze a
 // triple dot menu at the top right of the "store" card on the home screen to allow access to things
