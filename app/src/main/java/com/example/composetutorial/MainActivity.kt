@@ -2512,7 +2512,7 @@ fun ItemSourceInfo(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Price as sold"
-                        ) { // TODO: quite like this, but maybe "Shelf price"?
+                        ) { // TODO: quite like this, but maybe "Shelf price"? This might also help distinguish this from the "effective/adjusted price". *Just possibly* some sort of similar wording tweak on "Unit price" in ItemSourceInfo might help.
                             // TODO: There might be an argument for designing the UI to separate the
                             // price and quantity here, then we side-step the internationalisation
                             // issues of "for", which is *probably* tractable but might be a
@@ -7768,4 +7768,21 @@ Log.d("MyApp", baz.toString())
 // The idea of buffered IQR is that if the data is tightly clustered, the 5th percentile or whatever is not really significantly "better" than the 95th percentile. We don't want to use absolute amounts to make this kind of judgement.
 // We should probably call our inflation "pessimistic inflation rate" in UI, and default it to 5% or 10% per year. For prices >inflation thresold old, we start applying it compounded daily *from the threshold* (not from day 0) - we don't want a sudden big inflation jump just because a price became "eligible" for inflation.
 
-// TODO: "effective price" (after loyalty scheme and inflation) may be better than the "adjusted price" terminology I think I have been using
+// TODO: "effective price" (after loyalty scheme and inflation) may be better than the "adjusted
+// price" terminology I think I have been using
+
+// TODO: Possibly tapping on a row in the list of unit price by store should either a) open a "stats
+// for nerds" page (maybe not too heavy a one), which might for example help the user understand
+// what any icons-with-no-text (e.g. "this is stale") icons mean and/or might show where the
+// effective price comes from.
+
+// TODO: I am half wondering if I could somehow (the full-width dropdown doesn't help) squeeze a
+// triple dot menu at the top right of the "store" card on the home screen to allow access to things
+// like price history or more detailed info. MD3 card guidelines do say this can be at the upper *or
+// lower* right corner of the card, so maybe if I moved "Edit" and "Confirm" to be left aligned
+// (though this feels a bit of a shame) and edged the "Good price" recommendation up onto another
+// line or put it between those now-left-aligned buttons and an overflow button, that *might* work.
+
+// TODO: I am starting to think (and have already said so in other TODOs, probably) that the
+// ItemSourceInfo card should perhaps be expanded a bit and have text messages saying things like
+// "Price is old, please try to update it" *as well as* the judgement (if any).
