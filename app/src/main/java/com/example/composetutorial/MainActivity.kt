@@ -7800,3 +7800,12 @@ Log.d("MyApp", baz.toString())
 // I can think of these two interpretations might mean this is unnecessarily confusing, and does the
 // user really need/want to know this percentage difference that badly? They can see the price is
 // "a pound extra per 100" or "nearly double" or whatever, I guess.
+
+// TODO: It is just about possible to notice that e.g. the "Product" dropdown at the top of the
+// home screen is higher than the search field at the top of the Edit Product screen as you navigate
+// between them. In the absence of solid guidance otherwise (and I may have TODOs about this elsewhere,
+// not sure), there might be a consistency argument for having a gap between top app bar and top
+// component. There may be a similar cosistency argument (again towards "Edit products" and maybe
+// its siblings changing, though they will show the problem less dramatically as they don't have a
+// TextField at top) with the vertical positioning of the "Name" field at the top of the individual
+// "Edit Foo" screens.
