@@ -7408,8 +7408,7 @@ fun inflationAdjustedPrice(price: Double, ageDays: Long): Double {
         return price
     } else {
         val annualInflationPercent = 5.0
-        val dailyInflationMultiplier = (1.0 + (annualInflationPercent / 100.0)).pow(1.0 / 365.25)
-        return price * dailyInflationMultiplier.pow((ageDays - inflationThreshold).toDouble())
+        return price * (1.0 + annualInflationPercent / 100.0).pow((ageDays - inflationThreshold) / 365.25)
     }
 }
 
