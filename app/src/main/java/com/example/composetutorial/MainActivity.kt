@@ -2606,6 +2606,7 @@ fun ItemSourceInfo(
                         }
                     }
 
+                    // TODO: This judgement needs to come from the price analysis data, of course
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Row {
                             Icon(
