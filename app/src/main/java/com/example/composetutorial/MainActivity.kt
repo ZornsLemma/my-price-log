@@ -1779,7 +1779,7 @@ class HomeViewModel(
                     )
 
                     // TODO: I suspect in practice this analysis is lightweight enough we are fine doing it in this coroutine on the main thread, but just possibly we should shift (probably the whole database flow, but maybe just this work) onto a coroutine on a worker thread?
-                    val priceAnalysis = analysePrices(priceList, sourceList)
+                    val priceAnalysis = analysePrices(dataSet, priceList, sourceList)
                     /* TODO: Temp note for reference - will want something like this in UI when picking out a specific supermarket:
                     val sortedSupermarkets: List<Pair<Supermarket, PriceData>> = ...
 val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
@@ -2542,6 +2542,7 @@ fun ItemSourceInfo(
                                     includeDisplayOnly = true
                                 )
                             }
+                        // TODO: "candidateDenominators" is also derived inside the UIContent "flow" and we could easily make it available directly here. It probably doesn't save much but we could.
                         var selectedUnitPriceUnit by rememberSaveable(dataSet, price) {
                             val candidateDenominators = getSiblingMeasureUnits(
                                 dataSet,
@@ -7433,7 +7434,7 @@ fun judgePrice(augmentedPrice: AugmentedPrice, priceClassificationThresholds: Pr
 }
 
 // TODO: Should this be a companion function/constructor on AugmentedPrice or something like that?
-fun augmentPrice(price: Price, source: Source): AugmentedPrice {
+fun augmentPrice(price: Price, source: Source, unitPriceDenominator: MeasureUnit?, candidateUnitPriceDenominators: List<MeasureUnit>): AugmentedPrice {
     val loyaltyPrice = price.price * source.loyaltyMultiplier
     // TODO: We could convert to floating point ageDays by getting .seconds and dividing by 86400, but it probably makes little difference in practice.
     val ageDays = Duration.between(price.confirmed, Instant.now()).toDays()
@@ -7445,10 +7446,15 @@ fun augmentPrice(price: Price, source: Source): AugmentedPrice {
         ageDays = ageDays,
         inflatedLoyaltyPrice = inflatedLoyaltyPrice,
         // TODO: It feels slightly off that we have to specify a denominator for our unit prices here, but I suppose it's OK - but maybe we could improve the API. We can't choose a "friendly" unit at this point since we don't have all the data across all sources yet (we're building it up).
-        unitPrice = getUnitPrice(inflatedLoyaltyPrice, price.measure, baseUnitForQuantityType(price.measure.unit.quantityType)),
+        unitPrice = if (unitPriceDenominator != null) {
+            getUnitPrice(inflatedLoyaltyPrice, price.measure, unitPriceDenominator)
+        } else {
+            getFriendlyUnitPrice(inflatedLoyaltyPrice, price.measure, candidateUnitPriceDenominators)
+        },
         priceJudgement = PriceJudgement.NONE
     )
 }
+// TODO: I have a suspicion when I format prices to 2 d.p., it is truncating not rounding. May want to investigate this - do some tests with the different format functions, if more than one - and perhaps tweak options. Right now SuperiorStore milk is €2.86 for 2 litres, which shows as €0.81/pint, but some hacky debug output suggests that is really €0.8162 so it ought to round to €0.82/pint
 
 data class PriceClassificationThresholds(
     val good: Double,
@@ -7475,12 +7481,47 @@ fun quantile(sortedValues: List<Double>, q: Double): Double {
 
 val tooOldThresholdDays = 180L // TODO: should be in settings
 
-fun analysePrices(priceList: List<Price>, sourceList: List<Source>): PriceAnalysis {
+// TODO: This code feels a bit awkward somehow, maybe the unit price calculation code needs refactoring and maybe augmentPrice should be inlined as this is its only caller and that *might* help. It also feels like we're having to pass far too much random stuff in as parameters.
+fun analysePrices(dataSet: DataSet?, priceList: List<Price>, sourceList: List<Source>): PriceAnalysis {
     val sourceById = sourceList.associateBy { it.id }
+    if (dataSet == null) {
+        // TODO: having to do this so explicitly feels awful - the result is fine, but the implementation feels bad
+        return PriceAnalysis(emptyList(), null)
+    }
+    if (priceList.isEmpty()) {
+        // TODO: again, return value is fine but writing this here feels like a hack. this is all kind of related to
+        // how the following code is evolving and it may be I need to refactor augmentPrice() and or some of the unitprice
+        // stuff so I can just have things "flow through" more naturally even if some things aren't available. (remember
+        // we may be in a case where the home screen is basically null all the way - it's not about data not being available yet,
+        // it's about corner cases where there *is* no data.)
+        return PriceAnalysis(emptyList(), null)
+    }
+
+    // TODO: I am not sure we exactly want "sibling" here - we don't necessarily have a single
+    // system to pick from, or we maybe do/should but it's not so obvious - because we are in the
+    // context of multiple prices and they might be using a mixture of the user's available systems
+    // - so it's not as simple as "translating" price.measure.unit
+    // TODO: It's not so obvious which unit family we want to use here - in the context of showing the price at a
+    // particular source in ItemSourceInfo, we have "the unit the price was entered in for that source" to implicitly
+    // select a family, but here we are working with multiple prices which may use a mix of families (imagine milk,
+    // where in the UK we may have pints and litres at different stores). We probably don't want to ask the user to
+    // specify a *preferred* unit family. We could potentially have each source price vote with its unit family, but
+    // instead - and this is probably best, but will see how I feel later - we take the unit family of the cheapest
+    // price. (At risk of stating the obvious, but it's easy to get lost in the details here, we are showing the
+    // unit prices sorted as a list, so they all need to use the same denominator otherwise the list is not much
+    // use.)
+    val candidateUnitPriceDenominators = getSiblingMeasureUnits(
+        dataSet,
+        priceList.first().measure.unit,
+        includeDisplayOnly = true
+    )
+    var unitPriceDenominator: MeasureUnit? = null
     var augmentedPriceList = priceList.mapNotNull { price ->
         // TODO: I don't think we can really be in a case where we have a Price but do not have the corresponding Source, but probably best to play it safe. (We fetched all the data "atomically" by combining flows so we shouldn't still be waiting for a query result, but maybe there's a corner case.)
         sourceById[price.sourceId]?.let { source ->
-            augmentPrice(price, source)
+            val augmentedPrice = augmentPrice(price, source, unitPriceDenominator, candidateUnitPriceDenominators)
+            unitPriceDenominator = augmentedPrice.unitPrice.denominator
+            augmentedPrice
         }
     }.sortedBy { it.unitPrice }
     val recentEnoughPriceList = augmentedPriceList.mapNotNull { augmentedPrice ->
