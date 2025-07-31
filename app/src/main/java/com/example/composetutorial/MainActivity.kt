@@ -3449,7 +3449,7 @@ fun HomeScreenScaffold(
                     // TODO: Arguably we could/should use remember or something like that to store the header currency/unit string and avoid rederiving it all the time, albeit it isn't that involved and we are already doing that with the currencycode, but still, we could move this into that remember block and not expose the currency code outside it or something
                     // TODO: I'm hacking this together out of old prototype code but as this evolves we need to be "neater" about how we cope with generating the denominator part of the unit price header on the list when the list is empty - or just not showing the list at all in that case (which might make more sense, and maybe we already *do*, I'm not sure right now)
                     val header = listOf(
-                        "Source",
+                        "Store",
                         "${currencyFormat?.prefix ?: currencyFormat?.suffix ?: ""}/${priceAnalysis.augmentedPriceList.firstOrNull()?.unitPrice?.denominator?.symbol ?: "TODO"}",
                         "Notes"
                     )
