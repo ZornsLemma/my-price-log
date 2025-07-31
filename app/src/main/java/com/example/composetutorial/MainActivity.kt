@@ -3437,7 +3437,19 @@ fun HomeScreenScaffold(
                 // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
                 // but things are slightly different if we go with this approach.
                 // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
-                val header = listOf("Source", "£/100g", "Notes")
+                // TODO: We may want the denominator to be user-selectable in this list header, if so it should probably offer all the user's selected units of the right type, as the unit price dropdown on ItemStoreInfo does.
+                val locale = LocalConfiguration.current.locales[0]
+                val currencyFormat = remember(dataSet, locale) {
+                    dataSet?.let  { getCurrencyFormat(it, locale) }
+                }
+
+                // TODO: I think this is OK but check later: we use "prefix or suffix" here because
+                // although the prefix or suffix nature of a currency symbol in a locale matters in
+                // some other places, here it is appearing in isolation *without* a price next to
+                // it.
+                // TODO: Arguably we could/should use remember or something like that to store the header currency/unit string and avoid rederiving it all the time, albeit it isn't that involved and we are already doing that with the currencycode, but still, we could move this into that remember block and not expose the currency code outside it or something
+                // TODO: I'm hacking this together out of old prototype code but as this evolves we need to be "neater" about how we cope with generating the denominator part of the unit price header on the list when the list is empty - or just not showing the list at all in that case (which might make more sense, and maybe we already *do*, I'm not sure right now)
+                val header = listOf("Source", "${currencyFormat?.prefix ?: currencyFormat?.suffix ?: ""}/${priceAnalysis.augmentedPriceList.firstOrNull()?.unitPrice?.denominator?.symbol ?: "TODO"}", "Notes")
                 // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
                 val data = priceAnalysis.augmentedPriceList.map { augmentedPrice ->
                     listOf(augmentedPrice.sourceName, augmentedPrice.unitPrice.toString(), "TODO") }
