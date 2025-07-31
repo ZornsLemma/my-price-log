@@ -51,7 +51,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -77,7 +76,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.MaterialTheme
@@ -140,18 +138,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.PaintingStyle
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -165,7 +156,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
@@ -182,7 +172,6 @@ import androidx.navigation.compose.composable
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
-import androidx.room.Delete
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -194,7 +183,6 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
-import androidx.room.Update
 import androidx.room.Upsert
 import androidx.room.withTransaction
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -221,9 +209,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
-import com.example.composetutorial.EditPriceScreenUIContent.Companion
-import com.example.composetutorial.EditPriceScreenUIContent.Companion.DATA_SET_KEY
-import com.example.composetutorial.MeasureUnit.Companion.measureUnitById
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -241,6 +226,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
 import java.text.DecimalFormatSymbols
 import java.util.concurrent.Executors
+import kotlin.math.ceil
 import kotlin.math.pow
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
@@ -7398,7 +7384,8 @@ data class AugmentedPrice( // TODO: not sure about name but experimenting
     val loyaltyPrice: Double,
     val ageDays: Long,
     val inflatedLoyaltyPrice: Double,
-    val unitPrice: UnitPrice
+    val unitPrice: UnitPrice,
+    val priceJudgement: PriceJudgement,
 )
 
 fun inflationAdjustedPrice(price: Double, ageDays: Long): Double {
@@ -7412,6 +7399,30 @@ fun inflationAdjustedPrice(price: Double, ageDays: Long): Double {
     }
 }
 
+enum class PriceJudgement {
+    NONE,
+    STALE, // TODO: rename TOO_OLD? this is probably for the ">=180 days" case, not the ">=30 days" case
+    GOOD,
+    OK,
+    BAD
+}
+
+// TODO: Should this be a member of PriceJudgement??
+fun judgePrice(augmentedPrice: AugmentedPrice, priceClassificationThresholds: PriceClassificationThresholds?): PriceJudgement {
+    if (augmentedPrice.ageDays >= tooOldThresholdDays) {
+        return PriceJudgement.STALE
+    } else if (priceClassificationThresholds == null) {
+        return PriceJudgement.NONE
+    } else if (augmentedPrice.inflatedLoyaltyPrice < priceClassificationThresholds.good) {
+        return PriceJudgement.GOOD
+    } else if (augmentedPrice.inflatedLoyaltyPrice <= priceClassificationThresholds.bad) {
+        return PriceJudgement.OK
+    } else {
+        return PriceJudgement.BAD
+    }
+}
+
+// TODO: Should this be a companion function/constructor on AugmentedPrice or something like that?
 fun augmentPrice(price: Price, source: Source): AugmentedPrice {
     val loyaltyPrice = price.price * source.loyaltyMultiplier
     // TODO: We could convert to floating point ageDays by getting .seconds and dividing by 86400, but it probably makes little difference in practice.
@@ -7423,10 +7434,38 @@ fun augmentPrice(price: Price, source: Source): AugmentedPrice {
         ageDays = ageDays,
         inflatedLoyaltyPrice = inflatedLoyaltyPrice,
         // TODO: It feels slightly off that we have to specify a denominator for our unit prices here, but I suppose it's OK - but maybe we could improve the API. We can't choose a "friendly" unit at this point since we don't have all the data across all sources yet (we're building it up).
-        unitPrice = getUnitPrice(inflatedLoyaltyPrice, price.measure, baseUnitForQuantityType(price.measure.unit.quantityType))
+        unitPrice = getUnitPrice(inflatedLoyaltyPrice, price.measure, baseUnitForQuantityType(price.measure.unit.quantityType)),
+        priceJudgement = PriceJudgement.NONE
     )
 }
 
+data class PriceClassificationThresholds(
+    val good: Double,
+    val bad: Double)
+
+fun quantile(sortedValues: List<Double>, q: Double): Double {
+    devRequire(q in 0.0..1.0) { "Expected q in [0, 1] but got $q" }
+
+    // We could return null for empty, but in reality we don't expect this to happen and it feels
+    // better to avoid making the result nullable.
+    devRequire(sortedValues.isNotEmpty()) { "Expected non-empty list" }
+
+    // It's slightly inefficient to be checking sortedValues is sorted every time, but for our tiny
+    // lists it is very cheap and it might catch a bug causing invalid results to be generated.
+    devRequire(sortedValues.zipWithNext().all { (a, b) -> a <= b }) { "Expected sortedValues to be sorted but got $sortedValues" }
+
+    val doubleIndex = q * (sortedValues.size - 1)
+    val lowerIndex = doubleIndex.toInt()
+    // min() here is just paranoia in case of floating point rounding.
+    val upperIndex = kotlin.math.min(ceil(doubleIndex).toInt(), sortedValues.size - 1)
+    val fractionalIndex = doubleIndex - lowerIndex
+    return sortedValues[lowerIndex] * (1 - fractionalIndex) + sortedValues[upperIndex] * fractionalIndex
+}
+
+ val tooOldThresholdDays = 180L // TODO: should be in settings
+
+// TODO: Should this return an AnalysedPriceList object which wraps the List but also allows us to put in some extra information like the PriceClassificationThresholds so we have them available to show to the user in a stats for nerds screen etc?
+// TODO: Should we just put a sourceId inside AnalysedPrice (which should maybe be merged with AugmentedPrice anyway) and return a List of those?
 fun analysePrices(priceList: List<Price>, sourceList: List<Source>): List<Pair<Long /* sourceId */, AnalysedPrice>> {
     val sourceById = sourceList.associateBy { it.id }
     val augmentedPriceList = priceList.mapNotNull { price ->
@@ -7435,6 +7474,25 @@ fun analysePrices(priceList: List<Price>, sourceList: List<Source>): List<Pair<L
             augmentPrice(price, source)
         }
     }.sortedBy { it.unitPrice }
+    val recentEnoughPriceList = augmentedPriceList.mapNotNull { augmentedPrice ->
+        if (augmentedPrice.ageDays >= tooOldThresholdDays) { null } else { augmentedPrice.inflatedLoyaltyPrice }
+    }
+    val priceClassificationThresholds = if (recentEnoughPriceList.size <= 2) { null } else {
+        val lowerQuartile = quantile(recentEnoughPriceList, 0.25)
+        val upperQuartile = quantile(recentEnoughPriceList, 0.75)
+        val k = 0.1 // TODO: should be in settings?
+        PriceClassificationThresholds(lowerQuartile * (1 - k), upperQuartile * (1 + k))
+    }
+
+    val analysedPriceList = augmentedPriceList.map { augmentedPrice ->
+        // TODO: This *will* classify prices even if they are themselves stale - this is probably good, *but* the UI should show
+        // the "confirmed x days ago" thing in error color if the price is stale. (We do want to show the recommendation anyway,
+        // since maybe the user is checking the store out at home before deciding if they want to go there, so showing the
+        // recommendation is probably desirable.)
+        augmentedPrice.copy(priceJudgement = judgePrice(augmentedPrice, priceClassificationThresholds))
+
+    }
+
     TODO()
 }
 
