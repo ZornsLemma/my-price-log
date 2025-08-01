@@ -2701,6 +2701,27 @@ fun DataTable(
             }
         }
 
+        /* TODO: ChatpGPT suggests code like this would allow us to switch between "icons" and "icons+text" depending on screen size:
+
+        @Composable
+fun IconRow(icon: ImageVector, label: String, modifier: Modifier = Modifier) {
+    BoxWithConstraints {
+        val density = LocalDensity.current
+        val fontScale = LocalContext.current.resources.configuration.fontScale
+        val availableWidthDp = maxWidth / fontScale
+
+        if (availableWidthDp < 120.dp) {
+            Icon(imageVector = icon, contentDescription = label)
+        } else {
+            Row {
+                Icon(imageVector = icon, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(text = label)
+            }
+        }
+    }
+}
+*/
 
         // data rows
         rows.forEachIndexed { rowIndex, rowData ->
