@@ -7809,3 +7809,11 @@ Log.d("MyApp", baz.toString())
 // its siblings changing, though they will show the problem less dramatically as they don't have a
 // TextField at top) with the vertical positioning of the "Name" field at the top of the individual
 // "Edit Foo" screens.
+
+// TODO: Discussions with ChatGPT and Grok would suggest that it's reasonable to get rid of the
+// modal bottom sheet for product selection, replace it with the "select product" screen as already
+// used in the "Edit products" flow (with its FAB disabled in this "select a product to display on
+// home screen" context, and I suppose its top app bar might show a different title or subtitle too,
+// but it depends what that is in the "Edit product" flow case) and *slide it in from the right in
+// both cases*. It isn't a dialog, it's not modal in either case and we don't want to be
+// inconsistent.
