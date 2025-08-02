@@ -2574,6 +2574,11 @@ fun ItemSourceInfo(
                                 )
                             }
                         // TODO: "candidateDenominators" is also derived inside the UIContent "flow" and we could easily make it available directly here. It probably doesn't save much but we could.
+                        // TODO: If we edit the price and return to the home screen, the unit price
+                        // unit is not re-evaluated. This is arguably OK, but *if* the user never
+                        // changed it manually, it might be smart to re-evaluate it. This might be
+                        // mildly confusing. Think about it. (And test to check I have the current
+                        // behaviour understood; this is a quick note.)
                         var selectedUnitPriceUnit by rememberSaveable(dataSet, price) {
                             val candidateDenominators = getSiblingMeasureUnits(
                                 dataSet,
