@@ -2485,7 +2485,7 @@ fun ItemSourceInfo(
         Column(
             modifier = Modifier
                 .animateContentSize()
-                .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
         ) {
             // TODO: Once the store dropdown is moved off this card, will it be obvious this card
             // relates to that store? We could maybe give its actual name, but that might also be
@@ -2526,6 +2526,8 @@ fun ItemSourceInfo(
                     // tweaking (e.g. making sure we force some space between the three horizontal
                     // elements) might fix the corner cases better than any alternatives, but do
                     // have a think to see if some alternate design would look and/or work better.
+                    // TODO: The increased horizontal padding I'm now using (16 vs 8) is also making
+                    // this congestion much worse, at least on my small emulated phone.
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -3559,9 +3561,9 @@ fun HomeScreenScaffold(
                             .fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                     ) {
-                        // TODO: 12dp at bottom is to try to keep pointy edges of table away from rounded edges of card,
+                        // TODO: Extra padding at bottom vs top is to try to keep pointy edges of table away from rounded edges of card,
                         // just maybe this isn't the best appearance, come back to later.
-                        Column(modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 12.dp)) {
+                        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp)) {
                             Text(text = "Price comparison", style = MaterialTheme.typography.titleLarge)
                             Text(text = "Adjusted for loyalty discounts and old prices", style = MaterialTheme.typography.bodySmall)
                             Spacer(modifier = Modifier.height(8.dp))
