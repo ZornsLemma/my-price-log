@@ -1967,7 +1967,7 @@ fun MainScreen(
                     16.dp
                 )
                 .fillMaxWidth()
-                .background(color = Color.Red) // TODO DEBUG HACK
+                //.background(color = Color.Red) // TODO DEBUG HACK
         )
 
         // If sourceList is empty this will generate a single-item menu with just "None" in,
