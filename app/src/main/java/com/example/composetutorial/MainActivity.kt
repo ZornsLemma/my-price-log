@@ -2483,14 +2483,14 @@ fun ItemSourceInfo(
         Column(
             modifier = Modifier
                 .animateContentSize()
-                .padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)
+                .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
         ) {
             // TODO: Once the store dropdown is moved off this card, will it be obvious this card
             // relates to that store? We could maybe give its actual name, but that might also be
             // a bit repetitive.
-            Text(text = "Store price", style = MaterialTheme.typography.titleLarge)
+            Text(text = "Store price", style = MaterialTheme.typography.titleLarge) // TODO: This label feels a bit "redundant" and wording may need tweaking
             Text(text = "Shelf price at ${source?.name ?: "TODO"}", style = MaterialTheme.typography.bodySmall) // TODO: null handling?!
-
+            Spacer(modifier = Modifier.height(8.dp))
 
             Log.d("MyApp", "ISI dataset $dataSet")
             Log.d("MyApp", "ISI item $item")
@@ -3552,22 +3552,26 @@ fun HomeScreenScaffold(
                             .fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                     ) {
-                        Column {
+                        // TODO: 12dp at bottom is to try to keep pointy edges of table away from rounded edges of card,
+                        // just maybe this isn't the best appearance, come back to later.
+                        Column(modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 12.dp)) {
                             Text(text = "Price comparison", style = MaterialTheme.typography.titleLarge)
                             Text(text = "Adjusted for loyalty discounts and old prices", style = MaterialTheme.typography.bodySmall)
+                            Spacer(modifier = Modifier.height(8.dp))
 
-                            Box(
+                            /* Box(
+
                                 modifier = Modifier.padding(
                                     horizontal = 8.dp, vertical = 12.dp
                                 )
-                            ) {
+                            ) { */
                                 // TODO: This list may not need dividers between items if it is now simpler and doesn't show "Notes", which could have pushed us into multi-line items fairly easily, whereas now only very long store names or very big fonts on very small screens are likely to do it.
                                 DataTable(
                                     header = header, rows = data,
                                     // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
                                     columnWeights = listOf(1.7f, 1f, 1f)
                                 )
-                            }
+                            // }
                         }
                     }
                 }
