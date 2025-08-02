@@ -153,6 +153,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
@@ -2246,6 +2247,7 @@ data class UnitPrice(val numerator: Double, val denominator: MeasureUnit) : Comp
         // TODO: It feels like using MeasuredValue here is slightly technically incorrect, but it
         // does do what we want and it is probably OK. Maybe it's not even technically incorrect,
         // think about it fresh.
+        Log.d("MyApp", "compareTo $this $other")
         val thisAsMeasuredValue = MeasuredValue(this.numerator, this.denominator)
         val otherAsMeasuredValue = MeasuredValue(other.numerator, other.denominator)
         val baseUnit = baseUnitForQuantityType(thisAsMeasuredValue.unit.quantityType)
@@ -2681,6 +2683,7 @@ fun ItemSourceInfo(
 fun DataTable(
     header: List<String>,
     rows: List<List<String>>,
+    highlightRow: Int?,
     columnWeights: List<Float> = List(header.size) { 1f }
 ) {
     // TODO: Is there an argument that the column headings should actually use the same appearance
@@ -2708,6 +2711,7 @@ fun DataTable(
                         Text(
                             text = title,
                             style = MaterialTheme.typography.titleMedium,
+                            textAlign = if (index != 1) TextAlign.Start else TextAlign.End, // TODO: hardcoding 1 is hacky
                             modifier = Modifier
                                 .weight(columnWeights[index])
                                 .padding(end = 8.dp)
@@ -2743,13 +2747,15 @@ fun IconRow(icon: ImageVector, label: String, modifier: Modifier = Modifier) {
 */
 
         // data rows
+        // TODO: Far from sure I like the way I'm highlighting highlightRow, but it's not too bad. I was worried using any kind of font weight change would break the decimal point alignment but in practice it doesn't appear to be a big problem.
         rows.forEachIndexed { rowIndex, rowData ->
             // TODO: Zebra-striping is experimental, not sure how I feel about it. Even if we do keep it, note that the header row has a somewhat inconsistent colour - it is darker than the "surface" rows (which is probably good) but lighter than the surfaceVariant rows, which is probably bad (this comment is assuming a light mode display)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 0.dp, horizontal = 0.dp)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh /* if (rowIndex % 2 == 0) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant */)
+                    //.background(MaterialTheme.colorScheme.surfaceContainerHigh /* if (rowIndex % 2 == 0) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant */)
+                    .background(if(rowIndex != highlightRow) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.secondaryContainer)
             ) {
                 // TODO: This inner Row is only here for the zebra-striping - if we get rid of it, we can do without it (and move the padding to the parent Row)
                 Column {
@@ -2763,8 +2769,9 @@ fun IconRow(icon: ImageVector, label: String, modifier: Modifier = Modifier) {
                         rowData.forEachIndexed { index, cell ->
                             Text(
                                 text = cell,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                style = if (rowIndex != highlightRow) MaterialTheme.typography.bodyLarge else  MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                                color = if (rowIndex != highlightRow) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSecondaryContainer,
+                                textAlign = if (index != 1) TextAlign.Start else TextAlign.End, // TODO: hardcoding 1 is hacky
                                 modifier = Modifier
                                     .weight(columnWeights[index])
                                     .padding(end = 8.dp)
@@ -3566,8 +3573,9 @@ fun HomeScreenScaffold(
                                 )
                             ) { */
                                 // TODO: This list may not need dividers between items if it is now simpler and doesn't show "Notes", which could have pushed us into multi-line items fairly easily, whereas now only very long store names or very big fonts on very small screens are likely to do it.
+                                val highlightRow = data.indexOfFirst { it[0] == source?.name }.takeIf { it != -1 }
                                 DataTable(
-                                    header = header, rows = data,
+                                    header = header, rows = data, highlightRow = highlightRow,
                                     // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
                                     columnWeights = listOf(1.7f, 1f, 1f)
                                 )
