@@ -7628,7 +7628,7 @@ fun analysePrices(dataSet: DataSet?, priceList: List<Price>, sourceList: List<So
         }
     }.sortedBy { it.unitPrice }
     val recentEnoughPriceList = augmentedPriceList.mapNotNull { augmentedPrice ->
-        if (augmentedPrice.ageDays >= tooOldThresholdDays) { null } else { augmentedPrice.inflatedLoyaltyPrice }
+        if (augmentedPrice.ageDays >= tooOldThresholdDays) { null } else { augmentedPrice.unitPrice.numerator }
     }
     val priceClassificationThresholds = if (recentEnoughPriceList.size <= 2) { null } else {
         val lowerQuartile = quantile(recentEnoughPriceList, 0.25)
