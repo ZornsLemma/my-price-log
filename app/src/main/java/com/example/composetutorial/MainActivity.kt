@@ -3553,35 +3553,59 @@ fun HomeScreenScaffold(
                 )
                     */
 
-                    // TODO: Price column should be right-aligned, of course
-                    // TODO: This is based on an early hack and we should probably not be generating miscellaneous lists but instead just working directly with our AugmentedPrice objects or something
-                    Card(
-                        modifier = Modifier
-                            //.weight(1f, fill=false) // only component with weight, so fills all remaining space
-                            .fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                    ) {
-                        // TODO: Extra padding at bottom vs top is to try to keep pointy edges of table away from rounded edges of card,
-                        // just maybe this isn't the best appearance, come back to later.
-                        Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp)) {
-                            Text(text = "Price comparison", style = MaterialTheme.typography.titleLarge)
-                            Text(text = "Adjusted for loyalty discounts and old prices", style = MaterialTheme.typography.bodySmall)
-                            Spacer(modifier = Modifier.height(8.dp))
+                    // TODO: Just possibly we should use AnimatedVisibility here. However, it's not
+                    // that big a deal (but maybe do look into it) as the only way to have item be
+                    // null is if there *are* no items - unlike source, you can't deliberately set
+                    // it to null. So this is not a particularly common case and the animation would
+                    // only be firing if we were navigating back from an edit item screen where
+                    // we've removed the last item or something like that - it's not a "something
+                    // changed within the screen itself" animation like having source go between
+                    // null and non-null is.
+                    if (item != null) {
+                        // TODO: Price column should be right-aligned, of course
+                        // TODO: This is based on an early hack and we should probably not be generating miscellaneous lists but instead just working directly with our AugmentedPrice objects or something
+                        Card(
+                            modifier = Modifier
+                                //.weight(1f, fill=false) // only component with weight, so fills all remaining space
+                                .fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                        ) {
+                            // TODO: Extra padding at bottom vs top is to try to keep pointy edges of table away from rounded edges of card,
+                            // just maybe this isn't the best appearance, come back to later.
+                            Column(
+                                modifier = Modifier.padding(
+                                    start = 16.dp,
+                                    end = 16.dp,
+                                    top = 12.dp,
+                                    bottom = 16.dp
+                                )
+                            ) {
+                                Text(
+                                    text = "Price comparison",
+                                    style = MaterialTheme.typography.titleLarge
+                                )
+                                Text(
+                                    text = "Adjusted for loyalty discounts and old prices",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
 
-                            /* Box(
+                                /* Box(
 
                                 modifier = Modifier.padding(
                                     horizontal = 8.dp, vertical = 12.dp
                                 )
                             ) { */
                                 // TODO: This list may not need dividers between items if it is now simpler and doesn't show "Notes", which could have pushed us into multi-line items fairly easily, whereas now only very long store names or very big fonts on very small screens are likely to do it.
-                                val highlightRow = data.indexOfFirst { it[0] == source?.name }.takeIf { it != -1 }
+                                val highlightRow =
+                                    data.indexOfFirst { it[0] == source?.name }.takeIf { it != -1 }
                                 DataTable(
                                     header = header, rows = data, highlightRow = highlightRow,
                                     // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
                                     columnWeights = listOf(1.7f, 1f, 1f)
                                 )
-                            // }
+                                // }
+                            }
                         }
                     }
                 }
