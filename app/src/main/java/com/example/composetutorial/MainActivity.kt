@@ -1963,7 +1963,7 @@ fun MainScreen(
         Spacer(
             modifier = Modifier
                 .height(
-                    8.dp
+                    16.dp
                 )
                 .fillMaxWidth()
                 .background(color = Color.Red) // TODO DEBUG HACK
@@ -1982,7 +1982,7 @@ fun MainScreen(
         // where -1L is an easy hack.
         MyExposedDropdownMenuBox(
             modifier = Modifier
-                .padding(bottom = 8.dp)
+                // .padding(bottom = 8.dp)
                 .fillMaxWidth(),
             // Note that if source is null, we pass that null through to selectedId so the
             // dropdown starts off with nothing selected and the "Store" label expands to form a
@@ -3450,10 +3450,10 @@ fun HomeScreenScaffold(
                 Spacer(
                     modifier = Modifier
                         .height(
-                            8.dp
+                            16.dp
                         )
                         .fillMaxWidth()
-                        .background(color = Color.Red) // TODO DEBUG HACK
+                        //.background(color = Color.Red) // TODO DEBUG HACK
                 )
 
                 if (dataSet != null) {
@@ -3477,9 +3477,9 @@ fun HomeScreenScaffold(
 
                             Spacer(
                                 modifier = Modifier.height(
-                                    8.dp
+                                    16.dp
                                 )
-                                    .background(color = Color.Red) // TODO DEBUG HACK
+                                    //.background(color = Color.Red) // TODO DEBUG HACK
                             )
                         }
                     }
