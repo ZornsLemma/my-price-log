@@ -2444,6 +2444,13 @@ fun ItemSourceInfo(
                 .animateContentSize()
                 .padding(start = 8.dp, end = 8.dp, top = 12.dp, bottom = 8.dp)
         ) {
+            // TODO: Once the store dropdown is moved off this card, will it be obvious this card
+            // relates to that store? We could maybe give its actual name, but that might also be
+            // a bit repetitive.
+            Text(text = "Store price", style = MaterialTheme.typography.titleLarge)
+            Text(text = "Shelf price as seen in-store", style = MaterialTheme.typography.bodySmall)
+
+
             Log.d("MyApp", "ISI dataset $dataSet")
             Log.d("MyApp", "ISI item $item")
             Log.d("MyApp", "ISI source $item")
@@ -3512,17 +3519,22 @@ fun HomeScreenScaffold(
                             .fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
                     ) {
-                        Box(
-                            modifier = Modifier.padding(
-                                horizontal = 8.dp, vertical = 12.dp
-                            )
-                        ) {
-                            // TODO: This list may not need dividers between items if it is now simpler and doesn't show "Notes", which could have pushed us into multi-line items fairly easily, whereas now only very long store names or very big fonts on very small screens are likely to do it.
-                            DataTable(
-                                header = header, rows = data,
-                                // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
-                                columnWeights = listOf(1.7f, 1f, 1f)
-                            )
+                        Column {
+                            Text(text = "Price comparison", style = MaterialTheme.typography.titleLarge)
+                            Text(text = "Adjusted for loyalty discounts and old prices", style = MaterialTheme.typography.bodySmall)
+
+                            Box(
+                                modifier = Modifier.padding(
+                                    horizontal = 8.dp, vertical = 12.dp
+                                )
+                            ) {
+                                // TODO: This list may not need dividers between items if it is now simpler and doesn't show "Notes", which could have pushed us into multi-line items fairly easily, whereas now only very long store names or very big fonts on very small screens are likely to do it.
+                                DataTable(
+                                    header = header, rows = data,
+                                    // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
+                                    columnWeights = listOf(1.7f, 1f, 1f)
+                                )
+                            }
                         }
                     }
                 }
@@ -7844,3 +7856,5 @@ Log.d("MyApp", baz.toString())
 // between the raw price in ItemSourceInfo and the price in the list. Although it might be hard to
 // "educate" the user on this icon, because it doesn't feel like it has a natural use in the
 // ItemSourceInfo at all (which is where it could appear paired with text to explain it).
+
+// TODO: It's probably obvious in hindsight but I had some idea of using absolute prices on all rows of a "how the price was calculated" screen, whereas I almost certainly should show a start absolute price then "Inflation adjustment +$0.04" or "Loyalty discount (5%) -$0.03" with a final total at the end.
