@@ -40,6 +40,7 @@ import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateContentSize
@@ -1922,7 +1923,8 @@ const val maxNotesLength = 200 // TODO TEMP FOR TESTING, SHOULD BE 1024
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    item: Item?, itemList: List<Item>, onSelectedItemIdChange: (Long) -> Unit
+    source: Source?, sourceList: List<Source>, item: Item?, itemList: List<Item>, onSelectedItemIdChange: (Long) -> Unit,
+    onSelectedSourceIdChange: (Long?) -> Unit,
 ) {
     var showItemSheet by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
@@ -1956,6 +1958,46 @@ fun MainScreen(
             // colours, but since clicking on it immediately opens a modal bottom sheet, I think
             // it's probably reasonable to hard-code false here.
             colors = myTextFieldColors(false)
+        )
+
+        Spacer(
+            modifier = Modifier
+                .height(
+                    8.dp
+                )
+                .fillMaxWidth()
+                .background(color = Color.Red) // TODO DEBUG HACK
+        )
+
+        // If sourceList is empty this will generate a single-item menu with just "None" in,
+        // but that is probably better than the "skeleton" menu we get with no items in.
+        val items = listOf(Pair(-1L, "None")) + sourceList.map { Pair(it.id, it.name) }
+        // TODO: Did wonder if MyExposedDropdownMenuBox should allow null IDs to avoid the need
+        // for the "-1" hack here, but I really didn't want to have to make every user of it
+        // be null-tolerant when it *won't* hand you a null itself unless you gave it one in the
+        // input item list, so this is perhaps best but I'm not too sure. I did try wrapping
+        // the null inside a simple Nullable<T> so it could "pass through" MyExposedDropdownMenuBox
+        // without altering the API and I think the idea is sound but I started to run into
+        // incomprehensible "out"/covariance stuff and it just felt too much just to fix this
+        // where -1L is an easy hack.
+        MyExposedDropdownMenuBox(
+            modifier = Modifier
+                .padding(bottom = 8.dp)
+                .fillMaxWidth(),
+            // Note that if source is null, we pass that null through to selectedId so the
+            // dropdown starts off with nothing selected and the "Store" label expands to form a
+            // large "prompt". We could turn null into -1L and have "None" shown, but it's
+            // probably nicer this way.
+            selectedId = source?.id, /* ?: -1L */
+            onValueChange = { onSelectedSourceIdChange(if (it == -1L) null else it) },
+            label = { Text("Store") },
+            supportingText = null, /* TODO? if (haveItemAndSource) null else {
+                { Text("Select a product and store to view or change the price there") } // TODO: poor wording? *normally* product will not be null, so maybe we should have variant wording, or maybe the message should just not mention product
+            },
+                            */
+            items = items,
+            getId = { it.first },
+            getLabel = { it.second },
         )
 
         // Item Modal Bottom Sheet
@@ -2406,7 +2448,6 @@ fun ItemSourceInfo(
     item: Item?,
     source: Source?,
     sourceList: List<Source>,
-    onSelectedSourceIdChange: (Long?) -> Unit,
     itemPriceList: List<Price>,
     onEditPriceClick: () -> Unit,
 ) {
@@ -2448,44 +2489,15 @@ fun ItemSourceInfo(
             // relates to that store? We could maybe give its actual name, but that might also be
             // a bit repetitive.
             Text(text = "Store price", style = MaterialTheme.typography.titleLarge)
-            Text(text = "Shelf price as seen in-store", style = MaterialTheme.typography.bodySmall)
+            Text(text = "Shelf price at ${source?.name ?: "TODO"}", style = MaterialTheme.typography.bodySmall) // TODO: null handling?!
 
 
             Log.d("MyApp", "ISI dataset $dataSet")
             Log.d("MyApp", "ISI item $item")
             Log.d("MyApp", "ISI source $item")
-            val haveItemAndSource = item != null && source != null
-            // If sourceList is empty this will generate a single-item menu with just "None" in,
-            // but that is probably better than the "skeleton" menu we get with no items in.
-            val items = listOf(Pair(-1L, "None")) + sourceList.map { Pair(it.id, it.name) }
-            // TODO: Did wonder if MyExposedDropdownMenuBox should allow null IDs to avoid the need
-            // for the "-1" hack here, but I really didn't want to have to make every user of it
-            // be null-tolerant when it *won't* hand you a null itself unless you gave it one in the
-            // input item list, so this is perhaps best but I'm not too sure. I did try wrapping
-            // the null inside a simple Nullable<T> so it could "pass through" MyExposedDropdownMenuBox
-            // without altering the API and I think the idea is sound but I started to run into
-            // incomprehensible "out"/covariance stuff and it just felt too much just to fix this
-            // where -1L is an easy hack.
-            MyExposedDropdownMenuBox(
-                modifier = Modifier
-                    .padding(bottom = 8.dp)
-                    .fillMaxWidth(),
-                // Note that if source is null, we pass that null through to selectedId so the
-                // dropdown starts off with nothing selected and the "Store" label expands to form a
-                // large "prompt". We could turn null into -1L and have "None" shown, but it's
-                // probably nicer this way.
-                selectedId = source?.id, /* ?: -1L */
-                onValueChange = { onSelectedSourceIdChange(if (it == -1L) null else it) },
-                label = { Text("Store") },
-                supportingText = if (haveItemAndSource) null else {
-                    { Text("Select a product and store to view or change the price there") } // TODO: poor wording? *normally* product will not be null, so maybe we should have variant wording, or maybe the message should just not mention product
-                },
-                items = items,
-                getId = { it.first },
-                getLabel = { it.second },
-            )
-            if (haveItemAndSource) {
-                val price = itemPriceList.singleOrNull { it.sourceId == source!!.id }
+
+            if (true) {
+                val price = itemPriceList.singleOrNull { it.sourceId == source?.id }
 
                 if (price == null) {
                     Column(modifier = Modifier.fillMaxWidth()) {
@@ -3427,9 +3439,12 @@ fun HomeScreenScaffold(
             ) {
 
                 MainScreen(
+                    source = source,
+                    sourceList = sourceList,
                     item = item,
                     itemList = itemList,
-                    onSelectedItemIdChange = onSelectedItemIdChange
+                    onSelectedItemIdChange = onSelectedItemIdChange,
+                    onSelectedSourceIdChange = onSelectedSourceIdChange,
                 ) // TODO: rename this
 
                 Spacer(
@@ -3442,23 +3457,32 @@ fun HomeScreenScaffold(
                 )
 
                 if (dataSet != null) {
-                    Log.d("MyApp", "HSS dataSet $dataSet")
-                    Log.d("MyApp", "HSS item $item")
-                    ItemSourceInfo(
-                        dataSet = dataSet,
-                        item = item,
-                        source = source,
-                        sourceList = sourceList,
-                        onSelectedSourceIdChange = onSelectedSourceIdChange,
-                        itemPriceList = priceList,
-                        onEditPriceClick = onEditPriceClick
-                    )
+                    AnimatedVisibility(
+                        visible = item != null && source != null,
+                        // enter = TODO?
+                        // exit = TODO?
+                    ) {
+                        Column {
+                            Log.d("MyApp", "HSS dataSet $dataSet")
+                            Log.d("MyApp", "HSS item $item")
+                            ItemSourceInfo(
+                                dataSet = dataSet,
+                                item = item,
+                                source = source,
+                                sourceList = sourceList,
 
-                    Spacer(
-                        modifier = Modifier.height(
-                            8.dp
-                        )
-                    )
+                                itemPriceList = priceList,
+                                onEditPriceClick = onEditPriceClick
+                            )
+
+                            Spacer(
+                                modifier = Modifier.height(
+                                    8.dp
+                                )
+                                    .background(color = Color.Red) // TODO DEBUG HACK
+                            )
+                        }
+                    }
 
                     // TODO: This mock data shows some questions:
                     // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
