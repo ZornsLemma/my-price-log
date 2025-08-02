@@ -3457,6 +3457,15 @@ fun HomeScreenScaffold(
                 )
 
                 if (dataSet != null) {
+                    // TODO: While it has told me so much crap I don't trust it, ChatGPT suggests:
+                    // var lastFoo by remember { mutableStateOf<Foo?>(null) }
+                    //if (foo != null) lastFoo = foo
+                    // and then using  lastFoo?.let { safeFoo ->
+                    // to compose the contents of the AnimatedVisibility. This (might) give us
+                    // consistent appearance as we animate out without requiring actual ability to
+                    // handle null source/item  inside the content, and would (if this works) actually
+                    // make things mildly *less* janky as the content would be *the same* not some
+                    // null-based approximation. But there may well be subtleties.
                     AnimatedVisibility(
                         visible = item != null && source != null,
                         // enter = TODO?
