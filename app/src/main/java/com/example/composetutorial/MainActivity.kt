@@ -3561,6 +3561,12 @@ fun HomeScreenScaffold(
                     // we've removed the last item or something like that - it's not a "something
                     // changed within the screen itself" animation like having source go between
                     // null and non-null is.
+                    // TODO: Should we avoid showing this card if we have no stores in storeList? It
+                    // works but maybe looks a bit ugly and is a bit pointless. I probably in general
+                    // need to revise all the corner case "no data" handling to be consistent and
+                    // (if appropriate) use the otherwise wasted screen space to hint to the user
+                    // to go use the overflow menu to add stuff etc, once the layout otherwise
+                    // settles down.
                     if (item != null) {
                         // TODO: Price column should be right-aligned, of course
                         // TODO: This is based on an early hack and we should probably not be generating miscellaneous lists but instead just working directly with our AugmentedPrice objects or something
