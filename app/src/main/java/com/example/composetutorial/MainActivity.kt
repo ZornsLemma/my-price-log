@@ -3631,7 +3631,7 @@ fun OkPriceIcon() {
         // TODO: Not sure this is a great icon, maybe rethink.
         painter = painterResource(R.drawable.baseline_remove_circle_24),
         contentDescription = "OK price",
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        tint = MaterialTheme.colorScheme.secondary, // TODO: probably OK, was onSurfaceVariant, but since we use primary and tertiary for good and bad, and secondary is kind of grey-ish anyway...
     )
 }
 
@@ -3639,16 +3639,16 @@ fun OkPriceIcon() {
 fun BadPriceIcon() {
     Icon(
         painter = painterResource(R.drawable.baseline_cancel_24),
-        contentDescription = "Bad price", // TODO
-        tint = MaterialTheme.colorScheme.error,
+        contentDescription = "Bad price", // TODO: Should we say "X value" not "X price" everywhere, as "Bad price" sounds a bit like it is an error, rather than just "not a good price"
+        tint = MaterialTheme.colorScheme.tertiary, // TODO?
     )
 }
 
 @Composable
 fun StalePriceIcon() {
     Icon(
-        // TODO: Not sure this is a great icon, maybe rethink.
-        imageVector = Icons.Default.Warning,
+        // Idea with this icon is "the 'fresh' period is over, we started a timer now it's stale"
+        painter = painterResource(R.drawable.baseline_hourglass_top_24),
         contentDescription = "Stale price",
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -3657,8 +3657,8 @@ fun StalePriceIcon() {
 @Composable
 fun AncientPriceIcon() {
     Icon(
-        // TODO: Not sure this is a great icon, maybe rethink.
-        painter = painterResource(R.drawable.baseline_error_24),
+        // Idea with this icon is that the "stale timer" we started has now run out.
+        painter = painterResource(R.drawable.baseline_hourglass_bottom_24),
         contentDescription = "Ancient price",
         tint = MaterialTheme.colorScheme.error,
     )
@@ -3757,6 +3757,7 @@ fun PriceComparisonCard(
                 listOf<@Composable (AugmentedPrice) -> Unit>(
                     { augmentedPrice -> Text(augmentedPrice.sourceName) },
                     { augmentedPrice -> Text(formatPrice(augmentedPrice.unitPrice.numerator, dataSet, locale)) },
+                    // TODO: Should I effectively line the price judgement and age icons up in columns, e.g. by putting a dummy blank icon in the judgement column if we aren't willing to make a judgement? or is it ok to just have a "row" of icons and not worry about vertical alignment across rows?
                     { augmentedPrice ->
                         Row {
                             priceAnalysis.priceClassificationThresholds?.let { priceClassificationThresholds ->
