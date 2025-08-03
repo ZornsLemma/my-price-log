@@ -2707,11 +2707,11 @@ fun <T> NewDataTable(
             header.forEachIndexed { colIndex, title ->
                 Box(
                     Modifier
-                        .weight(columnWeights.getOrElse(colIndex) { 1f })
+                        .weight(columnWeights.getOrElse(colIndex) { 1f }) // TODO: Get rid of OrElse?
                         .padding(8.dp)
                         .then(alignmentModifier(columnAlignments[colIndex]))
                 ) {
-                    Text(title, style = MaterialTheme.typography.bodyMedium)
+                    Text(title, style = MaterialTheme.typography.titleMedium)
                 }
             }
         }
@@ -2742,7 +2742,7 @@ fun <T> NewDataTable(
                     columns.forEachIndexed { colIndex, cell ->
                         Box(
                             Modifier
-                                .weight(columnWeights.getOrElse(colIndex) { 1f })
+                                .weight(columnWeights.getOrElse(colIndex) { 1f }) // TODO: get rid of OrElse?
                                 .padding(8.dp)
                                 .then(alignmentModifier(columnAlignments[colIndex]))
                         ) {
