@@ -3509,57 +3509,6 @@ fun HomeScreenScaffold(
                         }
                     }
 
-                    // TODO: This mock data shows some questions:
-                    // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
-                    // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
-                    // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
-                    // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
-                    // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
-                    // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
-                    // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
-                    // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
-                    // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
-                    // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
-                    // but things are slightly different if we go with this approach.
-                    // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
-                    // TODO: We may want the denominator to be user-selectable in this list header, if so it should probably offer all the user's selected units of the right type, as the unit price dropdown on ItemStoreInfo does.
-                    val locale = LocalConfiguration.current.locales[0]
-                    val currencyFormat = remember(dataSet, locale) {
-                        getCurrencyFormat(dataSet, locale)
-                    }
-
-                    // TODO: I think this is OK but check later: we use "prefix or suffix" here because
-                    // although the prefix or suffix nature of a currency symbol in a locale matters in
-                    // some other places, here it is appearing in isolation *without* a price next to
-                    // it.
-                    // TODO: Arguably we could/should use remember or something like that to store the header currency/unit string and avoid rederiving it all the time, albeit it isn't that involved and we are already doing that with the currencycode, but still, we could move this into that remember block and not expose the currency code outside it or something
-                    // TODO: I'm hacking this together out of old prototype code but as this evolves we need to be "neater" about how we cope with generating the denominator part of the unit price header on the list when the list is empty - or just not showing the list at all in that case (which might make more sense, and maybe we already *do*, I'm not sure right now)
-                    val header = listOf(
-                        "Store",
-                        "${currencyFormat?.prefix ?: currencyFormat?.suffix ?: ""}/${priceAnalysis.augmentedPriceList.firstOrNull()?.unitPrice?.denominator?.symbol ?: "TODO"}",
-                        "Notes"
-                    )
-                    // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
-                    // TODO: We might be rebuilding this list every recomposition, I really don't have a clue, as I already noted we should really
-                    // not be building this list at all but working directrly with augmentedPriceList or something
-                    val data = priceAnalysis.augmentedPriceList.map { augmentedPrice ->
-                        listOf(
-                            augmentedPrice.sourceName,
-                            formatPrice(augmentedPrice.unitPrice.numerator, dataSet, locale),
-                            "TODO" // TODO: We probably don't want to show "notes", but we may want to show some icons or just possibly any judgement on the price or something in a third column
-                        )
-                    }
-                    /* TODO DELETE
-                    listOf(
-                        "Tesco", "£2.13", "Tesco Finest is actually cheapest"
-                    ),
-                    listOf("Sainsbury's Local", "£2.94", ""),
-                    listOf("Asda", "£2.08", "KTC brand"),
-                    listOf("Iceland", "£2.38", ""),
-                    // …
-                )
-                    */
-
                     // TODO: Just possibly we should use AnimatedVisibility here. However, it's not
                     // that big a deal (but maybe do look into it) as the only way to have item be
                     // null is if there *are* no items - unlike source, you can't deliberately set
@@ -3575,52 +3524,9 @@ fun HomeScreenScaffold(
                     // to go use the overflow menu to add stuff etc, once the layout otherwise
                     // settles down.
                     if (item != null) {
-                        // TODO: Price column should be right-aligned, of course
-                        // TODO: This is based on an early hack and we should probably not be generating miscellaneous lists but instead just working directly with our AugmentedPrice objects or something
-                        Card(
-                            modifier = Modifier
-                                //.weight(1f, fill=false) // only component with weight, so fills all remaining space
-                                .fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                        ) {
-                            // TODO: Extra padding at bottom vs top is to try to keep pointy edges of table away from rounded edges of card,
-                            // just maybe this isn't the best appearance, come back to later.
-                            Column(
-                                modifier = Modifier.padding(
-                                    start = 16.dp,
-                                    end = 16.dp,
-                                    top = 12.dp,
-                                    bottom = 16.dp
-                                )
-                            ) {
-                                Text(
-                                    text = "Price comparison",
-                                    style = MaterialTheme.typography.titleLarge
-                                )
-                                Text(
-                                    text = "Adjusted for loyalty discounts and old prices",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                /* Box(
-
-                                modifier = Modifier.padding(
-                                    horizontal = 8.dp, vertical = 12.dp
-                                )
-                            ) { */
-                                // TODO: This list may not need dividers between items if it is now simpler and doesn't show "Notes", which could have pushed us into multi-line items fairly easily, whereas now only very long store names or very big fonts on very small screens are likely to do it.
-                                val highlightRow =
-                                    data.indexOfFirst { it[0] == source?.name }.takeIf { it != -1 }
-                                DataTable(
-                                    header = header, rows = data, highlightRow = highlightRow,
-                                    // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
-                                    columnWeights = listOf(1.7f, 1f, 1f)
-                                )
-                                // }
-                            }
-                        }
+                        PriceComparisonCard(dataSet, source, priceAnalysis)
                     }
+
                 }
             }
         }
@@ -3639,6 +3545,111 @@ fun HomeScreenScaffold(
     // want the scrim.
     // TODO: Is this in right place in hierarchy wrt navigation drawer?
     ScrimWithSpinner(visible = loading)
+}
+
+@Composable
+fun PriceComparisonCard(
+    dataSet: DataSet,
+    source: Source?,
+    priceAnalysis: PriceAnalysis
+) {
+    // TODO: This mock data shows some questions:
+    // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
+    // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
+    // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
+    // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
+    // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
+    // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
+    // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
+    // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
+    // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
+    // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
+    // but things are slightly different if we go with this approach.
+    // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
+    // TODO: We may want the denominator to be user-selectable in this list header, if so it should probably offer all the user's selected units of the right type, as the unit price dropdown on ItemStoreInfo does.
+    val locale = LocalConfiguration.current.locales[0]
+    val currencyFormat = remember(dataSet, locale) {
+        getCurrencyFormat(dataSet, locale)
+    }
+
+    // TODO: I think this is OK but check later: we use "prefix or suffix" here because
+    // although the prefix or suffix nature of a currency symbol in a locale matters in
+    // some other places, here it is appearing in isolation *without* a price next to
+    // it.
+    // TODO: Arguably we could/should use remember or something like that to store the header currency/unit string and avoid rederiving it all the time, albeit it isn't that involved and we are already doing that with the currencycode, but still, we could move this into that remember block and not expose the currency code outside it or something
+    // TODO: I'm hacking this together out of old prototype code but as this evolves we need to be "neater" about how we cope with generating the denominator part of the unit price header on the list when the list is empty - or just not showing the list at all in that case (which might make more sense, and maybe we already *do*, I'm not sure right now)
+    val header = listOf(
+        "Store",
+        "${currencyFormat?.prefix ?: currencyFormat?.suffix ?: ""}/${priceAnalysis.augmentedPriceList.firstOrNull()?.unitPrice?.denominator?.symbol ?: "TODO"}",
+        "Notes"
+    )
+    // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
+    // TODO: We might be rebuilding this list every recomposition, I really don't have a clue, as I already noted we should really
+    // not be building this list at all but working directrly with augmentedPriceList or something
+    val data = priceAnalysis.augmentedPriceList.map { augmentedPrice ->
+        listOf(
+            augmentedPrice.sourceName,
+            formatPrice(augmentedPrice.unitPrice.numerator, dataSet, locale),
+            "TODO" // TODO: We probably don't want to show "notes", but we may want to show some icons or just possibly any judgement on the price or something in a third column
+        )
+    }
+    /* TODO DELETE
+    listOf(
+        "Tesco", "£2.13", "Tesco Finest is actually cheapest"
+    ),
+    listOf("Sainsbury's Local", "£2.94", ""),
+    listOf("Asda", "£2.08", "KTC brand"),
+    listOf("Iceland", "£2.38", ""),
+    // …
+)
+    */
+
+
+// TODO: Price column should be right-aligned, of course
+// TODO: This is based on an early hack and we should probably not be generating miscellaneous lists but instead just working directly with our AugmentedPrice objects or something
+    Card(
+        modifier = Modifier
+//.weight(1f, fill=false) // only component with weight, so fills all remaining space
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        // TODO: Extra padding at bottom vs top is to try to keep pointy edges of table away from rounded edges of card,
+        // just maybe this isn't the best appearance, come back to later.
+        Column(
+            modifier = Modifier.padding(
+                start = 16.dp,
+                end = 16.dp,
+                top = 12.dp,
+                bottom = 16.dp
+            )
+        ) {
+            Text(
+                text = "Price comparison",
+                style = MaterialTheme.typography.titleLarge
+            )
+            Text(
+                text = "Adjusted for loyalty discounts and old prices",
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            /* Box(
+
+        modifier = Modifier.padding(
+            horizontal = 8.dp, vertical = 12.dp
+        )
+    ) { */
+            // TODO: This list may not need dividers between items if it is now simpler and doesn't show "Notes", which could have pushed us into multi-line items fairly easily, whereas now only very long store names or very big fonts on very small screens are likely to do it.
+            val highlightRow =
+                data.indexOfFirst { it[0] == source?.name }.takeIf { it != -1 }
+            DataTable(
+                header = header, rows = data, highlightRow = highlightRow,
+                // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
+                columnWeights = listOf(1.7f, 1f, 1f)
+            )
+            // }
+        }
+    }
 }
 
 // TODO: ChatGPT magic but I think I do mostly understand
