@@ -2705,7 +2705,9 @@ fun <T> NewDataTable(
     }
 
     Column {
-        Row(modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceContainerHighest)) {
+        Row(modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceContainerHighest)
+            .height(56.dp) // TODO EXPERIMENTAL
+            ,  verticalAlignment = Alignment.CenterVertically) {
             header.forEachIndexed { colIndex, title ->
                 Box(
                     Modifier
@@ -2743,7 +2745,9 @@ fun <T> NewDataTable(
                 LocalTextStyle provides textStyle,
                 LocalContentColor provides textColor
             ) {
-                Row(modifier = Modifier.background(rowBackground)) {
+                Row(modifier = Modifier.background(rowBackground)
+                    .height(56.dp) // TODO EXPERIMENTAL
+                    ,   verticalAlignment = Alignment.CenterVertically) {
                     columns.forEachIndexed { colIndex, cell ->
                         Box(
                             Modifier
@@ -3712,7 +3716,7 @@ fun PriceComparisonCard(
                                 imageVector = Icons.Default.Warning, //TODO
                                 contentDescription = "Warning",
                                 tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(16.dp) // TODO SIZE EXP
+                                modifier = Modifier.size(24.dp) // TODO SIZE EXP - WE MAY NOT EVEN NEED TO SPECIFY IT EXPLICITLY
                             )
                         }
                         else {
@@ -3725,7 +3729,6 @@ fun PriceComparisonCard(
                     },
                 )
             }
-
             NewDataTable(
                 header = header,
                 items = priceAnalysis.augmentedPriceList,
