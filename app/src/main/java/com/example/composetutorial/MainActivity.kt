@@ -3651,10 +3651,13 @@ fun PriceComparisonCard(
     // it.
     // TODO: Arguably we could/should use remember or something like that to store the header currency/unit string and avoid rederiving it all the time, albeit it isn't that involved and we are already doing that with the currencycode, but still, we could move this into that remember block and not expose the currency code outside it or something
     // TODO: I'm hacking this together out of old prototype code but as this evolves we need to be "neater" about how we cope with generating the denominator part of the unit price header on the list when the list is empty - or just not showing the list at all in that case (which might make more sense, and maybe we already *do*, I'm not sure right now)
+    // TODO: Does it look ugly to have the "invisible" column with no title? It's like the price column is inexplicably further
+    // from the right margin than it "ought" to be and it's not obvious why unless there are icons in that column, and there *might*
+    // not be any. I suppose if we start adding good/OK/bad icons in there there will nearly always be at least one icon somewhere.
     val header = listOf(
         "Store",
         "${currencyFormat?.prefix ?: currencyFormat?.suffix ?: ""}/${priceAnalysis.augmentedPriceList.firstOrNull()?.unitPrice?.denominator?.symbol ?: "TODO"}",
-        "Notes"
+        "" // TODO?
     )
     // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
     // TODO: We might be rebuilding this list every recomposition, I really don't have a clue, as I already noted we should really
