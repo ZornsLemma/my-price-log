@@ -2683,6 +2683,7 @@ fun ItemSourceInfo(
     }
 }
 
+// TODO: Should NewDataTable have dividers like DataTable?
 @Composable
 fun <T> NewDataTable(
     header: List<String>,
@@ -2703,7 +2704,7 @@ fun <T> NewDataTable(
     }
 
     Column {
-        Row {
+        Row(modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceContainerHighest)) {
             header.forEachIndexed { colIndex, title ->
                 Box(
                     Modifier
@@ -2730,15 +2731,18 @@ fun <T> NewDataTable(
             } else {
                 MaterialTheme.colorScheme.onSurface
             }
+            val rowBackground = if (isHighlighted) {
+                MaterialTheme.colorScheme.secondaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerHigh
+            }
+
 
             CompositionLocalProvider(
                 LocalTextStyle provides textStyle,
                 LocalContentColor provides textColor
             ) {
-                Row(
-                    modifier = Modifier
-                        .background(if (isHighlighted) Color.LightGray else Color.Transparent)
-                ) {
+                Row(modifier = Modifier.background(rowBackground)) {
                     columns.forEachIndexed { colIndex, cell ->
                         Box(
                             Modifier
@@ -3693,6 +3697,7 @@ fun PriceComparisonCard(
                 // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
                 columnWeights = listOf(1.7f, 1f, 1f)
             )
+            Spacer(modifier = Modifier.height(8.dp)) // TODO TEMP (WE WON'T HAVE TWO TABLES SOON!)
 
             // TODO: We may need to add things like dataSet and locale to remember key
             val columns = remember {
