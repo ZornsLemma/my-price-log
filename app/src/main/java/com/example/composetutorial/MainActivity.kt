@@ -2376,6 +2376,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
 
 @Composable
 fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
+    modifier: Modifier = Modifier,
     selectedId: ID?,
     label: String,
     text: String,
@@ -2393,6 +2394,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
 
     ItemWithDropdown(
+        modifier = modifier,
         selectedId = selectedId,
         onValueChange = onValueChange,
         items = items,
@@ -2532,9 +2534,9 @@ fun ItemSourceInfo(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        //horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Price as sold"
+                        LabeledItem(modifier = Modifier.weight(1f), label = "Price as sold"
                         ) { // TODO: quite like this, but maybe "Shelf price"? This might also help distinguish this from the "effective/adjusted price". *Just possibly* some sort of similar wording tweak on "Unit price" in ItemSourceInfo might help.
                             // TODO: There might be an argument for designing the UI to separate the
                             // price and quantity here, then we side-step the internationalisation
@@ -2602,7 +2604,7 @@ fun ItemSourceInfo(
                             ), dataSet,
                             LocalConfiguration.current.locales[0]
                         )
-                        LabeledItemWithDropdown(/* modifier = Modifier.weight(1f), */ label = "Unit price",
+                        LabeledItemWithDropdown(modifier = Modifier.weight(1f), label = "Unit price",
                             text = unitPriceString,
                             //  TODO: Mixed feelings about the "/" prefix in this menu.
                             items = relevantUnitList,
