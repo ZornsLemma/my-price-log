@@ -3783,7 +3783,7 @@ fun PriceComparisonCard(
                 columns = columns,
                 highlightRow = highlightRow,
                 // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes. TBH fixed weights may be fine now we are not planning on showing free-form notes.
-                columnWeights = listOf(1.7f, 1f, 1f),
+                columnWeights = listOf(1.7f, 1f, 0.8f),
                 columnAlignments = listOf(CellAlignment.Start, CellAlignment.End, CellAlignment.Start),
             )
         }
