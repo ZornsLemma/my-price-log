@@ -2644,12 +2644,7 @@ fun ItemSourceInfo(
                     // TODO: This judgement needs to come from the price analysis data, of course
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Row {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Checked",
-                                modifier = Modifier.size(24.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            ) // TODO: probably "primary"=good, default text color=neutral, "error"=bad
+                            GoodPriceIcon()
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Good price")
                         }
@@ -3637,6 +3632,7 @@ fun GoodPriceIcon() {
 @Composable
 fun OkPriceIcon() {
     Icon(
+        // TODO: Not sure this is a great icon, maybe rethink.
         painter = painterResource(R.drawable.baseline_remove_circle_24),
         contentDescription = "OK price",
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
