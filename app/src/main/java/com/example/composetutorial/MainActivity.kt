@@ -2215,6 +2215,7 @@ fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's O
     // TODO: Not 100% sure about coloring this with no further indication to show it's "stale" and
     // try to encourage action, maybe we need a supportingText or a different layout or both. I'll
     // leave the code in for now anyway.
+    // TODO: Ideally we should be using an AugmentedPrice here and its age class, not determining it separately for ourself
     Text(relativeTime, color = if (ageInSeconds < inflationThresholdDays * secondsPerDay) Color.Unspecified else MaterialTheme.colorScheme.error)
 }
 
@@ -3648,6 +3649,9 @@ fun BadPriceIcon() {
 fun StalePriceIcon() {
     Icon(
         // Idea with this icon is "the 'fresh' period is over, we started a timer now it's stale"
+        // TODO: Just possibly create my own hourglass_middle icon and use that here instead? We
+        // probably would keep to no icon for fresh rather than using hourglass top, but the
+        // "tri-state metaphor" would maybe be a bit more obvious to users.
         painter = painterResource(R.drawable.baseline_hourglass_top_24),
         contentDescription = "Stale price",
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -3753,34 +3757,27 @@ fun PriceComparisonCard(
             Spacer(modifier = Modifier.height(8.dp)) // TODO TEMP (WE WON'T HAVE TWO TABLES SOON!)
 
             // TODO: We may need to add things like dataSet and locale to remember key
-            val columns = remember(priceAnalysis.priceClassificationThresholds, dataSet, locale) {
+            val columns = remember(dataSet, locale) {
                 listOf<@Composable (AugmentedPrice) -> Unit>(
                     { augmentedPrice -> Text(augmentedPrice.sourceName) },
                     { augmentedPrice -> Text(formatPrice(augmentedPrice.unitPrice.numerator, dataSet, locale)) },
                     // TODO: Should I effectively line the price judgement and age icons up in columns, e.g. by putting a dummy blank icon in the judgement column if we aren't willing to make a judgement? or is it ok to just have a "row" of icons and not worry about vertical alignment across rows?
                     { augmentedPrice ->
                         Row {
-                            priceAnalysis.priceClassificationThresholds?.let { priceClassificationThresholds ->
-                                //Text("TODO")
-                                if (augmentedPrice.ageDays < tooOldThresholdDays) {
-                                    val unitPrice = augmentedPrice.unitPrice.numerator
-                                    if (unitPrice < priceClassificationThresholds.good) {
-                                        GoodPriceIcon()
-
-                                    } else if (unitPrice < priceClassificationThresholds.bad) {
-                                        OkPriceIcon()
-                                    } else {
-                                        BadPriceIcon()
-                                    }
+                            if (augmentedPrice.ageClass != AgeClass.ANCIENT) {
+                                when (augmentedPrice.priceJudgement) {
+                                    PriceJudgement.NONE -> {}
+                                    PriceJudgement.GOOD -> GoodPriceIcon()
+                                    PriceJudgement.OK -> OkPriceIcon()
+                                    PriceJudgement.BAD -> BadPriceIcon()
                                 }
                             }
-                            if (augmentedPrice.ageDays < inflationThresholdDays) {
-                            } else if (augmentedPrice.ageDays < tooOldThresholdDays) {
+
+                            if (augmentedPrice.ageClass == AgeClass.STALE) {
                                 StalePriceIcon()
-                            } else {
+                            } else if (augmentedPrice.ageClass == AgeClass.ANCIENT) {
                                 AncientPriceIcon()
                             }
-
                         }
                     },
                 )
@@ -7698,11 +7695,13 @@ data class PriceAnalysis(
 
 
 // TODO: We may want to return a Price with swizzled internal double price value rather than having a custom AugmentedPrice, let's see how it goes.
+// TODO: Make constructor private so we can only construct these via augmentPrice()?
 data class AugmentedPrice( // TODO: not sure about name but experimenting
     val basePrice: Price, // TODO: just possibly we don't even want this embedded in here
     val sourceName: String, // saves faffing with associatedBy and remember in UI code
     val loyaltyPrice: Double,
     val ageDays: Long,
+    val ageClass: AgeClass,
     val inflatedLoyaltyPrice: Double,
     val unitPrice: UnitPrice,
     val priceJudgement: PriceJudgement,
@@ -7721,24 +7720,26 @@ fun inflationAdjustedPrice(price: Double, ageDays: Long): Double {
     }
 }
 
+enum class AgeClass { // TODO: PriceAgeClass?
+    FRESH,
+    STALE,
+    ANCIENT
+}
+
 enum class PriceJudgement {
     NONE,
-    STALE, // TODO: rename TOO_OLD? this is probably for the ">=180 days" case, not the ">=30 days" case
     GOOD,
     OK,
     BAD
 }
 
 // TODO: Should this be a member of PriceJudgement??
-// TODO: I am not using this everywhere I could, but/and this is maybe inconsistent because this considers stale an alternate to judgement whereas elsewhere I am happy to judge prices which are stale and show both indicators
 fun judgePrice(augmentedPrice: AugmentedPrice, priceClassificationThresholds: PriceClassificationThresholds?): PriceJudgement {
-    if (augmentedPrice.ageDays >= tooOldThresholdDays) {
-        return PriceJudgement.STALE
-    } else if (priceClassificationThresholds == null) {
+    if (priceClassificationThresholds == null) {
         return PriceJudgement.NONE
-    } else if (augmentedPrice.inflatedLoyaltyPrice < priceClassificationThresholds.good) {
+    } else if (augmentedPrice.unitPrice.numerator < priceClassificationThresholds.good) {
         return PriceJudgement.GOOD
-    } else if (augmentedPrice.inflatedLoyaltyPrice <= priceClassificationThresholds.bad) {
+    } else if (augmentedPrice.unitPrice.numerator <= priceClassificationThresholds.bad) {
         return PriceJudgement.OK
     } else {
         return PriceJudgement.BAD
@@ -7756,6 +7757,8 @@ fun augmentPrice(price: Price, source: Source, unitPriceDenominator: MeasureUnit
         sourceName = source.name,
         loyaltyPrice = loyaltyPrice,
         ageDays = ageDays,
+        ageClass = if (ageDays < inflationThresholdDays) { AgeClass.FRESH } else if (ageDays < tooOldThresholdDays) { AgeClass.STALE }
+            else { AgeClass.ANCIENT },
         inflatedLoyaltyPrice = inflatedLoyaltyPrice,
         // TODO: It feels slightly off that we have to specify a denominator for our unit prices here, but I suppose it's OK - but maybe we could improve the API. We can't choose a "friendly" unit at this point since we don't have all the data across all sources yet (we're building it up).
         unitPrice = if (unitPriceDenominator != null) {
@@ -7785,7 +7788,7 @@ fun quantile(sortedValues: List<Double>, q: Double): Double {
 
     val doubleIndex = q * (sortedValues.size - 1)
     val lowerIndex = doubleIndex.toInt()
-    // min() here is just paranoia in case of floating point rounding.
+    // min() here is just paranoia in case of floating point imprecision.
     val upperIndex = kotlin.math.min(ceil(doubleIndex).toInt(), sortedValues.size - 1)
     val fractionalIndex = doubleIndex - lowerIndex
     return sortedValues[lowerIndex] * (1 - fractionalIndex) + sortedValues[upperIndex] * fractionalIndex
@@ -7836,7 +7839,7 @@ fun analysePrices(dataSet: DataSet?, priceList: List<Price>, sourceList: List<So
         }
     }.sortedBy { it.unitPrice }
     val recentEnoughPriceList = augmentedPriceList.mapNotNull { augmentedPrice ->
-        if (augmentedPrice.ageDays >= tooOldThresholdDays) { null } else { augmentedPrice.unitPrice.numerator }
+        if (augmentedPrice.ageClass == AgeClass.ANCIENT ) { null } else { augmentedPrice.unitPrice.numerator }
     }
     Log.d("MyApp", "recentEnoughPriceList $recentEnoughPriceList")
     val priceClassificationThresholds = if (recentEnoughPriceList.size <= 2) { null } else {
