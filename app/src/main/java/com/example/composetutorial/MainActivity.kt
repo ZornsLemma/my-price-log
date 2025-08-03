@@ -2706,7 +2706,7 @@ fun <T> NewDataTable(
 
     Column {
         Row(modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceContainerHighest)
-            .height(56.dp) // TODO EXPERIMENTAL
+            //.height(56.dp) // TODO EXPERIMENTAL - NOT SURE IF HEADER NEEDS TO BE AS TALL AS THE ROWS FOR A START, IT ISN'T TAPPABLE
             ,  verticalAlignment = Alignment.CenterVertically) {
             header.forEachIndexed { colIndex, title ->
                 Box(
@@ -3620,6 +3620,13 @@ fun HomeScreenScaffold(
     ScrimWithSpinner(visible = loading)
 }
 
+// TODO: These icon choices are stupid/placeholder, just so I can move on. Need to look into this later, perhaps even pull in e.g. some icons from Material Symbols font or whatever.
+val goodPriceIcon = Icons.Default.CheckCircle
+val okPriceIcon = Icons.Default.Delete
+val badPriceIcon = Icons.Default.Search
+val stalePriceIcon = Icons.Default.Warning
+val tooOldPriceIcon = Icons.Default.Person
+
 @Composable
 fun PriceComparisonCard(
     dataSet: DataSet,
@@ -3709,26 +3716,53 @@ fun PriceComparisonCard(
             Spacer(modifier = Modifier.height(8.dp)) // TODO TEMP (WE WON'T HAVE TWO TABLES SOON!)
 
             // TODO: We may need to add things like dataSet and locale to remember key
-            val columns = remember {
+            val columns = remember(priceAnalysis.priceClassificationThresholds, dataSet, locale) {
                 listOf<@Composable (AugmentedPrice) -> Unit>(
                     { augmentedPrice -> Text(augmentedPrice.sourceName) },
                     { augmentedPrice -> Text(formatPrice(augmentedPrice.unitPrice.numerator, dataSet, locale)) },
                     { augmentedPrice ->
-                        if (augmentedPrice.ageDays < inflationThresholdDays ) {}
-                        else if (augmentedPrice.ageDays < tooOldThresholdDays) {
-                            Icon(
-                                imageVector = Icons.Default.Warning, //TODO
-                                contentDescription = "Warning",
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(24.dp) // TODO SIZE EXP - WE MAY NOT EVEN NEED TO SPECIFY IT EXPLICITLY
-                            )
-                        }
-                        else {
-                            Icon(
-                                imageVector = Icons.Default.Person, //TODO
-                                contentDescription = "Warning",
-                                tint = MaterialTheme.colorScheme.error
-                            )
+                        Row {
+                            priceAnalysis.priceClassificationThresholds?.let { priceClassificationThresholds ->
+                                //Text("TODO")
+                                if (augmentedPrice.ageDays < tooOldThresholdDays) {
+                                    val unitPrice = augmentedPrice.unitPrice.numerator
+                                    if (unitPrice < priceClassificationThresholds.good) {
+                                        Icon(
+                                            imageVector = goodPriceIcon,
+                                            contentDescription = "Warning", // TODO
+                                            tint = MaterialTheme.colorScheme.primary,
+                                        )
+                                    } else if (unitPrice < priceClassificationThresholds.bad) {
+                                        Icon(
+                                            imageVector = okPriceIcon,
+                                            contentDescription = "Warning", // TODO
+                                            // TODO? tint = MaterialTheme.colorScheme.primary,
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = badPriceIcon,
+                                            contentDescription = "Warning", // TODO
+                                            tint = MaterialTheme.colorScheme.error,
+                                        )
+                                    }
+                                }
+                            }
+                            if (augmentedPrice.ageDays < inflationThresholdDays) {
+                            } else if (augmentedPrice.ageDays < tooOldThresholdDays) {
+                                Icon( // TODO: Can/should I wrap the whole Icon up in e.g. stalePriceIcon?
+                                    imageVector = stalePriceIcon,
+                                    contentDescription = "Warning", // TODO
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(24.dp) // TODO SIZE EXP - WE MAY NOT EVEN NEED TO SPECIFY IT EXPLICITLY
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = tooOldPriceIcon,
+                                    contentDescription = "Warning", // TODO
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
+
                         }
                     },
                 )
@@ -7657,7 +7691,7 @@ data class AugmentedPrice( // TODO: not sure about name but experimenting
 )
 
 val inflationThresholdDays = 1L // 30L // TODO: rename staleThreshold or something? we use it for inflation, but it's about how we define "stale" really, and inflation only kicks in for stale prices
-val tooOldThresholdDays = 2L //180L // TODO: should be in settings
+val tooOldThresholdDays = 3L //180L // TODO: should be in settings
 
 fun inflationAdjustedPrice(price: Double, ageDays: Long): Double {
     // TODO: Hard-coded threshold and inflation rate should be taken from settings
@@ -7678,6 +7712,7 @@ enum class PriceJudgement {
 }
 
 // TODO: Should this be a member of PriceJudgement??
+// TODO: I am not using this everywhere I could, but/and this is maybe inconsistent because this considers stale an alternate to judgement whereas elsewhere I am happy to judge prices which are stale and show both indicators
 fun judgePrice(augmentedPrice: AugmentedPrice, priceClassificationThresholds: PriceClassificationThresholds?): PriceJudgement {
     if (augmentedPrice.ageDays >= tooOldThresholdDays) {
         return PriceJudgement.STALE
@@ -7785,6 +7820,7 @@ fun analysePrices(dataSet: DataSet?, priceList: List<Price>, sourceList: List<So
     val recentEnoughPriceList = augmentedPriceList.mapNotNull { augmentedPrice ->
         if (augmentedPrice.ageDays >= tooOldThresholdDays) { null } else { augmentedPrice.unitPrice.numerator }
     }
+    Log.d("MyApp", "recentEnoughPriceList $recentEnoughPriceList")
     val priceClassificationThresholds = if (recentEnoughPriceList.size <= 2) { null } else {
         val lowerQuartile = quantile(recentEnoughPriceList, 0.25)
         val upperQuartile = quantile(recentEnoughPriceList, 0.75)
