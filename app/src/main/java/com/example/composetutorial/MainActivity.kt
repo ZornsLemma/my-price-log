@@ -2554,14 +2554,6 @@ fun ItemSourceInfo(
                             )
                         }
 
-                        // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
-                        LabeledItem(/* modifier = Modifier.weight(1f), */ label = "Confirmed" /* "Last checked" */) {
-                            RelativeTimeText(price.confirmed)
-                            // TODO: would it be helpful to color code this and/or show an icon
-                            // ("!"?) if this is "old"? maybe even with an ascending amber/red
-                            // "severity" (and correspondingly different icons?)
-                        }
-
                         val relevantUnitFamilies =
                             remember(dataSet) { getRelevantUnitFamilies(dataSet) }
 
@@ -2627,6 +2619,14 @@ fun ItemSourceInfo(
                             selectedId = selectedUnitPriceUnit,
                             onValueChange = { selectedUnitPriceUnit = it })
 
+                    }
+
+                    // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
+                    LabeledItem(modifier = Modifier.padding(bottom = 8.dp), label = "Confirmed" /* "Last checked" */) {
+                        RelativeTimeText(price.confirmed)
+                        // TODO: would it be helpful to color code this and/or show an icon
+                        // ("!"?) if this is "old"? maybe even with an ascending amber/red
+                        // "severity" (and correspondingly different icons?)
                     }
 
                     if (price.details.isNotEmpty()) {
