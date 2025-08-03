@@ -2689,33 +2689,65 @@ fun <T> NewDataTable(
     items: List<T>,
     columns: List<@Composable (T) -> Unit>,
     highlightRow: Int? = null, // TODO: this might be better as a function which returns true to highlight and takes a T?
-    columnWeights: List<Float> = List(header.size) { 1f }
+    columnWeights: List<Float> = List(header.size) { 1f },
+    columnAlignments: List<CellAlignment> = List(header.size) { CellAlignment.Start },
 ) {
+    devRequire(header.size == columns.size) { "Expected same header and columns size but have ${header.size} and ${columns.size} respectively" }
+    devRequire(header.size == columnWeights.size) { "Expected same header and columnWeights size but have ${header.size} and ${columnWeights.size} respectively"}
+    devRequire(header.size == columnAlignments.size) { "Expected same header and columnAlignments size but have ${header.size} and ${columnAlignments.size} respectively"}
+
+    fun alignmentModifier(cellAlignment: CellAlignment) : Modifier = when (cellAlignment) {
+        CellAlignment.Start -> Modifier.wrapContentWidth(Alignment.Start)
+        CellAlignment.Center -> Modifier.wrapContentWidth(Alignment.CenterHorizontally)
+        CellAlignment.End -> Modifier.wrapContentWidth(Alignment.End)
+    }
+
     Column {
         Row {
-            header.forEachIndexed { index, title ->
+            header.forEachIndexed { colIndex, title ->
                 Box(
                     Modifier
-                        .weight(columnWeights.getOrElse(index) { 1f })
+                        .weight(columnWeights.getOrElse(colIndex) { 1f })
                         .padding(8.dp)
+                        .then(alignmentModifier(columnAlignments[colIndex]))
                 ) {
                     Text(title, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
 
+        // TODO: Far from sure I like the way I'm highlighting highlightRow, but it's not too bad. I was worried using any kind of font weight change would break the decimal point alignment but in practice it doesn't appear to be a big problem.
+
         items.forEachIndexed { rowIndex, item ->
-            Row(
-                modifier = Modifier
-                    .background(if (highlightRow == rowIndex) Color.LightGray else Color.Transparent)
+            val isHighlighted = rowIndex == highlightRow
+            val textStyle = if (isHighlighted) {
+                MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+            } else {
+                MaterialTheme.typography.bodyLarge
+            }
+            val textColor = if (isHighlighted) {
+                MaterialTheme.colorScheme.onSecondaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            }
+
+            CompositionLocalProvider(
+                LocalTextStyle provides textStyle,
+                LocalContentColor provides textColor
             ) {
-                columns.forEachIndexed { colIndex, cell ->
-                    Box(
-                        Modifier
-                            .weight(columnWeights.getOrElse(colIndex) { 1f })
-                            .padding(8.dp)
-                    ) {
-                        cell(item)
+                Row(
+                    modifier = Modifier
+                        .background(if (isHighlighted) Color.LightGray else Color.Transparent)
+                ) {
+                    columns.forEachIndexed { colIndex, cell ->
+                        Box(
+                            Modifier
+                                .weight(columnWeights.getOrElse(colIndex) { 1f })
+                                .padding(8.dp)
+                                .then(alignmentModifier(columnAlignments[colIndex]))
+                        ) {
+                            cell(item)
+                        }
                     }
                 }
             }
@@ -3677,11 +3709,14 @@ fun PriceComparisonCard(
                 columns = columns,
                 highlightRow = highlightRow,
                 // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes. TBH fixed weights may be fine now we are not planning on showing free-form notes.
-                columnWeights = listOf(1.7f, 1f, 1f)
+                columnWeights = listOf(1.7f, 1f, 1f),
+                columnAlignments = listOf(CellAlignment.Start, CellAlignment.End, CellAlignment.Start),
             )
         }
     }
 }
+
+enum class CellAlignment { Start, Center, End }
 
 // TODO: ChatGPT magic but I think I do mostly understand
 /*
