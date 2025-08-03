@@ -2683,6 +2683,46 @@ fun ItemSourceInfo(
     }
 }
 
+@Composable
+fun <T> NewDataTable(
+    header: List<String>,
+    items: List<T>,
+    columns: List<@Composable (T) -> Unit>,
+    highlightRow: Int? = null, // TODO: this might be better as a function which returns true to highlight and takes a T?
+    columnWeights: List<Float> = List(header.size) { 1f }
+) {
+    Column {
+        Row {
+            header.forEachIndexed { index, title ->
+                Box(
+                    Modifier
+                        .weight(columnWeights.getOrElse(index) { 1f })
+                        .padding(8.dp)
+                ) {
+                    Text(title, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+
+        items.forEachIndexed { rowIndex, item ->
+            Row(
+                modifier = Modifier
+                    .background(if (highlightRow == rowIndex) Color.LightGray else Color.Transparent)
+            ) {
+                columns.forEachIndexed { colIndex, cell ->
+                    Box(
+                        Modifier
+                            .weight(columnWeights.getOrElse(colIndex) { 1f })
+                            .padding(8.dp)
+                    ) {
+                        cell(item)
+                    }
+                }
+            }
+        }
+    }
+}
+
 // TODO: o4-mini code, review if keep
 // TODO: I should probably display an arrow of some sort next to the column which controls the sort
 // order, and I should probably make it clickable to reverse the order - the main thing being to
@@ -3613,12 +3653,6 @@ fun PriceComparisonCard(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            /* Box(
-
-        modifier = Modifier.padding(
-            horizontal = 8.dp, vertical = 12.dp
-        )
-    ) { */
             // TODO: This list may not need dividers between items if it is now simpler and doesn't show "Notes", which could have pushed us into multi-line items fairly easily, whereas now only very long store names or very big fonts on very small screens are likely to do it.
             val highlightRow =
                 data.indexOfFirst { it[0] == source?.name }.takeIf { it != -1 }
@@ -3627,7 +3661,24 @@ fun PriceComparisonCard(
                 // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
                 columnWeights = listOf(1.7f, 1f, 1f)
             )
-            // }
+
+            // TODO: We may need to add things like dataSet and locale to remember key
+            val columns = remember {
+                listOf<@Composable (AugmentedPrice) -> Unit>(
+                    { augmentedPrice -> Text(augmentedPrice.sourceName) },
+                    { augmentedPrice -> Text(formatPrice(augmentedPrice.unitPrice.numerator, dataSet, locale)) },
+                    { augmentedPrice -> Text("TODO") },
+                )
+            }
+
+            NewDataTable(
+                header = header,
+                items = priceAnalysis.augmentedPriceList,
+                columns = columns,
+                highlightRow = highlightRow,
+                // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes. TBH fixed weights may be fine now we are not planning on showing free-form notes.
+                columnWeights = listOf(1.7f, 1f, 1f)
+            )
         }
     }
 }
@@ -7694,7 +7745,7 @@ val foo = MeasuredValue(5.0, MeasureUnit.KG)
 val bar = MeasuredValue(2.3, MeasureUnit.ML)
 val quux = bar.to(MeasureUnit.FLOZ)
 Log.d("MyApp", quux.toString())
-var baz = foo + bar
+var baz = foo + barq
 Log.d("MyApp", baz.toString())
 */
 
