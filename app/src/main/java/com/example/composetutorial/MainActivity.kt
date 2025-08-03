@@ -3782,6 +3782,7 @@ fun PriceComparisonCard(
                     },
                 )
             }
+            // TODO: If we make these rows clickable, we should probably have a little right pointing chevron at the far right or something.
             NewDataTable(
                 header = header,
                 items = priceAnalysis.augmentedPriceList,
