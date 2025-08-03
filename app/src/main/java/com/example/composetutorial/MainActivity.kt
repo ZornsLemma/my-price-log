@@ -3656,6 +3656,7 @@ fun PriceComparisonCard(
     // not be any. I suppose if we start adding good/OK/bad icons in there there will nearly always be at least one icon somewhere.
     val header = listOf(
         "Store",
+        // TODO: Now I have more space here (not quite sure how, but I do), it *may* be that headings of the form "Price/pt" instead of "£/pt" look OK/better.
         "${currencyFormat?.prefix ?: currencyFormat?.suffix ?: ""}/${priceAnalysis.augmentedPriceList.firstOrNull()?.unitPrice?.denominator?.symbol ?: "TODO"}",
         "" // TODO?
     )
