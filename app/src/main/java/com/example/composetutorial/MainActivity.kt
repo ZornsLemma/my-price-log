@@ -94,6 +94,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -3704,7 +3705,24 @@ fun PriceComparisonCard(
                 listOf<@Composable (AugmentedPrice) -> Unit>(
                     { augmentedPrice -> Text(augmentedPrice.sourceName) },
                     { augmentedPrice -> Text(formatPrice(augmentedPrice.unitPrice.numerator, dataSet, locale)) },
-                    { augmentedPrice -> Text("TODO") },
+                    { augmentedPrice ->
+                        if (augmentedPrice.ageDays < inflationThresholdDays ) {}
+                        else if (augmentedPrice.ageDays < tooOldThresholdDays) {
+                            Icon(
+                                imageVector = Icons.Default.Warning, //TODO
+                                contentDescription = "Warning",
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(16.dp) // TODO SIZE EXP
+                            )
+                        }
+                        else {
+                            Icon(
+                                imageVector = Icons.Default.Person, //TODO
+                                contentDescription = "Warning",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    },
                 )
             }
 
@@ -7631,7 +7649,9 @@ data class AugmentedPrice( // TODO: not sure about name but experimenting
     val priceJudgement: PriceJudgement,
 )
 
-val inflationThresholdDays = 30L // TODO: rename staleThreshold or something? we use it for inflation, but it's about how we define "stale" really, and inflation only kicks in for stale prices
+val inflationThresholdDays = 1L // 30L // TODO: rename staleThreshold or something? we use it for inflation, but it's about how we define "stale" really, and inflation only kicks in for stale prices
+val tooOldThresholdDays = 2L //180L // TODO: should be in settings
+
 fun inflationAdjustedPrice(price: Double, ageDays: Long): Double {
     // TODO: Hard-coded threshold and inflation rate should be taken from settings
     if (ageDays < inflationThresholdDays) {
@@ -7711,7 +7731,6 @@ fun quantile(sortedValues: List<Double>, q: Double): Double {
     return sortedValues[lowerIndex] * (1 - fractionalIndex) + sortedValues[upperIndex] * fractionalIndex
 }
 
-val tooOldThresholdDays = 180L // TODO: should be in settings
 
 // TODO: This code feels a bit awkward somehow, maybe the unit price calculation code needs refactoring and maybe augmentPrice should be inlined as this is its only caller and that *might* help. It also feels like we're having to pass far too much random stuff in as parameters.
 fun analysePrices(dataSet: DataSet?, priceList: List<Price>, sourceList: List<Source>): PriceAnalysis {
