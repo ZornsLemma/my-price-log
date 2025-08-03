@@ -8086,3 +8086,5 @@ Log.d("MyApp", baz.toString())
 // ItemSourceInfo at all (which is where it could appear paired with text to explain it).
 
 // TODO: It's probably obvious in hindsight but I had some idea of using absolute prices on all rows of a "how the price was calculated" screen, whereas I almost certainly should show a start absolute price then "Inflation adjustment +$0.04" or "Loyalty discount (5%) -$0.03" with a final total at the end.
+
+// TODO: ChatGPT suggests tertiary/neutral/error colors for good/ok/bad indicator, i.e. not primary for good. This has some appeal. If I do this, I may want to switch away from tertiary for highlighting the current row in the price comparison, as I don't want it to convey "approval" of this store's price.
