@@ -3616,10 +3616,6 @@ fun HomeScreenScaffold(
     ScrimWithSpinner(visible = loading)
 }
 
-// TODO: These icon choices are stupid/placeholder, just so I can move on. Need to look into this later, perhaps even pull in e.g. some icons from Material Symbols font or whatever.
-val stalePriceIcon = Icons.Default.Warning
-val tooOldPriceIcon = Icons.Default.Person
-
 @Composable
 fun GoodPriceIcon() {
     Icon(
@@ -3644,6 +3640,26 @@ fun BadPriceIcon() {
     Icon(
         painter = painterResource(R.drawable.baseline_cancel_24),
         contentDescription = "Bad price", // TODO
+        tint = MaterialTheme.colorScheme.error,
+    )
+}
+
+@Composable
+fun StalePriceIcon() {
+    Icon(
+        // TODO: Not sure this is a great icon, maybe rethink.
+        imageVector = Icons.Default.Warning,
+        contentDescription = "Stale price",
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+fun AncientPriceIcon() {
+    Icon(
+        // TODO: Not sure this is a great icon, maybe rethink.
+        painter = painterResource(R.drawable.baseline_error_24),
+        contentDescription = "Ancient price",
         tint = MaterialTheme.colorScheme.error,
     )
 }
@@ -3759,18 +3775,9 @@ fun PriceComparisonCard(
                             }
                             if (augmentedPrice.ageDays < inflationThresholdDays) {
                             } else if (augmentedPrice.ageDays < tooOldThresholdDays) {
-                                Icon( // TODO: Can/should I wrap the whole Icon up in e.g. stalePriceIcon?
-                                    imageVector = stalePriceIcon,
-                                    contentDescription = "Warning", // TODO
-                                    tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(24.dp) // TODO SIZE EXP - WE MAY NOT EVEN NEED TO SPECIFY IT EXPLICITLY
-                                )
+                                StalePriceIcon()
                             } else {
-                                Icon(
-                                    imageVector = tooOldPriceIcon,
-                                    contentDescription = "Warning", // TODO
-                                    tint = MaterialTheme.colorScheme.error
-                                )
+                                AncientPriceIcon()
                             }
 
                         }
