@@ -2695,16 +2695,7 @@ fun DataTable(
     highlightRow: Int?,
     columnWeights: List<Float> = List(header.size) { 1f }
 ) {
-    // TODO: Is there an argument that the column headings should actually use the same appearance
-    // as the labels like "Unit price" - they are arguably playing the same kind of informative
-    // role and don't necessarily deserve the bold same-size (ish) text treatment they are currently
-    // getting. Maybe this would look weird though - perhaps there is a strong expectation that
-    // "tables" do have bold header rows which are "at least as big" as the data rows. Not sure,
-    // need to experiment. It *might* be reasonable to use primary for the header background,
-    // although I am not sure - and certainly if we did, we would not want to mix that with the
-    // small text label style used by LabelledText(). To some extent, I need to consider the
-    // appearance of the whole screen in deciding this.
-    // TODO: The header should remain fixed even when the list scrolls. - this is now done, but the header now loses contrast when a dark zebra row is adjacent
+    // TODO: *Maybe* I could use primary for the header background, and then use surfaceContainerHighest to highlight the current source (if any)? But I am wary of the table header "stealing the show" when so little of the rest of the UI is primary coloured, especially filled areas.
     // TODO: Should the header and the last item of the list have rounded corners? I am not sure. Probably best square corners TBH.
 
     Column {
@@ -2733,27 +2724,7 @@ fun DataTable(
             }
         }
 
-        /* TODO: ChatpGPT suggests code like this would allow us to switch between "icons" and "icons+text" depending on screen size:
 
-        @Composable
-fun IconRow(icon: ImageVector, label: String, modifier: Modifier = Modifier) {
-    BoxWithConstraints {
-        val density = LocalDensity.current
-        val fontScale = LocalContext.current.resources.configuration.fontScale
-        val availableWidthDp = maxWidth / fontScale
-
-        if (availableWidthDp < 120.dp) {
-            Icon(imageVector = icon, contentDescription = label)
-        } else {
-            Row {
-                Icon(imageVector = icon, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(text = label)
-            }
-        }
-    }
-}
-*/
 
         // data rows
         // TODO: Far from sure I like the way I'm highlighting highlightRow, but it's not too bad. I was worried using any kind of font weight change would break the decimal point alignment but in practice it doesn't appear to be a big problem.
@@ -2793,6 +2764,27 @@ fun IconRow(icon: ImageVector, label: String, modifier: Modifier = Modifier) {
     }
 }
 
+/* TODO: ChatpGPT suggests code like this would allow us to switch between "icons" and "icons+text" depending on screen size:
+
+@Composable
+fun IconRow(icon: ImageVector, label: String, modifier: Modifier = Modifier) {
+BoxWithConstraints {
+val density = LocalDensity.current
+val fontScale = LocalContext.current.resources.configuration.fontScale
+val availableWidthDp = maxWidth / fontScale
+
+if (availableWidthDp < 120.dp) {
+    Icon(imageVector = icon, contentDescription = label)
+} else {
+    Row {
+        Icon(imageVector = icon, contentDescription = null)
+        Spacer(Modifier.width(8.dp))
+        Text(text = label)
+    }
+}
+}
+}
+*/
 
 /* TODO: Delete if not needed
 // Utility to get Activity window
@@ -3593,19 +3585,7 @@ fun PriceComparisonCard(
             "TODO" // TODO: We probably don't want to show "notes", but we may want to show some icons or just possibly any judgement on the price or something in a third column
         )
     }
-    /* TODO DELETE
-    listOf(
-        "Tesco", "£2.13", "Tesco Finest is actually cheapest"
-    ),
-    listOf("Sainsbury's Local", "£2.94", ""),
-    listOf("Asda", "£2.08", "KTC brand"),
-    listOf("Iceland", "£2.38", ""),
-    // …
-)
-    */
 
-
-// TODO: Price column should be right-aligned, of course
 // TODO: This is based on an early hack and we should probably not be generating miscellaneous lists but instead just working directly with our AugmentedPrice objects or something
     Card(
         modifier = Modifier
