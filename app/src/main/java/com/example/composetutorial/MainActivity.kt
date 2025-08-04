@@ -2771,7 +2771,7 @@ fun <T> NewDataTable(
                     */
                     Row(
                         modifier = Modifier.background(rowBackground)
-                            .height(56.dp) // TODO EXPERIMENTAL
+                            .height(56.dp) // TODO EXPERIMENTAL - AND NOTE THAT UNLESS I ACTUALLY *DO* MAKE THE ROWS CLICKABLE, I DO NOT NEED THEM TO BE SO TALL AND CAN SHRINK THEM
                         , verticalAlignment = Alignment.CenterVertically
                     ) {
                         columns.forEachIndexed { colIndex, cell ->
