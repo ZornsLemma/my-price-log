@@ -525,7 +525,7 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
 }
 
 @Database(
-    entities = [DataSet::class, Item::class, Source::class, PriceEntity::class],
+    entities = [DataSet::class, Item::class, Source::class, PriceEntity::class, PriceHistory::class],
     version = 1,
     exportSchema = false
 )
@@ -537,6 +537,7 @@ abstract class InventoryDatabase : RoomDatabase() {
     abstract fun productDao(): ItemDao
     abstract fun sourceDao(): SourceDao
     abstract fun priceDao(): PriceDao
+    abstract fun priceHistoryDao(): PriceHistoryDao
 
     companion object {
         @Volatile
@@ -695,6 +696,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
                 confirmed = now.minus(2, ChronoUnit.MINUTES),
                 details = "Large pack own brand",
                 itemDefaultUnit = MeasureUnit.G,
+                modifiedAt = now.minus(2, ChronoUnit.MINUTES)
             )
         )
     repository.updateOrInsertPrice(
@@ -707,6 +709,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
                 confirmed = now.minus(4, ChronoUnit.DAYS),
                 details = "Own brand",
                         itemDefaultUnit = MeasureUnit.G,
+                modifiedAt = now.minus(4, ChronoUnit.DAYS),
             )
         )
     repository.updateOrInsertPrice(
@@ -722,6 +725,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
                 confirmed = now,
                 details = "",
                 itemDefaultUnit = MeasureUnit.L,
+                modifiedAt = now,
             )
         )
     repository.updateOrInsertPrice(
@@ -734,7 +738,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
                 confirmed = now.minus(63, ChronoUnit.DAYS),
                 details = "",
                         itemDefaultUnit = MeasureUnit.L,
-
+modifiedAt = now.minus(63, ChronoUnit.DAYS),
                 )
         )
     repository.updateOrInsertPrice(
@@ -747,6 +751,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
                 confirmed = now.minus(7, ChronoUnit.DAYS),
                 details = "Soft pack own brand",
                 itemDefaultUnit = MeasureUnit.EACH,
+                modifiedAt = now.minus(7, ChronoUnit.DAYS),
             )
         )
     repository.updateOrInsertPrice(
@@ -759,6 +764,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
                 confirmed = now.minus(4, ChronoUnit.HOURS),
                 details = "",
                         itemDefaultUnit = MeasureUnit.EACH,
+                modifiedAt = now.minus(4, ChronoUnit.HOURS),
             )
         )
         /*
@@ -802,10 +808,12 @@ interface PriceTrackerRepository {
 }
 
 class PriceTrackerRepositoryImpl(
+    private val db: InventoryDatabase,
     private val dataSetDao: DataSetDao,
     private val itemDao: ItemDao,
     private val sourceDao: SourceDao,
-    private val priceDao: PriceDao
+    private val priceDao: PriceDao,
+    private val priceHistoryDao: PriceHistoryDao,
 ) : PriceTrackerRepository {
     override fun getAllDataSets(): Flow<List<DataSet>> = dataSetDao.getAllDataSets()
 
@@ -848,8 +856,16 @@ class PriceTrackerRepositoryImpl(
     // down to hardware failures or bugs in my code. The viewmodel-ish layer code is responsible
     // for turning an EditablePrice (a special variant domain level thing with nullness etc) into
     // a Price and *that* is where final validation occurs.
-    override suspend fun updateOrInsertPrice(price: Price): Long =
-        priceDao.upsert(price.toEntity())
+    override suspend fun updateOrInsertPrice(price: Price): Long {
+        var priceId: Long = 0
+        db.withTransaction {
+            val priceEntity = price.toEntity()
+            priceId = priceDao.upsert(priceEntity)
+            val priceEntityWithId = if (priceEntity.id != 0L) priceEntity else priceEntity.copy(id = priceId)
+            priceHistoryDao.insert(PriceHistory.fromPriceEntity(priceEntityWithId))
+        }
+        return priceId
+    }
 }
 
 // AppViewModelProvider.Factory allows us to control the arguments passed to our ViewModel
@@ -877,7 +893,7 @@ object AppViewModelProvider {
 class MyApplication : Application() {
     val priceTrackerRepository: PriceTrackerRepositoryImpl by lazy {
         val db = InventoryDatabase.getDatabase(this)
-        PriceTrackerRepositoryImpl(db.dataSetDao(), db.productDao(), db.sourceDao(), db.priceDao())
+        PriceTrackerRepositoryImpl(db, db.dataSetDao(), db.productDao(), db.sourceDao(), db.priceDao(), db.priceHistoryDao())
     }
 
     // TODO: ChatGPT magic, needs checking. May also be worth investigating ACRA/Cockroach/SimpleCrashReport open source libraries.
@@ -1405,10 +1421,84 @@ data class PriceEntity(
     // TODO: Rename this as "user_unit" or something?
     @ColumnInfo(name = "original_unit") val originalUnit: MeasureUnit,
 
-    val confirmed: Instant,
+    val confirmed: Instant, // TODO: rename confirmed_at? (to make clear it's not a boolean)
 
-    val details: String // Additional price details TODO: rename "notes"?
+    val details: String, // Additional price details TODO: rename "notes"?
+
+    // TODO: I need modifiedAt for PriceHistory as it's what allows us to order the historical rows.
+    // I thought it was probably best to just put it on PriceEntity itself and then we can e.g. keep
+    // it precisely in sync with confirmed when that changes and it just might come in handy. But it
+    // may be that it would be better if it only lived on PriceHistory; we probably could still keep
+    // it in sync with confirmed if we really wanted and it probably wouldn't matter if we couldn't.
+    @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
 ) : Parcelable
+
+// TODO: Apparently the easy option to avoid fighting Room is simply to duplicate PriceEntity as separate entity PriceHistory so we can have a table for price history. This feels a bit crappy but it isn't a big deal.
+// TODO: Keep this in sync with PriceEntity!
+@Entity(
+    tableName = "price_history", foreignKeys = [
+        // TODO: Should we declare a foreign key relationship of price.id to our price_id? This is
+        // probably technically correct and probably does no harm. Not quite sure how this might
+        // work if/when we actually allow deleting a price - I guess this history would
+        // be inaccessible unless we query it via (data_set_id, item_id) rather than price_id. So
+        // it *might* be good if deleting a price does not delete this history and we are not
+        // forced to delete these rows or keep a price around to avoid them. That said, maybe this
+        // means we actually don't *want* price_id on this table - but it is extremely convenient
+        // to have it, if only for manual checking, and as long as sqlite doesn't ever re-use a
+        // deleted ID when assigning primary key IDs (which feels unlikely) it isn't going to
+        // actively cause confusion.
+        ForeignKey(
+            entity = DataSet::class,
+            parentColumns = ["id"],
+            childColumns = ["data_set_id"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = Item::class,
+            parentColumns = ["id"],
+            childColumns = ["item_id"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = Source::class,
+            parentColumns = ["id"],
+            childColumns = ["source_id"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
+data class PriceHistory(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    @ColumnInfo(name = "price_id") val priceId: Long,
+    @ColumnInfo(name = "data_set_id") val dataSetId: Long,
+    @ColumnInfo(name = "item_id") val itemId: Long,
+    @ColumnInfo(name = "source_id") val sourceId: Long,
+    val price: Double,
+    val measure: Double,
+    @ColumnInfo(name = "original_unit") val originalUnit: MeasureUnit,
+    val confirmed: Instant,
+    val details: String, // TODO: rename "notes"?
+    @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
+) {
+    companion object {
+        // TODO: Should this be somewhere else or something else or something going in the other direction!?!?!?!?!?!
+        fun fromPriceEntity(priceEntity: PriceEntity): PriceHistory {
+            return PriceHistory(
+                priceId = priceEntity.id,
+                dataSetId = priceEntity.dataSetId,
+                itemId = priceEntity.itemId,
+                sourceId = priceEntity.sourceId,
+                price = priceEntity.price,
+                measure = priceEntity.measure,
+                originalUnit = priceEntity.originalUnit,
+                confirmed = priceEntity.confirmed,
+                details = priceEntity.details,
+                modifiedAt = priceEntity.modifiedAt,
+            )
+        }
+    }
+}
 
 // TODO: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
 // that effectively tells us the quantity type implicitly and we don't need to join to item to get
@@ -1432,6 +1522,7 @@ data class Price(
     val measure: MeasuredValue,
     val confirmed: Instant,
     val details: String, // Additional price details TODO: rename "notes"?
+    val modifiedAt: Instant,
     // itemDefaultUnit is a copy of the defaultUnit from the Item when we originally read the
     // PriceWithItemEntity in from the database. It is intended to allow a best effort (protecting
     // against buggy code, not malicious code) validation that when we write back to the database,
@@ -1459,7 +1550,8 @@ data class Price(
             measure = measure.asValue(baseUnitForQuantityType(itemDefaultUnit.quantityType)),
             originalUnit = measure.unit,
             confirmed = confirmed,
-            details = details
+            details = details,
+            modifiedAt = modifiedAt,
         )
     }
 
@@ -1515,6 +1607,7 @@ fun PriceWithItemEntity.toDomain(): Price {
         ).to(priceEntity.originalUnit),
         confirmed = priceEntity.confirmed,
         details = priceEntity.details,
+        modifiedAt = priceEntity.modifiedAt,
         itemDefaultUnit = itemDefaultUnit,
     )
 }
@@ -1600,6 +1693,13 @@ interface PriceDao {
 
     @Query("SELECT COUNT(*) FROM price WHERE source_id = :sourceId")
     fun countPricesForSource(sourceId: Long): Flow<Long>
+}
+
+@Dao
+interface PriceHistoryDao {
+    // TODO: Because the history is not modified, we have insert() instead of upset(). OK?
+    @Insert
+    suspend fun insert(priceHistory: PriceHistory): Long
 }
 
 // TODO: ChatGPT semi-magic
@@ -3053,6 +3153,7 @@ data class EditablePrice(
         return if (priceDouble == null || measureValueDouble == null) {
             null
         } else {
+            val now = Instant.now()
             Price(
                 id = id,
                 dataSetId = dataSetId,
@@ -3060,8 +3161,9 @@ data class EditablePrice(
                 sourceId = sourceId,
                 price = priceDouble,
                 measure = MeasuredValue(measureValueDouble, measureUnit),
-                confirmed = if (toConfirm) Instant.now() else confirmed,
+                confirmed = if (toConfirm) now else confirmed,
                 details = details,
+                modifiedAt = now,
                 itemDefaultUnit = itemDefaultUnit,
             )
         }
@@ -6473,6 +6575,17 @@ class EditPriceViewModel(
     }
 
     suspend fun performSave() {
+        // TODO: Double check the handling of toConfirm here. My thinking is that if editablePrice
+        // has toConfirm set that constitutes a change, so by using the real value in editablePrice
+        // and forcing originalPrice to have toConfirm false that does what we want there, and will
+        // also pick up any other changes.
+        if (uiContent.editablePrice.value == uiContent.originalPrice.copy(toConfirm = false)) {
+            Log.d(
+                "MyApp",
+                "performSave() is a no-op; returning early to avoid bloating price history"
+            )
+            return
+        }
         val price = uiContent.editablePrice.value.toDomain(uiContent.frozenLocale)
         Log.d("MyApp", "saveEditablePrice price $price")
         if (price == null) {
