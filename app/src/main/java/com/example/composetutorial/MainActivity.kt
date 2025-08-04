@@ -673,6 +673,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
                 notes = ""
             )
         )
+    // TODO: Since you need three "recent" prices to see price judgements, we may need a fourth store which has at least some initial data.
         // Newco deliberately has no prices to start with.
     repository.updateOrInsertSource(
             Source(
