@@ -2455,7 +2455,7 @@ fun ItemSourceInfo(
     item: Item?,
     source: Source?,
     sourceList: List<Source>,
-    itemPriceList: List<Price>,
+    augmentedPrice: AugmentedPrice?,
     onEditPriceClick: () -> Unit,
 ) {
     // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut
@@ -2504,9 +2504,7 @@ fun ItemSourceInfo(
             Log.d("MyApp", "ISI source $item")
 
             if (true) {
-                val price = itemPriceList.singleOrNull { it.sourceId == source?.id }
-
-                if (price == null) {
+                if (augmentedPrice == null) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         // TODO: Should this be in the supportingText on the store dropdown? My gut
                         // feeling is not, as this is "card content" about the store+product
@@ -2526,6 +2524,7 @@ fun ItemSourceInfo(
                         }
                     }
                 } else {
+                    val price = augmentedPrice.basePrice
                     // TODO: This row can get a bit congested on small phones when the text in some
                     // of the LabeledItems gets a bit long. It does kind of work and some further
                     // tweaking (e.g. making sure we force some space between the three horizontal
@@ -3579,8 +3578,8 @@ fun HomeScreenScaffold(
                                 item = item,
                                 source = source,
                                 sourceList = sourceList,
-
-                                itemPriceList = priceList,
+                                augmentedPrice = priceAnalysis.augmentedPriceList.singleOrNull { it.basePrice.sourceId == source?.id },
+                                // TODO DELETE itemPriceList = priceList,
                                 onEditPriceClick = onEditPriceClick
                             )
 
