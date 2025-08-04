@@ -550,12 +550,14 @@ abstract class InventoryDatabase : RoomDatabase() {
                     .setQueryCallback({ sqlQuery, bindArgs ->
                         Log.d("MyApp", "SQL Query: $sqlQuery SQL Args: $bindArgs")
                     }, Executors.newSingleThreadExecutor())
+                    /* TODO DELETE
                     .addCallback(object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
                             CoroutineScope(Dispatchers.IO).launch { populateDemoData(context) }
                         }
                     })
+                    */
                     .build()
                     .also { Instance = it }
             }
@@ -580,18 +582,17 @@ This adds "free" debuggability by making it more obvious if an ID is misused or 
 
 */
 
-suspend fun populateDemoData(context: Context) {
-    val db = InventoryDatabase.getDatabase(context)
+suspend fun populateDemoData(repository: PriceTrackerRepository, context: Context) {
+    // TODO DELETE val db = InventoryDatabase.getDatabase(context)
     // TODO: I may want to add multiple demo data sets - if so, given them all names of the form "Demo (foo)", probably. I may at the very least want to do an imperial unit demo set, so new potential users don't assume the app is metric only. This might be overkill but it may not hurt. We could just use imperial with the metric-ish data set (i.e. just configure the display units to be the user's current regional ones by default when we set the database up), and that might well be reasonable - it would give "odd" pack sizes (e.g. nominally imperial demo data selling 2 litre cartons of milk which the shops call a 3.52 pint pack) but for demo purposes it is probably fine.
     // TODO: We should have some cases in the demo data set where there is no price for a store+product combination
-    db.withTransaction {
         // TODO: It's probably smart to default the demo data to the local currency, since that will look most natural to our new user, but do rethink this afterwards. (It's also just possible, remember, that they will start editing the demo dataset for their own use, rather than starting again with a fresh dataset.)
         // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
         // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current locale (and make sure any non-metric units in the data below are changed accordingly)
         // TODO: We should have some demo products which are (fake) "branded" products, so get the idea across that this is another way to do things if you are brand-sensitive on a particular item
         // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp - or perhaps better, have something I can turn on for debug builds which will do that, but don't pollute the user initial database with it
         // TODO: We should maybe - perhaps not worth worrying about - avoid using the demo data designed for 2dp currencies with e.g. JPY, if only by forcing the currency to be something else even if that's the system default, or perhaps applying a multiplier of 10^(2-currencydps) to all the prices just so they are "readable"
-        val dataSetId = db.dataSetDao().insert(
+        val dataSetId = repository.updateOrInsertDataSet(
             DataSet(
                 name = "Groceries (demo)",
                 currencyCode = "EUR", // TODO TEMP HACK Currency.getInstance(Locale.getDefault()).currencyCode,
@@ -601,7 +602,7 @@ suspend fun populateDemoData(context: Context) {
                 notes = "A sample collection of unrealistic grocery prices for imaginary stores. This is intended to give you something to play with when you first install the app.",
             )
         )
-        val dataSetId2 = db.dataSetDao().insert(
+        val dataSetId2 = repository.updateOrInsertDataSet(
             DataSet(
                 name = "Demo 2",
                 currencyCode = "AUD",
@@ -611,7 +612,7 @@ suspend fun populateDemoData(context: Context) {
                 notes = "",
             )
         ) // TODO TEMP HACK
-        db.dataSetDao().insert(
+    repository.updateOrInsertDataSet(
             DataSet(
                 name = "Demo 3",
                 currencyCode = "AUD",
@@ -621,7 +622,7 @@ suspend fun populateDemoData(context: Context) {
                 notes = "",
             )
         ) // TODO TEMP HACK
-        db.productDao().insert(
+        repository.updateOrInsertItem(
             Item(
                 dataSetId = dataSetId2,
                 name = "Demo 2 Item",
@@ -629,7 +630,7 @@ suspend fun populateDemoData(context: Context) {
                 notes = "",
             )
         )
-        val itemIdGroundCoffee = db.productDao().insert(
+        val itemIdGroundCoffee = repository.updateOrInsertItem(
             Item(
                 dataSetId = dataSetId,
                 name = "Coffee (ground)",
@@ -637,7 +638,7 @@ suspend fun populateDemoData(context: Context) {
                         notes = ""
             )
         )
-        val itemIdWholeMilk = db.productDao().insert(
+        val itemIdWholeMilk = repository.updateOrInsertItem(
             Item(
                 dataSetId = dataSetId,
                 name = "Milk (whole)",
@@ -645,7 +646,7 @@ suspend fun populateDemoData(context: Context) {
                 notes = "",
                 )
         )
-        val itemIdTeabags = db.productDao().insert(
+        val itemIdTeabags = repository.updateOrInsertItem(
             Item(
                 dataSetId = dataSetId,
                 name = "Teabags",
@@ -655,9 +656,7 @@ suspend fun populateDemoData(context: Context) {
                 )
         )
         // TODO: Do some web searches and confirm these are not real supermarket names
-        val sourceIdValueMart = db.sourceDao()
-            .insert(
-                Source(
+        val sourceIdValueMart = repository.updateOrInsertSource(Source(
                     dataSetId = dataSetId,
                     name = "ValueMart",
                     loyaltyDiscountType = LoyaltyDiscountType.NONE,
@@ -665,7 +664,7 @@ suspend fun populateDemoData(context: Context) {
                     notes = ""
                 )
             )
-        val sourceIdSuperiorStore = db.sourceDao().insert(
+        val sourceIdSuperiorStore = repository.updateOrInsertSource(
             Source(
                 dataSetId = dataSetId,
                 name = "SuperiorStore",
@@ -675,7 +674,7 @@ suspend fun populateDemoData(context: Context) {
             )
         )
         // Newco deliberately has no prices to start with.
-        db.sourceDao().insert(
+    repository.updateOrInsertSource(
             Source(
                 dataSetId = dataSetId,
                 name = "Newco",
@@ -685,32 +684,32 @@ suspend fun populateDemoData(context: Context) {
             )
         )
         val now = Instant.now()
-        db.priceDao().insert(
-            PriceEntity(
+        repository.updateOrInsertPrice(
+            Price(
                 dataSetId = dataSetId,
                 itemId = itemIdGroundCoffee,
                 sourceId = sourceIdValueMart,
                 price = 2.03,
-                measure = 500.0,
-                originalUnit = MeasureUnit.G,
+                measure = MeasuredValue(500.0, MeasureUnit.G),
                 confirmed = now.minus(2, ChronoUnit.MINUTES),
-                details = "Large pack own brand"
+                details = "Large pack own brand",
+                itemDefaultUnit = MeasureUnit.G,
             )
         )
-        db.priceDao().insert(
-            PriceEntity(
+    repository.updateOrInsertPrice(
+            Price(
                 dataSetId = dataSetId,
                 itemId = itemIdGroundCoffee,
                 sourceId = sourceIdSuperiorStore,
                 price = 1.50,
-                measure = 227.0,
-                originalUnit = MeasureUnit.G,
+                measure = MeasuredValue(227.0,MeasureUnit.G),
                 confirmed = now.minus(4, ChronoUnit.DAYS),
-                details = "Own brand"
+                details = "Own brand",
+                        itemDefaultUnit = MeasureUnit.G,
             )
         )
-        db.priceDao().insert(
-            PriceEntity(
+    repository.updateOrInsertPrice(
+            Price(
                 dataSetId = dataSetId,
                 itemId = itemIdWholeMilk,
                 sourceId = sourceIdValueMart,
@@ -718,46 +717,47 @@ suspend fun populateDemoData(context: Context) {
                 measure = MeasuredValue(
                     4.0,
                     MeasureUnit.IMPERIAL_PINT
-                ).asValue(MeasureUnit.ML),
-                originalUnit = MeasureUnit.IMPERIAL_PINT,
+                ),
                 confirmed = now,
-                details = ""
+                details = "",
+                itemDefaultUnit = MeasureUnit.L,
             )
         )
-        db.priceDao().insert(
-            PriceEntity(
+    repository.updateOrInsertPrice(
+            Price(
                 dataSetId = dataSetId,
                 itemId = itemIdWholeMilk,
                 sourceId = sourceIdSuperiorStore,
                 price = 2.86,
-                measure = 2000.0,
-                originalUnit = MeasureUnit.L,
+                measure = MeasuredValue(2000.0, MeasureUnit.ML),
                 confirmed = now.minus(63, ChronoUnit.DAYS),
-                details = ""
-            )
+                details = "",
+                        itemDefaultUnit = MeasureUnit.L,
+
+                )
         )
-        db.priceDao().insert(
-            PriceEntity(
+    repository.updateOrInsertPrice(
+            Price(
                 dataSetId = dataSetId,
                 itemId = itemIdTeabags,
                 sourceId = sourceIdValueMart,
                 price = 0.76,
-                measure = 40.0,
-                originalUnit = MeasureUnit.EACH,
+                measure = MeasuredValue(40.0, MeasureUnit.EACH),
                 confirmed = now.minus(7, ChronoUnit.DAYS),
-                details = "Soft pack own brand"
+                details = "Soft pack own brand",
+                itemDefaultUnit = MeasureUnit.EACH,
             )
         )
-        db.priceDao().insert(
-            PriceEntity(
+    repository.updateOrInsertPrice(
+            Price(
                 dataSetId = dataSetId,
                 itemId = itemIdTeabags,
                 sourceId = sourceIdSuperiorStore,
                 price = 0.60,
-                measure = 20.0,
-                originalUnit = MeasureUnit.EACH,
+                measure = MeasuredValue(20.0, MeasureUnit.EACH),
                 confirmed = now.minus(4, ChronoUnit.HOURS),
-                details = ""
+                details = "",
+                        itemDefaultUnit = MeasureUnit.EACH,
             )
         )
         /*
@@ -775,7 +775,6 @@ suspend fun populateDemoData(context: Context) {
             prefs[SELECTED_ITEM_ID_KEY] = itemIdGroundCoffee
         }
 
-    }
 }
 
 // TODO: This interface is here to help with mocking the database during testing. I may want to do
@@ -790,10 +789,10 @@ interface PriceTrackerRepository {
     fun countPricesForItem(itemId: Long): Flow<Long>
     fun countPricesForSource(sourceId: Long): Flow<Long>
 
-    suspend fun updateOrInsertDataSet(dataSet: DataSet)
-    suspend fun updateOrInsertItem(item: Item)
-    suspend fun updateOrInsertSource(source: Source)
-    suspend fun updateOrInsertPrice(price: Price)
+    suspend fun updateOrInsertDataSet(dataSet: DataSet): Long
+    suspend fun updateOrInsertItem(item: Item): Long
+    suspend fun updateOrInsertSource(source: Source): Long
+    suspend fun updateOrInsertPrice(price: Price): Long
 
     // TODO: Should these really return Long just to be super paranoid/vaguely consistent with use of Long for IDs (if IDs "don't fit" in 32 bits, neither do deletion counts)
     suspend fun deleteDataSetById(dataSetId: Long): Int
@@ -824,18 +823,15 @@ class PriceTrackerRepositoryImpl(
     override fun countPricesForSource(sourceId: Long): Flow<Long> =
         priceDao.countPricesForSource(sourceId)
 
-    override suspend fun updateOrInsertDataSet(dataSet: DataSet) {
+    override suspend fun updateOrInsertDataSet(dataSet: DataSet): Long =
         dataSetDao.upsert(dataSet)
-    }
 
-    override suspend fun updateOrInsertItem(item: Item) {
+    override suspend fun updateOrInsertItem(item: Item): Long =
         itemDao.upsert(item)
-    }
 
-    override suspend fun updateOrInsertSource(source: Source) {
+    override suspend fun updateOrInsertSource(source: Source): Long =
         // throw IOException("Simulated database failure") // TODO TEMP
         sourceDao.upsert(source)
-    }
 
     override suspend fun deleteDataSetById(dataSetId: Long): Int = dataSetDao.deleteById(dataSetId)
 
@@ -851,9 +847,8 @@ class PriceTrackerRepositoryImpl(
     // down to hardware failures or bugs in my code. The viewmodel-ish layer code is responsible
     // for turning an EditablePrice (a special variant domain level thing with nullness etc) into
     // a Price and *that* is where final validation occurs.
-    override suspend fun updateOrInsertPrice(price: Price) {
+    override suspend fun updateOrInsertPrice(price: Price): Long =
         priceDao.upsert(price.toEntity())
-    }
 }
 
 // AppViewModelProvider.Factory allows us to control the arguments passed to our ViewModel
@@ -936,6 +931,23 @@ class MyApplication : Application() {
     }
     */
 
+    override fun onCreate() {
+        super.onCreate()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            // TODO: ChatGPT code - may want to tweak keys or style of sharedPrefs stuff to match my other uses
+            val sharedPrefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
+            if (!sharedPrefs.getBoolean("demo_data_inserted", false)) {
+                val db = InventoryDatabase.getDatabase(this@MyApplication)
+
+                db.withTransaction {
+                    populateDemoData(priceTrackerRepository, this@MyApplication)
+                }
+
+                sharedPrefs.edit().putBoolean("demo_data_inserted", true).apply()
+            }
+        }
+    }
 }
 
 class Converters {
@@ -1512,7 +1524,7 @@ interface DataSetDao {
     suspend fun insert(dataSet: DataSet): Long
 
     @Upsert
-    suspend fun upsert(dataSet: DataSet)
+    suspend fun upsert(dataSet: DataSet): Long
 
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't
     // need this order by here
@@ -1529,7 +1541,7 @@ interface ItemDao {
     suspend fun insert(item: Item): Long
 
     @Upsert
-    suspend fun upsert(item: Item)
+    suspend fun upsert(item: Item): Long
 
     /* TODO DELETE?
     @Update
@@ -1553,7 +1565,7 @@ interface SourceDao {
     suspend fun insert(dataSet: Source): Long
 
     @Upsert
-    suspend fun upsert(source: Source)
+    suspend fun upsert(source: Source): Long
 
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
     @Query("SELECT * FROM source WHERE data_set_id = :dataSetId ORDER BY name ASC")
@@ -1565,11 +1577,13 @@ interface SourceDao {
 
 @Dao
 interface PriceDao {
+    /* TODO DELETE?
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(price: PriceEntity): Long
+    */
 
     @Upsert
-    suspend fun upsert(price: PriceEntity)
+    suspend fun upsert(price: PriceEntity): Long
 
     @Query(
         "SELECT price.*, item.default_unit FROM price JOIN item ON price.item_id = item.id " +
