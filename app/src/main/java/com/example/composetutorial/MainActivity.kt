@@ -2644,9 +2644,26 @@ fun ItemSourceInfo(
                     // TODO: This judgement needs to come from the price analysis data, of course
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Row {
-                            GoodPriceIcon()
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Good price")
+                            when (augmentedPrice.priceJudgement) {
+                                PriceJudgement.NONE -> {}
+                                PriceJudgement.GOOD -> {
+                                    GoodPriceIcon()
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Good price")
+                                }
+
+                                PriceJudgement.OK -> {
+                                    OkPriceIcon()
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("OK price")
+                                }
+
+                                PriceJudgement.BAD -> {
+                                    BadPriceIcon()
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Bad price")
+                                }
+                            }
                         }
 
                         Row(
