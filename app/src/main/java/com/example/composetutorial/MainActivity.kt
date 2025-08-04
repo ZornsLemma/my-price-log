@@ -2716,6 +2716,9 @@ fun <T> NewDataTable(
                 }
             }
         }
+        HorizontalDivider(
+            thickness = 1.dp, color = MaterialTheme.colorScheme.outline /* Variant */
+        )
 
         // TODO: Far from sure I like the way I'm highlighting highlightRow, but it's not too bad. I was worried using any kind of font weight change would break the decimal point alignment but in practice it doesn't appear to be a big problem.
 
@@ -2742,17 +2745,28 @@ fun <T> NewDataTable(
                 LocalTextStyle provides textStyle,
                 LocalContentColor provides textColor
             ) {
-                Row(modifier = Modifier.background(rowBackground)
-                    .height(56.dp) // TODO EXPERIMENTAL
-                    ,   verticalAlignment = Alignment.CenterVertically) {
-                    columns.forEachIndexed { colIndex, cell ->
-                        Box(
-                            Modifier
-                                .weight(columnWeights.getOrElse(colIndex) { 1f }) // TODO: get rid of OrElse?
-                                .padding(8.dp)
-                                .then(alignmentModifier(columnAlignments[colIndex]))
-                        ) {
-                            cell(item)
+                Column { // TODO: This is only needed if we have a horizontal divider
+                    /* TODO? Torn as to better appearance with or without
+                    if (rowIndex > 0) {
+                        HorizontalDivider(
+                            thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant
+                        )
+                    }
+                    */
+                    Row(
+                        modifier = Modifier.background(rowBackground)
+                            .height(56.dp) // TODO EXPERIMENTAL
+                        , verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        columns.forEachIndexed { colIndex, cell ->
+                            Box(
+                                Modifier
+                                    .weight(columnWeights.getOrElse(colIndex) { 1f }) // TODO: get rid of OrElse?
+                                    .padding(8.dp)
+                                    .then(alignmentModifier(columnAlignments[colIndex]))
+                            ) {
+                                cell(item)
+                            }
                         }
                     }
                 }
@@ -3746,15 +3760,17 @@ fun PriceComparisonCard(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            // TODO: This list may not need dividers between items if it is now simpler and doesn't show "Notes", which could have pushed us into multi-line items fairly easily, whereas now only very long store names or very big fonts on very small screens are likely to do it.
             val highlightRow =
                 data.indexOfFirst { it[0] == source?.name }.takeIf { it != -1 }
+            /* TODO DELETE
+            // TODO: This list may not need dividers between items if it is now simpler and doesn't show "Notes", which could have pushed us into multi-line items fairly easily, whereas now only very long store names or very big fonts on very small screens are likely to do it.
             DataTable(
                 header = header, rows = data, highlightRow = highlightRow,
                 // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
                 columnWeights = listOf(1.7f, 1f, 1f)
             )
             Spacer(modifier = Modifier.height(8.dp)) // TODO TEMP (WE WON'T HAVE TWO TABLES SOON!)
+            */
 
             // TODO: We may need to add things like dataSet and locale to remember key
             val columns = remember(dataSet, locale) {
