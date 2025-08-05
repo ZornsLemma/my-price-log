@@ -2810,6 +2810,7 @@ fun ItemSourceInfo(
 
                             Spacer(modifier = Modifier.width(8.dp))
 
+                            // TODO: Mixed feelings, but should we grey out the confirm button if the confirmed label shows "now"? (obviously not greying out "undo", but if for whatever reason we are not showing "undo" and it is "now")
                             // TODO: This width measurement works fine and looks OK, but with AnimatedContent is also looks kind of OK to not fix the width (we probably still want AnimatedContent even if the width is fix), so I'll leave this in but not use it for now and I can come back to it later and see which I prefer.
                             val confirmButtonWidth = rememberLabelWidth("Confirm", "Undo")
                             // TODO: We should probably animate the "Confirmed" text label changing *if it happens due to confirm/undo click* (not because timer ticks over to e.g. next minute)
