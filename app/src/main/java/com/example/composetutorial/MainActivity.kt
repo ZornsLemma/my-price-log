@@ -41,6 +41,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateContentSize
@@ -2810,8 +2811,13 @@ fun ItemSourceInfo(
                             // won't have changed on subsequent visits) - so it gets the position on
                             // the right.
                             // TODONOW: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
-                            FilledTonalButton(onClick = { allowUndoConfirm = !allowUndoConfirm /* TODO IS VAGUELY RIGHT (but incomplete) BUT BASICALLY A TEMP HACK */ }, shape = MaterialTheme.shapes.small) {
-                                Text(if (allowUndoConfirm) "Undo confirm" else "Confirm") // TODO: "Undo confirm" to probably poor wording/too long to be a good "toggle", and we need animation etc etc
+                            Crossfade(targetState = allowUndoConfirm) { showUndo ->
+                                FilledTonalButton(onClick = {
+                                    allowUndoConfirm =
+                                        !allowUndoConfirm /* TODO IS VAGUELY RIGHT (but incomplete) BUT BASICALLY A TEMP HACK */
+                                }, shape = MaterialTheme.shapes.small) {
+                                    Text(if (showUndo) "Undo" else "Confirm") // TODO: "Undo confirm" to probably poor wording/too long to be a good "toggle", and we need animation etc etc
+                                }
                             }
                         }
                     }
