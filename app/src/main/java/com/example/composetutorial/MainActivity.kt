@@ -128,6 +128,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisallowComposableCalls
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
@@ -209,7 +210,10 @@ import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.log10
 import androidx.datastore.preferences.core.edit
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
@@ -2573,6 +2577,14 @@ fun ItemSourceInfo(
     augmentedPrice: AugmentedPrice?,
     onEditPriceClick: () -> Unit,
 ) {
+    // TODO: Maybe this should live on the viewmodel
+    var allowUndoConfirm by rememberSaveable { mutableStateOf(false) } // TODO: Probably poor name for variableg
+    OnAppLifecycleEvent { event ->
+        if (event == Lifecycle.Event.ON_STOP) { // app has left the foreground
+            allowUndoConfirm = false
+        }
+    }
+
     // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut
     // feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective,
     // it's not as if the offer duration is usually clearly stated, free text note probably can be
@@ -2798,8 +2810,8 @@ fun ItemSourceInfo(
                             // won't have changed on subsequent visits) - so it gets the position on
                             // the right.
                             // TODONOW: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
-                            FilledTonalButton(onClick = {}, shape = MaterialTheme.shapes.small) {
-                                Text("Confirm")
+                            FilledTonalButton(onClick = { allowUndoConfirm = !allowUndoConfirm /* TODO IS VAGUELY RIGHT (but incomplete) BUT BASICALLY A TEMP HACK */ }, shape = MaterialTheme.shapes.small) {
+                                Text(if (allowUndoConfirm) "Undo confirm" else "Confirm") // TODO: "Undo confirm" to probably poor wording/too long to be a good "toggle", and we need animation etc etc
                             }
                         }
                     }
@@ -8021,6 +8033,26 @@ fun analysePrices(dataSet: DataSet?, priceList: List<Price>, sourceList: List<So
 
     }
     return PriceAnalysis(augmentedPriceList, priceClassificationThresholds)
+}
+
+// TODO: ChatGPT code, not tried to understand yet - it may be there's an easier way, or this may be buggy for all I know, or maybe I should just use this approach and not wrap it in this composable
+@Composable
+fun OnAppLifecycleEvent(
+    onEvent: (Lifecycle.Event) -> Unit
+) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            onEvent(event)
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 }
 
 /* TODO TEMP TEST CODE FOR MEASUREDVALUE
