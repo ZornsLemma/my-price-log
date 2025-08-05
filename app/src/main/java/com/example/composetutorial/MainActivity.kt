@@ -8272,3 +8272,12 @@ Log.d("MyApp", baz.toString())
 
 // TODO: In credits/licence, remember that I have pulled in some of the Material Design icons via vector asset studio. Think (check) these are Apache 2 licence. ChatGPT says (but don't take this on trust) I just need to say something like "This app includes vector icons from the Material Design icon set by Google.
 //Used under the Apache License 2.0." That feels plausible. I guess I probably also want to indicate use of Compose etc libs but not at all sure.
+
+// TODO: It might be nice to offer an "are you sure? this is x% more/less than before" type confirmation dialog when saving a price change where the (unit price? pack price? pack size?) has changed by more than a threshold, to help catch typos early.
+
+// TODO: Some thoughts on confirm/undo confirm/history after talking with ChatGPT:
+// - allow user to pick a historical entry and it appears in the "edit price" dialog (maybe with the confirm option missing - we would *always* preserve the old confirmed_at), then if they save from there that saves as the newest version of the record - this gives a "long range undo"
+// - don't allow users to edit history except maybe (what ChatGPT actually said) to edit an "oops" field/flag where they can type "price is a typo" if they want - I could possibly tweak this to just use the notes field, but maybe a separate un-editable historical_note/oops text field is nice - albeit this is extra UI
+// - I personally think it might be OK to allow users to delete historical entries if they *really* want, but not sure this is necessary or ideal
+// - the "confirm" button turns into "undo confirm" only briefly, for say 30-60s and it goes away if they change product or store or the app is closed and re-opened and has been reincarnated or whatever - it's a convenient, we don't *want* it to appear for very long as it invites accidental *undo* when it's too late to fix (albeit everything is in the history), and there is the history based "clone this point as new state, with chance to edit first" undo to fall back on whatever
+// - maybe have a restored_at nullable instant on the price table, which is *not* preserved as we update the record (it gets set to null) but is used (purely internally, at least for now) to track when a new price was created based on restoring from a (perhaps edited) historical price
