@@ -135,6 +135,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -2106,27 +2107,30 @@ fun MainScreen(
 
         // Item selector
         val clickableModifier = if (saveStatus.isNotBusy()) { Modifier.clickable  { Log.d("MyApp", "SPS"); showItemSheet = true } } else { Modifier }
-        TextField(
-            value = item?.name ?: "",
-            onValueChange = { /* No-op, read-only */ },
-            label = { Text("Product") },
-            enabled = false, // TODO: this is necessary to make "clickable" work, bit hacky
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(clickableModifier),
-            readOnly = true,
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Search products",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            },
-            // TODO: There might be an argument that this should "sometimes" get the focused
-            // colours, but since clicking on it immediately opens a modal bottom sheet, I think
-            // it's probably reasonable to hard-code false here.
-            colors = if (saveStatus.isNotBusy()) myTextFieldColors(false) else TextFieldDefaults.colors()
-        )
+        // TODO: For reasons I don't quite understand, using key() here avoids a frame or two of delay in applying the colors = when saveStatus changes - I think the basic idea (per ChatGPT) is that this forces the whole thing to be recomposed, but it is a bit voodoo
+        key(saveStatus) {
+            TextField(
+                value = item?.name ?: "",
+                onValueChange = { /* No-op, read-only */ },
+                label = { Text("Product") },
+                enabled = false, // TODO: this is necessary to make "clickable" work, bit hacky
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(clickableModifier),
+                readOnly = true,
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search products",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                // TODO: There might be an argument that this should "sometimes" get the focused
+                // colours, but since clicking on it immediately opens a modal bottom sheet, I think
+                // it's probably reasonable to hard-code false here.
+                colors = if (saveStatus.isNotBusy()) myTextFieldColors(false) else TextFieldDefaults.colors()
+            )
+        }
 
         Spacer(
             modifier = Modifier
@@ -2148,26 +2152,29 @@ fun MainScreen(
         // without altering the API and I think the idea is sound but I started to run into
         // incomprehensible "out"/covariance stuff and it just felt too much just to fix this
         // where -1L is an easy hack.
-        MyExposedDropdownMenuBox(
-            modifier = Modifier
-                // .padding(bottom = 8.dp)
-                .fillMaxWidth(),
-            // Note that if source is null, we pass that null through to selectedId so the
-            // dropdown starts off with nothing selected and the "Store" label expands to form a
-            // large "prompt". We could turn null into -1L and have "None" shown, but it's
-            // probably nicer this way.
-            selectedId = source?.id, /* ?: -1L */
-            onValueChange = { onSelectedSourceIdChange(if (it == -1L) null else it) },
-            enabled = saveStatus.isNotBusy(),
-            label = { Text("Store") },
-            supportingText = null, /* TODO? if (haveItemAndSource) null else {
+        key(saveStatus) { // TODO: as above
+            MyExposedDropdownMenuBox(
+                modifier = Modifier
+                    // .padding(bottom = 8.dp)
+                    .fillMaxWidth(),
+                // Note that if source is null, we pass that null through to selectedId so the
+                // dropdown starts off with nothing selected and the "Store" label expands to form a
+                // large "prompt". We could turn null into -1L and have "None" shown, but it's
+                // probably nicer this way.
+                selectedId = source?.id, /* ?: -1L */
+                onValueChange = { onSelectedSourceIdChange(if (it == -1L) null else it) },
+                enabled = saveStatus.isNotBusy(),
+                label = { Text("Store") },
+                supportingText = null,
+                /* TODO? if (haveItemAndSource) null else {
                 { Text("Select a product and store to view or change the price there") } // TODO: poor wording? *normally* product will not be null, so maybe we should have variant wording, or maybe the message should just not mention product
             },
                             */
-            items = items,
-            getId = { it.first },
-            getLabel = { it.second },
-        )
+                items = items,
+                getId = { it.first },
+                getLabel = { it.second },
+            )
+        }
 
         // Item Modal Bottom Sheet
         // TODO: This is mostly untouched AI code and it probably needs a review. I am also wondering
