@@ -1971,6 +1971,35 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
             }
         }
     }
+
+    var previousPrice: MutableState<Price?> = mutableStateOf(null)
+
+    // TODO: I hate the need to pass some of these arguments and I am rushing, think through later
+    fun confirmPrice(dataSet: DataSet, price: Price, locale: Locale) {
+        // TODO: Problems with errors and previousPrice getting out of step etc?
+            // TODO: This round-tripping is insane but currently the only way to "confirm" a price is via EditablePrice
+            val editablePrice = EditablePrice(price, locale, getCurrencyFormat(dataSet, locale))
+            val currentPrice = editablePrice.toDomain(locale)
+            val newPrice = editablePrice.copy(toConfirm = true).toDomain(locale)
+        updatePrice(newPrice!!, currentPrice)
+    }
+
+    fun undoConfirmPrice() {
+        // TODO: Problems with errors and previousPrice getting out of step etc?
+        // TODO: This needs to update modified_at even though it otherwise persists all previous data
+        updatePrice(previousPrice.value!!, null)
+    }
+
+    fun updatePrice(newPrice: Price, newPreviousPrice: Price?) {
+        // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
+        viewModelScope.launch {
+            // TODO: EXCEPTION HANDLING
+            priceTrackerRepository.updateOrInsertPrice(newPrice)
+            previousPrice.value = newPreviousPrice
+            // TODO: NEED TO COMMUNICATE TO OUTER SCOPE THAT THIS HAS DONE
+        }
+
+    }
 }
 
 /* TODO?
@@ -2575,6 +2604,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 // shown) "raw" unit price here and the adjusted price in the by-source list below ItemSourceInfo
 @Composable
 fun ItemSourceInfo(
+    vm: HomeViewModel,
     dataSet: DataSet,
     item: Item?,
     source: Source?,
@@ -2583,10 +2613,9 @@ fun ItemSourceInfo(
     onEditPriceClick: () -> Unit,
 ) {
     // TODO: Maybe this should live on the viewmodel
-    var allowUndoConfirm by rememberSaveable { mutableStateOf(false) } // TODO: Probably poor name for variableg
     OnAppLifecycleEvent { event ->
         if (event == Lifecycle.Event.ON_STOP) { // app has left the foreground
-            allowUndoConfirm = false
+            vm.previousPrice.value = null // TODO: arguably we should do all this via a "call up to top level", but not sure it's necessary - perhaps more to the point we should be calling a function on viewmodel to do this
         }
     }
 
@@ -2820,13 +2849,19 @@ fun ItemSourceInfo(
                             // won't have changed on subsequent visits) - so it gets the position on
                             // the right.
                             // TODONOW: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
+                            // TODO: This button needs to be disabled during save and ideally have a spinner on it a la full screen dialog "Save"
+                            val locale = LocalConfiguration.current.locales[0]
+                            val showConfirmButton = vm.previousPrice.value == null
                                 FilledTonalButton(/* modifier = Modifier.width(confirmButtonWidth) ,*/ onClick = {
-                                    allowUndoConfirm =
-                                        !allowUndoConfirm /* TODO IS VAGUELY RIGHT (but incomplete) BUT BASICALLY A TEMP HACK */
+                                    if (showConfirmButton) {
+                                        vm.confirmPrice(dataSet, augmentedPrice.basePrice, locale)
+                                    } else {
+                                        vm.undoConfirmPrice()
+                                    }
                                 }, shape = MaterialTheme.shapes.small /* TODO: is this right shape? what's the default? */) {
-                                    AnimatedContent(targetState = allowUndoConfirm) { showUndo ->
+                                    AnimatedContent(targetState = showConfirmButton) { showConfirm ->
 
-                                    Text(if (showUndo) "Undo" else "Confirm") // TODO: "Undo confirm" to probably poor wording/too long to be a good "toggle", and we need animation etc etc
+                                    Text(if (showConfirm) "Confirm" else "Undo") // TODO: "Undo confirm" to probably poor wording/too long to be a good "toggle", and we need animation etc etc
                                 }
                             }
                         }
@@ -3455,6 +3490,7 @@ fun HomeScreen(
     // we should.
     HomeScreenScaffold(
         navController,
+        vm,
         loading,
         uiContent.dataSet,
         uiContent.dataSetList,
@@ -3553,6 +3589,7 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
 // TODO: Function might be misnamed if we introduce navigation drawer, but I probably want to refactor a lot of the composables anyway in order to get away from gigantic massively independent functions.
 fun HomeScreenScaffold(
     navController: NavHostController,
+    vm: HomeViewModel,
     loading: Boolean,
     dataSet: DataSet?,
     dataSetList: List<DataSet>,
@@ -3760,6 +3797,7 @@ fun HomeScreenScaffold(
                             Log.d("MyApp", "HSS dataSet $dataSet")
                             Log.d("MyApp", "HSS item $item")
                             ItemSourceInfo(
+                                vm = vm,
                                 dataSet = dataSet,
                                 item = item,
                                 source = source,
