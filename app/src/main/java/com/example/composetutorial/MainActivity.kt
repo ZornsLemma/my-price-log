@@ -1972,6 +1972,7 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
         }
     }
 
+    // TODO: We need to set this to null if we navigate away from the home screen or if we change the dataset/product/source selectors!
     var previousPrice: MutableState<Price?> = mutableStateOf(null)
 
     // TODO: I hate the need to pass some of these arguments and I am rushing, think through later
@@ -1987,15 +1988,24 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
     fun undoConfirmPrice() {
         // TODO: Problems with errors and previousPrice getting out of step etc?
         // TODO: This needs to update modified_at even though it otherwise persists all previous data
+        // TODO: Should we avoid updating history when we undo this? And delete the "confirmed" history item? or is it cleaner and more "honest" to just let the history entries accumulate?
         updatePrice(previousPrice.value!!, null)
     }
 
+    val saveStatus = SyncedStateEvent(SaveStatus.Idle)
     fun updatePrice(newPrice: Price, newPreviousPrice: Price?) {
         // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
         viewModelScope.launch {
             // TODO: EXCEPTION HANDLING
-            priceTrackerRepository.updateOrInsertPrice(newPrice)
-            previousPrice.value = newPreviousPrice
+            saveStatus.update(SaveStatus.Busy)
+            try {
+                delay(5000) // TODO TEMP HACK
+                priceTrackerRepository.updateOrInsertPrice(newPrice)
+                previousPrice.value = newPreviousPrice
+                saveStatus.update(SaveStatus.Success)
+            } catch (e: Exception) {
+                saveStatus.update(SaveStatus.Error)
+            }
             // TODO: NEED TO COMMUNICATE TO OUTER SCOPE THAT THIS HAS DONE
         }
 
@@ -2079,6 +2089,7 @@ const val maxNotesLength = 200 // TODO TEMP FOR TESTING, SHOULD BE 1024
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
+    saveStatus: SaveStatus,
     source: Source?, sourceList: List<Source>, item: Item?, itemList: List<Item>, onSelectedItemIdChange: (Long) -> Unit,
     onSelectedSourceIdChange: (Long?) -> Unit,
 ) {
@@ -2094,6 +2105,7 @@ fun MainScreen(
         // we need support from our parent (or this needs moving up into the parent) to do that.
 
         // Item selector
+        val clickableModifier = if (saveStatus.isNotBusy()) { Modifier.clickable  { Log.d("MyApp", "SPS"); showItemSheet = true } } else { Modifier }
         TextField(
             value = item?.name ?: "",
             onValueChange = { /* No-op, read-only */ },
@@ -2101,7 +2113,7 @@ fun MainScreen(
             enabled = false, // TODO: this is necessary to make "clickable" work, bit hacky
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { Log.d("MyApp", "SPS"); showItemSheet = true },
+                .then(clickableModifier),
             readOnly = true,
             trailingIcon = {
                 Icon(
@@ -2113,7 +2125,7 @@ fun MainScreen(
             // TODO: There might be an argument that this should "sometimes" get the focused
             // colours, but since clicking on it immediately opens a modal bottom sheet, I think
             // it's probably reasonable to hard-code false here.
-            colors = myTextFieldColors(false)
+            colors = if (saveStatus.isNotBusy()) myTextFieldColors(false) else TextFieldDefaults.colors()
         )
 
         Spacer(
@@ -2146,6 +2158,7 @@ fun MainScreen(
             // probably nicer this way.
             selectedId = source?.id, /* ?: -1L */
             onValueChange = { onSelectedSourceIdChange(if (it == -1L) null else it) },
+            enabled = saveStatus.isNotBusy(),
             label = { Text("Store") },
             supportingText = null, /* TODO? if (haveItemAndSource) null else {
                 { Text("Select a product and store to view or change the price there") } // TODO: poor wording? *normally* product will not be null, so maybe we should have variant wording, or maybe the message should just not mention product
@@ -2486,12 +2499,13 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     // is "expected", and users probably also expect the dropdown to close on rotation.
     var expanded by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.clickable {
-        if (enabled) {
+    Box(modifier = modifier.then(
+        if (enabled) Modifier.clickable {
             expanded = true
             @Suppress("KotlinConstantConditions") onExpand(expanded)
         }
-    }) {
+        else Modifier)
+    ) {
         content()
 
         var previousItem: T? = null
@@ -2541,6 +2555,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     getId: (T) -> ID,
     getLabel: (T) -> String,
     getDividerBetween: ((T, T) -> Boolean)? = null,
+    enabled: Boolean = true,
 ) {
     // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
     // changes the system font size. (Even if we didn't do this, we'd still want to use a fixed
@@ -2553,6 +2568,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
         modifier = modifier,
         selectedId = selectedId,
         onValueChange = onValueChange,
+        enabled = enabled,
         items = items,
         getId = getId,
         getLabel = getLabel,
@@ -2578,6 +2594,10 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
                         // the text, despite working very hard to get it to be lined up with just
                         // the "text content" before - probably arguments both ways, but think about
                         // it
+                        // TODO: This text doesn't change colour when enabled is false, TBH this
+                        // probably looks OK and it might actually look ugly if it did in my specific
+                        // UI, but maybe it ought to. And equally maybe the LabeledItem itself should
+                        // change colour when disabled, currently we
                         Text(text)
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
@@ -2605,6 +2625,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 @Composable
 fun ItemSourceInfo(
     vm: HomeViewModel,
+    saveStatus: SaveStatus,
     dataSet: DataSet,
     item: Item?,
     source: Source?,
@@ -2769,6 +2790,7 @@ fun ItemSourceInfo(
                         )
                         LabeledItemWithDropdown(modifier = Modifier.weight(1f), label = "Unit price",
                             text = unitPriceString,
+                            enabled = saveStatus.isNotBusy(),
                             //  TODO: Mixed feelings about the "/" prefix in this menu.
                             items = relevantUnitList,
                             getId = { it },
@@ -3607,6 +3629,9 @@ fun HomeScreenScaffold(
     onEditItemsClick: () -> Unit,
     onEditSourcesClick: () -> Unit,
 ) {
+    // TODO: We need to disable all forms of interaction (navdrawer, dropdowns, menu, etc) while this is "busy"
+    val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
+
     // TODO: Navigation drawer is being deprecated in favour of expanded navigation rail in Material
     // 3 Expressive from May 2025. However, it appears to be a rotten fit for my requirements here -
     // it wants (in its non-expanded form) to be permanently on screen, and I don't have the space,
@@ -3694,7 +3719,7 @@ fun HomeScreenScaffold(
                 TopAppBar(
                     title = { Text(dataSet?.name ?: "") }, // TODO: better null handling?
                     navigationIcon = {
-                        IconButton(onClick = { coroutineScope.launch { drawerState.open() } }) {
+                        IconButton(enabled = saveStatus.isNotBusy(), onClick = { coroutineScope.launch { drawerState.open() } }) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
                                 contentDescription = "Open drawer"
@@ -3702,7 +3727,7 @@ fun HomeScreenScaffold(
                         }
                     },
                     actions = {
-                        IconButton(onClick = { menuExpanded = true }) {
+                        IconButton(enabled = saveStatus.isNotBusy(), onClick = { menuExpanded = true }) {
                             Icon(
                                 Icons.Default.MoreVert,
                                 contentDescription = "Menu"
@@ -3761,6 +3786,7 @@ fun HomeScreenScaffold(
             ) {
 
                 MainScreen(
+                    saveStatus = saveStatus,
                     source = source,
                     sourceList = sourceList,
                     item = item,
@@ -3798,6 +3824,7 @@ fun HomeScreenScaffold(
                             Log.d("MyApp", "HSS item $item")
                             ItemSourceInfo(
                                 vm = vm,
+                                saveStatus = saveStatus,
                                 dataSet = dataSet,
                                 item = item,
                                 source = source,
@@ -3851,7 +3878,39 @@ fun HomeScreenScaffold(
     // is implemented in the logic which sets the loading flag, so as soon as loading is true, we
     // want the scrim.
     // TODO: Is this in right place in hierarchy wrt navigation drawer?
-    ScrimWithSpinner(visible = loading)
+    LaunchedEffect(Unit) {
+        // TODO: I have thrown in a buffer() here voodoo-style based on an actual observed problem
+        // in other cases. Not sure if it's really necessary or best practice here.
+        vm.saveStatus.events.buffer().collect { event ->
+            when (event) {
+                SaveStatus.Busy -> {
+                    // We expect the operation to complete quickly so we don't want the visual distraction
+                    // of a progress indicator appearing straight away. Let the progress indicator kick
+                    // in after a short delay if we're still here waiting.
+                    delay(spinnerDelayMillis)
+                    // The state might not be busy any more, so check first before updating to avoid a race condition.
+                    if (vm.saveStatus.state.value == SaveStatus.Busy) {
+                        vm.saveStatus.update(SaveStatus.BusyForAWhile)
+                    }
+                }
+
+                SaveStatus.Success -> {
+                    vm.saveStatus.update(SaveStatus.Idle)
+                }
+
+                SaveStatus.Error -> {
+                    vm.saveStatus.update(SaveStatus.Idle)
+                    // TODO: We need to show an error dialog - I think this is probably a reasonable spot to do it, but not sure
+                }
+
+                else -> {}
+            }
+        }
+    }
+
+    // TODO: Is it OK to hack saveStatus into spinner like this? I suspect it is but need to come back to this calmly. Note that this *doesn't* eliminate the need to check saveStatus.isNotBusy() to disable all user interaction, as the scrim doesn't kick in straight away
+    // TODO: It's probably OK and if it's not it isn't necessarily specifically here that it will go wrong, but is there any lurking corner case where we've just returned from making an edit and the user very quickly clicks confirm and things go tits up?
+    ScrimWithSpinner(visible = loading || saveStatus == SaveStatus.BusyForAWhile)
 }
 
 @Composable
