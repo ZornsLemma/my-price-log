@@ -39,6 +39,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -2809,20 +2810,22 @@ fun ItemSourceInfo(
 
                             Spacer(modifier = Modifier.width(8.dp))
 
+                            // TODO: This width measurement works fine and looks OK, but with AnimatedContent is also looks kind of OK to not fix the width (we probably still want AnimatedContent even if the width is fix), so I'll leave this in but not use it for now and I can come back to it later and see which I prefer.
                             val confirmButtonWidth = rememberLabelWidth("Confirm", "Undo")
+                            // TODO: We should probably animate the "Confirmed" text label changing *if it happens due to confirm/undo click* (not because timer ticks over to e.g. next minute)
 
                             // The "Confirm" button is the primary button - we expect it to be the
                             // button users click on most on this card (most of the time prices
                             // won't have changed on subsequent visits) - so it gets the position on
                             // the right.
                             // TODONOW: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
-                                FilledTonalButton(modifier = Modifier.width(confirmButtonWidth), onClick = {
+                                FilledTonalButton(/* modifier = Modifier.width(confirmButtonWidth) ,*/ onClick = {
                                     allowUndoConfirm =
                                         !allowUndoConfirm /* TODO IS VAGUELY RIGHT (but incomplete) BUT BASICALLY A TEMP HACK */
-                                }, shape = MaterialTheme.shapes.small) {
-                                    Crossfade(targetState = allowUndoConfirm, animationSpec = tween(1000)) { showUndo ->
+                                }, shape = MaterialTheme.shapes.small /* TODO: is this right shape? what's the default? */) {
+                                    AnimatedContent(targetState = allowUndoConfirm) { showUndo ->
 
-                                    Text(if (allowUndoConfirm) "Undo" else "Confirm") // TODO: "Undo confirm" to probably poor wording/too long to be a good "toggle", and we need animation etc etc
+                                    Text(if (showUndo) "Undo" else "Confirm") // TODO: "Undo confirm" to probably poor wording/too long to be a good "toggle", and we need animation etc etc
                                 }
                             }
                         }
