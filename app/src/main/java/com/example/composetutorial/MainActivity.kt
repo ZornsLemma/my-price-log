@@ -157,10 +157,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.window.Popup
@@ -2806,17 +2809,20 @@ fun ItemSourceInfo(
 
                             Spacer(modifier = Modifier.width(8.dp))
 
+                            val confirmButtonWidth = rememberLabelWidth("Confirm", "Undo")
+
                             // The "Confirm" button is the primary button - we expect it to be the
                             // button users click on most on this card (most of the time prices
                             // won't have changed on subsequent visits) - so it gets the position on
                             // the right.
                             // TODONOW: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
-                            Crossfade(targetState = allowUndoConfirm) { showUndo ->
-                                FilledTonalButton(onClick = {
+                                FilledTonalButton(modifier = Modifier.width(confirmButtonWidth), onClick = {
                                     allowUndoConfirm =
                                         !allowUndoConfirm /* TODO IS VAGUELY RIGHT (but incomplete) BUT BASICALLY A TEMP HACK */
                                 }, shape = MaterialTheme.shapes.small) {
-                                    Text(if (showUndo) "Undo" else "Confirm") // TODO: "Undo confirm" to probably poor wording/too long to be a good "toggle", and we need animation etc etc
+                                    Crossfade(targetState = allowUndoConfirm, animationSpec = tween(1000)) { showUndo ->
+
+                                    Text(if (allowUndoConfirm) "Undo" else "Confirm") // TODO: "Undo confirm" to probably poor wording/too long to be a good "toggle", and we need animation etc etc
                                 }
                             }
                         }
@@ -2825,6 +2831,31 @@ fun ItemSourceInfo(
             }
             Log.d("MyApp", "TODO5")
 
+        }
+    }
+}
+
+// TODO: ChatGPT magic
+@Composable
+fun rememberLabelWidth(
+    vararg labels: String,
+    style: TextStyle = MaterialTheme.typography.labelLarge,
+    horizontalPadding: Dp = 48.dp // TODO: this seems to be total horizontal padding of a "medium" 56dp high FilledTextButton in MD3 spec
+): Dp {
+    val density = LocalDensity.current
+    val textMeasurer = rememberTextMeasurer()
+    val noWrapConstraints = Constraints(maxWidth = Int.MAX_VALUE)
+
+    return remember(density, *labels) {
+        with(density) {
+            val maxLabelWidthPx = labels.maxOf { label ->
+                textMeasurer.measure(
+                    text = AnnotatedString(label),
+                    style = style,
+                    constraints = noWrapConstraints
+                ).size.width
+            }
+            maxLabelWidthPx.toDp() + horizontalPadding
         }
     }
 }
