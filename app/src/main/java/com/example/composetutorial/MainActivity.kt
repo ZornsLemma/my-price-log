@@ -2643,7 +2643,8 @@ fun ItemSourceInfo(
     // TODO: Maybe this should live on the viewmodel
     OnAppLifecycleEvent { event ->
         if (event == Lifecycle.Event.ON_STOP) { // app has left the foreground
-            vm.previousPrice.value = null // TODO: arguably we should do all this via a "call up to top level", but not sure it's necessary - perhaps more to the point we should be calling a function on viewmodel to do this
+            vm.previousPrice.value =
+                null // TODO: arguably we should do all this via a "call up to top level", but not sure it's necessary - perhaps more to the point we should be calling a function on viewmodel to do this
         }
     }
 
@@ -2655,249 +2656,296 @@ fun ItemSourceInfo(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        // TODO: animateContentSize() is experimental. If I keep it, I may also want it on the lower
-        // card, which can change size when product changes (just not yet, in this mockup). The odd
-        // padding here is because we want 8.dp at the left and right and 12.dp at the top and
-        // bottom to try to keep the square-ish corners of the TextField away from the round-ish
-        // corners at the top of the card. Because the bottom of the card has two buttons and these
-        // have "touchable but background colour" space around them to meet the minimum touch size
-        // (and we don't want to make them visually larger), if we use 12.dp at the bottom we
-        // actually get a bit more because of that extra space "around" the buttons. So we manually
-        // adjust the bottom padding to visually compensate for this while allowing the buttons to
-        // have their natural touch region.
-        // TODO: When the card expands, the button(s) on the "bottom" row of the card jump down
-        // instead of animating smoothly "following" the bottom of the card - probably because this
-        // layout is sort of "top to bottom". I suspect this can be worked around by using a box and
-        // having most of the content inside a column with .align(Alignment.TopStart) and then
-        // follow that by the button row with .align(Alignment.BottomCenter) or something along
-        // these lines. The trouble with the code as currently structured is that the buttons are
-        // generated in conditional code and getting the right layout of composables isn't trivial.
-        // It is probably worth tweaking this for visual polish - it might make things clearer
-        // anyway, e.g. if we factor out some sub-composables - but I'm not going to get involved
-        // with it right now. We may need to attach .animateContentSize() to the Card instead of the
-        // Column.
-        Column(
-            modifier = Modifier
-                .animateContentSize()
-                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
-        ) {
-            // TODO: Once the store dropdown is moved off this card, will it be obvious this card
-            // relates to that store? We could maybe give its actual name, but that might also be
-            // a bit repetitive.
-            Text(text = "Store price", style = MaterialTheme.typography.titleLarge) // TODO: This label feels a bit "redundant" and wording may need tweaking
-            Text(text = "Shelf price at ${source?.name ?: "TODO"}", style = MaterialTheme.typography.bodySmall) // TODO: null handling?!
-            Spacer(modifier = Modifier.height(8.dp))
+        Box {
+            // TODO: animateContentSize() is experimental. If I keep it, I may also want it on the lower
+            // card, which can change size when product changes (just not yet, in this mockup). The odd
+            // padding here is because we want 8.dp at the left and right and 12.dp at the top and
+            // bottom to try to keep the square-ish corners of the TextField away from the round-ish
+            // corners at the top of the card. Because the bottom of the card has two buttons and these
+            // have "touchable but background colour" space around them to meet the minimum touch size
+            // (and we don't want to make them visually larger), if we use 12.dp at the bottom we
+            // actually get a bit more because of that extra space "around" the buttons. So we manually
+            // adjust the bottom padding to visually compensate for this while allowing the buttons to
+            // have their natural touch region.
+            // TODO: When the card expands, the button(s) on the "bottom" row of the card jump down
+            // instead of animating smoothly "following" the bottom of the card - probably because this
+            // layout is sort of "top to bottom". I suspect this can be worked around by using a box and
+            // having most of the content inside a column with .align(Alignment.TopStart) and then
+            // follow that by the button row with .align(Alignment.BottomCenter) or something along
+            // these lines. The trouble with the code as currently structured is that the buttons are
+            // generated in conditional code and getting the right layout of composables isn't trivial.
+            // It is probably worth tweaking this for visual polish - it might make things clearer
+            // anyway, e.g. if we factor out some sub-composables - but I'm not going to get involved
+            // with it right now. We may need to attach .animateContentSize() to the Card instead of the
+            // Column.
+            Column(
+                modifier = Modifier
+                    .animateContentSize()
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
+            ) {
+                // TODO: Once the store dropdown is moved off this card, will it be obvious this card
+                // relates to that store? We could maybe give its actual name, but that might also be
+                // a bit repetitive.
+                Text(
+                    text = "Store price",
+                    style = MaterialTheme.typography.titleLarge
+                ) // TODO: This label feels a bit "redundant" and wording may need tweaking
+                Text(
+                    text = "Shelf price at ${source?.name ?: "TODO"}",
+                    style = MaterialTheme.typography.bodySmall
+                ) // TODO: null handling?!
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Log.d("MyApp", "ISI dataset $dataSet")
-            Log.d("MyApp", "ISI item $item")
-            Log.d("MyApp", "ISI source $item")
+                Log.d("MyApp", "ISI dataset $dataSet")
+                Log.d("MyApp", "ISI item $item")
+                Log.d("MyApp", "ISI source $item")
 
-            if (true) {
-                if (augmentedPrice == null) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        // TODO: Should this be in the supportingText on the store dropdown? My gut
-                        // feeling is not, as this is "card content" about the store+product
-                        // together, not a note specifically on the "Store" dropdown. But think
-                        // about it.
-                        Text("There is no price recorded for this product at this store yet.")
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            FilledTonalButton(
-                                onClick = onEditPriceClick,
-                                shape = MaterialTheme.shapes.small
+                if (true) {
+                    if (augmentedPrice == null) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            // TODO: Should this be in the supportingText on the store dropdown? My gut
+                            // feeling is not, as this is "card content" about the store+product
+                            // together, not a note specifically on the "Store" dropdown. But think
+                            // about it.
+                            Text("There is no price recorded for this product at this store yet.")
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
                             ) {
-                                Text("Add") // TODO: "Edit"? "Add price"?
+                                FilledTonalButton(
+                                    onClick = onEditPriceClick,
+                                    shape = MaterialTheme.shapes.small
+                                ) {
+                                    Text("Add") // TODO: "Edit"? "Add price"?
+                                }
                             }
                         }
-                    }
-                } else {
-                    val price = augmentedPrice.basePrice
-                    // TODO: This row can get a bit congested on small phones when the text in some
-                    // of the LabeledItems gets a bit long. It does kind of work and some further
-                    // tweaking (e.g. making sure we force some space between the three horizontal
-                    // elements) might fix the corner cases better than any alternatives, but do
-                    // have a think to see if some alternate design would look and/or work better.
-                    // TODO: The increased horizontal padding I'm now using (16 vs 8) is also making
-                    // this congestion much worse, at least on my small emulated phone.
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        //horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        LabeledItem(modifier = Modifier.weight(1f), label = "Price as sold"
-                        ) { // TODO: quite like this, but maybe "Shelf price"? This might also help distinguish this from the "effective/adjusted price". *Just possibly* some sort of similar wording tweak on "Unit price" in ItemSourceInfo might help.
-                            // TODO: There might be an argument for designing the UI to separate the
-                            // price and quantity here, then we side-step the internationalisation
-                            // issues of "for", which is *probably* tractable but might be a
-                            // problem. If I really prefer the UI with a single text string
-                            // containing "for", don't let this put me off sticking with it.
-                            Text(
-                                "${
-                                    formatPrice(
-                                        price.price,
-                                        dataSet,
-                                        LocalConfiguration.current.locales[0]
-                                    )
-                                } for ${
-                                    price.measure.toDisplayString(LocalConfiguration.current.locales[0])
-                                }" /*, color = MaterialTheme.colorScheme.onSurface*/
-                            )
-                        }
-
-                        val relevantUnitFamilies =
-                            remember(dataSet) { getRelevantUnitFamilies(dataSet) }
-
-                        val relevantUnitList =
-                            remember(dataSet, price.measure.unit.quantityType) {
-                                getRelevantMeasureUnits(
-                                    dataSet,
-                                    price.measure.unit.quantityType,
-                                    includeDisplayOnly = true
+                    } else {
+                        val price = augmentedPrice.basePrice
+                        // TODO: This row can get a bit congested on small phones when the text in some
+                        // of the LabeledItems gets a bit long. It does kind of work and some further
+                        // tweaking (e.g. making sure we force some space between the three horizontal
+                        // elements) might fix the corner cases better than any alternatives, but do
+                        // have a think to see if some alternate design would look and/or work better.
+                        // TODO: The increased horizontal padding I'm now using (16 vs 8) is also making
+                        // this congestion much worse, at least on my small emulated phone.
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            //horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            LabeledItem(
+                                modifier = Modifier.weight(1f), label = "Price as sold"
+                            ) { // TODO: quite like this, but maybe "Shelf price"? This might also help distinguish this from the "effective/adjusted price". *Just possibly* some sort of similar wording tweak on "Unit price" in ItemSourceInfo might help.
+                                // TODO: There might be an argument for designing the UI to separate the
+                                // price and quantity here, then we side-step the internationalisation
+                                // issues of "for", which is *probably* tractable but might be a
+                                // problem. If I really prefer the UI with a single text string
+                                // containing "for", don't let this put me off sticking with it.
+                                Text(
+                                    "${
+                                        formatPrice(
+                                            price.price,
+                                            dataSet,
+                                            LocalConfiguration.current.locales[0]
+                                        )
+                                    } for ${
+                                        price.measure.toDisplayString(LocalConfiguration.current.locales[0])
+                                    }" /*, color = MaterialTheme.colorScheme.onSurface*/
                                 )
                             }
-                        // TODO: "candidateDenominators" is also derived inside the UIContent "flow" and we could easily make it available directly here. It probably doesn't save much but we could.
-                        // TODO: If we edit the price and return to the home screen, the unit price
-                        // unit is not re-evaluated. This is arguably OK, but *if* the user never
-                        // changed it manually, it might be smart to re-evaluate it. This might be
-                        // mildly confusing. Think about it. (And test to check I have the current
-                        // behaviour understood; this is a quick note.)
-                        var selectedUnitPriceUnit by rememberSaveable(dataSet, price) {
-                            val candidateDenominators = getSiblingMeasureUnits(
-                                dataSet,
-                                price.measure.unit,
-                                includeDisplayOnly = true
-                            )
-                            val friendlyUnitPrice = getFriendlyUnitPrice(
-                                price.price,
-                                price.measure,
-                                candidateDenominators
-                            )
-                            mutableStateOf(friendlyUnitPrice.denominator)
-                        }
-                        // TODO: If the user selects "g" for a product sold in relative bulk, the
-                        // standard decimal places on the currency is a bit misleading. This isn't a
-                        // bug as such, but can/should we try to increase the decimal places on the
-                        // currency in this case? Does the standard formatting stuff we are using
-                        // have any concept of "not a shelf price so smaller fractions make sense
-                        // than usual"? Maybe at the very least we should always round prices *up*
-                        // when showing with official dp - although we are not doing the conversion
-                        // ourselves, maybe the standard function has an option to do this? We could
-                        // perhaps even omit units which would give a "display zero" price from the
-                        // dropdown, though that might be more confusing than helpful.
-                        val unitPriceString = formatUnitPrice(
-                            getUnitPrice(
-                                price.price,
-                                price.measure,
-                                selectedUnitPriceUnit,
-                            ), dataSet,
-                            LocalConfiguration.current.locales[0]
-                        )
-                        LabeledItemWithDropdown(modifier = Modifier.weight(1f), label = "Unit price",
-                            text = unitPriceString,
-                            enabled = saveStatus.isNotBusy(),
-                            //  TODO: Mixed feelings about the "/" prefix in this menu.
-                            items = relevantUnitList,
-                            getId = { it },
-                            getLabel = { "/${it.symbol}" },
-                            // Show dividers between unit families
-                            getDividerBetween = { previousItem, item ->
-                                val previousItemUnitFamily =
-                                    previousItem.unitFamilies.intersect(relevantUnitFamilies)
-                                val itemUnitFamily =
-                                    item.unitFamilies.intersect(relevantUnitFamilies)
-                                previousItemUnitFamily != itemUnitFamily
-                            },
-                            selectedId = selectedUnitPriceUnit,
-                            onValueChange = { selectedUnitPriceUnit = it })
 
-                    }
+                            val relevantUnitFamilies =
+                                remember(dataSet) { getRelevantUnitFamilies(dataSet) }
 
-                    // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
-                    LabeledItem(modifier = Modifier.padding(bottom = 8.dp), label = "Confirmed" /* "Last checked" */) {
-                        RelativeTimeText(price.confirmed)
-                        // TODO: would it be helpful to color code this and/or show an icon
-                        // ("!"?) if this is "old"? maybe even with an ascending amber/red
-                        // "severity" (and correspondingly different icons?)
-                    }
-
-                    if (price.details.isNotEmpty()) {
-                        Row(modifier = Modifier.padding(bottom = 8.dp)) {
-                            LabeledItem("Notes") {
-                                Text(price.details)
+                            val relevantUnitList =
+                                remember(dataSet, price.measure.unit.quantityType) {
+                                    getRelevantMeasureUnits(
+                                        dataSet,
+                                        price.measure.unit.quantityType,
+                                        includeDisplayOnly = true
+                                    )
+                                }
+                            // TODO: "candidateDenominators" is also derived inside the UIContent "flow" and we could easily make it available directly here. It probably doesn't save much but we could.
+                            // TODO: If we edit the price and return to the home screen, the unit price
+                            // unit is not re-evaluated. This is arguably OK, but *if* the user never
+                            // changed it manually, it might be smart to re-evaluate it. This might be
+                            // mildly confusing. Think about it. (And test to check I have the current
+                            // behaviour understood; this is a quick note.)
+                            var selectedUnitPriceUnit by rememberSaveable(dataSet, price) {
+                                val candidateDenominators = getSiblingMeasureUnits(
+                                    dataSet,
+                                    price.measure.unit,
+                                    includeDisplayOnly = true
+                                )
+                                val friendlyUnitPrice = getFriendlyUnitPrice(
+                                    price.price,
+                                    price.measure,
+                                    candidateDenominators
+                                )
+                                mutableStateOf(friendlyUnitPrice.denominator)
                             }
+                            // TODO: If the user selects "g" for a product sold in relative bulk, the
+                            // standard decimal places on the currency is a bit misleading. This isn't a
+                            // bug as such, but can/should we try to increase the decimal places on the
+                            // currency in this case? Does the standard formatting stuff we are using
+                            // have any concept of "not a shelf price so smaller fractions make sense
+                            // than usual"? Maybe at the very least we should always round prices *up*
+                            // when showing with official dp - although we are not doing the conversion
+                            // ourselves, maybe the standard function has an option to do this? We could
+                            // perhaps even omit units which would give a "display zero" price from the
+                            // dropdown, though that might be more confusing than helpful.
+                            val unitPriceString = formatUnitPrice(
+                                getUnitPrice(
+                                    price.price,
+                                    price.measure,
+                                    selectedUnitPriceUnit,
+                                ), dataSet,
+                                LocalConfiguration.current.locales[0]
+                            )
+                            LabeledItemWithDropdown(
+                                modifier = Modifier.weight(1f), label = "Unit price",
+                                text = unitPriceString,
+                                enabled = saveStatus.isNotBusy(),
+                                //  TODO: Mixed feelings about the "/" prefix in this menu.
+                                items = relevantUnitList,
+                                getId = { it },
+                                getLabel = { "/${it.symbol}" },
+                                // Show dividers between unit families
+                                getDividerBetween = { previousItem, item ->
+                                    val previousItemUnitFamily =
+                                        previousItem.unitFamilies.intersect(relevantUnitFamilies)
+                                    val itemUnitFamily =
+                                        item.unitFamilies.intersect(relevantUnitFamilies)
+                                    previousItemUnitFamily != itemUnitFamily
+                                },
+                                selectedId = selectedUnitPriceUnit,
+                                onValueChange = { selectedUnitPriceUnit = it })
+
                         }
-                    }
 
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Row {
-                            when (augmentedPrice.priceJudgement) {
-                                PriceJudgement.NONE -> {}
-                                PriceJudgement.GOOD -> {
-                                    GoodPriceIcon()
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Good price")
-                                }
-
-                                PriceJudgement.OK -> {
-                                    OkPriceIcon()
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("OK price")
-                                }
-
-                                PriceJudgement.BAD -> {
-                                    BadPriceIcon()
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Bad price")
-                                }
-                            }
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
+                        // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
+                        LabeledItem(
+                            modifier = Modifier.padding(bottom = 8.dp),
+                            label = "Confirmed" /* "Last checked" */
                         ) {
-                            FilledTonalButton(
-                                onClick = onEditPriceClick,
-                                shape = MaterialTheme.shapes.small
-                            ) {
-                                Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
+                            RelativeTimeText(price.confirmed)
+                            // TODO: would it be helpful to color code this and/or show an icon
+                            // ("!"?) if this is "old"? maybe even with an ascending amber/red
+                            // "severity" (and correspondingly different icons?)
+                        }
+
+                        if (price.details.isNotEmpty()) {
+                            Row(modifier = Modifier.padding(bottom = 8.dp)) {
+                                LabeledItem("Notes") {
+                                    Text(price.details)
+                                }
+                            }
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row {
+                                when (augmentedPrice.priceJudgement) {
+                                    PriceJudgement.NONE -> {}
+                                    PriceJudgement.GOOD -> {
+                                        GoodPriceIcon()
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Good price")
+                                    }
+
+                                    PriceJudgement.OK -> {
+                                        OkPriceIcon()
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("OK price")
+                                    }
+
+                                    PriceJudgement.BAD -> {
+                                        BadPriceIcon()
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text("Bad price")
+                                    }
+                                }
                             }
 
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                FilledTonalButton(
+                                    onClick = onEditPriceClick,
+                                    shape = MaterialTheme.shapes.small
+                                ) {
+                                    Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
+                                }
 
-                            // TODO: Mixed feelings, but should we grey out the confirm button if the confirmed label shows "now"? (obviously not greying out "undo", but if for whatever reason we are not showing "undo" and it is "now")
-                            // TODO: This width measurement works fine and looks OK, but with AnimatedContent is also looks kind of OK to not fix the width (we probably still want AnimatedContent even if the width is fix), so I'll leave this in but not use it for now and I can come back to it later and see which I prefer.
-                            val confirmButtonWidth = rememberLabelWidth("Confirm", "Undo")
-                            // TODO: We should probably animate the "Confirmed" text label changing *if it happens due to confirm/undo click* (not because timer ticks over to e.g. next minute)
+                                Spacer(modifier = Modifier.width(8.dp))
 
-                            // The "Confirm" button is the primary button - we expect it to be the
-                            // button users click on most on this card (most of the time prices
-                            // won't have changed on subsequent visits) - so it gets the position on
-                            // the right.
-                            // TODONOW: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
-                            // TODO: This button needs to be disabled during save and ideally have a spinner on it a la full screen dialog "Save"
-                            val locale = LocalConfiguration.current.locales[0]
-                            val showConfirmButton = vm.previousPrice.value == null
-                                FilledTonalButton(/* modifier = Modifier.width(confirmButtonWidth) ,*/ onClick = {
-                                    if (showConfirmButton) {
-                                        vm.confirmPrice(dataSet, augmentedPrice.basePrice, locale)
-                                    } else {
-                                        vm.undoConfirmPrice()
-                                    }
-                                }, shape = MaterialTheme.shapes.small /* TODO: is this right shape? what's the default? */) {
+                                // TODO: Mixed feelings, but should we grey out the confirm button if the confirmed label shows "now"? (obviously not greying out "undo", but if for whatever reason we are not showing "undo" and it is "now")
+                                // TODO: This width measurement works fine and looks OK, but with AnimatedContent is also looks kind of OK to not fix the width (we probably still want AnimatedContent even if the width is fix), so I'll leave this in but not use it for now and I can come back to it later and see which I prefer.
+                                val confirmButtonWidth = rememberLabelWidth("Confirm", "Undo")
+                                // TODO: We should probably animate the "Confirmed" text label changing *if it happens due to confirm/undo click* (not because timer ticks over to e.g. next minute)
+
+                                // The "Confirm" button is the primary button - we expect it to be the
+                                // button users click on most on this card (most of the time prices
+                                // won't have changed on subsequent visits) - so it gets the position on
+                                // the right.
+                                // TODONOW: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
+                                // TODO: This button needs to be disabled during save and ideally have a spinner on it a la full screen dialog "Save"
+                                val locale = LocalConfiguration.current.locales[0]
+                                val showConfirmButton = vm.previousPrice.value == null
+                                FilledTonalButton(/* modifier = Modifier.width(confirmButtonWidth) ,*/
+                                    onClick = {
+                                        if (showConfirmButton) {
+                                            vm.confirmPrice(
+                                                dataSet,
+                                                augmentedPrice.basePrice,
+                                                locale
+                                            )
+                                        } else {
+                                            vm.undoConfirmPrice()
+                                        }
+                                    },
+                                    shape = MaterialTheme.shapes.small /* TODO: is this right shape? what's the default? */
+                                ) {
                                     AnimatedContent(targetState = showConfirmButton) { showConfirm ->
 
-                                    Text(if (showConfirm) "Confirm" else "Undo") // TODO: "Undo confirm" to probably poor wording/too long to be a good "toggle", and we need animation etc etc
+                                        Text(if (showConfirm) "Confirm" else "Undo") // TODO: "Undo confirm" to probably poor wording/too long to be a good "toggle", and we need animation etc etc
+                                    }
                                 }
                             }
                         }
                     }
                 }
+                Log.d("MyApp", "TODO5")
+
             }
-            Log.d("MyApp", "TODO5")
+
+            // TODO: This doesn't feel the right way to put the overflow menu in but it's what
+            // Grok/ChatGPT seem to suggest (in conjunction with the outer Box). I am not sure the
+            // position is perfect but I can't find any specs, note that we already have quite a lot
+            // of padding on the Card itself
+
+            var menuExpanded by remember { mutableStateOf(false) } // TODO: rememberSaveable???
+            IconButton(
+                enabled = saveStatus.isNotBusy(),
+                onClick = { menuExpanded = true },
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "More options" // TODO: wording?
+                )
+                DropdownMenu(
+                    expanded = menuExpanded, onDismissRequest = { menuExpanded = false }
+                    // ,modifier = Modifier.align(Alignment.TopEnd)
+                ) {
+                    MyDropdownMenuItem(
+                        text = { Text("View history") /* TODO: Wording?! */ },
+                        onClick = { menuExpanded = false /* TODO: AND NAVIGATE AWAY */ }
+                    )
+                }
+            }
 
         }
     }
@@ -3001,7 +3049,8 @@ fun <T> NewDataTable(
                     }
                     */
                     Row(
-                        modifier = Modifier.background(rowBackground)
+                        modifier = Modifier
+                            .background(rowBackground)
                             .height(56.dp) // TODO EXPERIMENTAL - AND NOTE THAT UNLESS I ACTUALLY *DO* MAKE THE ROWS CLICKABLE, I DO NOT NEED THEM TO BE SO TALL AND CAN SHRINK THEM
                         , verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -3074,7 +3123,7 @@ fun DataTable(
                     .fillMaxWidth()
                     .padding(vertical = 0.dp, horizontal = 0.dp)
                     //.background(MaterialTheme.colorScheme.surfaceContainerHigh /* if (rowIndex % 2 == 0) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant */)
-                    .background(if(rowIndex != highlightRow) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.secondaryContainer)
+                    .background(if (rowIndex != highlightRow) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.secondaryContainer)
             ) {
                 // TODO: This inner Row is only here for the zebra-striping - if we get rid of it, we can do without it (and move the padding to the parent Row)
                 Column {
@@ -5025,7 +5074,9 @@ fun EditItemScreen(
                             )
                         }
                     MyExposedDropdownMenuBox(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp),
                         enabled = saveStatus.isNotBusy(),
                         selectedId = uiContent.editableItem.value.defaultUnit.id,
                         onValueChange = {
