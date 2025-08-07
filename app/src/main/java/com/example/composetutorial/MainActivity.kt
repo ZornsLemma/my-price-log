@@ -2639,6 +2639,7 @@ fun ItemSourceInfo(
     sourceList: List<Source>,
     augmentedPrice: AugmentedPrice?,
     onEditPriceClick: () -> Unit,
+    onViewHistoryClick: () -> Unit, // TODO: Rename onView*Price*HistoryClick?
 ) {
     // TODO: Maybe this should live on the viewmodel
     OnAppLifecycleEvent { event ->
@@ -2942,7 +2943,7 @@ fun ItemSourceInfo(
                 ) {
                     MyDropdownMenuItem(
                         text = { Text("View history") /* TODO: Wording?! */ },
-                        onClick = { menuExpanded = false /* TODO: AND NAVIGATE AWAY */ }
+                        onClick = { menuExpanded = false; onViewHistoryClick() }
                     )
                 }
             }
@@ -3532,6 +3533,11 @@ data class EditDataSetScreenUIContent(
     }
 }
 
+// TODO: Do we need this?
+data class ViewPriceHistoryScreenUIContent(
+    val TODO: Integer
+)
+
 // TODO: Now I've increased the inter-field vertical spacing from 8.dp to 16.dp in the various edit
 // screens, this one might look a little cramped by comparison. Come back to this later.
 @Composable
@@ -3539,6 +3545,7 @@ fun HomeScreen(
     vm: HomeViewModel,
     navController: NavHostController,
     onEditPriceClick: (HomeScreenUIContent) -> Unit,
+    onViewHistoryClick: (HomeScreenUIContent) -> Unit,
     onEditDataSetsClick: (HomeScreenUIContent) -> Unit,
     onEditProductsClick: (HomeScreenUIContent) -> Unit,
     onEditSourcesClick: (HomeScreenUIContent) -> Unit
@@ -3594,6 +3601,7 @@ fun HomeScreen(
             // screen.
             navController.navigate("fullScreenDialog/${UUID.randomUUID()}")
         } */,
+        onViewHistoryClick = { onViewHistoryClick(uiContent) },
         onEditDataSetsClick = { onEditDataSetsClick(uiContent) },
         onEditItemsClick = { onEditProductsClick(uiContent) },
         onEditSourcesClick = { onEditSourcesClick(uiContent) }
@@ -3681,6 +3689,7 @@ fun HomeScreenScaffold(
     priceList: List<Price>,
     priceAnalysis: PriceAnalysis,
     onEditPriceClick: () -> Unit,
+    onViewHistoryClick: () -> Unit,
     onEditDataSetsClick: () -> Unit,
     onEditItemsClick: () -> Unit,
     onEditSourcesClick: () -> Unit,
@@ -3887,7 +3896,8 @@ fun HomeScreenScaffold(
                                 sourceList = sourceList,
                                 augmentedPrice = priceAnalysis.augmentedPriceList.singleOrNull { it.basePrice.sourceId == source?.id },
                                 // TODO DELETE itemPriceList = priceList,
-                                onEditPriceClick = onEditPriceClick
+                                onEditPriceClick = onEditPriceClick,
+                                onViewHistoryClick = onViewHistoryClick,
                             )
 
                             Spacer(
@@ -7005,6 +7015,16 @@ class EditItemViewModel(
     }
 }
 
+class ViewPriceHistoryViewModel(
+    private val priceTrackerRepository: PriceTrackerRepository,
+    private val savedStateHandle: SavedStateHandle /* TODO!? ,
+    val uiContent: EditSourceScreenUIContent, */
+) : ViewModel() {
+    init {
+        // TODO!?uiContent.saveState(savedStateHandle)
+    }
+}
+
 // TODO: Not here specifically, I almost wonder if the lambdas should have the *option* (not
 // obligation) to modify the value for later lambdas in the chain, and the validation process
 // returns the final one. This *might* provide a natural way to implement things like "strip
@@ -7283,6 +7303,13 @@ fun AppNavigation() {
                     )
                     navController.navigate("editPrice")
                 },
+                onViewHistoryClick = { uiContent ->
+                    // We navigate giving this ID triplet instead of the price ID here, so that if a
+                    // price gets deleted, we can still see the full history (and we can tell where
+                    // deletions occurred by discontinuities in the price ID, albeit we won't know
+                    // the precise time they happened).
+                    navController.navigate(route = "viewPriceHistory/${uiContent.dataSet!!.id}/${uiContent.item!!.id}/${uiContent.source!!.id}")
+                },
                 onEditDataSetsClick = { uiContent ->
                     sharedViewModel.setEditDataSetsScreenContent(
                         uiContent
@@ -7400,6 +7427,9 @@ fun AppNavigation() {
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
             screenWithViewModel<GeneralSelectorViewModel<Source>, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
+                // TODO: Could should sharedViewModel have a clearAllContent() or similar function
+                // and we just call that in clearUIContent? That way we could be sure *no* old
+                // content is lurking around.
                 clearUIContent = { sharedViewModel.editSourcesScreenUIContent = null },
                 buildViewModel = { app, handle ->
                     GeneralSelectorViewModel(
@@ -7600,6 +7630,58 @@ This may be complete crap. The example of how to use it is probably as long as t
                         navController.popBackStack()
                     })
             }
+        }
+
+        composable(
+            "viewPriceHistory/{dataSetId}/{itemId}/{sourceId}", enterTransition = { slideLeftTransition() },
+            popExitTransition = { slideRightTransition() },
+        ) { backStackEntry ->
+            screenWithViewModel<ViewPriceHistoryViewModel, ViewPriceHistoryScreenUIContent>(
+                backStackEntry = backStackEntry,
+                clearUIContent = { /* TODO! */ },
+                buildViewModel = { app, handle ->
+                    ViewPriceHistoryViewModel(
+                        app.priceTrackerRepository,
+                        handle
+                        /* TODO? ,
+                        sharedViewModel.editSourceScreenUIContent
+                            ?: EditSourceScreenUIContent.fromSavedState(handle)!!
+                         */
+                    )
+                }
+            ) { viewModel ->
+                ViewPriceHistoryScreen(
+                    viewModel, navController,
+                    requestClose = {
+                        navController.popBackStack()
+                    })
+            }
+        }
+    }
+}
+
+@Composable
+fun ViewPriceHistoryScreen(
+    viewModel: ViewPriceHistoryViewModel,
+    navController: NavHostController,
+    requestClose: () -> Unit // TODO: requestDismiss? Am I inconsistent about this across different functions or is there a difference?
+) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                navigationIcon = {
+                    IconButton(/* TODO? enabled = !isBusy, */ onClick = { requestClose() }) {
+                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    }
+                },
+        title = { Text("TODO") },
+            )
+        },
+
+        ) { innerPadding ->
+        Column(modifier = Modifier.padding(innerPadding)) {
+            Text("TODO")
         }
     }
 }
