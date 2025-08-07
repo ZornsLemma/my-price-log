@@ -7039,6 +7039,7 @@ class ViewPriceHistoryViewModel(
 
     val priceHistoryListFlow = priceTrackerRepository.getPriceHistory(uiContent.dataSetId, uiContent.itemId, uiContent.sourceId)
 
+    // TODO: dataSetFlow is probably a temp hack
     val dataSetFlow = priceTrackerRepository.getAllDataSets()
 
 }
@@ -7741,6 +7742,14 @@ fun ViewPriceHistoryScreen(
 
                         val measure = MeasuredValue(priceHistory.measure, baseUnitForQuantityType(priceHistory.originalUnit.quantityType)).to(priceHistory.originalUnit)
                         Text(modifier = Modifier.weight(1f), text=measure.toString())
+
+                        // TODO: Not sure if this list should show unit price - probably not?
+                        // Remember I half plan to show an ItemSourceInfo in the bottom part of the
+                        // screen to allow detailed viewing of individual entries.
+
+                        // TODO: This probably ought to show the confirmed date, since it feels like
+                        // one of the main reasons to use the history will be to undo accidental
+                        // confirmations. Not sure though.
                     }
                 }
             }
