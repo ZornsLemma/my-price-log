@@ -7919,11 +7919,6 @@ fun ViewPriceHistoryScreen(
             // TODO: Tracking selectedItem like this is a hack, maybe it's right, maybe it's not - if nothing else, we need to highlight selecteditem in list
             var selectedItem: PriceHistory? by remember { mutableStateOf(null) }
 
-            // TODO: Really want this at bottom
-            if (dataSet != null && selectedItem != null) { // TODO HACK
-                ItemSourceInfo2(dataSet, selectedItem!!.toPrice())
-            }
-
             // TODO: Because (I think) we don't update modified_at when undoing, that means the results here look odd - but that will be fixed once we do update modified_at when undoing, or if we make undo actually physically delete
 
             // TODO: We probably ought to have a header for this table?
@@ -7932,7 +7927,7 @@ fun ViewPriceHistoryScreen(
             val locale = LocalConfiguration.current.locales[0]
             val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
             val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
-            LazyColumn {
+            LazyColumn(modifier = Modifier.weight(1f)) {
                 items(priceHistoryList) { priceHistory ->
                     // TODO: ChatGPT magic - OK?
                     val zonedModifiedAt = priceHistory.modifiedAt.atZone(ZoneId.systemDefault())
@@ -7963,6 +7958,11 @@ fun ViewPriceHistoryScreen(
                     }
                 }
             }
+
+            if (dataSet != null && selectedItem != null) { // TODO HACK
+                ItemSourceInfo2(dataSet, selectedItem!!.toPrice())
+            }
+
         }
     }
 }
