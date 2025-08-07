@@ -7702,6 +7702,14 @@ fun ViewPriceHistoryScreen(
         ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
             Text("TODO")
+            LazyColumn {
+                items(priceHistoryList) { priceHistory ->
+                    Row() {
+                        Text(modifier = Modifier.weight(1f) , text=priceHistory.modifiedAt.toString())
+                        Text(modifier = Modifier.weight(1f), text=priceHistory.measure.toString())
+                    }
+                }
+            }
         }
     }
 }
