@@ -7024,7 +7024,8 @@ class EditItemViewModel(
 data class ViewPriceHistoryScreenUIContent(
     val dataSetId: Long,
     val itemId: Long,
-    val sourceId: Long
+    val sourceId: Long,
+    val quantityType: QuantityType,
 )
 
 class ViewPriceHistoryViewModel(
@@ -7654,6 +7655,7 @@ This may be complete crap. The example of how to use it is probably as long as t
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val itemId = backStackEntry.arguments?.getString("itemId")!!.toLong()
             val sourceId = backStackEntry.arguments?.getString("sourceId")!!.toLong()
+            val quantityType = QuantityType.WEIGHT // TODO: We completely don't need this, I started adding it so I 'm going to pass this fixed value around to avoid ripping the code I just added out and *then* finding out I did need it - but rip it out later
             screenWithViewModel<ViewPriceHistoryViewModel, ViewPriceHistoryScreenUIContent>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { /* TODO! */ },
@@ -7665,7 +7667,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                         sharedViewModel.viewPriceHistoryUIContent
                             ?: ViewPriceHistoryScreenUIContent.fromSavedState(handle)!!
                             */
-                        ViewPriceHistoryScreenUIContent(dataSetId, itemId, sourceId)
+                        ViewPriceHistoryScreenUIContent(dataSetId, itemId, sourceId, quantityType)
                     )
                 }
             ) { viewModel ->
@@ -7717,6 +7719,8 @@ fun ViewPriceHistoryScreen(
                     // TODO: ChatGPT magic - OK?
                     val zonedModifiedAt = priceHistory.modifiedAt.atZone(ZoneId.systemDefault())
                     Row() {
+                        // TODO: Really not sure how I want to format this, very experimental - main thing is to get the data shown as human readable strings first
+
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = dateFormatter.format(zonedModifiedAt)
@@ -7725,7 +7729,9 @@ fun ViewPriceHistoryScreen(
                                 text = timeFormatter.format(zonedModifiedAt)
                             )
                         }
-                        Text(modifier = Modifier.weight(1f), text=priceHistory.measure.toString())
+
+                        val measure = MeasuredValue(priceHistory.measure, baseUnitForQuantityType(priceHistory.originalUnit.quantityType)).to(priceHistory.originalUnit)
+                        Text(modifier = Modifier.weight(1f), text=measure.toString())
                     }
                 }
             }
