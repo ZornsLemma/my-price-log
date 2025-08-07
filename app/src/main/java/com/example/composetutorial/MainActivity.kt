@@ -7694,6 +7694,7 @@ fun ViewPriceHistoryScreen(
         topBar = {
             TopAppBar(
                 navigationIcon = {
+                    // TODO: This should almost certainly have a back arrow not a cross - it isn't a full screen dialog
                     IconButton(/* TODO? enabled = !isBusy, */ onClick = { requestClose() }) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
