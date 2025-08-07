@@ -239,6 +239,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
 import java.text.DecimalFormatSymbols
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.concurrent.Executors
 import kotlin.math.ceil
 import kotlin.math.pow
@@ -7702,10 +7705,24 @@ fun ViewPriceHistoryScreen(
         ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
             Text("TODO")
+            // TODO: Do I need to specify a key for the rows?
+            // TODO: It's likely inefficient to be doing the conversions inside LazyColumna dnwe should really be pre-filtering the list with val displayItems = remember(priceHistoryList) { priceHistoryList.map { } } or something, but I'm just going to hack it for now
+            val locale = LocalConfiguration.current.locales[0]
+            val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
+            val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
             LazyColumn {
                 items(priceHistoryList) { priceHistory ->
+                    // TODO: ChatGPT magic - OK?
+                    val zonedModifiedAt = priceHistory.modifiedAt.atZone(ZoneId.systemDefault())
                     Row() {
-                        Text(modifier = Modifier.weight(1f) , text=priceHistory.modifiedAt.toString())
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = dateFormatter.format(zonedModifiedAt)
+                            )
+                            Text(
+                                text = timeFormatter.format(zonedModifiedAt)
+                            )
+                        }
                         Text(modifier = Modifier.weight(1f), text=priceHistory.measure.toString())
                     }
                 }
