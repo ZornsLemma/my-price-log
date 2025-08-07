@@ -2015,6 +2015,9 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
     }
 
     fun undoConfirmPrice() {
+        // TODO: Maybe this should call an "undo" on the repository and it deals with this - that
+        // might work out neater if (as may well be better) the undo does undo things in the
+        // database rather than adding another update.
         // TODO: Problems with errors and previousPrice getting out of step etc?
         // TODO: This needs to update modified_at even though it otherwise persists all previous data
         // TODO: Should we avoid updating history when we undo this? And delete the "confirmed" history item? or is it cleaner and more "honest" to just let the history entries accumulate?
