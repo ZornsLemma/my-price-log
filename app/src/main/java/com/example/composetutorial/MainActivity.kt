@@ -7039,6 +7039,8 @@ class ViewPriceHistoryViewModel(
 
     val priceHistoryListFlow = priceTrackerRepository.getPriceHistory(uiContent.dataSetId, uiContent.itemId, uiContent.sourceId)
 
+    val dataSetFlow = priceTrackerRepository.getAllDataSets()
+
 }
 
 // TODO: Not here specifically, I almost wonder if the lambdas should have the *option* (not
@@ -7691,6 +7693,11 @@ fun ViewPriceHistoryScreen(
     val priceHistoryList by viewModel.priceHistoryListFlow.collectAsStateWithLifecycle(emptyList())
     Log.d("MyApp", "priceHistoryList.size ${priceHistoryList.size}")
 
+    // TODO: This is a hack - we could and probably should pass the DataSet through from the home screen using the shared view model, but I'm just hacking for now. It's particualrly inefficient as we currently don't have a "get data set ID X" function so this is getting all data sets - but not worth adding that functino if we are just going to pass the dataset through soon
+    val dataSetList by viewModel.dataSetFlow.collectAsStateWithLifecycle(emptyList())
+    // TODO: It feels like I ought to be able to fold this singleOrNull *into* the flow, but maybe I'm confused - anyway, as per previous comment this is likely temporary code so not worth worrying about unless it lives
+    val dataSet = dataSetList.singleOrNull { dataSet -> dataSet.id == viewModel.uiContent.dataSetId }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -7710,7 +7717,7 @@ fun ViewPriceHistoryScreen(
             Text("TODO")
             // TODO: We probably ought to have a header for this table?
             // TODO: Do I need to specify a key for the rows?
-            // TODO: It's likely inefficient to be doing the conversions inside LazyColumna dnwe should really be pre-filtering the list with val displayItems = remember(priceHistoryList) { priceHistoryList.map { } } or something, but I'm just going to hack it for now
+            // TODO: It's likely inefficient to be doing the conversions inside LazyColumn and we should really be pre-filtering the list with val displayItems = remember(priceHistoryList) { priceHistoryList.map { } } or something, but I'm just going to hack it for now
             val locale = LocalConfiguration.current.locales[0]
             val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
             val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
@@ -7729,6 +7736,8 @@ fun ViewPriceHistoryScreen(
                                 text = timeFormatter.format(zonedModifiedAt)
                             )
                         }
+
+                        Text(modifier = Modifier.weight(1f), text=if (dataSet == null) "" else formatPrice(priceHistory.price, dataSet, locale))
 
                         val measure = MeasuredValue(priceHistory.measure, baseUnitForQuantityType(priceHistory.originalUnit.quantityType)).to(priceHistory.originalUnit)
                         Text(modifier = Modifier.weight(1f), text=measure.toString())
