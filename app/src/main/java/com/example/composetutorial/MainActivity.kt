@@ -803,6 +803,8 @@ interface PriceTrackerRepository {
 
     fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
 
+    fun getPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<List<PriceHistory>>
+
     fun countPricesForItem(itemId: Long): Flow<Long>
     fun countPricesForSource(sourceId: Long): Flow<Long>
 
@@ -835,6 +837,9 @@ class PriceTrackerRepositoryImpl(
     override fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>> =
         priceDao.getPriceWithItemEntityForItem(dataSetId = dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
+
+    override fun getPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<List<PriceHistory>> =
+        priceHistoryDao.getPriceHistory(dataSetId, itemId, sourceId)
 
     override fun countPricesForItem(itemId: Long): Flow<Long> =
         priceDao.countPricesForItem(itemId)
@@ -1707,9 +1712,12 @@ interface PriceDao {
 
 @Dao
 interface PriceHistoryDao {
-    // TODO: Because the history is not modified, we have insert() instead of upset(). OK?
+    // TODO: Because the history is not modified, we have insert() instead of upsert(). OK?
     @Insert
     suspend fun insert(priceHistory: PriceHistory): Long
+
+    @Query("SELECT * FROM price_history WHERE data_set_id = :dataSetId AND item_id = :itemId and source_id = :sourceId ORDER BY modified_at DESC")
+    fun getPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<List<PriceHistory>>
 }
 
 // TODO: ChatGPT semi-magic
@@ -3532,11 +3540,6 @@ data class EditDataSetScreenUIContent(
         }
     }
 }
-
-// TODO: Do we need this?
-data class ViewPriceHistoryScreenUIContent(
-    val TODO: Integer
-)
 
 // TODO: Now I've increased the inter-field vertical spacing from 8.dp to 16.dp in the various edit
 // screens, this one might look a little cramped by comparison. Come back to this later.
@@ -7015,14 +7018,23 @@ class EditItemViewModel(
     }
 }
 
+data class ViewPriceHistoryScreenUIContent(
+    val dataSetId: Long,
+    val itemId: Long,
+    val sourceId: Long
+)
+
 class ViewPriceHistoryViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
-    private val savedStateHandle: SavedStateHandle /* TODO!? ,
-    val uiContent: EditSourceScreenUIContent, */
+    private val savedStateHandle: SavedStateHandle,
+    val uiContent: ViewPriceHistoryScreenUIContent,
 ) : ViewModel() {
     init {
         // TODO!?uiContent.saveState(savedStateHandle)
     }
+
+    val priceHistoryListFlow = priceTrackerRepository.getPriceHistory(uiContent.dataSetId, uiContent.itemId, uiContent.sourceId)
+
 }
 
 // TODO: Not here specifically, I almost wonder if the lambdas should have the *option* (not
@@ -7636,17 +7648,21 @@ This may be complete crap. The example of how to use it is probably as long as t
             "viewPriceHistory/{dataSetId}/{itemId}/{sourceId}", enterTransition = { slideLeftTransition() },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
+            val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
+            val itemId = backStackEntry.arguments?.getString("itemId")!!.toLong()
+            val sourceId = backStackEntry.arguments?.getString("sourceId")!!.toLong()
             screenWithViewModel<ViewPriceHistoryViewModel, ViewPriceHistoryScreenUIContent>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { /* TODO! */ },
                 buildViewModel = { app, handle ->
                     ViewPriceHistoryViewModel(
                         app.priceTrackerRepository,
-                        handle
-                        /* TODO? ,
-                        sharedViewModel.editSourceScreenUIContent
-                            ?: EditSourceScreenUIContent.fromSavedState(handle)!!
-                         */
+                        handle,
+                        /* TODO!?
+                        sharedViewModel.viewPriceHistoryUIContent
+                            ?: ViewPriceHistoryScreenUIContent.fromSavedState(handle)!!
+                            */
+                        ViewPriceHistoryScreenUIContent(dataSetId, itemId, sourceId)
                     )
                 }
             ) { viewModel ->
@@ -7666,6 +7682,10 @@ fun ViewPriceHistoryScreen(
     navController: NavHostController,
     requestClose: () -> Unit // TODO: requestDismiss? Am I inconsistent about this across different functions or is there a difference?
 ) {
+    // TODO: We could use null as initial value but I suspect we don't need it and it will be more convenient to default to empty
+    val priceHistoryList by viewModel.priceHistoryListFlow.collectAsStateWithLifecycle(emptyList())
+    Log.d("MyApp", "priceHistoryList.size ${priceHistoryList.size}")
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
