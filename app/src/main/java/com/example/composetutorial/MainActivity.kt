@@ -42,7 +42,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.animateContentSize
@@ -96,7 +95,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -196,7 +194,6 @@ import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import androidx.room.Upsert
 import androidx.room.withTransaction
-import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -7048,6 +7045,37 @@ data class ViewPriceHistoryScreenUIContent(
     val quantityType: QuantityType,
 )
 
+data class PriceHistoryDelta(
+    val price: Double?,
+    val measure: MeasuredValue?,
+    val confirmed: Instant?,
+    val details: String?,
+    val modifiedAt: Instant
+)
+
+// TODO: Yet another utterly incoherent style of adding conversion between data classes, no idea what I "ought" to do and this code is an inconsistent mish-mash of styles.
+fun PriceHistory.toPriceHistoryDelta(): PriceHistoryDelta {
+    return PriceHistoryDelta(
+        price = price,
+        measure = MeasuredValue(measure, baseUnitForQuantityType(originalUnit.quantityType)).to(originalUnit),
+        confirmed = confirmed,
+        details = details,
+        modifiedAt = modifiedAt
+    )
+}
+
+// TODO: Where does this belong and what naming and calling convention should it have?!?!?!
+fun diff(lhs: PriceHistory, rhs: PriceHistory): PriceHistoryDelta {
+    return PriceHistoryDelta(
+        price = if (lhs.price == rhs.price) null else rhs.price,
+        measure = if (lhs.measure == rhs.measure) null else MeasuredValue(rhs.measure, baseUnitForQuantityType(rhs.originalUnit.quantityType)).to(rhs.originalUnit),
+        confirmed = if (lhs.confirmed == rhs.confirmed) null else rhs.confirmed,
+        // TODO: OK to trim()?
+        details = if (lhs.details.trim() == rhs.details.trim()) null else rhs.details,
+        modifiedAt = rhs.modifiedAt
+    )
+}
+
 class ViewPriceHistoryViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
     private val savedStateHandle: SavedStateHandle,
@@ -7058,6 +7086,25 @@ class ViewPriceHistoryViewModel(
     }
 
     val priceHistoryListFlow = priceTrackerRepository.getPriceHistory(uiContent.dataSetId, uiContent.itemId, uiContent.sourceId)
+    val priceHistoryDeltaListFlow = priceHistoryListFlow.flatMapLatest { priceHistoryList ->
+        // TODO: This might be clearer implemented as a zip() operation, if there is one where I can get a "thing vs null" at the end rather than losing an item
+        if (priceHistoryList.isEmpty()) {
+            flowOf(emptyList<PriceHistoryDelta>())
+        } else {
+            val priceHistoryDeltaList = mutableListOf<PriceHistoryDelta>()
+            var previousPriceHistory: PriceHistory? = null
+            for (priceHistory in priceHistoryList) {
+                if (previousPriceHistory == null) {
+                    priceHistoryDeltaList.add(priceHistory.toPriceHistoryDelta())
+                } else {
+                    priceHistoryDeltaList.add(diff(previousPriceHistory, priceHistory))
+                }
+                previousPriceHistory = priceHistory
+            }
+            // TODO: Possibly we should filter out entries in the list which are all-null except for modifiedAt, but it may be these can't really occur in practice now we check for changes before saving.
+            flowOf(priceHistoryDeltaList)
+        }
+    }
 
     // TODO: dataSetFlow is probably a temp hack
     val dataSetFlow = priceTrackerRepository.getAllDataSets()
@@ -7895,6 +7942,8 @@ fun ViewPriceHistoryScreen(
     // TODO: We could use null as initial value but I suspect we don't need it and it will be more convenient to default to empty
     val priceHistoryList by viewModel.priceHistoryListFlow.collectAsStateWithLifecycle(emptyList())
     Log.d("MyApp", "priceHistoryList.size ${priceHistoryList.size}")
+    val priceHistoryDeltaList by viewModel.priceHistoryDeltaListFlow.collectAsStateWithLifecycle(emptyList())
+    Log.d("MyApp", "priceHistoryDeltaList $priceHistoryDeltaList")
 
     // TODO: This is a hack - we could and probably should pass the DataSet through from the home screen using the shared view model, but I'm just hacking for now. It's particualrly inefficient as we currently don't have a "get data set ID X" function so this is getting all data sets - but not worth adding that functino if we are just going to pass the dataset through soon
     val dataSetList by viewModel.dataSetFlow.collectAsStateWithLifecycle(emptyList())
