@@ -7101,7 +7101,7 @@ class ViewPriceHistoryViewModel(
                 }
                 previousPriceHistory = priceHistory
             }
-            // TODO: Possibly we should filter out entries in the list which are all-null except for modifiedAt, but it may be these can't really occur in practice now we check for changes before saving.
+            // TODO: Possibly we should filter out entries in the list which are all-null except for modifiedAt, but it may be these can't really occur in practice now we check for changes before saving. If we do this, it may be better for diff() to return a nullable result and directly return a null - although it might be mildly faffy for it to do so, but see
             flowOf(priceHistoryDeltaList)
         }
     }
