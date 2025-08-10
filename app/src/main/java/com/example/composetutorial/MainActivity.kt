@@ -597,200 +597,201 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
     // TODO DELETE val db = InventoryDatabase.getDatabase(context)
     // TODO: I may want to add multiple demo data sets - if so, given them all names of the form "Demo (foo)", probably. I may at the very least want to do an imperial unit demo set, so new potential users don't assume the app is metric only. This might be overkill but it may not hurt. We could just use imperial with the metric-ish data set (i.e. just configure the display units to be the user's current regional ones by default when we set the database up), and that might well be reasonable - it would give "odd" pack sizes (e.g. nominally imperial demo data selling 2 litre cartons of milk which the shops call a 3.52 pint pack) but for demo purposes it is probably fine.
     // TODO: We should have some cases in the demo data set where there is no price for a store+product combination
-        // TODO: It's probably smart to default the demo data to the local currency, since that will look most natural to our new user, but do rethink this afterwards. (It's also just possible, remember, that they will start editing the demo dataset for their own use, rather than starting again with a fresh dataset.)
-        // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
-        // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current locale (and make sure any non-metric units in the data below are changed accordingly)
-        // TODO: We should have some demo products which are (fake) "branded" products, so get the idea across that this is another way to do things if you are brand-sensitive on a particular item
-        // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp - or perhaps better, have something I can turn on for debug builds which will do that, but don't pollute the user initial database with it
-        // TODO: We should maybe - perhaps not worth worrying about - avoid using the demo data designed for 2dp currencies with e.g. JPY, if only by forcing the currency to be something else even if that's the system default, or perhaps applying a multiplier of 10^(2-currencydps) to all the prices just so they are "readable"
-        val dataSetId = repository.updateOrInsertDataSet(
-            DataSet(
-                name = "Groceries (demo)",
-                currencyCode = "EUR", // TODO TEMP HACK Currency.getInstance(Locale.getDefault()).currencyCode,
-                allowMetric = true,
-                allowImperial = true,
-                allowUSCustomary = false,
-                notes = "A sample collection of unrealistic grocery prices for imaginary stores. This is intended to give you something to play with when you first install the app.",
-            )
+    // TODO: It's probably smart to default the demo data to the local currency, since that will look most natural to our new user, but do rethink this afterwards. (It's also just possible, remember, that they will start editing the demo dataset for their own use, rather than starting again with a fresh dataset.)
+    // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
+    // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current locale (and make sure any non-metric units in the data below are changed accordingly)
+    // TODO: We should have some demo products which are (fake) "branded" products, so get the idea across that this is another way to do things if you are brand-sensitive on a particular item
+    // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp - or perhaps better, have something I can turn on for debug builds which will do that, but don't pollute the user initial database with it
+    // TODO: We should maybe - perhaps not worth worrying about - avoid using the demo data designed for 2dp currencies with e.g. JPY, if only by forcing the currency to be something else even if that's the system default, or perhaps applying a multiplier of 10^(2-currencydps) to all the prices just so they are "readable"
+    val dataSetId = repository.updateOrInsertDataSet(
+        DataSet(
+            name = "Groceries (demo)",
+            currencyCode = "EUR", // TODO TEMP HACK Currency.getInstance(Locale.getDefault()).currencyCode,
+            allowMetric = true,
+            allowImperial = true,
+            allowUSCustomary = false,
+            notes = "A sample collection of unrealistic grocery prices for imaginary stores. This is intended to give you something to play with when you first install the app.",
         )
-        val dataSetId2 = repository.updateOrInsertDataSet(
-            DataSet(
-                name = "Demo 2",
-                currencyCode = "AUD",
-                allowMetric = true,
-                allowImperial = false,
-                allowUSCustomary = true,
-                notes = "",
-            )
-        ) // TODO TEMP HACK
+    )
+    val dataSetId2 = repository.updateOrInsertDataSet(
+        DataSet(
+            name = "Demo 2",
+            currencyCode = "AUD",
+            allowMetric = true,
+            allowImperial = false,
+            allowUSCustomary = true,
+            notes = "",
+        )
+    ) // TODO TEMP HACK
     repository.updateOrInsertDataSet(
-            DataSet(
-                name = "Demo 3",
-                currencyCode = "AUD",
-                allowMetric = true,
-                allowImperial = false,
-                allowUSCustomary = true,
-                notes = "",
-            )
-        ) // TODO TEMP HACK
-        repository.updateOrInsertItem(
-            Item(
-                dataSetId = dataSetId2,
-                name = "Demo 2 Item",
-                defaultUnit = MeasureUnit.G,
-                notes = "",
-            )
+        DataSet(
+            name = "Demo 3",
+            currencyCode = "AUD",
+            allowMetric = true,
+            allowImperial = false,
+            allowUSCustomary = true,
+            notes = "",
         )
-        val itemIdGroundCoffee = repository.updateOrInsertItem(
-            Item(
-                dataSetId = dataSetId,
-                name = "Coffee (ground)",
-                defaultUnit = MeasureUnit.G,
-                        notes = ""
-            )
+    ) // TODO TEMP HACK
+    repository.updateOrInsertItem(
+        Item(
+            dataSetId = dataSetId2,
+            name = "Demo 2 Item",
+            defaultUnit = MeasureUnit.G,
+            notes = "",
         )
-        val itemIdWholeMilk = repository.updateOrInsertItem(
-            Item(
-                dataSetId = dataSetId,
-                name = "Milk (whole)",
-                defaultUnit = MeasureUnit.L,
-                notes = "",
-                )
+    )
+    val itemIdGroundCoffee = repository.updateOrInsertItem(
+        Item(
+            dataSetId = dataSetId,
+            name = "Coffee (ground)",
+            defaultUnit = MeasureUnit.G,
+            notes = ""
         )
-        val itemIdTeabags = repository.updateOrInsertItem(
-            Item(
-                dataSetId = dataSetId,
-                name = "Teabags",
-                defaultUnit = MeasureUnit.EACH,
-                        notes = "",
+    )
+    val itemIdWholeMilk = repository.updateOrInsertItem(
+        Item(
+            dataSetId = dataSetId,
+            name = "Milk (whole)",
+            defaultUnit = MeasureUnit.L,
+            notes = "",
+        )
+    )
+    val itemIdTeabags = repository.updateOrInsertItem(
+        Item(
+            dataSetId = dataSetId,
+            name = "Teabags",
+            defaultUnit = MeasureUnit.EACH,
+            notes = "",
 
-                )
-        )
-        // TODO: Do some web searches and confirm these are not real supermarket names
-        val sourceIdValueMart = repository.updateOrInsertSource(Source(
-                    dataSetId = dataSetId,
-                    name = "ValueMart",
-                    loyaltyDiscountType = LoyaltyDiscountType.NONE,
-                    loyaltyMultiplier = 1.0,
-                    notes = ""
-                )
             )
-        val sourceIdSuperiorStore = repository.updateOrInsertSource(
-            Source(
-                dataSetId = dataSetId,
-                name = "SuperiorStore",
-                loyaltyDiscountType = LoyaltyDiscountType.NONE,
-                loyaltyMultiplier = 1.0,
-                notes = ""
-            )
+    )
+    // TODO: Do some web searches and confirm these are not real supermarket names
+    val sourceIdValueMart = repository.updateOrInsertSource(
+        Source(
+            dataSetId = dataSetId,
+            name = "ValueMart",
+            loyaltyDiscountType = LoyaltyDiscountType.NONE,
+            loyaltyMultiplier = 1.0,
+            notes = ""
         )
+    )
+    val sourceIdSuperiorStore = repository.updateOrInsertSource(
+        Source(
+            dataSetId = dataSetId,
+            name = "SuperiorStore",
+            loyaltyDiscountType = LoyaltyDiscountType.NONE,
+            loyaltyMultiplier = 1.0,
+            notes = ""
+        )
+    )
     // TODO: Since you need three "recent" prices to see price judgements, we may need a fourth store which has at least some initial data.
-        // Newco deliberately has no prices to start with.
+    // Newco deliberately has no prices to start with.
     repository.updateOrInsertSource(
-            Source(
-                dataSetId = dataSetId,
-                name = "Newco",
-                loyaltyDiscountType = LoyaltyDiscountType.NONE,
-                loyaltyMultiplier = 1.0,
-                notes = "Only just opened but I hope their prices will be good."
-            )
+        Source(
+            dataSetId = dataSetId,
+            name = "Newco",
+            loyaltyDiscountType = LoyaltyDiscountType.NONE,
+            loyaltyMultiplier = 1.0,
+            notes = "Only just opened but I hope their prices will be good."
         )
-        val now = Instant.now()
-        repository.updateOrInsertPrice(
-            Price(
-                dataSetId = dataSetId,
-                itemId = itemIdGroundCoffee,
-                sourceId = sourceIdValueMart,
-                price = 2.03,
-                measure = MeasuredValue(500.0, MeasureUnit.G),
-                confirmed = now.minus(2, ChronoUnit.MINUTES),
-                details = "Large pack own brand",
-                itemDefaultUnit = MeasureUnit.G,
-                modifiedAt = now.minus(2, ChronoUnit.MINUTES)
-            )
-        )
+    )
+    val now = Instant.now()
     repository.updateOrInsertPrice(
-            Price(
-                dataSetId = dataSetId,
-                itemId = itemIdGroundCoffee,
-                sourceId = sourceIdSuperiorStore,
-                price = 1.50,
-                measure = MeasuredValue(227.0,MeasureUnit.G),
-                confirmed = now.minus(4, ChronoUnit.DAYS),
-                details = "Own brand",
-                        itemDefaultUnit = MeasureUnit.G,
-                modifiedAt = now.minus(4, ChronoUnit.DAYS),
-            )
+        Price(
+            dataSetId = dataSetId,
+            itemId = itemIdGroundCoffee,
+            sourceId = sourceIdValueMart,
+            price = 2.03,
+            measure = MeasuredValue(500.0, MeasureUnit.G),
+            confirmed = now.minus(2, ChronoUnit.MINUTES),
+            details = "Large pack own brand",
+            itemDefaultUnit = MeasureUnit.G,
+            modifiedAt = now.minus(2, ChronoUnit.MINUTES)
         )
+    )
     repository.updateOrInsertPrice(
-            Price(
-                dataSetId = dataSetId,
-                itemId = itemIdWholeMilk,
-                sourceId = sourceIdValueMart,
-                price = 1.99,
-                measure = MeasuredValue(
-                    4.0,
-                    MeasureUnit.IMPERIAL_PINT
-                ),
-                confirmed = now,
-                details = "",
-                itemDefaultUnit = MeasureUnit.L,
-                modifiedAt = now,
-            )
+        Price(
+            dataSetId = dataSetId,
+            itemId = itemIdGroundCoffee,
+            sourceId = sourceIdSuperiorStore,
+            price = 1.50,
+            measure = MeasuredValue(227.0, MeasureUnit.G),
+            confirmed = now.minus(4, ChronoUnit.DAYS),
+            details = "Own brand",
+            itemDefaultUnit = MeasureUnit.G,
+            modifiedAt = now.minus(4, ChronoUnit.DAYS),
         )
+    )
     repository.updateOrInsertPrice(
-            Price(
-                dataSetId = dataSetId,
-                itemId = itemIdWholeMilk,
-                sourceId = sourceIdSuperiorStore,
-                price = 2.86,
-                measure = MeasuredValue(2000.0, MeasureUnit.ML),
-                confirmed = now.minus(63, ChronoUnit.DAYS),
-                details = "",
-                        itemDefaultUnit = MeasureUnit.L,
-modifiedAt = now.minus(63, ChronoUnit.DAYS),
-                )
+        Price(
+            dataSetId = dataSetId,
+            itemId = itemIdWholeMilk,
+            sourceId = sourceIdValueMart,
+            price = 1.99,
+            measure = MeasuredValue(
+                4.0,
+                MeasureUnit.IMPERIAL_PINT
+            ),
+            confirmed = now,
+            details = "",
+            itemDefaultUnit = MeasureUnit.L,
+            modifiedAt = now,
         )
+    )
     repository.updateOrInsertPrice(
-            Price(
-                dataSetId = dataSetId,
-                itemId = itemIdTeabags,
-                sourceId = sourceIdValueMart,
-                price = 0.76,
-                measure = MeasuredValue(40.0, MeasureUnit.EACH),
-                confirmed = now.minus(7, ChronoUnit.DAYS),
-                details = "Soft pack own brand",
-                itemDefaultUnit = MeasureUnit.EACH,
-                modifiedAt = now.minus(7, ChronoUnit.DAYS),
-            )
+        Price(
+            dataSetId = dataSetId,
+            itemId = itemIdWholeMilk,
+            sourceId = sourceIdSuperiorStore,
+            price = 2.86,
+            measure = MeasuredValue(2000.0, MeasureUnit.ML),
+            confirmed = now.minus(63, ChronoUnit.DAYS),
+            details = "",
+            itemDefaultUnit = MeasureUnit.L,
+            modifiedAt = now.minus(63, ChronoUnit.DAYS),
         )
+    )
     repository.updateOrInsertPrice(
-            Price(
-                dataSetId = dataSetId,
-                itemId = itemIdTeabags,
-                sourceId = sourceIdSuperiorStore,
-                price = 0.60,
-                measure = MeasuredValue(20.0, MeasureUnit.EACH),
-                confirmed = now.minus(4, ChronoUnit.HOURS),
-                details = "",
-                        itemDefaultUnit = MeasureUnit.EACH,
-                modifiedAt = now.minus(4, ChronoUnit.HOURS),
-            )
+        Price(
+            dataSetId = dataSetId,
+            itemId = itemIdTeabags,
+            sourceId = sourceIdValueMart,
+            price = 0.76,
+            measure = MeasuredValue(40.0, MeasureUnit.EACH),
+            confirmed = now.minus(7, ChronoUnit.DAYS),
+            details = "Soft pack own brand",
+            itemDefaultUnit = MeasureUnit.EACH,
+            modifiedAt = now.minus(7, ChronoUnit.DAYS),
         )
-        /*
-        db.productDao().insert(Product(name = "Demo Product"))
-        db.itemDao().insert(Item(name = "Demo Item"))
-        // ...insert into other DAOs as needed
-        */
-        // Set some defaults for the first run so the user isn't left with a screen with no data
-        // wondering what to do. We leave the source blank because that's a state you can
-        // deliberately invoke yourself via the "None" option on the store dropdown. TODO: It might
-        // be better to set it to one of the stores with data for first impression purposes though -
-        // we want to show off our price data to make it clearer what the app is all about.
-        context.dataStore.edit { prefs ->
-            prefs[SELECTED_DATA_SET_ID_KEY] = dataSetId
-            prefs[SELECTED_ITEM_ID_KEY] = itemIdGroundCoffee
-        }
+    )
+    repository.updateOrInsertPrice(
+        Price(
+            dataSetId = dataSetId,
+            itemId = itemIdTeabags,
+            sourceId = sourceIdSuperiorStore,
+            price = 0.60,
+            measure = MeasuredValue(20.0, MeasureUnit.EACH),
+            confirmed = now.minus(4, ChronoUnit.HOURS),
+            details = "",
+            itemDefaultUnit = MeasureUnit.EACH,
+            modifiedAt = now.minus(4, ChronoUnit.HOURS),
+        )
+    )
+    /*
+    db.productDao().insert(Product(name = "Demo Product"))
+    db.itemDao().insert(Item(name = "Demo Item"))
+    // ...insert into other DAOs as needed
+    */
+    // Set some defaults for the first run so the user isn't left with a screen with no data
+    // wondering what to do. We leave the source blank because that's a state you can
+    // deliberately invoke yourself via the "None" option on the store dropdown. TODO: It might
+    // be better to set it to one of the stores with data for first impression purposes though -
+    // we want to show off our price data to make it clearer what the app is all about.
+    context.dataStore.edit { prefs ->
+        prefs[SELECTED_DATA_SET_ID_KEY] = dataSetId
+        prefs[SELECTED_ITEM_ID_KEY] = itemIdGroundCoffee
+    }
 
 }
 
@@ -838,7 +839,11 @@ class PriceTrackerRepositoryImpl(
         priceDao.getPriceWithItemEntityForItem(dataSetId = dataSetId, itemId = itemId)
             .map { list -> list.map { it.toDomain() } }
 
-    override fun getPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<List<PriceHistory>> =
+    override fun getPriceHistory(
+        dataSetId: Long,
+        itemId: Long,
+        sourceId: Long
+    ): Flow<List<PriceHistory>> =
         priceHistoryDao.getPriceHistory(dataSetId, itemId, sourceId)
 
     override fun countPricesForItem(itemId: Long): Flow<Long> =
@@ -876,7 +881,8 @@ class PriceTrackerRepositoryImpl(
         db.withTransaction {
             val priceEntity = price.toEntity()
             priceId = priceDao.upsert(priceEntity)
-            val priceEntityWithId = if (priceEntity.id != 0L) priceEntity else priceEntity.copy(id = priceId)
+            val priceEntityWithId =
+                if (priceEntity.id != 0L) priceEntity else priceEntity.copy(id = priceId)
             priceHistoryDao.insert(PriceHistory.fromPriceEntity(priceEntityWithId))
         }
         return priceId
@@ -908,7 +914,14 @@ object AppViewModelProvider {
 class MyApplication : Application() {
     val priceTrackerRepository: PriceTrackerRepositoryImpl by lazy {
         val db = InventoryDatabase.getDatabase(this)
-        PriceTrackerRepositoryImpl(db, db.dataSetDao(), db.productDao(), db.sourceDao(), db.priceDao(), db.priceHistoryDao())
+        PriceTrackerRepositoryImpl(
+            db,
+            db.dataSetDao(),
+            db.productDao(),
+            db.sourceDao(),
+            db.priceDao(),
+            db.priceHistoryDao()
+        )
     }
 
     // TODO: ChatGPT magic, needs checking. May also be worth investigating ACRA/Cockroach/SimpleCrashReport open source libraries.
@@ -1194,7 +1207,8 @@ data class EditableItem private constructor(
 
         // This is a devCheck not a "return null" check because it indicates an internal error.
         devCheck(quantityType == defaultUnit.quantityType) {
-            "Expected consistent quantity types on EditableItem but have $quantityType and $defaultUnit" }
+            "Expected consistent quantity types on EditableItem but have $quantityType and $defaultUnit"
+        }
         return Item(
             id = id,
             dataSetId = dataSetId,
@@ -1215,19 +1229,31 @@ data class EditableItem private constructor(
     companion object {
         fun fromItem(item: Item?, dataSet: DataSet): EditableItem {
             val defaultUnitIdByQuantityTypeOrdinal = QuantityType.entries.map { quantityType ->
-                getRelevantMeasureUnits(dataSet, quantityType, includeDisplayOnly = false).first().id
+                getRelevantMeasureUnits(
+                    dataSet,
+                    quantityType,
+                    includeDisplayOnly = false
+                ).first().id
             }.toMutableList()
             if (item == null) {
                 // It's probably reasonable to default to sold by weight, and it's nice not to have
                 // the possibility of a null state.
                 val quantityType = QuantityType.WEIGHT
                 // TODO DELETE getRelevantMeasureUnits(dataSet, quantityType, includeDisplayOnly = false).first()
-                return EditableItem(0, dataSet.id, "", QuantityType.WEIGHT, defaultUnitIdByQuantityTypeOrdinal,"")
+                return EditableItem(
+                    0,
+                    dataSet.id,
+                    "",
+                    QuantityType.WEIGHT,
+                    defaultUnitIdByQuantityTypeOrdinal,
+                    ""
+                )
             } else {
                 devCheck(dataSet.id == item.dataSetId) {
                     "Expected identical dataSetIds but have dataSet.id ${dataSet.id} and item.dataSetid ${item.dataSetId}"
                 }
-                defaultUnitIdByQuantityTypeOrdinal[item.defaultUnit.quantityType.ordinal] = item.defaultUnit.id
+                defaultUnitIdByQuantityTypeOrdinal[item.defaultUnit.quantityType.ordinal] =
+                    item.defaultUnit.id
                 return EditableItem(
                     item.id,
                     dataSet.id,
@@ -1504,7 +1530,9 @@ data class PriceHistory(
             itemId = itemId,
             sourceId = sourceId,
             price = price,
-            measure = MeasuredValue(measure, baseUnitForQuantityType(originalUnit.quantityType)).to(originalUnit),
+            measure = MeasuredValue(measure, baseUnitForQuantityType(originalUnit.quantityType)).to(
+                originalUnit
+            ),
             // TODO DELETE originalUnit = originalUnit,
             confirmed = confirmed,
             details = details,
@@ -2004,10 +2032,10 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
     // TODO: I hate the need to pass some of these arguments and I am rushing, think through later
     fun confirmPrice(dataSet: DataSet, price: Price, locale: Locale) {
         // TODO: Problems with errors and previousPrice getting out of step etc?
-            // TODO: This round-tripping is insane but currently the only way to "confirm" a price is via EditablePrice
-            val editablePrice = EditablePrice(price, locale, getCurrencyFormat(dataSet, locale))
-            val currentPrice = editablePrice.toDomain(locale)
-            val newPrice = editablePrice.copy(toConfirm = true).toDomain(locale)
+        // TODO: This round-tripping is insane but currently the only way to "confirm" a price is via EditablePrice
+        val editablePrice = EditablePrice(price, locale, getCurrencyFormat(dataSet, locale))
+        val currentPrice = editablePrice.toDomain(locale)
+        val newPrice = editablePrice.copy(toConfirm = true).toDomain(locale)
         updatePrice(newPrice!!, currentPrice)
     }
 
@@ -2119,7 +2147,11 @@ const val maxNotesLength = 200 // TODO TEMP FOR TESTING, SHOULD BE 1024
 @Composable
 fun MainScreen(
     saveStatus: SaveStatus,
-    source: Source?, sourceList: List<Source>, item: Item?, itemList: List<Item>, onSelectedItemIdChange: (Long) -> Unit,
+    source: Source?,
+    sourceList: List<Source>,
+    item: Item?,
+    itemList: List<Item>,
+    onSelectedItemIdChange: (Long) -> Unit,
     onSelectedSourceIdChange: (Long?) -> Unit,
 ) {
     var showItemSheet by remember { mutableStateOf(false) }
@@ -2134,7 +2166,11 @@ fun MainScreen(
         // we need support from our parent (or this needs moving up into the parent) to do that.
 
         // Item selector
-        val clickableModifier = if (saveStatus.isNotBusy()) { Modifier.clickable  { Log.d("MyApp", "SPS"); showItemSheet = true } } else { Modifier }
+        val clickableModifier = if (saveStatus.isNotBusy()) {
+            Modifier.clickable { Log.d("MyApp", "SPS"); showItemSheet = true }
+        } else {
+            Modifier
+        }
         // TODO: For reasons I don't quite understand, using key() here avoids a frame or two of delay in applying the colors = when saveStatus changes - I think the basic idea (per ChatGPT) is that this forces the whole thing to be recomposed, but it is a bit voodoo
         key(saveStatus) {
             TextField(
@@ -2166,7 +2202,7 @@ fun MainScreen(
                     16.dp
                 )
                 .fillMaxWidth()
-                //.background(color = Color.Red) // TODO DEBUG HACK
+            //.background(color = Color.Red) // TODO DEBUG HACK
         )
 
         // If sourceList is empty this will generate a single-item menu with just "None" in,
@@ -2417,7 +2453,10 @@ fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's O
     // try to encourage action, maybe we need a supportingText or a different layout or both. I'll
     // leave the code in for now anyway.
     // TODO: Ideally we should be using an AugmentedPrice here and its age class, not determining it separately for ourself
-    Text(relativeTime, color = if (ageInSeconds < inflationThresholdDays * secondsPerDay) Color.Unspecified else MaterialTheme.colorScheme.error)
+    Text(
+        relativeTime,
+        color = if (ageInSeconds < inflationThresholdDays * secondsPerDay) Color.Unspecified else MaterialTheme.colorScheme.error
+    )
 }
 
 fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
@@ -2455,7 +2494,8 @@ data class UnitPrice(val numerator: Double, val denominator: MeasureUnit) : Comp
         val thisAsMeasuredValue = MeasuredValue(this.numerator, this.denominator)
         val otherAsMeasuredValue = MeasuredValue(other.numerator, other.denominator)
         val baseUnit = baseUnitForQuantityType(thisAsMeasuredValue.unit.quantityType)
-        return thisAsMeasuredValue.asValue(baseUnit).compareTo(otherAsMeasuredValue.asValue(baseUnit))
+        return thisAsMeasuredValue.asValue(baseUnit)
+            .compareTo(otherAsMeasuredValue.asValue(baseUnit))
     }
 }
 
@@ -2534,7 +2574,8 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     // is "expected", and users probably also expect the dropdown to close on rotation.
     var expanded by remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.then(
+    Box(
+        modifier = modifier.then(
         if (enabled) Modifier.clickable {
             expanded = true
             @Suppress("KotlinConstantConditions") onExpand(expanded)
@@ -3016,19 +3057,21 @@ fun <T> NewDataTable(
     columnAlignments: List<CellAlignment> = List(header.size) { CellAlignment.Start },
 ) {
     devRequire(header.size == columns.size) { "Expected same header and columns size but have ${header.size} and ${columns.size} respectively" }
-    devRequire(header.size == columnWeights.size) { "Expected same header and columnWeights size but have ${header.size} and ${columnWeights.size} respectively"}
-    devRequire(header.size == columnAlignments.size) { "Expected same header and columnAlignments size but have ${header.size} and ${columnAlignments.size} respectively"}
+    devRequire(header.size == columnWeights.size) { "Expected same header and columnWeights size but have ${header.size} and ${columnWeights.size} respectively" }
+    devRequire(header.size == columnAlignments.size) { "Expected same header and columnAlignments size but have ${header.size} and ${columnAlignments.size} respectively" }
 
-    fun alignmentModifier(cellAlignment: CellAlignment) : Modifier = when (cellAlignment) {
+    fun alignmentModifier(cellAlignment: CellAlignment): Modifier = when (cellAlignment) {
         CellAlignment.Start -> Modifier.wrapContentWidth(Alignment.Start)
         CellAlignment.Center -> Modifier.wrapContentWidth(Alignment.CenterHorizontally)
         CellAlignment.End -> Modifier.wrapContentWidth(Alignment.End)
     }
 
     Column {
-        Row(modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceContainerHighest)
+        Row(
+            modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceContainerHighest)
             //.height(56.dp) // TODO EXPERIMENTAL - NOT SURE IF HEADER NEEDS TO BE AS TALL AS THE ROWS FOR A START, IT ISN'T TAPPABLE
-            ,  verticalAlignment = Alignment.CenterVertically) {
+            , verticalAlignment = Alignment.CenterVertically
+        ) {
             header.forEachIndexed { colIndex, title ->
                 Box(
                     Modifier
@@ -3142,7 +3185,6 @@ fun DataTable(
         }
 
 
-
         // data rows
         // TODO: Far from sure I like the way I'm highlighting highlightRow, but it's not too bad. I was worried using any kind of font weight change would break the decimal point alignment but in practice it doesn't appear to be a big problem.
         rows.forEachIndexed { rowIndex, rowData ->
@@ -3166,7 +3208,9 @@ fun DataTable(
                         rowData.forEachIndexed { index, cell ->
                             Text(
                                 text = cell,
-                                style = if (rowIndex != highlightRow) MaterialTheme.typography.bodyLarge else  MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                                style = if (rowIndex != highlightRow) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.Medium
+                                ),
                                 color = if (rowIndex != highlightRow) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSecondaryContainer,
                                 textAlign = if (index != 1) TextAlign.Start else TextAlign.End, // TODO: hardcoding 1 is hacky
                                 modifier = Modifier
@@ -3807,7 +3851,9 @@ fun HomeScreenScaffold(
                 TopAppBar(
                     title = { Text(dataSet?.name ?: "") }, // TODO: better null handling?
                     navigationIcon = {
-                        IconButton(enabled = saveStatus.isNotBusy(), onClick = { coroutineScope.launch { drawerState.open() } }) {
+                        IconButton(
+                            enabled = saveStatus.isNotBusy(),
+                            onClick = { coroutineScope.launch { drawerState.open() } }) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
                                 contentDescription = "Open drawer"
@@ -3815,7 +3861,9 @@ fun HomeScreenScaffold(
                         }
                     },
                     actions = {
-                        IconButton(enabled = saveStatus.isNotBusy(), onClick = { menuExpanded = true }) {
+                        IconButton(
+                            enabled = saveStatus.isNotBusy(),
+                            onClick = { menuExpanded = true }) {
                             Icon(
                                 Icons.Default.MoreVert,
                                 contentDescription = "Menu"
@@ -3889,7 +3937,7 @@ fun HomeScreenScaffold(
                             16.dp
                         )
                         .fillMaxWidth()
-                        //.background(color = Color.Red) // TODO DEBUG HACK
+                    //.background(color = Color.Red) // TODO DEBUG HACK
                 )
 
                 if (dataSet != null) {
@@ -3927,7 +3975,7 @@ fun HomeScreenScaffold(
                                 modifier = Modifier.height(
                                     16.dp
                                 )
-                                    //.background(color = Color.Red) // TODO DEBUG HACK
+                                //.background(color = Color.Red) // TODO DEBUG HACK
                             )
                         }
                     }
@@ -4147,7 +4195,15 @@ fun PriceComparisonCard(
             val columns = remember(dataSet, locale) {
                 listOf<@Composable (AugmentedPrice) -> Unit>(
                     { augmentedPrice -> Text(augmentedPrice.sourceName) },
-                    { augmentedPrice -> Text(formatPrice(augmentedPrice.unitPrice.numerator, dataSet, locale)) },
+                    { augmentedPrice ->
+                        Text(
+                            formatPrice(
+                                augmentedPrice.unitPrice.numerator,
+                                dataSet,
+                                locale
+                            )
+                        )
+                    },
                     // TODO: Should I effectively line the price judgement and age icons up in columns, e.g. by putting a dummy blank icon in the judgement column if we aren't willing to make a judgement? or is it ok to just have a "row" of icons and not worry about vertical alignment across rows?
                     { augmentedPrice ->
                         Row {
@@ -4177,7 +4233,11 @@ fun PriceComparisonCard(
                 highlightRow = highlightRow,
                 // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes. TBH fixed weights may be fine now we are not planning on showing free-form notes.
                 columnWeights = listOf(1.7f, 1f, 0.8f),
-                columnAlignments = listOf(CellAlignment.Start, CellAlignment.End, CellAlignment.Start),
+                columnAlignments = listOf(
+                    CellAlignment.Start,
+                    CellAlignment.End,
+                    CellAlignment.Start
+                ),
             )
         }
     }
@@ -4974,7 +5034,11 @@ fun EditItemScreen(
                 null,
             ),
             // TODO: Don't be over-eager to have supportingText here - if we don't need it for any of them items that is fine, and we can then avoid this maybe-nonstandardness in this case at least, and revert to the standard item height of 40.dp - "Item" alone may be a fine option, or "Item or group of items" or something like that would probably be a fine option with no supporting text - think carefully about wording but don't assume we need supportingText
-            Triple(QuantityType.ITEM, "Item", "Per item or pack of items") // TODO: POOR WORDING FOR BOTH SHORT NAME AND SUPPORTING TEXT? THINK
+            Triple(
+                QuantityType.ITEM,
+                "Item",
+                "Per item or pack of items"
+            ) // TODO: POOR WORDING FOR BOTH SHORT NAME AND SUPPORTING TEXT? THINK
         )
         var selectedOption = uiContent.editableItem.value.quantityType
         // TODO: This radio group needs to be enabled iff saveStatus.isNotBusy()
@@ -5099,7 +5163,10 @@ fun EditItemScreen(
                         remember(vm.uiContent.dataSet) { getRelevantUnitFamilies(vm.uiContent.dataSet) }
 
                     val relevantUnitList =
-                        remember(vm.uiContent.dataSet, vm.uiContent.editableItem.value.quantityType) {
+                        remember(
+                            vm.uiContent.dataSet,
+                            vm.uiContent.editableItem.value.quantityType
+                        ) {
                             getRelevantMeasureUnits(
                                 vm.uiContent.dataSet,
                                 vm.uiContent.editableItem.value.quantityType,
@@ -5118,7 +5185,12 @@ fun EditItemScreen(
                                 "Expected non-null defaultUnit to be selected; got $it"
                             }
                             if (uiContent.editableItem.value.defaultUnit != defaultUnit!!) {
-                                val defaultUnitIdByQuantityTypeOrdinal =  uiContent.editableItem.value.defaultUnitIdByQuantityTypeOrdinal.toMutableList().also { it[uiContent.editableItem.value.quantityType.ordinal] = defaultUnit.id }
+                                val defaultUnitIdByQuantityTypeOrdinal =
+                                    uiContent.editableItem.value.defaultUnitIdByQuantityTypeOrdinal.toMutableList()
+                                        .also {
+                                            it[uiContent.editableItem.value.quantityType.ordinal] =
+                                                defaultUnit.id
+                                        }
                                 // TODO DELETE defaultUnitIdByQuantityTypeOrdinal[uiContent.editableItem.value.quantityType.ordinal] = defaultUnit.id
                                 vm.setUIContentEditableItem(
                                     uiContent.editableItem.value.copy(
@@ -5128,7 +5200,7 @@ fun EditItemScreen(
                             }
                         },
                         label = { Text("Default unit") },
-                        supportingText = { Text("Used only as a default when entering a price for the first time. You can still choose another unit." ) },
+                        supportingText = { Text("Used only as a default when entering a price for the first time. You can still choose another unit.") },
                         items = relevantUnitList,
                         // Show dividers between unit families TODO: Copy and paste of code in ItemSourceInfo
                         getDividerBetween = { previousItem, item ->
@@ -6515,7 +6587,12 @@ class EditItemsViewModel(
     // TODO DELETE initialList: List<Item>?,
     dataQuery: Flow<List<Item>>,
     // TODO DELETE public val dataSet: DataSet
-) : GeneralSelectorViewModel<Item>(savedStateHandle, getName, uiContent.itemList /* TODO: rename initialList for consistency with other cases? */, dataQuery) {
+) : GeneralSelectorViewModel<Item>(
+    savedStateHandle,
+    getName,
+    uiContent.itemList /* TODO: rename initialList for consistency with other cases? */,
+    dataQuery
+) {
     init {
         uiContent.saveState(savedStateHandle)
     }
@@ -7057,7 +7134,9 @@ data class PriceHistoryDelta(
 fun PriceHistory.toPriceHistoryDelta(): PriceHistoryDelta {
     return PriceHistoryDelta(
         price = price,
-        measure = MeasuredValue(measure, baseUnitForQuantityType(originalUnit.quantityType)).to(originalUnit),
+        measure = MeasuredValue(measure, baseUnitForQuantityType(originalUnit.quantityType)).to(
+            originalUnit
+        ),
         confirmed = confirmed,
         details = details,
         modifiedAt = modifiedAt
@@ -7066,7 +7145,10 @@ fun PriceHistory.toPriceHistoryDelta(): PriceHistoryDelta {
 
 // TODO: Where does this belong and what naming and calling convention should it have?!?!?!
 fun diff(lhs: PriceHistory, rhs: PriceHistory): PriceHistoryDelta {
-    val rhsMeasure = MeasuredValue(rhs.measure, baseUnitForQuantityType(rhs.originalUnit.quantityType)).to(rhs.originalUnit)
+    val rhsMeasure = MeasuredValue(
+        rhs.measure,
+        baseUnitForQuantityType(rhs.originalUnit.quantityType)
+    ).to(rhs.originalUnit)
     val confirmed = if (lhs.confirmed == rhs.confirmed) null else rhs.confirmed
     // TODO: OK to trim()?
     val details = if (lhs.details.trim() == rhs.details.trim()) null else rhs.details
@@ -7089,7 +7171,11 @@ class ViewPriceHistoryViewModel(
         // TODO!?uiContent.saveState(savedStateHandle)
     }
 
-    val priceHistoryListFlow = priceTrackerRepository.getPriceHistory(uiContent.dataSetId, uiContent.itemId, uiContent.sourceId)
+    val priceHistoryListFlow = priceTrackerRepository.getPriceHistory(
+        uiContent.dataSetId,
+        uiContent.itemId,
+        uiContent.sourceId
+    )
     val priceHistoryDeltaListFlow = priceHistoryListFlow.flatMapLatest { priceHistoryList ->
         // TODO: This might be clearer implemented as a zip() operation, if there is one where I can get a "thing vs null" at the end rather than losing an item
         if (priceHistoryList.isEmpty()) {
@@ -7479,7 +7565,8 @@ fun AppNavigation() {
                     EditItemsViewModel(
                         savedStateHandle = handle,
                         getName = { it -> it.name },
-                        sharedViewModel.editItemsScreenUIContent ?: EditItemsScreenUIContent.fromSavedState(handle)!!,
+                        sharedViewModel.editItemsScreenUIContent
+                            ?: EditItemsScreenUIContent.fromSavedState(handle)!!,
                         // TODO: DELETE initialList = sharedViewModel.editItemsScreenUIContent?.itemList,
                         dataQuery = app.priceTrackerRepository.getAllItems(dataSetId),
                         // TODO: DELETE dataSet = sharedViewModel.editItemsScreenUIContent!!.dataSet
@@ -7723,13 +7810,15 @@ This may be complete crap. The example of how to use it is probably as long as t
         }
 
         composable(
-            "viewPriceHistory/{dataSetId}/{itemId}/{sourceId}", enterTransition = { slideLeftTransition() },
+            "viewPriceHistory/{dataSetId}/{itemId}/{sourceId}",
+            enterTransition = { slideLeftTransition() },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val itemId = backStackEntry.arguments?.getString("itemId")!!.toLong()
             val sourceId = backStackEntry.arguments?.getString("sourceId")!!.toLong()
-            val quantityType = QuantityType.WEIGHT // TODO: We completely don't need this, I started adding it so I 'm going to pass this fixed value around to avoid ripping the code I just added out and *then* finding out I did need it - but rip it out later
+            val quantityType =
+                QuantityType.WEIGHT // TODO: We completely don't need this, I started adding it so I 'm going to pass this fixed value around to avoid ripping the code I just added out and *then* finding out I did need it - but rip it out later
             screenWithViewModel<ViewPriceHistoryViewModel, ViewPriceHistoryScreenUIContent>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { /* TODO! */ },
@@ -7914,26 +8003,26 @@ fun ItemSourceInfo2(
                     }
                 }
 
-                        // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
-                    if (priceHistoryDelta.confirmed != null) {
-                        LabeledItem(
-                            modifier = Modifier.padding(bottom = 8.dp),
-                            label = "Confirmed" /* "Last checked" */
-                        ) {
-                            Text(dateFormatter2.format(priceHistoryDelta.confirmed))
-                        }
+                // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
+                if (priceHistoryDelta.confirmed != null) {
+                    LabeledItem(
+                        modifier = Modifier.padding(bottom = 8.dp),
+                        label = "Confirmed" /* "Last checked" */
+                    ) {
+                        Text(dateFormatter2.format(priceHistoryDelta.confirmed))
                     }
+                }
 
-                    // TODO: Should we show this if it changed *to* an empty string, or should we elide it?
-                    if (priceHistoryDelta.details != null ) {
-                        if (priceHistoryDelta.details.isNotEmpty()) {
-                            Row(modifier = Modifier.padding(bottom = 8.dp)) {
-                                LabeledItem("Notes") {
-                                    Text(priceHistoryDelta.details)
-                                }
+                // TODO: Should we show this if it changed *to* an empty string, or should we elide it?
+                if (priceHistoryDelta.details != null) {
+                    if (priceHistoryDelta.details.isNotEmpty()) {
+                        Row(modifier = Modifier.padding(bottom = 8.dp)) {
+                            LabeledItem("Notes") {
+                                Text(priceHistoryDelta.details)
                             }
                         }
                     }
+                }
 
                 Log.d("MyApp", "TODO5")
 
@@ -7951,13 +8040,16 @@ fun ViewPriceHistoryScreen(
     // TODO: We could use null as initial value but I suspect we don't need it and it will be more convenient to default to empty
     val priceHistoryList by viewModel.priceHistoryListFlow.collectAsStateWithLifecycle(emptyList())
     Log.d("MyApp", "priceHistoryList.size ${priceHistoryList.size}")
-    val priceHistoryDeltaList by viewModel.priceHistoryDeltaListFlow.collectAsStateWithLifecycle(emptyList())
+    val priceHistoryDeltaList by viewModel.priceHistoryDeltaListFlow.collectAsStateWithLifecycle(
+        emptyList()
+    )
     Log.d("MyApp", "priceHistoryDeltaList $priceHistoryDeltaList")
 
     // TODO: This is a hack - we could and probably should pass the DataSet through from the home screen using the shared view model, but I'm just hacking for now. It's particualrly inefficient as we currently don't have a "get data set ID X" function so this is getting all data sets - but not worth adding that functino if we are just going to pass the dataset through soon
     val dataSetList by viewModel.dataSetFlow.collectAsStateWithLifecycle(emptyList())
     // TODO: It feels like I ought to be able to fold this singleOrNull *into* the flow, but maybe I'm confused - anyway, as per previous comment this is likely temporary code so not worth worrying about unless it lives
-    val dataSet = dataSetList.singleOrNull { dataSet -> dataSet.id == viewModel.uiContent.dataSetId }
+    val dataSet =
+        dataSetList.singleOrNull { dataSet -> dataSet.id == viewModel.uiContent.dataSetId }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -7969,12 +8061,14 @@ fun ViewPriceHistoryScreen(
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 },
-        title = { Text("TODO") },
+                title = { Text("TODO") },
             )
         },
 
         ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding).padding(screenBorder)) {
+        Column(modifier = Modifier
+            .padding(innerPadding)
+            .padding(screenBorder)) {
             // TODO: Tracking selectedItem like this is a hack, maybe it's right, maybe it's not - if nothing else, we need to highlight selecteditem in list
             var selectedItem: PriceHistory? by remember { mutableStateOf(null) }
 
@@ -7984,23 +8078,35 @@ fun ViewPriceHistoryScreen(
             // TODO: It's likely inefficient to be doing the conversions inside LazyColumn and we should really be pre-filtering the list with val displayItems = remember(priceHistoryList) { priceHistoryList.map { } } or something, but I'm just going to hack it for now
             val locale = LocalConfiguration.current.locales[0]
             val dateFormatter = remember(locale) {
-                DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale).withZone(ZoneId.systemDefault()) }
+                DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale)
+                    .withZone(ZoneId.systemDefault())
+            }
             val dateFormatter2 = remember(locale) { // TODO RENAME
-                DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale).withZone(ZoneId.systemDefault()) }
+                DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
+                    .withZone(ZoneId.systemDefault())
+            }
 
             val timeFormatter = remember(locale) {
-                DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).withZone(ZoneId.systemDefault()) }
+                DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
+                    .withZone(ZoneId.systemDefault())
+            }
             if (dataSet != null) { // TODO: Temp hack, it can be briefly null while we initialise at the moment
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(priceHistoryDeltaList) { priceHistoryDelta ->
-                        ItemSourceInfo2(dataSet, priceHistoryDelta, dateFormatter, dateFormatter2, timeFormatter)
+                        ItemSourceInfo2(
+                            dataSet,
+                            priceHistoryDelta,
+                            dateFormatter,
+                            dateFormatter2,
+                            timeFormatter
+                        )
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
         }
-        }
     }
+}
 
 // TODO: ~/pc-sync/ai-chat-misc-to-move/grok-combo-box-and-alternate-ui.txt is a potentially
 // valuable discussion, touching on some implementation ideas, design ideas (small tweaks and
@@ -8462,7 +8568,8 @@ data class PriceAnalysis(
 
 // TODO: We may want to return a Price with swizzled internal double price value rather than having a custom AugmentedPrice, let's see how it goes.
 // TODO: Make constructor private so we can only construct these via augmentPrice()?
-data class AugmentedPrice( // TODO: not sure about name but experimenting
+data class AugmentedPrice(
+    // TODO: not sure about name but experimenting
     val basePrice: Price, // TODO: just possibly we don't even want this embedded in here
     val sourceName: String, // saves faffing with associatedBy and remember in UI code
     val loyaltyPrice: Double,
@@ -8473,7 +8580,8 @@ data class AugmentedPrice( // TODO: not sure about name but experimenting
     val priceJudgement: PriceJudgement,
 )
 
-val inflationThresholdDays = 1L // 30L // TODO: rename staleThreshold or something? we use it for inflation, but it's about how we define "stale" really, and inflation only kicks in for stale prices
+val inflationThresholdDays =
+    1L // 30L // TODO: rename staleThreshold or something? we use it for inflation, but it's about how we define "stale" really, and inflation only kicks in for stale prices
 val tooOldThresholdDays = 3L //180L // TODO: should be in settings
 
 fun inflationAdjustedPrice(price: Double, ageDays: Long): Double {
@@ -8500,7 +8608,10 @@ enum class PriceJudgement {
 }
 
 // TODO: Should this be a member of PriceJudgement??
-fun judgePrice(augmentedPrice: AugmentedPrice, priceClassificationThresholds: PriceClassificationThresholds?): PriceJudgement {
+fun judgePrice(
+    augmentedPrice: AugmentedPrice,
+    priceClassificationThresholds: PriceClassificationThresholds?
+): PriceJudgement {
     if (priceClassificationThresholds == null) {
         return PriceJudgement.NONE
     } else if (augmentedPrice.unitPrice.numerator < priceClassificationThresholds.good) {
@@ -8513,7 +8624,12 @@ fun judgePrice(augmentedPrice: AugmentedPrice, priceClassificationThresholds: Pr
 }
 
 // TODO: Should this be a companion function/constructor on AugmentedPrice or something like that?
-fun augmentPrice(price: Price, source: Source, unitPriceDenominator: MeasureUnit?, candidateUnitPriceDenominators: List<MeasureUnit>): AugmentedPrice {
+fun augmentPrice(
+    price: Price,
+    source: Source,
+    unitPriceDenominator: MeasureUnit?,
+    candidateUnitPriceDenominators: List<MeasureUnit>
+): AugmentedPrice {
     val loyaltyPrice = price.price * source.loyaltyMultiplier
     // TODO: We could convert to floating point ageDays by getting .seconds and dividing by 86400, but it probably makes little difference in practice.
     val ageDays = Duration.between(price.confirmed, Instant.now()).toDays()
@@ -8523,14 +8639,23 @@ fun augmentPrice(price: Price, source: Source, unitPriceDenominator: MeasureUnit
         sourceName = source.name,
         loyaltyPrice = loyaltyPrice,
         ageDays = ageDays,
-        ageClass = if (ageDays < inflationThresholdDays) { AgeClass.FRESH } else if (ageDays < tooOldThresholdDays) { AgeClass.STALE }
-            else { AgeClass.ANCIENT },
+        ageClass = if (ageDays < inflationThresholdDays) {
+            AgeClass.FRESH
+        } else if (ageDays < tooOldThresholdDays) {
+            AgeClass.STALE
+        } else {
+            AgeClass.ANCIENT
+        },
         inflatedLoyaltyPrice = inflatedLoyaltyPrice,
         // TODO: It feels slightly off that we have to specify a denominator for our unit prices here, but I suppose it's OK - but maybe we could improve the API. We can't choose a "friendly" unit at this point since we don't have all the data across all sources yet (we're building it up).
         unitPrice = if (unitPriceDenominator != null) {
             getUnitPrice(inflatedLoyaltyPrice, price.measure, unitPriceDenominator)
         } else {
-            getFriendlyUnitPrice(inflatedLoyaltyPrice, price.measure, candidateUnitPriceDenominators)
+            getFriendlyUnitPrice(
+                inflatedLoyaltyPrice,
+                price.measure,
+                candidateUnitPriceDenominators
+            )
         },
         priceJudgement = PriceJudgement.NONE
     )
@@ -8539,7 +8664,8 @@ fun augmentPrice(price: Price, source: Source, unitPriceDenominator: MeasureUnit
 
 data class PriceClassificationThresholds(
     val good: Double,
-    val bad: Double)
+    val bad: Double
+)
 
 fun quantile(sortedValues: List<Double>, q: Double): Double {
     devRequire(q in 0.0..1.0) { "Expected q in [0, 1] but got $q" }
@@ -8550,7 +8676,9 @@ fun quantile(sortedValues: List<Double>, q: Double): Double {
 
     // It's slightly inefficient to be checking sortedValues is sorted every time, but for our tiny
     // lists it is very cheap and it might catch a bug causing invalid results to be generated.
-    devRequire(sortedValues.zipWithNext().all { (a, b) -> a <= b }) { "Expected sortedValues to be sorted but got $sortedValues" }
+    devRequire(
+        sortedValues.zipWithNext()
+            .all { (a, b) -> a <= b }) { "Expected sortedValues to be sorted but got $sortedValues" }
 
     val doubleIndex = q * (sortedValues.size - 1)
     val lowerIndex = doubleIndex.toInt()
@@ -8562,7 +8690,11 @@ fun quantile(sortedValues: List<Double>, q: Double): Double {
 
 
 // TODO: This code feels a bit awkward somehow, maybe the unit price calculation code needs refactoring and maybe augmentPrice should be inlined as this is its only caller and that *might* help. It also feels like we're having to pass far too much random stuff in as parameters.
-fun analysePrices(dataSet: DataSet?, priceList: List<Price>, sourceList: List<Source>): PriceAnalysis {
+fun analysePrices(
+    dataSet: DataSet?,
+    priceList: List<Price>,
+    sourceList: List<Source>
+): PriceAnalysis {
     val sourceById = sourceList.associateBy { it.id }
     if (dataSet == null) {
         // TODO: having to do this so explicitly feels awful - the result is fine, but the implementation feels bad
@@ -8599,16 +8731,23 @@ fun analysePrices(dataSet: DataSet?, priceList: List<Price>, sourceList: List<So
     var augmentedPriceList = priceList.mapNotNull { price ->
         // TODO: I don't think we can really be in a case where we have a Price but do not have the corresponding Source, but probably best to play it safe. (We fetched all the data "atomically" by combining flows so we shouldn't still be waiting for a query result, but maybe there's a corner case.)
         sourceById[price.sourceId]?.let { source ->
-            val augmentedPrice = augmentPrice(price, source, unitPriceDenominator, candidateUnitPriceDenominators)
+            val augmentedPrice =
+                augmentPrice(price, source, unitPriceDenominator, candidateUnitPriceDenominators)
             unitPriceDenominator = augmentedPrice.unitPrice.denominator
             augmentedPrice
         }
     }.sortedBy { it.unitPrice }
     val recentEnoughPriceList = augmentedPriceList.mapNotNull { augmentedPrice ->
-        if (augmentedPrice.ageClass == AgeClass.ANCIENT ) { null } else { augmentedPrice.unitPrice.numerator }
+        if (augmentedPrice.ageClass == AgeClass.ANCIENT) {
+            null
+        } else {
+            augmentedPrice.unitPrice.numerator
+        }
     }
     Log.d("MyApp", "recentEnoughPriceList $recentEnoughPriceList")
-    val priceClassificationThresholds = if (recentEnoughPriceList.size <= 2) { null } else {
+    val priceClassificationThresholds = if (recentEnoughPriceList.size <= 2) {
+        null
+    } else {
         val lowerQuartile = quantile(recentEnoughPriceList, 0.25)
         val upperQuartile = quantile(recentEnoughPriceList, 0.75)
         val k = 0.1 // TODO: should be in settings?
@@ -8623,7 +8762,12 @@ fun analysePrices(dataSet: DataSet?, priceList: List<Price>, sourceList: List<So
         // the "confirmed x days ago" thing in error color if the price is stale. (We do want to show the recommendation anyway,
         // since maybe the user is checking the store out at home before deciding if they want to go there, so showing the
         // recommendation is probably desirable.)
-        augmentedPrice.copy(priceJudgement = judgePrice(augmentedPrice, priceClassificationThresholds))
+        augmentedPrice.copy(
+            priceJudgement = judgePrice(
+                augmentedPrice,
+                priceClassificationThresholds
+            )
+        )
 
     }
     return PriceAnalysis(augmentedPriceList, priceClassificationThresholds)
