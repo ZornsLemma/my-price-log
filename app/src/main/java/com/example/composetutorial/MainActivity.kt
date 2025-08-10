@@ -1508,6 +1508,7 @@ data class PriceEntity(
         )
     ]
 )
+// TODO: Rename this? Maybe HistoricalPrice or something? I am happy to have the database table called price_history but it is arguably confusing to have a class representing a point-in-time historical price called PriceHistory, as the name seems to imply it is "a history" in itself.
 data class PriceHistory(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
