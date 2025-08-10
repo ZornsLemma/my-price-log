@@ -7838,6 +7838,9 @@ This may be complete crap. The example of how to use it is probably as long as t
                     viewModel, navController,
                     requestClose = {
                         navController.popBackStack()
+                    },
+                    requestEditAsNew = { priceHistoryId ->
+                        Log.d("MyApp", "TODO: requestEditAsNew $priceHistoryId")
                     })
             }
         }
@@ -8035,7 +8038,8 @@ fun ItemSourceInfo2(
 fun ViewPriceHistoryScreen(
     viewModel: ViewPriceHistoryViewModel,
     navController: NavHostController,
-    requestClose: () -> Unit // TODO: requestDismiss? Am I inconsistent about this across different functions or is there a difference?
+    requestClose: () -> Unit, // TODO: requestDismiss? Am I inconsistent about this across different functions or is there a difference?,
+    requestEditAsNew: (priceHistoryId: Long) -> Unit // TODO: We can probably pass an actual PriceHistory to this if it would help
 ) {
     // TODO: We could use null as initial value but I suspect we don't need it and it will be more convenient to default to empty
     val priceHistoryList by viewModel.priceHistoryListFlow.collectAsStateWithLifecycle(emptyList())
@@ -8093,13 +8097,16 @@ fun ViewPriceHistoryScreen(
             if (dataSet != null) { // TODO: Temp hack, it can be briefly null while we initialise at the moment
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(priceHistoryDeltaList) { priceHistoryDelta ->
-                        ItemSourceInfo2(
-                            dataSet,
-                            priceHistoryDelta,
-                            dateFormatter,
-                            dateFormatter2,
-                            timeFormatter
-                        )
+                        // TODO: This box is just a temp hack so I can attach a clickable - I will probably actually show a single-item "overflow" menu at top right to allow this "edit as new" action but this will do for the moment
+                        Box(modifier = Modifier.clickable { requestEditAsNew(42L /* TODO */) }) {
+                            ItemSourceInfo2(
+                                dataSet,
+                                priceHistoryDelta,
+                                dateFormatter,
+                                dateFormatter2,
+                                timeFormatter
+                            )
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
