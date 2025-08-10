@@ -1560,6 +1560,11 @@ data class PriceHistory(
     }
 }
 
+// TODO: No idea where this should belong or what style it should have
+fun PriceHistory.toEditablePrice(priceId: Long, locale: Locale, dataSet: DataSet): EditablePrice {
+    return EditablePrice(toPrice().copy(id = priceId), locale, getCurrencyFormat(dataSet, locale))
+}
+
 // TODO: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
 // that effectively tells us the quantity type implicitly and we don't need to join to item to get
 // it. However, I suspect it still has some value because it allows us to do a bit of extra
@@ -3440,6 +3445,7 @@ data class EditPriceScreenUIContent(
     val dataSet: DataSet,
     val item: Item,
     val source: Source,
+    val nonLinearEdit: Boolean,
     val frozenLocale: Locale,
 ) {
     fun saveState(handle: SavedStateHandle) {
@@ -3448,6 +3454,7 @@ data class EditPriceScreenUIContent(
         handle[DATA_SET_KEY] = dataSet
         handle[ITEM_KEY] = item
         handle[SOURCE_KEY] = source
+        handle[NON_LINEAR_EDIT_KEY] = nonLinearEdit
         handle[LOCALE_TAG] = frozenLocale.toLanguageTag()
     }
 
@@ -3462,6 +3469,7 @@ data class EditPriceScreenUIContent(
         private const val DATA_SET_KEY = "dataSet"
         private const val ITEM_KEY = "item"
         private const val SOURCE_KEY = "source"
+        private const val NON_LINEAR_EDIT_KEY = "non_linear_edit"
         private const val LOCALE_TAG = "localeTag"
 
         fun fromSavedState(handle: SavedStateHandle): EditPriceScreenUIContent? {
@@ -3471,8 +3479,9 @@ data class EditPriceScreenUIContent(
             val savedDataSet: DataSet? = handle[DATA_SET_KEY]
             val savedItem: Item? = handle[ITEM_KEY]
             val savedSource: Source? = handle[SOURCE_KEY]
+            val savedNonLinearEdit: Boolean? = handle[NON_LINEAR_EDIT_KEY]
             val savedLocaleTag: String? = handle[LOCALE_TAG]
-            if (savedEditablePrice != null && savedOriginalPrice != null && savedDataSet != null && savedItem != null && savedSource != null && savedLocaleTag != null) {
+            if (savedEditablePrice != null && savedOriginalPrice != null && savedDataSet != null && savedItem != null && savedSource != null && savedNonLinearEdit != null && savedLocaleTag != null) {
                 Log.d("MyApp", "reconstructed EditPriceScreenUIContent")
                 return EditPriceScreenUIContent(
                     mutableStateOf(savedEditablePrice),
@@ -3480,6 +3489,7 @@ data class EditPriceScreenUIContent(
                     savedDataSet,
                     savedItem,
                     savedSource,
+                    savedNonLinearEdit,
                     Locale.forLanguageTag(savedLocaleTag)
                 )
             } else {
@@ -6452,6 +6462,27 @@ class SharedViewModel : ViewModel() {
             dataSet = dataSet,
             item = item,
             source = source,
+            nonLinearEdit = false,
+            frozenLocale = frozenLocale,
+        )
+    }
+
+    // TODO: It might be possible to share some code with the non-2 version or refactor but let's just
+    // bash this out for now.
+    fun setEditPriceScreenContent2(
+        dataSet: DataSet,
+        item: Item,
+        source: Source,
+        editablePrice: EditablePrice,
+        frozenLocale: Locale
+    ) {
+        editPriceScreenUIContent = EditPriceScreenUIContent(
+            editablePrice = mutableStateOf(editablePrice),
+            originalPrice = editablePrice,
+            dataSet = dataSet,
+            item = item,
+            source = source,
+            nonLinearEdit = true,
             frozenLocale = frozenLocale,
         )
     }
@@ -6474,7 +6505,7 @@ class SharedViewModel : ViewModel() {
             item = item,
             source = source,
             price = price,
-            frozenLocale = frozenLocale
+            // TODO delete frozenLocale = frozenLocale
         )
     }
 
@@ -6918,11 +6949,16 @@ class EditPriceViewModel(
     }
 
     suspend fun performSave() {
+        // nonLinearEdit indicates that we are editing an old historical value as a candidate for
+        // updating the current record, so if the user clicks save it *is* a change even if
+        // editablePrice and originalPrice are the same. (We don't just try to hack originalPrice
+        // because we don't want to warn the user about losing non-existent changes if they click
+        // close instead of save.)
         // TODO: Double check the handling of toConfirm here. My thinking is that if editablePrice
         // has toConfirm set that constitutes a change, so by using the real value in editablePrice
         // and forcing originalPrice to have toConfirm false that does what we want there, and will
         // also pick up any other changes.
-        if (uiContent.editablePrice.value == uiContent.originalPrice.copy(toConfirm = false)) {
+        if (!uiContent.nonLinearEdit && uiContent.editablePrice.value == uiContent.originalPrice.copy(toConfirm = false)) {
             Log.d(
                 "MyApp",
                 "performSave() is a no-op; returning early to avoid bloating price history"
@@ -7145,7 +7181,7 @@ data class ViewPriceHistoryScreenUIContent(
     val item: Item,
     val source: Source,
     val price: Price,
-    val frozenLocale: Locale,
+    // TODO: We probably don't want this - we don't need a frozen local during this view only screen: val frozenLocale: Locale,
     // TODO: WE PROBABLY DON'T NEED THIS ANY MORE val quantityType: QuantityType,
 ) {
     companion object {
@@ -7156,6 +7192,7 @@ data class ViewPriceHistoryScreenUIContent(
 }
 
 data class PriceHistoryDelta(
+    val priceHistory: PriceHistory, // TODO: having this here feels a bit crap, maybe it's OK
     val price: Double?,
     val measure: MeasuredValue?,
     val confirmed: Instant?,
@@ -7166,6 +7203,7 @@ data class PriceHistoryDelta(
 // TODO: Yet another utterly incoherent style of adding conversion between data classes, no idea what I "ought" to do and this code is an inconsistent mish-mash of styles.
 fun PriceHistory.toPriceHistoryDelta(): PriceHistoryDelta {
     return PriceHistoryDelta(
+        priceHistory = this,
         price = price,
         measure = MeasuredValue(measure, baseUnitForQuantityType(originalUnit.quantityType)).to(
             originalUnit
@@ -7187,6 +7225,7 @@ fun diff(lhs: PriceHistory, rhs: PriceHistory): PriceHistoryDelta {
     val details = if (lhs.details.trim() == rhs.details.trim()) null else rhs.details
     val priceOrMeasureChanged = (lhs.price != rhs.price) || (lhs.measure != rhs.measure)
     return PriceHistoryDelta(
+        priceHistory = rhs,
         price = if (!priceOrMeasureChanged) null else rhs.price,
         measure = if (!priceOrMeasureChanged) null else rhsMeasure,
         confirmed = confirmed,
@@ -7848,6 +7887,7 @@ This may be complete crap. The example of how to use it is probably as long as t
             enterTransition = { slideLeftTransition() },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
+            val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
             screenWithViewModel<ViewPriceHistoryViewModel, ViewPriceHistoryScreenUIContent>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { /* TODO! */ },
@@ -7868,8 +7908,27 @@ This may be complete crap. The example of how to use it is probably as long as t
                     requestClose = {
                         navController.popBackStack()
                     },
-                    requestEditAsNew = { priceHistoryId ->
-                        Log.d("MyApp", "TODO: requestEditAsNew $priceHistoryId")
+                    requestEditAsNew = { priceHistory ->
+                        Log.d("MyApp", "TODO: requestEditAsNew $priceHistory")
+                        sharedViewModel.setEditPriceScreenContent2(
+                            viewModel.uiContent.dataSet,
+                            viewModel.uiContent.item,
+                            viewModel.uiContent.source,
+                            // TODO: We need to be passing a "copied from" reference to put on the new record
+                            editablePrice = priceHistory.toEditablePrice(
+                                // It's important we provide the current price ID, since we must update
+                                // that existing record instead of adding a new one. The price ID
+                                // might in principle have changed since the history record was
+                                // created.
+                                priceId = viewModel.uiContent.price.id,
+                                locale,
+                                viewModel.uiContent.dataSet
+                            ),
+                            locale
+                        )
+                        navController.navigate("editPrice")
+                        // TODO: After this edit, we probably want to scroll to the top of the
+                        // price history screen so they user can see the new record
                     })
             }
         }
@@ -8068,7 +8127,7 @@ fun ViewPriceHistoryScreen(
     viewModel: ViewPriceHistoryViewModel,
     navController: NavHostController,
     requestClose: () -> Unit, // TODO: requestDismiss? Am I inconsistent about this across different functions or is there a difference?,
-    requestEditAsNew: (priceHistoryId: Long) -> Unit // TODO: We can probably pass an actual PriceHistory to this if it would help
+    requestEditAsNew: (priceHistory: PriceHistory) -> Unit
 ) {
     // TODO: We could use null as initial value but I suspect we don't need it and it will be more convenient to default to empty
     val priceHistoryList by viewModel.priceHistoryListFlow.collectAsStateWithLifecycle(emptyList())
@@ -8123,7 +8182,7 @@ fun ViewPriceHistoryScreen(
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(priceHistoryDeltaList) { priceHistoryDelta ->
                         // TODO: This box is just a temp hack so I can attach a clickable - I will probably actually show a single-item "overflow" menu at top right to allow this "edit as new" action but this will do for the moment
-                        Box(modifier = Modifier.clickable { requestEditAsNew(42L /* TODO */) }) {
+                        Box(modifier = Modifier.clickable { requestEditAsNew(priceHistoryDelta.priceHistory) }) {
                             ItemSourceInfo2(
                                 dataSet,
                                 priceHistoryDelta,
