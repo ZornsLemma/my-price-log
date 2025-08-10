@@ -6417,6 +6417,9 @@ class SharedViewModel : ViewModel() {
     // TODO: Should we be using get/set functions or a read-only property and a set?
     var editPriceScreenUIContent: EditPriceScreenUIContent? = null
 
+    // TODO: As editPriceScreenUIContent
+    var viewPriceHistoryScreenUIContent: ViewPriceHistoryScreenUIContent? = null
+
     // frozenLocale becomes part of the edit screen state - it was used to convert the doubles to
     // strings, and we will use it to convert the strings back to doubles if the user saves. If the
     // user changes the locale while on the edit screen, we do *not* want to reflect that change
@@ -6450,6 +6453,28 @@ class SharedViewModel : ViewModel() {
             item = item,
             source = source,
             frozenLocale = frozenLocale,
+        )
+    }
+
+    // TODO: Some overlap with setEditPriceScreenContent()?
+    fun setViewPriceHistoryScreenContent(
+        uiContent: HomeScreenUIContent,
+        frozenLocale: Locale
+    ) {
+        // !! is justified because uiContent was shown on the home screen and the edit price button
+        // was visible, which can only happen if we have all three available.
+        val dataSet = uiContent.dataSet!!
+        val item = uiContent.item!!
+        val source = uiContent.source!!
+        val price =
+            uiContent.priceList.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }!!
+
+        viewPriceHistoryScreenUIContent = ViewPriceHistoryScreenUIContent(
+            dataSet = dataSet,
+            item = item,
+            source = source,
+            price = price,
+            frozenLocale = frozenLocale
         )
     }
 
@@ -7116,11 +7141,19 @@ class EditItemViewModel(
 }
 
 data class ViewPriceHistoryScreenUIContent(
-    val dataSetId: Long,
-    val itemId: Long,
-    val sourceId: Long,
-    val quantityType: QuantityType,
-)
+    val dataSet: DataSet,
+    val item: Item,
+    val source: Source,
+    val price: Price,
+    val frozenLocale: Locale,
+    // TODO: WE PROBABLY DON'T NEED THIS ANY MORE val quantityType: QuantityType,
+) {
+    companion object {
+        fun fromSavedState(handle: SavedStateHandle): ViewPriceHistoryScreenUIContent? {
+            TODO() // TODO: We also need to make sure this actually gets saved in the first place
+        }
+    }
+}
 
 data class PriceHistoryDelta(
     val price: Double?,
@@ -7172,9 +7205,9 @@ class ViewPriceHistoryViewModel(
     }
 
     val priceHistoryListFlow = priceTrackerRepository.getPriceHistory(
-        uiContent.dataSetId,
-        uiContent.itemId,
-        uiContent.sourceId
+        uiContent.dataSet.id,
+        uiContent.item.id,
+        uiContent.source.id
     )
     val priceHistoryDeltaListFlow = priceHistoryListFlow.flatMapLatest { priceHistoryList ->
         // TODO: This might be clearer implemented as a zip() operation, if there is one where I can get a "thing vs null" at the end rather than losing an item
@@ -7483,8 +7516,9 @@ fun AppNavigation() {
                     // We navigate giving this ID triplet instead of the price ID here, so that if a
                     // price gets deleted, we can still see the full history (and we can tell where
                     // deletions occurred by discontinuities in the price ID, albeit we won't know
-                    // the precise time they happened).
-                    navController.navigate(route = "viewPriceHistory/${uiContent.dataSet!!.id}/${uiContent.item!!.id}/${uiContent.source!!.id}")
+                    // the precise time they happened). TODO: This comment is still relevant and should live somewhere, but now we aren't passing a triplet here it should be moved to the palce where we query the pricehistory table
+                    sharedViewModel.setViewPriceHistoryScreenContent(uiContent, locale)
+                    navController.navigate(route = "viewPriceHistory")
                 },
                 onEditDataSetsClick = { uiContent ->
                     sharedViewModel.setEditDataSetsScreenContent(
@@ -7810,15 +7844,10 @@ This may be complete crap. The example of how to use it is probably as long as t
         }
 
         composable(
-            "viewPriceHistory/{dataSetId}/{itemId}/{sourceId}",
+            "viewPriceHistory",
             enterTransition = { slideLeftTransition() },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
-            val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
-            val itemId = backStackEntry.arguments?.getString("itemId")!!.toLong()
-            val sourceId = backStackEntry.arguments?.getString("sourceId")!!.toLong()
-            val quantityType =
-                QuantityType.WEIGHT // TODO: We completely don't need this, I started adding it so I 'm going to pass this fixed value around to avoid ripping the code I just added out and *then* finding out I did need it - but rip it out later
             screenWithViewModel<ViewPriceHistoryViewModel, ViewPriceHistoryScreenUIContent>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { /* TODO! */ },
@@ -7830,7 +7859,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                         sharedViewModel.viewPriceHistoryUIContent
                             ?: ViewPriceHistoryScreenUIContent.fromSavedState(handle)!!
                             */
-                        ViewPriceHistoryScreenUIContent(dataSetId, itemId, sourceId, quantityType)
+                        sharedViewModel.viewPriceHistoryScreenUIContent ?: ViewPriceHistoryScreenUIContent.fromSavedState(handle)!!
                     )
                 }
             ) { viewModel ->
@@ -8049,11 +8078,7 @@ fun ViewPriceHistoryScreen(
     )
     Log.d("MyApp", "priceHistoryDeltaList $priceHistoryDeltaList")
 
-    // TODO: This is a hack - we could and probably should pass the DataSet through from the home screen using the shared view model, but I'm just hacking for now. It's particualrly inefficient as we currently don't have a "get data set ID X" function so this is getting all data sets - but not worth adding that functino if we are just going to pass the dataset through soon
-    val dataSetList by viewModel.dataSetFlow.collectAsStateWithLifecycle(emptyList())
-    // TODO: It feels like I ought to be able to fold this singleOrNull *into* the flow, but maybe I'm confused - anyway, as per previous comment this is likely temporary code so not worth worrying about unless it lives
-    val dataSet =
-        dataSetList.singleOrNull { dataSet -> dataSet.id == viewModel.uiContent.dataSetId }
+    val dataSet = viewModel.uiContent.dataSet
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
