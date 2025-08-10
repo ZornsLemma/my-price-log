@@ -7066,15 +7066,14 @@ fun PriceHistory.toPriceHistoryDelta(): PriceHistoryDelta {
 
 // TODO: Where does this belong and what naming and calling convention should it have?!?!?!
 fun diff(lhs: PriceHistory, rhs: PriceHistory): PriceHistoryDelta {
-    val price = if (lhs.price == rhs.price) null else rhs.price
-    val measure = if (lhs.measure == rhs.measure) null else MeasuredValue(rhs.measure, baseUnitForQuantityType(rhs.originalUnit.quantityType)).to(rhs.originalUnit)
+    val rhsMeasure = MeasuredValue(rhs.measure, baseUnitForQuantityType(rhs.originalUnit.quantityType)).to(rhs.originalUnit)
     val confirmed = if (lhs.confirmed == rhs.confirmed) null else rhs.confirmed
     // TODO: OK to trim()?
     val details = if (lhs.details.trim() == rhs.details.trim()) null else rhs.details
-    val priceOrMeasureChanged = price != null || measure != null
+    val priceOrMeasureChanged = (lhs.price != rhs.price) || (lhs.measure != rhs.measure)
     return PriceHistoryDelta(
-        price = if (!priceOrMeasureChanged) null else price,
-        measure = if (!priceOrMeasureChanged) null else measure,
+        price = if (!priceOrMeasureChanged) null else rhs.price,
+        measure = if (!priceOrMeasureChanged) null else rhsMeasure,
         confirmed = confirmed,
         details = details,
         modifiedAt = rhs.modifiedAt
