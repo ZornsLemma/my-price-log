@@ -7066,12 +7066,17 @@ fun PriceHistory.toPriceHistoryDelta(): PriceHistoryDelta {
 
 // TODO: Where does this belong and what naming and calling convention should it have?!?!?!
 fun diff(lhs: PriceHistory, rhs: PriceHistory): PriceHistoryDelta {
+    val price = if (lhs.price == rhs.price) null else rhs.price
+    val measure = if (lhs.measure == rhs.measure) null else MeasuredValue(rhs.measure, baseUnitForQuantityType(rhs.originalUnit.quantityType)).to(rhs.originalUnit)
+    val confirmed = if (lhs.confirmed == rhs.confirmed) null else rhs.confirmed
+    // TODO: OK to trim()?
+    val details = if (lhs.details.trim() == rhs.details.trim()) null else rhs.details
+    val priceOrMeasureChanged = price != null || measure != null
     return PriceHistoryDelta(
-        price = if (lhs.price == rhs.price) null else rhs.price,
-        measure = if (lhs.measure == rhs.measure) null else MeasuredValue(rhs.measure, baseUnitForQuantityType(rhs.originalUnit.quantityType)).to(rhs.originalUnit),
-        confirmed = if (lhs.confirmed == rhs.confirmed) null else rhs.confirmed,
-        // TODO: OK to trim()?
-        details = if (lhs.details.trim() == rhs.details.trim()) null else rhs.details,
+        price = if (!priceOrMeasureChanged) null else price,
+        measure = if (!priceOrMeasureChanged) null else measure,
+        confirmed = confirmed,
+        details = details,
         modifiedAt = rhs.modifiedAt
     )
 }
@@ -7755,13 +7760,14 @@ This may be complete crap. The example of how to use it is probably as long as t
 @Composable
 fun ItemSourceInfo2(
     dataSet: DataSet,
-    price: Price,
+    priceHistoryDelta: PriceHistoryDelta,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Box {
+            // TODO: There may well be no need for animateContentSize if this remains used only by price history (where values are static)
             // TODO: animateContentSize() is experimental. If I keep it, I may also want it on the lower
             // card, which can change size when product changes (just not yet, in this mockup). The odd
             // padding here is because we want 8.dp at the left and right and 12.dp at the top and
@@ -7803,129 +7809,138 @@ fun ItemSourceInfo2(
                 Spacer(modifier = Modifier.height(8.dp))
                 */
 
-                if (true) {
-                        // TODO: This row can get a bit congested on small phones when the text in some
-                        // of the LabeledItems gets a bit long. It does kind of work and some further
-                        // tweaking (e.g. making sure we force some space between the three horizontal
-                        // elements) might fix the corner cases better than any alternatives, but do
-                        // have a think to see if some alternate design would look and/or work better.
-                        // TODO: The increased horizontal padding I'm now using (16 vs 8) is also making
-                        // this congestion much worse, at least on my small emulated phone.
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 8.dp),
-                            //horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            LabeledItem(
-                                modifier = Modifier.weight(1f), label = "Price as sold"
-                            ) { // TODO: quite like this, but maybe "Shelf price"? This might also help distinguish this from the "effective/adjusted price". *Just possibly* some sort of similar wording tweak on "Unit price" in ItemSourceInfo might help.
-                                // TODO: There might be an argument for designing the UI to separate the
-                                // price and quantity here, then we side-step the internationalisation
-                                // issues of "for", which is *probably* tractable but might be a
-                                // problem. If I really prefer the UI with a single text string
-                                // containing "for", don't let this put me off sticking with it.
-                                Text(
-                                    "${
-                                        formatPrice(
-                                            price.price,
-                                            dataSet,
-                                            LocalConfiguration.current.locales[0]
-                                        )
-                                    } for ${
-                                        price.measure.toDisplayString(LocalConfiguration.current.locales[0])
-                                    }" /*, color = MaterialTheme.colorScheme.onSurface*/
-                                )
-                            }
-
-                            val relevantUnitFamilies =
-                                remember(dataSet) { getRelevantUnitFamilies(dataSet) }
-
-                            val relevantUnitList =
-                                remember(dataSet, price.measure.unit.quantityType) {
-                                    getRelevantMeasureUnits(
+                if (priceHistoryDelta.price != null || priceHistoryDelta.measure != null) {
+                    devCheck(priceHistoryDelta.price != null && priceHistoryDelta.measure != null) {
+                        "Expected price and measure to both be non-null since one is"
+                    }
+                    // TODO: This row can get a bit congested on small phones when the text in some
+                    // of the LabeledItems gets a bit long. It does kind of work and some further
+                    // tweaking (e.g. making sure we force some space between the three horizontal
+                    // elements) might fix the corner cases better than any alternatives, but do
+                    // have a think to see if some alternate design would look and/or work better.
+                    // TODO: The increased horizontal padding I'm now using (16 vs 8) is also making
+                    // this congestion much worse, at least on my small emulated phone.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                        //horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        LabeledItem(
+                            modifier = Modifier.weight(1f), label = "Price as sold"
+                        ) { // TODO: quite like this, but maybe "Shelf price"? This might also help distinguish this from the "effective/adjusted price". *Just possibly* some sort of similar wording tweak on "Unit price" in ItemSourceInfo might help.
+                            // TODO: There might be an argument for designing the UI to separate the
+                            // price and quantity here, then we side-step the internationalisation
+                            // issues of "for", which is *probably* tractable but might be a
+                            // problem. If I really prefer the UI with a single text string
+                            // containing "for", don't let this put me off sticking with it.
+                            Text(
+                                "${
+                                    formatPrice(
+                                        priceHistoryDelta.price!!,
                                         dataSet,
-                                        price.measure.unit.quantityType,
-                                        includeDisplayOnly = true
+                                        LocalConfiguration.current.locales[0]
                                     )
-                                }
-                            // TODO: "candidateDenominators" is also derived inside the UIContent "flow" and we could easily make it available directly here. It probably doesn't save much but we could.
-                            // TODO: If we edit the price and return to the home screen, the unit price
-                            // unit is not re-evaluated. This is arguably OK, but *if* the user never
-                            // changed it manually, it might be smart to re-evaluate it. This might be
-                            // mildly confusing. Think about it. (And test to check I have the current
-                            // behaviour understood; this is a quick note.)
-                            var selectedUnitPriceUnit by rememberSaveable(dataSet, price) {
-                                val candidateDenominators = getSiblingMeasureUnits(
-                                    dataSet,
-                                    price.measure.unit,
-                                    includeDisplayOnly = true
-                                )
-                                val friendlyUnitPrice = getFriendlyUnitPrice(
-                                    price.price,
-                                    price.measure,
-                                    candidateDenominators
-                                )
-                                mutableStateOf(friendlyUnitPrice.denominator)
-                            }
-                            // TODO: If the user selects "g" for a product sold in relative bulk, the
-                            // standard decimal places on the currency is a bit misleading. This isn't a
-                            // bug as such, but can/should we try to increase the decimal places on the
-                            // currency in this case? Does the standard formatting stuff we are using
-                            // have any concept of "not a shelf price so smaller fractions make sense
-                            // than usual"? Maybe at the very least we should always round prices *up*
-                            // when showing with official dp - although we are not doing the conversion
-                            // ourselves, maybe the standard function has an option to do this? We could
-                            // perhaps even omit units which would give a "display zero" price from the
-                            // dropdown, though that might be more confusing than helpful.
-                            val unitPriceString = formatUnitPrice(
-                                getUnitPrice(
-                                    price.price,
-                                    price.measure,
-                                    selectedUnitPriceUnit,
-                                ), dataSet,
-                                LocalConfiguration.current.locales[0]
+                                } for ${
+                                    priceHistoryDelta.measure!!.toDisplayString(LocalConfiguration.current.locales[0])
+                                }" /*, color = MaterialTheme.colorScheme.onSurface*/
                             )
-                            LabeledItemWithDropdown(
-                                modifier = Modifier.weight(1f), label = "Unit price",
-                                text = unitPriceString,
-                                enabled = true, // TODO: hardcoding to true for now, while this is on price history only and that has no save
-                                //  TODO: Mixed feelings about the "/" prefix in this menu.
-                                items = relevantUnitList,
-                                getId = { it },
-                                getLabel = { "/${it.symbol}" },
-                                // Show dividers between unit families
-                                getDividerBetween = { previousItem, item ->
-                                    val previousItemUnitFamily =
-                                        previousItem.unitFamilies.intersect(relevantUnitFamilies)
-                                    val itemUnitFamily =
-                                        item.unitFamilies.intersect(relevantUnitFamilies)
-                                    previousItemUnitFamily != itemUnitFamily
-                                },
-                                selectedId = selectedUnitPriceUnit,
-                                onValueChange = { selectedUnitPriceUnit = it })
-
                         }
 
+                        val relevantUnitFamilies =
+                            remember(dataSet) { getRelevantUnitFamilies(dataSet) }
+
+                        val relevantUnitList =
+                            remember(dataSet, priceHistoryDelta.measure!!.unit.quantityType) {
+                                getRelevantMeasureUnits(
+                                    dataSet,
+                                    priceHistoryDelta.measure!!.unit.quantityType,
+                                    includeDisplayOnly = true
+                                )
+                            }
+                        // TODO: "candidateDenominators" is also derived inside the UIContent "flow" and we could easily make it available directly here. It probably doesn't save much but we could.
+                        // TODO: If we edit the price and return to the home screen, the unit price
+                        // unit is not re-evaluated. This is arguably OK, but *if* the user never
+                        // changed it manually, it might be smart to re-evaluate it. This might be
+                        // mildly confusing. Think about it. (And test to check I have the current
+                        // behaviour understood; this is a quick note.)
+                        var selectedUnitPriceUnit by rememberSaveable(dataSet, priceHistoryDelta) {
+                            val candidateDenominators = getSiblingMeasureUnits(
+                                dataSet,
+                                priceHistoryDelta.measure!!.unit,
+                                includeDisplayOnly = true
+                            )
+                            val friendlyUnitPrice = getFriendlyUnitPrice(
+                                priceHistoryDelta.price!!,
+                                priceHistoryDelta.measure!!,
+                                candidateDenominators
+                            )
+                            mutableStateOf(friendlyUnitPrice.denominator)
+                        }
+                        // TODO: If the user selects "g" for a product sold in relative bulk, the
+                        // standard decimal places on the currency is a bit misleading. This isn't a
+                        // bug as such, but can/should we try to increase the decimal places on the
+                        // currency in this case? Does the standard formatting stuff we are using
+                        // have any concept of "not a shelf price so smaller fractions make sense
+                        // than usual"? Maybe at the very least we should always round prices *up*
+                        // when showing with official dp - although we are not doing the conversion
+                        // ourselves, maybe the standard function has an option to do this? We could
+                        // perhaps even omit units which would give a "display zero" price from the
+                        // dropdown, though that might be more confusing than helpful.
+                        val unitPriceString = formatUnitPrice(
+                            getUnitPrice(
+                                priceHistoryDelta.price!!,
+                                priceHistoryDelta.measure!!,
+                                selectedUnitPriceUnit,
+                            ), dataSet,
+                            LocalConfiguration.current.locales[0]
+                        )
+                        LabeledItemWithDropdown(
+                            modifier = Modifier.weight(1f), label = "Unit price",
+                            text = unitPriceString,
+                            enabled = true, // TODO: hardcoding to true for now, while this is on price history only and that has no save
+                            //  TODO: Mixed feelings about the "/" prefix in this menu.
+                            items = relevantUnitList,
+                            getId = { it },
+                            getLabel = { "/${it.symbol}" },
+                            // Show dividers between unit families
+                            getDividerBetween = { previousItem, item ->
+                                val previousItemUnitFamily =
+                                    previousItem.unitFamilies.intersect(relevantUnitFamilies)
+                                val itemUnitFamily =
+                                    item.unitFamilies.intersect(relevantUnitFamilies)
+                                previousItemUnitFamily != itemUnitFamily
+                            },
+                            selectedId = selectedUnitPriceUnit,
+                            onValueChange = { selectedUnitPriceUnit = it })
+
+                    }
+                }
+
                         // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
+                    if (priceHistoryDelta.confirmed != null) {
                         LabeledItem(
                             modifier = Modifier.padding(bottom = 8.dp),
                             label = "Confirmed" /* "Last checked" */
                         ) {
-                            RelativeTimeText(price.confirmed)
+                            RelativeTimeText(priceHistoryDelta.confirmed)
                             // TODO: would it be helpful to color code this and/or show an icon
                             // ("!"?) if this is "old"? maybe even with an ascending amber/red
                             // "severity" (and correspondingly different icons?)
                         }
+                    }
 
-                        if (price.details.isNotEmpty()) {
+                    // TODO: Should we show this if it changed *to* an empty string, or should we elide it?
+                    if (priceHistoryDelta.details != null ) {
+                        if (priceHistoryDelta.details.isNotEmpty()) {
                             Row(modifier = Modifier.padding(bottom = 8.dp)) {
                                 LabeledItem("Notes") {
-                                    Text(price.details)
+                                    Text(priceHistoryDelta.details)
                                 }
                             }
                         }
-                }
+                    }
+
                 Log.d("MyApp", "TODO5")
 
             }
@@ -7977,47 +7992,24 @@ fun ViewPriceHistoryScreen(
             // TODO: Do I need to specify a key for the rows?
             // TODO: It's likely inefficient to be doing the conversions inside LazyColumn and we should really be pre-filtering the list with val displayItems = remember(priceHistoryList) { priceHistoryList.map { } } or something, but I'm just going to hack it for now
             val locale = LocalConfiguration.current.locales[0]
-            val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
-            val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(priceHistoryList) { priceHistory ->
-                    // TODO: ChatGPT magic - OK?
-                    val zonedModifiedAt = priceHistory.modifiedAt.atZone(ZoneId.systemDefault())
-                    Row(modifier = Modifier.clickable { selectedItem = priceHistory }) {
-                        // TODO: Really not sure how I want to format this, very experimental - main thing is to get the data shown as human readable strings first
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = dateFormatter.format(zonedModifiedAt)
-                            )
-                            Text(
-                                text = timeFormatter.format(zonedModifiedAt)
-                            )
-                        }
-
-                        Text(modifier = Modifier.weight(1f), text=if (dataSet == null) "" else formatPrice(priceHistory.price, dataSet, locale))
-
-                        val measure = MeasuredValue(priceHistory.measure, baseUnitForQuantityType(priceHistory.originalUnit.quantityType)).to(priceHistory.originalUnit)
-                        Text(modifier = Modifier.weight(1f), text=measure.toString())
-
-                        // TODO: Not sure if this list should show unit price - probably not?
-                        // Remember I half plan to show an ItemSourceInfo in the bottom part of the
-                        // screen to allow detailed viewing of individual entries.
-
-                        // TODO: This probably ought to show the confirmed date, since it feels like
-                        // one of the main reasons to use the history will be to undo accidental
-                        // confirmations. Not sure though.
+            val dateFormatter =
+                DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
+            val timeFormatter =
+                DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
+            if (dataSet != null) { // TODO: Temp hack, it can be briefly null while we initialise at the moment
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(priceHistoryDeltaList) { priceHistoryDelta ->
+                        // TODO: ChatGPT magic - OK?
+                        val zonedModifiedAt =
+                            priceHistoryDelta.modifiedAt.atZone(ZoneId.systemDefault())
+                        // TODO: These cards need the date and time on as their title (and maybe subtitle)
+                        ItemSourceInfo2(dataSet, priceHistoryDelta)
                     }
                 }
             }
-
-            if (dataSet != null && selectedItem != null) { // TODO HACK
-                ItemSourceInfo2(dataSet, selectedItem!!.toPrice())
-            }
-
+        }
         }
     }
-}
 
 // TODO: ~/pc-sync/ai-chat-misc-to-move/grok-combo-box-and-alternate-ui.txt is a potentially
 // valuable discussion, touching on some implementation ideas, design ideas (small tweaks and
