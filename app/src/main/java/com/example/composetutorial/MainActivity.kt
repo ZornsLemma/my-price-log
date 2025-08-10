@@ -892,10 +892,11 @@ class PriceTrackerRepositoryImpl(
     override suspend fun revertPrice(priceBeforeRevert: Price, priceAfterRevert: Price) {
         // TODO: devRequire the two price arguments have the same dataset/source/item IDs and perhaps (but not necessarily) price ID
         db.withTransaction {
+            Log.d("MyApp", "revertPrice 1")
             // TODO: This retrieves more data than necessary, we could be more efficient.
             val currentPrice = getPricesForItem(dataSetId = priceBeforeRevert.dataSetId, itemId = priceBeforeRevert.itemId).first().firstOrNull { it.id == priceBeforeRevert.id }
             devCheck(currentPrice != null) { "TODO" }
-            devCheck(currentPrice == priceBeforeRevert) { "TODO" }
+            devCheck(currentPrice == priceBeforeRevert) { "TODO1" }
 
             /* TODO DELETE
             // TODO: This retrieves the whole history and we actually only want the most recent one.
@@ -914,13 +915,20 @@ class PriceTrackerRepositoryImpl(
             val priceHistoryToDelete = priceHistoryList[0]
             val priceHistoryToRevertTo = priceHistoryList[1]
 
-            // TODO: I suspect these will *always* fail because lhs and rhs are different types
-            devCheck(priceBeforeRevert == priceHistoryToDelete) { "TODO" }
-            devCheck(priceAfterRevert == priceHistoryToRevertTo) { "TODO" }
+            // TODO: I suspect these will *always* fail because lhs and rhs are different types - yes, TODO2 certainly is
+            Log.d("MyApp", "priceBeforeRevert $priceBeforeRevert")
+            Log.d("MyApp", "priceHistoryToDelete $priceHistoryToDelete")
+            Log.d("MyApp", "PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity()) ${PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity())}")
+            // TODO: This comparison logic feels faintly insane but the basic idea is sound
+            devCheck(PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity()).copy(id = priceHistoryToDelete.id) == priceHistoryToDelete) { "TODO2" }
+            Log.d("MyApp", "PriceHistory.fromPriceEntity(priceAfterRevert.toEntity()) ${PriceHistory.fromPriceEntity(priceAfterRevert.toEntity())}")
+            Log.d("MyApp", "priceHistoryToRevertTo $priceHistoryToRevertTo")
+            devCheck(PriceHistory.fromPriceEntity(priceAfterRevert.toEntity()).copy(id = priceHistoryToRevertTo.id).copy(modifiedAt = priceHistoryToRevertTo.modifiedAt) == priceHistoryToRevertTo) { "TODO3" }
 
             // TODO: OK, ignoring if/what we check first, let's just think about *doing* it.
             priceDao.upsert(priceAfterRevert.toEntity())
             priceHistoryDao.deleteById(priceHistoryToDelete.id)
+            Log.d("MyApp", "revertPrice 100")
 
         }
     }
@@ -2080,19 +2088,36 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
         // TODO: Problems with errors and previousPrice getting out of step etc?
         // TODO: This round-tripping is insane but currently the only way to "confirm" a price is via EditablePrice
         val editablePrice = EditablePrice(price, locale, getCurrencyFormat(dataSet, locale))
-        val currentPrice = editablePrice.toDomain(locale)
+        val currentPrice = editablePrice.toDomain(locale) // TODO: not a huge deal, but note that this means currentPrice has "now" as the modifiedAt, not its actual time
         val newPrice = editablePrice.copy(toConfirm = true).toDomain(locale)
         updatePrice(newPrice!!, currentPrice)
     }
 
-    fun undoConfirmPrice() {
+    fun undoConfirmPrice(priceBeforeRevert: Price, priceAfterRevert: Price) {
         // TODO: Maybe this should call an "undo" on the repository and it deals with this - that
         // might work out neater if (as may well be better) the undo does undo things in the
         // database rather than adding another update.
         // TODO: Problems with errors and previousPrice getting out of step etc?
         // TODO: This needs to update modified_at even though it otherwise persists all previous data
         // TODO: Should we avoid updating history when we undo this? And delete the "confirmed" history item? or is it cleaner and more "honest" to just let the history entries accumulate?
+        /* TODO OLD DELETE?
         updatePrice(previousPrice.value!!, null)
+        */
+        // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
+        viewModelScope.launch {
+            // TODO: EXCEPTION HANDLING
+            saveStatus.update(SaveStatus.Busy)
+            try {
+                //delay(5000) // TODO TEMP HACK
+                priceTrackerRepository.revertPrice(priceBeforeRevert = priceBeforeRevert, priceAfterRevert= priceAfterRevert)
+                previousPrice.value = null
+                saveStatus.update(SaveStatus.Success)
+            } catch (e: Exception) {
+                saveStatus.update(SaveStatus.Error)
+            }
+            // TODO: NEED TO COMMUNICATE TO OUTER SCOPE THAT THIS HAS DONE
+        }
+
     }
 
     val saveStatus = SyncedStateEvent(SaveStatus.Idle)
@@ -3019,7 +3044,8 @@ fun ItemSourceInfo(
                                                 locale
                                             )
                                         } else {
-                                            vm.undoConfirmPrice()
+                                            // TODO: Maybe some of these args should be supplied inside undoConfirmPrice()?
+                                            vm.undoConfirmPrice(augmentedPrice.basePrice, vm.previousPrice.value!!)
                                         }
                                     },
                                     shape = MaterialTheme.shapes.small /* TODO: is this right shape? what's the default? */
