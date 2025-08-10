@@ -429,7 +429,7 @@ fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {
 // sort them and/or rely on MeasureUnit.entities having some order. We may want some way for the
 // caller to indicate that if there are multiple unit families in the results, they prefer a
 // particularly family (e.g. the one the user last used to enter a price) at the top. There may be
-// an argument that consistent ordering of families if desirable rather than it varying too much,
+// an argument that consistent ordering of families iS desirable rather than it varying too much,
 // although some users might prefer e.g. metric first and others imperial/US customary first. Within
 // a unit family, we should probably order by smallest to largest (which we can do by relying on
 // MeasureUnit.entities being in that order, or by sorting on base - probably nicer just to go with
@@ -813,6 +813,7 @@ interface PriceTrackerRepository {
     suspend fun updateOrInsertItem(item: Item): Long
     suspend fun updateOrInsertSource(source: Source): Long
     suspend fun updateOrInsertPrice(price: Price): Long
+    suspend fun revertPrice(priceBeforeRevert: Price, priceAfterRevert: Price)
 
     // TODO: Should these really return Long just to be super paranoid/vaguely consistent with use of Long for IDs (if IDs "don't fit" in 32 bits, neither do deletion counts)
     suspend fun deleteDataSetById(dataSetId: Long): Int
@@ -886,6 +887,42 @@ class PriceTrackerRepositoryImpl(
             priceHistoryDao.insert(PriceHistory.fromPriceEntity(priceEntityWithId))
         }
         return priceId
+    }
+
+    override suspend fun revertPrice(priceBeforeRevert: Price, priceAfterRevert: Price) {
+        // TODO: devRequire the two price arguments have the same dataset/source/item IDs and perhaps (but not necessarily) price ID
+        db.withTransaction {
+            // TODO: This retrieves more data than necessary, we could be more efficient.
+            val currentPrice = getPricesForItem(dataSetId = priceBeforeRevert.dataSetId, itemId = priceBeforeRevert.itemId).first().firstOrNull { it.id == priceBeforeRevert.id }
+            devCheck(currentPrice != null) { "TODO" }
+            devCheck(currentPrice == priceBeforeRevert) { "TODO" }
+
+            /* TODO DELETE
+            // TODO: This retrieves the whole history and we actually only want the most recent one.
+            // It's probably not a big deal but we could be more efficient.
+            val priceHistoryList = priceHistoryDao.getPriceHistory(dataSetId = priceBeforeRevert.dataSetId, itemId = priceBeforeRevert.itemId, sourceId = priceBeforeRevert.sourceId).first()
+            devCheck(priceHistoryList.size >= 1) { "Expected at least one price history entry when reverting a price update" }
+            val priceHistoryToDelete = priceHistoryList.first()
+
+            // TODO: OK, ignoring if/what we check first, let's just think about *doing* it.
+            priceDao.upsert(priceAfterRevert.toEntity())
+            priceHistoryDao.delete(priceHistoryToDelete.id)
+            */
+
+            val priceHistoryList = priceHistoryDao.getPriceHistory(dataSetId = priceBeforeRevert.dataSetId, itemId = priceBeforeRevert.itemId, sourceId = priceBeforeRevert.sourceId).first()
+            devCheck(priceHistoryList.size >= 2) { "Expected at least two price history entries when reverting a price update" }
+            val priceHistoryToDelete = priceHistoryList[0]
+            val priceHistoryToRevertTo = priceHistoryList[1]
+
+            // TODO: I suspect these will *always* fail because lhs and rhs are different types
+            devCheck(priceBeforeRevert == priceHistoryToDelete) { "TODO" }
+            devCheck(priceAfterRevert == priceHistoryToRevertTo) { "TODO" }
+
+            // TODO: OK, ignoring if/what we check first, let's just think about *doing* it.
+            priceDao.upsert(priceAfterRevert.toEntity())
+            priceHistoryDao.deleteById(priceHistoryToDelete.id)
+
+        }
     }
 }
 
@@ -1769,6 +1806,9 @@ interface PriceHistoryDao {
 
     @Query("SELECT * FROM price_history WHERE data_set_id = :dataSetId AND item_id = :itemId and source_id = :sourceId ORDER BY modified_at DESC")
     fun getPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<List<PriceHistory>>
+
+    @Query("DELETE FROM price_history WHERE id = :priceHistoryId")
+    suspend fun deleteById(priceHistoryId: Long): Int
 }
 
 // TODO: ChatGPT semi-magic
@@ -8275,7 +8315,8 @@ fun ViewPriceHistoryScreen(
 
 // TODO: For some bizarre reason beyond my comprehension, check() and require() sometimes kill the
 // app but without leaving a clear logcat trace, which makes it very hard to figure out what went
-// wrong. So we use these instead.
+// wrong. So we use these instead. Should we rename them myCheck() and myRequire() to avoid any
+// implication they are debug build only or similar?
 
 inline fun devCheck(condition: Boolean, lazyMessage: () -> String) {
     if (!condition) {
