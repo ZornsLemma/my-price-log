@@ -7761,12 +7761,14 @@ This may be complete crap. The example of how to use it is probably as long as t
 fun ItemSourceInfo2(
     dataSet: DataSet,
     priceHistoryDelta: PriceHistoryDelta,
+    dateFormatter: DateTimeFormatter,
+    timeFormatter: DateTimeFormatter,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Box {
+        Box { // TODO: we may not need this Box
             // TODO: There may well be no need for animateContentSize if this remains used only by price history (where values are static)
             // TODO: animateContentSize() is experimental. If I keep it, I may also want it on the lower
             // card, which can change size when product changes (just not yet, in this mockup). The odd
@@ -7794,20 +7796,15 @@ fun ItemSourceInfo2(
                     .animateContentSize()
                     .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
             ) {
-                /* TODO: DELETE?
-                // TODO: Once the store dropdown is moved off this card, will it be obvious this card
-                // relates to that store? We could maybe give its actual name, but that might also be
-                // a bit repetitive.
                 Text(
-                    text = "Store price",
+                    text = dateFormatter.format(priceHistoryDelta.modifiedAt),
                     style = MaterialTheme.typography.titleLarge
                 ) // TODO: This label feels a bit "redundant" and wording may need tweaking
                 Text(
-                    text = "Shelf price at ${source?.name ?: "TODO"}",
+                    text = timeFormatter.format(priceHistoryDelta.modifiedAt),
                     style = MaterialTheme.typography.bodySmall
                 ) // TODO: null handling?!
                 Spacer(modifier = Modifier.height(8.dp))
-                */
 
                 if (priceHistoryDelta.price != null || priceHistoryDelta.measure != null) {
                     devCheck(priceHistoryDelta.price != null && priceHistoryDelta.measure != null) {
@@ -7992,10 +7989,10 @@ fun ViewPriceHistoryScreen(
             // TODO: Do I need to specify a key for the rows?
             // TODO: It's likely inefficient to be doing the conversions inside LazyColumn and we should really be pre-filtering the list with val displayItems = remember(priceHistoryList) { priceHistoryList.map { } } or something, but I'm just going to hack it for now
             val locale = LocalConfiguration.current.locales[0]
-            val dateFormatter =
-                DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
-            val timeFormatter =
-                DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
+            val dateFormatter = remember(locale) {
+                DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale).withZone(ZoneId.systemDefault()) }
+            val timeFormatter = remember(locale) {
+                DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).withZone(ZoneId.systemDefault()) }
             if (dataSet != null) { // TODO: Temp hack, it can be briefly null while we initialise at the moment
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(priceHistoryDeltaList) { priceHistoryDelta ->
@@ -8003,7 +8000,7 @@ fun ViewPriceHistoryScreen(
                         val zonedModifiedAt =
                             priceHistoryDelta.modifiedAt.atZone(ZoneId.systemDefault())
                         // TODO: These cards need the date and time on as their title (and maybe subtitle)
-                        ItemSourceInfo2(dataSet, priceHistoryDelta)
+                        ItemSourceInfo2(dataSet, priceHistoryDelta, dateFormatter, timeFormatter)
                     }
                 }
             }
