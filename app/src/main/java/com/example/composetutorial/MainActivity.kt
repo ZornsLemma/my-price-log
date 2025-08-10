@@ -7762,6 +7762,7 @@ fun ItemSourceInfo2(
     dataSet: DataSet,
     priceHistoryDelta: PriceHistoryDelta,
     dateFormatter: DateTimeFormatter,
+    dateFormatter2: DateTimeFormatter, // TODO RENAME
     timeFormatter: DateTimeFormatter,
 ) {
     Card(
@@ -7920,10 +7921,7 @@ fun ItemSourceInfo2(
                             modifier = Modifier.padding(bottom = 8.dp),
                             label = "Confirmed" /* "Last checked" */
                         ) {
-                            RelativeTimeText(priceHistoryDelta.confirmed)
-                            // TODO: would it be helpful to color code this and/or show an icon
-                            // ("!"?) if this is "old"? maybe even with an ascending amber/red
-                            // "severity" (and correspondingly different icons?)
+                            Text(dateFormatter2.format(priceHistoryDelta.confirmed))
                         }
                     }
 
@@ -7977,30 +7975,27 @@ fun ViewPriceHistoryScreen(
         },
 
         ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)) {
-            Text("TODO")
-
+        Column(modifier = Modifier.padding(innerPadding).padding(screenBorder)) {
             // TODO: Tracking selectedItem like this is a hack, maybe it's right, maybe it's not - if nothing else, we need to highlight selecteditem in list
             var selectedItem: PriceHistory? by remember { mutableStateOf(null) }
 
             // TODO: Because (I think) we don't update modified_at when undoing, that means the results here look odd - but that will be fixed once we do update modified_at when undoing, or if we make undo actually physically delete
 
-            // TODO: We probably ought to have a header for this table?
             // TODO: Do I need to specify a key for the rows?
             // TODO: It's likely inefficient to be doing the conversions inside LazyColumn and we should really be pre-filtering the list with val displayItems = remember(priceHistoryList) { priceHistoryList.map { } } or something, but I'm just going to hack it for now
             val locale = LocalConfiguration.current.locales[0]
             val dateFormatter = remember(locale) {
+                DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale).withZone(ZoneId.systemDefault()) }
+            val dateFormatter2 = remember(locale) { // TODO RENAME
                 DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale).withZone(ZoneId.systemDefault()) }
+
             val timeFormatter = remember(locale) {
                 DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).withZone(ZoneId.systemDefault()) }
             if (dataSet != null) { // TODO: Temp hack, it can be briefly null while we initialise at the moment
                 LazyColumn(modifier = Modifier.weight(1f)) {
                     items(priceHistoryDeltaList) { priceHistoryDelta ->
-                        // TODO: ChatGPT magic - OK?
-                        val zonedModifiedAt =
-                            priceHistoryDelta.modifiedAt.atZone(ZoneId.systemDefault())
-                        // TODO: These cards need the date and time on as their title (and maybe subtitle)
-                        ItemSourceInfo2(dataSet, priceHistoryDelta, dateFormatter, timeFormatter)
+                        ItemSourceInfo2(dataSet, priceHistoryDelta, dateFormatter, dateFormatter2, timeFormatter)
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
