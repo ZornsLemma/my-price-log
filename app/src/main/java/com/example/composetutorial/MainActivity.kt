@@ -870,6 +870,19 @@ interface PriceTrackerRepository {
     suspend fun deleteSourceById(sourceId: Long): Int
 }
 
+// TODO: Should this be an extension function on List or some "free" function or something else?
+fun <T> List<T>.sortedByLocale(
+    selector: (T) -> String,
+    locale: Locale): List<T> {
+    val collator = Collator.getInstance(locale).apply {
+        strength = Collator.PRIMARY
+    }
+
+    return this.sortedWith { lhs, rhs ->
+        collator.compare(selector(lhs), selector(rhs))
+    }
+}
+
 class PriceTrackerRepositoryImpl(
     private val db: InventoryDatabase,
     private val dataSetDao: DataSetDao,
@@ -1734,9 +1747,13 @@ interface DataSetDao {
     @Upsert
     suspend fun upsert(dataSet: DataSet): Long
 
+    // TODO: Not just here - I am going to start sorting explicity by DESC to make sure I don't have
+    // any missing places where I apply a locale-sensitive sort in the UI. Technically the ORDER BY
+    // clauses can be removed later for a small efficiency gain.
+
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't
     // need this order by here
-    @Query("SELECT * FROM data_set ORDER BY name ASC")
+    @Query("SELECT * FROM data_set ORDER BY name DESC")
     fun getAllDataSets(): Flow<List<DataSet>>
 
     @Query("DELETE FROM data_set WHERE id = :dataSetId")
@@ -2112,9 +2129,7 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
             } catch (e: Exception) {
                 saveStatus.update(SaveStatus.Error)
             }
-            // TODO: NEED TO COMMUNICATE TO OUTER SCOPE THAT THIS HAS DONE
         }
-
     }
 
     val saveStatus = SyncedStateEvent(SaveStatus.Idle)
@@ -3863,6 +3878,11 @@ fun HomeScreenScaffold(
     // get rid of my window insets or whatever at the very top level of my NavHost and move it into
     // individual screens, so this screen can have full screen for the drawer and apply the insets
     // to everything else.
+    val locale = LocalConfiguration.current.locales[0]
+    val dataSetListSorted = remember(dataSetList, locale) {
+        dataSetList.sortedByLocale({ it.name }, locale)
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -3891,7 +3911,7 @@ fun HomeScreenScaffold(
                         ) // TODO: 16dp right/necessary?
                     }
                     LazyColumn {
-                        items(dataSetList) { item ->
+                        items(dataSetListSorted) { item ->
                             val selected = dataSet?.id == item.id
                             // TODO: Should these have some kind of generic bullet-style icon? The half
                             // cut off "labels" gmail screenshot in m3 docs hints at this. But it might
@@ -6904,6 +6924,10 @@ fun <T> GeneralSelectorScreen(
                 )
             }
 
+            val locale = LocalConfiguration.current.locales[0]
+            val dataListSorted = remember(dataList, locale) {
+                dataList.sortedByLocale({ getName(it) }, locale)
+            }
             Box(
                 modifier = Modifier
                     .background(Color.Green /* TODO! */)
@@ -6912,7 +6936,7 @@ fun <T> GeneralSelectorScreen(
                 dataList.forEach { println("Item: $it, ID: ${getId(it)}") }
                 LazyColumn {
                     items(
-                        items = dataList,
+                        items = dataListSorted,
                         key = { item -> getId(item) }
                     ) { item ->
                         GeneralSelectorListItem(
