@@ -664,6 +664,8 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             )
     )
     // TODO: Do some web searches and confirm these are not real supermarket names
+    // We have three sources with sample prices, because you need three non-ancient prices in order
+    // to get good/OK/bad judgments.
     val sourceIdValueMart = repository.updateOrInsertSource(
         Source(
             dataSetId = dataSetId,
@@ -682,7 +684,15 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             notes = ""
         )
     )
-    // TODO: Since you need three "recent" prices to see price judgements, we may need a fourth store which has at least some initial data.
+    val sourceIdGrandways = repository.updateOrInsertSource(
+        Source(
+            dataSetId = dataSetId,
+            name = "Grandways",
+            loyaltyDiscountType = LoyaltyDiscountType.NONE,
+            loyaltyMultiplier = 1.0,
+            notes = ""
+        )
+    )
     // Newco deliberately has no prices to start with.
     repository.updateOrInsertSource(
         Source(
@@ -723,6 +733,19 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
     repository.updateOrInsertPrice(
         Price(
             dataSetId = dataSetId,
+            itemId = itemIdGroundCoffee,
+            sourceId = sourceIdGrandways,
+            price = 1.64,
+            measure = MeasuredValue(350.0, MeasureUnit.G),
+            confirmed = now.minus(9, ChronoUnit.DAYS),
+            notes = "",
+            itemDefaultUnit = MeasureUnit.G,
+            modifiedAt = now.minus(9, ChronoUnit.DAYS),
+        )
+    )
+    repository.updateOrInsertPrice(
+        Price(
+            dataSetId = dataSetId,
             itemId = itemIdWholeMilk,
             sourceId = sourceIdValueMart,
             price = 1.99,
@@ -752,6 +775,22 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
     repository.updateOrInsertPrice(
         Price(
             dataSetId = dataSetId,
+            itemId = itemIdWholeMilk,
+            sourceId = sourceIdGrandways,
+            price = 3.28,
+            measure = MeasuredValue(
+                6.0,
+                MeasureUnit.IMPERIAL_PINT
+            ),
+            confirmed = now.minus(14, ChronoUnit.DAYS),
+            notes = "",
+            itemDefaultUnit = MeasureUnit.L,
+            modifiedAt = now.minus(14, ChronoUnit.DAYS),
+        )
+    )
+    repository.updateOrInsertPrice(
+        Price(
+            dataSetId = dataSetId,
             itemId = itemIdTeabags,
             sourceId = sourceIdValueMart,
             price = 0.76,
@@ -773,6 +812,19 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             notes = "",
             itemDefaultUnit = MeasureUnit.EACH,
             modifiedAt = now.minus(4, ChronoUnit.HOURS),
+        )
+    )
+    repository.updateOrInsertPrice(
+        Price(
+            dataSetId = dataSetId,
+            itemId = itemIdTeabags,
+            sourceId = sourceIdGrandways,
+            price = 1.25,
+            measure = MeasuredValue(50.0, MeasureUnit.EACH),
+            confirmed = now.minus(12, ChronoUnit.DAYS),
+            notes = "",
+            itemDefaultUnit = MeasureUnit.EACH,
+            modifiedAt = now.minus(12, ChronoUnit.DAYS),
         )
     )
     /*
