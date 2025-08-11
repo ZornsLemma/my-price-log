@@ -2113,6 +2113,7 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
                 previousPrice.value = null
                 saveStatus.update(SaveStatus.Success)
             } catch (e: Exception) {
+                // TODO: Does this case work?
                 saveStatus.update(SaveStatus.Error)
             }
             // TODO: NEED TO COMMUNICATE TO OUTER SCOPE THAT THIS HAS DONE
