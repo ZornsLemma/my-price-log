@@ -7329,6 +7329,7 @@ fun diff(lhs: PriceHistory, rhs: PriceHistory): PriceHistoryDelta {
         rhs.measure,
         baseUnitForQuantityType(rhs.originalUnit.quantityType)
     ).to(rhs.originalUnit)
+    // TODO: Given we are not displaying confirmedAt using "full resolution", maybe we should apply the same resolution (date only I think, but check) here? This would need to work with some sort of approach where we filter out "no change except modifiedAt" entries either by returning null here or later on
     val confirmedAt = if (lhs.confirmedAt == rhs.confirmedAt) null else rhs.confirmedAt
     // TODO: OK to trim()?
     val notes = if (lhs.notes.trim() == rhs.notes.trim()) null else rhs.notes
