@@ -1689,23 +1689,6 @@ data class Price(
             modifiedAt = modifiedAt,
         )
     }
-
-    /* TODO: DELETE?
-    companion object {
-        fun createEmpty(): Price {
-            return Price(
-                dataSetId = 0, // TODO MASSIVE HACK
-                itemId = 0, // TODO MASSIVE HACK
-                sourceId = 0, // TODO MASSIVE HACK
-                price = 0.0,
-                measure = MeasuredValue(0.0, MeasureUnit.ML), // TODO MASSIVE HACK
-                confirmed = Instant.now(), // TODO MASSIVE HACK
-                details = "",
-                itemDefaultUnit = MeasureUnit.G // TODO MASSIVE HACK
-            )
-        }
-    }
-    */
 }
 
 fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
@@ -1715,10 +1698,6 @@ fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
 }
 
 // TODO: Whiff of ChatGPT magic
-// TODO: I suspect we should actually be using the item's "default unit" not its quantityType here -
-// although maybe not, it is perhaps better to keep this in the "internal" unit and convert to the
-// display unit for display, to avoid "oh, it happened to work for me in metric with grams but now
-// I'm in imperial it's displaying badly" concerns
 fun PriceWithItemEntity.toDomain(): Price {
     // I have checks like this in various places but this is probably a pretty solid place for one.
     // On the way from database->domain, this is where we have a "solid" itemDefaultUnit value
