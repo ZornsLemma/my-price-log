@@ -711,7 +711,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdValueMart,
             price = 2.03,
             measure = MeasuredValue(500.0, MeasureUnit.G),
-            confirmed = now.minus(2, ChronoUnit.MINUTES),
+            confirmedAt = now.minus(2, ChronoUnit.MINUTES),
             notes = "Large pack own brand",
             itemDefaultUnit = MeasureUnit.G,
             modifiedAt = now.minus(2, ChronoUnit.MINUTES)
@@ -724,7 +724,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdSuperiorStore,
             price = 1.50,
             measure = MeasuredValue(227.0, MeasureUnit.G),
-            confirmed = now.minus(4, ChronoUnit.DAYS),
+            confirmedAt = now.minus(4, ChronoUnit.DAYS),
             notes = "Own brand",
             itemDefaultUnit = MeasureUnit.G,
             modifiedAt = now.minus(4, ChronoUnit.DAYS),
@@ -737,7 +737,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdGrandways,
             price = 1.64,
             measure = MeasuredValue(350.0, MeasureUnit.G),
-            confirmed = now.minus(9, ChronoUnit.DAYS),
+            confirmedAt = now.minus(9, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasureUnit.G,
             modifiedAt = now.minus(9, ChronoUnit.DAYS),
@@ -753,7 +753,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
                 4.0,
                 MeasureUnit.IMPERIAL_PINT
             ),
-            confirmed = now,
+            confirmedAt = now,
             notes = "",
             itemDefaultUnit = MeasureUnit.L,
             modifiedAt = now,
@@ -766,7 +766,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdSuperiorStore,
             price = 2.86,
             measure = MeasuredValue(2000.0, MeasureUnit.ML),
-            confirmed = now.minus(63, ChronoUnit.DAYS),
+            confirmedAt = now.minus(63, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasureUnit.L,
             modifiedAt = now.minus(63, ChronoUnit.DAYS),
@@ -782,7 +782,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
                 6.0,
                 MeasureUnit.IMPERIAL_PINT
             ),
-            confirmed = now.minus(14, ChronoUnit.DAYS),
+            confirmedAt = now.minus(14, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasureUnit.L,
             modifiedAt = now.minus(14, ChronoUnit.DAYS),
@@ -795,7 +795,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdValueMart,
             price = 0.76,
             measure = MeasuredValue(40.0, MeasureUnit.EACH),
-            confirmed = now.minus(7, ChronoUnit.DAYS),
+            confirmedAt = now.minus(7, ChronoUnit.DAYS),
             notes = "Soft pack own brand",
             itemDefaultUnit = MeasureUnit.EACH,
             modifiedAt = now.minus(7, ChronoUnit.DAYS),
@@ -808,7 +808,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdSuperiorStore,
             price = 0.60,
             measure = MeasuredValue(20.0, MeasureUnit.EACH),
-            confirmed = now.minus(4, ChronoUnit.HOURS),
+            confirmedAt = now.minus(4, ChronoUnit.HOURS),
             notes = "",
             itemDefaultUnit = MeasureUnit.EACH,
             modifiedAt = now.minus(4, ChronoUnit.HOURS),
@@ -821,7 +821,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdGrandways,
             price = 1.25,
             measure = MeasuredValue(50.0, MeasureUnit.EACH),
-            confirmed = now.minus(12, ChronoUnit.DAYS),
+            confirmedAt = now.minus(12, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasureUnit.EACH,
             modifiedAt = now.minus(12, ChronoUnit.DAYS),
@@ -1508,7 +1508,7 @@ data class PriceEntity(
     // We use floating point for the price - it saves worrying about storing in pence or the
     // currency's equivalent and then getting in a mess if somehow the conventional number of
     // decimal places changes. For the kinds of prices we are representing and the limited amount of
-    // calculation we are doing on them, there should in practice be no problems at all, as long as
+    // calculation we are doing on them, there should in praqctice be no problems at all, as long as
     // we round to the relevant number of decimal places on display.
     //
     // "measure" will always be stored in the metric base unit associated with the item_id's
@@ -1531,7 +1531,7 @@ data class PriceEntity(
     // TODO: Rename this as "user_unit" or something? display_unit? default_display_unit (prob OTT)?
     @ColumnInfo(name = "original_unit") val originalUnit: MeasureUnit,
 
-    val confirmed: Instant, // TODO: rename confirmed_at? (to make clear it's not a boolean)
+    @ColumnInfo(name = "confirmed_at") val confirmedAt: Instant,
 
     val notes: String,
 
@@ -1588,7 +1588,7 @@ data class PriceHistory(
     val price: Double,
     val measure: Double,
     @ColumnInfo(name = "original_unit") val originalUnit: MeasureUnit,
-    val confirmed: Instant,
+    @ColumnInfo(name = "confirmed_at") val confirmedAt: Instant,
     val notes: String,
     @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
 ) {
@@ -1604,7 +1604,7 @@ data class PriceHistory(
                 originalUnit
             ),
             // TODO DELETE originalUnit = originalUnit,
-            confirmed = confirmed,
+            confirmedAt = confirmedAt,
             notes = notes,
             modifiedAt = modifiedAt,
             itemDefaultUnit = baseUnitForQuantityType(originalUnit.quantityType) // TODO: This is a hack, I don't know if it matters but it isn't ideal even if it does work in practice
@@ -1622,7 +1622,7 @@ data class PriceHistory(
                 price = priceEntity.price,
                 measure = priceEntity.measure,
                 originalUnit = priceEntity.originalUnit,
-                confirmed = priceEntity.confirmed,
+                confirmedAt = priceEntity.confirmedAt,
                 notes = priceEntity.notes,
                 modifiedAt = priceEntity.modifiedAt,
             )
@@ -1655,7 +1655,7 @@ data class Price(
     val sourceId: Long,
     val price: Double,
     val measure: MeasuredValue,
-    val confirmed: Instant,
+    val confirmedAt: Instant,
     val notes: String,
     val modifiedAt: Instant,
     // itemDefaultUnit is a copy of the defaultUnit from the Item when we originally read the
@@ -1684,7 +1684,7 @@ data class Price(
             price = price,
             measure = measure.asValue(baseUnitForQuantityType(itemDefaultUnit.quantityType)),
             originalUnit = measure.unit,
-            confirmed = confirmed,
+            confirmedAt = confirmedAt,
             notes = notes,
             modifiedAt = modifiedAt,
         )
@@ -1740,7 +1740,7 @@ fun PriceWithItemEntity.toDomain(): Price {
             priceEntity.measure,
             baseUnitForQuantityType(priceEntity.originalUnit.quantityType)
         ).to(priceEntity.originalUnit),
-        confirmed = priceEntity.confirmed,
+        confirmedAt = priceEntity.confirmedAt,
         notes = priceEntity.notes,
         modifiedAt = priceEntity.modifiedAt,
         itemDefaultUnit = itemDefaultUnit,
@@ -2989,7 +2989,7 @@ fun ItemSourceInfo(
                             modifier = Modifier.padding(bottom = 8.dp),
                             label = "Confirmed" /* "Last checked" */
                         ) {
-                            RelativeTimeText(price.confirmed)
+                            RelativeTimeText(price.confirmedAt)
                             // TODO: would it be helpful to color code this and/or show an icon
                             // ("!"?) if this is "old"? maybe even with an ascending amber/red
                             // "severity" (and correspondingly different icons?)
@@ -3415,7 +3415,7 @@ data class EditablePrice(
     val price: String,
     val measureValue: String,
     val measureUnit: MeasureUnit,
-    val confirmed: Instant, // TODO: rename this confirmedAt (everywhere)?
+    val confirmedAt: Instant, // TODO: rename this confirmedAt (everywhere)?
     val toConfirm: Boolean,
     val notes: String,
     val itemDefaultUnit: MeasureUnit,
@@ -3437,7 +3437,7 @@ data class EditablePrice(
         price = "",
         measureValue = "",
         measureUnit = itemDefaultUnit,
-        confirmed = Instant.now(),
+        confirmedAt = Instant.now(),
         toConfirm = true,
         notes = "",
         itemDefaultUnit = itemDefaultUnit
@@ -3466,7 +3466,7 @@ data class EditablePrice(
                 locale
             ),
         measureUnit = price.measure.unit,
-        confirmed = price.confirmed,
+        confirmedAt = price.confirmedAt,
         toConfirm = false,
         notes = price.notes,
         itemDefaultUnit = price.itemDefaultUnit
@@ -3490,7 +3490,7 @@ data class EditablePrice(
                 sourceId = sourceId,
                 price = priceDouble,
                 measure = MeasuredValue(measureValueDouble, measureUnit),
-                confirmed = if (toConfirm) now else confirmed,
+                confirmedAt = if (toConfirm) now else confirmedAt,
                 notes = notes,
                 modifiedAt = now,
                 itemDefaultUnit = itemDefaultUnit,
@@ -7294,7 +7294,7 @@ data class PriceHistoryDelta(
     val priceHistory: PriceHistory, // TODO: having this here feels a bit crap, maybe it's OK
     val price: Double?,
     val measure: MeasuredValue?,
-    val confirmed: Instant?,
+    val confirmedAt: Instant?,
     val notes: String?,
     val modifiedAt: Instant
 )
@@ -7307,7 +7307,7 @@ fun PriceHistory.toPriceHistoryDelta(): PriceHistoryDelta {
         measure = MeasuredValue(measure, baseUnitForQuantityType(originalUnit.quantityType)).to(
             originalUnit
         ),
-        confirmed = confirmed,
+        confirmedAt = confirmedAt,
         notes = notes,
         modifiedAt = modifiedAt
     )
@@ -7319,7 +7319,7 @@ fun diff(lhs: PriceHistory, rhs: PriceHistory): PriceHistoryDelta {
         rhs.measure,
         baseUnitForQuantityType(rhs.originalUnit.quantityType)
     ).to(rhs.originalUnit)
-    val confirmed = if (lhs.confirmed == rhs.confirmed) null else rhs.confirmed
+    val confirmedAt = if (lhs.confirmedAt == rhs.confirmedAt) null else rhs.confirmedAt
     // TODO: OK to trim()?
     val notes = if (lhs.notes.trim() == rhs.notes.trim()) null else rhs.notes
     val priceOrMeasureChanged = (lhs.price != rhs.price) || (lhs.measure != rhs.measure)
@@ -7327,7 +7327,7 @@ fun diff(lhs: PriceHistory, rhs: PriceHistory): PriceHistoryDelta {
         priceHistory = rhs,
         price = if (!priceOrMeasureChanged) null else rhs.price,
         measure = if (!priceOrMeasureChanged) null else rhsMeasure,
-        confirmed = confirmed,
+        confirmedAt = confirmedAt,
         notes = notes,
         modifiedAt = rhs.modifiedAt
     )
@@ -8194,12 +8194,12 @@ fun ItemSourceInfo2(
                 }
 
                 // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
-                if (priceHistoryDelta.confirmed != null) {
+                if (priceHistoryDelta.confirmedAt != null) {
                     LabeledItem(
                         modifier = Modifier.padding(bottom = 8.dp),
                         label = "Confirmed" /* "Last checked" */
                     ) {
-                        Text(dateFormatter2.format(priceHistoryDelta.confirmed))
+                        Text(dateFormatter2.format(priceHistoryDelta.confirmedAt))
                     }
                 }
 
@@ -8823,7 +8823,7 @@ fun augmentPrice(
 ): AugmentedPrice {
     val loyaltyPrice = price.price * source.loyaltyMultiplier
     // TODO: We could convert to floating point ageDays by getting .seconds and dividing by 86400, but it probably makes little difference in practice.
-    val ageDays = Duration.between(price.confirmed, Instant.now()).toDays()
+    val ageDays = Duration.between(price.confirmedAt, Instant.now()).toDays()
     val inflatedLoyaltyPrice = inflationAdjustedPrice(loyaltyPrice, ageDays)
     return AugmentedPrice(
         basePrice = price,
