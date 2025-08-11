@@ -7359,23 +7359,13 @@ class ViewPriceHistoryViewModel(
         uiContent.source.id
     )
     val priceHistoryDeltaListFlow = priceHistoryListFlow.flatMapLatest { priceHistoryList ->
-        // TODO: This might be clearer implemented as a zip() operation, if there is one where I can get a "thing vs null" at the end rather than losing an item
-        if (priceHistoryList.isEmpty()) {
-            flowOf(emptyList<PriceHistoryDelta>())
-        } else {
-            val priceHistoryDeltaList = mutableListOf<PriceHistoryDelta>()
-            var previousPriceHistory: PriceHistory? = null
-            for (priceHistory in priceHistoryList) {
-                if (previousPriceHistory == null) {
-                    priceHistoryDeltaList.add(priceHistory.toPriceHistoryDelta())
-                } else {
-                    priceHistoryDeltaList.add(diff(previousPriceHistory, priceHistory))
-                }
-                previousPriceHistory = priceHistory
-            }
-            // TODO: Possibly we should filter out entries in the list which are all-null except for modifiedAt, but it may be these can't really occur in practice now we check for changes before saving. If we do this, it may be better for diff() to return a nullable result and directly return a null - although it might be mildly faffy for it to do so, but see
-            flowOf(priceHistoryDeltaList)
+        // Remember that we are doing a "backwards delta" here - we show the very latest element in full,
+        // and for older elements we show differences between them and the next newest element. This zip
+        // has every member of priceHistoryList appear exactly once as oldPriceHistory.
+        val priceHistoryDeltaList = (listOf(null) + priceHistoryList).zip(priceHistoryList).mapNotNull { (newPriceHistory, oldPriceHistory) ->
+            if (newPriceHistory == null) oldPriceHistory.toPriceHistoryDelta() else diff(oldPriceHistory, newPriceHistory)
         }
+        flowOf(priceHistoryDeltaList)
     }
 
     // TODO: dataSetFlow is probably a temp hack
