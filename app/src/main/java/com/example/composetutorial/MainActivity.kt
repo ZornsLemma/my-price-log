@@ -874,7 +874,8 @@ interface PriceTrackerRepository {
 // TODO: Should this be an extension function on List or some "free" function or something else?
 fun <T> List<T>.sortedByLocale(
     selector: (T) -> String,
-    locale: Locale): List<T> {
+    locale: Locale
+): List<T> {
     val collator = Collator.getInstance(locale).apply {
         strength = Collator.PRIMARY
     }
@@ -957,11 +958,18 @@ class PriceTrackerRepositoryImpl(
         db.withTransaction {
             Log.d("MyApp", "revertPrice 1")
             // TODO: This retrieves more data than necessary, we could be more efficient.
-            val currentPrice = getPricesForItem(dataSetId = priceBeforeRevert.dataSetId, itemId = priceBeforeRevert.itemId).first().firstOrNull { it.id == priceBeforeRevert.id }
+            val currentPrice = getPricesForItem(
+                dataSetId = priceBeforeRevert.dataSetId,
+                itemId = priceBeforeRevert.itemId
+            ).first().firstOrNull { it.id == priceBeforeRevert.id }
             devCheck(currentPrice != null) { "TODO" }
             devCheck(currentPrice == priceBeforeRevert) { "TODO1" }
 
-            val priceHistoryList = priceHistoryDao.getPriceHistory(dataSetId = priceBeforeRevert.dataSetId, itemId = priceBeforeRevert.itemId, sourceId = priceBeforeRevert.sourceId).first()
+            val priceHistoryList = priceHistoryDao.getPriceHistory(
+                dataSetId = priceBeforeRevert.dataSetId,
+                itemId = priceBeforeRevert.itemId,
+                sourceId = priceBeforeRevert.sourceId
+            ).first()
             devCheck(priceHistoryList.size >= 2) { "Expected at least two price history entries when reverting a price update" }
             val priceHistoryToDelete = priceHistoryList[0]
             val priceHistoryToRevertTo = priceHistoryList[1]
@@ -969,12 +977,29 @@ class PriceTrackerRepositoryImpl(
             // TODO: I suspect these will *always* fail because lhs and rhs are different types - yes, TODO2 certainly is
             Log.d("MyApp", "priceBeforeRevert $priceBeforeRevert")
             Log.d("MyApp", "priceHistoryToDelete $priceHistoryToDelete")
-            Log.d("MyApp", "PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity()) ${PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity())}")
+            Log.d(
+                "MyApp",
+                "PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity()) ${
+                    PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity())
+                }"
+            )
             // TODO: This comparison logic feels faintly insane but the basic idea is sound
-            devCheck(PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity()).copy(id = priceHistoryToDelete.id) == priceHistoryToDelete) { "TODO2" }
-            Log.d("MyApp", "PriceHistory.fromPriceEntity(priceAfterRevert.toEntity()) ${PriceHistory.fromPriceEntity(priceAfterRevert.toEntity())}")
+            devCheck(
+                PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity())
+                    .copy(id = priceHistoryToDelete.id) == priceHistoryToDelete
+            ) { "TODO2" }
+            Log.d(
+                "MyApp",
+                "PriceHistory.fromPriceEntity(priceAfterRevert.toEntity()) ${
+                    PriceHistory.fromPriceEntity(priceAfterRevert.toEntity())
+                }"
+            )
             Log.d("MyApp", "priceHistoryToRevertTo $priceHistoryToRevertTo")
-            devCheck(PriceHistory.fromPriceEntity(priceAfterRevert.toEntity()).copy(id = priceHistoryToRevertTo.id).copy(modifiedAt = priceHistoryToRevertTo.modifiedAt) == priceHistoryToRevertTo) { "TODO3" }
+            devCheck(
+                PriceHistory.fromPriceEntity(priceAfterRevert.toEntity())
+                    .copy(id = priceHistoryToRevertTo.id)
+                    .copy(modifiedAt = priceHistoryToRevertTo.modifiedAt) == priceHistoryToRevertTo
+            ) { "TODO3" }
 
             // TODO: OK, ignoring if/what we check first, let's just think about *doing* it.
             priceDao.upsert(priceAfterRevert.toEntity())
@@ -2106,7 +2131,8 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
         // TODO: Problems with errors and previousPrice getting out of step etc?
         // TODO: This round-tripping is insane but currently the only way to "confirm" a price is via EditablePrice
         val editablePrice = EditablePrice(price, locale, getCurrencyFormat(dataSet, locale))
-        val currentPrice = editablePrice.toDomain(locale) // TODO: not a huge deal, but note that this means currentPrice has "now" as the modifiedAt, not its actual time
+        val currentPrice =
+            editablePrice.toDomain(locale) // TODO: not a huge deal, but note that this means currentPrice has "now" as the modifiedAt, not its actual time
         val newPrice = editablePrice.copy(toConfirm = true).toDomain(locale)
         updatePrice(newPrice!!, currentPrice)
     }
@@ -2121,7 +2147,10 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
             saveStatus.update(SaveStatus.Busy)
             try {
                 //delay(5000) // TODO TEMP HACK
-                priceTrackerRepository.revertPrice(priceBeforeRevert = priceBeforeRevert, priceAfterRevert= priceAfterRevert)
+                priceTrackerRepository.revertPrice(
+                    priceBeforeRevert = priceBeforeRevert,
+                    priceAfterRevert = priceAfterRevert
+                )
                 previousPrice.value = null
                 saveStatus.update(SaveStatus.Success)
             } catch (e: Exception) {
@@ -2290,7 +2319,8 @@ fun MainScreen(
         // but that is probably better than the "skeleton" menu we get with no items in.
         val locale = LocalConfiguration.current.locales[0]
         val sourceListSorted = remember(sourceList, locale) {
-            listOf(Pair(-1L, "None")) + sourceList.sortedByLocale({ it.name }, locale).map { Pair(it.id, it.name) }
+            listOf(Pair(-1L, "None")) + sourceList.sortedByLocale({ it.name }, locale)
+                .map { Pair(it.id, it.name) }
         }
         Log.d("MyApp", "sourceListSorted $sourceListSorted")
         // TODO: Did wonder if MyExposedDropdownMenuBox should allow null IDs to avoid the need
@@ -2666,11 +2696,11 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
 
     Box(
         modifier = modifier.then(
-        if (enabled) Modifier.clickable {
-            expanded = true
-            @Suppress("KotlinConstantConditions") onExpand(expanded)
-        }
-        else Modifier)
+            if (enabled) Modifier.clickable {
+                expanded = true
+                @Suppress("KotlinConstantConditions") onExpand(expanded)
+            }
+            else Modifier)
     ) {
         content()
 
@@ -2964,7 +2994,10 @@ fun ItemSourceInfo(
                                             )
                                         } else {
                                             // TODO: Maybe some of these args should be supplied inside undoConfirmPrice()?
-                                            vm.undoConfirmPrice(augmentedPrice.basePrice, vm.previousPrice.value!!)
+                                            vm.undoConfirmPrice(
+                                                augmentedPrice.basePrice,
+                                                vm.previousPrice.value!!
+                                            )
                                         }
                                     },
                                     shape = MaterialTheme.shapes.small /* TODO: is this right shape? what's the default? */
@@ -4869,7 +4902,6 @@ fun SaveErrorAlertDialog(requestClose: () -> Unit) {
         }
     )
 }
-
 
 
 @Composable
@@ -6968,7 +7000,10 @@ class EditPriceViewModel(
         // has toConfirm set that constitutes a change, so by using the real value in editablePrice
         // and forcing originalPrice to have toConfirm false that does what we want there, and will
         // also pick up any other changes.
-        if (!uiContent.nonLinearEdit && uiContent.editablePrice.value == uiContent.originalPrice.copy(toConfirm = false)) {
+        if (!uiContent.nonLinearEdit && uiContent.editablePrice.value == uiContent.originalPrice.copy(
+                toConfirm = false
+            )
+        ) {
             Log.d(
                 "MyApp",
                 "performSave() is a no-op; returning early to avoid bloating price history"
@@ -7226,7 +7261,11 @@ fun PriceHistory.toPriceHistoryDelta(confirmedAtFormatter: DateTimeFormatter): P
 }
 
 // TODO: Where does this belong and what naming and calling convention should it have?!?!?!
-fun diff(lhs: PriceHistory, rhs: PriceHistory, confirmedAtFormatter: DateTimeFormatter): PriceHistoryDelta? {
+fun diff(
+    lhs: PriceHistory,
+    rhs: PriceHistory,
+    confirmedAtFormatter: DateTimeFormatter
+): PriceHistoryDelta? {
     val rhsMeasure = MeasuredValue(
         rhs.measure,
         baseUnitForQuantityType(rhs.originalUnit.quantityType)
@@ -7243,14 +7282,15 @@ fun diff(lhs: PriceHistory, rhs: PriceHistory, confirmedAtFormatter: DateTimeFor
     val notes = if (lhs.notes.trim() == rhs.notes.trim()) null else rhs.notes
     val priceOrMeasureChanged = (lhs.price != rhs.price) || (lhs.measure != rhs.measure)
     if (priceOrMeasureChanged || confirmedAt != null || notes != null) {
-    return PriceHistoryDelta(
-        priceHistory = rhs,
-        price = if (!priceOrMeasureChanged) null else rhs.price,
-        measure = if (!priceOrMeasureChanged) null else rhsMeasure,
-        confirmedAt = confirmedAt,
-        notes = notes,
-        modifiedAt = rhs.modifiedAt
-    ) } else {
+        return PriceHistoryDelta(
+            priceHistory = rhs,
+            price = if (!priceOrMeasureChanged) null else rhs.price,
+            measure = if (!priceOrMeasureChanged) null else rhsMeasure,
+            confirmedAt = confirmedAt,
+            notes = notes,
+            modifiedAt = rhs.modifiedAt
+        )
+    } else {
         return null
     }
 }
@@ -7270,13 +7310,20 @@ class ViewPriceHistoryViewModel(
         uiContent.source.id
     )
 
-    fun generatePriceHistoryDeltaList(priceHistoryList: List<PriceHistory>, locale: Locale, confirmedAtFormatter: DateTimeFormatter) =
-        // Remember that we are doing a "backwards delta" here - we show the very latest element in full,
-        // and for older elements we show differences between them and the next newest element. This zip
+    fun generatePriceHistoryDeltaList(
+        priceHistoryList: List<PriceHistory>,
+        locale: Locale,
+        confirmedAtFormatter: DateTimeFormatter
+    ) =
+    // Remember that we are doing a "backwards delta" here - we show the very latest element in full,
+    // and for older elements we show differences between them and the next newest element. This zip
         // has every member of priceHistoryList appear exactly once as oldPriceHistory.
-        (listOf(null) + priceHistoryList).zip(priceHistoryList).mapNotNull { (newPriceHistory, oldPriceHistory) ->
-            if (newPriceHistory == null) oldPriceHistory.toPriceHistoryDelta(confirmedAtFormatter) else diff(newPriceHistory, oldPriceHistory, confirmedAtFormatter)
-        }
+        (listOf(null) + priceHistoryList).zip(priceHistoryList)
+            .mapNotNull { (newPriceHistory, oldPriceHistory) ->
+                if (newPriceHistory == null) oldPriceHistory.toPriceHistoryDelta(
+                    confirmedAtFormatter
+                ) else diff(newPriceHistory, oldPriceHistory, confirmedAtFormatter)
+            }
 
     // TODO: dataSetFlow is probably a temp hack
     val dataSetFlow = priceTrackerRepository.getAllDataSets()
@@ -7909,7 +7956,8 @@ This may be complete crap. The example of how to use it is probably as long as t
                         sharedViewModel.viewPriceHistoryUIContent
                             ?: ViewPriceHistoryScreenUIContent.fromSavedState(handle)!!
                             */
-                        sharedViewModel.viewPriceHistoryScreenUIContent ?: ViewPriceHistoryScreenUIContent.fromSavedState(handle)!!
+                        sharedViewModel.viewPriceHistoryScreenUIContent
+                            ?: ViewPriceHistoryScreenUIContent.fromSavedState(handle)!!
                     )
                 }
             ) { viewModel ->
@@ -8066,53 +8114,53 @@ fun ItemSourceInfo2(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-            Column(
-                modifier = Modifier
-                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
-            ) {
-                // TODO: We could possibly pull this 2xText (+Spacer?) out into a CardTitleAndSubtitle() composable.
-                Text(
-                    text = modifiedAtTitleFormatter.format(priceHistoryDelta.modifiedAt),
-                    style = MaterialTheme.typography.titleLarge
-                ) // TODO: This label feels a bit "redundant" and wording may need tweaking
-                Text(
-                    text = modifiedAtSubtitleFormatter.format(priceHistoryDelta.modifiedAt),
-                    style = MaterialTheme.typography.bodySmall
-                ) // TODO: null handling?!
-                Spacer(modifier = Modifier.height(8.dp))
+        Column(
+            modifier = Modifier
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
+        ) {
+            // TODO: We could possibly pull this 2xText (+Spacer?) out into a CardTitleAndSubtitle() composable.
+            Text(
+                text = modifiedAtTitleFormatter.format(priceHistoryDelta.modifiedAt),
+                style = MaterialTheme.typography.titleLarge
+            ) // TODO: This label feels a bit "redundant" and wording may need tweaking
+            Text(
+                text = modifiedAtSubtitleFormatter.format(priceHistoryDelta.modifiedAt),
+                style = MaterialTheme.typography.bodySmall
+            ) // TODO: null handling?!
+            Spacer(modifier = Modifier.height(8.dp))
 
-                if (priceHistoryDelta.price != null || priceHistoryDelta.measure != null) {
-                    devCheck(priceHistoryDelta.price != null && priceHistoryDelta.measure != null) {
-                        "Expected price and measure to both be non-null since one is"
-                    }
-                    PackPriceAndSizeRow(priceHistoryDelta.price!!, priceHistoryDelta.measure!!, dataSet)
+            if (priceHistoryDelta.price != null || priceHistoryDelta.measure != null) {
+                devCheck(priceHistoryDelta.price != null && priceHistoryDelta.measure != null) {
+                    "Expected price and measure to both be non-null since one is"
                 }
+                PackPriceAndSizeRow(priceHistoryDelta.price!!, priceHistoryDelta.measure!!, dataSet)
+            }
 
-                // TODO: Next two are possible candidates for factoring out and sharing with ItemSourceInfo(),
-                // but note that the confirmed at format differs (relative vs absolute and colour vs no colour),
-                // and the handling of empty notes just might be different too, so be careful.
+            // TODO: Next two are possible candidates for factoring out and sharing with ItemSourceInfo(),
+            // but note that the confirmed at format differs (relative vs absolute and colour vs no colour),
+            // and the handling of empty notes just might be different too, so be careful.
 
-                // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
-                if (priceHistoryDelta.confirmedAt != null) {
-                    LabeledItem(
-                        modifier = Modifier.padding(bottom = 8.dp),
-                        label = "Confirmed" /* "Last checked" */
-                    ) {
-                        Text(priceHistoryDelta.confirmedAt)
-                    }
+            // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
+            if (priceHistoryDelta.confirmedAt != null) {
+                LabeledItem(
+                    modifier = Modifier.padding(bottom = 8.dp),
+                    label = "Confirmed" /* "Last checked" */
+                ) {
+                    Text(priceHistoryDelta.confirmedAt)
                 }
+            }
 
-                // TODO: Should we show this if it changed *to* an empty string, or should we elide it?
-                if (priceHistoryDelta.notes != null) {
-                    if (priceHistoryDelta.notes.isNotEmpty()) {
-                        Row(modifier = Modifier.padding(bottom = 8.dp)) {
-                            LabeledItem("Notes") {
-                                Text(priceHistoryDelta.notes)
-                            }
+            // TODO: Should we show this if it changed *to* an empty string, or should we elide it?
+            if (priceHistoryDelta.notes != null) {
+                if (priceHistoryDelta.notes.isNotEmpty()) {
+                    Row(modifier = Modifier.padding(bottom = 8.dp)) {
+                        LabeledItem("Notes") {
+                            Text(priceHistoryDelta.notes)
                         }
                     }
                 }
             }
+        }
     }
 }
 
@@ -8152,9 +8200,11 @@ fun ViewPriceHistoryScreen(
         },
 
         ) { innerPadding ->
-        Column(modifier = Modifier
-            .padding(innerPadding)
-            .padding(screenBorder)) {
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(screenBorder)
+        ) {
 
             // TODO: Do I need to specify a key for the rows?
             // TODO: It's likely inefficient to be doing the conversions inside LazyColumn and we should really be pre-filtering the list with val displayItems = remember(priceHistoryList) { priceHistoryList.map { } } or something, but I'm just going to hack it for now
@@ -8168,7 +8218,10 @@ fun ViewPriceHistoryScreen(
                 DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
                     .withZone(zoneId)
             }
-            LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
                 items(priceHistoryDeltaList) { priceHistoryDelta ->
                     // TODO: This box is just a temp hack so I can attach a clickable - I will probably actually show a single-item "overflow" menu at top right to allow this "edit as new" action but this will do for the moment
                     Box(modifier = Modifier.clickable { requestEditAsNew(priceHistoryDelta.priceHistory) }) {
