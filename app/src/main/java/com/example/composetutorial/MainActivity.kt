@@ -705,7 +705,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             price = 2.03,
             measure = MeasuredValue(500.0, MeasureUnit.G),
             confirmed = now.minus(2, ChronoUnit.MINUTES),
-            details = "Large pack own brand",
+            notes = "Large pack own brand",
             itemDefaultUnit = MeasureUnit.G,
             modifiedAt = now.minus(2, ChronoUnit.MINUTES)
         )
@@ -718,7 +718,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             price = 1.50,
             measure = MeasuredValue(227.0, MeasureUnit.G),
             confirmed = now.minus(4, ChronoUnit.DAYS),
-            details = "Own brand",
+            notes = "Own brand",
             itemDefaultUnit = MeasureUnit.G,
             modifiedAt = now.minus(4, ChronoUnit.DAYS),
         )
@@ -734,7 +734,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
                 MeasureUnit.IMPERIAL_PINT
             ),
             confirmed = now,
-            details = "",
+            notes = "",
             itemDefaultUnit = MeasureUnit.L,
             modifiedAt = now,
         )
@@ -747,7 +747,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             price = 2.86,
             measure = MeasuredValue(2000.0, MeasureUnit.ML),
             confirmed = now.minus(63, ChronoUnit.DAYS),
-            details = "",
+            notes = "",
             itemDefaultUnit = MeasureUnit.L,
             modifiedAt = now.minus(63, ChronoUnit.DAYS),
         )
@@ -760,7 +760,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             price = 0.76,
             measure = MeasuredValue(40.0, MeasureUnit.EACH),
             confirmed = now.minus(7, ChronoUnit.DAYS),
-            details = "Soft pack own brand",
+            notes = "Soft pack own brand",
             itemDefaultUnit = MeasureUnit.EACH,
             modifiedAt = now.minus(7, ChronoUnit.DAYS),
         )
@@ -773,7 +773,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             price = 0.60,
             measure = MeasuredValue(20.0, MeasureUnit.EACH),
             confirmed = now.minus(4, ChronoUnit.HOURS),
-            details = "",
+            notes = "",
             itemDefaultUnit = MeasureUnit.EACH,
             modifiedAt = now.minus(4, ChronoUnit.HOURS),
         )
@@ -1509,7 +1509,7 @@ data class PriceEntity(
 
     val confirmed: Instant, // TODO: rename confirmed_at? (to make clear it's not a boolean)
 
-    val details: String, // Additional price details TODO: rename "notes"?
+    val notes: String,
 
     // TODO: I need modifiedAt for PriceHistory as it's what allows us to order the historical rows.
     // I thought it was probably best to just put it on PriceEntity itself and then we can e.g. keep
@@ -1565,7 +1565,7 @@ data class PriceHistory(
     val measure: Double,
     @ColumnInfo(name = "original_unit") val originalUnit: MeasureUnit,
     val confirmed: Instant,
-    val details: String, // TODO: rename "notes"?
+    val notes: String,
     @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
 ) {
     // TODO: No idea where this should live or what it should be called or if it's a good idea.
@@ -1581,7 +1581,7 @@ data class PriceHistory(
             ),
             // TODO DELETE originalUnit = originalUnit,
             confirmed = confirmed,
-            details = details,
+            notes = notes,
             modifiedAt = modifiedAt,
             itemDefaultUnit = baseUnitForQuantityType(originalUnit.quantityType) // TODO: This is a hack, I don't know if it matters but it isn't ideal even if it does work in practice
         )
@@ -1599,7 +1599,7 @@ data class PriceHistory(
                 measure = priceEntity.measure,
                 originalUnit = priceEntity.originalUnit,
                 confirmed = priceEntity.confirmed,
-                details = priceEntity.details,
+                notes = priceEntity.notes,
                 modifiedAt = priceEntity.modifiedAt,
             )
         }
@@ -1632,7 +1632,7 @@ data class Price(
     val price: Double,
     val measure: MeasuredValue,
     val confirmed: Instant,
-    val details: String, // Additional price details TODO: rename "notes"?
+    val notes: String,
     val modifiedAt: Instant,
     // itemDefaultUnit is a copy of the defaultUnit from the Item when we originally read the
     // PriceWithItemEntity in from the database. It is intended to allow a best effort (protecting
@@ -1661,7 +1661,7 @@ data class Price(
             measure = measure.asValue(baseUnitForQuantityType(itemDefaultUnit.quantityType)),
             originalUnit = measure.unit,
             confirmed = confirmed,
-            details = details,
+            notes = notes,
             modifiedAt = modifiedAt,
         )
     }
@@ -1717,7 +1717,7 @@ fun PriceWithItemEntity.toDomain(): Price {
             baseUnitForQuantityType(priceEntity.originalUnit.quantityType)
         ).to(priceEntity.originalUnit),
         confirmed = priceEntity.confirmed,
-        details = priceEntity.details,
+        notes = priceEntity.notes,
         modifiedAt = priceEntity.modifiedAt,
         itemDefaultUnit = itemDefaultUnit,
     )
@@ -2094,15 +2094,9 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
     }
 
     fun undoConfirmPrice(priceBeforeRevert: Price, priceAfterRevert: Price) {
-        // TODO: Maybe this should call an "undo" on the repository and it deals with this - that
-        // might work out neater if (as may well be better) the undo does undo things in the
-        // database rather than adding another update.
         // TODO: Problems with errors and previousPrice getting out of step etc?
         // TODO: This needs to update modified_at even though it otherwise persists all previous data
         // TODO: Should we avoid updating history when we undo this? And delete the "confirmed" history item? or is it cleaner and more "honest" to just let the history entries accumulate?
-        /* TODO OLD DELETE?
-        updatePrice(previousPrice.value!!, null)
-        */
         // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
         viewModelScope.launch {
             // TODO: EXCEPTION HANDLING
@@ -2977,10 +2971,10 @@ fun ItemSourceInfo(
                             // "severity" (and correspondingly different icons?)
                         }
 
-                        if (price.details.isNotEmpty()) {
+                        if (price.notes.isNotEmpty()) {
                             Row(modifier = Modifier.padding(bottom = 8.dp)) {
                                 LabeledItem("Notes") {
-                                    Text(price.details)
+                                    Text(price.notes)
                                 }
                             }
                         }
@@ -3399,7 +3393,7 @@ data class EditablePrice(
     val measureUnit: MeasureUnit,
     val confirmed: Instant, // TODO: rename this confirmedAt (everywhere)?
     val toConfirm: Boolean,
-    val details: String,
+    val notes: String,
     val itemDefaultUnit: MeasureUnit,
 
     ) : Parcelable {
@@ -3421,7 +3415,7 @@ data class EditablePrice(
         measureUnit = itemDefaultUnit,
         confirmed = Instant.now(),
         toConfirm = true,
-        details = "",
+        notes = "",
         itemDefaultUnit = itemDefaultUnit
     )
 
@@ -3450,7 +3444,7 @@ data class EditablePrice(
         measureUnit = price.measure.unit,
         confirmed = price.confirmed,
         toConfirm = false,
-        details = price.details,
+        notes = price.notes,
         itemDefaultUnit = price.itemDefaultUnit
     )
 
@@ -3473,7 +3467,7 @@ data class EditablePrice(
                 price = priceDouble,
                 measure = MeasuredValue(measureValueDouble, measureUnit),
                 confirmed = if (toConfirm) now else confirmed,
-                details = details,
+                notes = notes,
                 modifiedAt = now,
                 itemDefaultUnit = itemDefaultUnit,
             )
@@ -4632,9 +4626,9 @@ fun EditPriceScreen(
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Notes") },
-            value = uiContent.editablePrice.value.details,
+            value = uiContent.editablePrice.value.notes,
             onValueChange = {
-                vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(details = it))
+                vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(notes = it))
             },
             enabled = saveStatus.isNotBusy(),
         )
@@ -7277,7 +7271,7 @@ data class PriceHistoryDelta(
     val price: Double?,
     val measure: MeasuredValue?,
     val confirmed: Instant?,
-    val details: String?,
+    val notes: String?,
     val modifiedAt: Instant
 )
 
@@ -7290,7 +7284,7 @@ fun PriceHistory.toPriceHistoryDelta(): PriceHistoryDelta {
             originalUnit
         ),
         confirmed = confirmed,
-        details = details,
+        notes = notes,
         modifiedAt = modifiedAt
     )
 }
@@ -7303,14 +7297,14 @@ fun diff(lhs: PriceHistory, rhs: PriceHistory): PriceHistoryDelta {
     ).to(rhs.originalUnit)
     val confirmed = if (lhs.confirmed == rhs.confirmed) null else rhs.confirmed
     // TODO: OK to trim()?
-    val details = if (lhs.details.trim() == rhs.details.trim()) null else rhs.details
+    val notes = if (lhs.notes.trim() == rhs.notes.trim()) null else rhs.notes
     val priceOrMeasureChanged = (lhs.price != rhs.price) || (lhs.measure != rhs.measure)
     return PriceHistoryDelta(
         priceHistory = rhs,
         price = if (!priceOrMeasureChanged) null else rhs.price,
         measure = if (!priceOrMeasureChanged) null else rhsMeasure,
         confirmed = confirmed,
-        details = details,
+        notes = notes,
         modifiedAt = rhs.modifiedAt
     )
 }
@@ -8186,11 +8180,11 @@ fun ItemSourceInfo2(
                 }
 
                 // TODO: Should we show this if it changed *to* an empty string, or should we elide it?
-                if (priceHistoryDelta.details != null) {
-                    if (priceHistoryDelta.details.isNotEmpty()) {
+                if (priceHistoryDelta.notes != null) {
+                    if (priceHistoryDelta.notes.isNotEmpty()) {
                         Row(modifier = Modifier.padding(bottom = 8.dp)) {
                             LabeledItem("Notes") {
-                                Text(priceHistoryDelta.details)
+                                Text(priceHistoryDelta.notes)
                             }
                         }
                     }
