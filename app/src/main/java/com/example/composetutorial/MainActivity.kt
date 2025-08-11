@@ -8066,34 +8066,11 @@ fun ItemSourceInfo2(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        Box { // TODO: we may not need this Box
-            // TODO: There may well be no need for animateContentSize if this remains used only by price history (where values are static)
-            // TODO: animateContentSize() is experimental. If I keep it, I may also want it on the lower
-            // card, which can change size when product changes (just not yet, in this mockup). The odd
-            // padding here is because we want 8.dp at the left and right and 12.dp at the top and
-            // bottom to try to keep the square-ish corners of the TextField away from the round-ish
-            // corners at the top of the card. Because the bottom of the card has two buttons and these
-            // have "touchable but background colour" space around them to meet the minimum touch size
-            // (and we don't want to make them visually larger), if we use 12.dp at the bottom we
-            // actually get a bit more because of that extra space "around" the buttons. So we manually
-            // adjust the bottom padding to visually compensate for this while allowing the buttons to
-            // have their natural touch region.
-            // TODO: When the card expands, the button(s) on the "bottom" row of the card jump down
-            // instead of animating smoothly "following" the bottom of the card - probably because this
-            // layout is sort of "top to bottom". I suspect this can be worked around by using a box and
-            // having most of the content inside a column with .align(Alignment.TopStart) and then
-            // follow that by the button row with .align(Alignment.BottomCenter) or something along
-            // these lines. The trouble with the code as currently structured is that the buttons are
-            // generated in conditional code and getting the right layout of composables isn't trivial.
-            // It is probably worth tweaking this for visual polish - it might make things clearer
-            // anyway, e.g. if we factor out some sub-composables - but I'm not going to get involved
-            // with it right now. We may need to attach .animateContentSize() to the Card instead of the
-            // Column.
             Column(
                 modifier = Modifier
-                    .animateContentSize()
                     .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
             ) {
+                // TODO: We could possibly pull this 2xText (+Spacer?) out into a CardTitleAndSubtitle() composable.
                 Text(
                     text = modifiedAtTitleFormatter.format(priceHistoryDelta.modifiedAt),
                     style = MaterialTheme.typography.titleLarge
@@ -8110,6 +8087,10 @@ fun ItemSourceInfo2(
                     }
                     PackPriceAndSizeRow(priceHistoryDelta.price!!, priceHistoryDelta.measure!!, dataSet)
                 }
+
+                // TODO: Next two are possible candidates for factoring out and sharing with ItemSourceInfo(),
+                // but note that the confirmed at format differs (relative vs absolute and colour vs no colour),
+                // and the handling of empty notes just might be different too, so be careful.
 
                 // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
                 if (priceHistoryDelta.confirmedAt != null) {
@@ -8131,11 +8112,7 @@ fun ItemSourceInfo2(
                         }
                     }
                 }
-
-                Log.d("MyApp", "TODO5")
-
             }
-        }
     }
 }
 
@@ -8191,7 +8168,7 @@ fun ViewPriceHistoryScreen(
                 DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
                     .withZone(zoneId)
             }
-            LazyColumn(modifier = Modifier.weight(1f)) {
+            LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 items(priceHistoryDeltaList) { priceHistoryDelta ->
                     // TODO: This box is just a temp hack so I can attach a clickable - I will probably actually show a single-item "overflow" menu at top right to allow this "edit as new" action but this will do for the moment
                     Box(modifier = Modifier.clickable { requestEditAsNew(priceHistoryDelta.priceHistory) }) {
@@ -8202,7 +8179,6 @@ fun ViewPriceHistoryScreen(
                             timeFormatter
                         )
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
