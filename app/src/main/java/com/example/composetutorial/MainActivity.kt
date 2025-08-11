@@ -8244,7 +8244,6 @@ fun ViewPriceHistoryScreen(
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
             .withZone(zoneId)
     }
-    // TODO: We could use null as initial value but I suspect we don't need it and it will be more convenient to default to empty
     val priceHistoryList by viewModel.priceHistoryListFlow.collectAsStateWithLifecycle(emptyList())
     val priceHistoryDeltaList = remember(priceHistoryList, locale) {
         viewModel.generatePriceHistoryDeltaList(priceHistoryList, locale, dateFormatter2)
@@ -8259,9 +8258,8 @@ fun ViewPriceHistoryScreen(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    // TODO: This should almost certainly have a back arrow not a cross - it isn't a full screen dialog
                     IconButton(/* TODO? enabled = !isBusy, */ onClick = { requestClose() }) {
-                        Icon(Icons.Default.Close, contentDescription = "Close")
+                        Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
                 title = { Text("TODO") },
@@ -8272,10 +8270,6 @@ fun ViewPriceHistoryScreen(
         Column(modifier = Modifier
             .padding(innerPadding)
             .padding(screenBorder)) {
-            // TODO: Tracking selectedItem like this is a hack, maybe it's right, maybe it's not - if nothing else, we need to highlight selecteditem in list
-            var selectedItem: PriceHistory? by remember { mutableStateOf(null) }
-
-            // TODO: Because (I think) we don't update modified_at when undoing, that means the results here look odd - but that will be fixed once we do update modified_at when undoing, or if we make undo actually physically delete
 
             // TODO: Do I need to specify a key for the rows?
             // TODO: It's likely inefficient to be doing the conversions inside LazyColumn and we should really be pre-filtering the list with val displayItems = remember(priceHistoryList) { priceHistoryList.map { } } or something, but I'm just going to hack it for now
@@ -8289,21 +8283,19 @@ fun ViewPriceHistoryScreen(
                 DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
                     .withZone(zoneId)
             }
-            if (dataSet != null) { // TODO: Temp hack, it can be briefly null while we initialise at the moment
-                LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(priceHistoryDeltaList) { priceHistoryDelta ->
-                        // TODO: This box is just a temp hack so I can attach a clickable - I will probably actually show a single-item "overflow" menu at top right to allow this "edit as new" action but this will do for the moment
-                        Box(modifier = Modifier.clickable { requestEditAsNew(priceHistoryDelta.priceHistory) }) {
-                            ItemSourceInfo2(
-                                dataSet,
-                                priceHistoryDelta,
-                                dateFormatter,
-                                dateFormatter2,
-                                timeFormatter
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                items(priceHistoryDeltaList) { priceHistoryDelta ->
+                    // TODO: This box is just a temp hack so I can attach a clickable - I will probably actually show a single-item "overflow" menu at top right to allow this "edit as new" action but this will do for the moment
+                    Box(modifier = Modifier.clickable { requestEditAsNew(priceHistoryDelta.priceHistory) }) {
+                        ItemSourceInfo2(
+                            dataSet,
+                            priceHistoryDelta,
+                            dateFormatter,
+                            dateFormatter2,
+                            timeFormatter
+                        )
                     }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
