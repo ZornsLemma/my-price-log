@@ -249,7 +249,7 @@ import kotlin.math.pow
 // be varied much more freely.
 // TODO: Just possibly rename this "MeasureType"? ChatGPT suggestion, maybe has a point,
 // "QuantityType" is definitely not a terrible name though.
-enum class QuantityType(val value: Int) {
+enum class QuantityType(val value: Int) { // TODO: "value" -> "id"??
     ITEM(1),
     WEIGHT(2), // technically mass but everyone says "price per weight"
     VOLUME(3);
@@ -263,14 +263,11 @@ enum class QuantityType(val value: Int) {
     */
 }
 
-// TODO: Could/should we get rid of the ITEM unit family and just make MeasureUnit.ITEM a member of
-// each of the three other families? This might well be a bad idea in terms of allowing the user to
-// have both metric and one of the other families enabled, but at least have a quick think.
 enum class UnitFamily {
     METRIC,
     IMPERIAL, // as used in UK
     US_CUSTOMARY, // as used in US
-    ITEM, // TODO: not sure if we need this
+    ITEM,
 }
 
 // TODO: CHECK ALL THE MULTIPLIERS HERE - THIS IS CHATGPT CODE, AND WE MAY ALSO NEED TO ADDRESS IMPERIAL VS US OR WHATEVER TERMINOLOGY IS
@@ -303,7 +300,7 @@ enum class MeasureUnit(
         QuantityType.WEIGHT,
         "oz",
         3, // allow for eighths
-        28.3495,
+        28.349523125,
         false
     ),
     LB(
@@ -312,7 +309,7 @@ enum class MeasureUnit(
         QuantityType.WEIGHT,
         "lb",
         3, // allow for eighths
-        453.592,
+        453.59237,
         false
     ),
 
@@ -341,7 +338,7 @@ enum class MeasureUnit(
         QuantityType.VOLUME,
         "flUoz",
         3, // allow for eighths
-        29.5735,
+        29.5735295625,
         false
     ),
     US_CUSTOMARY_PINT(
@@ -359,7 +356,7 @@ enum class MeasureUnit(
         QuantityType.VOLUME,
         "gal",
         3, // allow for eighths
-        3785.41,
+        3785.411784,
         false
     ),
     IMPERIAL_FLOZ(
@@ -897,18 +894,6 @@ class PriceTrackerRepositoryImpl(
             val currentPrice = getPricesForItem(dataSetId = priceBeforeRevert.dataSetId, itemId = priceBeforeRevert.itemId).first().firstOrNull { it.id == priceBeforeRevert.id }
             devCheck(currentPrice != null) { "TODO" }
             devCheck(currentPrice == priceBeforeRevert) { "TODO1" }
-
-            /* TODO DELETE
-            // TODO: This retrieves the whole history and we actually only want the most recent one.
-            // It's probably not a big deal but we could be more efficient.
-            val priceHistoryList = priceHistoryDao.getPriceHistory(dataSetId = priceBeforeRevert.dataSetId, itemId = priceBeforeRevert.itemId, sourceId = priceBeforeRevert.sourceId).first()
-            devCheck(priceHistoryList.size >= 1) { "Expected at least one price history entry when reverting a price update" }
-            val priceHistoryToDelete = priceHistoryList.first()
-
-            // TODO: OK, ignoring if/what we check first, let's just think about *doing* it.
-            priceDao.upsert(priceAfterRevert.toEntity())
-            priceHistoryDao.delete(priceHistoryToDelete.id)
-            */
 
             val priceHistoryList = priceHistoryDao.getPriceHistory(dataSetId = priceBeforeRevert.dataSetId, itemId = priceBeforeRevert.itemId, sourceId = priceBeforeRevert.sourceId).first()
             devCheck(priceHistoryList.size >= 2) { "Expected at least two price history entries when reverting a price update" }
