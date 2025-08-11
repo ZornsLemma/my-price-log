@@ -1751,8 +1751,6 @@ interface DataSetDao {
     // any missing places where I apply a locale-sensitive sort in the UI. Technically the ORDER BY
     // clauses can be removed later for a small efficiency gain.
 
-    // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't
-    // need this order by here
     @Query("SELECT * FROM data_set ORDER BY name DESC")
     fun getAllDataSets(): Flow<List<DataSet>>
 
@@ -1776,8 +1774,7 @@ interface ItemDao {
     suspend fun delete(item: Item)
     */
 
-    // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
-    @Query("SELECT * FROM item WHERE data_set_id = :dataSetId ORDER BY name ASC")
+    @Query("SELECT * FROM item WHERE data_set_id = :dataSetId ORDER BY name DESC")
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
 
     @Query("DELETE FROM item WHERE id = :itemId")
@@ -2328,8 +2325,13 @@ fun MainScreen(
         // if I should just make this a full-screen dialog, now I more-or-less know how to do one
         // and since it would give more space for the product list to be scrolled in etc. But it
         // might be best to just leave this as-is for now and fiddle around with this after hitting
-        // MVP.
+        // MVP. (Probably an outdated comment. I could and perhaps should repurpose the selector screen
+        // for "edit product" to do this as a full screen dialog, even for MVP.)
         if (showItemSheet) {
+            val locale = LocalConfiguration.current.locales[0]
+            val itemListSorted = remember(itemList, locale) {
+                itemList.sortedByLocale({ it.name }, locale)
+            }
             ModalBottomSheet(onDismissRequest = { showItemSheet = false }) {
                 Column(
                     modifier = Modifier
@@ -2347,7 +2349,7 @@ fun MainScreen(
                             )
                         })
                     LazyColumn {
-                        items(itemList.filter {
+                        items(itemListSorted.filter {
                             it.name.contains(searchQuery, ignoreCase = true)
                         }) { listItem ->
                             ListItem(
@@ -3878,6 +3880,7 @@ fun HomeScreenScaffold(
     // get rid of my window insets or whatever at the very top level of my NavHost and move it into
     // individual screens, so this screen can have full screen for the drawer and apply the insets
     // to everything else.
+    // TODO: Can/should I factor this little fragment of code out into a helper function?
     val locale = LocalConfiguration.current.locales[0]
     val dataSetListSorted = remember(dataSetList, locale) {
         dataSetList.sortedByLocale({ it.name }, locale)
