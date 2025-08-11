@@ -1790,7 +1790,7 @@ interface SourceDao {
     suspend fun upsert(source: Source): Long
 
     // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
-    @Query("SELECT * FROM source WHERE data_set_id = :dataSetId ORDER BY name ASC")
+    @Query("SELECT * FROM source WHERE data_set_id = :dataSetId ORDER BY name DESC")
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
 
     @Query("DELETE FROM source WHERE id = :sourceId")
@@ -2287,7 +2287,11 @@ fun MainScreen(
 
         // If sourceList is empty this will generate a single-item menu with just "None" in,
         // but that is probably better than the "skeleton" menu we get with no items in.
-        val items = listOf(Pair(-1L, "None")) + sourceList.map { Pair(it.id, it.name) }
+        val locale = LocalConfiguration.current.locales[0]
+        val sourceListSorted = remember(sourceList, locale) {
+            listOf(Pair(-1L, "None")) + sourceList.sortedByLocale({ it.name }, locale).map { Pair(it.id, it.name) }
+        }
+        Log.d("MyApp", "sourceListSorted $sourceListSorted")
         // TODO: Did wonder if MyExposedDropdownMenuBox should allow null IDs to avoid the need
         // for the "-1" hack here, but I really didn't want to have to make every user of it
         // be null-tolerant when it *won't* hand you a null itself unless you gave it one in the
@@ -2314,7 +2318,7 @@ fun MainScreen(
                 { Text("Select a product and store to view or change the price there") } // TODO: poor wording? *normally* product will not be null, so maybe we should have variant wording, or maybe the message should just not mention product
             },
                             */
-                items = items,
+                items = sourceListSorted,
                 getId = { it.first },
                 getLabel = { it.second },
             )
