@@ -1473,7 +1473,6 @@ data class EditableSource(
     }
 }
 
-// TODO: This needs history tracking stuff adding, either on this table or via a separate table.
 @Entity(
     tableName = "price", foreignKeys = [
         ForeignKey(
@@ -1496,18 +1495,6 @@ data class EditableSource(
         )
     ]
 )
-// TODO: A record here needs to store:
-// - the "pack price" (need to think of generic word for "pack")
-// - the "pack measure" (ditto)
-// When designing this, think of:
-// - £1.20 for 6 bananas
-// - £3.00 for 250g
-// - £2.00 for 500ml
-// We want the "banana" case to be first class - if the shelf says £1.20 for 6 bananas, we don't
-// want to force the user to convert this to a unit price themselves. This will probably just fall
-// out naturally, but be careful to support it.
-//
-// The measure will be in a hard-coded "base" unit suitable to the unit type
 @Parcelize // TODO: probably won't need this once the edit dialog is written to use new style viewmodel data stuff
 data class PriceEntity(
     @PrimaryKey(autoGenerate = true)
@@ -1535,12 +1522,12 @@ data class PriceEntity(
     // maybe not - "amount" could also be a monetary amount - but maybe "quantity" would work? I am
     // cooling on "measure" somewhat right now
     val measure: Double,
+
     // Although measure is stored in the base unit, we also record the actual unit the user entered
     // the price in. This allows us to show it back to them in the most natural form when they are
     // e.g. comparing the database price with the current shelf price. We do have a default unit
     // stored on the item, but tracking it per actual price allows us to handle situations where
-    // supermarket A sells milk in pint multiples (even if the pack still has litres shown as well,
-    // the user may think of this in pints) while supermarket B sells it in litre multiples.
+    // supermarket A sells milk in pint multiples while supermarket B sells it in litre multiples.
     // TODO: Rename this as "user_unit" or something?
     @ColumnInfo(name = "original_unit") val originalUnit: MeasureUnit,
 
