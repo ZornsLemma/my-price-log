@@ -7330,7 +7330,10 @@ fun diff(lhs: PriceHistory, rhs: PriceHistory, confirmedAtFormatter: DateTimeFor
         rhs.measure,
         baseUnitForQuantityType(rhs.originalUnit.quantityType)
     ).to(rhs.originalUnit)
-    // TODO: Given we are not displaying confirmedAt using "full resolution", maybe we should apply the same resolution (date only I think, but check) here? This would need to work with some sort of approach where we filter out "no change except modifiedAt" entries either by returning null here or later on
+    // Note that by using confirmedAtFormatter here and PriceHistory.confirmedAt being the resulting
+    // string, if two PriceHistory records have visually indistinguishable confirmedAt values we
+    // won't show them, and if there are no other differences we will hide the extra record
+    // entirely.
     val lhsConfirmedAt = confirmedAtFormatter.format(lhs.confirmedAt)
     val rhsConfirmedAt = confirmedAtFormatter.format(rhs.confirmedAt)
     Log.d("MyApp", "lhsConfirmedAt $lhsConfirmedAt rhsConfirmedAt $rhsConfirmedAt")
