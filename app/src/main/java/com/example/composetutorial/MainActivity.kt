@@ -2113,7 +2113,6 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
                 previousPrice.value = null
                 saveStatus.update(SaveStatus.Success)
             } catch (e: Exception) {
-                // TODO: Does this case work?
                 saveStatus.update(SaveStatus.Error)
             }
             // TODO: NEED TO COMMUNICATE TO OUTER SCOPE THAT THIS HAS DONE
@@ -3855,6 +3854,8 @@ fun HomeScreenScaffold(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     var menuExpanded by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    var showErrorDialog by rememberSaveable { mutableStateOf(false) }
+    // TODO: Do I need the showBusySnackbar stuff here? I suppose the user might hit back while we are saving (confirm/undo)
 
     // TODO: I have tried to get the dimensions right as per M3 specs here, but I'm not that
     // confident. Although I think I have followed the font size/style advice, I am not sure it
@@ -4115,7 +4116,7 @@ fun HomeScreenScaffold(
 
                 SaveStatus.Error -> {
                     vm.saveStatus.update(SaveStatus.Idle)
-                    // TODO: We need to show an error dialog - I think this is probably a reasonable spot to do it, but not sure
+                    showErrorDialog = true
                 }
 
                 else -> {}
@@ -4126,6 +4127,10 @@ fun HomeScreenScaffold(
     // TODO: Is it OK to hack saveStatus into spinner like this? I suspect it is but need to come back to this calmly. Note that this *doesn't* eliminate the need to check saveStatus.isNotBusy() to disable all user interaction, as the scrim doesn't kick in straight away
     // TODO: It's probably OK and if it's not it isn't necessarily specifically here that it will go wrong, but is there any lurking corner case where we've just returned from making an edit and the user very quickly clicks confirm and things go tits up?
     ScrimWithSpinner(visible = loading || saveStatus == SaveStatus.BusyForAWhile)
+
+    if (showErrorDialog) {
+        SaveErrorAlertDialog(requestClose = { showErrorDialog = false })
+    }
 }
 
 @Composable
@@ -4900,25 +4905,9 @@ fun GeneralEditScreen(
         )
     }
 
-    // TODO: Do we want to "re-use" this dialog for e.g. delete errors too? If so, how will the
-    // change of wording be addressed? We may want to rename showErrorDialog to something more
-    // suggestive depending on what kinds of error this code handles.
+
     if (showErrorDialog) {
-        // We use an AlertDialog not a snackbar here. This is a local database save which is
-        // failing so it is very unlikely to be transient. We also don't want the user
-        // missing the snackbar, thinking the app is buggy ("I already saved, why didn't the
-        // dialog close?") and then tapping the close icon without realising their changes
-        // have not been saved. (If transient failure was a possibility - e.g. we needed to
-        // perform network activity - there might be value in showing a snackbar, maybe with
-        // a fallback to an AlertDialog if things keep failing.)
-        AlertDialog(
-            title = { Text("Unable to save changes") },
-            text = { Text("An error occurred while saving the changes.") },
-            onDismissRequest = { showErrorDialog = false },
-            confirmButton = {
-                TextButton(onClick = { showErrorDialog = false }) { Text("OK") }
-            }
-        )
+        SaveErrorAlertDialog(requestClose = { showErrorDialog = false })
     }
 
     LaunchedEffect(showBusySnackbar) {
@@ -4933,6 +4922,30 @@ fun GeneralEditScreen(
         }
     }
 }
+
+@Composable
+fun SaveErrorAlertDialog(requestClose: () -> Unit) {
+    // We use an AlertDialog not a snackbar here. This is a local database save which is
+    // failing so it is very unlikely to be transient. We also don't want the user
+    // missing the snackbar, thinking the app is buggy ("I already saved, why didn't the
+    // dialog close?") and then tapping the close icon without realising their changes
+    // have not been saved. (If transient failure was a possibility - e.g. we needed to
+    // perform network activity - there might be value in showing a snackbar, maybe with
+    // a fallback to an AlertDialog if things keep failing.)
+    // TODO: Do we want to "re-use" this dialog for e.g. delete errors too? If so, how will the
+    // change of wording be addressed? We may want to rename showErrorDialog to something more
+    // suggestive depending on what kinds of error this code handles.
+    AlertDialog(
+        title = { Text("Unable to save changes") },
+        text = { Text("An error occurred while saving the changes.") },
+        onDismissRequest = { requestClose() },
+        confirmButton = {
+            TextButton(onClick = { requestClose() }) { Text("OK") }
+        }
+    )
+}
+
+
 
 @Composable
 fun GeneralEditAndDeleteScreen(
