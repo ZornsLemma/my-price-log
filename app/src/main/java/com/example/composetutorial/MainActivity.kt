@@ -7304,36 +7304,41 @@ data class PriceHistoryDelta(
     val priceHistory: PriceHistory, // TODO: having this here feels a bit crap, maybe it's OK
     val price: Double?,
     val measure: MeasuredValue?,
-    val confirmedAt: Instant?,
+    // confirmedAt is a string so we can do "user-resolution" de-duplication
+    val confirmedAt: String?,
     val notes: String?,
     val modifiedAt: Instant
 )
 
 // TODO: Yet another utterly incoherent style of adding conversion between data classes, no idea what I "ought" to do and this code is an inconsistent mish-mash of styles.
-fun PriceHistory.toPriceHistoryDelta(): PriceHistoryDelta {
+fun PriceHistory.toPriceHistoryDelta(confirmedAtFormatter: DateTimeFormatter): PriceHistoryDelta {
     return PriceHistoryDelta(
         priceHistory = this,
         price = price,
         measure = MeasuredValue(measure, baseUnitForQuantityType(originalUnit.quantityType)).to(
             originalUnit
         ),
-        confirmedAt = confirmedAt,
+        confirmedAt = confirmedAtFormatter.format(confirmedAt),
         notes = notes,
         modifiedAt = modifiedAt
     )
 }
 
 // TODO: Where does this belong and what naming and calling convention should it have?!?!?!
-fun diff(lhs: PriceHistory, rhs: PriceHistory): PriceHistoryDelta {
+fun diff(lhs: PriceHistory, rhs: PriceHistory, confirmedAtFormatter: DateTimeFormatter): PriceHistoryDelta? {
     val rhsMeasure = MeasuredValue(
         rhs.measure,
         baseUnitForQuantityType(rhs.originalUnit.quantityType)
     ).to(rhs.originalUnit)
     // TODO: Given we are not displaying confirmedAt using "full resolution", maybe we should apply the same resolution (date only I think, but check) here? This would need to work with some sort of approach where we filter out "no change except modifiedAt" entries either by returning null here or later on
-    val confirmedAt = if (lhs.confirmedAt == rhs.confirmedAt) null else rhs.confirmedAt
+    val lhsConfirmedAt = confirmedAtFormatter.format(lhs.confirmedAt)
+    val rhsConfirmedAt = confirmedAtFormatter.format(rhs.confirmedAt)
+    Log.d("MyApp", "lhsConfirmedAt $lhsConfirmedAt rhsConfirmedAt $rhsConfirmedAt")
+    val confirmedAt = if (lhsConfirmedAt == rhsConfirmedAt) null else rhsConfirmedAt
     // TODO: OK to trim()?
     val notes = if (lhs.notes.trim() == rhs.notes.trim()) null else rhs.notes
     val priceOrMeasureChanged = (lhs.price != rhs.price) || (lhs.measure != rhs.measure)
+    if (priceOrMeasureChanged || confirmedAt != null || notes != null) {
     return PriceHistoryDelta(
         priceHistory = rhs,
         price = if (!priceOrMeasureChanged) null else rhs.price,
@@ -7341,7 +7346,9 @@ fun diff(lhs: PriceHistory, rhs: PriceHistory): PriceHistoryDelta {
         confirmedAt = confirmedAt,
         notes = notes,
         modifiedAt = rhs.modifiedAt
-    )
+    ) } else {
+        return null
+    }
 }
 
 class ViewPriceHistoryViewModel(
@@ -7359,12 +7366,12 @@ class ViewPriceHistoryViewModel(
         uiContent.source.id
     )
 
-    fun generatePriceHistoryDeltaList(priceHistoryList: List<PriceHistory>, locale: Locale) =
+    fun generatePriceHistoryDeltaList(priceHistoryList: List<PriceHistory>, locale: Locale, confirmedAtFormatter: DateTimeFormatter) =
         // Remember that we are doing a "backwards delta" here - we show the very latest element in full,
         // and for older elements we show differences between them and the next newest element. This zip
         // has every member of priceHistoryList appear exactly once as oldPriceHistory.
         (listOf(null) + priceHistoryList).zip(priceHistoryList).mapNotNull { (newPriceHistory, oldPriceHistory) ->
-            if (newPriceHistory == null) oldPriceHistory.toPriceHistoryDelta() else diff(oldPriceHistory, newPriceHistory)
+            if (newPriceHistory == null) oldPriceHistory.toPriceHistoryDelta(confirmedAtFormatter) else diff(newPriceHistory, oldPriceHistory, confirmedAtFormatter)
         }
 
     // TODO: dataSetFlow is probably a temp hack
@@ -8199,7 +8206,7 @@ fun ItemSourceInfo2(
                         modifier = Modifier.padding(bottom = 8.dp),
                         label = "Confirmed" /* "Last checked" */
                     ) {
-                        Text(dateFormatter2.format(priceHistoryDelta.confirmedAt))
+                        Text(priceHistoryDelta.confirmedAt)
                     }
                 }
 
@@ -8228,11 +8235,16 @@ fun ViewPriceHistoryScreen(
     requestClose: () -> Unit, // TODO: requestDismiss? Am I inconsistent about this across different functions or is there a difference?,
     requestEditAsNew: (priceHistory: PriceHistory) -> Unit
 ) {
+    val locale = LocalConfiguration.current.locales[0]
+    val zoneId = ZoneId.systemDefault()
+    val dateFormatter2 = remember(locale, zoneId) { // TODO RENAME
+        DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
+            .withZone(zoneId)
+    }
     // TODO: We could use null as initial value but I suspect we don't need it and it will be more convenient to default to empty
     val priceHistoryList by viewModel.priceHistoryListFlow.collectAsStateWithLifecycle(emptyList())
-    val locale = LocalConfiguration.current.locales[0]
     val priceHistoryDeltaList = remember(priceHistoryList, locale) {
-        viewModel.generatePriceHistoryDeltaList(priceHistoryList, locale)
+        viewModel.generatePriceHistoryDeltaList(priceHistoryList, locale, dateFormatter2)
     }
 
     Log.d("MyApp", "priceHistoryDeltaList $priceHistoryDeltaList")
@@ -8264,19 +8276,15 @@ fun ViewPriceHistoryScreen(
 
             // TODO: Do I need to specify a key for the rows?
             // TODO: It's likely inefficient to be doing the conversions inside LazyColumn and we should really be pre-filtering the list with val displayItems = remember(priceHistoryList) { priceHistoryList.map { } } or something, but I'm just going to hack it for now
-            val locale = LocalConfiguration.current.locales[0]
-            val dateFormatter = remember(locale) {
+            val dateFormatter = remember(locale, zoneId) {
                 DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale)
-                    .withZone(ZoneId.systemDefault())
-            }
-            val dateFormatter2 = remember(locale) { // TODO RENAME
-                DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
-                    .withZone(ZoneId.systemDefault())
+                    .withZone(zoneId)
             }
 
-            val timeFormatter = remember(locale) {
+
+            val timeFormatter = remember(locale, zoneId) {
                 DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
-                    .withZone(ZoneId.systemDefault())
+                    .withZone(zoneId)
             }
             if (dataSet != null) { // TODO: Temp hack, it can be briefly null while we initialise at the moment
                 LazyColumn(modifier = Modifier.weight(1f)) {
