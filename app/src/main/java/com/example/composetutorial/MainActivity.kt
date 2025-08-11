@@ -7358,15 +7358,14 @@ class ViewPriceHistoryViewModel(
         uiContent.item.id,
         uiContent.source.id
     )
-    val priceHistoryDeltaListFlow = priceHistoryListFlow.flatMapLatest { priceHistoryList ->
+
+    fun generatePriceHistoryDeltaList(priceHistoryList: List<PriceHistory>, locale: Locale) =
         // Remember that we are doing a "backwards delta" here - we show the very latest element in full,
         // and for older elements we show differences between them and the next newest element. This zip
         // has every member of priceHistoryList appear exactly once as oldPriceHistory.
-        val priceHistoryDeltaList = (listOf(null) + priceHistoryList).zip(priceHistoryList).mapNotNull { (newPriceHistory, oldPriceHistory) ->
+        (listOf(null) + priceHistoryList).zip(priceHistoryList).mapNotNull { (newPriceHistory, oldPriceHistory) ->
             if (newPriceHistory == null) oldPriceHistory.toPriceHistoryDelta() else diff(oldPriceHistory, newPriceHistory)
         }
-        flowOf(priceHistoryDeltaList)
-    }
 
     // TODO: dataSetFlow is probably a temp hack
     val dataSetFlow = priceTrackerRepository.getAllDataSets()
@@ -8231,10 +8230,11 @@ fun ViewPriceHistoryScreen(
 ) {
     // TODO: We could use null as initial value but I suspect we don't need it and it will be more convenient to default to empty
     val priceHistoryList by viewModel.priceHistoryListFlow.collectAsStateWithLifecycle(emptyList())
-    Log.d("MyApp", "priceHistoryList.size ${priceHistoryList.size}")
-    val priceHistoryDeltaList by viewModel.priceHistoryDeltaListFlow.collectAsStateWithLifecycle(
-        emptyList()
-    )
+    val locale = LocalConfiguration.current.locales[0]
+    val priceHistoryDeltaList = remember(priceHistoryList, locale) {
+        viewModel.generatePriceHistoryDeltaList(priceHistoryList, locale)
+    }
+
     Log.d("MyApp", "priceHistoryDeltaList $priceHistoryDeltaList")
 
     val dataSet = viewModel.uiContent.dataSet
