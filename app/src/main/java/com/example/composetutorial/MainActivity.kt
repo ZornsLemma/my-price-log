@@ -2603,7 +2603,9 @@ fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
 }
 
 // TODO: EXPERIMENTAL
-// TODO: HOW WILL WE HANDLE "/100G" ETC? WILL WE MAKE THESE FIRST CLASS MEASUREUNITS BUT FLAG THEM AS "MULTIPLES" SO WE OMIT THEM FROM MANY CASES, OR WILL WE MAKE IT A LIST<PAIR<MULT,MEASUREUNIT>>?
+// TODO: HOW WILL WE HANDLE "/100G" ETC? WILL WE MAKE THESE FIRST CLASS MEASUREUNITS BUT FLAG THEM
+// AS "MULTIPLES" SO WE OMIT THEM FROM MANY CASES, OR WILL WE MAKE IT A
+// LIST<PAIR<MULT,MEASUREUNIT>>?
 // TODO: A UnitPrice *isn't* a MeasuredValue in some sense (the value is price *per* unit, not X units), but in practice it might work nicely to represent it as one, at least internally. Not sure.
 data class UnitPrice(val numerator: Double, val denominator: MeasureUnit) : Comparable<UnitPrice> {
     override fun compareTo(other: UnitPrice): Int {
@@ -2671,10 +2673,10 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet, locale: Locale): Str
     return "${formatPrice(unitPrice.numerator, dataSet, locale)}/${unitPrice.denominator.symbol}"
 }
 
-// TODO: Note that selectedId is not used. I would like to use this to focus the previously
-// selected item when expanding the dropdown using a D-pad, instead of defaulting to the first
-// item. However, this appears to be ninja-grade level development and I tried tweaking multiple
-// AI-suggested solutions and got nothing but crashes.
+// ENHANCE: Note that selectedId is not used. I would like to use this to focus the previously
+// selected item when expanding the dropdown using a D-pad, instead of defaulting to the first item.
+// However, this appears to be ninja-grade development and I tried tweaking multiple AI-suggested
+// solutions and got nothing but crashes.
 // TODO: RENAME?
 @Composable
 fun <T, ID : Comparable<ID>> ItemWithDropdown(
@@ -2747,6 +2749,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     label: String,
     text: String,
     onValueChange: (ID) -> Unit, // TODO: follow naming convention of MyExposedDropdownMenUBox
+    dropdownContentDescription: String,
     items: List<T>,
     getId: (T) -> ID,
     getLabel: (T) -> String,
@@ -2754,9 +2757,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     enabled: Boolean = true,
 ) {
     // fontSize/iconSize are used here so that the drop down icon scales correctly when the user
-    // changes the system font size. (Even if we didn't do this, we'd still want to use a fixed
-    // size() Modifier (16.dp works quite nicely at the default settings on my current emulator) to
-    // improve the appearance, but it's nicer to take font size into account.)
+    // changes the system font size.
     val fontSize = MaterialTheme.typography.bodyLarge.fontSize
     val iconSize = with(LocalDensity.current) { fontSize.toDp() }
 
@@ -2797,7 +2798,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
                         Text(text)
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Select unit", // TODO: needs to be passed in by caller
+                            contentDescription = dropdownContentDescription,
                             modifier = Modifier.size(iconSize /* 16.dp */)
                         )
                     }
@@ -8083,6 +8084,7 @@ fun PackPriceAndSizeRow(
         )
         LabeledItemWithDropdown(
             modifier = Modifier.weight(1f), label = "Unit price",
+            dropdownContentDescription = "Select unit",
             text = unitPriceString,
             enabled = true, // TODO: hardcoding to true for now, while this is on price history only and that has no save
             //  TODO: Mixed feelings about the "/" prefix in this menu.
