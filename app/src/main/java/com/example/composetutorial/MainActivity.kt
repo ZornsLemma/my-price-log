@@ -3153,88 +3153,6 @@ fun <T> NewDataTable(
     }
 }
 
-// TODO: o4-mini code, review if keep
-// TODO: I should probably display an arrow of some sort next to the column which controls the sort
-// order, and I should probably make it clickable to reverse the order - the main thing being to
-// visually indicate that the data is sorted, I don't think in practice changing the order is of
-// much interest and I certainly don't see the need to allow sorting on other columns.
-@Composable
-fun DataTable(
-    header: List<String>,
-    rows: List<List<String>>,
-    highlightRow: Int?,
-    columnWeights: List<Float> = List(header.size) { 1f }
-) {
-    // TODO: *Maybe* I could use primary for the header background, and then use surfaceContainerHighest to highlight the current source (if any)? But I am wary of the table header "stealing the show" when so little of the rest of the UI is primary coloured, especially filled areas.
-    // TODO: Should the header and the last item of the list have rounded corners? I am not sure. Probably best square corners TBH.
-
-    Column {
-        // optional header
-        Surface(color = MaterialTheme.colorScheme.surfaceContainerHighest) {
-            Column {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp, horizontal = 8.dp)
-                ) {
-                    header.forEachIndexed { index, title ->
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.titleMedium,
-                            textAlign = if (index != 1) TextAlign.Start else TextAlign.End, // TODO: hardcoding 1 is hacky
-                            modifier = Modifier
-                                .weight(columnWeights[index])
-                                .padding(end = 8.dp)
-                        )
-                    }
-                }
-                HorizontalDivider(
-                    thickness = 1.dp, color = MaterialTheme.colorScheme.outline /* Variant */
-                )
-            }
-        }
-
-
-        // data rows
-        // TODO: Far from sure I like the way I'm highlighting highlightRow, but it's not too bad. I was worried using any kind of font weight change would break the decimal point alignment but in practice it doesn't appear to be a big problem.
-        rows.forEachIndexed { rowIndex, rowData ->
-            // TODO: Zebra-striping is experimental, not sure how I feel about it. Even if we do keep it, note that the header row has a somewhat inconsistent colour - it is darker than the "surface" rows (which is probably good) but lighter than the surfaceVariant rows, which is probably bad (this comment is assuming a light mode display)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 0.dp, horizontal = 0.dp)
-                    //.background(MaterialTheme.colorScheme.surfaceContainerHigh /* if (rowIndex % 2 == 0) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceVariant */)
-                    .background(if (rowIndex != highlightRow) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.secondaryContainer)
-            ) {
-                // TODO: This inner Row is only here for the zebra-striping - if we get rid of it, we can do without it (and move the padding to the parent Row)
-                Column {
-                    if (rowIndex > 0) {
-                        HorizontalDivider(
-                            thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant
-                        )
-                    }
-
-                    Row(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
-                        rowData.forEachIndexed { index, cell ->
-                            Text(
-                                text = cell,
-                                style = if (rowIndex != highlightRow) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyLarge.copy(
-                                    fontWeight = FontWeight.Medium
-                                ),
-                                color = if (rowIndex != highlightRow) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSecondaryContainer,
-                                textAlign = if (index != 1) TextAlign.Start else TextAlign.End, // TODO: hardcoding 1 is hacky
-                                modifier = Modifier
-                                    .weight(columnWeights[index])
-                                    .padding(end = 8.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 /* TODO: ChatpGPT suggests code like this would allow us to switch between "icons" and "icons+text" depending on screen size:
 
 @Composable
@@ -4146,17 +4064,21 @@ fun PriceComparisonCard(
     // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
     // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
     // but things are slightly different if we go with this approach.
-    // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a contextDescription for screen readers which is "Price per 100g", so it gets read out properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows themselves contain the currency symbol.
-    // TODO: We may want the denominator to be user-selectable in this list header, if so it should probably offer all the user's selected units of the right type, as the unit price dropdown on ItemStoreInfo does.
+    // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a
+    // contextDescription for screen readers which is "Price per 100g", so it gets read out
+    // properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows
+    // themselves contain the currency symbol.
+    // TODO: We may want the denominator to be user-selectable in this list header, if so it should
+    // probably offer all the user's selected units of the right type, as the unit price dropdown on
+    // ItemSourceInfo does.
     val locale = LocalConfiguration.current.locales[0]
     val currencyFormat = remember(dataSet, locale) {
         getCurrencyFormat(dataSet, locale)
     }
 
-    // TODO: I think this is OK but check later: we use "prefix or suffix" here because
-    // although the prefix or suffix nature of a currency symbol in a locale matters in
-    // some other places, here it is appearing in isolation *without* a price next to
-    // it.
+    // We use "prefix or suffix" in the header because although the prefix or suffix nature of a
+    // currency symbol in a locale matters in some other places, here it is appearing in isolation
+    // *without* a price next to it.
     // TODO: Arguably we could/should use remember or something like that to store the header currency/unit string and avoid rederiving it all the time, albeit it isn't that involved and we are already doing that with the currencycode, but still, we could move this into that remember block and not expose the currency code outside it or something
     // TODO: I'm hacking this together out of old prototype code but as this evolves we need to be "neater" about how we cope with generating the denominator part of the unit price header on the list when the list is empty - or just not showing the list at all in that case (which might make more sense, and maybe we already *do*, I'm not sure right now)
     // TODO: Does it look ugly to have the "invisible" column with no title? It's like the price column is inexplicably further
@@ -4164,11 +4086,13 @@ fun PriceComparisonCard(
     // not be any. I suppose if we start adding good/OK/bad icons in there there will nearly always be at least one icon somewhere.
     val header = listOf(
         "Store",
-        // TODO: Now I have more space here (not quite sure how, but I do), it *may* be that headings of the form "Price/pt" instead of "£/pt" look OK/better.
         "${currencyFormat?.prefix ?: currencyFormat?.suffix ?: ""}/${priceAnalysis.augmentedPriceList.firstOrNull()?.unitPrice?.denominator?.symbol ?: "TODO"}",
         "" // TODO?
     )
-    // TODO: With the £/100g header, it is arguably redundant/incorrect to include the £ on the data values, but I think it's a reasonable compromise for readability and use by non-technical users.
+    // It may be technically incorrect to show the currency symbol both in the header ("£/100g") and
+    // on the individual unit prices, but I think that for practical purposes this is the least
+    // confusing way to show it. An "incomplete" header ("/100g") feels unclear, as does having
+    // prices which aren't marked with a currency symbol.
     // TODO: We might be rebuilding this list every recomposition, I really don't have a clue, as I already noted we should really
     // not be building this list at all but working directrly with augmentedPriceList or something
     val data = priceAnalysis.augmentedPriceList.map { augmentedPrice ->
@@ -4203,15 +4127,6 @@ fun PriceComparisonCard(
 
             val highlightRow =
                 data.indexOfFirst { it[0] == source?.name }.takeIf { it != -1 }
-            /* TODO DELETE
-            // TODO: This list may not need dividers between items if it is now simpler and doesn't show "Notes", which could have pushed us into multi-line items fairly easily, whereas now only very long store names or very big fonts on very small screens are likely to do it.
-            DataTable(
-                header = header, rows = data, highlightRow = highlightRow,
-                // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes.
-                columnWeights = listOf(1.7f, 1f, 1f)
-            )
-            Spacer(modifier = Modifier.height(8.dp)) // TODO TEMP (WE WON'T HAVE TWO TABLES SOON!)
-            */
 
             // TODO: We may need to add things like dataSet and locale to remember key
             val columns = remember(dataSet, locale) {
@@ -4293,15 +4208,6 @@ fun rememberSyncedTextFieldValue(modelState: String): MutableState<TextFieldValu
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-// TODO: I was thinking this screen would show the price history, but I am cooling on that. Not
-// quite sure where we would show it, but I am not sure it's something we want cluttering up this
-// in-store edit screen, or encouraging people to go into this "live edit" view where they might
-// accidentally change data just to see the history. Maybe this could go on the overflow menu on
-// home screen if we have all three things selected?
-// TODO: I could maybe re-use the (bundled up in a composable) unit price display only but with
-// variable unit on this screen, as it will might be useful to the user as a confirmation of the
-// unit price on the shelf. On the other hand, it might just be extra clutter on a screen where
-// the user is editing.
 fun EditPriceScreen(
     vm: EditPriceViewModel,
     navController: NavHostController,
