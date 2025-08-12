@@ -2252,6 +2252,12 @@ const val maxItemNameLength = 32
 const val maxSourceNameLength = 32
 const val maxNotesLength = 200 // TODO TEMP FOR TESTING, SHOULD BE 1024
 
+// 11 is a bit arbitrary but we're just trying to avoid the user filling the TextField full of junk.
+// With my current layouts on a small phone this avoids wrapping and it feels very generous anyway;
+// it allows just under a million with two decimal places and a (manually entered) thousands
+// separator.
+const val maxDecimalLength = 11
+
 // TODO: RENAME THIS IF IT SURVIVES REFACTORING
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -6101,16 +6107,12 @@ fun NumericTextField(
         prefix = prefix,
         suffix = suffix,
         textStyle = textStyle,
-        // TODO: We don't (we could, but probably no point) allow arbitrary onCandidateValueChange
-        // functions to be supplied by our caller. We just hardcode this for now. We could
-        // potentially accept some options from our caller which say whether decimal point (locale
-        // sensitive) or minus signs are allowed and tweak the internally-assigned onCandidate...
-        // function here.
-        // TODO: The length limit is a bit arbitrary but we're just trying to avoid the user filling
-        // the box full of junk. I picked 11 because with my current layout on a small phone this
-        // avoids wrapping, and it feels very generous anyway. This allows just under a million with
-        // two decimal places and a (manually entered) thousands separator.
-        onCandidateValueChange = { isValidTransitionalDecimal(it) && it.length <= 11 },
+        // ENHANCE: We don't (we could, but probably no point) allow arbitrary
+        // onCandidateValueChange functions to be supplied by our caller. We just hardcode this for
+        // now. We could potentially accept some options from our caller which say whether decimal
+        // point (locale sensitive) or minus signs are allowed and tweak the internally-assigned
+        // onCandidate... function here.
+        onCandidateValueChange = { isValidTransitionalDecimal(it) && it.length <= maxDecimalLength },
         onValueChange = onValueChange,
         enabled = enabled,
         isError = isError,
