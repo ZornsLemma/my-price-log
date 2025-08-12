@@ -5893,28 +5893,26 @@ fun getCurrencyForLocale(locale: Locale): Currency? {
     }
 }
 
-// This list is a combination of the currency codes from list two (fund codes,
-// https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-two.doc)
-// and list three (historic currencies and funds,
-// https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-three.xls).
-// I have then de-blacklisted the following which also appear on list one
-// (https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-one.xls)
-// and to my non-expert eye look like currencies which are potentially in use: EUR, MWK, PEN, RON,
-// SDG, SZL, TRY. There's obviously some contextual information in lists two and three which just
-// taking the list of currencies ignores.
-// @formatter:off
-val blacklistedCurrencyCodes = setOf(
-    "ADP", "AFA", "ALK", "ANG", "AOK", "AON", "AOR", "ARA", "ARP", "ARY", "ATS", "AYM", "AZM",
-    "BAD", "BEC", "BEF", "BEL", "BGJ", "BGK", "BGL", "BOP", "BOV", "BRB", "BRC", "BRE", "BRN",
-    "BRR", "BUK", "BYB", "BYR", "CHC", "CHE", "CHW", "CLF", "COU", "CSD", "CSJ", "CSK", "CUC",
-    "CYP", "DDM", "DEM", "ECS", "ECV", "EEK", "ESA", "ESB", "ESP", "FIM", "FRF", "GEK", "GHC",
-    "GHP", "GNE", "GNS", "GQE", "GRD", "GWE", "GWP", "HRD", "HRK", "IDR", "IEP", "ILP", "ILR",
-    "ISJ", "ITL", "LAJ", "LSM", "LTL", "LTT", "LUC", "LUF", "LUL", "LVL", "LVR", "MGF", "MLF",
-    "MRO", "MTL", "MTP", "MVQ", "MXP", "MXV", "MZE", "MZM", "NIC", "NLG", "PEH", "PEI", "PES",
-    "PLZ", "PTE", "RHD", "ROK", "ROL", "RUR", "SDD", "SDP", "SIT", "SKK", "SLL", "SRG", "STD",
-    "SUR", "TJR", "TMM", "TPE", "TRL", "UAK", "UGS", "UGW", "USN", "USS", "UYI", "UYN", "UYP",
-    "UYW", "VEB", "VEF", "VNC", "XAD", "XEU", "XFO", "XFU", "XRE", "YDD", "YUD", "YUM", "YUN",
-    "ZAL", "ZMK", "ZRN", "ZRZ", "ZWC", "ZWD", "ZWL", "ZWN", "ZWR"
+// I would have preferred to use the phone's own list of valid currency codes, but there seems to
+// be so much junk (e.g. historical currency codes, which are irrelevant for our purposes) that
+// I had to give up on the idea. The following list is a manual combination of the results from
+// the following lists:
+// - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-one.xls
+// - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-two.doc
+// - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-three.xls
+val validCurrencyCodes = setOf(
+    "AED", "AFN", "ALL", "AMD", "AOA", "ARS", "AUD", "AWG", "AZN", "BAM", "BBD", "BDT", "BGN",
+    "BHD", "BIF", "BMD", "BND", "BOB", "BRL", "BSD", "BTN", "BWP", "BYN", "BZD", "CAD", "CDF",
+    "CHF", "CLP", "CNY", "COP", "CRC", "CUP", "CVE", "CZK", "DJF", "DKK", "DOP", "DZD", "EGP",
+    "ERN", "ETB", "EUR", "FJD", "FKP", "GBP", "GEL", "GHS", "GIP", "GMD", "GNF", "GTQ", "GYD",
+    "HKD", "HNL", "HTG", "HUF", "ILS", "INR", "IQD", "IRR", "ISK", "JMD", "JOD", "JPY", "KES",
+    "KGS", "KHR", "KMF", "KPW", "KRW", "KWD", "KYD", "KZT", "LAK", "LBP", "LKR", "LRD", "LSL",
+    "LYD", "MAD", "MDL", "MGA", "MKD", "MMK", "MNT", "MOP", "MRU", "MUR", "MVR", "MWK", "MXN",
+    "MYR", "MZN", "NAD", "NGN", "NIO", "NOK", "NPR", "NZD", "OMR", "PAB", "PEN", "PGK", "PHP",
+    "PKR", "PLN", "PYG", "QAR", "RON", "RSD", "RUB", "RWF", "SAR", "SBD", "SCR", "SDG", "SEK",
+    "SGD", "SHP", "SLE", "SOS", "SRD", "SSP", "STN", "SVC", "SYP", "SZL", "THB", "TJS", "TMT",
+    "TND", "TOP", "TRY", "TTD", "TWD", "TZS", "UAH", "UGX", "USD", "UYU", "UZS", "VED", "VES",
+    "VND", "VUV", "WST", "XAF", "XCD", "XCG", "XDR", "XOF", "XPF", "YER", "ZAR", "ZMW", "ZWG"
 )
 // @formatter:on
 
@@ -5939,6 +5937,13 @@ fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Strin
         }
     }
 
+    // We accept the currencies for the current locales even if they are not in validCurrencyCodes.
+    // ENHANCE: For all I know this isn't smart - maybe some locales include historic currency codes
+    // and we'd be better off filtering using validCurrencyCodes even here - but for now it seems
+    // best to err on the side of caution. This significantly reduces the chances of a user not
+    // being able to select a currency they care about. The amount of noise is likely to be
+    // relatively small; any given locale is going to have only a few historic currency codes and
+    // the user is going to have a small number of current locales.
     val mainCurrencyList = mutableListOf<Pair<String, String>>()
     val mainCurrencyCodeSet = mutableSetOf<String>()
     for (i in 0 until locales.size()) {
@@ -5950,22 +5955,18 @@ fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Strin
         }
     }
 
-    // getAvailableCurrencies() seems to return a lot of junk. At some point it's likely to be
-    // easier just to use a curated list as the starting point, but for now let's persist with the
-    // system values in the name of flexibility. We blacklist some specific codes which we know to
-    // be historic or for funds instead of currencies; it seems fair to assume these will never be
-    // used in a context we're interested in. We also filter out currency codes starting with X and
-    // currency codes where the system re-uses the currency code as the display name.
+    // We intersect the results of getAvailableCurrencies() with validCurrencyCodes. The former
+    // includes a lot of irrelevant junk for our purposes, but we don't want to try to use a code
+    // from validCurrencyCodes if the system doesn't understand it.
     val otherCurrencyList =
         Currency.getAvailableCurrencies().mapNotNull { currency ->
             if (currency.currencyCode in mainCurrencyCodeSet ||
-                currency.currencyCode.startsWith("X") ||
-                currency.getDisplayName(locales[0]) == currency.currencyCode ||
-                currency.currencyCode in blacklistedCurrencyCodes
-            ) null else buildPair(currency)
+                currency.currencyCode !in validCurrencyCodes) {
+                null } else { buildPair(currency) }
         }
 
     // TODO: ChatGPT magic, check later
+    // TODO: We can almost certainly use our sortedByLocale() here
     val collator = Collator.getInstance(locales[0]).apply {
         strength = Collator.PRIMARY // case-insensitive, diacritic-aware
     }
