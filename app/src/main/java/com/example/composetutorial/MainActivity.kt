@@ -2901,7 +2901,6 @@ fun ItemSourceInfo(
 
                         PackPriceAndSizeRow(price.price, price.measure, dataSet)
 
-                        // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
                         LabeledItem(
                             modifier = Modifier.padding(bottom = 8.dp),
                             label = "Confirmed" /* "Last checked" */
@@ -6819,6 +6818,9 @@ fun <T> GeneralSelectorScreen(
 
             // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
+            // TODO: Misc ideas for this search:
+            // - we could have a clear button to empty the text
+            // - we could show e.g. a warning icon and/or some supporting text if nothing matches the substring (rather than just having an empty list)
             if (showSearch) {
                 TextField(
                     value = searchString,
@@ -8125,7 +8127,6 @@ fun ItemSourceInfo2( // TODO: Rename
             // but note that the confirmed at format differs (relative vs absolute and colour vs no colour),
             // and the handling of empty notes just might be different too, so be careful.
 
-            // TODO: Label this "Confirmed" to match the button? Or "Last confirmed", but bit long?
             if (priceHistoryDelta.confirmedAt != null) {
                 LabeledItem(
                     modifier = Modifier.padding(bottom = 8.dp),
@@ -8158,13 +8159,13 @@ fun ViewPriceHistoryScreen(
 ) {
     val locale = LocalConfiguration.current.locales[0]
     val zoneId = ZoneId.systemDefault()
-    val dateFormatter2 = remember(locale, zoneId) { // TODO RENAME
+    val confirmedAtFormatter = remember(locale, zoneId) {
         DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
             .withZone(zoneId)
     }
     val priceHistoryList by viewModel.priceHistoryListFlow.collectAsStateWithLifecycle(emptyList())
     val priceHistoryDeltaList = remember(priceHistoryList, locale) {
-        viewModel.generatePriceHistoryDeltaList(priceHistoryList, locale, dateFormatter2)
+        viewModel.generatePriceHistoryDeltaList(priceHistoryList, locale, confirmedAtFormatter)
     }
 
     Log.d("MyApp", "priceHistoryDeltaList $priceHistoryDeltaList")
@@ -8222,11 +8223,6 @@ fun ViewPriceHistoryScreen(
         }
     }
 }
-
-// TODO: ~/pc-sync/ai-chat-misc-to-move/grok-combo-box-and-alternate-ui.txt is a potentially
-// valuable discussion, touching on some implementation ideas, design ideas (small tweaks and
-// alternatives) etc and would probably be worth a re-read later.
-
 
 // TODO: I should probably lock the app to portrait mode
 
