@@ -2867,15 +2867,10 @@ fun ItemSourceInfo(
                 // TODO: Once the store dropdown is moved off this card, will it be obvious this card
                 // relates to that store? We could maybe give its actual name, but that might also be
                 // a bit repetitive.
-                Text(
-                    text = "Store price",
-                    style = MaterialTheme.typography.titleLarge
-                ) // TODO: This label feels a bit "redundant" and wording may need tweaking
-                Text(
-                    text = "Shelf price at ${source?.name ?: "TODO"}",
-                    style = MaterialTheme.typography.bodySmall
-                ) // TODO: null handling?!
-                Spacer(modifier = Modifier.height(8.dp))
+                CardTitle(
+                    title = "Store price", // TODO: This label feels a bit "redundant" and wording may need tweaking
+                    subtitle = "Shelf price at ${source?.name ?: "TODO"}", // TODO: null handling!
+                )
 
                 Log.d("MyApp", "ISI dataset $dataSet")
                 Log.d("MyApp", "ISI item $item")
@@ -4202,15 +4197,10 @@ fun PriceComparisonCard(
                 bottom = 16.dp
             )
         ) {
-            Text(
-                text = "Price comparison",
-                style = MaterialTheme.typography.titleLarge
+            CardTitle(
+                title = "Price comparison",
+                subtitle = "Adjusted for loyalty discounts and old prices"
             )
-            Text(
-                text = "Adjusted for loyalty discounts and old prices",
-                style = MaterialTheme.typography.bodySmall
-            )
-            Spacer(modifier = Modifier.height(8.dp))
 
             val highlightRow =
                 data.indexOfFirst { it[0] == source?.name }.takeIf { it != -1 }
@@ -8095,9 +8085,17 @@ fun PackPriceAndSizeRow(
     }
 }
 
-// TODO: This is a nasty copy and paste from ItemSourceInfo; if it works out, I hope I can factor out the common code
 @Composable
-fun ItemSourceInfo2(
+fun CardTitle(title: String, subtitle: String?) {
+    Text(text = title, style = MaterialTheme.typography.titleLarge)
+    if (subtitle != null) {
+        Text(text = subtitle, style = MaterialTheme.typography.bodySmall)
+    }
+    Spacer(modifier = Modifier.height(8.dp)) // TODO: Not sure if we want this in here or if callers should do it after calling us
+}
+
+@Composable
+fun ItemSourceInfo2( // TODO: Rename
     dataSet: DataSet,
     priceHistoryDelta: PriceHistoryDelta,
     modifiedAtTitleFormatter: DateTimeFormatter,
@@ -8111,16 +8109,10 @@ fun ItemSourceInfo2(
             modifier = Modifier
                 .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
         ) {
-            // TODO: We could possibly pull this 2xText (+Spacer?) out into a CardTitleAndSubtitle() composable.
-            Text(
-                text = modifiedAtTitleFormatter.format(priceHistoryDelta.modifiedAt),
-                style = MaterialTheme.typography.titleLarge
-            ) // TODO: This label feels a bit "redundant" and wording may need tweaking
-            Text(
-                text = modifiedAtSubtitleFormatter.format(priceHistoryDelta.modifiedAt),
-                style = MaterialTheme.typography.bodySmall
-            ) // TODO: null handling?!
-            Spacer(modifier = Modifier.height(8.dp))
+            CardTitle(
+                title = modifiedAtTitleFormatter.format( priceHistoryDelta.modifiedAt),
+                subtitle = modifiedAtSubtitleFormatter.format(priceHistoryDelta.modifiedAt)
+            )
 
             if (priceHistoryDelta.price != null || priceHistoryDelta.measure != null) {
                 devCheck(priceHistoryDelta.price != null && priceHistoryDelta.measure != null) {
