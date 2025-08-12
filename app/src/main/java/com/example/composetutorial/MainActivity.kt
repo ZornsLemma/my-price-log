@@ -3594,13 +3594,7 @@ fun HomeScreen(
         },
         uiContent.priceList,
         uiContent.priceAnalysis,
-        onEditPriceClick = { onEditPriceClick(uiContent) } /* TODO DELETE (uiContent)
-            vm.setEditPriceScreenStateFromHomeScreenState(uiContent)
-            // TODO: I don't know if this random UUID is necessary or helpful or harmful any more,
-            // need to experiment/think about this once I finish re-implementing the price edit
-            // screen.
-            navController.navigate("fullScreenDialog/${UUID.randomUUID()}")
-        } */,
+        onEditPriceClick = { onEditPriceClick(uiContent) },
         onViewHistoryClick = { onViewHistoryClick(uiContent) },
         onEditDataSetsClick = { onEditDataSetsClick(uiContent) },
         onEditItemsClick = { onEditProductsClick(uiContent) },
@@ -3608,7 +3602,7 @@ fun HomeScreen(
     )
 }
 
-// TODO: Should this have a (fairly rapid) fade in and/or fade out? I am not sure. It's not a
+// ENHANCE: Should this have a (fairly rapid) fade in and/or fade out? I am not sure. It's not a
 // massive deal given how little I expect it to actually be visible, but I might use it in other
 // situations and it might be a nice little bit of polish. If we do fade, remember it probably needs
 // to be quick, since it won't even start to fade in until ~150ms has elapsed, and the query could
@@ -6669,7 +6663,6 @@ fun <T> GeneralSelectorScreen(
             // "default" colour combination) but they seem to be the defaults anyway.
             FloatingActionButton(
                 onClick = dropUnlessResumed { onAddClick() },
-
                 // containerColor = MaterialTheme.colorScheme.primaryContainer,
                 // contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 // shape = RoundedCornerShape(16.dp)
@@ -6704,12 +6697,14 @@ fun <T> GeneralSelectorScreen(
         floatingActionButton = floatingActionButton,
     ) { innerPadding ->
         Column(
+            // We apply innerPadding but no other padding here so the list can be edge-to-edge. The
+            // individual list items still have horizontal padding between the screen edge and their
+            // text, but e.g. the ripple effect on click goes right to the edge of the screen, which
+            // I think is how MD3 likes it.
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize()
                 .padding(innerPadding)
-            // TODO: experimentally not using this here so list can be edge-to-edge .padding(screenBorder)
-
             // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
             // TODO: Misc ideas for this search:
