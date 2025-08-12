@@ -2808,17 +2808,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     }
 }
 
-// This composable provides the at-a-glance status of an item at a particular source. It won't always be visible because we may not have a current source, but when we do this should provide "most" of what a user wants to know:
-// - is the item well-priced?
-// - do we have an up-to-date price for this item?
-// - make it easy for the user to confirm our current price or update it
-// - (borderline?) do we have up-to-date prices for other sources? if not it's hard to know if this is well-priced or not no matter how up to the date the price at this source is.
 // TODO: This is quite a long function and might benefit from subcomposables being factored out.
-// TODO: Just possibly this should show the "adjusted (effective) unit price" *as well as* the "raw"
-// (don't call it that) price we already show (and must, since it's what the user is seeing on the
-// shelf in front of them if the data is correct). It isn't so much that the user necessarily
-// directly cares, *but* that this might resolve the visual discrepancy between the (currently only
-// shown) "raw" unit price here and the adjusted price in the by-source list below ItemSourceInfo
 @Composable
 fun ItemSourceInfo(
     vm: HomeViewModel,
