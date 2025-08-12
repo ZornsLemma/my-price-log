@@ -4052,18 +4052,6 @@ fun PriceComparisonCard(
     source: Source?,
     priceAnalysis: PriceAnalysis
 ) {
-    // TODO: This mock data shows some questions:
-    // - should we include Notes? If we do, should we maybe show the first line only (we can let the user put newlines in the text box, and that gives them some control over what shows in this list, albeit imperfectly). Or we could "..."-truncate the text to fit a single line here in the display. Or we could omit this - but I suppose if the note is "special offer price", that *is* helpful to see for "other" stores (the "selected" store's notes are shown in the other card always)?
-    // - if we do include notes, since you can see the current source's notes in full in the other card, should we omit them from the table to save space? or apply special "ellipsis truncation" rules just to the current source' data even if we don't do this for others, or something like that? or is this going to cause confusion?
-    // - should we duplicate the unit in the unit price column? we could make the header "Price/100g" or whatever. This might also help avoid column width problems as the data varies.
-    // - we will probably want some kind of trailing icon and/or colourisation on the price (or the whole row?) to indicate at the very least "this price is very old" and/or "we have had to apply inflation-ish adjustments to this price"
-    // - instead of showing the *user's* notes, we could replace the "Notes" column here with usually-empty stuff which perhaps comments on any icons we put on the price (e.g. "last updated 90 days ago" or "old price"), but this may not fit very nicely in the space available either
-    // - should we show a rank on the table rows? probably not necessary really. it is likely to be fixed sort on unit price and it's not that long.
-    // - it's not out of the question (but we wouldn't want to insist) the user can provide an icon for each *source* (there aren't that many), and we could use icons for the sources. That said, if they are in addition to the text names they do take up more space, and if they are instead of the text names that may not be super readable *even if* every source does have an icon, especially if these are "square" icons not arbitrary "company name as a logo bitmap" shaped things. Probably simplest to forget this and got with pure text.
-    // That said, we are probably looking at 5-10 items in the list "realistic max" (scrolling will always be there as a fallback) but
-    // I originally did think the list items might be "two rows high" so we don't have to stick to a precise "table" layout - it
-    // can be a list of "double height info cards" if we prefer that. This doesn't necessarily change the decisions to be made here,
-    // but things are slightly different if we go with this approach.
     // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a
     // contextDescription for screen readers which is "Price per 100g", so it gets read out
     // properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows
