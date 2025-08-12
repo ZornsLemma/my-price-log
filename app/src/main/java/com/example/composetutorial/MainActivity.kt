@@ -3042,7 +3042,7 @@ fun ItemSourceInfo(
 fun rememberLabelWidth(
     vararg labels: String,
     style: TextStyle = MaterialTheme.typography.labelLarge,
-    horizontalPadding: Dp = 48.dp // TODO: this seems to be total horizontal padding of a "medium" 56dp high FilledTextButton in MD3 spec
+    horizontalPadding: Dp = 48.dp // MD3 spec for "medium" 56 dp high FilledTextButton
 ): Dp {
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
