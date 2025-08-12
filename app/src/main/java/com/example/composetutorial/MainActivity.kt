@@ -6126,17 +6126,15 @@ fun NumericTextField(
 // into this kind of hole, but it might be worth changing the API of onCandidateValueChange so
 // it receives the old text as well, so here we could allow the new text if it's shorter than the
 // old text even if it's still too long.
-// TODO: We don't show a current/maximum count on our ValidatedTextFields because the length limit
-// is just there to keep things tidy and in practice we don't expect a user to run up against it, so
-// it would be unwanted visual fluff (imagine a price field where the user thinks of it as a decimal
-// value which seems to be keen on counting characters - they don't use this function but do use
-// equivalent logic to impose a length limit). I think it's OK if a user does hit a text field size
-// limit that their keystrokes are just ignored, but it feels slightly off. I don't really see a
-// good way to communicate this though - the best I can think of is a transitory supportingText (not
-// generated via the more persistent validationrule stuff), but that might be annoying. It might
-// work and perhaps the biggest difficutly is combining it with the validation rule logic - so maybe
-// worth revisiting this later. Maybe just ignoring silently is actually best though, regardless of
-// the work involved - think about it fresh later.
+// ENHANCE: The length limit on our ValidatedTextFields is just there to keep things tidy and in
+// practice we don't expect a user to run up against it. We therefore don't show a current/max
+// character count, as it would probably be more confusing than helpful. (Imagine editing a
+// notionally decimal value in a text field with current/max character counts under it.) It's not
+// absolutely ideal that the user's input is just silently ignored if they do hit the length limit,
+// but it's not a likely case and I can't think of a nice way to show this. We could maybe show some
+// kind of transitory supportingText message (not one of the more persistent ones our validation
+// infrastructure generates), but even ignoring the implementation difficulties I am not sure that
+// would be better than just silently dropping input.
 // TODO: Maybe "build" instead of "make" (in other places too) would be more idiomatic? I suspect "create" might be most idiomatic.
 fun makeOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
     { it.length <= maxLength }
@@ -6529,7 +6527,7 @@ data class GeneralSelectorScreenUIContent<T>(
     val initialList: List<T>?
 )
 
-// TODO: This function does not handle non-English languages very well. As far as I can tell from
+// ENHANCE: This function does not handle non-English languages very well. As far as I can tell from
 // discussing with LLMs and doing my own web searches, we really need something like the ICU string
 // search service (https://unicode-org.github.io/icu/userguide/collation/string-search) but although
 // Android has some ICU stuff by default, it apparently doesn't have this. I am going to use this
@@ -6538,8 +6536,12 @@ data class GeneralSelectorScreenUIContent<T>(
 fun isCaseInsensitiveSubstring(lhs: String, rhs: String, locale: Locale) =
     rhs.lowercase(locale).contains(lhs.lowercase(locale))
 
-// TODO: We probably *can* do a half-decent job of implementing this locale-sensitive, probably something to do with collate(), but need to look into it. This is different to isCaseInsensitiveSubstring() because we are dealing with the string as a whole, not substrings. But for now I will hack it with this English-ish version.
-// TODO: Even in English-only, it might be good to squash sequences of whitespace down to a single space for comparison so "foo  bar" == "foo bar" != "foobar"
+// TODO: We probably *can* do a half-decent job of implementing this locale-sensitive, probably
+// something to do with collate(), but need to look into it. This is different to
+// isCaseInsensitiveSubstring() because we are dealing with the string as a whole, not substrings.
+// But for now I will hack it with this English-ish version.
+// TODO: Even in English-only, it might be good to squash sequences of whitespace down to a single
+// space for comparison so "foo  bar" == "foo bar" != "foobar"
 fun areHumanEqual(lhs: String, rhs: String) =
     lhs.trim().lowercase() == rhs.trim().lowercase()
 
