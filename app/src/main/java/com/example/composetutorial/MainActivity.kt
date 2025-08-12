@@ -3027,6 +3027,7 @@ fun ItemSourceInfo(
                 ) {
                     MyDropdownMenuItem(
                         text = { Text("View history") /* TODO: Wording?! */ },
+                        enabled = augmentedPrice != null,
                         onClick = { menuExpanded = false; onViewHistoryClick() }
                     )
                 }
