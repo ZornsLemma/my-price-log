@@ -6645,6 +6645,7 @@ fun <T> GeneralSelectorScreen(
     getId: (T) -> Long,
     getName: (T) -> String,
     onAddClick: (() -> Unit)? = null,
+    addContentDescription: String,
     // TODO: We pass the actual T to onItemSelected to try to avoid race conditions, I am not
     // completely sure about this but let's see how it goes. Do I need to do this in any other
     // contexts as well?
@@ -6670,7 +6671,7 @@ fun <T> GeneralSelectorScreen(
                 Icon(
                     // modifier = Modifier.size(24.dp),
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add item" // TODO: CALLER SHOULD SUPPLY THIS
+                    contentDescription = addContentDescription
                 )
             }
         }
@@ -7545,6 +7546,7 @@ fun AppNavigation() {
                         sharedViewModel.setEditDataSetScreenContent(null)
                         navController.navigate("editDataSet")
                     },
+                    addContentDescription = "Add data set",
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
                         sharedViewModel.setEditDataSetScreenContent(it)
@@ -7587,6 +7589,7 @@ fun AppNavigation() {
                         sharedViewModel.setEditItemScreenContent(null, viewModel.uiContent.dataSet)
                         navController.navigate("editItem")
                     },
+                    addContentDescription = "Add item",
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
                         sharedViewModel.setEditItemScreenContent(it, viewModel.uiContent.dataSet)
@@ -7635,6 +7638,7 @@ fun AppNavigation() {
                         sharedViewModel.setEditSourceScreenContent(null, dataSetId, locale)
                         navController.navigate("editSource")
                     },
+                    addContentDescription = "Add source",
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
                         sharedViewModel.setEditSourceScreenContent(it, dataSetId, locale)
