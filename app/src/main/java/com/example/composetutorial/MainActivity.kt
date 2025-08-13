@@ -2438,11 +2438,6 @@ fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
         MaterialTheme.colorScheme.onSurfaceVariant,
 )
 
-
-// TODO: We *may* want to disable the on click ripple whatsit for this, based on how the
-// "official" experimental ExposedDropdownMenuBox behaves - although having thoughts about
-// it and chatted with Grok and ChatGPT, maybe this is *good* and it is a weird quirk of (my
-// impl) of the experimental "official" one that is weird
 // TODO: If a TextField has focus and then you click on a MyExposedDropdownMenuBox, the
 // TextField does *not* lose focus so it retains its primary colour label/underline, which
 // isn't ideal.
