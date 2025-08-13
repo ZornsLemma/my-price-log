@@ -278,28 +278,31 @@ enum class MeasureUnit(
     val id: Long,
     val unitFamilies: Set<UnitFamily>,
     val quantityType: QuantityType,
-    val symbol: String,
+    val symbol: String, // TODO: this probably needs to be translatable (e.g. French prefers "L" for litre)
+    val fullName: String, // TODO: this will need to be translatable
     val maxDecimals: Int,
     val toBase: Double,
     val displayOnly: Boolean
 ) {
     // Weight
-    G(101, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "g", 0, 1.0, false),
+    G(101, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "g", "gram",0, 1.0, false),
     G100(
         1001,
         setOf(UnitFamily.METRIC),
         QuantityType.WEIGHT,
         "100 g",
+        "100 gram",
         2,
         100.0,
         true
     ), // TODO: experimental
-    KG(102, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "kg", 3, 1000.0, false),
+    KG(102, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "kg", "kilogram",3, 1000.0, false),
     OZ(
         103,
         setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
         QuantityType.WEIGHT,
         "oz",
+        "ounce",
         3, // allow for eighths
         28.349523125,
         false
@@ -309,23 +312,25 @@ enum class MeasureUnit(
         setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
         QuantityType.WEIGHT,
         "lb",
+        "pound",
         3, // allow for eighths
         453.59237,
         false
     ),
 
     // Volume
-    ML(201, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml", 0, 1.0, false),
+    ML(201, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml", "millilitre",0, 1.0, false),
     ML100(
         2001,
         setOf(UnitFamily.METRIC),
         QuantityType.VOLUME,
         "100 ml",
+        "100 millilitre",
         2,
         100.0,
         true
     ), // TODO: experimental
-    L(202, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "l", 3, 1000.0, false),
+    L(202, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "l", "litre", 3, 1000.0, false),
 
     // TODO: Arguably imperial should come first here to match order in UnitFamily
     // TODO: As a massive hack to help me notice problems during debugging, I have replaced the space in "fl oz" with a U or I to
@@ -338,6 +343,7 @@ enum class MeasureUnit(
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
         "flUoz",
+        "fluid ounce",
         3, // allow for eighths
         29.5735295625,
         false
@@ -347,6 +353,7 @@ enum class MeasureUnit(
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
         "pt",
+        "pint",
         3, // allow for eighths
         473.176473,
         false
@@ -356,6 +363,7 @@ enum class MeasureUnit(
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
         "gal",
+        "gallon",
         3, // allow for eighths
         3785.411784,
         false
@@ -365,6 +373,7 @@ enum class MeasureUnit(
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
         "flIoz",
+        "fluid ounce",
         3, // allow for eighths
         28.4130625,
         false
@@ -374,6 +383,7 @@ enum class MeasureUnit(
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
         "pt",
+        "pint",
         3, // allow for eighths
         568.26125,
         false
@@ -383,6 +393,7 @@ enum class MeasureUnit(
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
         "gal",
+        "gallon",
         3, // allow for eighths
         4546.09,
         false
@@ -396,12 +407,13 @@ enum class MeasureUnit(
         setOf(UnitFamily.ITEM),
         QuantityType.ITEM,
         "",
+        "", // TODO!?
         0,
         1.0,
         false
     ), // TODO: RENAME "EACH" TO "ITEM"?
-    EACH10(302, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", 1, 10.0, true),
-    EACH100(303, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", 2, 100.0, true);
+    EACH10(302, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", "10" /* TODO?? */, 1, 10.0, true),
+    EACH100(303, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", "100" /* TODO? */,2, 100.0, true);
 
     companion object {
         private val measureUnitById = entries.associateBy { it.id }
@@ -2450,6 +2462,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     items: List<T>,
     getId: (T) -> ID,
     getLabel: (T) -> String,
+    getStaticLabel: ((T) -> String)? = null,
     getDividerBetween: ((T, T) -> Boolean)? = null,
 ) {
     var textFieldWidth by remember { mutableIntStateOf(0) }
@@ -2457,7 +2470,11 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
 
     Column(modifier = modifier) {
         ItemWithDropdown(
-            dropdownModifier = Modifier.width(with(LocalDensity.current) { textFieldWidth.toDp() }),
+            // We use .widthIn to force the dropdown to be at least as wide as its parent TextField
+            // while allowing it to be wider (mainly for dropdowns on TextFields which don't occupy
+            // the full screen width). ENHANCE: In practice this probably works well, but we might
+            // want to add parameters to allow our caller to force exact width or other variations.
+            dropdownModifier = Modifier.widthIn(min = with(LocalDensity.current) { textFieldWidth.toDp() }),
             selectedId = selectedId,
             onValueChange = onValueChange,
             enabled = enabled,
@@ -2470,7 +2487,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             val itemMap = items.associateBy { getId(it) }
             val todoPulledOut: String = if (selectedId == null) "" else {
                 val item = itemMap[selectedId]
-                if (item != null) getLabel(item) else "Invalid ID $selectedId"
+                if (item != null) (getStaticLabel ?: getLabel)(item) else "Invalid ID $selectedId"
             }
             TextField(
                 value = todoPulledOut,
@@ -4341,7 +4358,8 @@ fun EditPriceScreen(
                     items = units,
                     modifier = Modifier.weight(0.5f),
                     getId = { it.id },
-                    getLabel = { it.symbol },
+                    getStaticLabel = { it.symbol },
+                    getLabel = { "${it.fullName} (${it.symbol})" },
                 )
             }
 
