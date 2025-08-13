@@ -5965,19 +5965,10 @@ fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Strin
                 null } else { buildPair(currency) }
         }
 
-    // TODO: ChatGPT magic, check later
-    // TODO: We can almost certainly use our sortedByLocale() here
-    val collator = Collator.getInstance(locales[0]).apply {
-        strength = Collator.PRIMARY // case-insensitive, diacritic-aware
-    }
     return Pair(
         mainCurrencyList.last().first,
-        mainCurrencyList.toList() + otherCurrencyList.sortedWith { lhs, rhs ->
-            collator.compare(
-                lhs.second,
-                rhs.second
-            )
-        })
+        mainCurrencyList.toList() + otherCurrencyList.sortedByLocale( { it.second }, locales[0])
+    )
 }
 
 
