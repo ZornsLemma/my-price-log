@@ -2438,9 +2438,6 @@ fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
         MaterialTheme.colorScheme.onSurfaceVariant,
 )
 
-// TODO: If a TextField has focus and then you click on a MyExposedDropdownMenuBox, the
-// TextField does *not* lose focus so it retains its primary colour label/underline, which
-// isn't ideal.
 // TODO: We *may* want to disable the on click ripple whatsit for this, based on
 // how the "official" experimental ExposedDropdownMenuBox behaves - although
 // having thoughts about it and chatted with Grok and ChatGPT, maybe this is
@@ -2714,9 +2711,14 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     // is "expected", and users probably also expect the dropdown to close on rotation.
     var expanded by remember { mutableStateOf(false) }
 
+    val focusManager = LocalFocusManager.current
     Box(
         modifier = modifier.then(
             if (enabled) Modifier.clickable {
+                // We remove focus from anything else that has it in order to "fake" this component
+                // getting the focus. Without this, if a TextField has focus it retains it (including
+                // its focused colors) when the dropdown appears, which feels wrong.
+                focusManager.clearFocus(/* TODO?: force = true */)
                 expanded = true
                 @Suppress("KotlinConstantConditions") onExpand(expanded)
             }
@@ -5708,7 +5710,7 @@ fun EditDataSetScreen(
             // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and 2 as imperial/US
 
             // We *don't* call Modifier.validationFocusRequester() as you can't focus a segmented button,
-            // and this will force a clear focus to happen instead.
+            // and this will force a clear focus to happen on validation errors instead.
             MultiChoiceSegmentedButtonRow(
                 modifier = Modifier.fillMaxWidth()
             ) {
