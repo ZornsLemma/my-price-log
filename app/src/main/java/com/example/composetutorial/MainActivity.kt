@@ -5893,10 +5893,10 @@ fun getCurrencyForLocale(locale: Locale): Currency? {
     }
 }
 
-// I would have preferred to use the phone's own list of valid currency codes, but there seems to
-// be so much junk (e.g. historical currency codes, which are irrelevant for our purposes) that
-// I had to give up on the idea. The following list is a manual combination of the results from
-// the following lists:
+// I would have preferred to use Android's own list of valid currency codes, but there seems to be
+// so much junk (e.g. historical currency codes, which are irrelevant for our purposes) that I had
+// to give up on the idea. The following list is a manual combination of the results from the
+// following lists:
 // - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-one.xls
 // - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-two.doc
 // - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-three.xls
