@@ -103,6 +103,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -3684,63 +3685,21 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-// TODO: Function might be misnamed if we introduce navigation drawer, but I probably want to refactor a lot of the composables anyway in order to get away from gigantic massively independent functions.
-fun HomeScreenScaffold(
-    navController: NavHostController,
-    vm: HomeViewModel,
-    loading: Boolean,
+fun HomeScreenNavigationDrawer(
+    drawerState: DrawerState,
     dataSet: DataSet?,
-    dataSetList: List<DataSet>,
+    dataSetListSorted: List<DataSet>,
     onSelectedDataSetIdChange: (Long) -> Unit,
-    item: Item?,
-    itemList: List<Item>,
-    onSelectedItemIdChange: (Long) -> Unit,
-    source: Source?,
-    sourceList: List<Source>,
-    onSelectedSourceIdChange: (Long?) -> Unit,
-    priceList: List<Price>,
-    priceAnalysis: PriceAnalysis,
-    onEditPriceClick: () -> Unit,
-    onViewHistoryClick: () -> Unit,
-    onEditDataSetsClick: () -> Unit,
-    onEditItemsClick: () -> Unit,
-    onEditSourcesClick: () -> Unit,
+    coroutineScope: CoroutineScope,
+    content: @Composable () -> Unit
 ) {
-    // TODO: We need to disable all forms of interaction (navdrawer, dropdowns, menu, etc) while this is "busy"
-    val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
-
     // TODO: Navigation drawer is being deprecated in favour of expanded navigation rail in Material
     // 3 Expressive from May 2025. However, it appears to be a rotten fit for my requirements here -
     // it wants (in its non-expanded form) to be permanently on screen, and I don't have the space,
     // and it seems to be intended for "a few" designer-selected things, not user-defined
     // categories. It also seems to want to live at the bottom of the screen on a portrait
     // smartphone layout. So I am going to stick with the navigation drawer for now.
-    // TODO: rememberDrawerState seems to persist across rotations, which feels a bit odd to me -
-    // given how we seem to be expected to treat e.g. dropdowns, I'd have expected the drawer to
-    // close. Should we try to force it to close on a rotation or just accept this default
-    // behaviour?
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    var menuExpanded by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
-    var showErrorDialog by rememberSaveable { mutableStateOf(false) }
-    // TODO: Do I need the showBusySnackbar stuff here? I suppose the user might hit back while we are saving (confirm/undo)
-
-    // TODO: I have tried to get the dimensions right as per M3 specs here, but I'm not that
-    // confident. Although I think I have followed the font size/style advice, I am not sure it
-    // doesn't look weird - it would maybe be good to e.g. compare with a modern-ish version of
-    // GMail and see what that looks like. Playing with Material Files, I do wonder if the desired
-    // effect is just that the background of the drawer does go "behind" the top and bottom system
-    // bars but they continue to draw on top - in which case I probably can achieve this, if I
-    // get rid of my window insets or whatever at the very top level of my NavHost and move it into
-    // individual screens, so this screen can have full screen for the drawer and apply the insets
-    // to everything else.
-    // TODO: Can/should I factor this little fragment of code out into a helper function?
-    val locale = LocalConfiguration.current.locales[0]
-    val dataSetListSorted = remember(dataSetList, locale) {
-        dataSetList.sortedByLocale({ it.name }, locale)
-    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -3797,6 +3756,65 @@ fun HomeScreenScaffold(
             }
         }
     ) {
+        content()
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+// TODO: Function might be misnamed if we introduce navigation drawer, but I probably want to refactor a lot of the composables anyway in order to get away from gigantic massively independent functions.
+fun HomeScreenScaffold(
+    navController: NavHostController,
+    vm: HomeViewModel,
+    loading: Boolean,
+    dataSet: DataSet?,
+    dataSetList: List<DataSet>,
+    onSelectedDataSetIdChange: (Long) -> Unit,
+    item: Item?,
+    itemList: List<Item>,
+    onSelectedItemIdChange: (Long) -> Unit,
+    source: Source?,
+    sourceList: List<Source>,
+    onSelectedSourceIdChange: (Long?) -> Unit,
+    priceList: List<Price>,
+    priceAnalysis: PriceAnalysis,
+    onEditPriceClick: () -> Unit,
+    onViewHistoryClick: () -> Unit,
+    onEditDataSetsClick: () -> Unit,
+    onEditItemsClick: () -> Unit,
+    onEditSourcesClick: () -> Unit,
+) {
+    // TODO: We need to disable all forms of interaction (navdrawer, dropdowns, menu, etc) while this is "busy"
+    val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
+
+
+    var menuExpanded by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    var showErrorDialog by rememberSaveable { mutableStateOf(false) }
+    // TODO: Do I need the showBusySnackbar stuff here? I suppose the user might hit back while we are saving (confirm/undo)
+
+    // TODO: I have tried to get the dimensions right as per M3 specs here, but I'm not that
+    // confident. Although I think I have followed the font size/style advice, I am not sure it
+    // doesn't look weird - it would maybe be good to e.g. compare with a modern-ish version of
+    // GMail and see what that looks like. Playing with Material Files, I do wonder if the desired
+    // effect is just that the background of the drawer does go "behind" the top and bottom system
+    // bars but they continue to draw on top - in which case I probably can achieve this, if I
+    // get rid of my window insets or whatever at the very top level of my NavHost and move it into
+    // individual screens, so this screen can have full screen for the drawer and apply the insets
+    // to everything else.
+    // TODO: Can/should I factor this little fragment of code out into a helper function?
+    val locale = LocalConfiguration.current.locales[0]
+    val dataSetListSorted = remember(dataSetList, locale) {
+        dataSetList.sortedByLocale({ it.name }, locale)
+    }
+
+    // TODO: rememberDrawerState seems to persist across rotations, which feels a bit odd to me -
+    // given how we seem to be expected to treat e.g. dropdowns, I'd have expected the drawer to
+    // close. Should we try to force it to close on a rotation or just accept this default
+    // behaviour?
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+
+    HomeScreenNavigationDrawer(drawerState, dataSet, dataSetListSorted, onSelectedDataSetIdChange, coroutineScope) {
 
         Scaffold(
             modifier = Modifier
