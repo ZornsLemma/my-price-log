@@ -3760,6 +3760,94 @@ fun HomeScreenNavigationDrawer(
     }
 }
 
+@Composable
+fun HomeScreenActualScaffold( // TODO: RENAME
+    navController: NavHostController,
+    drawerState: DrawerState,
+    dataSet: DataSet?,
+    onEditDataSetsClick: () -> Unit,
+    onEditItemsClick: () -> Unit,
+    onEditSourcesClick: () -> Unit,
+
+    saveStatus: SaveStatus,
+    coroutineScope: CoroutineScope,
+
+    content: @Composable (innerPadding: PaddingValues) -> Unit
+
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Red /* TODO DEBUG HACK */),
+        topBar = {
+            TopAppBar(
+                title = { Text(dataSet?.name ?: "") }, // TODO: better null handling?
+                navigationIcon = {
+                    IconButton(
+                        enabled = saveStatus.isNotBusy(),
+                        onClick = { coroutineScope.launch { drawerState.open() } }) {
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "Open drawer"
+                        ) // TODO: tweak description?
+                    }
+                },
+                actions = {
+                    IconButton(
+                        enabled = saveStatus.isNotBusy(),
+                        onClick = { menuExpanded = true }) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = "Menu"
+                        ) // TODO: tweak description?
+                    }
+
+                    DropdownMenu(
+                        expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        // TODO: There is maybe an argument that "Manage" might be better than
+                        // "Edit" because it carries a stronger suggestion of adding/removing
+                        // products (or whatever) rather than just tweaking their details. But not
+                        // sure. Edit is shorter! And while edit is a *tiny* bit tech jargon it is
+                        // widely accepted in phone apps, while "manage" feels vaguely corporate.
+                        MyDropdownMenuItem(text = { Text("Edit collections") }, onClick = {
+                            menuExpanded = false
+                            onEditDataSetsClick()
+                        })
+                        MyDropdownMenuItem(
+                            text = { Text("Edit products") },
+                            enabled = dataSet != null,
+                            onClick = {
+                                menuExpanded = false
+                                onEditItemsClick()
+                            })
+                        MyDropdownMenuItem(
+                            text = { Text("Edit stores") },
+                            enabled = dataSet != null,
+                            onClick = {
+                                menuExpanded = false
+                                onEditSourcesClick()
+                            })
+                        MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
+                            menuExpanded = false
+                            // TODO: This should probably be done via a callback function provided
+                            // to HomeScreen and passed through to us, and this function should
+                            // probably *not* have the navController directly available. We might
+                            // pass a *route* back but the function passed to us would actually
+                            // invoke navController.navigate().
+                            navController.navigate("settings")
+                        })
+                    }
+                },
+                modifier = Modifier.background(MaterialTheme.colorScheme.surface /* TODO? */)
+            )
+        },
+    ) { innerPadding ->
+        content(innerPadding)
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 // TODO: Function might be misnamed if we introduce navigation drawer, but I probably want to refactor a lot of the composables anyway in order to get away from gigantic massively independent functions.
@@ -3788,7 +3876,6 @@ fun HomeScreenScaffold(
     val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
 
 
-    var menuExpanded by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
     // TODO: Do I need the showBusySnackbar stuff here? I suppose the user might hit back while we are saving (confirm/undo)
@@ -3816,73 +3903,8 @@ fun HomeScreenScaffold(
 
     HomeScreenNavigationDrawer(drawerState, dataSet, dataSetListSorted, onSelectedDataSetIdChange, coroutineScope) {
 
-        Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Red /* TODO DEBUG HACK */),
-            topBar = {
-                TopAppBar(
-                    title = { Text(dataSet?.name ?: "") }, // TODO: better null handling?
-                    navigationIcon = {
-                        IconButton(
-                            enabled = saveStatus.isNotBusy(),
-                            onClick = { coroutineScope.launch { drawerState.open() } }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "Open drawer"
-                            ) // TODO: tweak description?
-                        }
-                    },
-                    actions = {
-                        IconButton(
-                            enabled = saveStatus.isNotBusy(),
-                            onClick = { menuExpanded = true }) {
-                            Icon(
-                                Icons.Default.MoreVert,
-                                contentDescription = "Menu"
-                            ) // TODO: tweak description?
-                        }
-
-                        DropdownMenu(
-                            expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                            // TODO: There is maybe an argument that "Manage" might be better than
-                            // "Edit" because it carries a stronger suggestion of adding/removing
-                            // products (or whatever) rather than just tweaking their details. But not
-                            // sure. Edit is shorter! And while edit is a *tiny* bit tech jargon it is
-                            // widely accepted in phone apps, while "manage" feels vaguely corporate.
-                            MyDropdownMenuItem(text = { Text("Edit collections") }, onClick = {
-                                menuExpanded = false
-                                onEditDataSetsClick()
-                            })
-                            MyDropdownMenuItem(
-                                text = { Text("Edit products") },
-                                enabled = dataSet != null,
-                                onClick = {
-                                    menuExpanded = false
-                                    onEditItemsClick()
-                                })
-                            MyDropdownMenuItem(
-                                text = { Text("Edit stores") },
-                                enabled = dataSet != null,
-                                onClick = {
-                                    menuExpanded = false
-                                    onEditSourcesClick()
-                                })
-                            MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
-                                menuExpanded = false
-                                // TODO: This should probably be done via a callback function provided
-                                // to HomeScreen and passed through to us, and this function should
-                                // probably *not* have the navController directly available. We might
-                                // pass a *route* back but the function passed to us would actually
-                                // invoke navController.navigate().
-                                navController.navigate("settings")
-                            })
-                        }
-                    },
-                    modifier = Modifier.background(MaterialTheme.colorScheme.surface /* TODO? */)
-                )
-            },
-        ) { innerPadding ->
+        HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, saveStatus, coroutineScope)
+ { innerPadding ->
             Column(
                 modifier = Modifier
                     // .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
