@@ -3875,7 +3875,6 @@ fun HomeScreenScaffold(
     // TODO: We need to disable all forms of interaction (navdrawer, dropdowns, menu, etc) while this is "busy"
     val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
 
-
     val coroutineScope = rememberCoroutineScope()
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
     // TODO: Do I need the showBusySnackbar stuff here? I suppose the user might hit back while we are saving (confirm/undo)
@@ -3905,96 +3904,7 @@ fun HomeScreenScaffold(
 
         HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, saveStatus, coroutineScope)
  { innerPadding ->
-            Column(
-                modifier = Modifier
-                    // .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
-                    .background(MaterialTheme.colorScheme.background) // TODO?
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(innerPadding)
-                    .padding(screenBorder) // TODO: MAYBE THIS SHOULD ONLY BE HORIZONTAL - MY YELLOW DEBUG BACKGROUND IS MAYBE GIVING ME A MISLEADING IDEA AND WE MAYBE SHOULDN'T HAVE VERTICAL SPACE BETWEEN TOP BAR AND TOP OF CONTENT
-
-            ) {
-
-                MainScreen(
-                    saveStatus = saveStatus,
-                    source = source,
-                    sourceList = sourceList,
-                    item = item,
-                    itemList = itemList,
-                    onSelectedItemIdChange = onSelectedItemIdChange,
-                    onSelectedSourceIdChange = onSelectedSourceIdChange,
-                ) // TODO: rename this
-
-                Spacer(
-                    modifier = Modifier
-                        .height(
-                            16.dp
-                        )
-                        .fillMaxWidth()
-                    //.background(color = Color.Red) // TODO DEBUG HACK
-                )
-
-                if (dataSet != null) {
-                    // TODO: While it has told me so much crap I don't trust it, ChatGPT suggests:
-                    // var lastFoo by remember { mutableStateOf<Foo?>(null) }
-                    //if (foo != null) lastFoo = foo
-                    // and then using  lastFoo?.let { safeFoo ->
-                    // to compose the contents of the AnimatedVisibility. This (might) give us
-                    // consistent appearance as we animate out without requiring actual ability to
-                    // handle null source/item  inside the content, and would (if this works) actually
-                    // make things mildly *less* janky as the content would be *the same* not some
-                    // null-based approximation. But there may well be subtleties.
-                    AnimatedVisibility(
-                        visible = item != null && source != null,
-                        // enter = TODO?
-                        // exit = TODO?
-                    ) {
-                        Column {
-                            Log.d("MyApp", "HSS dataSet $dataSet")
-                            Log.d("MyApp", "HSS item $item")
-                            ItemSourceInfo(
-                                vm = vm,
-                                saveStatus = saveStatus,
-                                dataSet = dataSet,
-                                item = item,
-                                source = source,
-                                sourceList = sourceList,
-                                augmentedPrice = priceAnalysis.augmentedPriceList.singleOrNull { it.basePrice.sourceId == source?.id },
-                                // TODO DELETE itemPriceList = priceList,
-                                onEditPriceClick = onEditPriceClick,
-                                onViewHistoryClick = onViewHistoryClick,
-                            )
-
-                            Spacer(
-                                modifier = Modifier.height(
-                                    16.dp
-                                )
-                                //.background(color = Color.Red) // TODO DEBUG HACK
-                            )
-                        }
-                    }
-
-                    // TODO: Just possibly we should use AnimatedVisibility here. However, it's not
-                    // that big a deal (but maybe do look into it) as the only way to have item be
-                    // null is if there *are* no items - unlike source, you can't deliberately set
-                    // it to null. So this is not a particularly common case and the animation would
-                    // only be firing if we were navigating back from an edit item screen where
-                    // we've removed the last item or something like that - it's not a "something
-                    // changed within the screen itself" animation like having source go between
-                    // null and non-null is.
-                    // TODO: Should we avoid showing this card if we have no stores in storeList? It
-                    // works but maybe looks a bit ugly and is a bit pointless. I probably in general
-                    // need to revise all the corner case "no data" handling to be consistent and
-                    // (if appropriate) use the otherwise wasted screen space to hint to the user
-                    // to go use the overflow menu to add stuff etc, once the layout otherwise
-                    // settles down.
-                    if (item != null) {
-                        PriceComparisonCard(dataSet, source, priceAnalysis)
-                    }
-
-                }
-            }
+            HomeScreenContent(vm, dataSet, item, itemList, onSelectedItemIdChange, source, sourceList, onSelectedSourceIdChange, priceAnalysis, onEditPriceClick, onViewHistoryClick, saveStatus, innerPadding)
         }
     }
 
@@ -4047,6 +3957,113 @@ fun HomeScreenScaffold(
     if (showErrorDialog) {
         SaveErrorAlertDialog(requestClose = { showErrorDialog = false })
     }
+}
+
+@Composable
+fun HomeScreenContent(
+    vm: HomeViewModel,
+    dataSet: DataSet?,
+    item: Item?,
+    itemList: List<Item>,
+    onSelectedItemIdChange: (Long) -> Unit,
+    source: Source?,
+    sourceList: List<Source>,
+    onSelectedSourceIdChange: (Long?) -> Unit,
+    priceAnalysis: PriceAnalysis,
+    onEditPriceClick: () -> Unit,
+    onViewHistoryClick: () -> Unit,
+    saveStatus: SaveStatus,
+    innerPadding: PaddingValues,
+) {
+    Column(
+        modifier = Modifier
+            // .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
+            .background(MaterialTheme.colorScheme.background) // TODO?
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(innerPadding)
+            .padding(screenBorder) // TODO: MAYBE THIS SHOULD ONLY BE HORIZONTAL - MY YELLOW DEBUG BACKGROUND IS MAYBE GIVING ME A MISLEADING IDEA AND WE MAYBE SHOULDN'T HAVE VERTICAL SPACE BETWEEN TOP BAR AND TOP OF CONTENT
+    ) {
+        MainScreen(
+            saveStatus = saveStatus,
+            source = source,
+            sourceList = sourceList,
+            item = item,
+            itemList = itemList,
+            onSelectedItemIdChange = onSelectedItemIdChange,
+            onSelectedSourceIdChange = onSelectedSourceIdChange,
+        ) // TODO: rename this
+
+        Spacer(
+            modifier = Modifier
+                .height(
+                    16.dp
+                )
+                .fillMaxWidth()
+            //.background(color = Color.Red) // TODO DEBUG HACK
+        )
+
+        if (dataSet != null) {
+            // TODO: While it has told me so much crap I don't trust it, ChatGPT suggests:
+            // var lastFoo by remember { mutableStateOf<Foo?>(null) }
+            //if (foo != null) lastFoo = foo
+            // and then using  lastFoo?.let { safeFoo ->
+            // to compose the contents of the AnimatedVisibility. This (might) give us
+            // consistent appearance as we animate out without requiring actual ability to
+            // handle null source/item  inside the content, and would (if this works) actually
+            // make things mildly *less* janky as the content would be *the same* not some
+            // null-based approximation. But there may well be subtleties.
+            AnimatedVisibility(
+                visible = item != null && source != null,
+                // enter = TODO?
+                // exit = TODO?
+            ) {
+                Column {
+                    Log.d("MyApp", "HSS dataSet $dataSet")
+                    Log.d("MyApp", "HSS item $item")
+                    ItemSourceInfo(
+                        vm = vm,
+                        saveStatus = saveStatus,
+                        dataSet = dataSet,
+                        item = item,
+                        source = source,
+                        sourceList = sourceList,
+                        augmentedPrice = priceAnalysis.augmentedPriceList.singleOrNull { it.basePrice.sourceId == source?.id },
+                        // TODO DELETE itemPriceList = priceList,
+                        onEditPriceClick = onEditPriceClick,
+                        onViewHistoryClick = onViewHistoryClick,
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(
+                            16.dp
+                        )
+                        //.background(color = Color.Red) // TODO DEBUG HACK
+                    )
+                }
+            }
+
+            // TODO: Just possibly we should use AnimatedVisibility here. However, it's not
+            // that big a deal (but maybe do look into it) as the only way to have item be
+            // null is if there *are* no items - unlike source, you can't deliberately set
+            // it to null. So this is not a particularly common case and the animation would
+            // only be firing if we were navigating back from an edit item screen where
+            // we've removed the last item or something like that - it's not a "something
+            // changed within the screen itself" animation like having source go between
+            // null and non-null is.
+            // TODO: Should we avoid showing this card if we have no stores in storeList? It
+            // works but maybe looks a bit ugly and is a bit pointless. I probably in general
+            // need to revise all the corner case "no data" handling to be consistent and
+            // (if appropriate) use the otherwise wasted screen space to hint to the user
+            // to go use the overflow menu to add stuff etc, once the layout otherwise
+            // settles down.
+            if (item != null) {
+                PriceComparisonCard(dataSet, source, priceAnalysis)
+            }
+
+        }
+    }
+
 }
 
 @Composable
