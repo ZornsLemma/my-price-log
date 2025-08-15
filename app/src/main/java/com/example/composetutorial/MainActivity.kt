@@ -272,6 +272,16 @@ enum class UnitFamily {
     ITEM,
 }
 
+fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> = when (locale.country.uppercase()) {
+    // ChatGPT suggests it's common to have dual metric and US Customary labelling in US
+    // supermarkets and that some users may want to use metric, so we enable it by default. I'll do
+    // the same for Liberia and Myanmar too for now.
+    "US", "LR", "MM" -> setOf(UnitFamily.METRIC, UnitFamily.US_CUSTOMARY, UnitFamily.ITEM)
+    // TODO: Check "GB" *is* the right country code here for UK - I got this from ChatGPT
+    "GB" -> setOf(UnitFamily.METRIC, UnitFamily.IMPERIAL, UnitFamily.ITEM)
+    else -> setOf(UnitFamily.METRIC, UnitFamily.ITEM)
+}
+
 // TODO: CHECK ALL THE MULTIPLIERS HERE - THIS IS CHATGPT CODE, AND WE MAY ALSO NEED TO ADDRESS IMPERIAL VS US OR WHATEVER TERMINOLOGY IS
 // TODO: IDS SHOULD PROBABLY BE TIDIED UP IF WE KEEP EG G100
 // TODO: IF WE KEEP G100 AND ML100, WE MAY NEED A FLAG TO INDICATE THESE ARE SECOND-CLASS CITIZENS AND ONLY ELIGIBLE FOR UNIT PRICE DENOMINATOR NOT GENERATE UNIT SELECTION
@@ -1237,17 +1247,18 @@ data class EditableDataSet(
     }
 
     companion object {
-        fun fromDataSet(dataSet: DataSet?): EditableDataSet {
+        fun fromDataSet(dataSet: DataSet?, locale: Locale): EditableDataSet {
             if (dataSet == null) {
+                val defaultUnitFamilies = getDefaultUnitFamilies(locale) // TODO: TEST THIS!
+
                 // TODO: The currencyCode should default to current locale
-                // TODO: The default "allowX" values should probably be configured in settings - will just hard-code something I like for now
                 return EditableDataSet(
                     0,
                     "",
                     "",
-                    allowMetric = true,
-                    allowImperial = true,
-                    allowUSCustomary = false,
+                    allowMetric = UnitFamily.METRIC in defaultUnitFamilies,
+                    allowImperial = UnitFamily.IMPERIAL in defaultUnitFamilies,
+                    allowUSCustomary = UnitFamily.US_CUSTOMARY in defaultUnitFamilies,
                     notes = ""
                 )
             } else {
@@ -6517,8 +6528,8 @@ class SharedViewModel : ViewModel() {
 
     var editDataSetScreenUIContent: EditDataSetScreenUIContent? = null
 
-    fun setEditDataSetScreenContent(dataSet: DataSet?) {
-        val editableDataSet = EditableDataSet.fromDataSet(dataSet)
+    fun setEditDataSetScreenContent(dataSet: DataSet?, locale: Locale) {
+        val editableDataSet = EditableDataSet.fromDataSet(dataSet, locale)
         editDataSetScreenUIContent = EditDataSetScreenUIContent(
             editableDataSet = mutableStateOf(editableDataSet),
             originalDataSet = editableDataSet,
@@ -7604,6 +7615,10 @@ fun AppNavigation() {
                     )
                 }
             ) { viewModel ->
+                // TODO: Is this locale wrong? Will this *pick up* changes to the locale, defeating the
+                // whole point of having a frozen locale? Do we need to be setting this in the navhost screen which *calls* us? That's
+                // what (albeit via sharedViewModel - do we have to use that here now?) happens for the edit price screen.
+                val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
                 GeneralSelectorScreen(
                     viewModel,
                     navController,
@@ -7612,13 +7627,13 @@ fun AppNavigation() {
                     getName = { it.name },
                     onAddClick = {
                         Log.d("MyAppGS", "Add data set")
-                        sharedViewModel.setEditDataSetScreenContent(null)
+                        sharedViewModel.setEditDataSetScreenContent(null, locale)
                         navController.navigate("editDataSet")
                     },
                     addContentDescription = "Add data set",
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
-                        sharedViewModel.setEditDataSetScreenContent(it)
+                        sharedViewModel.setEditDataSetScreenContent(it, locale)
                         navController.navigate("editDataSet")
                     })
             }
