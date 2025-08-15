@@ -5206,7 +5206,7 @@ fun EditItemScreen(
                             previousItemUnitFamily != itemUnitFamily
                         },
                         getId = { it.id },
-                        getLabel = { it.symbol },
+                        getLabel = { "${it.fullName} (${it.symbol})" },
                     )
                     // TODO: If it's not too faffy, we should maybe remember the unit dropdown value (only in the edit UI of course) per-quantityType, so if the user flips back and forth between weight and volume they don't lose their previous selection
                 }
