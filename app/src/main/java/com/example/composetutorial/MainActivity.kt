@@ -4274,6 +4274,9 @@ fun rememberSyncedTextFieldValue(modelState: String): MutableState<TextFieldValu
     return tfv
 }
 
+fun areDifferentUnitFamilies(lhs: MeasureUnit, rhs: MeasureUnit) =
+    lhs.unitFamilies.intersect(rhs.unitFamilies).isEmpty()
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditPriceScreen(
@@ -4400,7 +4403,6 @@ fun EditPriceScreen(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // TODO: Should I be using a divider between measurement systems in this dropdown, as I do elsewhere?
                 MyExposedDropdownMenuBox(
                     enabled = saveStatus.isNotBusy(),
                     selectedId = uiContent.editablePrice.value.measureUnit.id,
@@ -4424,6 +4426,7 @@ fun EditPriceScreen(
                     getId = { it.id },
                     getStaticLabel = { it.symbol },
                     getLabel = { "${it.fullName} (${it.symbol})" },
+                    getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
                 )
             }
 
@@ -5207,14 +5210,7 @@ fun EditItemScreen(
                         label = { Text("Default unit") },
                         supportingText = { Text("Used only as a default when entering a price for the first time. You can still choose another unit.") },
                         items = relevantUnitList,
-                        // Show dividers between unit families TODO: Copy and paste of code in ItemSourceInfo
-                        getDividerBetween = { previousItem, item ->
-                            val previousItemUnitFamily =
-                                previousItem.unitFamilies.intersect(relevantUnitFamilies)
-                            val itemUnitFamily =
-                                item.unitFamilies.intersect(relevantUnitFamilies)
-                            previousItemUnitFamily != itemUnitFamily
-                        },
+                        getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
                         getId = { it.id },
                         getLabel = { "${it.fullName} (${it.symbol})" },
                     )
@@ -8050,14 +8046,7 @@ fun PackPriceAndSizeRow(
             items = relevantUnitList,
             getId = { it },
             getLabel = { "/${it.symbol}" },
-            // Show dividers between unit families
-            getDividerBetween = { previousItem, item ->
-                val previousItemUnitFamily =
-                    previousItem.unitFamilies.intersect(relevantUnitFamilies)
-                val itemUnitFamily =
-                    item.unitFamilies.intersect(relevantUnitFamilies)
-                previousItemUnitFamily != itemUnitFamily
-            },
+            getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
             selectedId = selectedUnitPriceUnit,
             onValueChange = { selectedUnitPriceUnit = it })
     }
