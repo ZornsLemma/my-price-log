@@ -4451,6 +4451,8 @@ fun EditPriceScreen(
         BaseValidatedTextField(
             value = packPrice.text,
             validationRules = currencyFormat.validationRules,
+            // No validationRulesKey is needed as the validation rules depend only on our fixed
+            // DataSet and frozen locale.
             allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
             validationFlow = vm.saveValidationEvents,
             validationFlowFieldId = EditPriceViewModel.EditableField.PRICE,
@@ -4501,9 +4503,6 @@ fun EditPriceScreen(
         // "minimal" and the other filling rest of space - but then again, if you do that, a
         // fixed ratio is probably more or less the same since both will expand with font size
         // just the same, so maybe that would be pointless
-        // TODO: TEMP NOTE PRESERVED FROM NUMERICTEXTFIELD TO BE MOVE INTO VALIDATIONTHING REWRITE We don't need a validationRulesKey here because the currency validation rules
-        // cannot change while we are editing. They depend only on our DataSet and our
-        // frozen locale.
 
         // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
         // why are we entering it?
