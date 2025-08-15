@@ -1249,13 +1249,11 @@ data class EditableDataSet(
     companion object {
         fun fromDataSet(dataSet: DataSet?, locale: Locale): EditableDataSet {
             if (dataSet == null) {
-                val defaultUnitFamilies = getDefaultUnitFamilies(locale) // TODO: TEST THIS!
-
-                // TODO: The currencyCode should default to current locale
+                val defaultUnitFamilies = getDefaultUnitFamilies(locale)
                 return EditableDataSet(
                     0,
                     "",
-                    "",
+                    getCurrencyForLocale(locale)?.currencyCode ?: "",
                     allowMetric = UnitFamily.METRIC in defaultUnitFamilies,
                     allowImperial = UnitFamily.IMPERIAL in defaultUnitFamilies,
                     allowUSCustomary = UnitFamily.US_CUSTOMARY in defaultUnitFamilies,
@@ -5983,7 +5981,7 @@ fun getCurrencyForLocale(locale: Locale): Currency? {
 // - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-one.xls
 // - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-two.doc
 // - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-three.xls
-// with a few manual tweaks.
+// with a few additional tweaks.
 val validCurrencyCodes = setOf(
     "AED", "AFN", "ALL", "AMD", "AOA", "ARS", "AUD", "AWG", "AZN", "BAM", "BBD", "BDT", "BGN",
     "BHD", "BIF", "BMD", "BND", "BOB", "BRL", "BSD", "BTN", "BWP", "BYN", "BZD", "CAD", "CDF",
