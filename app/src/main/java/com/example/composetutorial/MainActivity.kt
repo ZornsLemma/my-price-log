@@ -6772,14 +6772,19 @@ fun <T> GeneralSelectorScreen(
         floatingActionButton = floatingActionButton,
     ) { innerPadding ->
         Column(
-            // We apply innerPadding but no other padding here so the list can be edge-to-edge. The
-            // individual list items still have horizontal padding between the screen edge and their
-            // text, but e.g. the ripple effect on click goes right to the edge of the screen, which
-            // I think is how MD3 likes it.
+            // We apply innerPadding and a vertical screenBorder but no horizontal padding here so
+            // the list can be edge-to-edge. The individual list items still have horizontal padding
+            // between the screen edge and their text, but e.g. the ripple effect on click goes
+            // right to the edge of the screen, which I think is how MD3 likes it. The vertical
+            // screenBorder padding is arguably unnecessary, but although mostly invisible (in
+            // practice the background colour of the top app bar and the screen content are the
+            // same), it adds some consistency - particularly when the search field is present -
+            // with the vertical spacing on other screens.
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize()
                 .padding(innerPadding)
+                .padding(vertical = screenBorder)
             // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
             // TODO: Misc ideas for this search:
