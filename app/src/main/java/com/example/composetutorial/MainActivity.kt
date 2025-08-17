@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.padding
 import android.app.Application
 import android.content.Context
 import android.icu.text.Collator
-import android.media.SubtitleData
 import androidx.activity.compose.BackHandler
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
@@ -2166,7 +2165,7 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
         // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
         viewModelScope.launch {
             // TODO: EXCEPTION HANDLING
-            saveStatus.update(SaveStatus.Busy)
+            asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 //delay(5000) // TODO TEMP HACK
                 priceTrackerRepository.revertPrice(
@@ -2174,26 +2173,26 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
                     priceAfterRevert = priceAfterRevert
                 )
                 previousPrice.value = null
-                saveStatus.update(SaveStatus.Success)
+                asyncOperationStatus.update(AsyncOperationStatus.Success)
             } catch (e: Exception) {
-                saveStatus.update(SaveStatus.Error)
+                asyncOperationStatus.update(AsyncOperationStatus.Error)
             }
         }
     }
 
-    val saveStatus = SyncedStateEvent(SaveStatus.Idle)
+    val asyncOperationStatus = SyncedStateEvent(AsyncOperationStatus.Idle)
     fun updatePrice(newPrice: Price, newPreviousPrice: Price?) {
         // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
         viewModelScope.launch {
             // TODO: EXCEPTION HANDLING
-            saveStatus.update(SaveStatus.Busy)
+            asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 delay(5000) // TODO TEMP HACK
                 priceTrackerRepository.updateOrInsertPrice(newPrice)
                 previousPrice.value = newPreviousPrice
-                saveStatus.update(SaveStatus.Success)
+                asyncOperationStatus.update(AsyncOperationStatus.Success)
             } catch (e: Exception) {
-                saveStatus.update(SaveStatus.Error)
+                asyncOperationStatus.update(AsyncOperationStatus.Error)
             }
             // TODO: NEED TO COMMUNICATE TO OUTER SCOPE THAT THIS HAS DONE
         }
@@ -2284,7 +2283,7 @@ const val maxDecimalLength = 11
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    saveStatus: SaveStatus,
+    asyncOperationStatus: AsyncOperationStatus,
     source: Source?,
     sourceList: List<Source>,
     item: Item?,
@@ -2304,13 +2303,13 @@ fun MainScreen(
         // we need support from our parent (or this needs moving up into the parent) to do that.
 
         // Item selector
-        val clickableModifier = if (saveStatus.isNotBusy()) {
+        val clickableModifier = if (asyncOperationStatus.isNotBusy()) {
             Modifier.clickable { Log.d("MyApp", "SPS"); showItemSheet = true }
         } else {
             Modifier
         }
         // TODO: For reasons I don't quite understand, using key() here avoids a frame or two of delay in applying the colors = when saveStatus changes - I think the basic idea (per ChatGPT) is that this forces the whole thing to be recomposed, but it is a bit voodoo
-        key(saveStatus) {
+        key(asyncOperationStatus) {
             TextField(
                 value = item?.name ?: "",
                 onValueChange = { /* No-op, read-only */ },
@@ -2330,7 +2329,7 @@ fun MainScreen(
                 // TODO: There might be an argument that this should "sometimes" get the focused
                 // colours, but since clicking on it immediately opens a modal bottom sheet, I think
                 // it's probably reasonable to hard-code false here.
-                colors = if (saveStatus.isNotBusy()) myTextFieldColors(false) else TextFieldDefaults.colors()
+                colors = if (asyncOperationStatus.isNotBusy()) myTextFieldColors(false) else TextFieldDefaults.colors()
             )
         }
 
@@ -2359,7 +2358,7 @@ fun MainScreen(
         // without altering the API and I think the idea is sound but I started to run into
         // incomprehensible "out"/covariance stuff and it just felt too much just to fix this
         // where -1L is an easy hack.
-        key(saveStatus) { // TODO: as above
+        key(asyncOperationStatus) { // TODO: as above
             MyExposedDropdownMenuBox(
                 modifier = Modifier
                     // .padding(bottom = 8.dp)
@@ -2370,7 +2369,7 @@ fun MainScreen(
                 // probably nicer this way.
                 selectedId = source?.id, /* ?: -1L */
                 onValueChange = { onSelectedSourceIdChange(if (it == -1L) null else it) },
-                enabled = saveStatus.isNotBusy(),
+                enabled = asyncOperationStatus.isNotBusy(),
                 label = { Text("Store") },
                 supportingText = null,
                 /* TODO? if (haveItemAndSource) null else {
@@ -2842,7 +2841,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 @Composable
 fun ItemSourceInfo(
     vm: HomeViewModel,
-    saveStatus: SaveStatus,
+    asyncOperationStatus: AsyncOperationStatus,
     dataSet: DataSet,
     item: Item?,
     source: Source?,
@@ -3037,7 +3036,7 @@ fun ItemSourceInfo(
 
             var menuExpanded by remember { mutableStateOf(false) } // TODO: rememberSaveable???
             IconButton(
-                enabled = saveStatus.isNotBusy(),
+                enabled = asyncOperationStatus.isNotBusy(),
                 onClick = { menuExpanded = true },
                 modifier = Modifier.align(Alignment.TopEnd)
             ) {
@@ -3778,7 +3777,7 @@ fun HomeScreenActualScaffold( // TODO: RENAME
     onEditItemsClick: () -> Unit,
     onEditSourcesClick: () -> Unit,
 
-    saveStatus: SaveStatus,
+    asyncOperationStatus: AsyncOperationStatus,
     coroutineScope: CoroutineScope,
 
     content: @Composable (innerPadding: PaddingValues) -> Unit
@@ -3795,7 +3794,7 @@ fun HomeScreenActualScaffold( // TODO: RENAME
                 title = { Text(dataSet?.name ?: "") }, // TODO: better null handling?
                 navigationIcon = {
                     IconButton(
-                        enabled = saveStatus.isNotBusy(),
+                        enabled = asyncOperationStatus.isNotBusy(),
                         onClick = { coroutineScope.launch { drawerState.open() } }) {
                         Icon(
                             imageVector = Icons.Default.Menu,
@@ -3805,7 +3804,7 @@ fun HomeScreenActualScaffold( // TODO: RENAME
                 },
                 actions = {
                     IconButton(
-                        enabled = saveStatus.isNotBusy(),
+                        enabled = asyncOperationStatus.isNotBusy(),
                         onClick = { menuExpanded = true }) {
                         Icon(
                             Icons.Default.MoreVert,
@@ -3882,7 +3881,7 @@ fun HomeScreenScaffold(
     onEditSourcesClick: () -> Unit,
 ) {
     // TODO: We need to disable all forms of interaction (navdrawer, dropdowns, menu, etc) while this is "busy"
-    val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
+    val saveStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val coroutineScope = rememberCoroutineScope()
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
@@ -3932,25 +3931,25 @@ fun HomeScreenScaffold(
     LaunchedEffect(Unit) {
         // TODO: I have thrown in a buffer() here voodoo-style based on an actual observed problem
         // in other cases. Not sure if it's really necessary or best practice here.
-        vm.saveStatus.events.buffer().collect { event ->
+        vm.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
-                SaveStatus.Busy -> {
+                AsyncOperationStatus.Busy -> {
                     // We expect the operation to complete quickly so we don't want the visual distraction
                     // of a progress indicator appearing straight away. Let the progress indicator kick
                     // in after a short delay if we're still here waiting.
                     delay(spinnerDelayMillis)
                     // The state might not be busy any more, so check first before updating to avoid a race condition.
-                    if (vm.saveStatus.state.value == SaveStatus.Busy) {
-                        vm.saveStatus.update(SaveStatus.BusyForAWhile)
+                    if (vm.asyncOperationStatus.state.value == AsyncOperationStatus.Busy) {
+                        vm.asyncOperationStatus.update(AsyncOperationStatus.BusyForAWhile)
                     }
                 }
 
-                SaveStatus.Success -> {
-                    vm.saveStatus.update(SaveStatus.Idle)
+                AsyncOperationStatus.Success -> {
+                    vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
                 }
 
-                SaveStatus.Error -> {
-                    vm.saveStatus.update(SaveStatus.Idle)
+                AsyncOperationStatus.Error -> {
+                    vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
                     showErrorDialog = true
                 }
 
@@ -3961,7 +3960,7 @@ fun HomeScreenScaffold(
 
     // TODO: Is it OK to hack saveStatus into spinner like this? I suspect it is but need to come back to this calmly. Note that this *doesn't* eliminate the need to check saveStatus.isNotBusy() to disable all user interaction, as the scrim doesn't kick in straight away
     // TODO: It's probably OK and if it's not it isn't necessarily specifically here that it will go wrong, but is there any lurking corner case where we've just returned from making an edit and the user very quickly clicks confirm and things go tits up?
-    ScrimWithSpinner(visible = loading || saveStatus == SaveStatus.BusyForAWhile)
+    ScrimWithSpinner(visible = loading || saveStatus == AsyncOperationStatus.BusyForAWhile)
 
     if (showErrorDialog) {
         SaveErrorAlertDialog(requestClose = { showErrorDialog = false })
@@ -3981,7 +3980,7 @@ fun HomeScreenContent(
     priceAnalysis: PriceAnalysis,
     onEditPriceClick: () -> Unit,
     onViewHistoryClick: () -> Unit,
-    saveStatus: SaveStatus,
+    asyncOperationStatus: AsyncOperationStatus,
     innerPadding: PaddingValues,
 ) {
     Column(
@@ -3994,7 +3993,7 @@ fun HomeScreenContent(
             .padding(screenBorder) // TODO: MAYBE THIS SHOULD ONLY BE HORIZONTAL - MY YELLOW DEBUG BACKGROUND IS MAYBE GIVING ME A MISLEADING IDEA AND WE MAYBE SHOULDN'T HAVE VERTICAL SPACE BETWEEN TOP BAR AND TOP OF CONTENT
     ) {
         MainScreen(
-            saveStatus = saveStatus,
+            asyncOperationStatus = asyncOperationStatus,
             source = source,
             sourceList = sourceList,
             item = item,
@@ -4032,7 +4031,7 @@ fun HomeScreenContent(
                     Log.d("MyApp", "HSS item $item")
                     ItemSourceInfo(
                         vm = vm,
-                        saveStatus = saveStatus,
+                        asyncOperationStatus = asyncOperationStatus,
                         dataSet = dataSet,
                         item = item,
                         source = source,
@@ -4288,7 +4287,7 @@ fun EditPriceScreen(
 
 // TODO: Some of this remember stuff should maybe move into the ViewModel
 
-    val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
+    val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     fun onPackSizeOrPriceChange() {
         // On the first change to the pack size or price, we set the "to confirm" switch to true, on
@@ -4581,7 +4580,7 @@ fun SupportingText(text: String, isError: Boolean, modifier: Modifier = Modifier
 // indicative of a serious problem, will it matter that our state has been serialised to a bundle!?
 // I need to thinka bout this later when it's maybe clearer.
 class GeneralEditScreenViewModel {
-    val saveStatus = SyncedStateEvent(SaveStatus.Idle)
+    val asyncOperationStatus = SyncedStateEvent(AsyncOperationStatus.Idle)
     var saveAttempted: MutableState<Boolean> = mutableStateOf(false)
 }
 
@@ -4593,15 +4592,15 @@ fun runGeneralEditScreenOperation(
 ) {
     coroutineScope.launch {
         if (isSafeToPerform()) {
-            vm.saveStatus.update(SaveStatus.Busy)
+            vm.asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation about to call perform")
                 perform()
                 // delay(5000) // TODO HACK - DONE AFTER PERFORM SO IT GETS A CHANCE TO SET SAVING/DELETING FLAG TO TRUE
-                vm.saveStatus.update(SaveStatus.Success)
+                vm.asyncOperationStatus.update(AsyncOperationStatus.Success)
             } catch (e: Exception) {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation caught exception")
-                vm.saveStatus.update(SaveStatus.Error) // TODO: can/should we preserve e and show it to user in UI?
+                vm.asyncOperationStatus.update(AsyncOperationStatus.Error) // TODO: can/should we preserve e and show it to user in UI?
             }
         }
     }
@@ -4619,7 +4618,7 @@ fun GeneralEditScreen(
     requestClose: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
+    val saveStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
     Log.d("MyAppRGE", "GeneralEditScreen saveStatus=$saveStatus")
 
     val isBusy = !saveStatus.isNotBusy() // TODO: Add a isBusy()? get rid of isNotBusy()?
@@ -4660,16 +4659,16 @@ fun GeneralEditScreen(
     LaunchedEffect(Unit) {
         // TODO: I have thrown in a buffer() here voodoo-style based on an actual observed problem
         // in the case below. Come back to this later.
-        vm.saveStatus.events.buffer().collect { event ->
+        vm.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
-                SaveStatus.Busy -> {
+                AsyncOperationStatus.Busy -> {
                     // We expect the operation to complete quickly so we don't want the visual distraction
                     // of a progress indicator appearing straight away. Let the progress indicator kick
                     // in after a short delay if we're still here waiting.
                     delay(spinnerDelayMillis)
                     // The state might not be busy any more, so check first before updating to avoid a race condition.
-                    if (vm.saveStatus.state.value == SaveStatus.Busy) {
-                        vm.saveStatus.update(SaveStatus.BusyForAWhile)
+                    if (vm.asyncOperationStatus.state.value == AsyncOperationStatus.Busy) {
+                        vm.asyncOperationStatus.update(AsyncOperationStatus.BusyForAWhile)
                     }
                 }
 
@@ -4683,9 +4682,9 @@ fun GeneralEditScreen(
         // TODO: We use buffer here because we want to update() in the error case while we are
         // already collecting; we get a deadlock otherwise. I *think* this is OK, but be good to
         // come back to it later.
-        vm.saveStatus.events.buffer().collect { event ->
+        vm.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
-                SaveStatus.Idle -> {
+                AsyncOperationStatus.Idle -> {
                     Log.d("MyAppRGE", "collected idle")
                     saving = false
                     Log.d("MyAppRGE", "set saving to false")
@@ -4693,14 +4692,14 @@ fun GeneralEditScreen(
                     Log.d("MyAppRGE", "called onIdle")
                 }
 
-                SaveStatus.Success -> {
+                AsyncOperationStatus.Success -> {
                     Log.d("MyAppRGE", "collected success")
                     requestCloseDebounced()
                 }
 
-                SaveStatus.Error -> {
+                AsyncOperationStatus.Error -> {
                     Log.d("MyAppRGE", "collected error")
-                    vm.saveStatus.update(SaveStatus.Idle)
+                    vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
                     Log.d("MyAppRGE", "set state to idle")
                     showErrorDialog = true
                 }
@@ -4760,7 +4759,7 @@ fun GeneralEditScreen(
                         // re-enables, but it feels confusing to close while showing the spinner,
                         // since it might suggest to the user we *haven't* finished but are for some
                         // reason closing anyway.
-                        if (saving && saveStatus == SaveStatus.BusyForAWhile) {
+                        if (saving && saveStatus == AsyncOperationStatus.BusyForAWhile) {
                             SmallCircularProgressIndicator()
                         } else {
                             Text("Save")
@@ -4880,7 +4879,7 @@ fun GeneralEditAndDeleteScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     var deleting by rememberSaveable { mutableStateOf(false) }
-    val saveStatus by vm.saveStatus.collectAsStateWithLifecycle()
+    val saveStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
 
     GeneralEditScreen(
         vm = vm,
@@ -4896,7 +4895,7 @@ fun GeneralEditAndDeleteScreen(
         requestClose = requestClose,
     ) {
         content(
-            deleting && saveStatus == SaveStatus.BusyForAWhile,
+            deleting && saveStatus == AsyncOperationStatus.BusyForAWhile,
             // TODO: NEEDED? deleting = deleting,
             /* TODO DELETE
             { isSimpleDelete: Boolean, dialogTitle: @Composable () -> Unit, dialogText: @Composable () -> Unit ->
@@ -4978,7 +4977,7 @@ fun EditItemScreen(
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
-    val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
+    val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = itemReferenceCount == 0L
     GeneralEditAndDeleteScreen(
@@ -5277,7 +5276,7 @@ fun EditSourceScreen(
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
-    val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
+    val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = sourceReferenceCount == 0L
     GeneralEditAndDeleteScreen(
@@ -5611,7 +5610,7 @@ fun EditDataSetScreen(
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
-    val saveStatus by vm.generalEditScreenViewModel.saveStatus.collectAsStateWithLifecycle()
+    val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = dataSetReferenceCount == 0L
     GeneralEditAndDeleteScreen(
@@ -6972,14 +6971,9 @@ class EditPriceViewModel(
         }
         priceTrackerRepository.updateOrInsertPrice(price)
     }
-
-    // TODO: Is there really no standard abstraction which will wrap all this hellish savestatus crap up?
-
-    // TODO DELETE? val saveStatus = SyncedStateEvent(SaveStatus.Idle)
 }
 
-// TODO: This is not just a *save* status any more - rename
-enum class SaveStatus {
+enum class AsyncOperationStatus {
     Idle, Busy, BusyForAWhile, Success, Error;
 
     // We count Success as busy here, since it doesn't make sense to re-enable buttons after we
