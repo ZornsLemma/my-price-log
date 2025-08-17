@@ -6982,8 +6982,9 @@ class EditPriceViewModel(
 enum class SaveStatus {
     Idle, Busy, BusyForAWhile, Success, Error;
 
-    // We count "success" as busy here, since it doesn't make sense to re-enable buttons after we
-    // succeeded and are about to close.
+    // We count Success as busy here, since it doesn't make sense to re-enable buttons after we
+    // succeeded and are about to close. (For longer term screens, we will transition from Success
+    // to Idle.)
     fun isNotBusy(): Boolean {
         return this != Busy && this != BusyForAWhile && this != Success
     }
