@@ -6841,9 +6841,10 @@ fun <T> GeneralSelectorScreen(
                 }
             }
 
-            // TODO: We *might* want optional support for a delete action on items, but I suspect we
-            // won't - deleting is rare and we don't want to make it too easy and it can be done
-            // from the "edit individual item" screen. Don't forget to implement this though!
+            // ENHANCE: We could offer support for deleting items here, e.g. via "swipe to reveal a
+            // bin icon". This would probably be more useful if this code is re-used. In this app,
+            // deleting is rare and potentially scary and we prefer to hide it away a bit by putting
+            // it on the individual edit screens.
         }
     }
 }
