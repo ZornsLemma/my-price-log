@@ -6849,7 +6849,6 @@ fun <T> GeneralSelectorScreen(
     }
 }
 
-// TODO: We could optionally add switches or check boxes to the list items to allow them to be enabled or disabled - but this may well be better done at the edit X individual screen level
 // TODO: This function might well be better just folded into GeneralSelectorScreen
 @Composable
 fun GeneralSelectorListItem(id: Long, name: String, onItemSelected: () -> Unit) {
