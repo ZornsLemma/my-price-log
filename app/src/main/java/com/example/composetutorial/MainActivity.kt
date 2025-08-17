@@ -6849,7 +6849,9 @@ fun <T> GeneralSelectorScreen(
     }
 }
 
-// TODO: This function might well be better just folded into GeneralSelectorScreen
+// This is only used once and I'd like to inline it, as if anything it obfuscates what's happening
+// rather than simplifying the code. But inlining causes problems with dropUnlessResumed and the
+// possible workarounds feel worse than just keeping this function.
 @Composable
 fun GeneralSelectorListItem(id: Long, name: String, onItemSelected: () -> Unit) {
     ListItem(
