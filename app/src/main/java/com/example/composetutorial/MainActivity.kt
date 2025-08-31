@@ -265,20 +265,20 @@ enum class QuantityType(val value: Int) { // TODO: "value" -> "id"??
 }
 
 enum class UnitFamily {
+    ITEM,
     METRIC,
     IMPERIAL, // as used in UK
     US_CUSTOMARY, // as used in US
-    ITEM,
 }
 
 fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> = when (locale.country.uppercase()) {
     // ChatGPT suggests it's common to have dual metric and US Customary labelling in US
     // supermarkets and that some users may want to use metric, so we enable it by default. I'll do
     // the same for Liberia and Myanmar too for now.
-    "US", "LR", "MM" -> setOf(UnitFamily.METRIC, UnitFamily.US_CUSTOMARY, UnitFamily.ITEM)
+    "US", "LR", "MM" -> setOf(UnitFamily.ITEM, UnitFamily.METRIC, UnitFamily.US_CUSTOMARY)
     // TODO: Check "GB" *is* the right country code here for UK - I got this from ChatGPT
-    "GB" -> setOf(UnitFamily.METRIC, UnitFamily.IMPERIAL, UnitFamily.ITEM)
-    else -> setOf(UnitFamily.METRIC, UnitFamily.ITEM)
+    "GB" -> setOf(UnitFamily.ITEM, UnitFamily.METRIC, UnitFamily.IMPERIAL)
+    else -> setOf(UnitFamily.ITEM, UnitFamily.METRIC)
 }
 
 // TODO: IDS SHOULD PROBABLY BE TIDIED UP IF WE KEEP EG G100
@@ -293,10 +293,25 @@ enum class MeasureUnit(
     val toBase: Double,
     val displayOnly: Boolean
 ) {
-    // Weight
-    G(101, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "g", "gram",0, 1.0, false),
+    // Countable items
+    // TODO: Should symbol be empty string or something else here? feeling my way. I suspect "" looks best, it may lead to strings like "for 20 " with a trailing space but that's probably not a big deal in practice. (We could also just make a point of trimming strings generated using symbol.) We sort of might want "1" for the unit price denominator stuff though.
+    EACH(
+        101,
+        setOf(UnitFamily.ITEM),
+        QuantityType.ITEM,
+        "",
+        "", // TODO!?
+        0,
+        1.0,
+        false
+    ), // TODO: RENAME "EACH" TO "ITEM"?
+    EACH10(102, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", "10" /* TODO?? */, 1, 10.0, true),
+    EACH100(103, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", "100" /* TODO? */,2, 100.0, true),
+
+    // Weight (metric)
+    G(201, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "g", "gram",0, 1.0, false),
     G100(
-        1001,
+        202,
         setOf(UnitFamily.METRIC),
         QuantityType.WEIGHT,
         "100 g",
@@ -305,9 +320,11 @@ enum class MeasureUnit(
         100.0,
         true
     ), // TODO: experimental
-    KG(102, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "kg", "kilogram",3, 1000.0, false),
+    KG(203, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "kg", "kilogram",3, 1000.0, false),
+
+    // Weight (imperial/US customary)
     OZ(
-        103,
+        211,
         setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
         QuantityType.WEIGHT,
         "oz",
@@ -317,7 +334,7 @@ enum class MeasureUnit(
         false
     ),
     LB(
-        104,
+        212,
         setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
         QuantityType.WEIGHT,
         "lb",
@@ -327,10 +344,10 @@ enum class MeasureUnit(
         false
     ),
 
-    // Volume
-    ML(201, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml", "millilitre",0, 1.0, false),
+    // Volume (metric)
+    ML(301, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml", "millilitre",0, 1.0, false),
     ML100(
-        2001,
+        302,
         setOf(UnitFamily.METRIC),
         QuantityType.VOLUME,
         "100 ml",
@@ -339,46 +356,17 @@ enum class MeasureUnit(
         100.0,
         true
     ), // TODO: experimental
-    L(202, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "l", "litre", 3, 1000.0, false),
+    L(303, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "l", "litre", 3, 1000.0, false),
 
-    // TODO: Arguably imperial should come first here to match order in UnitFamily
     // TODO: As a massive hack to help me notice problems during debugging, I have replaced the space in "fl oz" with a U or I to
     // let me see which type is in use. I don't seriously expect subtle bugs here (if we do mess up our unit family handling, we
     // will probably end up with duplicated values in dropdowns which will be fairly obvious), but might as well keep an eye on it.
     // I don't want to add a suffix " (US)" or whatever just for debugging as it will mean the unit sizes aren't realistic in
     // layouts.
-    US_CUSTOMARY_FLOZ(
-        203,
-        setOf(UnitFamily.US_CUSTOMARY),
-        QuantityType.VOLUME,
-        "flUoz",
-        "fluid ounce",
-        3, // allow for eighths
-        29.5735295625,
-        false
-    ),
-    US_CUSTOMARY_PINT(
-        2033,
-        setOf(UnitFamily.US_CUSTOMARY),
-        QuantityType.VOLUME,
-        "pt",
-        "pint",
-        3, // allow for eighths
-        473.176473,
-        false
-    ),
-    US_CUSTOMARY_GAL(
-        204,
-        setOf(UnitFamily.US_CUSTOMARY),
-        QuantityType.VOLUME,
-        "gal",
-        "gallon",
-        3, // allow for eighths
-        3785.411784,
-        false
-    ),
+
+    // Volume (imperial)
     IMPERIAL_FLOZ(
-        2041,
+        311,
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
         "flIoz",
@@ -388,7 +376,7 @@ enum class MeasureUnit(
         false
     ),
     IMPERIAL_PINT(
-        205,
+        312,
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
         "pt",
@@ -398,7 +386,7 @@ enum class MeasureUnit(
         false
     ),
     IMPERIAL_GAL(
-        206,
+        313,
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
         "gal",
@@ -408,21 +396,37 @@ enum class MeasureUnit(
         false
     ),
 
-    // Countable items
-    // TODO: Arguably these should come first to match order in QuantityType
-    // TODO: Should symbol be empty string or something else here? feeling my way. I suspect "" looks best, it may lead to strings like "for 20 " with a trailing space but that's probably not a big deal in practice. (We could also just make a point of trimming strings generated using symbol.) We sort of might want "1" for the unit price denominator stuff though.
-    EACH(
-        301,
-        setOf(UnitFamily.ITEM),
-        QuantityType.ITEM,
-        "",
-        "", // TODO!?
-        0,
-        1.0,
+    // Volume (US customary)
+    US_CUSTOMARY_FLOZ(
+        321,
+        setOf(UnitFamily.US_CUSTOMARY),
+        QuantityType.VOLUME,
+        "flUoz",
+        "fluid ounce",
+        3, // allow for eighths
+        29.5735295625,
         false
-    ), // TODO: RENAME "EACH" TO "ITEM"?
-    EACH10(302, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", "10" /* TODO?? */, 1, 10.0, true),
-    EACH100(303, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", "100" /* TODO? */,2, 100.0, true);
+    ),
+    US_CUSTOMARY_PINT(
+        322,
+        setOf(UnitFamily.US_CUSTOMARY),
+        QuantityType.VOLUME,
+        "pt",
+        "pint",
+        3, // allow for eighths
+        473.176473,
+        false
+    ),
+    US_CUSTOMARY_GAL(
+        323,
+        setOf(UnitFamily.US_CUSTOMARY),
+        QuantityType.VOLUME,
+        "gal",
+        "gallon",
+        3, // allow for eighths
+        3785.411784,
+        false
+    );
 
     companion object {
         private val measureUnitById = entries.associateBy { it.id }
