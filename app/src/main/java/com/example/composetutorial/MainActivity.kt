@@ -281,7 +281,6 @@ fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> = when (locale.count
     else -> setOf(UnitFamily.METRIC, UnitFamily.ITEM)
 }
 
-// TODO: CHECK ALL THE MULTIPLIERS HERE - THIS IS CHATGPT CODE, AND WE MAY ALSO NEED TO ADDRESS IMPERIAL VS US OR WHATEVER TERMINOLOGY IS
 // TODO: IDS SHOULD PROBABLY BE TIDIED UP IF WE KEEP EG G100
 // TODO: IF WE KEEP G100 AND ML100, WE MAY NEED A FLAG TO INDICATE THESE ARE SECOND-CLASS CITIZENS AND ONLY ELIGIBLE FOR UNIT PRICE DENOMINATOR NOT GENERATE UNIT SELECTION
 enum class MeasureUnit(
@@ -5032,6 +5031,7 @@ fun EditItemScreen(
         // copied and pasted from EditSourceScreen for now.
 
         // TODO: Can I put these string versions inside QuantityType or won't that play well with i18n?
+        // TODO: It might be better to put ITEM first. That way the weight and volume are nearer to the default unit box which appears when they are selected.
         val options = listOf(
             Triple(QuantityType.WEIGHT, "Weight", null),
             Triple(
