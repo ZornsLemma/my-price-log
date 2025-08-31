@@ -1568,7 +1568,7 @@ data class PriceEntity(
     // We use floating point for the price - it saves worrying about storing in pence or the
     // currency's equivalent and then getting in a mess if somehow the conventional number of
     // decimal places changes. For the kinds of prices we are representing and the limited amount of
-    // calculation we are doing on them, there should in praqctice be no problems at all, as long as
+    // calculation we are doing on them, there should in practice be no problems at all, as long as
     // we round to the relevant number of decimal places on display.
     //
     // "measure" will always be stored in the metric base unit associated with the item_id's
@@ -9129,3 +9129,18 @@ Log.d("MyApp", baz.toString())
 // - I personally think it might be OK to allow users to delete historical entries if they *really* want, but not sure this is necessary or ideal
 // - the "confirm" button turns into "undo confirm" only briefly, for say 30-60s and it goes away if they change product or store or the app is closed and re-opened and has been reincarnated or whatever - it's a convenient, we don't *want* it to appear for very long as it invites accidental *undo* when it's too late to fix (albeit everything is in the history), and there is the history based "clone this point as new state, with chance to edit first" undo to fall back on whatever
 // - maybe have a restored_at nullable instant on the price table, which is *not* preserved as we update the record (it gets set to null) but is used (purely internally, at least for now) to track when a new price was created based on restoring from a (perhaps edited) historical price
+
+// TODONOW: Database tweaks before I put app into personal use to try to avoid problems upgrading later:
+// - add missing indexes
+// - decide if I want to renumber/reorder hardcoded IDs like gram vs floz before they get baked into my data
+// - decide if I want to do the "IDs start at different ranges" tweak for debuggability
+// - finalise names of source.loyalty_* columns
+// - finalise names of price, measure and original_unit columns on price table
+// - make sure price_history is kept in sync with any column naming in price table
+//
+// What indexes do I think I want based on code review? Ignoring primary key indexes which i think are automatic
+// - item.data_set_id
+// - source.data_set_id
+// - price.item_id -make a comment we don't include data_set_id as it is redundant (an item_id already implies a data_set_id) so doesn't reduce cardinality, the data_set_id condition is just there fore belt-and-braces/to show logical intent
+// - price.source_id
+// - price_history.{item_id, source_id} combined index - we only query on both these two together (plus technically redundant data_set_id), but it feels slightly more likely we'll want to use data_set_id+item_id as an initial prefix of this index than data_set_id+source_id - data_set_id is redundant, since item_id and source_id imply it, so we omit it
