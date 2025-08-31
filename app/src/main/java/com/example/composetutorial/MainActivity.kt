@@ -284,7 +284,7 @@ fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> = when (locale.count
 
 // TODO: IDS SHOULD PROBABLY BE TIDIED UP IF WE KEEP EG G100
 // TODO: IF WE KEEP G100 AND ML100, WE MAY NEED A FLAG TO INDICATE THESE ARE SECOND-CLASS CITIZENS AND ONLY ELIGIBLE FOR UNIT PRICE DENOMINATOR NOT GENERATE UNIT SELECTION
-// TODO: Could just maybe rename this "MeasurementUnit" but it's not a big deal and this is a bit more concise. "UnitOfMeasure" is a compromise on length but might also be nice.
+// TODO: Could just maybe rename this "MeasurementUnit" but it's not a big deal and this is a bit more concise. "UnitOfMeasure" is a compromise on length but might also be nice. Maybe worth making note-to-self comment that we'd just call this Unit but Kotlin already took that. :-)
 enum class MeasureUnit(
     val id: Long,
     val unitFamilies: Set<UnitFamily>,
