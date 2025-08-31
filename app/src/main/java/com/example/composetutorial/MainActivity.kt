@@ -191,6 +191,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import androidx.room.Upsert
@@ -598,23 +599,6 @@ abstract class InventoryDatabase : RoomDatabase() {
         }
     }
 }
-/* TODO: I had a chat with ChatGPT and I can probably arrange to start each table's ID counter at a different value with something like:
-
-    val roomCallback = object : RoomDatabase.Callback() {
-    override fun onCreate(db: SupportSQLiteDatabase) {
-        super.onCreate(db)
-
-        // Seed the auto-increment for Foo table to start at 999 (next will be 1000)
-        db.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('Foo', 999)")
-
-        // For Bar table, start at 1999 (next will be 2000)
-        db.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('Bar', 1999)")
-    }
-}
-
-This adds "free" debuggability by making it more obvious if an ID is misused or is reported in an error with no context on which table it's from. Gut feeling is I should allocate say 1000 IDs to each of the basic static data things and start prices (which will be way the biggest table) at say 10000.
-
-*/
 
 suspend fun populateDemoData(repository: PriceTrackerRepository, context: Context) {
     // TODO DELETE val db = InventoryDatabase.getDatabase(context)
@@ -1132,6 +1116,18 @@ class MyApplication : Application() {
                 val db = InventoryDatabase.getDatabase(this@MyApplication)
 
                 db.withTransaction {
+                    // Manually adjust the starting sequence values for various tables. This
+                    // increases the chances that foreign key bugs cause constraint violations,
+                    // rather than silently referencing the wrong record. It also makes it easier to
+                    // identify the type of ID during debugging based on its numeric range. We don't
+                    // rely on IDs being non-overlapping for correctness.
+                    //
+                    // We leave data_set's sequence alone and let it start IDs at 1.
+                    db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('source', 1000)")
+                    db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('item', 2000)")
+                    db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('price', 10000)")
+                    db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('price_history', 100000)")
+
                     populateDemoData(priceTrackerRepository, this@MyApplication)
                 }
 
@@ -9136,8 +9132,6 @@ Log.d("MyApp", baz.toString())
 
 // TODONOW: Database tweaks before I put app into personal use to try to avoid problems upgrading later:
 // - add missing indexes
-// - decide if I want to renumber/reorder hardcoded IDs like gram vs floz before they get baked into my data
-// - decide if I want to do the "IDs start at different ranges" tweak for debuggability
 // - finalise names of source.loyalty_* columns
 // - finalise names of price, measure and original_unit columns on price table
 // - make sure price_history is kept in sync with any column naming in price table
