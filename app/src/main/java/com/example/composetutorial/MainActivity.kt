@@ -221,6 +221,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
+import androidx.room.Index
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
@@ -1279,7 +1280,8 @@ data class EditableDataSet(
             childColumns = ["data_set_id"],
             onDelete = ForeignKey.CASCADE
         )
-    ]
+    ],
+    indices = [Index(value = ["data_set_id"], unique = false)]
 )
 @Parcelize
 data class Item(
@@ -1415,7 +1417,8 @@ data class EditableItem private constructor(
             childColumns = ["data_set_id"],
             onDelete = ForeignKey.CASCADE
         )
-    ]
+    ],
+    indices = [Index(value = ["data_set_id"], unique = false)]
 )
 @Parcelize
 data class Source(
@@ -1552,6 +1555,12 @@ data class EditableSource(
             childColumns = ["source_id"],
             onDelete = ForeignKey.CASCADE
         )
+    ],
+    indices = [
+        Index(value = ["data_set_id"], unique = false), // just because this is a foreign key
+        // We don't include data_set_id here because although some queries specify it along with item_id, it's just belt-and-braces - item_id already implies a data_set_id if all is well.
+        Index(value = ["item_id"], unique = false),
+        Index(value = ["source_id"], unique = false)
     ]
 )
 @Parcelize // TODO: probably won't need this once the edit dialog is written to use new style viewmodel data stuff
@@ -1634,6 +1643,18 @@ data class PriceEntity(
             childColumns = ["source_id"],
             onDelete = ForeignKey.CASCADE
         )
+    ],
+    indices = [
+        Index(value = ["data_set_id"], unique = false), // because this is a foreign key
+        Index(value = ["source_id"], unique = false), // because this is a foreign key
+        Index(value = ["item_id"], unique = false), // because this is a foreign key, although the composite index below might well be good enough we'll add this one too to play it safe
+        // We don't include data_set_id in this index as it's technically redundant - item_id and
+        // source_id both imply a data_set_id and it should be the same. We put item_id first
+        // because it feels more likely we might want to select history using just item_id than just
+        // source_id in the future. I also suspect it helps that item_id is far more selective than
+        // source_id - there will be typically many more items than sources and our queries will
+        // be using equality conditions..
+        Index(value = ["item_id", "source_id"], unique = false)
     ]
 )
 // TODO: Rename this? Maybe HistoricalPrice or something? I am happy to have the database table called price_history but it is arguably confusing to have a class representing a point-in-time historical price called PriceHistory, as the name seems to imply it is "a history" in itself.
@@ -1875,7 +1896,9 @@ interface PriceHistoryDao {
     @Insert
     suspend fun insert(priceHistory: PriceHistory): Long
 
-    @Query("SELECT * FROM price_history WHERE data_set_id = :dataSetId AND item_id = :itemId and source_id = :sourceId ORDER BY modified_at DESC")
+    // I am 99% sure it doesn't matter, but just to play it safe, note that we have item_id and source_id here in the same order as in the composite index.
+    // TODO: At some point it might be worth checking the query plan is the same regardless of ordering here and then deleting the above comment.
+    @Query("SELECT * FROM price_history WHERE data_set_id = :dataSetId AND item_id = :itemId AND source_id = :sourceId ORDER BY modified_at DESC")
     fun getPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<List<PriceHistory>>
 
     @Query("DELETE FROM price_history WHERE id = :priceHistoryId")
@@ -9136,8 +9159,9 @@ Log.d("MyApp", baz.toString())
 // - make sure price_history is kept in sync with any column naming in price table
 //
 // What indexes do I think I want based on code review? Ignoring primary key indexes which i think are automatic
-// - item.data_set_id
-// - source.data_set_id
-// - price.item_id -make a comment we don't include data_set_id as it is redundant (an item_id already implies a data_set_id) so doesn't reduce cardinality, the data_set_id condition is just there fore belt-and-braces/to show logical intent
-// - price.source_id
-// - price_history.{item_id, source_id} combined index - we only query on both these two together (plus technically redundant data_set_id), but it feels slightly more likely we'll want to use data_set_id+item_id as an initial prefix of this index than data_set_id+source_id - data_set_id is redundant, since item_id and source_id imply it, so we omit it
+// - item.data_set_id DONE
+// - source.data_set_id DONE
+// - price.item_id DONE -make a comment we don't include data_set_id as it is redundant (an item_id already implies a data_set_id) so doesn't reduce cardinality, the data_set_id condition is just there fore belt-and-braces/to show logical intent
+// - price.source_id DONE
+// - price_history.{item_id, source_id} combined index DONE - we only query on both these two together (plus technically redundant data_set_id), but it feels slightly more likely we'll want to use data_set_id+item_id as an initial prefix of this index than data_set_id+source_id - data_set_id is redundant, since item_id and source_id imply it, so we omit it
+// - the foreign key ones I get warnings about
