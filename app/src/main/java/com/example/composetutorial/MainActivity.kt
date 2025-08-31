@@ -9132,7 +9132,6 @@ Log.d("MyApp", baz.toString())
 
 // TODONOW: Database tweaks before I put app into personal use to try to avoid problems upgrading later:
 // - add missing indexes
-// - finalise names of source.loyalty_* columns
 // - finalise names of price, measure and original_unit columns on price table
 // - make sure price_history is kept in sync with any column naming in price table
 //
