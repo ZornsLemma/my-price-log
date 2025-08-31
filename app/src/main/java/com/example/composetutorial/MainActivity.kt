@@ -1587,7 +1587,7 @@ data class PriceEntity(
     // e.g. comparing the database price with the current shelf price. We do have a default unit
     // stored on the item, but tracking it per actual price allows us to handle situations where
     // supermarket A sells milk in pint multiples while supermarket B sells it in litre multiples.
-    // TODO: Rename this as "user_unit" or something? display_unit? default_display_unit (prob OTT)?
+    // TODO: Rename this as "user_unit" or something? display_unit? default_display_unit (prob OTT)? - probably "display_unit", just maybe "input_unit" but probably prefer to put emphasis on the display nature. even if it's only the default display convention. But I am kind of leaning to "input_unit", given the "display_unit" is actually only a default, and "input_unit" is a fact, but the other stuff is sort of "UI convention".
     @ColumnInfo(name = "original_unit") val originalUnit: MeasureUnit,
 
     @ColumnInfo(name = "confirmed_at") val confirmedAt: Instant,
