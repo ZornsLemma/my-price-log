@@ -775,7 +775,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdWholeMilk,
             sourceId = sourceIdSuperiorStore,
             price = 2.86,
-            measure = MeasuredValue(2000.0, MeasureUnit.ML),
+            measure = MeasuredValue(2.0, MeasureUnit.L),
             confirmedAt = now.minus(63, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasureUnit.L,
