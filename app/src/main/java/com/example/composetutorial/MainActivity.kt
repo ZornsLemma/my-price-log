@@ -1896,8 +1896,6 @@ interface PriceHistoryDao {
     @Insert
     suspend fun insert(priceHistory: PriceHistory): Long
 
-    // I am 99% sure it doesn't matter, but just to play it safe, note that we have item_id and source_id here in the same order as in the composite index.
-    // TODO: At some point it might be worth checking the query plan is the same regardless of ordering here and then deleting the above comment.
     @Query("SELECT * FROM price_history WHERE data_set_id = :dataSetId AND item_id = :itemId AND source_id = :sourceId ORDER BY modified_at DESC")
     fun getPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<List<PriceHistory>>
 
