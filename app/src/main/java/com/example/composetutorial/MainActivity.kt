@@ -191,7 +191,6 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import androidx.room.Upsert
@@ -680,7 +679,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
         Source(
             dataSetId = dataSetId,
             name = "ValueMart",
-            loyaltyDiscountType = LoyaltyDiscountType.NONE,
+            loyaltyType = LoyaltyType.NONE,
             loyaltyMultiplier = 1.0,
             notes = ""
         )
@@ -689,7 +688,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
         Source(
             dataSetId = dataSetId,
             name = "SuperiorStore",
-            loyaltyDiscountType = LoyaltyDiscountType.NONE,
+            loyaltyType = LoyaltyType.NONE,
             loyaltyMultiplier = 1.0,
             notes = ""
         )
@@ -698,7 +697,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
         Source(
             dataSetId = dataSetId,
             name = "Grandways",
-            loyaltyDiscountType = LoyaltyDiscountType.NONE,
+            loyaltyType = LoyaltyType.NONE,
             loyaltyMultiplier = 1.0,
             notes = ""
         )
@@ -708,7 +707,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
         Source(
             dataSetId = dataSetId,
             name = "Newco",
-            loyaltyDiscountType = LoyaltyDiscountType.NONE,
+            loyaltyType = LoyaltyType.NONE,
             loyaltyMultiplier = 1.0,
             notes = "Only just opened but I hope their prices will be good."
         )
@@ -1172,13 +1171,13 @@ class Converters {
     }
 
     @TypeConverter
-    fun fromLoyaltyDiscountType(loyaltyDiscountType: LoyaltyDiscountType?): Long? {
-        return loyaltyDiscountType?.id
+    fun fromLoyaltyType(loyaltyType: LoyaltyType?): Long? {
+        return loyaltyType?.id
     }
 
     @TypeConverter
-    fun toLoyaltyDiscountType(value: Long?): LoyaltyDiscountType? {
-        return value?.let { LoyaltyDiscountType.fromValue(it) }
+    fun toLoyaltyType(value: Long?): LoyaltyType? {
+        return value?.let { LoyaltyType.fromValue(it) }
     }
 }
 
@@ -1424,21 +1423,21 @@ data class Source(
     val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId: Long,
     val name: String,
-    @ColumnInfo(name = "loyalty_discount_type") val loyaltyDiscountType: LoyaltyDiscountType, // TODO: JUST GET RID OF "DISCOUNT" FROM NAMES HERE INCL THE ENUM CLASS?
+    @ColumnInfo(name = "loyalty_type") val loyaltyType: LoyaltyType,
     @ColumnInfo(name = "loyalty_multiplier") val loyaltyMultiplier: Double,
     val notes: String,
 ) : Parcelable
 
-enum class LoyaltyDiscountType(val id: Long) {
+enum class LoyaltyType(val id: Long) {
     NONE(1),
     BONUS(2),
     DISCOUNT(3);
 
     companion object {
-        private val loyaltyDiscountTypeById = LoyaltyDiscountType.entries.associateBy { it.id }
+        private val loyaltyTypeById = LoyaltyType.entries.associateBy { it.id }
 
-        fun fromValue(loyaltyDiscountTypeId: Long): LoyaltyDiscountType? =
-            loyaltyDiscountTypeById[loyaltyDiscountTypeId]
+        fun fromValue(loyaltyDiscountTypeId: Long): LoyaltyType? =
+            loyaltyTypeById[loyaltyDiscountTypeId]
     }
 }
 
@@ -1448,7 +1447,7 @@ data class EditableSource(
     val id: Long,
     val dataSetId: Long,
     val name: String,
-    val loyaltyDiscountType: LoyaltyDiscountType,
+    val loyaltyType: LoyaltyType,
     // TODO: In general I am inconsistent about loyaltyPercentage vs loyaltyDiscountPercentage naming etc - note that the percentage is *not* in general a "discount" percentage, it may be a bonus percentage
     val loyaltyPercentage: String, // TODO: NEED TO ADD THIS TO NON-EDITABLE TOO! WE ALSO NEED TO STORE THE NONE/BONUS/DISCOUNT FLAG HERE
     val notes: String,
@@ -1465,10 +1464,10 @@ data class EditableSource(
         // TODO: Is this a reasonable place to do trimming? Gut feeling is that yes it is, since
         // validation doesn't care about this, it's just a bit of "tidying". But not sure.
         val loyaltyPercentage = parseStringAsDoubleOrNull(locale, loyaltyPercentage)
-        val loyaltyMultiplier = when (loyaltyDiscountType) {
-            LoyaltyDiscountType.NONE -> 1.0
-            LoyaltyDiscountType.BONUS -> if (loyaltyPercentage != null) 100.0 / (100.0 + loyaltyPercentage) else null // TODO: double check this calculation later - I think I am confusing myself and there may not be a difference between bonus and discount, but I am really not sure any more - hmm, *maybe* this is right, and maybe the insight is that a discount is a discount, but with cashback I don't actually get my 5% or whatever *on the cashback* (it's not literal cash back so I can't spend it again for another 5%) - still very unsure though
-            LoyaltyDiscountType.DISCOUNT -> if (loyaltyPercentage != null) 1.0 - (loyaltyPercentage / 100.0) else null
+        val loyaltyMultiplier = when (loyaltyType) {
+            LoyaltyType.NONE -> 1.0
+            LoyaltyType.BONUS -> if (loyaltyPercentage != null) 100.0 / (100.0 + loyaltyPercentage) else null // TODO: double check this calculation later - I think I am confusing myself and there may not be a difference between bonus and discount, but I am really not sure any more - hmm, *maybe* this is right, and maybe the insight is that a discount is a discount, but with cashback I don't actually get my 5% or whatever *on the cashback* (it's not literal cash back so I can't spend it again for another 5%) - still very unsure though
+            LoyaltyType.DISCOUNT -> if (loyaltyPercentage != null) 1.0 - (loyaltyPercentage / 100.0) else null
         }
         if (loyaltyMultiplier == null) {
             return null
@@ -1477,7 +1476,7 @@ data class EditableSource(
             id = id,
             dataSetId = dataSetId,
             name = trimmedName,
-            loyaltyDiscountType = loyaltyDiscountType,
+            loyaltyType = loyaltyType,
             loyaltyMultiplier = loyaltyMultiplier,
             notes = notes
         )
@@ -1485,24 +1484,25 @@ data class EditableSource(
 
     // 5% bonus is not the same as 5% discount/cashback. Suppose we want to buy something costing £100.
     // - If there is a 5% discount, the price is £95 and we hand over £95.
-    // - If we get 5% cashback,  we hand over £100 and get £5 back, so £95 net.
+    // - If we get 5% cashback, we hand over £100 and get £5 back, so £95 net.
     // - If we get 5% bonus in some "store account", we need to deposit £95.24 and the 5% bonus makes that up to the £100 we need.
     // - If we get 5% bonus as points on our spending, we "theoretically" spend £95.24, get 5% bonus as points and that makes up the £100 we need. (In reality you can't do this, but I think in the long term it works out as if you can.) I think an alternate way of looking at this is that you spend £100, get £5 worth of points but those points are not quite as good as cash because you don't get 5% back when you spend those points, so we value the points at £4.76 instead of £5.
+    // I think an alternative but equivalent way to look at this is that with cashback, we can spend the cashback at the same store and get another 5% back on it, and repeat that. Whereas with a 5% bonus, we can't compound like this. (I believe this is typically true, but in theory a store could offer the same bonus on reward spending, so I am arguably using misleading terminology here.)
     // TODO: Revisit this later as I have found myself flip-flopping
     companion object {
         fun fromSource(source: Source?, dataSetId: Long, locale: Locale): EditableSource {
             if (source == null) {
-                return EditableSource(0, dataSetId, "", LoyaltyDiscountType.NONE, "", "")
+                return EditableSource(0, dataSetId, "", LoyaltyType.NONE, "", "")
             } else {
                 devCheck(dataSetId == source.dataSetId) {
                     "Expected identical dataSetIds but have dataSetId $dataSetId and source.dataSetid ${source.dataSetId}"
                 }
-                val loyaltyPercentage = when (source.loyaltyDiscountType) {
-                    LoyaltyDiscountType.NONE -> {
+                val loyaltyPercentage = when (source.loyaltyType) {
+                    LoyaltyType.NONE -> {
                         ""
                     }
 
-                    LoyaltyDiscountType.BONUS -> {
+                    LoyaltyType.BONUS -> {
                         formatDoubleForEditing(
                             100.0 / source.loyaltyMultiplier - 100.0,
                             minDecimals = 0,
@@ -1510,7 +1510,7 @@ data class EditableSource(
                             locale
                         )
                     } // TODO CHECK AGAIN LATER
-                    LoyaltyDiscountType.DISCOUNT -> {
+                    LoyaltyType.DISCOUNT -> {
                         formatDoubleForEditing(
                             100.0 * (1 - source.loyaltyMultiplier),
                             minDecimals = 0,
@@ -1523,7 +1523,7 @@ data class EditableSource(
                     source.id,
                     dataSetId,
                     source.name,
-                    source.loyaltyDiscountType,
+                    source.loyaltyType,
                     loyaltyPercentage,
                     source.notes
                 )
@@ -5331,15 +5331,15 @@ fun EditSourceScreen(
         // TODO: We should almost certainly be doing this via an integer ID - we now have LoyaltyDiscountType
         // TODO: Can I put these string versions inside LoyaltyDiscountType or won't that play well with i18n?
         val options = listOf(
-            Triple(LoyaltyDiscountType.NONE, "None", null),
+            Triple(LoyaltyType.NONE, "None", null),
             Triple(
-                LoyaltyDiscountType.BONUS,
+                LoyaltyType.BONUS,
                 "Store rewards",
                 "Points or credit usable only at this store"
             ),
-            Triple(LoyaltyDiscountType.DISCOUNT, "Discount", "Discount on basket or money back")
+            Triple(LoyaltyType.DISCOUNT, "Discount", "Discount on basket or money back")
         )
-        var selectedOption = uiContent.editableSource.value.loyaltyDiscountType
+        var selectedOption = uiContent.editableSource.value.loyaltyType
         // TODO: This radio group needs to be enabled iff saveStatus.isNotBusy()
 
         Card(
@@ -5381,7 +5381,7 @@ fun EditSourceScreen(
                             .clickable {
                                 vm.setUIContentEditableSource(
                                     uiContent.editableSource.value.copy(
-                                        loyaltyDiscountType = id
+                                        loyaltyType = id
                                     )
                                 )
                             }
@@ -5413,7 +5413,7 @@ fun EditSourceScreen(
                     }
                 }
 
-                if (selectedOption != LoyaltyDiscountType.NONE) {
+                if (selectedOption != LoyaltyType.NONE) {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     var loyaltyPercentage by rememberSyncedTextFieldValue(uiContent.editableSource.value.loyaltyPercentage)
@@ -7060,8 +7060,8 @@ class EditSourceViewModel(
             _saveValidationEvents.emit(EditableField.NAME)
             return false
         }
-        // TODO: IS IT OK TO EXPLCIITLY CHECK loyaltyDiscountType HERE? CAN/SHOULD THIS BE FOLDED INTO VALIODATION RULES, E.G. BY VALIDATING A PAIR<DISCOUNTTYPE,STRINGDISCOUNTPERCENTAGE>??
-        if (uiContent.editableSource.value.loyaltyDiscountType != LoyaltyDiscountType.NONE && !validationRulesOk(
+        // TODO: IS IT OK TO EXPLCIITLY CHECK loyaltyType HERE? CAN/SHOULD THIS BE FOLDED INTO VALIODATION RULES, E.G. BY VALIDATING A PAIR<DISCOUNTTYPE,STRINGDISCOUNTPERCENTAGE>??
+        if (uiContent.editableSource.value.loyaltyType != LoyaltyType.NONE && !validationRulesOk(
                 loyaltyPercentageValidationRules,
                 uiContent.editableSource.value.loyaltyPercentage
             )
