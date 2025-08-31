@@ -1576,11 +1576,11 @@ data class PriceEntity(
     // marking pack sizes in ounces instead of lbs, for example. We use floating point for "measure"
     // because it allows us to round-trip non-metric measures perfectly (provided we round them for
     // display), and it doesn't seem to have any real downside in practice.
-    val price: Double, // TODO: It might be better to rename this column to avoid "price.price" type stuff - pack_price might work, just maybe "cost" or shelf_price
+    val price: Double, // TODO: It might be better to rename this column to avoid "price.price" type stuff - pack_price might work, just maybe "cost" or shelf_price - probably best just "price", maybe "cost" or "value" but neither feels great - probably avoid "pack_*" as it is a bit "multipack"-ish
     // TODO: would "amount" be a much simpler yet still generic name instead of "measure"?? hmm,
     // maybe not - "amount" could also be a monetary amount - but maybe "quantity" would work? I am
     // cooling on "measure" somewhat right now
-    val measure: Double, // TODO: maybe pack_size? pack_size_in_base_unit? (we could use just packSize in other objects where we have a MeasuredValue, but here it's just a raw double so extra caution might pay off)
+    val measure: Double, // TODO: maybe pack_size? pack_size_in_base_unit? (we could use just packSize in other objects where we have a MeasuredValue, but here it's just a raw double so extra caution might pay off) - OK, maybe quantity_in_base_unit?
 
     // Although measure is stored in the base unit, we also record the actual unit the user entered
     // the price in. This allows us to show it back to them in the most natural form when they are
