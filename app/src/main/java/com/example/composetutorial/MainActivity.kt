@@ -9152,14 +9152,5 @@ Log.d("MyApp", baz.toString())
 // - maybe have a restored_at nullable instant on the price table, which is *not* preserved as we update the record (it gets set to null) but is used (purely internally, at least for now) to track when a new price was created based on restoring from a (perhaps edited) historical price
 
 // TODONOW: Database tweaks before I put app into personal use to try to avoid problems upgrading later:
-// - add missing indexes
 // - finalise names of price, measure and original_unit columns on price table
 // - make sure price_history is kept in sync with any column naming in price table
-//
-// What indexes do I think I want based on code review? Ignoring primary key indexes which i think are automatic
-// - item.data_set_id DONE
-// - source.data_set_id DONE
-// - price.item_id DONE -make a comment we don't include data_set_id as it is redundant (an item_id already implies a data_set_id) so doesn't reduce cardinality, the data_set_id condition is just there fore belt-and-braces/to show logical intent
-// - price.source_id DONE
-// - price_history.{item_id, source_id} combined index DONE - we only query on both these two together (plus technically redundant data_set_id), but it feels slightly more likely we'll want to use data_set_id+item_id as an initial prefix of this index than data_set_id+source_id - data_set_id is redundant, since item_id and source_id imply it, so we omit it
-// - the foreign key ones I get warnings about
