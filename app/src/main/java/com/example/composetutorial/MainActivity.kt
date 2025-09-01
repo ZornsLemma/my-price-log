@@ -2205,7 +2205,7 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
             // TODO: EXCEPTION HANDLING
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
-                delay(5000) // TODO TEMP HACK
+                // delay(5000) // TODO TEMP HACK
                 priceTrackerRepository.updateOrInsertPrice(newPrice)
                 previousPrice.value = newPreviousPrice
                 asyncOperationStatus.update(AsyncOperationStatus.Success)
@@ -4767,7 +4767,7 @@ fun GeneralEditScreen(
                             isSafeToPerform = validateForSave,
                             perform = {
                                 saving = true
-                                delay(5000) // TODO HACK
+                                //delay(5000) // TODO HACK
                                 performSave()
                             }
                         )
@@ -4957,7 +4957,7 @@ fun GeneralEditAndDeleteScreen(
                         isSafeToPerform = { true },
                         perform = {
                             deleting = true
-                            delay(5000) // TODO HACK
+                            //delay(5000) // TODO HACK
                             //throw IllegalStateException("TODO")
                             requestDelete()
                         }
@@ -9148,3 +9148,5 @@ Log.d("MyApp", baz.toString())
 // - I personally think it might be OK to allow users to delete historical entries if they *really* want, but not sure this is necessary or ideal
 // - the "confirm" button turns into "undo confirm" only briefly, for say 30-60s and it goes away if they change product or store or the app is closed and re-opened and has been reincarnated or whatever - it's a convenient, we don't *want* it to appear for very long as it invites accidental *undo* when it's too late to fix (albeit everything is in the history), and there is the history based "clone this point as new state, with chance to edit first" undo to fall back on whatever
 // - maybe have a restored_at nullable instant on the price table, which is *not* preserved as we update the record (it gets set to null) but is used (purely internally, at least for now) to track when a new price was created based on restoring from a (perhaps edited) historical price
+
+// TODO: Can/should I provide some sort of "capitalise first letter" hint on the Name text fields for data set/source/item? At least on the O6 this doesn't seem to happen by default.
