@@ -6375,7 +6375,7 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier
                         .fillMaxSize()/* .safeDrawingPadding() */.imePadding(),
-                    color = Color.Green /* MaterialTheme.colorScheme.background */
+                    color = /* Color.Green */ MaterialTheme.colorScheme.background
                 ) {
                     // TODO: It may be we can get rid of this Box now it does nothing
                     Box(/* TODO: Delete modifier = Modifier.safeDrawingPadding() */) {
@@ -6841,7 +6841,7 @@ fun <T> GeneralSelectorScreen(
             }
             Box(
                 modifier = Modifier
-                    .background(Color.Green /* TODO! */)
+                    //.background(Color.Green /* TODO! */)
                     .fillMaxWidth()
             ) {
                 dataList.forEach { println("Item: $it, ID: ${getId(it)}") }
