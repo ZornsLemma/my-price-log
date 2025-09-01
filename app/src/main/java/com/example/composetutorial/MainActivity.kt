@@ -1591,9 +1591,9 @@ data class PriceEntity(
     // TODO: would "amount" be a much simpler yet still generic name instead of "measure"?? hmm,
     // maybe not - "amount" could also be a monetary amount - but maybe "quantity" would work? I am
     // cooling on "measure" somewhat right now
-    @ColumnInfo(name = "quantity_in_base_unit") val quantityInBaseUnit: Double, // TODO: maybe pack_size? pack_size_in_base_unit? (we could use just packSize in other objects where we have a MeasuredValue, but here it's just a raw double so extra caution might pay off) - OK, maybe quantity_in_base_unit?
+    @ColumnInfo(name = "quantity_in_base_unit") val quantityInBaseUnit: Double,
 
-    // Although measure is stored in the base unit, we also record the actual unit the user entered
+    // Although quantity is stored in the base unit, we also record the actual unit the user entered
     // the price in. This allows us to show it back to them in the most natural form when they are
     // e.g. comparing the database price with the current shelf price. We do have a default unit
     // stored on the item, but tracking it per actual price allows us to handle situations where
