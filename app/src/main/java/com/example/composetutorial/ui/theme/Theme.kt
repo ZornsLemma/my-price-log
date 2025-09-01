@@ -23,7 +23,7 @@ private val LightColorScheme = lightColorScheme(
     secondary = PurpleGrey40,
     tertiary = Pink40,
 
-    background = Color.Yellow, // TODO TEMP HACK FOR DEBUG SO SURFACE AND BACKGROUND NOT SAME
+    // background = Color.Yellow, // TODO TEMP HACK FOR DEBUG SO SURFACE AND BACKGROUND NOT SAME
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
     surface = Color(0xFFFFFBFE),
@@ -39,7 +39,7 @@ private val LightColorScheme = lightColorScheme(
 fun ComposeTutorialTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = false, // TODO: temp hack, was "true" but want to force it for now for debug
+    dynamicColor: Boolean = true, // false, // TODO: temp hack, was "true" but want to force it for now for debug
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
