@@ -722,7 +722,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdGroundCoffee,
             sourceId = sourceIdValueMart,
             price = 2.03,
-            measure = MeasuredValue(500.0, MeasureUnit.G),
+            quantity = MeasuredValue(500.0, MeasureUnit.G),
             confirmedAt = now.minus(2, ChronoUnit.MINUTES),
             notes = "Large pack own brand",
             itemDefaultUnit = MeasureUnit.G,
@@ -735,7 +735,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdGroundCoffee,
             sourceId = sourceIdSuperiorStore,
             price = 1.50,
-            measure = MeasuredValue(227.0, MeasureUnit.G),
+            quantity = MeasuredValue(227.0, MeasureUnit.G),
             confirmedAt = now.minus(4, ChronoUnit.DAYS),
             notes = "Own brand",
             itemDefaultUnit = MeasureUnit.G,
@@ -748,7 +748,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdGroundCoffee,
             sourceId = sourceIdGrandways,
             price = 1.64,
-            measure = MeasuredValue(350.0, MeasureUnit.G),
+            quantity = MeasuredValue(350.0, MeasureUnit.G),
             confirmedAt = now.minus(9, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasureUnit.G,
@@ -761,7 +761,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdWholeMilk,
             sourceId = sourceIdValueMart,
             price = 1.99,
-            measure = MeasuredValue(
+            quantity = MeasuredValue(
                 4.0,
                 MeasureUnit.IMPERIAL_PINT
             ),
@@ -777,7 +777,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdWholeMilk,
             sourceId = sourceIdSuperiorStore,
             price = 2.86,
-            measure = MeasuredValue(2.0, MeasureUnit.L),
+            quantity = MeasuredValue(2.0, MeasureUnit.L),
             confirmedAt = now.minus(63, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasureUnit.L,
@@ -790,7 +790,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdWholeMilk,
             sourceId = sourceIdGrandways,
             price = 3.28,
-            measure = MeasuredValue(
+            quantity = MeasuredValue(
                 6.0,
                 MeasureUnit.IMPERIAL_PINT
             ),
@@ -806,7 +806,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdTeabags,
             sourceId = sourceIdValueMart,
             price = 0.76,
-            measure = MeasuredValue(40.0, MeasureUnit.EACH),
+            quantity = MeasuredValue(40.0, MeasureUnit.EACH),
             confirmedAt = now.minus(7, ChronoUnit.DAYS),
             notes = "Soft pack own brand",
             itemDefaultUnit = MeasureUnit.EACH,
@@ -819,7 +819,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdTeabags,
             sourceId = sourceIdSuperiorStore,
             price = 0.60,
-            measure = MeasuredValue(20.0, MeasureUnit.EACH),
+            quantity = MeasuredValue(20.0, MeasureUnit.EACH),
             confirmedAt = now.minus(4, ChronoUnit.HOURS),
             notes = "",
             itemDefaultUnit = MeasureUnit.EACH,
@@ -832,7 +832,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdTeabags,
             sourceId = sourceIdGrandways,
             price = 1.25,
-            measure = MeasuredValue(50.0, MeasureUnit.EACH),
+            quantity = MeasuredValue(50.0, MeasureUnit.EACH),
             confirmedAt = now.minus(12, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasureUnit.EACH,
@@ -1591,7 +1591,7 @@ data class PriceEntity(
     // TODO: would "amount" be a much simpler yet still generic name instead of "measure"?? hmm,
     // maybe not - "amount" could also be a monetary amount - but maybe "quantity" would work? I am
     // cooling on "measure" somewhat right now
-    val measure: Double, // TODO: maybe pack_size? pack_size_in_base_unit? (we could use just packSize in other objects where we have a MeasuredValue, but here it's just a raw double so extra caution might pay off) - OK, maybe quantity_in_base_unit?
+    @ColumnInfo(name = "quantity_in_base_unit") val quantityInBaseUnit: Double, // TODO: maybe pack_size? pack_size_in_base_unit? (we could use just packSize in other objects where we have a MeasuredValue, but here it's just a raw double so extra caution might pay off) - OK, maybe quantity_in_base_unit?
 
     // Although measure is stored in the base unit, we also record the actual unit the user entered
     // the price in. This allows us to show it back to them in the most natural form when they are
@@ -1668,7 +1668,7 @@ data class PriceHistory(
     @ColumnInfo(name = "item_id") val itemId: Long,
     @ColumnInfo(name = "source_id") val sourceId: Long,
     val price: Double,
-    val measure: Double,
+    @ColumnInfo(name = "quantity_in_base_unit") val quantityInBaseUnit: Double,
     @ColumnInfo(name = "original_unit") val originalUnit: MeasureUnit,
     @ColumnInfo(name = "confirmed_at") val confirmedAt: Instant,
     val notes: String,
@@ -1682,7 +1682,7 @@ data class PriceHistory(
             itemId = itemId,
             sourceId = sourceId,
             price = price,
-            measure = MeasuredValue(measure, baseUnitForQuantityType(originalUnit.quantityType)).to(
+            quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(originalUnit.quantityType)).to(
                 originalUnit
             ),
             // TODO DELETE originalUnit = originalUnit,
@@ -1702,7 +1702,7 @@ data class PriceHistory(
                 itemId = priceEntity.itemId,
                 sourceId = priceEntity.sourceId,
                 price = priceEntity.price,
-                measure = priceEntity.measure,
+                quantityInBaseUnit = priceEntity.quantityInBaseUnit,
                 originalUnit = priceEntity.originalUnit,
                 confirmedAt = priceEntity.confirmedAt,
                 notes = priceEntity.notes,
@@ -1736,7 +1736,7 @@ data class Price(
     val itemId: Long,
     val sourceId: Long,
     val price: Double,
-    val measure: MeasuredValue,
+    val quantity: MeasuredValue,
     val confirmedAt: Instant,
     val notes: String,
     val modifiedAt: Instant,
@@ -1754,9 +1754,9 @@ data class Price(
         // TODO: I think this check is technically redundant because using
         // itemDefaultUnit.quantityType to determine the base unit will cause an internal check
         // error if measure's own unit is a different type - but this is maybe a bit more explicit.
-        devCheck(measure.unit.quantityType == itemDefaultUnit.quantityType) {
+        devCheck(quantity.unit.quantityType == itemDefaultUnit.quantityType) {
             "Expected consistent quantity type when converting Price to PriceEntity but found " +
-                    "measure $measure with itemDefaultUnit $itemDefaultUnit"
+                    "measure $quantity with itemDefaultUnit $itemDefaultUnit"
         }
         return PriceEntity(
             id = id,
@@ -1764,8 +1764,8 @@ data class Price(
             itemId = itemId,
             sourceId = sourceId,
             price = price,
-            measure = measure.asValue(baseUnitForQuantityType(itemDefaultUnit.quantityType)),
-            originalUnit = measure.unit,
+            quantityInBaseUnit = quantity.asValue(baseUnitForQuantityType(itemDefaultUnit.quantityType)),
+            originalUnit = quantity.unit,
             confirmedAt = confirmedAt,
             notes = notes,
             modifiedAt = modifiedAt,
@@ -1797,8 +1797,8 @@ fun PriceWithItemEntity.toDomain(): Price {
         itemId = priceEntity.itemId,
         sourceId = priceEntity.sourceId,
         price = priceEntity.price,
-        measure = MeasuredValue(
-            priceEntity.measure,
+        quantity = MeasuredValue(
+            priceEntity.quantityInBaseUnit,
             baseUnitForQuantityType(priceEntity.originalUnit.quantityType)
         ).to(priceEntity.originalUnit),
         confirmedAt = priceEntity.confirmedAt,
@@ -2950,7 +2950,7 @@ fun ItemSourceInfo(
                     } else {
                         val price = augmentedPrice.basePrice
 
-                        PackPriceAndSizeRow(price.price, price.measure, dataSet)
+                        PackPriceAndSizeRow(price.price, price.quantity, dataSet)
 
                         LabeledItem(
                             modifier = Modifier.padding(bottom = 8.dp),
@@ -3349,12 +3349,12 @@ data class EditablePrice(
         // some visible noise in the least significant decimal places.
         measureValue =
             formatDoubleForEditing(
-                price.measure.value,
+                price.quantity.value,
                 minDecimals = 0,
-                maxDecimals = price.measure.unit.maxDecimals,
+                maxDecimals = price.quantity.unit.maxDecimals,
                 locale
             ),
-        measureUnit = price.measure.unit,
+        measureUnit = price.quantity.unit,
         confirmedAt = price.confirmedAt,
         toConfirm = false,
         notes = price.notes,
@@ -3378,7 +3378,7 @@ data class EditablePrice(
                 itemId = itemId,
                 sourceId = sourceId,
                 price = priceDouble,
-                measure = MeasuredValue(measureValueDouble, measureUnit),
+                quantity = MeasuredValue(measureValueDouble, measureUnit),
                 confirmedAt = if (toConfirm) now else confirmedAt,
                 notes = notes,
                 modifiedAt = now,
@@ -7212,7 +7212,7 @@ data class ViewPriceHistoryScreenUIContent(
 data class PriceHistoryDelta(
     val priceHistory: PriceHistory, // TODO: having this here feels a bit crap, maybe it's OK
     val price: Double?,
-    val measure: MeasuredValue?,
+    val quantity: MeasuredValue?,
     // confirmedAt is a string so we can do "user-resolution" de-duplication
     val confirmedAt: String?,
     val notes: String?,
@@ -7224,7 +7224,7 @@ fun PriceHistory.toPriceHistoryDelta(confirmedAtFormatter: DateTimeFormatter): P
     return PriceHistoryDelta(
         priceHistory = this,
         price = price,
-        measure = MeasuredValue(measure, baseUnitForQuantityType(originalUnit.quantityType)).to(
+        quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(originalUnit.quantityType)).to(
             originalUnit
         ),
         confirmedAt = confirmedAtFormatter.format(confirmedAt),
@@ -7239,8 +7239,8 @@ fun diff(
     rhs: PriceHistory,
     confirmedAtFormatter: DateTimeFormatter
 ): PriceHistoryDelta? {
-    val rhsMeasure = MeasuredValue(
-        rhs.measure,
+    val rhsQuantity = MeasuredValue(
+        rhs.quantityInBaseUnit,
         baseUnitForQuantityType(rhs.originalUnit.quantityType)
     ).to(rhs.originalUnit)
     // Note that by using confirmedAtFormatter here and PriceHistory.confirmedAt being the resulting
@@ -7253,12 +7253,12 @@ fun diff(
     val confirmedAt = if (lhsConfirmedAt == rhsConfirmedAt) null else rhsConfirmedAt
     // TODO: OK to trim()?
     val notes = if (lhs.notes.trim() == rhs.notes.trim()) null else rhs.notes
-    val priceOrMeasureChanged = (lhs.price != rhs.price) || (lhs.measure != rhs.measure)
-    if (priceOrMeasureChanged || confirmedAt != null || notes != null) {
+    val priceOrQuantityChanged = (lhs.price != rhs.price) || (lhs.quantityInBaseUnit != rhs.quantityInBaseUnit)
+    if (priceOrQuantityChanged || confirmedAt != null || notes != null) {
         return PriceHistoryDelta(
             priceHistory = rhs,
-            price = if (!priceOrMeasureChanged) null else rhs.price,
-            measure = if (!priceOrMeasureChanged) null else rhsMeasure,
+            price = if (!priceOrQuantityChanged) null else rhs.price,
+            quantity = if (!priceOrQuantityChanged) null else rhsQuantity,
             confirmedAt = confirmedAt,
             notes = notes,
             modifiedAt = rhs.modifiedAt
@@ -8105,11 +8105,11 @@ fun ItemSourceInfo2( // TODO: Rename
                 subtitle = modifiedAtSubtitleFormatter.format(priceHistoryDelta.modifiedAt)
             )
 
-            if (priceHistoryDelta.price != null || priceHistoryDelta.measure != null) {
-                devCheck(priceHistoryDelta.price != null && priceHistoryDelta.measure != null) {
+            if (priceHistoryDelta.price != null || priceHistoryDelta.quantity != null) {
+                devCheck(priceHistoryDelta.price != null && priceHistoryDelta.quantity != null) {
                     "Expected price and measure to both be non-null since one is"
                 }
-                PackPriceAndSizeRow(priceHistoryDelta.price!!, priceHistoryDelta.measure!!, dataSet)
+                PackPriceAndSizeRow(priceHistoryDelta.price!!, priceHistoryDelta.quantity!!, dataSet)
             }
 
             // TODO: Next two are possible candidates for factoring out and sharing with ItemSourceInfo(),
@@ -8750,11 +8750,11 @@ fun augmentPrice(
         inflatedLoyaltyPrice = inflatedLoyaltyPrice,
         // TODO: It feels slightly off that we have to specify a denominator for our unit prices here, but I suppose it's OK - but maybe we could improve the API. We can't choose a "friendly" unit at this point since we don't have all the data across all sources yet (we're building it up).
         unitPrice = if (unitPriceDenominator != null) {
-            getUnitPrice(inflatedLoyaltyPrice, price.measure, unitPriceDenominator)
+            getUnitPrice(inflatedLoyaltyPrice, price.quantity, unitPriceDenominator)
         } else {
             getFriendlyUnitPrice(
                 inflatedLoyaltyPrice,
-                price.measure,
+                price.quantity,
                 candidateUnitPriceDenominators
             )
         },
@@ -8825,7 +8825,7 @@ fun analysePrices(
     // use.)
     val candidateUnitPriceDenominators = getSiblingMeasureUnits(
         dataSet,
-        priceList.first().measure.unit,
+        priceList.first().quantity.unit,
         includeDisplayOnly = true
     )
     var unitPriceDenominator: MeasureUnit? = null
