@@ -1587,10 +1587,7 @@ data class PriceEntity(
     // marking pack sizes in ounces instead of lbs, for example. We use floating point for "measure"
     // because it allows us to round-trip non-metric measures perfectly (provided we round them for
     // display), and it doesn't seem to have any real downside in practice.
-    val price: Double, // TODO: It might be better to rename this column to avoid "price.price" type stuff - pack_price might work, just maybe "cost" or shelf_price - probably best just "price", maybe "cost" or "value" but neither feels great - probably avoid "pack_*" as it is a bit "multipack"-ish
-    // TODO: would "amount" be a much simpler yet still generic name instead of "measure"?? hmm,
-    // maybe not - "amount" could also be a monetary amount - but maybe "quantity" would work? I am
-    // cooling on "measure" somewhat right now
+    val price: Double,
     @ColumnInfo(name = "quantity_in_base_unit") val quantityInBaseUnit: Double,
 
     // Although quantity is stored in the base unit, we also record the actual unit the user entered
@@ -1598,8 +1595,7 @@ data class PriceEntity(
     // e.g. comparing the database price with the current shelf price. We do have a default unit
     // stored on the item, but tracking it per actual price allows us to handle situations where
     // supermarket A sells milk in pint multiples while supermarket B sells it in litre multiples.
-    // TODO: Rename this as "user_unit" or something? display_unit? default_display_unit (prob OTT)? - probably "display_unit", just maybe "input_unit" but probably prefer to put emphasis on the display nature. even if it's only the default display convention. But I am kind of leaning to "input_unit", given the "display_unit" is actually only a default, and "input_unit" is a fact, but the other stuff is sort of "UI convention". But I'm flip-flopping towards "user_unit" - it is the unit the user chooses to use (for input and implicitly for display, but in theory the UI could let the user change this unit without changing anything else. But then that would make display_unit itself a good name too.
-    @ColumnInfo(name = "original_unit") val originalUnit: MeasureUnit,
+    @ColumnInfo(name = "user_unit") val userUnit: MeasureUnit,
 
     @ColumnInfo(name = "confirmed_at") val confirmedAt: Instant,
 
@@ -1669,7 +1665,7 @@ data class PriceHistory(
     @ColumnInfo(name = "source_id") val sourceId: Long,
     val price: Double,
     @ColumnInfo(name = "quantity_in_base_unit") val quantityInBaseUnit: Double,
-    @ColumnInfo(name = "original_unit") val originalUnit: MeasureUnit,
+    @ColumnInfo(name = "user_unit") val userUnit: MeasureUnit,
     @ColumnInfo(name = "confirmed_at") val confirmedAt: Instant,
     val notes: String,
     @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
@@ -1682,14 +1678,14 @@ data class PriceHistory(
             itemId = itemId,
             sourceId = sourceId,
             price = price,
-            quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(originalUnit.quantityType)).to(
-                originalUnit
+            quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(userUnit.quantityType)).to(
+                userUnit
             ),
             // TODO DELETE originalUnit = originalUnit,
             confirmedAt = confirmedAt,
             notes = notes,
             modifiedAt = modifiedAt,
-            itemDefaultUnit = baseUnitForQuantityType(originalUnit.quantityType) // TODO: This is a hack, I don't know if it matters but it isn't ideal even if it does work in practice
+            itemDefaultUnit = baseUnitForQuantityType(userUnit.quantityType) // TODO: This is a hack, I don't know if it matters but it isn't ideal even if it does work in practice
         )
     }
 
@@ -1703,7 +1699,7 @@ data class PriceHistory(
                 sourceId = priceEntity.sourceId,
                 price = priceEntity.price,
                 quantityInBaseUnit = priceEntity.quantityInBaseUnit,
-                originalUnit = priceEntity.originalUnit,
+                userUnit = priceEntity.userUnit,
                 confirmedAt = priceEntity.confirmedAt,
                 notes = priceEntity.notes,
                 modifiedAt = priceEntity.modifiedAt,
@@ -1765,7 +1761,7 @@ data class Price(
             sourceId = sourceId,
             price = price,
             quantityInBaseUnit = quantity.asValue(baseUnitForQuantityType(itemDefaultUnit.quantityType)),
-            originalUnit = quantity.unit,
+            userUnit = quantity.unit,
             confirmedAt = confirmedAt,
             notes = notes,
             modifiedAt = modifiedAt,
@@ -1787,9 +1783,9 @@ fun PriceWithItemEntity.toDomain(): Price {
     // priceEntity.originalUnit is of the right QuantityType. (TODO: We should also be doing a check
     // before we write to the database, to stop bad data getting in, but at that point we don't have
     // such absolutely confidence in our itemDefaultUnit.)
-    devCheck(priceEntity.originalUnit.quantityType == itemDefaultUnit.quantityType) {
-        "Expected consistent units on PriceWithItemEntity but we have originalUnit " +
-                "${priceEntity.originalUnit} and itemDefaultUnit $itemDefaultUnit"
+    devCheck(priceEntity.userUnit.quantityType == itemDefaultUnit.quantityType) {
+        "Expected consistent units on PriceWithItemEntity but we have userUnit " +
+                "${priceEntity.userUnit} and itemDefaultUnit $itemDefaultUnit"
     }
     return Price(
         id = priceEntity.id,
@@ -1799,8 +1795,8 @@ fun PriceWithItemEntity.toDomain(): Price {
         price = priceEntity.price,
         quantity = MeasuredValue(
             priceEntity.quantityInBaseUnit,
-            baseUnitForQuantityType(priceEntity.originalUnit.quantityType)
-        ).to(priceEntity.originalUnit),
+            baseUnitForQuantityType(priceEntity.userUnit.quantityType)
+        ).to(priceEntity.userUnit),
         confirmedAt = priceEntity.confirmedAt,
         notes = priceEntity.notes,
         modifiedAt = priceEntity.modifiedAt,
@@ -7224,8 +7220,8 @@ fun PriceHistory.toPriceHistoryDelta(confirmedAtFormatter: DateTimeFormatter): P
     return PriceHistoryDelta(
         priceHistory = this,
         price = price,
-        quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(originalUnit.quantityType)).to(
-            originalUnit
+        quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(userUnit.quantityType)).to(
+            userUnit
         ),
         confirmedAt = confirmedAtFormatter.format(confirmedAt),
         notes = notes,
@@ -7241,8 +7237,8 @@ fun diff(
 ): PriceHistoryDelta? {
     val rhsQuantity = MeasuredValue(
         rhs.quantityInBaseUnit,
-        baseUnitForQuantityType(rhs.originalUnit.quantityType)
-    ).to(rhs.originalUnit)
+        baseUnitForQuantityType(rhs.userUnit.quantityType)
+    ).to(rhs.userUnit)
     // Note that by using confirmedAtFormatter here and PriceHistory.confirmedAt being the resulting
     // string, if two PriceHistory records have visually indistinguishable confirmedAt values we
     // won't show them, and if there are no other differences we will hide the extra record
@@ -9152,7 +9148,3 @@ Log.d("MyApp", baz.toString())
 // - I personally think it might be OK to allow users to delete historical entries if they *really* want, but not sure this is necessary or ideal
 // - the "confirm" button turns into "undo confirm" only briefly, for say 30-60s and it goes away if they change product or store or the app is closed and re-opened and has been reincarnated or whatever - it's a convenient, we don't *want* it to appear for very long as it invites accidental *undo* when it's too late to fix (albeit everything is in the history), and there is the history based "clone this point as new state, with chance to edit first" undo to fall back on whatever
 // - maybe have a restored_at nullable instant on the price table, which is *not* preserved as we update the record (it gets set to null) but is used (purely internally, at least for now) to track when a new price was created based on restoring from a (perhaps edited) historical price
-
-// TODONOW: Database tweaks before I put app into personal use to try to avoid problems upgrading later:
-// - finalise names of price, measure and original_unit columns on price table
-// - make sure price_history is kept in sync with any column naming in price table
