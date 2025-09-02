@@ -9180,3 +9180,6 @@ val capitalization = when (capString) {
 // product I want to add into the search box at the top of the "edit products" screen. It might be
 // worth copying any search search into the name field when the add button is clicked. Maybe this
 // would be annoying, but perhapos it's less annoying overall than having to type it twice.
+
+// TODO: It's early days yet but it might be that the price edit screen should have the price field
+// *above* the pack size fields.
