@@ -4564,9 +4564,11 @@ fun EditPriceScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
+        // TODO: This probably ought to be a FilteredTextField or something - a raw TextField will not implement the "large but not infinite" length restriction
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Notes") },
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = uiContent.editablePrice.value.notes,
             onValueChange = {
                 vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(notes = it))
@@ -5487,6 +5489,7 @@ fun EditSourceScreen(
         var notes by rememberSyncedTextFieldValue(uiContent.editableSource.value.notes)
         FilteredTextField(
             label = { Text("Notes") },
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = notes,
             onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
@@ -5857,6 +5860,7 @@ fun EditDataSetScreen(
         var notes by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.notes)
         FilteredTextField(
             label = { Text("Notes") },
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = notes,
             onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
