@@ -9150,3 +9150,16 @@ Log.d("MyApp", baz.toString())
 // - maybe have a restored_at nullable instant on the price table, which is *not* preserved as we update the record (it gets set to null) but is used (purely internally, at least for now) to track when a new price was created based on restoring from a (perhaps edited) historical price
 
 // TODO: Can/should I provide some sort of "capitalise first letter" hint on the Name text fields for data set/source/item? At least on the O6 this doesn't seem to happen by default.
+
+/* TODO: When I add translation, I should probably allow the translator so indirectly specify keyboard hints - e.g. product name in English probably wants Words, but in Spanish probably None. Grok sketched out:
+val capString = stringResource(R.string.grocery_capitalization)
+val capitalization = when (capString) {
+    "sentences" -> KeyboardCapitalization.Sentences
+    "words" -> KeyboardCapitalization.Words
+    else -> KeyboardCapitalization.None
+}
+        with English using res/values/strings.xml:
+        <string name="grocery_capitalization">words</string>
+        and Spanish using:
+        <string name="grocery_capitalization">none</string>
+*/
