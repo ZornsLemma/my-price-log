@@ -160,6 +160,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -5030,6 +5031,7 @@ fun EditItemScreen(
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
         ValidatedTextField2(
             label = { Text("Name") },
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = name,
             maxLength = maxItemNameLength,
             onValueChange = {
@@ -5243,6 +5245,7 @@ fun EditItemScreen(
         var notes by rememberSyncedTextFieldValue(uiContent.editableItem.value.notes)
         FilteredTextField(
             label = { Text("Notes") },
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = notes,
             onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
@@ -5330,6 +5333,8 @@ fun EditSourceScreen(
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
         ValidatedTextField2(
             label = { Text("Name") },
+            // We use Words here because this is likely to be a store brand.
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
             value = name,
             maxLength = maxSourceNameLength,
             onValueChange = {
@@ -5579,6 +5584,7 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
 @Composable
 fun <T> ValidatedTextField2(
     label: @Composable() (() -> Unit)? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     value: TextFieldValue,
     maxLength: Int,
     onValueChange: (TextFieldValue) -> Unit,
@@ -5611,6 +5617,7 @@ fun <T> ValidatedTextField2(
             modifier = Modifier
                 .fillMaxWidth()
                 .validationFocusRequester(scrollToFocusableHandle),
+            keyboardOptions = keyboardOptions,
             interactionSource = interactionSource
         )
     }
@@ -5664,6 +5671,7 @@ fun EditDataSetScreen(
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         ValidatedTextField2(
             label = { Text("Name") },
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = name,
             maxLength = maxDataSetNameLength,
             onValueChange = {
