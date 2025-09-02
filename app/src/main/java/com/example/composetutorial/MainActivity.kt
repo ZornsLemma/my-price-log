@@ -9175,3 +9175,8 @@ val capitalization = when (capString) {
         and Spanish using:
         <string name="grocery_capitalization">none</string>
 */
+
+// TODO: I might (it's early days as I write this) have a tendency to start typing the name of a
+// product I want to add into the search box at the top of the "edit products" screen. It might be
+// worth copying any search search into the name field when the add button is clicked. Maybe this
+// would be annoying, but perhapos it's less annoying overall than having to type it twice.
