@@ -9161,8 +9161,6 @@ Log.d("MyApp", baz.toString())
 // - the "confirm" button turns into "undo confirm" only briefly, for say 30-60s and it goes away if they change product or store or the app is closed and re-opened and has been reincarnated or whatever - it's a convenient, we don't *want* it to appear for very long as it invites accidental *undo* when it's too late to fix (albeit everything is in the history), and there is the history based "clone this point as new state, with chance to edit first" undo to fall back on whatever
 // - maybe have a restored_at nullable instant on the price table, which is *not* preserved as we update the record (it gets set to null) but is used (purely internally, at least for now) to track when a new price was created based on restoring from a (perhaps edited) historical price
 
-// TODO: Can/should I provide some sort of "capitalise first letter" hint on the Name text fields for data set/source/item? At least on the O6 this doesn't seem to happen by default.
-
 /* TODO: When I add translation, I should probably allow the translator so indirectly specify keyboard hints - e.g. product name in English probably wants Words, but in Spanish probably None. Grok sketched out:
 val capString = stringResource(R.string.grocery_capitalization)
 val capitalization = when (capString) {
