@@ -9201,3 +9201,6 @@ val capitalization = when (capString) {
 // feels like I'd really like to tap on one of these and switch to that store. Yes technically it is
 // not much harder to use the store dropdown on the same screen to change, but I think this might be
 // a good additional way.
+
+// TODO: If it lives, I need a "x" to delete the search text on the product selection modal dialog.
+// But it is probably going to be replaced with the edit product selection screen.
