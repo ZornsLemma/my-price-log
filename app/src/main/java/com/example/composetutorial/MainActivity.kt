@@ -9195,3 +9195,9 @@ val capitalization = when (capString) {
 // wouldn't do this for data sets and sources, given their different selection styles on the home
 // screen. I don't think the "+" makes this any more inconsistent than the different selection
 // styles already do.
+
+// TODO: I'm not theoretically averse to the idea of opening a "how was this calculated" button when
+// you tap a store in the price comparison at the bottom of the home screen, but TBH in practice it
+// feels like I'd really like to tap on one of these and switch to that store. Yes technically it is
+// not much harder to use the store dropdown on the same screen to change, but I think this might be
+// a good additional way.
