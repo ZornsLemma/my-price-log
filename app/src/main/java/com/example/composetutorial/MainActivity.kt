@@ -9181,3 +9181,17 @@ val capitalization = when (capString) {
 
 // TODO: It's early days yet but it might be that the price edit screen should have the price field
 // *above* the pack size fields.
+
+// TODO: When adding (or perhaps even just editing an existing) product, should we return
+// immediately back to the home screen (not the "select product to edit" immediate parent screen)
+// and select the product just added (or edited)? This feel "technically wrong" but in practice this
+// is exactly what I seem to want (it is early days yet) when I add a new product. Arguably we could
+// extend the same principle to daa sets and sources for consistency, although I suspect it's less
+// critical there.
+
+// TODO: Should we add a "+" FAB to the product selection from the home screen? This would be even
+// more natural if we dump the modal bottom sheet and use the "select a product to edit" screen
+// instead. We could even copy any search string into the name of the new product there. We probably
+// wouldn't do this for data sets and sources, given their different selection styles on the home
+// screen. I don't think the "+" makes this any more inconsistent than the different selection
+// styles already do.
