@@ -278,12 +278,10 @@ fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> = when (locale.count
     // supermarkets and that some users may want to use metric, so we enable it by default. I'll do
     // the same for Liberia and Myanmar too for now.
     "US", "LR", "MM" -> setOf(UnitFamily.ITEM, UnitFamily.METRIC, UnitFamily.US_CUSTOMARY)
-    // TODO: Check "GB" *is* the right country code here for UK - I got this from ChatGPT
     "GB" -> setOf(UnitFamily.ITEM, UnitFamily.METRIC, UnitFamily.IMPERIAL)
     else -> setOf(UnitFamily.ITEM, UnitFamily.METRIC)
 }
 
-// TODO: IDS SHOULD PROBABLY BE TIDIED UP IF WE KEEP EG G100
 // TODO: IF WE KEEP G100 AND ML100, WE MAY NEED A FLAG TO INDICATE THESE ARE SECOND-CLASS CITIZENS AND ONLY ELIGIBLE FOR UNIT PRICE DENOMINATOR NOT GENERATE UNIT SELECTION
 // TODO: Could just maybe rename this "MeasurementUnit" but it's not a big deal and this is a bit more concise. "UnitOfMeasure" is a compromise on length but might also be nice. Maybe worth making note-to-self comment that we'd just call this Unit but Kotlin already took that. :-)
 enum class MeasureUnit(
