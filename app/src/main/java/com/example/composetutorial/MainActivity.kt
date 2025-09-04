@@ -605,7 +605,10 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
     // TODO DELETE val db = InventoryDatabase.getDatabase(context)
     // TODO: I may want to add multiple demo data sets - if so, given them all names of the form "Demo (foo)", probably. I may at the very least want to do an imperial unit demo set, so new potential users don't assume the app is metric only. This might be overkill but it may not hurt. We could just use imperial with the metric-ish data set (i.e. just configure the display units to be the user's current regional ones by default when we set the database up), and that might well be reasonable - it would give "odd" pack sizes (e.g. nominally imperial demo data selling 2 litre cartons of milk which the shops call a 3.52 pint pack) but for demo purposes it is probably fine.
     // TODO: We should have some cases in the demo data set where there is no price for a store+product combination
-    // TODO: It's probably smart to default the demo data to the local currency, since that will look most natural to our new user, but do rethink this afterwards. (It's also just possible, remember, that they will start editing the demo dataset for their own use, rather than starting again with a fresh dataset.)
+    // TODO: It's probably smart to default the demo data to the local currency, since that will
+    // look most natural to our new user, but do rethink this afterwards. (It's also just possible,
+    // remember, that they will start editing the demo dataset for their own use, rather than
+    // starting again with a fresh dataset.)
     // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
     // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current locale (and make sure any non-metric units in the data below are changed accordingly)
     // TODO: We should have some demo products which are (fake) "branded" products, so get the idea across that this is another way to do things if you are brand-sensitive on a particular item
@@ -1200,7 +1203,7 @@ data class DataSet(
     val id: Long = 0,
     val name: String,
     @ColumnInfo(name = "currency_code") val currencyCode: String,
-    // TODO: For now, I think I will ask the system to format currencies using the currency_code.
+    // ENHANCE: For now, I think I will ask the system to format currencies using the currency_code.
     // Later on we may want to give DataSet a flag "use system formatting" and some parameters
     // (currency prefix/suffix/decimal places) which the user can specify to override the system
     // formatting. I think it may be that e.g. the system formatting of USD when in a GBP locale may
@@ -1445,7 +1448,6 @@ enum class LoyaltyType(val id: Long) {
     }
 }
 
-// TODO: IN THE DB AND IN "SOURCE", THE LOYALTYDISCOUNTTYPE WILL BE STORED BUT THE PERCENTAGE WILL BE STORED AS A LOYALTY_MULTIPLER WHICH IS JUST APPLIED VIA A MULT AND DOESN'T NEED TO BE TREATED DIFFERENTLY DEPEND ING ON LOYALTHY TYPE
 @Parcelize
 data class EditableSource(
     val id: Long,
@@ -2632,7 +2634,7 @@ fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
     } catch (e: Exception) {
         // Generate a generic-ish "USD 1234" value as a fallback, without trying to use any
         // localisation settings.
-        // TODO: Eventually we might want to see if there's any useful data in a currency
+        // ENHANCE: Eventually we might want to see if there's any useful data in a currency
         // prefix/suffix/decimal places set of fields in dataSet, but we don't have those yet. But
         // even if we did, we'd probably already be using those in preference to
         // getCurrencyInstance(), so they wouldn't help us at this point.
@@ -2820,10 +2822,10 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
         LabeledItem(label = label) {
             Row {
                 // TODO: FWIW a quick discussion with ChatGPT suggests it is reasonable for i18n to
-                // have some kind of format substitition to generate a unit price string analogous
+                // have some kind of format substitution to generate a unit price string analogous
                 // to the one I'm using here. So having a single "Unit price" field is probably
                 // reasonable, and it does feel like the clearest way to express it.
-                // TODONOW: There's a small bug here, if we edit the price so a different unit price
+                // TODO: There's a small bug here, if we edit the price so a different unit price
                 // would be more appropriate we do *not* change it when we navigate back. Obviously
                 // this isn't super likely with realistic price data, but it could happen. There is
                 // a subtlety here, as the user may have changed the unit price unit themselves and
@@ -2875,10 +2877,10 @@ fun ItemSourceInfo(
         }
     }
 
-    // TODO: Will we have a "special offer"/"short term price" flag and maybe associated data? Gut
-    // feeling is no, how to handle expiry/deletion gets complex from UI and internal perspective,
-    // it's not as if the offer duration is usually clearly stated, free text note probably can be
-    // used for this among other things
+    // ENHANCE: Will we have a "special offer"/"short term price" flag and maybe associated data?
+    // Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal
+    // perspective, it's not as if the offer duration is usually clearly stated, free text note
+    // probably can be used for this among other things
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
@@ -3143,7 +3145,9 @@ fun <T> NewDataTable(
             thickness = 1.dp, color = MaterialTheme.colorScheme.outline /* Variant */
         )
 
-        // TODO: Far from sure I like the way I'm highlighting highlightRow, but it's not too bad. I was worried using any kind of font weight change would break the decimal point alignment but in practice it doesn't appear to be a big problem.
+        // TODO: Far from sure I like the way I'm highlighting highlightRow, but it's not too bad. I
+        // was worried using any kind of font weight change would break the decimal point alignment
+        // but in practice it doesn't appear to be a big problem.
 
         items.forEachIndexed { rowIndex, item ->
             val isHighlighted = rowIndex == highlightRow
@@ -3299,7 +3303,7 @@ data class EditablePrice(
     val price: String,
     val measureValue: String,
     val measureUnit: MeasureUnit,
-    val confirmedAt: Instant, // TODO: rename this confirmedAt (everywhere)?
+    val confirmedAt: Instant,
     val toConfirm: Boolean,
     val notes: String,
     val itemDefaultUnit: MeasureUnit,
@@ -3584,8 +3588,6 @@ data class EditDataSetScreenUIContent(
     }
 }
 
-// TODO: Now I've increased the inter-field vertical spacing from 8.dp to 16.dp in the various edit
-// screens, this one might look a little cramped by comparison. Come back to this later.
 @Composable
 fun HomeScreen(
     vm: HomeViewModel,
@@ -3719,12 +3721,12 @@ fun HomeScreenNavigationDrawer(
     coroutineScope: CoroutineScope,
     content: @Composable () -> Unit
 ) {
-    // TODO: Navigation drawer is being deprecated in favour of expanded navigation rail in Material
-    // 3 Expressive from May 2025. However, it appears to be a rotten fit for my requirements here -
-    // it wants (in its non-expanded form) to be permanently on screen, and I don't have the space,
-    // and it seems to be intended for "a few" designer-selected things, not user-defined
-    // categories. It also seems to want to live at the bottom of the screen on a portrait
-    // smartphone layout. So I am going to stick with the navigation drawer for now.
+    // ENHANCE: Navigation drawer is being deprecated in favour of expanded navigation rail in
+    // Material 3 Expressive from May 2025. However, it appears to be a rotten fit for my
+    // requirements here - it wants (in its non-expanded form) to be permanently on screen, and I
+    // don't have the space, and it seems to be intended for "a few" designer-selected things, not
+    // user-defined categories. It also seems to want to live at the bottom of the screen on a
+    // portrait smartphone layout. So I am going to stick with the navigation drawer for now.
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -4252,7 +4254,10 @@ fun PriceComparisonCard(
                 items = priceAnalysis.augmentedPriceList,
                 columns = columns,
                 highlightRow = highlightRow,
-                // TODO: Manually tweaking these weights is annoying and risks not working for some user's set of sources. Being clever may help, but it's awkward given the somewhat free form source and the very free form notes. TBH fixed weights may be fine now we are not planning on showing free-form notes.
+                // TODO: Manually tweaking these weights is annoying and risks not working for some
+                // user's set of sources. Being clever may help, but it's awkward given the somewhat
+                // free form source and the very free form notes. TBH fixed weights may be fine now
+                // we are not planning on showing free-form notes.
                 columnWeights = listOf(1.7f, 1f, 0.8f),
                 columnAlignments = listOf(
                     CellAlignment.Start,
@@ -4322,12 +4327,6 @@ fun EditPriceScreen(
         }
     }
 
-    // TODO: We could possibly try to "animate" the problematic text
-    // field we just focused (e.g. pulse its border colour) to draw
-    // attention to it further, but this feels surprisingly fiddly and I
-    // am not sure it's necessary. My inclination is to leave this for
-    // now and let the code settle down first before maybe trying to add
-    // it.
     GeneralEditScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
@@ -4381,7 +4380,9 @@ fun EditPriceScreen(
         // TODO: I wonder if this screen is actually a bit vertically squashed together, now I see
         // that I "need" offset = 4.dp here instead of the current default 6.dp. It might be I
         // should increase the vertical spacing of the components on this screen and then make this
-        // 6.dp.
+        // 6.dp. (I don't know, but I may have already increased the vertical spacing. So try 6.dp
+        // here again - and check what other bits of the code use for their error offsets - before
+        // automatically increasing the spacing.)
         BaseValidatedTextField(
             value = packSizeNumber.text,
             validationRules = vm.packSizeValidationRules,
@@ -4562,7 +4563,9 @@ fun EditPriceScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
-        // TODO: This probably ought to be a FilteredTextField or something - a raw TextField will not implement the "large but not infinite" length restriction
+        // TODO: This probably ought to be a FilteredTextField or something - a raw TextField will
+        // not implement the "large but not infinite" length restriction. Check we don't have any
+        // other raw ones hanging round too.
         TextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Notes") },
@@ -4575,9 +4578,9 @@ fun EditPriceScreen(
         )
     }
 
-    // TODO: It is probably hard, but *if* the a field with a validation error is currently
-    // focused, it would be nice to animate the error highlight box and scroll to it if
-    // necessary but *not* jump the focus to a different field with an error.
+    // TODO: It is probably hard, but *if* two fields have validation errors and a field with a
+    // validation error is currently focused, it would be nice to use the already-focused one as the
+    // scroll-and-highlight target, not "whichever one our internal logic considers first".
 }
 
 @Composable
@@ -5233,7 +5236,6 @@ fun EditItemScreen(
                         getId = { it.id },
                         getLabel = { "${it.fullName} (${it.symbol})" },
                     )
-                    // TODO: If it's not too faffy, we should maybe remember the unit dropdown value (only in the edit UI of course) per-quantityType, so if the user flips back and forth between weight and volume they don't lose their previous selection
                 }
             }
         }
@@ -5687,7 +5689,7 @@ fun EditDataSetScreen(
             validationFlowFieldId = EditDataSetViewModel.EditableField.NAME
         )
 
-        Spacer(modifier = Modifier.height(16.dp)) // TODO: Maybe 16.dp given general structure of this screen?
+        Spacer(modifier = Modifier.height(16.dp))
 
         // TODO: Should we specify an offset of 4.dp here? Or should we perhaps just improve spacing?
         BaseValidatedTextField(
@@ -5735,6 +5737,7 @@ fun EditDataSetScreen(
             // item in the list is *not* entirely shown. I don't know if the same thing will happen with
             // other dropdowns which get long enough to need scrolling, but should definitely test as it
             // matters much more there. It's ugly and annoying and concerning here too, of course.
+            // (This doesn't seem to happen on the O6!?)
             MyExposedDropdownMenuBox(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -5764,9 +5767,9 @@ fun EditDataSetScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // TODO: MD3 Expressive deprecates this and says we should use a connected button group, but
-        // the relevant library version is still in alpha so I'll just do it the old MD3 way for now
-        // with a segmented button group.
+        // ENHANCE: MD3 Expressive deprecates this and says we should use a connected button group,
+        // but the relevant library version is still in alpha so I'll just do it the old MD3 way for
+        // now with a segmented button group.
         // TODO: Should this maybe be on a Card to help it match the "style" of the filledtextfields?
         // TODO: I'm far from sure what typography or colour this caption should have, but this
         // matches the caption on the TextFields so it is probably not a terrible choice.
@@ -6815,9 +6818,7 @@ fun <T> GeneralSelectorScreen(
                 .padding(vertical = screenBorder)
             // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
-            // TODO: Misc ideas for this search:
-            // - we could have a clear button to empty the text
-            // - we could show e.g. a warning icon and/or some supporting text if nothing matches the substring (rather than just having an empty list)
+            // TODO: We could show e.g. a warning icon and/or some supporting text if nothing matches the substring (rather than just having an empty list)
             if (showSearch) {
                 TextField(
                     value = searchString,
@@ -7522,8 +7523,8 @@ fun AppNavigation() {
         startDestination = "home",
     ) {
         // TODO: Move these up to where the other global-ish constants are defined?
-        val tweenDurationMillisEnter = 700 // TODO: should probably be 300 in final version
-        val tweenDurationMillisExit = 700 // TODO: should probably be 250 in final version
+        val tweenDurationMillisEnter = 300 // 700 // TODO: should probably be 300 in final version
+        val tweenDurationMillisExit = 250 // 700 // TODO: should probably be 250 in final version
 
         // TODO: The syntax required to factor these animations out into re-usable functions is pure
         // ChatGPT voodoo (and it took several attempts to get it right, unless I just kept messing
@@ -7985,13 +7986,6 @@ fun PackPriceAndSizeRow(
     measure: MeasuredValue,
     dataSet: DataSet
 ) {
-// TODO: This row can get a bit congested on small phones when the text in some
-// of the LabeledItems gets a bit long. It does kind of work and some further
-// tweaking (e.g. making sure we force some space between the three horizontal
-// elements) might fix the corner cases better than any alternatives, but do
-// have a think to see if some alternate design would look and/or work better.
-// TODO: The increased horizontal padding I'm now using (16 vs 8) is also making
-// this congestion much worse, at least on my small emulated phone.
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -8313,8 +8307,8 @@ data class CurrencyFormat(
     val validationRules: List<ValidationRule<String>>
 )
 
-// TODO: This takes a DataSet not a currency code because later on a DataSet may allow custom
-// currency formatting which overrides whatever the current locale wants to do.
+// This takes a DataSet not a currency code because later on a DataSet may allow custom currency
+// formatting which overrides whatever the current locale wants to do.
 // TODO: Rename this from "getFoo" syntax to make it clear it's not "cheap"?
 fun getCurrencyFormat(dataSet: DataSet, locale: Locale): CurrencyFormat {
     val currencyInstance = Currency.getInstance(dataSet.currencyCode)
@@ -8767,7 +8761,6 @@ fun augmentPrice(
         priceJudgement = PriceJudgement.NONE
     )
 }
-// TODO: I have a suspicion when I format prices to 2 d.p., it is truncating not rounding. May want to investigate this - do some tests with the different format functions, if more than one - and perhaps tweak options. Right now SuperiorStore milk is €2.86 for 2 litres, which shows as €0.81/pint, but some hacky debug output suggests that is really €0.8162 so it ought to round to €0.82/pint. OK, it would be good to check, but I suspect this was just me getting confused over a small inflation adjustment to the price between the ItemSourceInfo and the list across stores. Check. Even if that's right, this may suggest users could get confused too - but there may be little I can do about it, but think/discuss with LLM.
 
 data class PriceClassificationThresholds(
     val good: Double,
@@ -8914,7 +8907,7 @@ Log.d("MyApp", baz.toString())
 // basically unrecoverable and it's semi-OK if the process just dies, but I'm not sure and it would
 // be good to read up on best practices.
 
-// TOOD: I should probably limit all text fields to approx 1000 characters just to stop the user going crazy.
+// TODO: I should probably limit all text fields to approx 1000 characters just to stop the user going crazy.
 
 // Note to self: Locale.getDefault() is initialised to the current locale when our app process
 // starts and is not automatically updated if the user changes the system locale while the app is
@@ -9047,11 +9040,11 @@ Log.d("MyApp", baz.toString())
 // and be more consistent about naming variables functions around the whole sharedviewmodel thing
 // and also the resulting structure inside the fooscreenviewmodel.
 
-// TODO: We should probably implement a "recycle bin" type delete - have a "deleted" flag on all the
-// tables, and when something is deleted we set that. (We would not cascade-set this if we e.g.
+// ENHANCE: We should probably implement a "recycle bin" type delete - have a "deleted" flag on all
+// the tables, and when something is deleted we set that. (We would not cascade-set this if we e.g.
 // delete a data set.) We can then undelete (subject to verifying names are still unique - deleted
 // things would not count towards uniqueness checks). This is a UI faff because it means three-ish
-// screens to select thigns to undelete, and maybe some other facility somewhere else to purge
+// screens to select things to undelete, and maybe some other facility somewhere else to purge
 // some/all waste bin things for real. But it probably is the way to go long term, even if it's not
 // part of MVP.
 
@@ -9127,9 +9120,10 @@ Log.d("MyApp", baz.toString())
 // component. There may be a similar cosistency argument (again towards "Edit products" and maybe
 // its siblings changing, though they will show the problem less dramatically as they don't have a
 // TextField at top) with the vertical positioning of the "Name" field at the top of the individual
-// "Edit Foo" screens.
+// "Edit Foo" screens. - I have a feeling I fixed this, but i ought to put debug backgrounds in
+// again and check before deleting this TODO.
 
-// TODO: Discussions with ChatGPT and Grok would suggest that it's reasonable to get rid of the
+// TODONOW: Discussions with ChatGPT and Grok would suggest that it's reasonable to get rid of the
 // modal bottom sheet for product selection, replace it with the "select product" screen as already
 // used in the "Edit products" flow (with its FAB disabled in this "select a product to display on
 // home screen" context, and I suppose its top app bar might show a different title or subtitle too,
@@ -9143,14 +9137,25 @@ Log.d("MyApp", baz.toString())
 // "educate" the user on this icon, because it doesn't feel like it has a natural use in the
 // ItemSourceInfo at all (which is where it could appear paired with text to explain it).
 
-// TODO: It's probably obvious in hindsight but I had some idea of using absolute prices on all rows of a "how the price was calculated" screen, whereas I almost certainly should show a start absolute price then "Inflation adjustment +$0.04" or "Loyalty discount (5%) -$0.03" with a final total at the end.
+// TODO: It's probably obvious in hindsight but I had some idea of using absolute prices on all rows
+// of a "how the price was calculated" screen, whereas I almost certainly should show a start
+// absolute price then "Inflation adjustment +$0.04" or "Loyalty discount (5%) -$0.03" with a final
+// total at the end.
 
-// TODO: ChatGPT suggests tertiary/neutral/error colors for good/ok/bad indicator, i.e. not primary for good. This has some appeal. If I do this, I may want to switch away from tertiary for highlighting the current row in the price comparison, as I don't want it to convey "approval" of this store's price.
+// TODO: ChatGPT suggests tertiary/neutral/error colors for good/ok/bad indicator, i.e. not primary
+// for good. This has some appeal. If I do this, I may want to switch away from tertiary for
+// highlighting the current row in the price comparison, as I don't want it to convey "approval" of
+// this store's price.
 
-// TODO: In credits/licence, remember that I have pulled in some of the Material Design icons via vector asset studio. Think (check) these are Apache 2 licence. ChatGPT says (but don't take this on trust) I just need to say something like "This app includes vector icons from the Material Design icon set by Google.
-//Used under the Apache License 2.0." That feels plausible. I guess I probably also want to indicate use of Compose etc libs but not at all sure.
+// TODO: In credits/licence, remember that I have pulled in some of the Material Design icons via
+// vector asset studio. Think (check) these are Apache 2 licence. ChatGPT says (but don't take this
+// on trust) I just need to say something like "This app includes vector icons from the Material
+// Design icon set by Google. Used under the Apache License 2.0." That feels plausible. I guess I
+// probably also want to indicate use of Compose etc libs but not at all sure.
 
-// TODO: It might be nice to offer an "are you sure? this is x% more/less than before" type confirmation dialog when saving a price change where the (unit price? pack price? pack size?) has changed by more than a threshold, to help catch typos early.
+// TODO: It might be nice to offer an "are you sure? this is x% more/less than before" type
+// confirmation dialog when saving a price change where the (unit price? pack price? pack size?) has
+// changed by more than a threshold, to help catch typos early.
 
 // TODO: Some thoughts on confirm/undo confirm/history after talking with ChatGPT:
 // - allow user to pick a historical entry and it appears in the "edit price" dialog (maybe with the confirm option missing - we would *always* preserve the old confirmed_at), then if they save from there that saves as the newest version of the record - this gives a "long range undo"
@@ -9174,12 +9179,12 @@ val capitalization = when (capString) {
         <string name="grocery_capitalization">none</string>
 */
 
-// TODO: I might (it's early days as I write this) have a tendency to start typing the name of a
+// TODONOW: I might (it's early days as I write this) have a tendency to start typing the name of a
 // product I want to add into the search box at the top of the "edit products" screen. It might be
 // worth copying any search search into the name field when the add button is clicked. Maybe this
 // would be annoying, but perhapos it's less annoying overall than having to type it twice.
 
-// TODO: It's early days yet but it might be that the price edit screen should have the price field
+// TODONOW: It's early days yet but it might be that the price edit screen should have the price field
 // *above* the pack size fields.
 
 // TODO: When adding (or perhaps even just editing an existing) product, should we return
@@ -9189,14 +9194,14 @@ val capitalization = when (capString) {
 // extend the same principle to daa sets and sources for consistency, although I suspect it's less
 // critical there.
 
-// TODO: Should we add a "+" FAB to the product selection from the home screen? This would be even
+// TODONOW: Should we add a "+" FAB to the product selection from the home screen? This would be even
 // more natural if we dump the modal bottom sheet and use the "select a product to edit" screen
 // instead. We could even copy any search string into the name of the new product there. We probably
 // wouldn't do this for data sets and sources, given their different selection styles on the home
 // screen. I don't think the "+" makes this any more inconsistent than the different selection
 // styles already do.
 
-// TODO: I'm not theoretically averse to the idea of opening a "how was this calculated" button when
+// TODONOW: I'm not theoretically averse to the idea of opening a "how was this calculated" button when
 // you tap a store in the price comparison at the bottom of the home screen, but TBH in practice it
 // feels like I'd really like to tap on one of these and switch to that store. Yes technically it is
 // not much harder to use the store dropdown on the same screen to change, but I think this might be
@@ -9204,3 +9209,14 @@ val capitalization = when (capString) {
 
 // TODO: If it lives, we need a "x" to delete the search text on the product selection modal dialog.
 // But it is probably going to be replaced with a re-use of the edit product selection screen.
+
+// TODO: I perhaps ought to be more aggressive at forcing focus into a textfield, e.g. when editing
+// a product/source/dataset. I think there is probably an argument for *not* forcing this when using
+// the "product list" screen with a search box, because the user might want to just scroll the list,
+// but for the edit screens the user is going to want to edit something. It may be the best
+// compromise to only do this if it is a brand new something though, as if there is already data,
+// the user may not want to edit the top thing. And it may in rpactice just be best not to force it.
+// All I know is I find myself vaguely annoyed on the O6 at having to do an extra tap to get the
+// focus there and bring up the OSK, but do be careful about this. No idea what is "standard" or
+// "advised" by MD3 or general Android conventions, a chat with an LLM might offer some perspectives
+// even if they're not guaranteed to be "correct".
