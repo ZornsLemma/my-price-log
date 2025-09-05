@@ -9220,3 +9220,13 @@ val capitalization = when (capString) {
 // focus there and bring up the OSK, but do be careful about this. No idea what is "standard" or
 // "advised" by MD3 or general Android conventions, a chat with an LLM might offer some perspectives
 // even if they're not guaranteed to be "correct".
+
+// ENHANCE: It might be nice to have a flag on the item definition something like "sold in
+// multiples", and if this is set the price includes an integer multiplier (which is implicitly 1 in
+// the database and not shown if this isn't set). The idea here is to handle multipacks and/or
+// multi-purchase offers, so you can record "3x330ml cola" rather than having to do mental
+// artihmetic and record "990ml cola". A database upgrade would just set the multiplier in the
+// price table to 1 for all existing records and the flag to off for all existing items, of course.
+// Or we might let the price table hold null in the multiplier column, and avoiding showing the
+// multipler if it's null on read-only screens. But maybe 1 would be treated like that - although
+// maybe there's a "if the user types 1, we show it" corner case.
