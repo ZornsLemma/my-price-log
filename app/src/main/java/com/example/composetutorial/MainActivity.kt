@@ -9184,14 +9184,6 @@ Log.d("MyApp", baz.toString())
 // "Edit Foo" screens. - I have a feeling I fixed this, but i ought to put debug backgrounds in
 // again and check before deleting this TODO.
 
-// TODONOW: Discussions with ChatGPT and Grok would suggest that it's reasonable to get rid of the
-// modal bottom sheet for product selection, replace it with the "select product" screen as already
-// used in the "Edit products" flow (with its FAB disabled in this "select a product to display on
-// home screen" context, and I suppose its top app bar might show a different title or subtitle too,
-// but it depends what that is in the "Edit product" flow case) and *slide it in from the right in
-// both cases*. It isn't a dialog, it's not modal in either case and we don't want to be
-// inconsistent.
-
 // TODO: Should we have an icon (and just maybe text) in the product-at-all-stores list which shows
 // a loyalty discount applies? Then we'd have icons for everything that can cause a discrepancy
 // between the raw price in ItemSourceInfo and the price in the list. Although it might be hard to
