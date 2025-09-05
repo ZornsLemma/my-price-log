@@ -4386,101 +4386,7 @@ fun EditPriceScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        val units: List<MeasureUnit> =
-            remember(uiContent.dataSet, uiContent.item.defaultUnit.quantityType) {
-                getRelevantMeasureUnits(
-                    uiContent.dataSet,
-                    uiContent.item.defaultUnit.quantityType,
-                    includeDisplayOnly = false
-                )
-            }
-        var packSizeNumber by rememberSyncedTextFieldValue(
-            uiContent.editablePrice.value.measureValue
-        )
-        // TODO: This box could just be around the actual "Pack size" text field, but I think it
-        // makes sense for it to also cover the supportingText showing the actual problem. That
-        // visually requires it to cover the whole screen width.
-        // TODO: I wonder if this screen is actually a bit vertically squashed together, now I see
-        // that I "need" offset = 4.dp here instead of the current default 6.dp. It might be I
-        // should increase the vertical spacing of the components on this screen and then make this
-        // 6.dp. (I don't know, but I may have already increased the vertical spacing. So try 6.dp
-        // here again - and check what other bits of the code use for their error offsets - before
-        // automatically increasing the spacing.)
-        BaseValidatedTextField(
-            value = packSizeNumber.text,
-            validationRules = vm.packSizeValidationRules,
-            validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
-            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
-            validationFlow = vm.saveValidationEvents,
-            validationFlowFieldId = EditPriceViewModel.EditableField.PACK_SIZE,
-            errorHighlightOffset = 4.dp,
-        ) { validationResult, interactionSource, scrollToFocusableHandle ->
-            Row {
-                // TODO: Using weight to size the components is also sucky, since we really
-                // just want "a reasonable fixed size" for the unit with
-                // the product taking whatever's left, but this will do for now.
-                NumericTextField(
-                    label = { Text("Pack size") },
-                    value = packSizeNumber,
-                    onValueChange = {
-                        packSizeNumber = it
-                        if (uiContent.editablePrice.value.measureValue != it.text) {
-                            vm.setUIContentEditablePrice(
-                                uiContent.editablePrice.value.copy(
-                                    measureValue = it.text
-                                )
-                            )
-                            onPackSizeOrPriceChange()
-                        }
-                    },
-                    enabled = saveStatus.isNotBusy(),
-                    isError = validationResult != null,
-                    modifier = Modifier
-                        .weight(1f)
-                        .validationFocusRequester(scrollToFocusableHandle),
-                    interactionSource = interactionSource
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                MyExposedDropdownMenuBox(
-                    enabled = saveStatus.isNotBusy(),
-                    selectedId = uiContent.editablePrice.value.measureUnit.id,
-                    onValueChange = {
-                        val measureUnit = MeasureUnit.fromValue(it)
-                        devCheck(measureUnit != null) {
-                            "Expected non-null measureUnit to be selected; got $it"
-                        }
-                        if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
-                            vm.setUIContentEditablePrice(
-                                uiContent.editablePrice.value.copy(
-                                    measureUnit = measureUnit
-                                )
-                            )
-                            onPackSizeOrPriceChange()
-                        }
-                    },
-                    label = { Text("Unit") },
-                    items = units,
-                    modifier = Modifier.weight(0.5f),
-                    getId = { it.id },
-                    getStaticLabel = { it.symbol },
-                    getLabel = { "${it.fullName} (${it.symbol})" },
-                    getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
-                )
-            }
-
-            if (validationResult != null) {
-                SupportingText(
-                    text = validationResult, isError = true,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 4.dp)
-                    //.background(Color.Cyan) // TODO HACK
-                )
-
-            }
-        }
+        EditPriceScreenPackSize(vm, /* TODO DELETE validationResult, interactionSource, scrollToFocusableHandle, */ ::onPackSizeOrPriceChange)
 
         //Spacer(modifier = Modifier.height(500.dp))
         Spacer(modifier = Modifier.height(16.dp))
@@ -4616,6 +4522,121 @@ fun EditPriceScreenPrice(
             interactionSource = interactionSource,
         )
     }
+}
+
+@Composable
+fun EditPriceScreenPackSize(
+    vm: EditPriceViewModel,
+    /* TODO DELETE
+    validationResult: String?,
+    interactionSource: MutableInteractionSource,
+    scrollToFocusableHandle: ScrollToFocusableHandle,
+    */
+    onChange: () -> Unit
+) {
+    val uiContent = vm.uiContent
+
+    val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+
+    val units: List<MeasureUnit> =
+        remember(uiContent.dataSet, uiContent.item.defaultUnit.quantityType) {
+            getRelevantMeasureUnits(
+                uiContent.dataSet,
+                uiContent.item.defaultUnit.quantityType,
+                includeDisplayOnly = false
+            )
+        }
+    var packSizeNumber by rememberSyncedTextFieldValue(
+        uiContent.editablePrice.value.measureValue
+    )
+
+    // TODO: This box could just be around the actual "Pack size" text field, but I think it
+    // makes sense for it to also cover the supportingText showing the actual problem. That
+    // visually requires it to cover the whole screen width.
+    // TODO: I wonder if this screen is actually a bit vertically squashed together, now I see
+    // that I "need" offset = 4.dp here instead of the current default 6.dp. It might be I
+    // should increase the vertical spacing of the components on this screen and then make this
+    // 6.dp. (I don't know, but I may have already increased the vertical spacing. So try 6.dp
+    // here again - and check what other bits of the code use for their error offsets - before
+    // automatically increasing the spacing.)
+    BaseValidatedTextField(
+        value = packSizeNumber.text,
+        validationRules = vm.packSizeValidationRules,
+        validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
+        allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+        validationFlow = vm.saveValidationEvents,
+        validationFlowFieldId = EditPriceViewModel.EditableField.PACK_SIZE,
+        errorHighlightOffset = 4.dp,
+    ) { validationResult, interactionSource, scrollToFocusableHandle ->
+
+
+    Row {
+        // TODO: Using weight to size the components is also sucky, since we really
+        // just want "a reasonable fixed size" for the unit with
+        // the product taking whatever's left, but this will do for now.
+        NumericTextField(
+            label = { Text("Pack size") },
+            value = packSizeNumber,
+            onValueChange = {
+                packSizeNumber = it
+                if (uiContent.editablePrice.value.measureValue != it.text) {
+                    vm.setUIContentEditablePrice(
+                        uiContent.editablePrice.value.copy(
+                            measureValue = it.text
+                        )
+                    )
+                    onChange()
+                }
+            },
+            enabled = saveStatus.isNotBusy(),
+            isError = validationResult != null,
+            modifier = Modifier
+                .weight(1f)
+                .validationFocusRequester(scrollToFocusableHandle),
+            interactionSource = interactionSource
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        MyExposedDropdownMenuBox(
+            enabled = saveStatus.isNotBusy(),
+            selectedId = uiContent.editablePrice.value.measureUnit.id,
+            onValueChange = {
+                val measureUnit = MeasureUnit.fromValue(it)
+                devCheck(measureUnit != null) {
+                    "Expected non-null measureUnit to be selected; got $it"
+                }
+                if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
+                    vm.setUIContentEditablePrice(
+                        uiContent.editablePrice.value.copy(
+                            measureUnit = measureUnit
+                        )
+                    )
+                    onChange()
+                }
+            },
+            label = { Text("Unit") },
+            items = units,
+            modifier = Modifier.weight(0.5f),
+            getId = { it.id },
+            getStaticLabel = { it.symbol },
+            getLabel = { "${it.fullName} (${it.symbol})" },
+            getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
+        )
+    }
+
+    if (validationResult != null) {
+        SupportingText(
+            text = validationResult, isError = true,
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(top = 4.dp)
+            //.background(Color.Cyan) // TODO HACK
+        )
+
+    }
+}
+
 }
 
 @Composable
