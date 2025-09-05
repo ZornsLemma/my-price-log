@@ -4485,7 +4485,7 @@ fun EditPriceScreen(
         //Spacer(modifier = Modifier.height(500.dp))
         Spacer(modifier = Modifier.height(16.dp))
 
-        EditPricePrice(vm, ::onPackSizeOrPriceChange)
+        EditPriceScreenPrice(vm, ::onPackSizeOrPriceChange)
 
         // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that
         // would give a width for an arbitrary string and we could use something like that to
@@ -4561,10 +4561,10 @@ fun EditPriceScreen(
 }
 
 @Composable
-fun EditPricePrice(
+fun EditPriceScreenPrice(
     vm: EditPriceViewModel,
-    onPackSizeOrPriceChange: () -> Unit // TODO: Rename onChange or onPriceChange in this function? caller can use the "or" named version of course
-) { // TODO: Rename!?
+    onChange: () -> Unit
+) {
     val uiContent = vm.uiContent
 
     val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
@@ -4604,7 +4604,7 @@ fun EditPricePrice(
                 packPrice = it
                 if (uiContent.editablePrice.value.price != it.text) {
                     vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
-                    onPackSizeOrPriceChange()
+                    onChange()
                 }
             },
             enabled = saveStatus.isNotBusy(),
