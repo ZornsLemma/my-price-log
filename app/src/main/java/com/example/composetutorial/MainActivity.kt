@@ -1922,6 +1922,23 @@ class SyncedStateEvent<T>(initialState: T) {
     }
 }
 
+// TODO: Very mild ChatGPT magic
+// TODO: Some code duplication with HomeViewModel.savePreference
+fun <T> savePreference(
+    dataStore: DataStore<Preferences>,
+    key: Preferences.Key<T>,
+    value: T?
+) {
+    // DataStore is thread-safe and handles internal synchronization, so it's safe to write from a
+    // background thread even if other code reads or writes from the Main thread (e.g., via
+    // viewModelScope).
+    CoroutineScope(Dispatchers.IO).launch {
+        dataStore.edit { prefs ->
+            if (value != null) prefs[key] = value else prefs.remove(key)
+        }
+    }
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(
     private val priceTrackerRepository: PriceTrackerRepository,
@@ -2309,8 +2326,9 @@ fun MainScreen(
     itemList: List<Item>,
     onSelectedItemIdChange: (Long) -> Unit,
     onSelectedSourceIdChange: (Long?) -> Unit,
+    onItemSearchClick: () -> Unit,
 ) {
-    var showItemSheet by remember { mutableStateOf(false) }
+    var showItemSheet by remember { mutableStateOf(false) } // TODO: Delete this and associated stuff, no longer used
     var searchQuery by remember { mutableStateOf("") }
 
     Column(
@@ -2323,7 +2341,7 @@ fun MainScreen(
 
         // Item selector
         val clickableModifier = if (asyncOperationStatus.isNotBusy()) {
-            Modifier.clickable { Log.d("MyApp", "SPS"); showItemSheet = true }
+            Modifier.clickable { onItemSearchClick() }
         } else {
             Modifier
         }
@@ -3593,6 +3611,7 @@ fun HomeScreen(
     vm: HomeViewModel,
     navController: NavHostController,
     onEditPriceClick: (HomeScreenUIContent) -> Unit,
+    onItemSearchClick: (HomeScreenUIContent) -> Unit,
     onViewHistoryClick: (HomeScreenUIContent) -> Unit,
     onEditDataSetsClick: (HomeScreenUIContent) -> Unit,
     onEditProductsClick: (HomeScreenUIContent) -> Unit,
@@ -3643,6 +3662,7 @@ fun HomeScreen(
         uiContent.priceList,
         uiContent.priceAnalysis,
         onEditPriceClick = { onEditPriceClick(uiContent) },
+        onItemSearchClick = { onItemSearchClick(uiContent) },
         onViewHistoryClick = { onViewHistoryClick(uiContent) },
         onEditDataSetsClick = { onEditDataSetsClick(uiContent) },
         onEditItemsClick = { onEditProductsClick(uiContent) },
@@ -3894,6 +3914,7 @@ fun HomeScreenScaffold(
     priceList: List<Price>,
     priceAnalysis: PriceAnalysis,
     onEditPriceClick: () -> Unit,
+    onItemSearchClick: () -> Unit, // TODO: Jump this up one place and cascade that through callees and callers?
     onViewHistoryClick: () -> Unit,
     onEditDataSetsClick: () -> Unit,
     onEditItemsClick: () -> Unit,
@@ -3931,7 +3952,7 @@ fun HomeScreenScaffold(
 
         HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, saveStatus, coroutineScope)
  { innerPadding ->
-            HomeScreenContent(vm, dataSet, item, itemList, onSelectedItemIdChange, source, sourceList, onSelectedSourceIdChange, priceAnalysis, onEditPriceClick, onViewHistoryClick, saveStatus, innerPadding)
+            HomeScreenContent(vm, dataSet, item, itemList, onSelectedItemIdChange, source, sourceList, onSelectedSourceIdChange, priceAnalysis, onEditPriceClick, onItemSearchClick, onViewHistoryClick, saveStatus, innerPadding)
         }
     }
 
@@ -3998,6 +4019,7 @@ fun HomeScreenContent(
     onSelectedSourceIdChange: (Long?) -> Unit,
     priceAnalysis: PriceAnalysis,
     onEditPriceClick: () -> Unit,
+    onItemSearchClick: () -> Unit,
     onViewHistoryClick: () -> Unit,
     asyncOperationStatus: AsyncOperationStatus,
     innerPadding: PaddingValues,
@@ -4019,6 +4041,7 @@ fun HomeScreenContent(
             itemList = itemList,
             onSelectedItemIdChange = onSelectedItemIdChange,
             onSelectedSourceIdChange = onSelectedSourceIdChange,
+            onItemSearchClick = onItemSearchClick,
         ) // TODO: rename this
 
         Spacer(
@@ -7588,6 +7611,10 @@ fun AppNavigation() {
                     )
                     navController.navigate("editPrice")
                 },
+                onItemSearchClick = { uiContent ->
+                    sharedViewModel.setEditItemsScreenContent(uiContent)
+                    navController.navigate("editItems/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}/${true}")
+                },
                 onViewHistoryClick = { uiContent ->
                     // We navigate giving this ID triplet instead of the price ID here, so that if a
                     // price gets deleted, we can still see the full history (and we can tell where
@@ -7602,11 +7629,11 @@ fun AppNavigation() {
                     )
                     navController.navigate("editDataSets")
                 },
-                onEditProductsClick = { uiContent ->
+                onEditProductsClick = { uiContent -> // TODO: This ought to be named re "Items" not "Products", using our internal conventions
                     sharedViewModel.setEditItemsScreenContent(
                         uiContent
                     )
-                    navController.navigate("editItems/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
+                    navController.navigate("editItems/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}/${false}")
                 },
                 onEditSourcesClick = { uiContent ->
                     sharedViewModel.setEditSourcesScreenContent(
@@ -7665,14 +7692,22 @@ fun AppNavigation() {
             }
         }
 
+        // TODO: We might want to rename the path "editItems" now this is used in two different ways - maybe it's OK?
+        // TODO: I've used a simple boolean flag "select" on the end for convenience, but arguably we should move this
+        // to the first parameter and make it "edit" or "select" valued for neatness - perhaps change later?
+        // TODO: I am using a single path with two different modes (edit vs select) here to avoid duplicating a lot of the
+        // common code. That is probably the way to go, but in theory we could have two different paths which call functions
+        // where the duplicate code has been factored out. Given the general fiddly faffiness of all this shared view model
+        // and navigation stuff, I suspect it's cleaner the way I've done it, but reconsider later.
         composable(
-            "editItems/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
+            "editItems/{dataSetId}/{dataSetName}/{select}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
             // TODO: We now have an actual DataSet passed to us so we can and perhaps should get rid of dataSetId and dataSetName
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
+            val select = backStackEntry.arguments?.getString("select")!!.toBoolean() // TODO: rename "isSelect"??? but probably won't live anyway
             screenWithViewModel<EditItemsViewModel, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.editItemsScreenUIContent = null },
@@ -7688,13 +7723,21 @@ fun AppNavigation() {
                     )
                 }
             ) { viewModel ->
+                val dataStore = LocalContext.current.applicationContext.dataStore
                 GeneralSelectorScreen(
                     viewModel,
                     navController,
-                    title = topAppBarTitle("Edit products", dataSetName),
+                    title = topAppBarTitle(if (!select) "Edit products" else "Select product", dataSetName),
                     getId = { it.id },
                     getName = { it.name },
                     onAddClick = {
+                        // TODONOW: I think it's actually desirable to leave the standard FAB add in
+                        // operation when used to select from the home screen for display, but need
+                        // to test this and experiment and think - for now anyway this code is not
+                        // checking "select". There may be some interaction with the planned change
+                        // to always (sometimes?) return directly to the home screen after adding a
+                        // new item (even via "Edit products") with that item selected, so maybe
+                        // address this when I do that.
                         Log.d("MyAppGS", "Add item")
                         sharedViewModel.setEditItemScreenContent(null, viewModel.uiContent.dataSet)
                         navController.navigate("editItem")
@@ -7702,8 +7745,16 @@ fun AppNavigation() {
                     addContentDescription = "Add item",
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
-                        sharedViewModel.setEditItemScreenContent(it, viewModel.uiContent.dataSet)
-                        navController.navigate("editItem")
+                        if (!select) {
+                            sharedViewModel.setEditItemScreenContent(
+                                it,
+                                viewModel.uiContent.dataSet
+                            )
+                            navController.navigate("editItem")
+                        } else {
+                            savePreference(dataStore, SELECTED_ITEM_ID_KEY, it.id)
+                            navController.popBackStack() // return to home screen TODO: popUpTo() or something instead!?
+                        }
                     },
                     showSearch = true
                 )
@@ -8030,7 +8081,15 @@ fun PackPriceAndSizeRow(
         // changed it manually, it might be smart to re-evaluate it. This might be
         // mildly confusing. Think about it. (And test to check I have the current
         // behaviour understood; this is a quick note.)
-        var selectedUnitPriceUnit by rememberSaveable(dataSet, price, measure) {
+        Log.d("MyAppQA", "measure identityHashCode=${System.identityHashCode(measure)}")
+        // NB: We are using remember() here to avoid redoing an expensive computation on every
+        // recomposition. We *must not* use rememberSaveable(), because it does *not* recompute when
+        // navigating back after a new item is selected in another screen, due to saved state
+        // restoration behaviour. We could force recomputation by adding a composite key like
+        // "$dataSet-$price-$measure", but that's a hack and not an ideal solution.
+        // TODONOW: I need to review other uses of rememberSaveable() to make sure I'm not vulnerable to the same problem.
+        var selectedUnitPriceUnit by remember(dataSet, price, measure) {
+            Log.d("MyAppQA", "rememberSaveable $price $measure")
             val candidateDenominators = getSiblingMeasureUnits(
                 dataSet,
                 measure.unit,
@@ -8041,6 +8100,7 @@ fun PackPriceAndSizeRow(
                 measure,
                 candidateDenominators
             )
+            Log.d("MyAppQA", "rememberSaveable returning $friendlyUnitPrice")
             mutableStateOf(friendlyUnitPrice.denominator)
         }
         // TODO: If the user selects "g" for a product sold in relative bulk, the
@@ -8053,6 +8113,7 @@ fun PackPriceAndSizeRow(
         // ourselves, maybe the standard function has an option to do this? We could
         // perhaps even omit units which would give a "display zero" price from the
         // dropdown, though that might be more confusing than helpful.
+        Log.d("MyAppQA", "calling formatUnitPrice $price $measure $selectedUnitPriceUnit")
         val unitPriceString = formatUnitPrice(
             getUnitPrice(
                 price,
