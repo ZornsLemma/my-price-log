@@ -4485,53 +4485,7 @@ fun EditPriceScreen(
         //Spacer(modifier = Modifier.height(500.dp))
         Spacer(modifier = Modifier.height(16.dp))
 
-        var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
-        val currencyFormat = vm.currencyFormat
-
-        BaseValidatedTextField(
-            value = packPrice.text,
-            validationRules = currencyFormat.validationRules,
-            // No validationRulesKey is needed as the validation rules depend only on our fixed
-            // DataSet and frozen locale.
-            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
-            validationFlow = vm.saveValidationEvents,
-            validationFlowFieldId = EditPriceViewModel.EditableField.PRICE,
-            errorHighlightOffset = 4.dp,
-        ) { validationResult, interactionSource, scrollToFocusableHandle ->
-            NumericTextField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .validationFocusRequester(scrollToFocusableHandle),
-                label = { Text("Pack price") },
-                value = packPrice,
-                prefix = textOrNull(currencyFormat.prefix),
-                suffix = textOrNull(currencyFormat.suffix),
-                // TODO: Is it correct to right-align like this? I will assume it is for now.
-                // Maybe there's an argument since the unit on the pack size is pseudo-suffixy,
-                // we should right-align the pack size - but I think that might look ugly. But
-                // maybe that means this looks ugly. But maybe it's different if you're used to
-                // the currency symbol being on the right. Or maybe the currency symbol should
-                // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
-                // wait for user feedback?
-                textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
-                    textAlign = TextAlign.End
-                ) else LocalTextStyle.current,
-                onValueChange = {
-                    packPrice = it
-                    if (uiContent.editablePrice.value.price != it.text) {
-                        vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
-                        onPackSizeOrPriceChange()
-                    }
-                },
-                enabled = saveStatus.isNotBusy(),
-                isError = validationResult != null,
-                supportingText = textOrNull(
-                    validationResult,
-                    color = MaterialTheme.colorScheme.error
-                ),
-                interactionSource = interactionSource,
-            )
-        }
+        EditPricePrice(vm, ::onPackSizeOrPriceChange)
 
         // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that
         // would give a width for an arbitrary string and we could use something like that to
@@ -4604,6 +4558,64 @@ fun EditPriceScreen(
     // TODO: It is probably hard, but *if* two fields have validation errors and a field with a
     // validation error is currently focused, it would be nice to use the already-focused one as the
     // scroll-and-highlight target, not "whichever one our internal logic considers first".
+}
+
+@Composable
+fun EditPricePrice(
+    vm: EditPriceViewModel,
+    onPackSizeOrPriceChange: () -> Unit // TODO: Rename onChange or onPriceChange in this function? caller can use the "or" named version of course
+) { // TODO: Rename!?
+    val uiContent = vm.uiContent
+
+    val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+
+    var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
+    val currencyFormat = vm.currencyFormat
+
+    BaseValidatedTextField(
+        value = packPrice.text,
+        validationRules = currencyFormat.validationRules,
+        // No validationRulesKey is needed as the validation rules depend only on our fixed
+        // DataSet and frozen locale.
+        allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+        validationFlow = vm.saveValidationEvents,
+        validationFlowFieldId = EditPriceViewModel.EditableField.PRICE,
+        errorHighlightOffset = 4.dp,
+    ) { validationResult, interactionSource, scrollToFocusableHandle ->
+        NumericTextField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .validationFocusRequester(scrollToFocusableHandle),
+            label = { Text("Pack price") },
+            value = packPrice,
+            prefix = textOrNull(currencyFormat.prefix),
+            suffix = textOrNull(currencyFormat.suffix),
+            // TODO: Is it correct to right-align like this? I will assume it is for now.
+            // Maybe there's an argument since the unit on the pack size is pseudo-suffixy,
+            // we should right-align the pack size - but I think that might look ugly. But
+            // maybe that means this looks ugly. But maybe it's different if you're used to
+            // the currency symbol being on the right. Or maybe the currency symbol should
+            // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
+            // wait for user feedback?
+            textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
+                textAlign = TextAlign.End
+            ) else LocalTextStyle.current,
+            onValueChange = {
+                packPrice = it
+                if (uiContent.editablePrice.value.price != it.text) {
+                    vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
+                    onPackSizeOrPriceChange()
+                }
+            },
+            enabled = saveStatus.isNotBusy(),
+            isError = validationResult != null,
+            supportingText = textOrNull(
+                validationResult,
+                color = MaterialTheme.colorScheme.error
+            ),
+            interactionSource = interactionSource,
+        )
+    }
 }
 
 @Composable
