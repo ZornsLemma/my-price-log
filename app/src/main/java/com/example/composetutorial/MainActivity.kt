@@ -4386,12 +4386,19 @@ fun EditPriceScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        EditPriceScreenPackSize(vm, /* TODO DELETE validationResult, interactionSource, scrollToFocusableHandle, */ ::onPackSizeOrPriceChange)
+        // We put the price above the pack size. This matches the order we show things (at least in
+        // English) on the read-only home screen. It also ties in with the price usually being the
+        // primary item on a shelf label. ENHANCE: If anyone expresses an interest, we could make
+        // the ordering of these translation-configurable. (Don't forget to alter the order we
+        // check for validation failures to match, as well as re-ordering the actual composables
+        // here.)
+
+        EditPriceScreenPrice(vm, ::onPackSizeOrPriceChange)
 
         //Spacer(modifier = Modifier.height(500.dp))
         Spacer(modifier = Modifier.height(16.dp))
 
-        EditPriceScreenPrice(vm, ::onPackSizeOrPriceChange)
+        EditPriceScreenPackSize(vm, /* TODO DELETE validationResult, interactionSource, scrollToFocusableHandle, */ ::onPackSizeOrPriceChange)
 
         // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that
         // would give a width for an arbitrary string and we could use something like that to
@@ -6998,8 +7005,8 @@ class EditPriceViewModel(
     var firstPackSizeOrPriceChangeOccurred: Boolean = false
 
     enum class EditableField {
+        PRICE,
         PACK_SIZE,
-        PRICE
     }
 
     private val _saveValidationEvents = MutableSharedFlow<EditableField>()
@@ -7012,19 +7019,19 @@ class EditPriceViewModel(
     // ViewModel as an argument to EditablePrice.toDomain()
     suspend fun validateForSave(): Boolean {
         if (!validationRulesOk(
-                packSizeValidationRules,
-                uiContent.editablePrice.value.measureValue
-            )
-        ) {
-            _saveValidationEvents.emit(EditableField.PACK_SIZE)
-            return false
-        }
-        if (!validationRulesOk(
                 currencyFormat.validationRules,
                 uiContent.editablePrice.value.price
             )
         ) {
             _saveValidationEvents.emit(EditableField.PRICE)
+            return false
+        }
+        if (!validationRulesOk(
+                packSizeValidationRules,
+                uiContent.editablePrice.value.measureValue
+            )
+        ) {
+            _saveValidationEvents.emit(EditableField.PACK_SIZE)
             return false
         }
         return true
@@ -9269,9 +9276,6 @@ val capitalization = when (capString) {
 // product I want to add into the search box at the top of the "edit products" screen. It might be
 // worth copying any search search into the name field when the add button is clicked. Maybe this
 // would be annoying, but perhapos it's less annoying overall than having to type it twice.
-
-// TODONOW: It's early days yet but it might be that the price edit screen should have the price field
-// *above* the pack size fields.
 
 // TODO: When adding (or perhaps even just editing an existing) product, should we return
 // immediately back to the home screen (not the "select product to edit" immediate parent screen)
