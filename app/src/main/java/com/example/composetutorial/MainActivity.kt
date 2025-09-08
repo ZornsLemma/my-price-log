@@ -2209,14 +2209,16 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
                     priceAfterRevert = priceAfterRevert
                 )
                 previousPrice.value = null
-                asyncOperationStatus.update(AsyncOperationStatus.Success)
+                asyncOperationStatus.update(AsyncOperationStatus.Success(/* TODONOW */ 42))
             } catch (e: Exception) {
-                asyncOperationStatus.update(AsyncOperationStatus.Error)
+                asyncOperationStatus.update(AsyncOperationStatus.Error("TODONOW"))
             }
         }
     }
 
-    val asyncOperationStatus = SyncedStateEvent(AsyncOperationStatus.Idle)
+    // TODO: requestClose() might be more idiomatically called onDismissRequest(), but this is a ChatGPT suggestion and I'd need to research it before changing it. AlertDialog might be a real example of this.
+
+    val asyncOperationStatus = SyncedStateEvent<AsyncOperationStatus>(AsyncOperationStatus.Idle)
     fun updatePrice(newPrice: Price, newPreviousPrice: Price?) {
         // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
         viewModelScope.launch {
@@ -2226,9 +2228,9 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
                 // delay(5000) // TODO TEMP HACK
                 priceTrackerRepository.updateOrInsertPrice(newPrice)
                 previousPrice.value = newPreviousPrice
-                asyncOperationStatus.update(AsyncOperationStatus.Success)
+                asyncOperationStatus.update(AsyncOperationStatus.Success(/* TODONOW */ 42))
             } catch (e: Exception) {
-                asyncOperationStatus.update(AsyncOperationStatus.Error)
+                asyncOperationStatus.update(AsyncOperationStatus.Error("TODONOW"))
             }
             // TODO: NEED TO COMMUNICATE TO OUTER SCOPE THAT THIS HAS DONE
         }
@@ -3984,11 +3986,11 @@ fun HomeScreenScaffold(
                     }
                 }
 
-                AsyncOperationStatus.Success -> {
+                is AsyncOperationStatus.Success -> {
                     vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
                 }
 
-                AsyncOperationStatus.Error -> {
+                is AsyncOperationStatus.Error -> { // TODO: We might want to destructure the parameter here so we can save/show the error
                     vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
                     showErrorDialog = true
                 }
@@ -4665,7 +4667,7 @@ fun SupportingText(text: String, isError: Boolean, modifier: Modifier = Modifier
 // indicative of a serious problem, will it matter that our state has been serialised to a bundle!?
 // I need to thinka bout this later when it's maybe clearer.
 class GeneralEditScreenViewModel {
-    val asyncOperationStatus = SyncedStateEvent(AsyncOperationStatus.Idle)
+    val asyncOperationStatus = SyncedStateEvent<AsyncOperationStatus>(AsyncOperationStatus.Idle)
     var saveAttempted: MutableState<Boolean> = mutableStateOf(false)
 }
 
@@ -4682,10 +4684,10 @@ fun runGeneralEditScreenOperation(
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation about to call perform")
                 perform()
                 // delay(5000) // TODO HACK - DONE AFTER PERFORM SO IT GETS A CHANCE TO SET SAVING/DELETING FLAG TO TRUE
-                vm.asyncOperationStatus.update(AsyncOperationStatus.Success)
+                vm.asyncOperationStatus.update(AsyncOperationStatus.Success(/* TODONOW */ 42))
             } catch (e: Exception) {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation caught exception")
-                vm.asyncOperationStatus.update(AsyncOperationStatus.Error) // TODO: can/should we preserve e and show it to user in UI?
+                vm.asyncOperationStatus.update(AsyncOperationStatus.Error("TODONOW")) // TODO: can/should we preserve e and show it to user in UI?
             }
         }
     }
@@ -4777,12 +4779,12 @@ fun GeneralEditScreen(
                     Log.d("MyAppRGE", "called onIdle")
                 }
 
-                AsyncOperationStatus.Success -> {
+                is AsyncOperationStatus.Success -> {
                     Log.d("MyAppRGE", "collected success")
                     requestCloseDebounced()
                 }
 
-                AsyncOperationStatus.Error -> {
+                is AsyncOperationStatus.Error -> {
                     Log.d("MyAppRGE", "collected error")
                     vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
                     Log.d("MyAppRGE", "set state to idle")
@@ -7066,6 +7068,7 @@ class EditPriceViewModel(
     }
 }
 
+/* TODO DELETE
 enum class AsyncOperationStatus {
     Idle, Busy, BusyForAWhile, Success, Error;
 
@@ -7074,6 +7077,24 @@ enum class AsyncOperationStatus {
     // to Idle.)
     fun isNotBusy(): Boolean {
         return this != Busy && this != BusyForAWhile && this != Success
+    }
+}
+*/
+
+sealed class AsyncOperationStatus {
+    object Idle : AsyncOperationStatus()
+    object Busy : AsyncOperationStatus()
+    object BusyForAWhile : AsyncOperationStatus()
+    data class Success(val newId: Long) : AsyncOperationStatus()
+    data class Error(val message: String) : AsyncOperationStatus()
+}
+
+fun AsyncOperationStatus.isNotBusy(): Boolean {
+    return when (this) {
+        is AsyncOperationStatus.Busy,
+        is AsyncOperationStatus.BusyForAWhile,
+        is AsyncOperationStatus.Success -> false
+        else -> true
     }
 }
 
