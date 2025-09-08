@@ -7991,6 +7991,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                         // It might be somewhat logical to just do popBackStack() here, but in
                         // reality if I've added or edited an item it's almost always because I want
                         // to actually work with it on the home screen.
+                        // TODONOW: For consistency the edit data set and edit source screens need to work like this too
                         // TODO: WE NEED TO SET THE CURRENTLY SELECTED ITEM TO THIS THING - JUST MAYBE NOT IF WE CHOCE CANCEL THOUGH
                         // TODO savePreference(dataStore, SELECTED_ITEM_ID_KEY, newSelectedItemId) - MAYBE THE LOW lEVEL CODE SHOULD BE DOING THIS, SINCE IT CAN DISTINGUISH CANCEL FROM SAVE - BUT WE CAN TOO IF IT EG PASSES US A NULL FOR CANCEL
                         navController.popBackStack("home", inclusive = false)
