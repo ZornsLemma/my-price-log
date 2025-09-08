@@ -2209,7 +2209,8 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
                     priceAfterRevert = priceAfterRevert
                 )
                 previousPrice.value = null
-                asyncOperationStatus.update(AsyncOperationStatus.Success(/* TODONOW */ 42))
+                // TODO: I think Success(0) is fine - we don't really care about an ID in this screen - but revisit later.
+                asyncOperationStatus.update(AsyncOperationStatus.Success(0))
             } catch (e: Exception) {
                 asyncOperationStatus.update(AsyncOperationStatus.Error("TODONOW"))
             }
@@ -4328,7 +4329,7 @@ fun areDifferentUnitFamilies(lhs: MeasureUnit, rhs: MeasureUnit) =
 fun EditPriceScreen(
     vm: EditPriceViewModel,
     navController: NavHostController,
-    requestClose: () -> Unit
+    requestClose: (Long?) -> Unit
 ) {
     val uiContent = vm.uiContent
 
@@ -4675,16 +4676,17 @@ fun runGeneralEditScreenOperation(
     vm: GeneralEditScreenViewModel,
     coroutineScope: CoroutineScope,
     isSafeToPerform: suspend () -> Boolean,
-    perform: suspend () -> Unit,
+    perform: suspend () -> Long,
 ) {
     coroutineScope.launch {
         if (isSafeToPerform()) {
             vm.asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation about to call perform")
-                perform()
+                val id = perform()
+                Log.d("MyAppQZ", "perform() returned id $id")
                 // delay(5000) // TODO HACK - DONE AFTER PERFORM SO IT GETS A CHANCE TO SET SAVING/DELETING FLAG TO TRUE
-                vm.asyncOperationStatus.update(AsyncOperationStatus.Success(/* TODONOW */ 42))
+                vm.asyncOperationStatus.update(AsyncOperationStatus.Success(id))
             } catch (e: Exception) {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation caught exception")
                 vm.asyncOperationStatus.update(AsyncOperationStatus.Error("TODONOW")) // TODO: can/should we preserve e and show it to user in UI?
@@ -4700,9 +4702,9 @@ fun GeneralEditScreen(
     title: @Composable () -> Unit,
     isDirty: () -> Boolean,
     validateForSave: suspend () -> Boolean,
-    performSave: suspend () -> Unit,
+    performSave: suspend () -> Long,
     onIdle: () -> Unit,
-    requestClose: () -> Unit,
+    requestClose: (Long?) -> Unit,
     content: @Composable () -> Unit
 ) {
     val saveStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
@@ -4721,15 +4723,19 @@ fun GeneralEditScreen(
     // TODO: We may need to make this available to the content() so it can use it for scrolling to highlight errors, or it may be that we don't need it here at all and it can be entirely in the content()
     val scrollState = rememberScrollState()
 
-    val requestCloseDebounced = dropUnlessResumed {
-        requestClose()
+    // We can't use dropUnlessResumed here as we have a parameter, so pseudo-inline it.
+    val localLifecycleOwner = LocalLifecycleOwner.current
+    fun requestCloseDebounced(id: Long?) {
+        if (localLifecycleOwner.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+            requestClose(id)
+        }
     }
 
     fun requestDismiss() {
         if (isDirty()) {
             showConfirmDiscardDialog = true
         } else {
-            requestCloseDebounced()
+            requestCloseDebounced(null)
         }
     }
 
@@ -4781,7 +4787,7 @@ fun GeneralEditScreen(
 
                 is AsyncOperationStatus.Success -> {
                     Log.d("MyAppRGE", "collected success")
-                    requestCloseDebounced()
+                    requestCloseDebounced(event.id)
                 }
 
                 is AsyncOperationStatus.Error -> {
@@ -4899,7 +4905,7 @@ fun GeneralEditScreen(
                 }) { Text("Keep editing") }
             },
             confirmButton = {
-                TextButton(onClick = { requestCloseDebounced() }) {
+                TextButton(onClick = { requestCloseDebounced(null) }) {
                     Text(
                         "Discard"
                     )
@@ -4956,9 +4962,9 @@ fun GeneralEditAndDeleteScreen(
     title: @Composable () -> Unit,
     isDirty: () -> Boolean,
     validateForSave: suspend () -> Boolean,
-    performSave: suspend () -> Unit,
+    performSave: suspend () -> Long,
     onIdle: () -> Unit,
-    requestClose: () -> Unit,
+    requestClose: (Long?) -> Unit,
     deleteConfirmationDetails: Triple<Boolean, @Composable () -> Unit, @Composable () -> Unit>?,
     requestDelete: suspend () -> Unit,
     requestDeleteCancel: () -> Unit,
@@ -5029,6 +5035,7 @@ fun GeneralEditAndDeleteScreen(
                             //delay(5000) // TODO HACK
                             //throw IllegalStateException("TODO")
                             requestDelete()
+                            0 // TODO: feels like a hack - we have to return an ID, but for deletion that makes little sense - should we use null? do somethng else?
                         }
                     )
                 }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
@@ -5041,7 +5048,7 @@ fun GeneralEditAndDeleteScreen(
 fun EditItemScreen(
     vm: EditItemViewModel,
     navController: NavHostController,
-    requestClose: (/* TODO newSelectedItemId: Long? */) -> Unit
+    requestClose: (newSelectedItemId: Long?) -> Unit
 ) {
     val uiContent = vm.uiContent
 
@@ -5356,7 +5363,7 @@ fun EditItemScreen(
 fun EditSourceScreen(
     vm: EditSourceViewModel,
     navController: NavHostController,
-    requestClose: () -> Unit
+    requestClose: (Long?) -> Unit
 ) {
     val uiContent = vm.uiContent
 
@@ -5695,7 +5702,7 @@ fun <T> ValidatedTextField2(
 fun EditDataSetScreen(
     vm: EditDataSetViewModel,
     navController: NavHostController,
-    requestClose: () -> Unit
+    requestClose: (Long?) -> Unit
 ) {
     val uiContent = vm.uiContent
 
@@ -7039,7 +7046,7 @@ class EditPriceViewModel(
         return true
     }
 
-    suspend fun performSave() {
+    suspend fun performSave() : Long {
         // nonLinearEdit indicates that we are editing an old historical value as a candidate for
         // updating the current record, so if the user clicks save it *is* a change even if
         // editablePrice and originalPrice are the same. (We don't just try to hack originalPrice
@@ -7057,14 +7064,14 @@ class EditPriceViewModel(
                 "MyApp",
                 "performSave() is a no-op; returning early to avoid bloating price history"
             )
-            return
+            return uiContent.editablePrice.value.id
         }
         val price = uiContent.editablePrice.value.toDomain(uiContent.frozenLocale)
         Log.d("MyApp", "saveEditablePrice price $price")
         if (price == null) {
             throw IllegalStateException("saveEditablePrice() called with an inconvertible editablePrice: ${uiContent.editablePrice.value}")
         }
-        priceTrackerRepository.updateOrInsertPrice(price)
+        return priceTrackerRepository.updateOrInsertPrice(price)
     }
 }
 
@@ -7085,7 +7092,7 @@ sealed class AsyncOperationStatus {
     object Idle : AsyncOperationStatus()
     object Busy : AsyncOperationStatus()
     object BusyForAWhile : AsyncOperationStatus()
-    data class Success(val newId: Long) : AsyncOperationStatus()
+    data class Success(val id: Long) : AsyncOperationStatus()
     data class Error(val message: String) : AsyncOperationStatus()
 }
 
@@ -7188,12 +7195,12 @@ class EditSourceViewModel(
         return true
     }
 
-    suspend fun performSave() {
+    suspend fun performSave(): Long {
         val source = uiContent.editableSource.value.toDomain(uiContent.frozenLocale)
         if (source == null) {
             throw IllegalStateException("performSave() called with an inconvertible EditableSource: ${uiContent.editableSource.value}")
         }
-        priceTrackerRepository.updateOrInsertSource(source)
+        return priceTrackerRepository.updateOrInsertSource(source)
     }
 
     suspend fun performDelete() {
@@ -7268,12 +7275,15 @@ class EditItemViewModel(
         return true
     }
 
-    suspend fun performSave() {
+    suspend fun performSave() : Long {
         val item = uiContent.editableItem.value.toDomain()
         if (item == null) {
             throw IllegalStateException("performSave() called with an inconvertible EditableItem: ${uiContent.editableItem.value}")
         }
-        priceTrackerRepository.updateOrInsertItem(item)
+        // updateOrInsertItem() returns -1 if it's an update or the new ID if it was an insert.
+        val newId =  priceTrackerRepository.updateOrInsertItem(item)
+        Log.d("MyAppQZ", "updateOrInsertItem returned $newId")
+        return if (newId == -1L) item.id else newId
     }
 
     suspend fun performDelete() {
@@ -7532,12 +7542,12 @@ class EditDataSetViewModel(
         return true
     }
 
-    suspend fun performSave() {
+    suspend fun performSave(): Long {
         val dataSet = uiContent.editableDataSet.value.toDomain()
         if (dataSet == null) {
             throw IllegalStateException("performSave() called with an inconvertible EditableDataSet: ${uiContent.editableDataSet.value}")
         }
-        priceTrackerRepository.updateOrInsertDataSet(dataSet)
+        return priceTrackerRepository.updateOrInsertDataSet(dataSet)
     }
 
     suspend fun performDelete() {
@@ -8008,14 +8018,26 @@ This may be complete crap. The example of how to use it is probably as long as t
                 val dataStore = LocalContext.current.applicationContext.dataStore
                 EditItemScreen(
                     viewModel, navController,
-                    requestClose = { /* TODO newSelectedItemId -> */
+                    requestClose = { newSelectedItemId ->
                         // It might be somewhat logical to just do popBackStack() here, but in
                         // reality if I've added or edited an item it's almost always because I want
                         // to actually work with it on the home screen.
                         // TODONOW: For consistency the edit data set and edit source screens need to work like this too
                         // TODO: WE NEED TO SET THE CURRENTLY SELECTED ITEM TO THIS THING - JUST MAYBE NOT IF WE CHOCE CANCEL THOUGH
-                        // TODO savePreference(dataStore, SELECTED_ITEM_ID_KEY, newSelectedItemId) - MAYBE THE LOW lEVEL CODE SHOULD BE DOING THIS, SINCE IT CAN DISTINGUISH CANCEL FROM SAVE - BUT WE CAN TOO IF IT EG PASSES US A NULL FOR CANCEL
-                        navController.popBackStack("home", inclusive = false)
+                        // ENHANCE: Just possibly there should be a setting to always do a simple
+                        // popBackStack() here instead of immediately selecting an item which we
+                        // just added/edited.
+                        if (newSelectedItemId == null) {
+                            // The user cancelled the edit, so just go up one level to the "select
+                            // item to edit" screen.
+                            navController.popBackStack()
+                        } else {
+                            // The used saved the edit, so select the edited item and return to the
+                            // home screen.
+                            Log.d("MyAppQZ", "newSelectedItemId=$newSelectedItemId")
+                            savePreference(dataStore, SELECTED_ITEM_ID_KEY, newSelectedItemId)
+                            navController.popBackStack("home", inclusive = false)
+                        }
                     })
             }
         }
