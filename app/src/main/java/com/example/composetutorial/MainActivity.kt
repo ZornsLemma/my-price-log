@@ -5039,7 +5039,7 @@ fun GeneralEditAndDeleteScreen(
 fun EditItemScreen(
     vm: EditItemViewModel,
     navController: NavHostController,
-    requestClose: () -> Unit
+    requestClose: (/* TODO newSelectedItemId: Long? */) -> Unit
 ) {
     val uiContent = vm.uiContent
 
@@ -7984,10 +7984,16 @@ This may be complete crap. The example of how to use it is probably as long as t
                     )
                 }
             ) { viewModel ->
+                val dataStore = LocalContext.current.applicationContext.dataStore
                 EditItemScreen(
                     viewModel, navController,
-                    requestClose = {
-                        navController.popBackStack()
+                    requestClose = { /* TODO newSelectedItemId -> */
+                        // It might be somewhat logical to just do popBackStack() here, but in
+                        // reality if I've added or edited an item it's almost always because I want
+                        // to actually work with it on the home screen.
+                        // TODO: WE NEED TO SET THE CURRENTLY SELECTED ITEM TO THIS THING - JUST MAYBE NOT IF WE CHOCE CANCEL THOUGH
+                        // TODO savePreference(dataStore, SELECTED_ITEM_ID_KEY, newSelectedItemId) - MAYBE THE LOW lEVEL CODE SHOULD BE DOING THIS, SINCE IT CAN DISTINGUISH CANCEL FROM SAVE - BUT WE CAN TOO IF IT EG PASSES US A NULL FOR CANCEL
+                        navController.popBackStack("home", inclusive = false)
                     })
             }
         }
@@ -9277,7 +9283,7 @@ val capitalization = when (capString) {
 // worth copying any search search into the name field when the add button is clicked. Maybe this
 // would be annoying, but perhapos it's less annoying overall than having to type it twice.
 
-// TODO: When adding (or perhaps even just editing an existing) product, should we return
+// TODONOW: When adding (or perhaps even just editing an existing) product, should we return
 // immediately back to the home screen (not the "select product to edit" immediate parent screen)
 // and select the product just added (or edited)? This feel "technically wrong" but in practice this
 // is exactly what I seem to want (it is early days yet) when I add a new product. Arguably we could
