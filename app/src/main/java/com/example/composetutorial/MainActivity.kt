@@ -2229,7 +2229,9 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
                 // delay(5000) // TODO TEMP HACK
                 priceTrackerRepository.updateOrInsertPrice(newPrice)
                 previousPrice.value = newPreviousPrice
-                asyncOperationStatus.update(AsyncOperationStatus.Success(/* TODONOW */ 42))
+                // TODO: We don't really care about the ID here (although newPrice.id is of course
+                // available) so we use 0 - is this OK? Should we allow nulls? Use -1?
+                asyncOperationStatus.update(AsyncOperationStatus.Success(0))
             } catch (e: Exception) {
                 asyncOperationStatus.update(AsyncOperationStatus.Error("TODONOW"))
             }
@@ -7200,7 +7202,9 @@ class EditSourceViewModel(
         if (source == null) {
             throw IllegalStateException("performSave() called with an inconvertible EditableSource: ${uiContent.editableSource.value}")
         }
-        return priceTrackerRepository.updateOrInsertSource(source)
+        // updateOrInsertSource() returns -1 if it's an update or the new ID if it was an insert.
+        val newId = priceTrackerRepository.updateOrInsertSource(source)
+        return if (newId == -1L) source.id else newId
     }
 
     suspend fun performDelete() {
@@ -7547,7 +7551,9 @@ class EditDataSetViewModel(
         if (dataSet == null) {
             throw IllegalStateException("performSave() called with an inconvertible EditableDataSet: ${uiContent.editableDataSet.value}")
         }
-        return priceTrackerRepository.updateOrInsertDataSet(dataSet)
+        // updateOrInsertDataSet() returns -1 if it's an update or the new ID if it was an insert.
+        val newId = priceTrackerRepository.updateOrInsertDataSet(dataSet)
+        return if (newId == -1L) dataSet.id else newId
     }
 
     suspend fun performDelete() {
@@ -7921,10 +7927,16 @@ fun AppNavigation() {
                     )
                 }
             ) { viewModel ->
+                val dataStore = LocalContext.current.applicationContext.dataStore
                 EditDataSetScreen(
                     viewModel, navController,
-                    requestClose = {
-                        navController.popBackStack()
+                    requestClose = { newSelectedDataSetId ->
+                        if (newSelectedDataSetId == null) {
+                            navController.popBackStack()
+                        } else {
+                            savePreference(dataStore, SELECTED_DATA_SET_ID_KEY, newSelectedDataSetId)
+                            navController.popBackStack("home", inclusive = false)
+                        }
                     })
             }
         }
@@ -8023,13 +8035,11 @@ This may be complete crap. The example of how to use it is probably as long as t
                         // reality if I've added or edited an item it's almost always because I want
                         // to actually work with it on the home screen.
                         // TODONOW: For consistency the edit data set and edit source screens need to work like this too
-                        // TODO: WE NEED TO SET THE CURRENTLY SELECTED ITEM TO THIS THING - JUST MAYBE NOT IF WE CHOCE CANCEL THOUGH
                         // ENHANCE: Just possibly there should be a setting to always do a simple
                         // popBackStack() here instead of immediately selecting an item which we
                         // just added/edited.
                         if (newSelectedItemId == null) {
-                            // The user cancelled the edit, so just go up one level to the "select
-                            // item to edit" screen.
+                            // The user cancelled the edit, so just go back one step.
                             navController.popBackStack()
                         } else {
                             // The used saved the edit, so select the edited item and return to the
@@ -8059,10 +8069,16 @@ This may be complete crap. The example of how to use it is probably as long as t
                     )
                 }
             ) { viewModel ->
+                val dataStore = LocalContext.current.applicationContext.dataStore
                 EditSourceScreen(
                     viewModel, navController,
-                    requestClose = {
-                        navController.popBackStack()
+                    requestClose = { newSelectedSourceId ->
+                        if (newSelectedSourceId == null) {
+                            navController.popBackStack()
+                        } else {
+                            savePreference(dataStore, SELECTED_SOURCE_ID_KEY, newSelectedSourceId)
+                            navController.popBackStack("home", inclusive = false)
+                        }
                     })
             }
         }
