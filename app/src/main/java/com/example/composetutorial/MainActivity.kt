@@ -8034,7 +8034,6 @@ This may be complete crap. The example of how to use it is probably as long as t
                         // It might be somewhat logical to just do popBackStack() here, but in
                         // reality if I've added or edited an item it's almost always because I want
                         // to actually work with it on the home screen.
-                        // TODONOW: For consistency the edit data set and edit source screens need to work like this too
                         // ENHANCE: Just possibly there should be a setting to always do a simple
                         // popBackStack() here instead of immediately selecting an item which we
                         // just added/edited.
@@ -9342,13 +9341,6 @@ val capitalization = when (capString) {
 // product I want to add into the search box at the top of the "edit products" screen. It might be
 // worth copying any search search into the name field when the add button is clicked. Maybe this
 // would be annoying, but perhapos it's less annoying overall than having to type it twice.
-
-// TODONOW: When adding (or perhaps even just editing an existing) product, should we return
-// immediately back to the home screen (not the "select product to edit" immediate parent screen)
-// and select the product just added (or edited)? This feel "technically wrong" but in practice this
-// is exactly what I seem to want (it is early days yet) when I add a new product. Arguably we could
-// extend the same principle to daa sets and sources for consistency, although I suspect it's less
-// critical there.
 
 // TODONOW: Should we add a "+" FAB to the product selection from the home screen? This would be even
 // more natural if we dump the modal bottom sheet and use the "select a product to edit" screen
