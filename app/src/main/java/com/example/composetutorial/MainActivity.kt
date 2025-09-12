@@ -7808,13 +7808,10 @@ fun AppNavigation() {
                     getId = { it.id },
                     getName = { it.name },
                     onAddClick = {
-                        // TODONOW: I think it's actually desirable to leave the standard FAB add in
-                        // operation when used to select from the home screen for display, but need
-                        // to test this and experiment and think - for now anyway this code is not
-                        // checking "select". There may be some interaction with the planned change
-                        // to always (sometimes?) return directly to the home screen after adding a
-                        // new item (even via "Edit products") with that item selected, so maybe
-                        // address this when I do that.
+                        // We don't alter our behaviour here depending whether or not we're being
+                        // used to select an item directly from the home screen or via "Edit
+                        // products". It's handy to be able to directly add a missing item when
+                        // searching from the home screen.
                         Log.d("MyAppGS", "Add item")
                         sharedViewModel.setEditItemScreenContent(null, viewModel.uiContent.dataSet)
                         navController.navigate("editItem")
