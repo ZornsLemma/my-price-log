@@ -476,27 +476,40 @@ fun getRelevantMeasureUnits(
     return relevantMeasureUnits
 }
 
-// Note that this regards measureUnit as its own sibling.
-// TODO: This is *probably* only used internally to generate some units which we pick among automatically and we don't care about the order of the results.
-fun getSiblingMeasureUnits(
+// Return a list of the MeasureUnits of the same QuantityType and UnitFamily as measureUnit. Note
+// that measureUnit itself will be included in the results. The results are in the same order as
+// in MeasureUnit.entries, but in practice I don't believe this matters.
+fun getMeasureUnitsOfSameQuantityTypeAndUnitFamily(
     dataSet: DataSet,
     measureUnit: MeasureUnit,
     includeDisplayOnly: Boolean
 ): List<MeasureUnit> {
+    // dataSet is used here to decide which of the possible multiple families measureUnit belongs to
+    // is the one we're interested in. Suppose we have OZ - it could be imperial or US customary. As
+    // it happens, in all cases where a MeasureUnit belongs to two families, the families as we
+    // currently define them are identical anyway so the distinction doesn't matter. But we do the
+    // right thing anyway just to be cautious. (It's not likely but to see why this matters, suppose
+    // we add support for the cubic inch as a volume measurement. It's the same in imperial and US
+    // customary. But if measureUnit were CUBIC_INCH, the family would matter in deciding whether
+    // the returned MeasureUnits are US or imperial floz/pint/gallon.)
     val unitFamily = measureUnit.unitFamilies.intersect(getRelevantUnitFamilies(dataSet))
-    devCheck(unitFamily.size == 1) { "Expected MeasureUnit ID ${measureUnit.id} to be a member of exactly one unit family in the context of data set ID ${dataSet.id} but got ${unitFamily.size}" }
-    val siblingMeasureUnits = MeasureUnit.entries.filter {
+    devCheck(unitFamily.size == 1) {
+        "measureUnit ${measureUnit.id} belongs to multiple unit families for data set " +
+                "${dataSet.id}: ${unitFamily.size}"
+    }
+    val result = MeasureUnit.entries.filter {
         it.quantityType == measureUnit.quantityType &&
                 unitFamily.single() in it.unitFamilies &&
                 (!it.displayOnly || includeDisplayOnly)
     }
-    devCheck(siblingMeasureUnits.isNotEmpty()) {
-        "Expected at least one sibling measure unit for MeasureUnit ${measureUnit.id} in the " +
-                "context of data set ID ${dataSet.id} but found none"
+    devCheck(result.isNotEmpty()) {
+        "measureUnit ${measureUnit.id} belongs to no unit families for data set ${dataSet.id}"
     }
-    // TODO: We could verify that measureUnit is a member of the returned list, but it feels a bad
-    // idea to do a linear search just for a check.
-    return siblingMeasureUnits
+    // This is a linear search but it's a tiny list and we don't call this a lot.
+    devCheck(measureUnit in result) {
+        "Original measureUnit ${measureUnit.id} not present in result: ${result.map { it.id }}"
+    }
+    return result
 }
 
 // The arguments are mandatory here so we don't fail to think about what's correct when we call
@@ -5862,7 +5875,7 @@ fun EditDataSetScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             ) // TODO TWEAK TEXT, FONT, SIZE
-            // "US Customary" doesn't fit (on my test "small" emulated phone) but based on a discussion
+            // "US customary" doesn't fit (on my test "small" emulated phone) but based on a discussion
             // with ChatGPT "US Units" is better for a casual user anyway, even if we could fit "US
             // Customary".
             val options = listOf("Metric", "Imperial", "US units")
@@ -5888,7 +5901,7 @@ fun EditDataSetScreen(
                         ),
                         onCheckedChange = {
                             checkedStates[index] = it
-                            // Don't allow Imperial and US Customary to be selected together. (We use
+                            // Don't allow imperial and US customary to be selected together. (We use
                             // the common but ambiguous names for the units, so this would cause UI
                             // confusion. We don't want to be showing "pint (US)" or "pt (US)" all the
                             // time to disambiguate.)
@@ -8192,7 +8205,7 @@ fun PackPriceAndSizeRow(
         // TODONOW: I need to review other uses of rememberSaveable() to make sure I'm not vulnerable to the same problem.
         var selectedUnitPriceUnit by remember(dataSet, price, measure) {
             Log.d("MyAppQA", "rememberSaveable $price $measure")
-            val candidateDenominators = getSiblingMeasureUnits(
+            val candidateDenominators = getMeasureUnitsOfSameQuantityTypeAndUnitFamily(
                 dataSet,
                 measure.unit,
                 includeDisplayOnly = true
@@ -8985,7 +8998,7 @@ fun analysePrices(
     // price. (At risk of stating the obvious, but it's easy to get lost in the details here, we are showing the
     // unit prices sorted as a list, so they all need to use the same denominator otherwise the list is not much
     // use.)
-    val candidateUnitPriceDenominators = getSiblingMeasureUnits(
+    val candidateUnitPriceDenominators = getMeasureUnitsOfSameQuantityTypeAndUnitFamily(
         dataSet,
         priceList.first().quantity.unit,
         includeDisplayOnly = true
