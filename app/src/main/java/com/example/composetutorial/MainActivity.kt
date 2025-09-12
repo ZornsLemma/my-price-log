@@ -9378,3 +9378,6 @@ val capitalization = when (capString) {
 // Or we might let the price table hold null in the multiplier column, and avoiding showing the
 // multipler if it's null on read-only screens. But maybe 1 would be treated like that - although
 // maybe there's a "if the user types 1, we show it" corner case.
+
+// TODONOW: It might be a good idea to have a setting which controls whether view history elides
+// entries which are nothing but confirmation date changes.
