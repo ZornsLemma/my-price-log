@@ -1811,14 +1811,6 @@ interface ItemDao {
     @Upsert
     suspend fun upsert(item: Item): Long
 
-    /* TODO DELETE?
-    @Update
-    suspend fun update(item: Item)
-
-    @Delete
-    suspend fun delete(item: Item)
-    */
-
     @Query("SELECT * FROM item WHERE data_set_id = :dataSetId ORDER BY name DESC")
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
 
@@ -1834,7 +1826,6 @@ interface SourceDao {
     @Upsert
     suspend fun upsert(source: Source): Long
 
-    // TODO: Is this sort case-insensitive? If not I may need to sort myself after, and thus don't need this order by here
     @Query("SELECT * FROM source WHERE data_set_id = :dataSetId ORDER BY name DESC")
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
 
@@ -1844,11 +1835,6 @@ interface SourceDao {
 
 @Dao
 interface PriceDao {
-    /* TODO DELETE?
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(price: PriceEntity): Long
-    */
-
     @Upsert
     suspend fun upsert(price: PriceEntity): Long
 
@@ -1870,7 +1856,6 @@ interface PriceDao {
 
 @Dao
 interface PriceHistoryDao {
-    // TODO: Because the history is not modified, we have insert() instead of upsert(). OK?
     @Insert
     suspend fun insert(priceHistory: PriceHistory): Long
 
@@ -2093,14 +2078,11 @@ class HomeViewModel(
                         "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
                     )
 
-                    // TODO: I suspect in practice this analysis is lightweight enough we are fine doing it in this coroutine on the main thread, but just possibly we should shift (probably the whole database flow, but maybe just this work) onto a coroutine on a worker thread?
+                    // ENHANCE: I suspect in practice this analysis is lightweight enough we are
+                    // fine doing it in this coroutine on the main thread, but just possibly we
+                    // should shift (probably the whole database flow, but maybe just this work)
+                    // onto a coroutine on a worker thread?
                     val priceAnalysis = analysePrices(dataSet, priceList, sourceList)
-                    /* TODO: Temp note for reference - will want something like this in UI when picking out a specific supermarket:
-                    val sortedSupermarkets: List<Pair<Supermarket, PriceData>> = ...
-val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
-    sortedSupermarkets.firstOrNull { it.first == selectedSupermarket }
-}
-*/
 
                     Log.d("MyFlow", "derived analysedPriceList")
 
@@ -2159,7 +2141,8 @@ val selectedPriceData = remember(selectedSupermarket, sortedSupermarkets) {
         }
     }
 
-    // TODO: We need to set this to null if we navigate away from the home screen or if we change the dataset/product/source selectors!
+    // TODONOW: We need to set this to null if we navigate away from the home screen or if we change
+    // the dataset/product/source selectors!
     var previousPrice: MutableState<Price?> = mutableStateOf(null)
 
     // TODO: I hate the need to pass some of these arguments and I am rushing, think through later
