@@ -840,11 +840,6 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             modifiedAt = now.minus(12, ChronoUnit.DAYS),
         )
     )
-    /*
-    db.productDao().insert(Product(name = "Demo Product"))
-    db.itemDao().insert(Item(name = "Demo Item"))
-    // ...insert into other DAOs as needed
-    */
     // Set some defaults for the first run so the user isn't left with a screen with no data
     // wondering what to do.
     context.dataStore.edit { prefs ->
@@ -856,7 +851,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
 }
 
 // TODO: This interface is here to help with mocking the database during testing. I may want to do
-// this, so let's keep it around for now.
+// this eventually, so let's keep it around for now.
 interface PriceTrackerRepository {
     fun getAllDataSets(): Flow<List<DataSet>>
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
@@ -875,7 +870,8 @@ interface PriceTrackerRepository {
     suspend fun updateOrInsertPrice(price: Price): Long
     suspend fun revertPrice(priceBeforeRevert: Price, priceAfterRevert: Price)
 
-    // TODO: Should these really return Long just to be super paranoid/vaguely consistent with use of Long for IDs (if IDs "don't fit" in 32 bits, neither do deletion counts)
+    // It feels slightly odd to use Int return values (number of deleted rows) here when we use
+    // Long for IDs, but that's just how it is and in practice it doesn't matter, of course.
     suspend fun deleteDataSetById(dataSetId: Long): Int
     suspend fun deleteItemById(itemId: Long): Int
     suspend fun deleteSourceById(sourceId: Long): Int
