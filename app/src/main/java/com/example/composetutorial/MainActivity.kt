@@ -960,7 +960,9 @@ class PriceTrackerRepositoryImpl(
     }
 
     override suspend fun revertPrice(priceBeforeRevert: Price, priceAfterRevert: Price) {
-        // TODO: devRequire the two price arguments have the same dataset/source/item IDs and perhaps (but not necessarily) price ID
+        // It might be arguably OK for "id" not to match between priceBeforeRevert and
+        // priceAfterRevert, but in practice it ought to so let's include that in the check.
+        devRequire(priceBeforeRevert.id == priceAfterRevert.id && priceBeforeRevert.dataSetId == priceAfterRevert.dataSetId && priceBeforeRevert.itemId == priceAfterRevert.itemId && priceBeforeRevert.sourceId == priceAfterRevert.sourceId) { "Inconsistent IDs between priceBeforeRevert ($priceBeforeRevert) and priceAfterRevert ($priceAfterRevert)" }
         db.withTransaction {
             Log.d("MyApp", "revertPrice 1")
             // TODO: This retrieves more data than necessary, we could be more efficient.
@@ -1007,7 +1009,6 @@ class PriceTrackerRepositoryImpl(
                     .copy(modifiedAt = priceHistoryToRevertTo.modifiedAt) == priceHistoryToRevertTo
             ) { "TODO3" }
 
-            // TODO: OK, ignoring if/what we check first, let's just think about *doing* it.
             priceDao.upsert(priceAfterRevert.toEntity())
             priceHistoryDao.deleteById(priceHistoryToDelete.id)
             Log.d("MyApp", "revertPrice 100")
@@ -1179,15 +1180,13 @@ class Converters {
     }
 }
 
-// TODO: General naming note for databases - both Perplexity and ChatGPT agreed that "_id" suffix on
-// column names implies a foreign key - so even if (just as an example - but I need to consider this
-// on all tables) we might *later* have a unit table but for now our units are just represented by
-// hard-coded in application IDs, columns which store a unit should be called "unit" not "unit_id".
-// I am not 100% sure I agree but I do need to at least consider naming for consistency at some
-// point, and I wanted to note this opinion.
-
-// TODO: I need to make sure I have the right indexes on all these tables, not sure what if any
-// might get auto-created (and I may want to inhibit some auto-creation if there is any)
+// General note on database naming conventions:
+// - I've used an "_id" suffix exclusively for foreign keys. Other things (like units) which are
+//   referenced by internal code IDs don't have this suffix. (Not sure this is sensible, but it has
+//   some logic and both Perplexity and ChatGPT seemed to agree on this convention so I went with
+//   it.)
+// - I've used an "_at" stuffix to suggest that a value holds a date/time (as an Instant encoded as
+//   an integer).
 
 @Entity(tableName = "data_set")
 @Parcelize
@@ -1197,7 +1196,7 @@ data class DataSet(
     val name: String,
     @ColumnInfo(name = "currency_code") val currencyCode: String,
     // ENHANCE: For now, I think I will ask the system to format currencies using the currency_code.
-    // Later on we may want to give DataSet a flag "use system formatting" and some parameters
+    // Later on we may want to give DataSet a "use system formatting" flag and some parameters
     // (currency prefix/suffix/decimal places) which the user can specify to override the system
     // formatting. I think it may be that e.g. the system formatting of USD when in a GBP locale may
     // be a bit annoying ("US$ 123.00" instead of "$123.00" perhaps - not tested though) so this
@@ -1317,19 +1316,16 @@ data class Item(
 @Parcelize
 data class EditableItem private constructor(
     val id: Long,
-    val dataSetId: Long, // TODO: although the non-editable Item has a dataSetId and that is probably a strong argument for keeping this is, I half wonder if we should just shove our full DataSet object in here. OTOH it will slightly add to the serialisation burden and we do serialise this every time anything changes.
+    // TODO: although the non-editable Item has a dataSetId and that is probably a strong argument
+    // for keeping this is, I half wonder if we should just shove our full DataSet object in here.
+    // OTOH it will slightly add to the serialisation burden and we do serialise this every time
+    // anything changes.
+    val dataSetId: Long,
     val name: String,
     val quantityType: QuantityType,
     val defaultUnitIdByQuantityTypeOrdinal: List<Long>,
     val notes: String,
 ) : Parcelable {
-    /* TODO DELETE
-    // Note this is indexed by QuantityType.ordinal, not QuantityType.value.
-    val defaultUnitArray = QuantityType.entries.map { quantityType ->
-        getRelevantMeasureUnits(dataSet, quantityType, includeDisplayOnly = false).first()
-    }
-    */
-
     val defaultUnit: MeasureUnit get() = MeasureUnit.fromValue(defaultUnitIdByQuantityTypeOrdinal[quantityType.ordinal])!!
 
     fun toDomain(): Item? { // TODO: not just here - would "toItem" pair better with fromItem?!
@@ -1378,7 +1374,6 @@ data class EditableItem private constructor(
                 // It's probably reasonable to default to sold by weight, and it's nice not to have
                 // the possibility of a null state.
                 val quantityType = QuantityType.WEIGHT
-                // TODO DELETE getRelevantMeasureUnits(dataSet, quantityType, includeDisplayOnly = false).first()
                 return EditableItem(
                     0,
                     dataSet.id,
