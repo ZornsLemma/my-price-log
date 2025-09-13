@@ -1589,28 +1589,20 @@ data class PriceEntity(
 
     val notes: String,
 
-    // TODO: I need modifiedAt for PriceHistory as it's what allows us to order the historical rows.
-    // I thought it was probably best to just put it on PriceEntity itself and then we can e.g. keep
-    // it precisely in sync with confirmed when that changes and it just might come in handy. But it
-    // may be that it would be better if it only lived on PriceHistory; we probably could still keep
-    // it in sync with confirmed if we really wanted and it probably wouldn't matter if we couldn't.
+    // modifiedAt is borderline redundant here, but it feels generally neater to have it here as
+    // well as on PriceHistory and probably simplifies things.
     @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
 ) : Parcelable
 
-// TODO: Apparently the easy option to avoid fighting Room is simply to duplicate PriceEntity as separate entity PriceHistory so we can have a table for price history. This feels a bit crappy but it isn't a big deal.
 // TODO: Keep this in sync with PriceEntity!
 @Entity(
     tableName = "price_history", foreignKeys = [
-        // TODO: Should we declare a foreign key relationship of price.id to our price_id? This is
-        // probably technically correct and probably does no harm. Not quite sure how this might
-        // work if/when we actually allow deleting a price - I guess this history would
-        // be inaccessible unless we query it via (data_set_id, item_id) rather than price_id. So
-        // it *might* be good if deleting a price does not delete this history and we are not
-        // forced to delete these rows or keep a price around to avoid them. That said, maybe this
-        // means we actually don't *want* price_id on this table - but it is extremely convenient
-        // to have it, if only for manual checking, and as long as sqlite doesn't ever re-use a
-        // deleted ID when assigning primary key IDs (which feels unlikely) it isn't going to
-        // actively cause confusion.
+        // We don't declare a foreign key relationship of our price_id to price.id. At some point it
+        // will probably be possible to delete a price but retain the history, which wouldn't work
+        // with such a foreign key relationship. Arguably we don't need price_id at all on this
+        // table, but having it will (e.g.) allow us to observe when it changes for the same
+        // (data_set_id, source_id, item_id) combination and infer a price deletion at that point in
+        // the history.
         ForeignKey(
             entity = DataSet::class,
             parentColumns = ["id"],
@@ -1638,7 +1630,7 @@ data class PriceEntity(
         // source_id both imply a data_set_id and it should be the same. We put item_id first
         // because it feels more likely we might want to select history using just item_id than just
         // source_id in the future. I also suspect it helps that item_id is far more selective than
-        // source_id - there will be typically many more items than sources and our queries will
+        // source_id - there will typically be many more items than sources and our queries will
         // be using equality conditions..
         Index(value = ["item_id", "source_id"], unique = false)
     ]
@@ -1669,7 +1661,6 @@ data class PriceHistory(
             quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(userUnit.quantityType)).to(
                 userUnit
             ),
-            // TODO DELETE originalUnit = originalUnit,
             confirmedAt = confirmedAt,
             notes = notes,
             modifiedAt = modifiedAt,
@@ -1771,6 +1762,7 @@ fun PriceWithItemEntity.toDomain(): Price {
     // priceEntity.originalUnit is of the right QuantityType. (TODO: We should also be doing a check
     // before we write to the database, to stop bad data getting in, but at that point we don't have
     // such absolutely confidence in our itemDefaultUnit.)
+    // TODO: That comment must be at least slightly wrong, as "originalUnit" no longer exists.
     devCheck(priceEntity.userUnit.quantityType == itemDefaultUnit.quantityType) {
         "Expected consistent units on PriceWithItemEntity but we have userUnit " +
                 "${priceEntity.userUnit} and itemDefaultUnit $itemDefaultUnit"
