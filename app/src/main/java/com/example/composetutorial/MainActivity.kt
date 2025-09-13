@@ -2297,7 +2297,7 @@ fun MainScreen(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // TODO: If we have no data sets, we should (analogous to how the source dropdown works)
+        // TODONOW: If we have no data sets, we should (analogous to how the source dropdown works)
         // show a message about selecting/creating one *and hide the rest of the UI*. Nothing makes
         // sense without a dataset, there is no way to pick a product or source. This probably means
         // we need support from our parent (or this needs moving up into the parent) to do that.
@@ -2308,7 +2308,10 @@ fun MainScreen(
         } else {
             Modifier
         }
-        // TODO: For reasons I don't quite understand, using key() here avoids a frame or two of delay in applying the colors = when saveStatus changes - I think the basic idea (per ChatGPT) is that this forces the whole thing to be recomposed, but it is a bit voodoo
+        // For reasons I don't quite understand, using key() here avoids a frame or two of delay in
+        // applying the new colors= selection when asyncOperationStatus changes. I think the basic
+        // idea (according to ChatGPT) is that this forces the whole thing to be recomposed, but it
+        // is a bit voodoo.
         key(asyncOperationStatus) {
             TextField(
                 value = item?.name ?: "",
@@ -2326,9 +2329,9 @@ fun MainScreen(
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
-                // TODO: There might be an argument that this should "sometimes" get the focused
-                // colours, but since clicking on it immediately opens a modal bottom sheet, I think
-                // it's probably reasonable to hard-code false here.
+                // There might be an argument that this should "sometimes" get the focused colours,
+                // but since clicking on it immediately opens a full screen dialog, I think it's
+                // probably reasonable to hard-code false here.
                 colors = if (asyncOperationStatus.isNotBusy()) myTextFieldColors(false) else TextFieldDefaults.colors()
             )
         }
@@ -2350,14 +2353,14 @@ fun MainScreen(
                 .map { Pair(it.id, it.name) }
         }
         Log.d("MyApp", "sourceListSorted $sourceListSorted")
-        // TODO: Did wonder if MyExposedDropdownMenuBox should allow null IDs to avoid the need
-        // for the "-1" hack here, but I really didn't want to have to make every user of it
-        // be null-tolerant when it *won't* hand you a null itself unless you gave it one in the
-        // input item list, so this is perhaps best but I'm not too sure. I did try wrapping
-        // the null inside a simple Nullable<T> so it could "pass through" MyExposedDropdownMenuBox
-        // without altering the API and I think the idea is sound but I started to run into
-        // incomprehensible "out"/covariance stuff and it just felt too much just to fix this
-        // where -1L is an easy hack.
+        // ENHANCE: Did wonder if MyExposedDropdownMenuBox should allow null IDs to avoid the need
+        // for the "-1" hack here, but I really didn't want to have to make every user of it be
+        // null-tolerant when it *won't* hand you a null itself unless you gave it one in the input
+        // item list, so this is perhaps best but I'm not too sure. I did try wrapping the null
+        // inside a simple Nullable<T> so it could "pass through" MyExposedDropdownMenuBox without
+        // altering the API and I think the idea is sound but I started to run into incomprehensible
+        // "out"/covariance stuff and it just felt too much just to fix this where -1L is an easy
+        // hack.
         key(asyncOperationStatus) { // TODO: as above
             MyExposedDropdownMenuBox(
                 modifier = Modifier
