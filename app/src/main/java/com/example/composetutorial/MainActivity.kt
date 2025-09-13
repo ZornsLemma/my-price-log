@@ -1442,8 +1442,7 @@ data class EditableSource(
     val dataSetId: Long,
     val name: String,
     val loyaltyType: LoyaltyType,
-    // TODO: In general I am inconsistent about loyaltyPercentage vs loyaltyDiscountPercentage naming etc - note that the percentage is *not* in general a "discount" percentage, it may be a bonus percentage
-    val loyaltyPercentage: String, // TODO: NEED TO ADD THIS TO NON-EDITABLE TOO! WE ALSO NEED TO STORE THE NONE/BONUS/DISCOUNT FLAG HERE
+    val loyaltyPercentage: String,
     val notes: String,
 ) : Parcelable {
     fun toDomain(locale: Locale): Source? {
@@ -7146,6 +7145,8 @@ class EditSourceViewModel(
 
     // TODO: Maybe we should allow zero here? We might need to tweak some messages accordingly. Zero isn't necessary as you can choose "None", but maybe it's a bit persnickety not to allow the user just to type 0 directly with one of the other options as well.
     // TODO: Should we impose an upper bound? At the very least something like 100% is probably safe.
+    // TODO: Not necessarily here, but extreme bonus/discount cases could maybe cause zero or
+    // negative prices which might cause us to misbehave.
     val loyaltyPercentageValidationRules = numericValidationRules(
         uiContent.frozenLocale,
         allowDecimals = true,
