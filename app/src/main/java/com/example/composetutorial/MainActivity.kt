@@ -617,17 +617,31 @@ abstract class InventoryDatabase : RoomDatabase() {
 
 suspend fun populateDemoData(repository: PriceTrackerRepository, context: Context) {
     // TODO DELETE val db = InventoryDatabase.getDatabase(context)
-    // TODO: I may want to add multiple demo data sets - if so, given them all names of the form "Demo (foo)", probably. I may at the very least want to do an imperial unit demo set, so new potential users don't assume the app is metric only. This might be overkill but it may not hurt. We could just use imperial with the metric-ish data set (i.e. just configure the display units to be the user's current regional ones by default when we set the database up), and that might well be reasonable - it would give "odd" pack sizes (e.g. nominally imperial demo data selling 2 litre cartons of milk which the shops call a 3.52 pint pack) but for demo purposes it is probably fine.
-    // TODO: We should have some cases in the demo data set where there is no price for a store+product combination
+    // TODO: I may want to add multiple demo data sets - if so, given them all names of the form
+    // "Demo (foo)", probably. I may at the very least want to do an imperial unit demo set, so new
+    // potential users don't assume the app is metric only. This might be overkill but it may not
+    // hurt. We could just use imperial with the metric-ish data set (i.e. just configure the
+    // display units to be the user's current regional ones by default when we set the database up),
+    // and that might well be reasonable - it would give "odd" pack sizes (e.g. nominally imperial
+    // demo data selling 2 litre cartons of milk which the shops call a 3.52 pint pack) but for demo
+    // purposes it is probably fine.
     // TODO: It's probably smart to default the demo data to the local currency, since that will
     // look most natural to our new user, but do rethink this afterwards. (It's also just possible,
     // remember, that they will start editing the demo dataset for their own use, rather than
     // starting again with a fresh dataset.)
-    // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and see that the app works!
-    // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current locale (and make sure any non-metric units in the data below are changed accordingly)
-    // TODO: We should have some demo products which are (fake) "branded" products, so get the idea across that this is another way to do things if you are brand-sensitive on a particular item
-    // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp - or perhaps better, have something I can turn on for debug builds which will do that, but don't pollute the user initial database with it
-    // TODO: We should maybe - perhaps not worth worrying about - avoid using the demo data designed for 2dp currencies with e.g. JPY, if only by forcing the currency to be something else even if that's the system default, or perhaps applying a multiplier of 10^(2-currencydps) to all the prices just so they are "readable"
+    // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and
+    // see that the app works!
+    // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current
+    // locale (and make sure any non-metric units in the data below are changed accordingly)
+    // TODO: We should have some demo products which are (fake) "branded" products, so get the idea
+    // across that this is another way to do things if you are brand-sensitive on a particular item
+    // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp - or
+    // perhaps better, have something I can turn on for debug builds which will do that, but don't
+    // pollute the user initial database with it
+    // TODO: We should maybe - perhaps not worth worrying about - avoid using the demo data designed
+    // for 2dp currencies with e.g. JPY, if only by forcing the currency to be something else even
+    // if that's the system default, or perhaps applying a multiplier of 10^(2-currencydps) to all
+    // the prices just so they are "readable"
     val dataSetId = repository.updateOrInsertDataSet(
         DataSet(
             name = "Groceries (demo)",
@@ -636,34 +650,6 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             allowImperial = true,
             allowUSCustomary = false,
             notes = "A sample collection of unrealistic grocery prices for imaginary stores. This is intended to give you something to play with when you first install the app.",
-        )
-    )
-    val dataSetId2 = repository.updateOrInsertDataSet(
-        DataSet(
-            name = "Demo 2",
-            currencyCode = "AUD",
-            allowMetric = true,
-            allowImperial = false,
-            allowUSCustomary = true,
-            notes = "",
-        )
-    ) // TODO TEMP HACK
-    repository.updateOrInsertDataSet(
-        DataSet(
-            name = "Demo 3",
-            currencyCode = "AUD",
-            allowMetric = true,
-            allowImperial = false,
-            allowUSCustomary = true,
-            notes = "",
-        )
-    ) // TODO TEMP HACK
-    repository.updateOrInsertItem(
-        Item(
-            dataSetId = dataSetId2,
-            name = "Demo 2 Item",
-            defaultUnit = MeasureUnit.G,
-            notes = "",
         )
     )
     val itemIdGroundCoffee = repository.updateOrInsertItem(
@@ -691,9 +677,8 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
 
             )
     )
-    // TODO: Do some web searches and confirm these are not real supermarket names
     // We have three sources with sample prices, because you need three non-ancient prices in order
-    // to get good/OK/bad judgments.
+    // to get good/OK/bad judgments and we want to show those off to new users.
     val sourceIdValueMart = repository.updateOrInsertSource(
         Source(
             dataSetId = dataSetId,
