@@ -2162,7 +2162,6 @@ class HomeViewModel(
         // TODO: Should we avoid updating history when we undo this? And delete the "confirmed" history item? or is it cleaner and more "honest" to just let the history entries accumulate?
         // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
         viewModelScope.launch {
-            // TODO: EXCEPTION HANDLING
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 //delay(5000) // TODO TEMP HACK
@@ -2174,7 +2173,8 @@ class HomeViewModel(
                 // TODO: I think Success(0) is fine - we don't really care about an ID in this screen - but revisit later.
                 asyncOperationStatus.update(AsyncOperationStatus.Success(0))
             } catch (e: Exception) {
-                asyncOperationStatus.update(AsyncOperationStatus.Error("TODONOW"))
+                Log.e("HomeViewModel", "Unexpected exception", e)
+                asyncOperationStatus.update(AsyncOperationStatus.Error("undoConfirmPrice failed: ${e.toString()}"))
             }
         }
     }
@@ -2185,7 +2185,6 @@ class HomeViewModel(
     fun updatePrice(newPrice: Price, newPreviousPrice: Price?) {
         // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
         viewModelScope.launch {
-            // TODO: EXCEPTION HANDLING
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 // delay(5000) // TODO TEMP HACK
@@ -2195,9 +2194,9 @@ class HomeViewModel(
                 // available) so we use 0 - is this OK? Should we allow nulls? Use -1?
                 asyncOperationStatus.update(AsyncOperationStatus.Success(0))
             } catch (e: Exception) {
-                asyncOperationStatus.update(AsyncOperationStatus.Error("TODONOW"))
+                Log.e("HomeViewModel", "Unexpected exception", e)
+                asyncOperationStatus.update(AsyncOperationStatus.Error("updatePrice failed: ${e.toString()}"))
             }
-            // TODO: NEED TO COMMUNICATE TO OUTER SCOPE THAT THIS HAS DONE
         }
 
     }
