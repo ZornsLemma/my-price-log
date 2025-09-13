@@ -2223,7 +2223,7 @@ enum class ThemePreference {
 // on-screen data is outdated, but we retain consistency. Even if the data retrieval is quicker than
 // spinnerDelay ms, we don't want a janky double-update where the dropdown's content changes
 // instantly then the associated data changes a few ms later.
-const val spinnerDelayMillis = 1000L // TODO SHOULD BE 200L
+const val spinnerDelayMillis = 200L // 1000L // TODO SHOULD BE 200L
 
 // This value is a trade-off between showing the user validation failures ASAP and not annoying them
 // by showing transient validation failures while they are in the middle of actively editing. This
@@ -2236,7 +2236,7 @@ const val defaultValidationMessageDelayMillis = 200L
 const val errorHighlightBoxVisibleTimeMillis = 1000L
 
 // TODO: https://m3.material.io/foundations/layout/applying-layout/compact says 16dp left and right
-// margins - maybe change this? Then again there are placed where I've used edge-to-edge for lists
+// margins - maybe change this? Then again there are places where I've used edge-to-edge for lists
 // so I just don't know. For that matter, are there 16.dp margins supposed to be added to left and
 // right of the top app bar as well? Or just the body content below it?
 val screenBorder = 8.dp
