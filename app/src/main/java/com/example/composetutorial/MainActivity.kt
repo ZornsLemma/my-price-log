@@ -449,15 +449,16 @@ fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {
     return relevantUnitFamilies
 }
 
-// TODO: The results from this will probably be shown to the user so order matters. We should maybe
-// sort them and/or rely on MeasureUnit.entities having some order. We may want some way for the
-// caller to indicate that if there are multiple unit families in the results, they prefer a
-// particularly family (e.g. the one the user last used to enter a price) at the top. There may be
-// an argument that consistent ordering of families iS desirable rather than it varying too much,
-// although some users might prefer e.g. metric first and others imperial/US customary first. Within
-// a unit family, we should probably order by smallest to largest (which we can do by relying on
-// MeasureUnit.entities being in that order, or by sorting on base - probably nicer just to go with
-// the baked-in order for now.
+// Returns a sensibly-ordered list (which will probably be shown to the user in this order) of all
+// the measurement units for dataSet and quantityType.
+// ENHANCE: Where multiple unit families are enabled in the data set, this will currently always
+// follow the order in MeasureUnit. So metric will always come before imperial/US customary if they
+// are enabled. It might be desirable to have some global or per-data set configuration which says
+// something like "I prefer family X to come first where it's included" or (in practice mostly
+// equivalent) "I prefer {metric/non-metric} to come first when both are available". The precise
+// wording and level of control would have to be decided, though in practice we are unlikely to add
+// new unit families so there isn't too much need for amazing amounts of flexibility - the real
+// choice is "metric first or non-metric first"?.
 fun getRelevantMeasureUnits(
     dataSet: DataSet,
     quantityType: QuantityType,
