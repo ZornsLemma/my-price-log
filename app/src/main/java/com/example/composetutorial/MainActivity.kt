@@ -846,13 +846,11 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
     // ...insert into other DAOs as needed
     */
     // Set some defaults for the first run so the user isn't left with a screen with no data
-    // wondering what to do. We leave the source blank because that's a state you can
-    // deliberately invoke yourself via the "None" option on the store dropdown. TODO: It might
-    // be better to set it to one of the stores with data for first impression purposes though -
-    // we want to show off our price data to make it clearer what the app is all about.
+    // wondering what to do.
     context.dataStore.edit { prefs ->
         prefs[SELECTED_DATA_SET_ID_KEY] = dataSetId
-        prefs[SELECTED_ITEM_ID_KEY] = itemIdGroundCoffee
+        prefs[SELECTED_ITEM_ID_KEY] = itemIdTeabags
+        prefs[SELECTED_SOURCE_ID_KEY] = sourceIdSuperiorStore
     }
 
 }
