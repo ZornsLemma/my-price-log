@@ -2294,9 +2294,6 @@ fun MainScreen(
     onSelectedSourceIdChange: (Long?) -> Unit,
     onItemSearchClick: () -> Unit,
 ) {
-    var showItemSheet by remember { mutableStateOf(false) } // TODO: Delete this and associated stuff, no longer used
-    var searchQuery by remember { mutableStateOf("") }
-
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -2383,52 +2380,6 @@ fun MainScreen(
                 getId = { it.first },
                 getLabel = { it.second },
             )
-        }
-
-        // Item Modal Bottom Sheet
-        // TODO: This is mostly untouched AI code and it probably needs a review. I am also wondering
-        // if I should just make this a full-screen dialog, now I more-or-less know how to do one
-        // and since it would give more space for the product list to be scrolled in etc. But it
-        // might be best to just leave this as-is for now and fiddle around with this after hitting
-        // MVP. (Probably an outdated comment. I could and perhaps should repurpose the selector screen
-        // for "edit product" to do this as a full screen dialog, even for MVP.)
-        if (showItemSheet) {
-            val locale = LocalConfiguration.current.locales[0]
-            val itemListSorted = remember(itemList, locale) {
-                itemList.sortedByLocale({ it.name }, locale)
-            }
-            ModalBottomSheet(onDismissRequest = { showItemSheet = false }) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    TextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        label = { Text("Search products") },
-                        modifier = Modifier.fillMaxWidth(),
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search, contentDescription = "Search"
-                            )
-                        })
-                    LazyColumn {
-                        items(itemListSorted.filter {
-                            it.name.contains(searchQuery, ignoreCase = true)
-                        }) { listItem ->
-                            ListItem(
-                                headlineContent = { Text(listItem.name) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        onSelectedItemIdChange(listItem.id)
-                                        showItemSheet = false
-                                    })
-                        }
-                    }
-                }
-            }
         }
     }
 }
