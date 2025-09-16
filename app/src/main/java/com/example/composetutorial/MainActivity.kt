@@ -2404,11 +2404,13 @@ fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
         MaterialTheme.colorScheme.onSurfaceVariant,
 )
 
-// TODO: We *may* want to disable the on click ripple whatsit for this, based on
-// how the "official" experimental ExposedDropdownMenuBox behaves - although
-// having thoughts about it and chatted with Grok and ChatGPT, maybe this is
-// *good* and it is a weird quirk of (my impl) of the experimental "official"
-// one that is weird
+// ENHANCE: I am not sure if we should disable the on-click ripple here when opening the menu. It's
+// not that clear to me if the guidelines at https://m3.material.io/components/menus/guidelines also
+// suggest other behaviours we don't have, although the core of this implementation is the standard
+// DropdownMenu. Maybe there's some element of MD3 Expressive in those guidelines. It might be worth
+// trying the experimental ExposedDropdownMenuBox again at some point, although up to now I have
+// found it not to work very well. Maybe there is or will be another standard component worth using
+// here.
 @Composable
 fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     modifier: Modifier = Modifier,
