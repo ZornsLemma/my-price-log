@@ -113,7 +113,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ProvideTextStyle
@@ -2371,7 +2370,7 @@ fun MainScreen(
                 // large "prompt". We could turn null into -1L and have "None" shown, but it's
                 // probably nicer this way.
                 selectedId = source?.id, /* ?: -1L */
-                onValueChange = { onSelectedSourceIdChange(if (it == -1L) null else it) },
+                onItemSelected = { onSelectedSourceIdChange(if (it == -1L) null else it) },
                 enabled = asyncOperationStatus.isNotBusy(),
                 label = { Text("Store") },
                 supportingText = null,
@@ -2415,7 +2414,7 @@ fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
 fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     modifier: Modifier = Modifier,
     selectedId: ID?,
-    onValueChange: (ID) -> Unit, // TODO: rename onItemSelected? is there a "standard" for e.g. the crappy MD3 experimental dropdown?
+    onItemSelected: (ID) -> Unit,
     enabled: Boolean = true,
     label: @Composable () -> Unit, // TODO: rename to distinguish from getLabel type use?
     supportingText: @Composable (() -> Unit)? = null,
@@ -2436,7 +2435,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             // want to add parameters to allow our caller to force exact width or other variations.
             dropdownModifier = Modifier.widthIn(min = with(LocalDensity.current) { textFieldWidth.toDp() }),
             selectedId = selectedId,
-            onValueChange = onValueChange,
+            onItemSelected = onItemSelected,
             enabled = enabled,
             onExpand = { isExpanded = it },
             items = items,
@@ -2666,7 +2665,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     modifier: Modifier = Modifier,
     dropdownModifier: Modifier = Modifier, // TODO: OK!?
     @Suppress("UNUSED_PARAMETER") selectedId: ID?, // see above
-    onValueChange: (ID) -> Unit, // TODO: follow naming convention of MyExposedDropdownMenUBox
+    onItemSelected: (ID) -> Unit,
     enabled: Boolean = true,
     onExpand: (Boolean) -> Unit = {},
     items: List<T>,
@@ -2720,7 +2719,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
                         Text(getLabel(item))
                     },
                     onClick = {
-                        onValueChange(getId(item))
+                        onItemSelected(getId(item))
                         expanded = false
                         @Suppress("KotlinConstantConditions") onExpand(expanded)
                     }
@@ -2752,7 +2751,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     ItemWithDropdown(
         modifier = modifier,
         selectedId = selectedId,
-        onValueChange = onValueChange,
+        onItemSelected = onValueChange,
         enabled = enabled,
         items = items,
         getId = getId,
@@ -4530,7 +4529,7 @@ fun EditPriceScreenPackSize(
         MyExposedDropdownMenuBox(
             enabled = saveStatus.isNotBusy(),
             selectedId = uiContent.editablePrice.value.measureUnit.id,
-            onValueChange = {
+            onItemSelected = {
                 val measureUnit = MeasureUnit.fromValue(it)
                 devCheck(measureUnit != null) {
                     "Expected non-null measureUnit to be selected; got $it"
@@ -5200,7 +5199,7 @@ fun EditItemScreen(
                             .padding(horizontal = 8.dp),
                         enabled = saveStatus.isNotBusy(),
                         selectedId = uiContent.editableItem.value.defaultUnit.id,
-                        onValueChange = {
+                        onItemSelected = {
                             val defaultUnit = MeasureUnit.fromValue(it)
                             devCheck(defaultUnit != null) {
                                 "Expected non-null defaultUnit to be selected; got $it"
@@ -5735,7 +5734,7 @@ fun EditDataSetScreen(
                     .validationFocusRequester(scrollToFocusableHandle),
 
                 selectedId = if (uiContent.editableDataSet.value.currencyCode != "") uiContent.editableDataSet.value.currencyCode else null,
-                onValueChange = {
+                onItemSelected = {
                     vm.setUIContentEditableDataSet(
                         uiContent.editableDataSet.value.copy(
                             currencyCode = it
