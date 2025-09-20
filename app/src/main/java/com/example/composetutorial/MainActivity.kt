@@ -2316,7 +2316,7 @@ fun MainScreen(
                 value = item?.name ?: "",
                 onValueChange = { /* No-op, read-only */ },
                 label = { Text("Product") },
-                enabled = false, // TODO: this is necessary to make "clickable" work, bit hacky
+                enabled = false, // so Modifier.clickable() works
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(clickableModifier),
@@ -2453,7 +2453,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
                 onValueChange = { /* No-op, handled by dropdown */ },
                 label = label,
                 readOnly = true,
-                enabled = false, // TODO: this is necessary to make "clickable" work, bit hacky
+                enabled = false, // so Modifier.clickable() works
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
