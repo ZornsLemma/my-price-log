@@ -2525,28 +2525,40 @@ fun LabeledItem(
     }
 }
 
-// TODO: ChatGPT magic, though I do mostly understand it
 @Composable
-fun RelativeTimeText(instant: Instant) { // TODO: rename parameter? maybe it's OK
-    var now by remember { mutableStateOf(Instant.now()) }
+fun RelativeTimeText(instant: Instant) {
+    var now by remember(instant) { mutableStateOf(Instant.now()) }
     val ageInSeconds = Duration.between(instant, now).seconds
     val secondsPerDay = 24 * 60 * 60
 
-    if (ageInSeconds < secondsPerDay) {
-        LaunchedEffect(Unit) {
-            while (true) {
-                delay(if (ageInSeconds < 60) 1_000 else 60_000) // TODO: OK? fine tune?
-                now = Instant.now()
+    // This LaunchedEffect causes the *state variable* "now" to update periodically, forcing a
+    // recomposition so the user can see the age increasing.
+    LaunchedEffect(instant) {
+        // NB: The captured ageInSeconds will *not* update in here - this coroutine is launched once
+        // on the first composition for a specific value of "instant".
+        while (true) {
+            // ENHANCE: We could maybe sleep until "the next minute boundary" when ageInMinutes<60,
+            // so we're not executing every second for the first minute when the display only has
+            // minute resolution.
+            val ageInMinutes = Duration.between(instant, Instant.now()).toMinutes()
+            Log.d("MyAppRTT", "ageInMinutes: $ageInMinutes")
+            val delayDuration = when {
+                ageInMinutes < 1       -> 1_000L           // update every second for first minute
+                ageInMinutes < 24 * 60 -> 60_000L          // every minute for first day
+                else                   -> 60 * 60 * 1_000L // every hour after that
             }
+            delay(delayDuration)
+            now = Instant.now()
+            Log.d("MyAppRTT", "updated now: $now")
         }
     }
+
     // getRelativeTimeSpanString() returns "0 min. ago" in English for ages under 60 seconds, and
-    // presumably similar in other languages, so even at the cost of adding another string we'll
-    // need to translate, this feels nicer. TODO: Do think about this more, maybe "0 min. ago" is
-    // better?
+    // presumably similar in other languages, so we special-case this.
+    Log.d("MyAppRTT", "$ageInSeconds $instant $now")
     val relativeTime = if (ageInSeconds < 60) "now" else DateUtils.getRelativeTimeSpanString(
         instant.toEpochMilli(),
-        System.currentTimeMillis(),
+        now.toEpochMilli(),
         DateUtils.MINUTE_IN_MILLIS,
         DateUtils.FORMAT_ABBREV_RELATIVE
     ).toString()
