@@ -2444,12 +2444,12 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             getDividerBetween = getDividerBetween,
         ) {
             val itemMap = items.associateBy { getId(it) }
-            val todoPulledOut: String = if (selectedId == null) "" else {
+            val valueString = if (selectedId == null) "" else {
                 val item = itemMap[selectedId]
                 if (item != null) (getStaticLabel ?: getLabel)(item) else "Invalid ID $selectedId"
             }
             TextField(
-                value = todoPulledOut,
+                value = valueString, // pulled out just to improve code formatting
                 onValueChange = { /* No-op, handled by dropdown */ },
                 label = label,
                 readOnly = true,
