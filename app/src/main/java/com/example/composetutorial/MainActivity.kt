@@ -2471,15 +2471,12 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
                     .fillMaxWidth()
                     .onGloballyPositioned { coordinates ->
                         textFieldWidth = coordinates.size.width
-                    }, /* TODO DELETE
-                    .onFocusChanged { focusState ->
-                        isFocused = focusState.isFocused
-                    }, */
-                // TODO: It isn't ideal to use isExpanded as a substitute for focus here, but it
-                // doesn't look too bad in practice. As probably noted elsewhere, because we have to
-                // have the TextField disabled in order to make it clickable, it doesn't seem to
-                // actually get focus (even when it gets that "it's focus but it's not focus" D-pad
-                // navigation focus) as far as onFocusChanged is concerned.
+                    },
+                // ENHANCE: It isn't ideal to use isExpanded as a substitute for focus here, but it
+                // doesn't look too bad in practice. Because we have to have the TextField disabled
+                // in order to make it clickable, it doesn't seem to actually get focus as far as
+                // onFocusChanged is concerned (even when it gets that "it's focus but it's not
+                // focus" D-pad navigation focus).
                 colors = if (enabled) myTextFieldColors(isExpanded) else TextFieldDefaults.colors()
             )
         }
