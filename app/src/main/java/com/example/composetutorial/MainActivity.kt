@@ -142,6 +142,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
@@ -2459,7 +2460,11 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = "Expand",
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        /* TODO modifier = Modifier.rotate(if (expanded) 180f else 0f) */
+                        // Not 100% sure about this rotation behaviour, but e.g. the screenshot of
+                        // the "Text field" configuration at the bottom of
+                        // https://m3.material.io/components/menus/specs seems to show this, so
+                        // let's go with it.
+                        modifier = Modifier.rotate(if (isExpanded) 180f else 0f)
                     )
                 },
                 modifier = Modifier
