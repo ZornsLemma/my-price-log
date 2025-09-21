@@ -2526,21 +2526,22 @@ fun LabeledItem(
 }
 
 @Composable
-fun RelativeTimeText(instant: Instant) {
-    var now by remember(instant) { mutableStateOf(Instant.now()) }
-    val ageInSeconds = Duration.between(instant, now).seconds
+fun RelativeTimeText(augmentedPrice: AugmentedPrice) {
+    val confirmedAt = augmentedPrice.basePrice.confirmedAt
+    var now by remember(confirmedAt) { mutableStateOf(Instant.now()) }
+    val ageInSeconds = Duration.between(confirmedAt, now).seconds
     val secondsPerDay = 24 * 60 * 60
 
     // This LaunchedEffect causes the *state variable* "now" to update periodically, forcing a
     // recomposition so the user can see the age increasing.
-    LaunchedEffect(instant) {
+    LaunchedEffect(confirmedAt) {
         // NB: The captured ageInSeconds will *not* update in here - this coroutine is launched once
         // on the first composition for a specific value of "instant".
         while (true) {
             // ENHANCE: We could maybe sleep until "the next minute boundary" when ageInMinutes<60,
             // so we're not executing every second for the first minute when the display only has
             // minute resolution.
-            val ageInMinutes = Duration.between(instant, Instant.now()).toMinutes()
+            val ageInMinutes = Duration.between(confirmedAt, Instant.now()).toMinutes()
             Log.d("MyAppRTT", "ageInMinutes: $ageInMinutes")
             val delayDuration = when {
                 ageInMinutes < 1       -> 1_000L           // update every second for first minute
@@ -2555,9 +2556,9 @@ fun RelativeTimeText(instant: Instant) {
 
     // getRelativeTimeSpanString() returns "0 min. ago" in English for ages under 60 seconds, and
     // presumably similar in other languages, so we special-case this.
-    Log.d("MyAppRTT", "$ageInSeconds $instant $now")
+    Log.d("MyAppRTT", "$ageInSeconds $confirmedAt $now")
     val relativeTime = if (ageInSeconds < 60) "now" else DateUtils.getRelativeTimeSpanString(
-        instant.toEpochMilli(),
+        confirmedAt.toEpochMilli(),
         now.toEpochMilli(),
         DateUtils.MINUTE_IN_MILLIS,
         DateUtils.FORMAT_ABBREV_RELATIVE
@@ -2565,10 +2566,9 @@ fun RelativeTimeText(instant: Instant) {
     // TODO: Not 100% sure about coloring this with no further indication to show it's "stale" and
     // try to encourage action, maybe we need a supportingText or a different layout or both. I'll
     // leave the code in for now anyway.
-    // TODO: Ideally we should be using an AugmentedPrice here and its age class, not determining it separately for ourself
     Text(
         relativeTime,
-        color = if (ageInSeconds < inflationThresholdDays * secondsPerDay) Color.Unspecified else MaterialTheme.colorScheme.error
+        color = if (augmentedPrice.ageClass == AgeClass.FRESH) Color.Unspecified else MaterialTheme.colorScheme.error
     )
 }
 
@@ -2903,7 +2903,7 @@ fun ItemSourceInfo(
                             modifier = Modifier.padding(bottom = 8.dp),
                             label = "Confirmed" /* "Last checked" */
                         ) {
-                            RelativeTimeText(price.confirmedAt)
+                            RelativeTimeText(augmentedPrice)
                             // TODO: would it be helpful to color code this and/or show an icon
                             // ("!"?) if this is "old"? maybe even with an ascending amber/red
                             // "severity" (and correspondingly different icons?)
