@@ -8842,7 +8842,15 @@ fun augmentPrice(
             AgeClass.ANCIENT
         },
         inflatedLoyaltyPrice = inflatedLoyaltyPrice,
-        // TODO: It feels slightly off that we have to specify a denominator for our unit prices here, but I suppose it's OK - but maybe we could improve the API. We can't choose a "friendly" unit at this point since we don't have all the data across all sources yet (we're building it up).
+        // TODO: It feels slightly off that we have to specify a denominator for our unit prices
+        // here, but I suppose it's OK - but maybe we could improve the API. We can't choose a
+        // "friendly" unit at this point since we don't have all the data across all sources yet
+        // (we're building it up). We also have to pass in dataSet to this function just so we
+        // can use it to get a "friendly" unit price. That said, this comment is already a bit
+        // mixed-up, because we *do* choose a friendly unit price based on the first price and
+        // then stick to it, and we use this when we're displaying. In principle though we certainly
+        // could defer this decision to the UI layer and use e.g. the base unit for the relevant
+        // quantity type here.
         unitPrice = if (unitPriceDenominator != null) {
             getUnitPrice(inflatedLoyaltyPrice, price.quantity, unitPriceDenominator)
         } else {
