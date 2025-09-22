@@ -2615,10 +2615,6 @@ data class UnitPrice(val numerator: Double, val denominator: MeasureUnit) : Comp
 fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUnit): UnitPrice =
     UnitPrice(amount / measure.asValue(denominator), denominator)
 
-// TODO: Note that we don't currently use the numerator of the returned UnitPrice - this might be
-// fine, but it suggests we could simplify the return type to just MeasureUnit. OTOH, we've got to
-// *calculate* the numerator anyway, so maybe we might as well pass it back in case it's handy in
-// some other case?
 // TODO: This probably needs to be currency-dp aware - imagine for example we're working with JPY,
 // it's not about decimal places per se but about getting the "shortest" number which doesn't
 // gratuitously push non-zero digits into the non-displayed part after rounding.
