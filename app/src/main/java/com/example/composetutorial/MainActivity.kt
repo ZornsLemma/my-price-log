@@ -2615,16 +2615,19 @@ data class UnitPrice(val numerator: Double, val denominator: MeasureUnit) : Comp
 fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUnit): UnitPrice =
     UnitPrice(amount / measure.asValue(denominator), denominator)
 
-// TODO: This probably needs to be currency-dp aware - imagine for example we're working with JPY,
-// it's not about decimal places per se but about getting the "shortest" number which doesn't
-// gratuitously push non-zero digits into the non-displayed part after rounding.
+// This takes currencyDecimalPlaces not a CurrencyFormat because we only need the number of decimal
+// places and our caller will not always have a locale to get a CurrencyFormat with.
 fun getFriendlyUnitPrice(
     amount: Double,
+    currencyDecimalPlaces: Int,
     measure: MeasuredValue,
     candidateDenominators: List<MeasureUnit>
 ): UnitPrice {
     devCheck(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
     devCheck(measure.value > 0.0) { "Expected positive measure; got $measure" }
+    // TODO: This needs to use currencyDecimalPlaces - imagine for example we're working with JPY,
+    // it's not about decimal places per se but about getting the "shortest" number which doesn't
+    // gratuitously push non-zero digits into the non-displayed part after rounding.
     var bestScore: Double? = null
     var bestUnitPrice: UnitPrice? = null
     for (candidateDenominator in candidateDenominators) {
@@ -8122,6 +8125,7 @@ fun PackPriceAndSizeRow(
             )
             val friendlyUnitPrice = getFriendlyUnitPrice(
                 price,
+                getCurrencyDecimalPlaces(dataSet),
                 measure,
                 candidateDenominators
             )
@@ -8422,6 +8426,9 @@ fun getCurrencyFormat(dataSet: DataSet, locale: Locale): CurrencyFormat {
         )
     )
 }
+
+fun getCurrencyDecimalPlaces(dataSet: DataSet) =
+    Currency.getInstance(dataSet.currencyCode).defaultFractionDigits
 
 // TODO: Just possibly this could be used in the consistency hell stuff in home screen's flow pipeline
 data class Versioned<T>(
@@ -8813,6 +8820,7 @@ fun judgePrice(
 // TODO: Should this be a companion function/constructor on AugmentedPrice or something like that?
 fun augmentPrice(
     price: Price,
+    dataSet: DataSet,
     source: Source,
     unitPriceDenominator: MeasureUnit?,
     candidateUnitPriceDenominators: List<MeasureUnit>
@@ -8840,6 +8848,7 @@ fun augmentPrice(
         } else {
             getFriendlyUnitPrice(
                 inflatedLoyaltyPrice,
+                getCurrencyDecimalPlaces(dataSet),
                 price.quantity,
                 candidateUnitPriceDenominators
             )
@@ -8918,7 +8927,7 @@ fun analysePrices(
         // TODO: I don't think we can really be in a case where we have a Price but do not have the corresponding Source, but probably best to play it safe. (We fetched all the data "atomically" by combining flows so we shouldn't still be waiting for a query result, but maybe there's a corner case.)
         sourceById[price.sourceId]?.let { source ->
             val augmentedPrice =
-                augmentPrice(price, source, unitPriceDenominator, candidateUnitPriceDenominators)
+                augmentPrice(price, dataSet, source, unitPriceDenominator, candidateUnitPriceDenominators)
             unitPriceDenominator = augmentedPrice.unitPrice.denominator
             augmentedPrice
         }
