@@ -244,6 +244,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.concurrent.Executors
 import kotlin.math.ceil
+import kotlin.math.min
 import kotlin.math.pow
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
@@ -2617,6 +2618,15 @@ fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUni
 
 // This takes currencyDecimalPlaces not a CurrencyFormat because we only need the number of decimal
 // places and our caller will not always have a locale to get a CurrencyFormat with.
+// TODO: I've been hacking around with this to experiment and try to get my head straight and the
+// current code is an utter mess both in terms of implementation and its undesirable behaviour,
+// but I'll commit it anyway. Current gut feeling is I need to work on something based purely on
+// penalising leading zeros (after filtering out a decimal point, if any) and also penalising
+// trailing zeroes but less so. But the result is never going to be perfect and I need to think
+// some more. It may not be fair to penalise trailing zeroes though - after all, if the price
+// happens to come out neatly at £1.20/kg, that's great - we don't want to be pushing for £0.12/100g
+// because it's unstable and if the price goes up by £0.01/kg, we'll change our auto-chosen unit
+// price denominator. 
 fun getFriendlyUnitPrice(
     amount: Double,
     currencyDecimalPlaces: Int,
@@ -2630,6 +2640,7 @@ fun getFriendlyUnitPrice(
     // gratuitously push non-zero digits into the non-displayed part after rounding.
     var bestScore: Double? = null
     var bestUnitPrice: UnitPrice? = null
+    val baseUnit = baseUnitForQuantityType(measure.unit.quantityType)
     for (candidateDenominator in candidateDenominators) {
         val candidateUnitPrice = getUnitPrice(amount, measure, candidateDenominator)
         // We compute a score (lower is better) for candidateUnitPrice which measures how far away
@@ -2648,13 +2659,34 @@ fun getFriendlyUnitPrice(
         // given we have limited dp (because of currency display settings), we want to make full use
         // of the space we have.
         val log10Of1 = 0.0
-        val candidateScore = abs(log10(candidateUnitPrice.numerator) - log10Of1) // lower is better
+        val relativeError = abs(candidateUnitPrice.numerator.roundTo(currencyDecimalPlaces) - candidateUnitPrice.numerator) / candidateUnitPrice.numerator
+        val displayLength = String.format("%.${currencyDecimalPlaces}f", candidateUnitPrice.numerator).length
+        // TODO OLD val candidateScore = abs(log10(candidateUnitPrice.numerator) - log10Of1) // lower is better
+        // TODO OLD val candidateScore = log10(relativeError) / displayLength
+        // TODO: Abusing MeasureValue to scale prices here, as in the fn above
+        //val absoluteError = MeasuredValue(abs(candidateUnitPrice.numerator.roundTo(currencyDecimalPlaces) - candidateUnitPrice.numerator), candidateUnitPrice.denominator).asValue(baseUnit)
+        val absoluteErrorThreshold = 10.0.pow(-currencyDecimalPlaces)
+        //val absoluteErrorScore = min(absoluteError - absoluteErrorThreshold, 0.0)
+        // val candidateScore: Double /* TODO CHANGE TO INT */ = if (absoluteError >= absoluteErrorThreshold) 0.0 else (-displayLength).toDouble()
+        val roundedCandidateUnitPrice = MeasuredValue(candidateUnitPrice.numerator.roundTo(currencyDecimalPlaces), candidateUnitPrice.denominator)
+        // TODO WRONG val amountFromRoundedCandidateUnitPrice = roundedCandidateUnitPrice.asValue(measure.unit) * measure.value
+        val amountFromRoundedCandidateUnitPrice = measure.asValue(roundedCandidateUnitPrice.unit) * roundedCandidateUnitPrice.value
+        val absoluteError = abs(amountFromRoundedCandidateUnitPrice - amount)
+        val candidateScore: Double /* TODO CHANGE TO INT */ = if (absoluteError >= absoluteErrorThreshold) 0.0 else (-displayLength).toDouble()
+        Log.d("MyAppFU", "$candidateDenominator $roundedCandidateUnitPrice $amountFromRoundedCandidateUnitPrice $absoluteError $candidateScore")
+
+        //Log.d("MyAppFU", "$candidateDenominator ${candidateUnitPrice.numerator} $candidateScore $absoluteError $displayLength")
         if (bestScore == null || candidateScore < bestScore) {
             bestScore = candidateScore
             bestUnitPrice = candidateUnitPrice
         }
     }
     return bestUnitPrice!!
+}
+
+fun Double.roundTo(decimalPlaces: Int): Double {
+    val factor = 10.0.pow(decimalPlaces)
+    return kotlin.math.round(this * factor) / factor
 }
 
 // TODO: I suspect there is an open issue with whether the denominator should use the full name or
