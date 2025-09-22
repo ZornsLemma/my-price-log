@@ -2595,19 +2595,17 @@ fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
     }
 }
 
-// TODO: EXPERIMENTAL
-// TODO: HOW WILL WE HANDLE "/100G" ETC? WILL WE MAKE THESE FIRST CLASS MEASUREUNITS BUT FLAG THEM
-// AS "MULTIPLES" SO WE OMIT THEM FROM MANY CASES, OR WILL WE MAKE IT A
-// LIST<PAIR<MULT,MEASUREUNIT>>?
-// TODO: A UnitPrice *isn't* a MeasuredValue in some sense (the value is price *per* unit, not X units), but in practice it might work nicely to represent it as one, at least internally. Not sure.
 data class UnitPrice(val numerator: Double, val denominator: MeasureUnit) : Comparable<UnitPrice> {
     override fun compareTo(other: UnitPrice): Int {
-        // TODO: It feels like using MeasuredValue here is slightly technically incorrect, but it
-        // does do what we want and it is probably OK. Maybe it's not even technically incorrect,
-        // think about it fresh.
+        // We are abusing MeasuredValue here by treating the currency amount as a quantity measured
+        // in the unit price's unit. This is a convenient hack to allow us to scale the currency
+        // amounts to compare them with a common unit, but it's not strictly logical.
         Log.d("MyApp", "compareTo $this $other")
         val thisAsMeasuredValue = MeasuredValue(this.numerator, this.denominator)
         val otherAsMeasuredValue = MeasuredValue(other.numerator, other.denominator)
+        // We could convert thisAsMeasuredValue to otherAsMeasuredValue.unit in order to compare the
+        // two. Although it may be a bit superstitious of me, it feels safer
+        // ("rounding"/"consistency") to compare in the base unit and the extra work is negligible.
         val baseUnit = baseUnitForQuantityType(thisAsMeasuredValue.unit.quantityType)
         return thisAsMeasuredValue.asValue(baseUnit)
             .compareTo(otherAsMeasuredValue.asValue(baseUnit))
