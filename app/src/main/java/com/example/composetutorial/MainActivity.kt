@@ -2626,7 +2626,9 @@ fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUni
 // some more. It may not be fair to penalise trailing zeroes though - after all, if the price
 // happens to come out neatly at £1.20/kg, that's great - we don't want to be pushing for £0.12/100g
 // because it's unstable and if the price goes up by £0.01/kg, we'll change our auto-chosen unit
-// price denominator. 
+// price denominator. Although for 0dp currencies, there will never be any leading zeroes, so we
+// probably need to be factoring in length-in-digits and/or penalising leading zeroes before the
+// decimal point. I'm going round in circles and probably missing all sorts of stuff.
 fun getFriendlyUnitPrice(
     amount: Double,
     currencyDecimalPlaces: Int,
