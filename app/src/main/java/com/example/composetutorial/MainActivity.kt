@@ -2629,6 +2629,15 @@ fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUni
 // price denominator. Although for 0dp currencies, there will never be any leading zeroes, so we
 // probably need to be factoring in length-in-digits and/or penalising leading zeroes before the
 // decimal point. I'm going round in circles and probably missing all sorts of stuff.
+// TODO: While it is probably smart to try to get this as nice as we can, I am wondering if we
+// should store (in the db? in shared preferences?) the last user-selected value for each (item,
+// source) combination (which implicitly is also per data set) - this way if the default isn't good,
+// it isn't critical. It may be faffy to use the real db here but since this is "nice to have but
+// not critical" data we can potentially save it async without too much fuss (definitely no spinners
+// etc - we don't even want the user to be aware we regard this as a "save", it's not like the used
+// is editing data in a dialog where saving is crucial), and *if* it's helpful we could use a
+// separate table to avoid worrying about our writes hanging around and subsequently blatting more
+// critical changes to the price table by "full effort and wait til it completes" saves.
 fun getFriendlyUnitPrice(
     amount: Double,
     currencyDecimalPlaces: Int,
