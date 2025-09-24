@@ -571,7 +571,7 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
                 useLocaleGrouping = false,
                 locale
             )
-        } ${unit.symbol}"
+        } ${unit.symbol}" // TODO: Here we *need* empty for unit
 }
 
 @Database(
@@ -2703,7 +2703,13 @@ fun Double.roundTo(decimalPlaces: Int): Double {
 // TODO: I suspect there is an open issue with whether the denominator should use the full name or
 // symbol for the unit, probably with some extra wrinkles around "per individual item".
 fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet, locale: Locale): String {
-    return "${formatPrice(unitPrice.numerator, dataSet, locale)}/${unitPrice.denominator.symbol}"
+    return "${
+        formatPrice(
+            unitPrice.numerator,
+            dataSet,
+            locale
+        )
+    }/${unitPrice.denominator.symbol}" // TODO: Here empty-for-unit is bad
 }
 
 // ENHANCE: Note that selectedId is not used. I would like to use this to focus the previously
@@ -4167,6 +4173,7 @@ fun PriceComparisonCard(
     // not be any. I suppose if we start adding good/OK/bad icons in there there will nearly always be at least one icon somewhere.
     val header = listOf(
         "Store",
+        // TODO: here empty-for-unit is bad
         "${currencyFormat?.prefix ?: currencyFormat?.suffix ?: ""}/${priceAnalysis.augmentedPriceList.firstOrNull()?.unitPrice?.denominator?.symbol ?: "TODO"}",
         "" // TODO?
     )
@@ -4598,6 +4605,7 @@ fun EditPriceScreenPackSize(
             items = units,
             modifier = Modifier.weight(0.5f),
             getId = { it.id },
+            // TODO: HERE FOR BOTH SYMBOL AND FULL NAME EMPTY-FOR-UNIT IS BAD
             getStaticLabel = { it.symbol },
             getLabel = { "${it.fullName} (${it.symbol})" },
             getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
@@ -8202,7 +8210,7 @@ fun PackPriceAndSizeRow(
             //  TODO: Mixed feelings about the "/" prefix in this menu.
             items = relevantUnitList,
             getId = { it },
-            getLabel = { "/${it.symbol}" },
+            getLabel = { "/${it.symbol}" }, // TODO: Here empty-for-unit is bad
             getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
             selectedId = selectedUnitPriceUnit,
             onValueChange = { selectedUnitPriceUnit = it })
