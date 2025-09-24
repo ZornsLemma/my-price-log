@@ -2719,7 +2719,7 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet, locale: Locale): Str
 @Composable
 fun <T, ID : Comparable<ID>> ItemWithDropdown(
     modifier: Modifier = Modifier,
-    dropdownModifier: Modifier = Modifier, // TODO: OK!?
+    dropdownModifier: Modifier = Modifier,
     @Suppress("UNUSED_PARAMETER") selectedId: ID?, // see above
     onItemSelected: (ID) -> Unit,
     enabled: Boolean = true,
@@ -2741,7 +2741,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
                 // We remove focus from anything else that has it in order to "fake" this component
                 // getting the focus. Without this, if a TextField has focus it retains it (including
                 // its focused colors) when the dropdown appears, which feels wrong.
-                focusManager.clearFocus(/* TODO?: force = true */)
+                focusManager.clearFocus(force = true)
                 expanded = true
                 @Suppress("KotlinConstantConditions") onExpand(expanded)
             }
