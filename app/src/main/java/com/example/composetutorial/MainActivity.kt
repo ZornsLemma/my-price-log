@@ -293,19 +293,24 @@ enum class MeasureUnit(
     val fullName: String, // TODO: this will need to be translatable
     val maxDecimals: Int,
     val toBase: Double,
-    val displayOnly: Boolean
+    val displayOnly: Boolean,
+    val perSymbol: String = "/",
 ) {
     // Countable items
-    // TODO: Should symbol be empty string or something else here? feeling my way. I suspect "" looks best, it may lead to strings like "for 20 " with a trailing space but that's probably not a big deal in practice. (We could also just make a point of trimming strings generated using symbol.) We sort of might want "1" for the unit price denominator stuff though.
+    // TODO: Should symbol be empty string or something else here? feeling my way. I suspect ""
+    // looks best, it may lead to strings like "for 20 " with a trailing space but that's probably
+    // not a big deal in practice. (We could also just make a point of trimming strings generated
+    // using symbol.) We sort of might want "1" for the unit price denominator stuff though.
     EACH(
         101,
         setOf(UnitFamily.ITEM),
         QuantityType.ITEM,
-        "",
+        "each",
         "", // TODO!?
         0,
         1.0,
-        false
+        false,
+        perSymbol = " ",
     ), // TODO: RENAME "EACH" TO "ITEM"?
     EACH10(102, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", "10" /* TODO?? */, 1, 10.0, true),
     EACH100(103, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", "100" /* TODO? */,2, 100.0, true),
@@ -563,15 +568,13 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
     // measures even when they're for display only - "2272 ml" feels better than "2,272 ml", at
     // least to me.
     fun toDisplayString(locale: Locale): String =
-        "${
-            formatDouble(
-                value,
-                minDecimals = 0,
-                maxDecimals = unit.maxDecimals,
-                useLocaleGrouping = false,
-                locale
-            )
-        } ${unit.symbol}" // TODO: Here we *need* empty-for-unit
+        formatDouble(
+            value,
+            minDecimals = 0,
+            maxDecimals = unit.maxDecimals,
+            useLocaleGrouping = false,
+            locale
+        ) + if (quantityType == QuantityType.ITEM) "" else " ${unit.symbol}" // TODO: Here we *need* empty-for-unit
 }
 
 @Database(
@@ -2703,13 +2706,12 @@ fun Double.roundTo(decimalPlaces: Int): Double {
 // TODO: I suspect there is an open issue with whether the denominator should use the full name or
 // symbol for the unit, probably with some extra wrinkles around "per individual item".
 fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet, locale: Locale): String {
-    return "${
-        formatPrice(
+    return "${formatPrice(
             unitPrice.numerator,
             dataSet,
             locale
         )
-    }/${unitPrice.denominator.symbol}" // TODO: Here empty-for-unit is bad
+    }${unitPrice.denominator.perSymbol}${unitPrice.denominator.symbol}" // TODO: Here empty-for-unit is bad
 }
 
 // ENHANCE: Note that selectedId is not used. I would like to use this to focus the previously
@@ -4171,10 +4173,11 @@ fun PriceComparisonCard(
     // TODO: Does it look ugly to have the "invisible" column with no title? It's like the price column is inexplicably further
     // from the right margin than it "ought" to be and it's not obvious why unless there are icons in that column, and there *might*
     // not be any. I suppose if we start adding good/OK/bad icons in there there will nearly always be at least one icon somewhere.
+    val headerUnitPriceDenominator = priceAnalysis.augmentedPriceList.firstOrNull()?.unitPrice?.denominator
     val header = listOf(
         "Store",
         // TODO: here empty-for-unit is bad
-        "${currencyFormat?.prefix ?: currencyFormat?.suffix ?: ""}/${priceAnalysis.augmentedPriceList.firstOrNull()?.unitPrice?.denominator?.symbol ?: "TODO"}",
+        "${currencyFormat?.prefix ?: currencyFormat?.suffix ?: ""}${headerUnitPriceDenominator?.perSymbol ?: "TODO"}${headerUnitPriceDenominator?.symbol ?: "TODO"}",
         "" // TODO?
     )
     // It may be technically incorrect to show the currency symbol both in the header ("£/100g") and
@@ -4582,34 +4585,40 @@ fun EditPriceScreenPackSize(
             interactionSource = interactionSource
         )
 
-        Spacer(modifier = Modifier.width(8.dp))
+        if (uiContent.item.defaultUnit.quantityType != QuantityType.ITEM) {
+            Spacer(modifier = Modifier.width(8.dp))
 
-        MyExposedDropdownMenuBox(
-            enabled = saveStatus.isNotBusy(),
-            selectedId = uiContent.editablePrice.value.measureUnit.id,
-            onItemSelected = {
-                val measureUnit = MeasureUnit.fromValue(it)
-                devCheck(measureUnit != null) {
-                    "Expected non-null measureUnit to be selected; got $it"
-                }
-                if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
-                    vm.setUIContentEditablePrice(
-                        uiContent.editablePrice.value.copy(
-                            measureUnit = measureUnit
+            MyExposedDropdownMenuBox(
+                enabled = saveStatus.isNotBusy(),
+                selectedId = uiContent.editablePrice.value.measureUnit.id,
+                onItemSelected = {
+                    val measureUnit = MeasureUnit.fromValue(it)
+                    devCheck(measureUnit != null) {
+                        "Expected non-null measureUnit to be selected; got $it"
+                    }
+                    if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
+                        vm.setUIContentEditablePrice(
+                            uiContent.editablePrice.value.copy(
+                                measureUnit = measureUnit
+                            )
                         )
+                        onChange()
+                    }
+                },
+                label = { Text("Unit") },
+                items = units,
+                modifier = Modifier.weight(0.5f),
+                getId = { it.id },
+                getStaticLabel = { it.symbol },
+                getLabel = { "${it.fullName} (${it.symbol})" },
+                getDividerBetween = { previousItem, item ->
+                    areDifferentUnitFamilies(
+                        previousItem,
+                        item
                     )
-                    onChange()
-                }
-            },
-            label = { Text("Unit") },
-            items = units,
-            modifier = Modifier.weight(0.5f),
-            getId = { it.id },
-            // TODO: HERE FOR BOTH SYMBOL AND FULL NAME EMPTY-FOR-UNIT IS BAD
-            getStaticLabel = { it.symbol },
-            getLabel = { "${it.fullName} (${it.symbol})" },
-            getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
-        )
+                },
+            )
+        }
     }
 
     if (validationResult != null) {
@@ -8210,7 +8219,7 @@ fun PackPriceAndSizeRow(
             //  TODO: Mixed feelings about the "/" prefix in this menu.
             items = relevantUnitList,
             getId = { it },
-            getLabel = { "/${it.symbol}" }, // TODO: Here empty-for-unit is bad
+            getLabel = { "${it.perSymbol}${it.symbol}".trim() }, // TODO: Here empty-for-unit is bad
             getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
             selectedId = selectedUnitPriceUnit,
             onValueChange = { selectedUnitPriceUnit = it })
