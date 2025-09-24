@@ -2383,7 +2383,7 @@ fun MainScreen(
                             */
                 items = sourceListSorted,
                 getId = { it.first },
-                getLabel = { it.second },
+                getItemText = { it.second },
             )
         }
     }
@@ -2419,12 +2419,12 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     selectedId: ID?,
     onItemSelected: (ID) -> Unit,
     enabled: Boolean = true,
-    label: @Composable () -> Unit, // TODO: rename to distinguish from getLabel type use?
+    label: @Composable () -> Unit,
     supportingText: @Composable (() -> Unit)? = null,
     items: List<T>,
     getId: (T) -> ID,
-    getLabel: (T) -> String,
-    getStaticLabel: ((T) -> String)? = null,
+    getItemText: (T) -> String,
+    getCollapsedItemText: ((T) -> String)? = null,
     getDividerBetween: ((T, T) -> Boolean)? = null,
 ) {
     var textFieldWidth by remember { mutableIntStateOf(0) }
@@ -2443,13 +2443,13 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             onExpand = { isExpanded = it },
             items = items,
             getId = getId,
-            getLabel = getLabel,
+            getItemText = getItemText,
             getDividerBetween = getDividerBetween,
         ) {
             val itemMap = items.associateBy { getId(it) }
             val valueString = if (selectedId == null) "" else {
                 val item = itemMap[selectedId]
-                if (item != null) (getStaticLabel ?: getLabel)(item) else "Invalid ID $selectedId"
+                if (item != null) (getCollapsedItemText ?: getItemText)(item) else "Invalid ID $selectedId"
             }
             TextField(
                 value = valueString, // pulled out just to improve code formatting
@@ -2724,7 +2724,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     onExpand: (Boolean) -> Unit = {},
     items: List<T>,
     getId: (T) -> ID,
-    getLabel: (T) -> String,
+    getItemText: (T) -> String,
     getDividerBetween: ((T, T) -> Boolean)? = null,
     content: @Composable () -> Unit,
 ) {
@@ -2770,7 +2770,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
 
                 MyDropdownMenuItem(
                     text = {
-                        Text(getLabel(item))
+                        Text(getItemText(item))
                     },
                     onClick = {
                         onItemSelected(getId(item))
@@ -2789,11 +2789,11 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     selectedId: ID?,
     label: String,
     text: String,
-    onItemSelected: (ID) -> Unit, // TODO: follow naming convention of MyExposedDropdownMenUBox
+    onItemSelected: (ID) -> Unit,
     dropdownContentDescription: String,
     items: List<T>,
     getId: (T) -> ID,
-    getLabel: (T) -> String,
+    getItemText: (T) -> String,
     getDividerBetween: ((T, T) -> Boolean)? = null,
     enabled: Boolean = true,
 ) {
@@ -2809,7 +2809,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
         enabled = enabled,
         items = items,
         getId = getId,
-        getLabel = getLabel,
+        getItemText = getItemText,
         getDividerBetween = getDividerBetween,
     ) {
         LabeledItem(label = label) {
@@ -4604,8 +4604,8 @@ fun EditPriceScreenPackSize(
                 items = units,
                 modifier = Modifier.weight(0.5f),
                 getId = { it.id },
-                getStaticLabel = { it.symbol },
-                getLabel = { "${it.fullName} (${it.symbol})" },
+                getCollapsedItemText = { it.symbol },
+                getItemText = { "${it.fullName} (${it.symbol})" },
                 getDividerBetween = { previousItem, item ->
                     areDifferentUnitFamilies(
                         previousItem,
@@ -5287,7 +5287,7 @@ fun EditItemScreen(
                         items = relevantUnitList,
                         getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
                         getId = { it.id },
-                        getLabel = { "${it.fullName} (${it.symbol})" },
+                        getItemText = { "${it.fullName} (${it.symbol})" },
                     )
                 }
             }
@@ -5808,7 +5808,7 @@ fun EditDataSetScreen(
                 label = { Text("Currency") },
                 items = currencyList.second,
                 getId = { it.first },
-                getLabel = { it.second },
+                getItemText = { it.second },
                 getDividerBetween = { firstItem, _ -> firstItem.first == currencyList.first },
                 supportingText = textOrNull(
                     validationResult,
@@ -8214,7 +8214,7 @@ fun PackPriceAndSizeRow(
             //  TODO: Mixed feelings about the "/" prefix in this menu.
             items = relevantUnitList,
             getId = { it },
-            getLabel = { "${it.perSymbol}${it.symbol}".trim() }, // TODO: Here empty-for-unit is bad
+            getItemText = { "${it.perSymbol}${it.symbol}".trim() }, // TODO: Here empty-for-unit is bad
             getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
             selectedId = selectedUnitPriceUnit,
             onItemSelected = { selectedUnitPriceUnit = it })
