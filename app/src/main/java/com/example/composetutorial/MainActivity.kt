@@ -2703,8 +2703,6 @@ fun Double.roundTo(decimalPlaces: Int): Double {
     return kotlin.math.round(this * factor) / factor
 }
 
-// TODO: I suspect there is an open issue with whether the denominator should use the full name or
-// symbol for the unit, probably with some extra wrinkles around "per individual item".
 fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet, locale: Locale): String {
     return "${formatPrice(
             unitPrice.numerator,
@@ -2718,7 +2716,6 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet, locale: Locale): Str
 // selected item when expanding the dropdown using a D-pad, instead of defaulting to the first item.
 // However, this appears to be ninja-grade development and I tried tweaking multiple AI-suggested
 // solutions and got nothing but crashes.
-// TODO: RENAME?
 @Composable
 fun <T, ID : Comparable<ID>> ItemWithDropdown(
     modifier: Modifier = Modifier,
