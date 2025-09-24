@@ -358,7 +358,7 @@ enum class MeasureUnit(
         100.0,
         true
     ), // TODO: experimental
-    L(303, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "l", "litre", 3, 1000.0, false),
+    L(303, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "L", "litre", 3, 1000.0, false),
 
     // TODO: As a massive hack to help me notice problems during debugging, I have replaced the space in "fl oz" with a U or I to
     // let me see which type is in use. I don't seriously expect subtle bugs here (if we do mess up our unit family handling, we
@@ -571,7 +571,7 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
                 useLocaleGrouping = false,
                 locale
             )
-        } ${unit.symbol}" // TODO: Here we *need* empty for unit
+        } ${unit.symbol}" // TODO: Here we *need* empty-for-unit
 }
 
 @Database(
