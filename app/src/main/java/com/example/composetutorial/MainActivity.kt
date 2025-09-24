@@ -2896,10 +2896,6 @@ fun ItemSourceInfo(
                 if (true) {
                     if (augmentedPrice == null) {
                         Column(modifier = Modifier.fillMaxWidth()) {
-                            // TODO: Should this be in the supportingText on the store dropdown? My gut
-                            // feeling is not, as this is "card content" about the store+product
-                            // together, not a note specifically on the "Store" dropdown. But think
-                            // about it.
                             Text("There is no price recorded for this product at this store yet.")
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -2909,7 +2905,7 @@ fun ItemSourceInfo(
                                     onClick = onEditPriceClick,
                                     shape = MaterialTheme.shapes.small
                                 ) {
-                                    Text("Add") // TODO: "Edit"? "Add price"?
+                                    Text("Add")
                                 }
                             }
                         }
