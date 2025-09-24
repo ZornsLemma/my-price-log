@@ -2847,7 +2847,7 @@ fun ItemSourceInfo(
     sourceList: List<Source>,
     augmentedPrice: AugmentedPrice?,
     onEditPriceClick: () -> Unit,
-    onViewHistoryClick: () -> Unit, // TODO: Rename onView*Price*HistoryClick?
+    onViewHistoryClick: () -> Unit,
 ) {
     // TODO: Maybe this should live on the viewmodel
     OnAppLifecycleEvent { event ->
@@ -2859,42 +2859,31 @@ fun ItemSourceInfo(
 
     // ENHANCE: Will we have a "special offer"/"short term price" flag and maybe associated data?
     // Gut feeling is no, how to handle expiry/deletion gets complex from UI and internal
-    // perspective, it's not as if the offer duration is usually clearly stated, free text note
-    // probably can be used for this among other things
+    // perspective. It's not as if the offer duration is usually clearly stated. Free text note
+    // probably can be used for this.
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Box {
-            // TODO: animateContentSize() is experimental. If I keep it, I may also want it on the lower
-            // card, which can change size when product changes (just not yet, in this mockup). The odd
-            // padding here is because we want 8.dp at the left and right and 12.dp at the top and
-            // bottom to try to keep the square-ish corners of the TextField away from the round-ish
-            // corners at the top of the card. Because the bottom of the card has two buttons and these
-            // have "touchable but background colour" space around them to meet the minimum touch size
-            // (and we don't want to make them visually larger), if we use 12.dp at the bottom we
-            // actually get a bit more because of that extra space "around" the buttons. So we manually
-            // adjust the bottom padding to visually compensate for this while allowing the buttons to
-            // have their natural touch region.
-            // TODO: When the card expands, the button(s) on the "bottom" row of the card jump down
-            // instead of animating smoothly "following" the bottom of the card - probably because this
-            // layout is sort of "top to bottom". I suspect this can be worked around by using a box and
-            // having most of the content inside a column with .align(Alignment.TopStart) and then
-            // follow that by the button row with .align(Alignment.BottomCenter) or something along
-            // these lines. The trouble with the code as currently structured is that the buttons are
-            // generated in conditional code and getting the right layout of composables isn't trivial.
-            // It is probably worth tweaking this for visual polish - it might make things clearer
-            // anyway, e.g. if we factor out some sub-composables - but I'm not going to get involved
-            // with it right now. We may need to attach .animateContentSize() to the Card instead of the
-            // Column.
+            // ENHANCE: When the card expands, the button(s) on the "bottom" row of the card jump
+            // down instead of animating smoothly "following" the bottom of the card - probably
+            // because this layout is sort of "top to bottom". I suspect this can be worked around
+            // by using a box and having most of the content inside a column with
+            // .align(Alignment.TopStart) and then follow that by the button row with
+            // .align(Alignment.BottomCenter) or something along these lines. The trouble with the
+            // code as currently structured is that the buttons are generated in conditional code
+            // and getting the right layout of composables isn't trivial. It is probably worth
+            // tweaking this for visual polish - it might make things clearer anyway, e.g. if we
+            // factor out some sub-composables - but I'm not going to get involved with it right
+            // now. We may need to attach .animateContentSize() to the Card instead of the Column.
+            // All this said, because the "Store" dropdown tends to obscure this card in practice,
+            // this isn't all that noticeable.
             Column(
                 modifier = Modifier
                     .animateContentSize()
                     .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
             ) {
-                // TODO: Once the store dropdown is moved off this card, will it be obvious this card
-                // relates to that store? We could maybe give its actual name, but that might also be
-                // a bit repetitive.
                 CardTitle(
                     title = "Store price", // TODO: This label feels a bit "redundant" and wording may need tweaking
                     subtitle = "Shelf price at ${source?.name ?: "TODO"}", // TODO: null handling!
