@@ -2814,28 +2814,15 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     ) {
         LabeledItem(label = label) {
             Row {
-                // TODO: FWIW a quick discussion with ChatGPT suggests it is reasonable for i18n to
-                // have some kind of format substitution to generate a unit price string analogous
-                // to the one I'm using here. So having a single "Unit price" field is probably
-                // reasonable, and it does feel like the clearest way to express it.
-                // TODO: There's a small bug here, if we edit the price so a different unit price
-                // would be more appropriate we do *not* change it when we navigate back. Obviously
-                // this isn't super likely with realistic price data, but it could happen. There is
-                // a subtlety here, as the user may have changed the unit price unit themselves and
-                // *maybe* we should respect that if so.
+
                 Box {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // TODO: I am starting to wonder if this down arrow should be vertically
-                        // centred wrt the textfield as a whole (including its label-above) not just
-                        // the text, despite working very hard to get it to be lined up with just
-                        // the "text content" before - probably arguments both ways, but think about
-                        // it
-                        // TODO: This text doesn't change colour when enabled is false, TBH this
+                        // ENHANCE: This text doesn't change colour when enabled is false, TBH this
                         // probably looks OK and it might actually look ugly if it did in my specific
                         // UI, but maybe it ought to. And equally maybe the LabeledItem itself should
-                        // change colour when disabled, currently we
+                        // change colour when disabled.
                         Text(text)
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
@@ -8170,7 +8157,20 @@ fun PackPriceAndSizeRow(
         // navigating back after a new item is selected in another screen, due to saved state
         // restoration behaviour. We could force recomputation by adding a composite key like
         // "$dataSet-$price-$measure", but that's a hack and not an ideal solution.
-        // TODONOW: I need to review other uses of rememberSaveable() to make sure I'm not vulnerable to the same problem.
+        // TODONOW: I need to review other uses of rememberSaveable() to make sure I'm not
+        // vulnerable to the same problem.
+        // TODO: I am not actually sure that's the whole story, because selectedUnitPriceUnit is
+        // *initialised* by an expensive computation, but the user can change it, and we really
+        // ought to be remembering what they select fairly persistently, e.g. via
+        // rememberSaveable(). It may be the right thing to do is to compute the default inside
+        // remember() but use rememberSaveable() for the actual user selection and just initialise
+        // it from that remember()-ed computed default. This may be moot if I am going to persist
+        // the user's selection in the database anyway.
+        // TODO: There's a small bug here, if we edit the price so a different unit price
+        // would be more appropriate we do *not* change it when we navigate back. Obviously
+        // this isn't super likely with realistic price data, but it could happen. There is
+        // a subtlety here, as the user may have changed the unit price unit themselves and
+        // *maybe* we should respect that if so.
         var selectedUnitPriceUnit by remember(dataSet, price, measure) {
             Log.d("MyAppQA", "rememberSaveable $price $measure")
             val candidateDenominators = getMeasureUnitsOfSameQuantityTypeAndUnitFamily(
@@ -8211,7 +8211,6 @@ fun PackPriceAndSizeRow(
             dropdownContentDescription = "Select unit",
             text = unitPriceString,
             enabled = true, // TODO: hardcoding to true for now, while this is on price history only and that has no save
-            //  TODO: Mixed feelings about the "/" prefix in this menu.
             items = relevantUnitList,
             getId = { it },
             getItemText = { "${it.perSymbol}${it.symbol}".trim() }, // TODO: Here empty-for-unit is bad
