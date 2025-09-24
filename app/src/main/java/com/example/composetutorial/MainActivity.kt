@@ -213,7 +213,6 @@ import java.util.Currency
 import java.util.Locale
 import java.util.UUID
 import kotlin.math.abs
-import kotlin.math.log10
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -244,7 +243,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.concurrent.Executors
 import kotlin.math.ceil
-import kotlin.math.min
 import kotlin.math.pow
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
@@ -2791,7 +2789,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     selectedId: ID?,
     label: String,
     text: String,
-    onValueChange: (ID) -> Unit, // TODO: follow naming convention of MyExposedDropdownMenUBox
+    onItemSelected: (ID) -> Unit, // TODO: follow naming convention of MyExposedDropdownMenUBox
     dropdownContentDescription: String,
     items: List<T>,
     getId: (T) -> ID,
@@ -2807,7 +2805,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     ItemWithDropdown(
         modifier = modifier,
         selectedId = selectedId,
-        onItemSelected = onValueChange,
+        onItemSelected = onItemSelected,
         enabled = enabled,
         items = items,
         getId = getId,
@@ -8219,7 +8217,7 @@ fun PackPriceAndSizeRow(
             getLabel = { "${it.perSymbol}${it.symbol}".trim() }, // TODO: Here empty-for-unit is bad
             getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
             selectedId = selectedUnitPriceUnit,
-            onValueChange = { selectedUnitPriceUnit = it })
+            onItemSelected = { selectedUnitPriceUnit = it })
     }
 }
 
