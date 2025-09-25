@@ -167,6 +167,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
@@ -2260,6 +2261,12 @@ val menuLeftPadding = 16.dp
 
 val defaultErrorHighlightOffset = 6.dp
 
+// MD3 (while deprecating the navigation drawer anyway) says the width should be 360.dp. We don't
+// properly respect that because I think it looks bad on a phone to have the drawer fill the whole
+// screen, but we do respect it as far as using as a maximum width. This will probably never kick in
+// unless someone is using the app on a tablet, but still.
+val maxNavigationDrawerWidth = 360.dp
+
 /* TODO DELETE
 // MD3 standard values
 val oneLineListItemHeight = 56.dp
@@ -3591,10 +3598,9 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f)), // TODO: What would MD3 say for color and opacity?
+                        .background(Color.Black.copy(alpha = 0.3f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    // TODO: Are the defaults here OK?
                     CircularProgressIndicator()
                 }
             }
@@ -3616,20 +3622,21 @@ fun HomeScreenNavigationDrawer(
     // Material 3 Expressive from May 2025. However, it appears to be a rotten fit for my
     // requirements here - it wants (in its non-expanded form) to be permanently on screen, and I
     // don't have the space, and it seems to be intended for "a few" designer-selected things, not
-    // user-defined categories. It also seems to want to live at the bottom of the screen on a
-    // portrait smartphone layout. So I am going to stick with the navigation drawer for now.
+    // maybe 5-10+ user-defined categories. It also seems to want to live at the bottom of the
+    // screen on a portrait smartphone layout. So I am going to stick with the navigation drawer for
+    // now.
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            // TODO: Hard-coding this to 2/3 of the screen width feels a bit of a hack, but I really
-            // don't like the default behaviour of it taking the full screen width. If nothing else,
-            // that makes how to dismiss it feel less discoverable.
-            // TODO: Probably irrelevant on a phone, but we should maybe cap the width at 360.dp, which is MD3 specified width.
+            // We cap the drawer width at 2/3 of the screen width because although it's not MD3
+            // standard, I really don't like the default behaviour of it taking the full screen
+            // width on a portrait smartphone. If nothing else, that makes how to dismiss it feel
+            // less discoverable.
             ModalDrawerSheet(
                 modifier = Modifier
                     .wrapContentWidth()
-                    .widthIn(max = LocalConfiguration.current.screenWidthDp.dp * 2f / 3f)
+                    .widthIn(max = min(LocalConfiguration.current.screenWidthDp.dp * 2f / 3f, maxNavigationDrawerWidth))
             ) {
                 // TODO: Probably need to set font style/colour for this "heading"
                 Column {
