@@ -3013,11 +3013,9 @@ fun ItemSourceInfo(
 
             }
 
-            // TODO: This doesn't feel the right way to put the overflow menu in but it's what
-            // Grok/ChatGPT seem to suggest (in conjunction with the outer Box). I am not sure the
-            // position is perfect but I can't find any specs, note that we already have quite a lot
-            // of padding on the Card itself
-
+            // ENHANCE: I am not sure this is the right way to put the overflow menu in or what
+            // precise positioning it should have, but in the absence of any official documentation
+            // let's go with this Grok/ChatGPT suggestion.
             var menuExpanded by remember { mutableStateOf(false) } // TODO: rememberSaveable???
             IconButton(
                 enabled = asyncOperationStatus.isNotBusy(),
@@ -3026,45 +3024,20 @@ fun ItemSourceInfo(
             ) {
                 Icon(
                     imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More options" // TODO: wording?
+                    contentDescription = "More options"
                 )
                 DropdownMenu(
                     expanded = menuExpanded, onDismissRequest = { menuExpanded = false }
                     // ,modifier = Modifier.align(Alignment.TopEnd)
                 ) {
                     MyDropdownMenuItem(
-                        text = { Text("View history") /* TODO: Wording?! */ },
+                        text = { Text("View history") },
                         enabled = augmentedPrice != null,
                         onClick = { menuExpanded = false; onViewHistoryClick() }
                     )
                 }
             }
 
-        }
-    }
-}
-
-// TODO: ChatGPT magic
-@Composable
-fun rememberLabelWidth(
-    vararg labels: String,
-    style: TextStyle = MaterialTheme.typography.labelLarge,
-    horizontalPadding: Dp = 48.dp // MD3 spec for "medium" 56 dp high FilledTextButton
-): Dp {
-    val density = LocalDensity.current
-    val textMeasurer = rememberTextMeasurer()
-    val noWrapConstraints = Constraints(maxWidth = Int.MAX_VALUE)
-
-    return remember(density, *labels) {
-        with(density) {
-            val maxLabelWidthPx = labels.maxOf { label ->
-                textMeasurer.measure(
-                    text = AnnotatedString(label),
-                    style = style,
-                    constraints = noWrapConstraints
-                ).size.width
-            }
-            maxLabelWidthPx.toDp() + horizontalPadding
         }
     }
 }
