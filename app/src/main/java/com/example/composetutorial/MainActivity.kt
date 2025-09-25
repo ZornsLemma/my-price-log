@@ -2919,9 +2919,6 @@ fun ItemSourceInfo(
                             label = "Confirmed" /* "Last checked" */
                         ) {
                             RelativeTimeText(augmentedPrice)
-                            // TODO: would it be helpful to color code this and/or show an icon
-                            // ("!"?) if this is "old"? maybe even with an ascending amber/red
-                            // "severity" (and correspondingly different icons?)
                         }
 
                         if (price.notes.isNotEmpty()) {
@@ -2964,15 +2961,18 @@ fun ItemSourceInfo(
                                     onClick = onEditPriceClick,
                                     shape = MaterialTheme.shapes.small
                                 ) {
-                                    Text("Edit") // TODO: "Update"? (we do have a history-ish element, maybe)
+                                    Text("Edit")
                                 }
 
                                 Spacer(modifier = Modifier.width(8.dp))
 
-                                // TODO: Mixed feelings, but should we grey out the confirm button if the confirmed label shows "now"? (obviously not greying out "undo", but if for whatever reason we are not showing "undo" and it is "now")
-                                // TODO: This width measurement works fine and looks OK, but with AnimatedContent is also looks kind of OK to not fix the width (we probably still want AnimatedContent even if the width is fix), so I'll leave this in but not use it for now and I can come back to it later and see which I prefer.
-                                val confirmButtonWidth = rememberLabelWidth("Confirm", "Undo")
-                                // TODO: We should probably animate the "Confirmed" text label changing *if it happens due to confirm/undo click* (not because timer ticks over to e.g. next minute)
+                                // TODO: Mixed feelings, but should we grey out the confirm button
+                                // if the confirmed label shows "now"? (obviously not greying out
+                                // "undo", but if for whatever reason we are not showing "undo" and
+                                // it is "now")
+                                // TODO: We should probably animate the "Confirmed" text label
+                                // changing *if it happens due to confirm/undo click* (not because
+                                // timer ticks over to e.g. next minute)
 
                                 // The "Confirm" button is the primary button - we expect it to be the
                                 // button users click on most on this card (most of the time prices
