@@ -3128,45 +3128,9 @@ fun <T> NewDataTable( // TODO: Rename
     }
 }
 
-/* TODO: ChatpGPT suggests code like this would allow us to switch between "icons" and "icons+text" depending on screen size:
-
-@Composable
-fun IconRow(icon: ImageVector, label: String, modifier: Modifier = Modifier) {
-BoxWithConstraints {
-val density = LocalDensity.current
-val fontScale = LocalContext.current.resources.configuration.fontScale
-val availableWidthDp = maxWidth / fontScale
-
-if (availableWidthDp < 120.dp) {
-    Icon(imageVector = icon, contentDescription = label)
-} else {
-    Row {
-        Icon(imageVector = icon, contentDescription = null)
-        Spacer(Modifier.width(8.dp))
-        Text(text = label)
-    }
-}
-}
-}
-*/
-
-/* TODO: Delete if not needed
-// Utility to get Activity window
-// TODO: Is this used?
-@Composable
-private fun Context.getActivityWindow(): Window? {
-    var context = this
-    while (context is ContextWrapper) {
-        if (context is Activity) return context.window
-        context = context.baseContext
-    }
-    return null
-}
-*/
-
 // A simple wrapper around DropdownMenuItem applying MD3 formatting.
-// TODO: This isn't fully general as I don't want to add stuff that isn't going to get tested; I can
-// always expand it later.
+// ENHANCE: This isn't fully general as I don't want to add stuff that isn't going to get tested; I
+// can always expand it later.
 @Composable
 fun MyDropdownMenuItem(
     text: @Composable () -> Unit,
