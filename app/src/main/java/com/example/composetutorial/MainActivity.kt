@@ -3042,13 +3042,12 @@ fun ItemSourceInfo(
     }
 }
 
-// TODO: Should NewDataTable have dividers like DataTable?
 @Composable
-fun <T> NewDataTable(
+fun <T> NewDataTable( // TODO: Rename
     header: List<String>,
     items: List<T>,
     columns: List<@Composable (T) -> Unit>,
-    highlightRow: Int? = null, // TODO: this might be better as a function which returns true to highlight and takes a T?
+    highlightRow: Int? = null,
     columnWeights: List<Float> = List(header.size) { 1f },
     columnAlignments: List<CellAlignment> = List(header.size) { CellAlignment.Start },
 ) {
@@ -3063,15 +3062,16 @@ fun <T> NewDataTable(
     }
 
     Column {
+        // ENHANCE: If we allow user-selectable units in this header via a dropdown, its height may
+        // need increasing to 56 dp.
         Row(
-            modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceContainerHighest)
-            //.height(56.dp) // TODO EXPERIMENTAL - NOT SURE IF HEADER NEEDS TO BE AS TALL AS THE ROWS FOR A START, IT ISN'T TAPPABLE
-            , verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceContainerHighest),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             header.forEachIndexed { colIndex, title ->
                 Box(
                     Modifier
-                        .weight(columnWeights.getOrElse(colIndex) { 1f }) // TODO: Get rid of OrElse?
+                        .weight(columnWeights[colIndex])
                         .padding(8.dp)
                         .then(alignmentModifier(columnAlignments[colIndex]))
                 ) {
@@ -3082,10 +3082,6 @@ fun <T> NewDataTable(
         HorizontalDivider(
             thickness = 1.dp, color = MaterialTheme.colorScheme.outline /* Variant */
         )
-
-        // TODO: Far from sure I like the way I'm highlighting highlightRow, but it's not too bad. I
-        // was worried using any kind of font weight change would break the decimal point alignment
-        // but in practice it doesn't appear to be a big problem.
 
         items.forEachIndexed { rowIndex, item ->
             val isHighlighted = rowIndex == highlightRow
