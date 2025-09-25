@@ -3106,29 +3106,20 @@ fun <T> NewDataTable( // TODO: Rename
                 LocalTextStyle provides textStyle,
                 LocalContentColor provides textColor
             ) {
-                Column { // TODO: This is only needed if we have a horizontal divider
-                    /* TODO? Torn as to better appearance with or without
-                    if (rowIndex > 0) {
-                        HorizontalDivider(
-                            thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant
-                        )
-                    }
-                    */
-                    Row(
-                        modifier = Modifier
-                            .background(rowBackground)
-                            .height(56.dp) // TODO EXPERIMENTAL - AND NOTE THAT UNLESS I ACTUALLY *DO* MAKE THE ROWS CLICKABLE, I DO NOT NEED THEM TO BE SO TALL AND CAN SHRINK THEM
-                        , verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        columns.forEachIndexed { colIndex, cell ->
-                            Box(
-                                Modifier
-                                    .weight(columnWeights.getOrElse(colIndex) { 1f }) // TODO: get rid of OrElse?
-                                    .padding(8.dp)
-                                    .then(alignmentModifier(columnAlignments[colIndex]))
-                            ) {
-                                cell(item)
-                            }
+                Row(
+                    modifier = Modifier
+                        .background(rowBackground)
+                        .height(56.dp) // TODO EXPERIMENTAL - AND NOTE THAT UNLESS I ACTUALLY *DO* MAKE THE ROWS CLICKABLE, I DO NOT NEED THEM TO BE SO TALL AND CAN SHRINK THEM
+                    , verticalAlignment = Alignment.CenterVertically
+                ) {
+                    columns.forEachIndexed { colIndex, cell ->
+                        Box(
+                            Modifier
+                                .weight(columnWeights[colIndex])
+                                .padding(8.dp)
+                                .then(alignmentModifier(columnAlignments[colIndex]))
+                        ) {
+                            cell(item)
                         }
                     }
                 }
