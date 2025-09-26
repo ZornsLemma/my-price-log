@@ -4299,16 +4299,16 @@ fun EditPriceScreen(
 
         // TODO: Can/should I do something to scroll the screen when focus enters this and the caret
         // is half-hidden?
-        // TODO: This probably ought to be a FilteredTextField or something - a raw TextField will
-        // not implement the "large but not infinite" length restriction. Check we don't have any
-        // other raw ones hanging round too.
-        TextField(
+        var notes by rememberSyncedTextFieldValue(uiContent.editablePrice.value.notes)
+        FilteredTextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Notes") },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-            value = uiContent.editablePrice.value.notes,
+            value = notes,
+            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
-                vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(notes = it))
+                notes = it
+                vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(notes = it.text))
             },
             enabled = saveStatus.isNotBusy(),
         )
@@ -6741,6 +6741,7 @@ fun <T> GeneralSelectorScreen(
             // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
             // TODO: We could show e.g. a warning icon and/or some supporting text if nothing matches the substring (rather than just having an empty list)
+            // TODO: Ought to be a FilteredTextField, if only to restrict input length
             if (showSearch) {
                 TextField(
                     value = searchString,
