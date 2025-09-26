@@ -2263,8 +2263,8 @@ val defaultErrorHighlightOffset = 6.dp
 
 // MD3 (while deprecating the navigation drawer anyway) says the width should be 360.dp. We don't
 // properly respect that because I think it looks bad on a phone to have the drawer fill the whole
-// screen, but we do respect it as far as using as a maximum width. This will probably never kick in
-// unless someone is using the app on a tablet, but still.
+// screen, but we do respect it as far as using it as a maximum width. This will probably never kick
+// in unless someone is using the app on a tablet, but still.
 val maxNavigationDrawerWidth = 360.dp
 
 /* TODO DELETE
