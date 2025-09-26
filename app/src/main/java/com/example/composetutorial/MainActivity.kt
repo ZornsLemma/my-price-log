@@ -4255,21 +4255,10 @@ fun EditPriceScreen(
         //Spacer(modifier = Modifier.height(500.dp))
         Spacer(modifier = Modifier.height(16.dp))
 
-        EditPriceScreenPackSize(vm, /* TODO DELETE validationResult, interactionSource, scrollToFocusableHandle, */ ::onPackSizeOrPriceChange)
+        EditPriceScreenPackSize(vm, ::onPackSizeOrPriceChange)
 
-        // TODO: FWIW I have a Grok conversation saved where it offered a TextMeasure class that
-        // would give a width for an arbitrary string and we could use something like that to
-        // size fields like this and/or the unit (albeit both have some extra window furniture -
-        // but we could for example compute a "notional text size" taking font size into account
-        // for " £  1234.00     " (spaces approximating margins/space for icons to pop in) and "
-        // litre    " (ditto) and use those sizes as the weights - we don't want both things
-        // fixed size as they won't fill the screen then, and we probably don't want one
-        // "minimal" and the other filling rest of space - but then again, if you do that, a
-        // fixed ratio is probably more or less the same since both will expand with font size
-        // just the same, so maybe that would be pointless
-
-        // We don't show the switch if this is the first price for an item and source; the price is confirmed, otherwise
-        // why are we entering it?
+        // We don't show the switch if this is the first price for an item and source; the price is
+        // confirmed, otherwise why are we entering it?
         if (uiContent.editablePrice.value.id != 0L) {
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -4279,7 +4268,6 @@ fun EditPriceScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column {
-                    // TODO: WORDING FOR BOTH THESE MIGHT WANT TWEAKING
                     Text(
                         text = "Confirm pack size and price",
                         color = MaterialTheme.colorScheme.onSurface
@@ -4309,7 +4297,8 @@ fun EditPriceScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // TODO: Can/should I do something to scroll the screen when focus enters this and the caret is half-hidden?
+        // TODO: Can/should I do something to scroll the screen when focus enters this and the caret
+        // is half-hidden?
         // TODO: This probably ought to be a FilteredTextField or something - a raw TextField will
         // not implement the "large but not infinite" length restriction. Check we don't have any
         // other raw ones hanging round too.
