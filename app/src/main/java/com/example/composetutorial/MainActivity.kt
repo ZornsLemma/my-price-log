@@ -3638,7 +3638,6 @@ fun HomeScreenNavigationDrawer(
                     .wrapContentWidth()
                     .widthIn(max = min(LocalConfiguration.current.screenWidthDp.dp * 2f / 3f, maxNavigationDrawerWidth))
             ) {
-                // TODO: Probably need to set font style/colour for this "heading"
                 Column {
                     Box(
                         modifier = Modifier
@@ -3648,17 +3647,12 @@ fun HomeScreenNavigationDrawer(
                     ) {
                         Text(
                             text = "Collections",
-                            //color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.titleSmall,
-                            //modifier = Modifier.padding(start = 16.dp).height(56.dp) // TODO!?
-                        ) // TODO: 16dp right/necessary?
+                        )
                     }
                     LazyColumn {
                         items(dataSetListSorted) { item ->
                             val selected = dataSet?.id == item.id
-                            // TODO: Should these have some kind of generic bullet-style icon? The half
-                            // cut off "labels" gmail screenshot in m3 docs hints at this. But it might
-                            // also look a bit weird to have these.
                             NavigationDrawerItem(
                                 modifier = Modifier
                                     .padding(horizontal = 12.dp)
@@ -3716,7 +3710,7 @@ fun HomeScreenActualScaffold( // TODO: RENAME
                         Icon(
                             imageVector = Icons.Default.Menu,
                             contentDescription = "Open drawer"
-                        ) // TODO: tweak description?
+                        )
                     }
                 },
                 actions = {
@@ -3726,7 +3720,7 @@ fun HomeScreenActualScaffold( // TODO: RENAME
                         Icon(
                             Icons.Default.MoreVert,
                             contentDescription = "Menu"
-                        ) // TODO: tweak description?
+                        )
                     }
 
                     DropdownMenu(
