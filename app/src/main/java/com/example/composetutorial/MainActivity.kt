@@ -4069,15 +4069,13 @@ fun PriceComparisonCard(
     // confusing way to show it. An "incomplete" header ("/100g") feels unclear, as does having
     // prices which aren't marked with a currency symbol.
 
-// TODO: This is based on an early hack and we should probably not be generating miscellaneous lists but instead just working directly with our AugmentedPrice objects or something
     Card(
         modifier = Modifier
-//.weight(1f, fill=false) // only component with weight, so fills all remaining space
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        // TODO: Extra padding at bottom vs top is to try to keep pointy edges of table away from rounded edges of card,
-        // just maybe this isn't the best appearance, come back to later.
+        // The extra padding at the bottom compared to the top is to try to visually keep the sharp
+        // corners of the table away from the rounded edges of the card.
         Column(
             modifier = Modifier.padding(
                 start = 16.dp,
@@ -4094,7 +4092,6 @@ fun PriceComparisonCard(
             val highlightRow =
                 priceAnalysis.augmentedPriceList.indexOfFirst { it.sourceName == source?.name }.takeIf { it != -1 }
 
-            // TODO: We may need to add things like dataSet and locale to remember key
             val columns = remember(dataSet, locale) {
                 listOf<@Composable (AugmentedPrice) -> Unit>(
                     { augmentedPrice -> Text(augmentedPrice.sourceName) },
@@ -4128,16 +4125,19 @@ fun PriceComparisonCard(
                     },
                 )
             }
-            // TODO: If we make these rows clickable, we should probably have a little right pointing chevron at the far right or something.
+            // TODO: If we make these rows clickable, we should probably have a little right
+            // pointing chevron at the far right or something. Maybe that would only apply if they
+            // open a new "how the calculation was performed" screen, not if they instead select the
+            // relevant source for this screen.
             NewDataTable(
                 header = header,
                 items = priceAnalysis.augmentedPriceList,
                 columns = columns,
                 highlightRow = highlightRow,
-                // TODO: Manually tweaking these weights is annoying and risks not working for some
-                // user's set of sources. Being clever may help, but it's awkward given the somewhat
-                // free form source and the very free form notes. TBH fixed weights may be fine now
-                // we are not planning on showing free-form notes.
+                // ENHANCE: It might be better to calculate the space needed for the longest unit
+                // price and the longest number of icons, then assign anything left over to the
+                // source name. In practice these simple fixed weights seem to be working quite
+                // well for now.
                 columnWeights = listOf(1.7f, 1f, 0.8f),
                 columnAlignments = listOf(
                     CellAlignment.Start,
