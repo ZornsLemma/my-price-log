@@ -4068,16 +4068,6 @@ fun PriceComparisonCard(
     // on the individual unit prices, but I think that for practical purposes this is the least
     // confusing way to show it. An "incomplete" header ("/100g") feels unclear, as does having
     // prices which aren't marked with a currency symbol.
-    // TODO: We might be rebuilding this list every recomposition, I really don't have a clue, as I
-    // already noted we should really not be building this list at all but working directrly with
-    // augmentedPriceList or something
-    val data = priceAnalysis.augmentedPriceList.map { augmentedPrice ->
-        listOf(
-            augmentedPrice.sourceName,
-            formatPrice(augmentedPrice.unitPrice.numerator, dataSet, locale),
-            "TODO" // TODO: We probably don't want to show "notes", but we may want to show some icons or just possibly any judgement on the price or something in a third column
-        )
-    }
 
 // TODO: This is based on an early hack and we should probably not be generating miscellaneous lists but instead just working directly with our AugmentedPrice objects or something
     Card(
@@ -4102,7 +4092,7 @@ fun PriceComparisonCard(
             )
 
             val highlightRow =
-                data.indexOfFirst { it[0] == source?.name }.takeIf { it != -1 }
+                priceAnalysis.augmentedPriceList.indexOfFirst { it.sourceName == source?.name }.takeIf { it != -1 }
 
             // TODO: We may need to add things like dataSet and locale to remember key
             val columns = remember(dataSet, locale) {
