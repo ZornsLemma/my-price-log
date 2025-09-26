@@ -3725,11 +3725,6 @@ fun HomeScreenActualScaffold( // TODO: RENAME
 
                     DropdownMenu(
                         expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        // TODO: There is maybe an argument that "Manage" might be better than
-                        // "Edit" because it carries a stronger suggestion of adding/removing
-                        // products (or whatever) rather than just tweaking their details. But not
-                        // sure. Edit is shorter! And while edit is a *tiny* bit tech jargon it is
-                        // widely accepted in phone apps, while "manage" feels vaguely corporate.
                         MyDropdownMenuItem(text = { Text("Edit collections") }, onClick = {
                             menuExpanded = false
                             onEditDataSetsClick()
@@ -3769,7 +3764,9 @@ fun HomeScreenActualScaffold( // TODO: RENAME
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-// TODO: Function might be misnamed if we introduce navigation drawer, but I probably want to refactor a lot of the composables anyway in order to get away from gigantic massively independent functions.
+// TODO: Function might be misnamed if we introduce navigation drawer, but I probably want to
+// refactor a lot of the composables anyway in order to get away from gigantic massively independent
+// functions.
 fun HomeScreenScaffold(
     navController: NavHostController,
     vm: HomeViewModel,
@@ -3792,22 +3789,15 @@ fun HomeScreenScaffold(
     onEditItemsClick: () -> Unit,
     onEditSourcesClick: () -> Unit,
 ) {
-    // TODO: We need to disable all forms of interaction (navdrawer, dropdowns, menu, etc) while this is "busy"
+    // TODO: We need to disable all forms of interaction (navdrawer, dropdowns, menu, etc) while
+    // this is "busy"
     val saveStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val coroutineScope = rememberCoroutineScope()
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
-    // TODO: Do I need the showBusySnackbar stuff here? I suppose the user might hit back while we are saving (confirm/undo)
+    // TODO: Do I need the showBusySnackbar stuff here? I suppose the user might hit back while we
+    // are saving (confirm/undo)
 
-    // TODO: I have tried to get the dimensions right as per M3 specs here, but I'm not that
-    // confident. Although I think I have followed the font size/style advice, I am not sure it
-    // doesn't look weird - it would maybe be good to e.g. compare with a modern-ish version of
-    // GMail and see what that looks like. Playing with Material Files, I do wonder if the desired
-    // effect is just that the background of the drawer does go "behind" the top and bottom system
-    // bars but they continue to draw on top - in which case I probably can achieve this, if I
-    // get rid of my window insets or whatever at the very top level of my NavHost and move it into
-    // individual screens, so this screen can have full screen for the drawer and apply the insets
-    // to everything else.
     // TODO: Can/should I factor this little fragment of code out into a helper function?
     val locale = LocalConfiguration.current.locales[0]
     val dataSetListSorted = remember(dataSetList, locale) {
@@ -9284,3 +9274,7 @@ val capitalization = when (capString) {
 
 // TODONOW: It might be a good idea to have a setting which controls whether view history elides
 // entries which are nothing but confirmation date changes.
+
+// TODONOW: We definitely need the ability to delete a price - I just accidentally entered a price
+// against the wrong supermarket on my phone and I have no way to fix this short of actually going
+// to the supermarket to find a price (and that's assuming they do sell this product).
