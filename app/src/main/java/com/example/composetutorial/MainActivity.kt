@@ -3941,7 +3941,6 @@ fun HomeScreenContent(
                         source = source,
                         sourceList = sourceList,
                         augmentedPrice = priceAnalysis.augmentedPriceList.singleOrNull { it.basePrice.sourceId == source?.id },
-                        // TODO DELETE itemPriceList = priceList,
                         onEditPriceClick = onEditPriceClick,
                         onViewHistoryClick = onViewHistoryClick,
                     )
@@ -3993,7 +3992,7 @@ fun OkPriceIcon() {
         // TODO: Not sure this is a great icon, maybe rethink.
         painter = painterResource(R.drawable.baseline_remove_circle_24),
         contentDescription = "OK price",
-        tint = MaterialTheme.colorScheme.secondary, // TODO: probably OK, was onSurfaceVariant, but since we use primary and tertiary for good and bad, and secondary is kind of grey-ish anyway...
+        tint = MaterialTheme.colorScheme.secondary,
     )
 }
 
@@ -4002,7 +4001,7 @@ fun BadPriceIcon() {
     Icon(
         painter = painterResource(R.drawable.baseline_cancel_24),
         contentDescription = "Bad price", // TODO: Should we say "X value" not "X price" everywhere, as "Bad price" sounds a bit like it is an error, rather than just "not a good price"
-        tint = MaterialTheme.colorScheme.tertiary, // TODO?
+        tint = MaterialTheme.colorScheme.tertiary,
     )
 }
 
@@ -4050,11 +4049,14 @@ fun PriceComparisonCard(
     // We use "prefix or suffix" in the header because although the prefix or suffix nature of a
     // currency symbol in a locale matters in some other places, here it is appearing in isolation
     // *without* a price next to it.
-    // TODO: Arguably we could/should use remember or something like that to store the header currency/unit string and avoid rederiving it all the time, albeit it isn't that involved and we are already doing that with the currencycode, but still, we could move this into that remember block and not expose the currency code outside it or something
-    // TODO: I'm hacking this together out of old prototype code but as this evolves we need to be "neater" about how we cope with generating the denominator part of the unit price header on the list when the list is empty - or just not showing the list at all in that case (which might make more sense, and maybe we already *do*, I'm not sure right now)
-    // TODO: Does it look ugly to have the "invisible" column with no title? It's like the price column is inexplicably further
-    // from the right margin than it "ought" to be and it's not obvious why unless there are icons in that column, and there *might*
-    // not be any. I suppose if we start adding good/OK/bad icons in there there will nearly always be at least one icon somewhere.
+    // TODO: Arguably we could/should use remember or something like that to store the header
+    // currency/unit string and avoid rederiving it all the time, albeit it isn't that involved and
+    // we are already doing that with the currencycode, but still, we could move this into that
+    // remember block and not expose the currency code outside it or something
+    // TODO: I'm hacking this together out of old prototype code but as this evolves we need to be
+    // "neater" about how we cope with generating the denominator part of the unit price header on
+    // the list when the list is empty - or just not showing the list at all in that case (which
+    // might make more sense, and maybe we already *do*, I'm not sure right now)
     val headerUnitPriceDenominator = priceAnalysis.augmentedPriceList.firstOrNull()?.unitPrice?.denominator
     val header = listOf(
         "Store",
@@ -4066,8 +4068,9 @@ fun PriceComparisonCard(
     // on the individual unit prices, but I think that for practical purposes this is the least
     // confusing way to show it. An "incomplete" header ("/100g") feels unclear, as does having
     // prices which aren't marked with a currency symbol.
-    // TODO: We might be rebuilding this list every recomposition, I really don't have a clue, as I already noted we should really
-    // not be building this list at all but working directrly with augmentedPriceList or something
+    // TODO: We might be rebuilding this list every recomposition, I really don't have a clue, as I
+    // already noted we should really not be building this list at all but working directrly with
+    // augmentedPriceList or something
     val data = priceAnalysis.augmentedPriceList.map { augmentedPrice ->
         listOf(
             augmentedPrice.sourceName,
