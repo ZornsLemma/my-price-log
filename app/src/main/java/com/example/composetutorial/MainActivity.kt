@@ -3807,7 +3807,7 @@ fun HomeScreenScaffold(
     // TODO: rememberDrawerState seems to persist across rotations, which feels a bit odd to me -
     // given how we seem to be expected to treat e.g. dropdowns, I'd have expected the drawer to
     // close. Should we try to force it to close on a rotation or just accept this default
-    // behaviour?
+    // behaviour? If you look at the implementation it uses rememberSaveable internally.
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
     HomeScreenNavigationDrawer(drawerState, dataSet, dataSetListSorted, onSelectedDataSetIdChange, coroutineScope) {
