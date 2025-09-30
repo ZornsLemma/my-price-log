@@ -4766,9 +4766,6 @@ fun GeneralEditScreen(
     LaunchedEffect(showBusySnackbar) {
         if (showBusySnackbar) {
             coroutineScope.launch {
-                // TODO: It's probably OK to just say "Busy" (we could be saving, or generically
-                // busy doing something like a delete which we don't control directly) but maybe
-                // we need to make this string more controllable.
                 snackbarHostState.showSnackbar("Busy, please wait...")
                 showBusySnackbar = false
             }
@@ -4832,22 +4829,12 @@ fun GeneralEditAndDeleteScreen(
         requestClose = requestClose,
     ) {
         content(
-            deleting && saveStatus == AsyncOperationStatus.BusyForAWhile,
-            // TODO: NEEDED? deleting = deleting,
-            /* TODO DELETE
-            { isSimpleDelete: Boolean, dialogTitle: @Composable () -> Unit, dialogText: @Composable () -> Unit ->
-                showDeleteConfirmDialog = true
-                isSimpleDeleteTODO = isSimpleDelete
-                dialogTitleTODO = dialogTitle
-                dialogTextTODO = dialogText
-            }, */
-
+            deleting && saveStatus == AsyncOperationStatus.BusyForAWhile
         )
     }
-    // TODO (isSimpleDelete: Boolean, dialogTitle: @Composable () -> Unit, dialogText: @Composable () -> Unit),
 
     if (deleteConfirmationDetails != null) {
-        val isSimpleDelete = deleteConfirmationDetails.first // TODO: Rename "showWarningIcon"?
+        val isSimpleDelete = deleteConfirmationDetails.first
         val dialogTitle = deleteConfirmationDetails.second
         val dialogText = deleteConfirmationDetails.third
 
@@ -4971,20 +4958,19 @@ fun EditItemScreen(
         // copied and pasted from EditSourceScreen for now.
 
         // TODO: Can I put these string versions inside QuantityType or won't that play well with i18n?
-        // TODO: It might be better to put ITEM first. That way the weight and volume are nearer to the default unit box which appears when they are selected.
         val options = listOf(
+            // TODO: Don't be over-eager to have supportingText here - if we don't need it for any of them items that is fine, and we can then avoid this maybe-nonstandardness in this case at least, and revert to the standard item height of 40.dp - "Item" alone may be a fine option, or "Item or group of items" or something like that would probably be a fine option with no supporting text - think carefully about wording but don't assume we need supportingText
+            Triple(
+                QuantityType.ITEM,
+                "Item",
+                "Per item or pack of items"
+            ), // TODO: POOR WORDING FOR BOTH SHORT NAME AND SUPPORTING TEXT? THINK
             Triple(QuantityType.WEIGHT, "Weight", null),
             Triple(
                 QuantityType.VOLUME,
                 "Volume",
                 null,
             ),
-            // TODO: Don't be over-eager to have supportingText here - if we don't need it for any of them items that is fine, and we can then avoid this maybe-nonstandardness in this case at least, and revert to the standard item height of 40.dp - "Item" alone may be a fine option, or "Item or group of items" or something like that would probably be a fine option with no supporting text - think carefully about wording but don't assume we need supportingText
-            Triple(
-                QuantityType.ITEM,
-                "Item",
-                "Per item or pack of items"
-            ) // TODO: POOR WORDING FOR BOTH SHORT NAME AND SUPPORTING TEXT? THINK
         )
         var selectedOption = uiContent.editableItem.value.quantityType
         // TODO: This radio group needs to be enabled iff saveStatus.isNotBusy()
@@ -5010,10 +4996,8 @@ fun EditItemScreen(
                     .animateContentSize()
                     .padding(horizontal = 8.dp, vertical = 12.dp)
             ) {
-                // TODO: I'm far from sure what typography or colour this caption should have, but this
-                // matches the caption on the TextFields so it is probably not a terrible choice. TODO: THIS IS FOR bodySmall - I can't help thinking titleSmall maybe looks better though. I am a bit worried the fonts are all over the place in general, but since MD3 is conspicuously silent outside of some very specific cases it is really hard to know what to do.
                 Text(
-                    "Product sold by", // TODO: Not necessarily great wording, especially since we also have a specific unit selection further down for weight/volume - not the only aspect, but maybe just "Sold by" would be fine (the whole dialog is about products and probably even says "product" in top app bar)
+                    "Sold by",
                     style = MaterialTheme.typography.titleSmall /* bodySmall */,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 8.dp)
@@ -5030,12 +5014,10 @@ fun EditItemScreen(
                                     uiContent.editableItem.value.copy(
                                         quantityType = id
                                     )
-                                    // TODO: We also need to null-out the default unit or maybe give it a "default default", if this is a *change* of quantityType (not if it's just a reselection of same quantityType)
                                 )
                             }
                             .padding(horizontal = 8.dp)
                             .height(48.dp) // 40.dp is MD3 spec but we want extra space for our supporting text while still having some spacing between items
-                            //.padding(8.dp) // TODO: ChatGPT value to try to space things out now we have supportingText
                             .semantics {
                                 role = Role.RadioButton
                             }, // for TalkBack / screen readers, since this is clickable not the RadioButton
@@ -5046,8 +5028,7 @@ fun EditItemScreen(
                         )
                         Column(modifier = Modifier.padding(start = 8.dp)) {
                             Text(
-                                text = name,
-                                /* TODO: not sure this looks right: style = MaterialTheme.typography.labelLarge, */ /* TODO: seems to be default anyway: color = MaterialTheme.colorScheme.onSurface */
+                                text = name
                             )
                             Log.d("MyApp", "supportingText $supportingText")
                             if (supportingText != null) {
