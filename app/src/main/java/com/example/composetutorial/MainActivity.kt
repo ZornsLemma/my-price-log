@@ -5204,7 +5204,6 @@ fun EditSourceScreen(
             validationFlowFieldId = EditSourceViewModel.EditableField.NAME
         )
 
-        // TODO: START EXPERIMENTAL
         Spacer(modifier = Modifier.height(16.dp))
 
         // TODO: We should almost certainly be doing this via an integer ID - we now have LoyaltyDiscountType
@@ -5224,9 +5223,6 @@ fun EditSourceScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-
-            // TODO: colors?
-            // TODO: elevation???
         ) {
             // We would like to use horizontal padding of 16.dp on this Column, but we don't want
             // the ripple effect on the radio button Rows to "stop" at the left edge of the circular
@@ -5242,8 +5238,6 @@ fun EditSourceScreen(
                     .animateContentSize()
                     .padding(horizontal = 8.dp, vertical = 12.dp)
             ) {
-                // TODO: I'm far from sure what typography or colour this caption should have, but this
-                // matches the caption on the TextFields so it is probably not a terrible choice. TODO: THIS IS FOR bodySmall - I can't help thinking titleSmall maybe looks better though. I am a bit worried the fonts are all over the place in general, but since MD3 is conspicuously silent outside of some very specific cases it is really hard to know what to do.
                 Text(
                     "Loyalty scheme",
                     style = MaterialTheme.typography.titleSmall /* bodySmall */,
@@ -5266,19 +5260,17 @@ fun EditSourceScreen(
                             }
                             .padding(horizontal = 8.dp)
                             .height(48.dp) // 40.dp is MD3 spec but we want extra space for our supporting text while still having some spacing between items
-                            //.padding(8.dp) // TODO: ChatGPT value to try to space things out now we have supportingText
                             .semantics {
                                 role = Role.RadioButton
                             }, // for TalkBack / screen readers, since this is clickable not the RadioButton
                     ) {
                         RadioButton(
                             selected = (selectedOption == id),
-                            onClick = null // TODO onClick
+                            onClick = null // Row's Modifier.clickable() handles this
                         )
                         Column(modifier = Modifier.padding(start = 8.dp)) {
                             Text(
-                                text = name,
-                                /* TODO: not sure this looks right: style = MaterialTheme.typography.labelLarge, */ /* TODO: seems to be default anyway: color = MaterialTheme.colorScheme.onSurface */
+                                text = name
                             )
                             Log.d("MyApp", "supportingText $supportingText")
                             if (supportingText != null) {
