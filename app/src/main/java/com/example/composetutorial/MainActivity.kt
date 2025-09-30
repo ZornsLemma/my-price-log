@@ -4554,7 +4554,7 @@ fun GeneralEditScreen(
     val saveStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
     Log.d("MyAppRGE", "GeneralEditScreen saveStatus=$saveStatus")
 
-    val isBusy = !saveStatus.isNotBusy() // TODO: Add a isBusy()? get rid of isNotBusy()?
+    val isNotBusy = saveStatus.isNotBusy()
     var showConfirmDiscardDialog by rememberSaveable { mutableStateOf(false) }
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
     var showBusySnackbar by rememberSaveable { mutableStateOf(false) }
@@ -4584,7 +4584,7 @@ fun GeneralEditScreen(
     }
 
     BackHandler {
-        if (!isBusy) {
+        if (isNotBusy) {
             requestDismiss()
         } else {
             // I've discussed this with LLMs and it's not clear if - from a UI perspective - we
@@ -4664,7 +4664,7 @@ fun GeneralEditScreen(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(enabled = !isBusy, onClick = { requestDismiss() }) {
+                    IconButton(enabled = isNotBusy, onClick = { requestDismiss() }) {
                         Icon(Icons.Default.Close, contentDescription = "Close")
                     }
                 },
@@ -4673,7 +4673,7 @@ fun GeneralEditScreen(
                     // TODO: Just possibly instead of always calling onSave, onClick should call
                     // isDirty first and just dismiss without saving if it returns false - but that
                     // might be confusing and it's maybe optimising a corner case
-                    TextButton(enabled = !isBusy, onClick = {
+                    TextButton(enabled = isNotBusy, onClick = {
                         // TODO: I think the layout here is good and in fact better than it was,
                         // but note that unlike the EditPrice stuff this is being based on, here
                         // updateOrInsertFoo() does not (and probably cannot, since it's an
@@ -8187,7 +8187,7 @@ fun ViewPriceHistoryScreen(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(/* TODO? enabled = !isBusy, */ onClick = { requestClose() }) {
+                    IconButton(/* TODO? enabled = isNotBusy, */ onClick = { requestClose() }) {
                         Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
