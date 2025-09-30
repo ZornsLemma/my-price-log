@@ -5045,47 +5045,10 @@ fun EditItemScreen(
                 if (selectedOption != QuantityType.ITEM) {
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    /* TODO COPY AND PASTE DELETE KEPT JUST IN CASE USEFUL FOR REF BUT PROBABLY NOT
-                    var loyaltyPercentage by rememberSyncedTextFieldValue(uiContent.editableSource.value.loyaltyPercentage)
-                    // TODO: Can/should we factor out this BaseValidatedTextField+NumericTextField combo?
-                    Box(modifier = Modifier.padding(8.dp)) {
-                        BaseValidatedTextField(
-                            value = loyaltyPercentage.text,
-                            validationRules = vm.loyaltyPercentageValidationRules,
-                            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
-                            validationFlow = vm.saveValidationEvents,
-                            validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
-                        ) { validationResult, interactionSource, scrollToFocusableHandle ->
-                            NumericTextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .validationFocusRequester(scrollToFocusableHandle),
-                                // TODO: I can't help feeling this looks a bit confusing when it's empty, maybe it's just lack of a "%" or something.
-                                label = { Text("Loyalty scheme reward") },
-                                value = loyaltyPercentage,
-                                suffix = { Text("%") },
-                                onValueChange = {
-                                    loyaltyPercentage = it
-                                    vm.setUIContentEditableSource(
-                                        uiContent.editableSource.value.copy(
-                                            loyaltyPercentage = it.text
-                                        )
-                                    )
-                                },
-                                enabled = saveStatus.isNotBusy(),
-                                isError = validationResult != null,
-                                supportingText = textOrNull(
-                                    validationResult,
-                                    color = MaterialTheme.colorScheme.error
-                                ),
-                                interactionSource = interactionSource,
-                            )
-                        }
-                    }
-                    */
                     // TODO: Not just here, but the use of abbreviations for units is maybe not ideal here, it's a bit confusing to just see e.g. a bare "l" instead of "litre"
 
-                    // TODO: RelevantUnit* here are sort of copy and paste from ItemSourceInfo and could possibly be factored out along with the code using them
+                    // TODO: RelevantUnit* here are sort of copy and paste from ItemSourceInfo and
+                    // could possibly be factored out along with the code using them
                     val relevantUnitFamilies =
                         remember(vm.uiContent.dataSet) { getRelevantUnitFamilies(vm.uiContent.dataSet) }
 
@@ -5118,7 +5081,6 @@ fun EditItemScreen(
                                             it[uiContent.editableItem.value.quantityType.ordinal] =
                                                 defaultUnit.id
                                         }
-                                // TODO DELETE defaultUnitIdByQuantityTypeOrdinal[uiContent.editableItem.value.quantityType.ordinal] = defaultUnit.id
                                 vm.setUIContentEditableItem(
                                     uiContent.editableItem.value.copy(
                                         defaultUnitIdByQuantityTypeOrdinal = defaultUnitIdByQuantityTypeOrdinal
@@ -5155,12 +5117,6 @@ fun EditItemScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        // TODO: We should take account of whether a product has any price data or not. Maybe not in
-        // terms of labelling the button etc (though we could, albeit minor jank prospects as we'd
-        // need to query async during recomposition, albeit the change might be small enough that on
-        // this form jank might be minimal). At a minimum, when clicked, the alert dialog should
-        // distinguish the cases where the product has prices and where it doesn't - the latter being
-        // a much less scary delete.
         if (uiContent.editableItem.value.id != 0L) {
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
@@ -5175,7 +5131,7 @@ fun EditItemScreen(
                     Icon(
                         Icons.Default.Delete,
                         contentDescription = "Delete"
-                    ) // TODO: tweak wording?
+                    )
                 }
                 Spacer(Modifier.width(8.dp))
                 Text("Delete product")
