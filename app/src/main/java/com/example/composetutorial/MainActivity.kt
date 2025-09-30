@@ -4533,7 +4533,7 @@ fun runGeneralEditScreenOperation(
                 vm.asyncOperationStatus.update(AsyncOperationStatus.Success(id))
             } catch (e: Exception) {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation caught exception")
-                vm.asyncOperationStatus.update(AsyncOperationStatus.Error("TODONOW")) // TODO: can/should we preserve e and show it to user in UI?
+                vm.asyncOperationStatus.update(AsyncOperationStatus.Error("runGeneralEditScreenOperation failed: ${e.toString()}"))
             }
         }
     }
