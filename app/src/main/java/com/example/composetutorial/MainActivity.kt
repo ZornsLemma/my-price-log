@@ -4380,11 +4380,6 @@ fun EditPriceScreenPrice(
 @Composable
 fun EditPriceScreenPackSize(
     vm: EditPriceViewModel,
-    /* TODO DELETE
-    validationResult: String?,
-    interactionSource: MutableInteractionSource,
-    scrollToFocusableHandle: ScrollToFocusableHandle,
-    */
     onChange: () -> Unit
 ) {
     val uiContent = vm.uiContent
@@ -4403,9 +4398,8 @@ fun EditPriceScreenPackSize(
         uiContent.editablePrice.value.measureValue
     )
 
-    // TODO: This box could just be around the actual "Pack size" text field, but I think it
-    // makes sense for it to also cover the supportingText showing the actual problem. That
-    // visually requires it to cover the whole screen width.
+    // This BaseValidatedTextField wraps the whole Row and its supporting text, because we do want
+    // it to surround the supporting text as well.
     // TODO: I wonder if this screen is actually a bit vertically squashed together, now I see
     // that I "need" offset = 4.dp here instead of the current default 6.dp. It might be I
     // should increase the vertical spacing of the components on this screen and then make this
