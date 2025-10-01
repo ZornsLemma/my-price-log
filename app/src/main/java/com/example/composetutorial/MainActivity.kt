@@ -5327,8 +5327,6 @@ fun EditSourceScreen(
             }
         }
 
-        // TODO END EXPERIMENTAL
-
         Spacer(modifier = Modifier.height(16.dp))
 
         var notes by rememberSyncedTextFieldValue(uiContent.editableSource.value.notes)
@@ -5345,12 +5343,6 @@ fun EditSourceScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        // TODO: We should take account of whether a product has any price data or not. Maybe not in
-        // terms of labelling the button etc (though we could, albeit minor jank prospects as we'd
-        // need to query async during recomposition, albeit the change might be small enough that on
-        // this form jank might be minimal). At a minimum, when clicked, the alert dialog should
-        // distinguish the cases where the product has prices and where it doesn't - the latter being
-        // a much less scary delete.
         if (uiContent.editableSource.value.id != 0L) {
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
@@ -5365,7 +5357,7 @@ fun EditSourceScreen(
                     Icon(
                         Icons.Default.Delete,
                         contentDescription = "Delete"
-                    ) // TODO: tweak wording?
+                    )
                 }
                 Spacer(Modifier.width(8.dp))
                 Text("Delete store")
@@ -5405,7 +5397,8 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
         validationTarget = scrollToFocusableHandle
     ) {
         Column(modifier = Modifier.animateContentSize()) {
-            // TODO: We could possibly pass validationThing201 directly. We could also maybe pass a Modifier.validationFocusRequester() instead of scrollToFocusableHandle.
+            // TODO: We could possibly pass validationThing201 directly. We could also maybe pass a
+            // Modifier.validationFocusRequester() instead of scrollToFocusableHandle.
             content(
                 validationThing201.validationResult.value,
                 validationThing201.interactionSource,
@@ -5544,13 +5537,12 @@ fun EditDataSetScreen(
             validationFlow = vm.saveValidationEvents,
             validationFlowFieldId = EditDataSetViewModel.EditableField.CURRENCY_CODE
         ) { validationResult, interactionSource, scrollToFocusableHandle ->
-            // TODO: When we do the "add data set" case, note that currency will be able to be null and we need to validate it isn't null on save.
-            // TODO: According to a long comment I wrote elsewhere, we probably should be using a frozen
-            // LocalConfiguration from when this screen was first opened here. However, at present it
-            // includes no floating point values that are awkward if the locale changes, and being
-            // responsive to any locale changes is both easy and may be helpful. If I keep doing it this
-            // way, I need to update that long comment elsewhere accordingly and make a permanent note
-            // here too.
+            // TODO: According to a long comment I wrote elsewhere, we probably should be using a
+            // frozen LocalConfiguration from when this screen was first opened here. However, at
+            // present it includes no floating point values that are awkward if the locale changes,
+            // and being responsive to any locale changes is both easy and may be helpful. If I keep
+            // doing it this way, I need to update that long comment elsewhere accordingly and make
+            // a permanent note here too.
             val currentLocalConfiguration = LocalConfiguration.current
             val currencyList = remember(currentLocalConfiguration.locales) {
                 // TODO: Test this updates if we change locales on the fly?
@@ -5558,31 +5550,27 @@ fun EditDataSetScreen(
             }
 
             // TODO: Without getting sidetracked just yet into e.g. third party libraries to support
-            // currency selection between, we try to do half-decent job by showing a gigantic list in
-            // an unwieldy dropdown but putting the currencies the user is likely to care about at the
-            // top. In the longer term apart from maybe investigating third party libraries I see two
-            // options:
+            // currency selection between, we try to do half-decent job by showing a gigantic list
+            // in an unwieldy dropdown but putting the currencies the user is likely to care about
+            // at the top. In the longer term  I see three options:
             // 1 - optionally allow the user to just enter a three letter currency code directly
-            // 2 - optionally allow the user to define their own currency (in which case we don't care
-            //     about three letter codes) by specifying prefix, suffix and decimal places
+            // 2 - optionally allow the user to define their own currency (in which case we don't
+            //     care about three letter codes) by specifying prefix, suffix and decimal places
+            // 3 - investigate third party libraries to help with this
             // If option 2 is available, there may be no real need for option 1. We'd probably still
-            // support currency selection in some form, but the specific escape hatch of being able to
-            // type in a three letter code is not so important. But maybe we'd do both.
+            // support currency selection in some form, but the specific escape hatch of being able
+            // to type in a three letter code is not so important. But maybe we'd do both.
             //
-            // We could of course create our own pop-up (probably not full screen) dialog to pick a
-            // currency, but the chances are curating a list which isn't bloated with historical
-            // currencies (which are not relevant to us) is something best left to a third party library
-            // which is actively interested in this. For us it's rather tangential.
-            //
-            // We could also use our existing item selection dialog - which is substring search capable
-            // - to help the user pick something out of the gigantic list of currencies instead of
-            // scrolling through a giant dropdown.
+            // We could create our own pop-up (probably not full screen) dialog to pick a currency.
+            // We could also use our existing item selection dialog - which is substring search
+            // capable - to help the user pick something out of the gigantic list of currencies
+            // instead of scrolling through a giant dropdown.
 
-            // TODO: This may expose a lurking bug in MyExposedDropdownMenuBox - the very last (I think)
-            // item in the list is *not* entirely shown. I don't know if the same thing will happen with
-            // other dropdowns which get long enough to need scrolling, but should definitely test as it
-            // matters much more there. It's ugly and annoying and concerning here too, of course.
-            // (This doesn't seem to happen on the O6!?)
+            // TODO: This may expose a lurking bug in MyExposedDropdownMenuBox - the very last (I
+            // think) item in the list is *not* entirely shown. I don't know if the same thing will
+            // happen with other dropdowns which get long enough to need scrolling, but should
+            // definitely test as it matters much more there. It's ugly and annoying and concerning
+            // here too, of course. (This doesn't seem to happen on the O6!?)
             MyExposedDropdownMenuBox(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -5606,7 +5594,6 @@ fun EditDataSetScreen(
                     validationResult,
                     color = MaterialTheme.colorScheme.error,
                 ),
-                // TODO!? interactionSource = interactionSource
             )
         }
 
@@ -5615,9 +5602,6 @@ fun EditDataSetScreen(
         // ENHANCE: MD3 Expressive deprecates this and says we should use a connected button group,
         // but the relevant library version is still in alpha so I'll just do it the old MD3 way for
         // now with a segmented button group.
-        // TODO: Should this maybe be on a Card to help it match the "style" of the filledtextfields?
-        // TODO: I'm far from sure what typography or colour this caption should have, but this
-        // matches the caption on the TextFields so it is probably not a terrible choice.
         BaseValidatedTextField(
             value = Triple(
                 uiContent.editableDataSet.value.allowMetric,
@@ -5632,7 +5616,7 @@ fun EditDataSetScreen(
                 "Measurement units",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
-            ) // TODO TWEAK TEXT, FONT, SIZE
+            )
             // "US customary" doesn't fit (on my test "small" emulated phone) but based on a discussion
             // with ChatGPT "US Units" is better for a casual user anyway, even if we could fit "US
             // Customary".
