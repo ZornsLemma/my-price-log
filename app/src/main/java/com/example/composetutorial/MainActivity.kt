@@ -5628,10 +5628,11 @@ fun EditDataSetScreen(
                     uiContent.editableDataSet.value.allowUSCustomary
                 )
             }
-            // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and 2 as imperial/US
+            // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and
+            // 2 as imperial/US
 
-            // We *don't* call Modifier.validationFocusRequester() as you can't focus a segmented button,
-            // and this will force a clear focus to happen on validation errors instead.
+            // We *don't* call Modifier.validationFocusRequester() as you can't focus a segmented
+            // button, and this will force a clear focus to happen on validation errors instead.
             MultiChoiceSegmentedButtonRow(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -5669,14 +5670,14 @@ fun EditDataSetScreen(
             }
 
             if (validationResult != null) {
-                // TODO: I'm not sure this padding gives the ideal visual appearance, but this doesn't look too bad.
-                // TODO: Should we show a red warning triangle e.g. at left or right of this text? Not sure, but we
-                // do show one in the case of TextFields so although the layout isn't quite the same, maybe showing
-                // one here is not a bad idea. Current gut feeling following some LLM discussion is that the
-                // warning triangle is probably not a good idea, but it should be at the left if I do add it. And
-                // maybe I should make the border of the segmented button red if we're in an error state as well,
-                // although my inclination is that this might look ugly and is not particularly blessed as
-                // standard.
+                // TODO: Should we show a red warning triangle e.g. at left or right of this text?
+                // Not sure, but we do show one in the case of TextFields so although the layout
+                // isn't quite the same, maybe showing one here is not a bad idea. Current gut
+                // feeling following some LLM discussion is that the warning triangle is probably
+                // not a good idea, but it should be at the left if I do add it. And maybe I should
+                // make the border of the segmented button red if we're in an error state as well,
+                // although my inclination is that this might look ugly and is not particularly
+                // blessed as standard.
                 SupportingText(
                     validationResult,
                     isError = true,
@@ -5715,7 +5716,7 @@ fun EditDataSetScreen(
                     Icon(
                         Icons.Default.Delete,
                         contentDescription = "Delete"
-                    ) // TODO: tweak wording?
+                    )
                 }
                 Spacer(Modifier.width(8.dp)) // TODO: Maybe 16.dp given spacing around measurement units?
                 Text("Delete collection")
@@ -5786,15 +5787,15 @@ fun <T> rememberValidationThing(
     //   it in anger on an actual smartphone with a touchscreen rather than typing on keyboard on
     //   PC or clicking awkwardly with the mouse on the on-screen keyboard on emulator.
     LaunchedEffect(value, validationRulesKey, allowEmpty, isFocused) {
-        // TODO: The delay is breaking things a bit here when e.g. we have an empty "pack size" string
-        // and click save - the validation message becomes eligible for display as allowEmpty is now
-        // true, but it doesn't appear straight away and so it "misses" the highlight box and it
-        // generally looks bad and a bit confusing. (This is less of a visual issue now I've dropped
-        // the delay from 1000ms to 200ms, but it's probably best to address it properly. Maybe
-        // put the delay back to 1000ms temporarily when working on this.) I suspect the fix is to
-        // have a remembered oldValue, say "if (value != oldValue)" here instead of controlling based
-        // on isFocused, and the obviously set oldValue = value after. Not tested this, maybe too
-        // simplistic.
+        // TODO: The delay is breaking things a bit here when e.g. we have an empty "pack size"
+        // string and click save - the validation message becomes eligible for display as allowEmpty
+        // is now true, but it doesn't appear straight away and so it "misses" the highlight box and
+        // it generally looks bad and a bit confusing. (This is less of a visual issue now I've
+        // dropped the delay from 1000ms to 200ms, but it's probably best to address it properly.
+        // Maybe put the delay back to 1000ms temporarily when working on this.) I suspect the fix
+        // is to have a remembered oldValue, say "if (value != oldValue)" here instead of
+        // controlling based on isFocused, and the obviously set oldValue = value after. Not tested
+        // this, maybe too simplistic.
         if (isFocused) delay(delayMillis)
 
         val reorderedValidations =
