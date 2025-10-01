@@ -9169,3 +9169,9 @@ val capitalization = when (capString) {
 // TODONOW: We definitely need the ability to delete a price - I just accidentally entered a price
 // against the wrong supermarket on my phone and I have no way to fix this short of actually going
 // to the supermarket to find a price (and that's assuming they do sell this product).
+
+// TODONOW: Implement a simple e.g. list screen from scratch using async database fetch to just
+// experiment and see whether my anti-jank sharedviewmodel stuff is worthwhile or whether it would
+// look "OK" if I just did it the naive way. Maybe also try an edit-individual-item screen. Don't
+// make this production quality or worry about refactoring, just hack something in which uses the
+// right basic approach to see how it feels.
