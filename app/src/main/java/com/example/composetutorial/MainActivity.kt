@@ -7389,6 +7389,14 @@ fun AppNavigation() {
         // ChatGPT voodoo (and it took several attempts to get it right, unless I just kept messing
         // up myself).
 
+        // TODO: It might be good to look at adding a fade to some of these animations - maybe a
+        // fade added to "top" screen and perhaps a fade added to the "bottom" screen as well. I
+        // don't think it's a huge deal and it is "correct", but the border on the incoming screen
+        // can - if you're really looking at the transition with paranoid eyes - give an impression
+        // of the outgoing non-background content "flickering away" before being replaced by new
+        // content. I say "correct" because if we're imagining cards sliding on top of one another
+        // in a stack the border would indeed cause this kind of "flicker", but it might still look
+        // nicer with some fading.
         fun AnimatedContentTransitionScope<NavBackStackEntry>.slideLeftTransition(): EnterTransition =
             slideIntoContainer(
                 towards = AnimatedContentTransitionScope.SlideDirection.Left,
@@ -9175,3 +9183,15 @@ val capitalization = when (capString) {
 // look "OK" if I just did it the naive way. Maybe also try an edit-individual-item screen. Don't
 // make this production quality or worry about refactoring, just hack something in which uses the
 // right basic approach to see how it feels.
+
+// ENHANCE: Some sort of feature for showing best ever price for a product across all stores, or
+// probably better some variant on this where we show some (not too stats nerdy) "best price range"
+// for data over the last n days for a product. Where I'm going with this (though there may be other
+// uses) is that for products I buy rarely and on demand and am relatively price sensitive for (e.g.
+// beer), I sometimes find myself reluctant to update the current price away from a temporary good
+// offer price, because I probably won't be buying it tomorrow (so I don't "need" the correct price
+// shown, although logically that's how the app should work/be used) and I want to record the good
+// price so I know it's good when I see it again. If there was an easy way to see "best price over
+// last n days" (actually shwoing this for say n=30/60/90/180/365 simultaneously) might not be a
+// bad way to show the "spread" in a non-stats-nerd and useful way), I wouldn't feel ths reluctance
+// to update the price.
