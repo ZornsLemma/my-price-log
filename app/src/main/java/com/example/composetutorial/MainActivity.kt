@@ -5836,6 +5836,7 @@ fun getCurrencyForLocale(locale: Locale): Currency? {
 // - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-two.doc
 // - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-three.xls
 // with a few additional tweaks.
+// @formatter:off
 val validCurrencyCodes = setOf(
     "AED", "AFN", "ALL", "AMD", "AOA", "ARS", "AUD", "AWG", "AZN", "BAM", "BBD", "BDT", "BGN",
     "BHD", "BIF", "BMD", "BND", "BOB", "BRL", "BSD", "BTN", "BWP", "BYN", "BZD", "CAD", "CDF",
@@ -6000,7 +6001,8 @@ fun numericValidationRules(
         },
 
         if (!allowZero) {
-            // TODO: This message assumes you can't enter a negative value in the first place.
+            // This message assumes you can't enter a negative value because input filtering rejects
+            // '-'.
             ValidationRule({ attemptedParse(it) != 0.0 }, "Must be greater than zero")
         } else {
             null
@@ -6340,16 +6342,13 @@ class SharedViewModel : ViewModel() {
             item = item,
             source = source,
             price = price,
-            // TODO delete frozenLocale = frozenLocale
         )
     }
-
-    // TODO: ALL EXPERIMENTAL NEW BELOW HERE
 
     // TODO: Not just here, but e.g. EditSourceScreen vs EditSource*s*Screen is way too subtle for this already rather confusing code. Might (apart from other possible improvements) be better to
     // talk about "Edit source" (singular) but "List sources" (plural) internally, even if we continue to use "Edit sources" in the UI labels.
 
-    // TODO: Rename the following now they are just List<T>? not a UIContent structure
+    // TODO: Rename the following now they are just List<T>? not a UIContent structure? Or is the "UIContent" convention more valuable?
     var editDataSetsScreenUIContent: List<DataSet>? = null
     var editItemsScreenUIContent: EditItemsScreenUIContent? = null
     var editSourcesScreenUIContent: List<Source>? = null
@@ -6375,8 +6374,6 @@ class SharedViewModel : ViewModel() {
         editSourcesScreenUIContent =
             uiContent.sourceList + uiContent.sourceList.map { it -> it.copy(id = it.id * 1000) }
     }
-
-    // TODO: MORE NEW EXPERIMENTAL
 
     var editDataSetScreenUIContent: EditDataSetScreenUIContent? = null
 
@@ -6479,9 +6476,7 @@ class EditItemsViewModel(
     savedStateHandle: SavedStateHandle,
     getName: (Item) -> String,
     val uiContent: EditItemsScreenUIContent,
-    // TODO DELETE initialList: List<Item>?,
     dataQuery: Flow<List<Item>>,
-    // TODO DELETE public val dataSet: DataSet
 ) : GeneralSelectorViewModel<Item>(
     savedStateHandle,
     getName,
@@ -9204,4 +9199,6 @@ val capitalization = when (capString) {
 // evaluating a different product variant to the one you already have at this store, you might want
 // to explore this without relying on shelf unit price (if any) without actually updating the db and
 // finding the new price is worse. I'd envisage this beig available via the overflow menu at top
-// right of home screen.
+// right of home screen. I'm imagine the three button metric/imperial/US customary selector from
+// the dataset configuration being shown on this screen, initialised with the current dataset
+// configuration, so you can choose which units appear in the dropdowns.
