@@ -6535,9 +6535,9 @@ open class GeneralSelectorViewModel<T>(
 fun topAppBarTitle(title: String, subtitle: String?): @Composable (() -> Unit) =
     if (subtitle != null) {
         {
-            // TODO: No idea if these sizes are MD3 compliant, spec talks about actual sizes etc
-            // but I really feel I ought to be using the MaterialTheme.typography stuff. Maybe
-            // I'm wrong. I think this does look about right anyway.
+            // I don't know if this is MD3 compliant, the spec talks about actual sizes but I feel
+            // I ought to be using MaterialTheme.typography.* styles. This does seem to look about
+            // right anyway.
             Column {
                 Text(
                     text = title,
@@ -6548,10 +6548,6 @@ fun topAppBarTitle(title: String, subtitle: String?): @Composable (() -> Unit) =
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    /*
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal,
-                    */
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
