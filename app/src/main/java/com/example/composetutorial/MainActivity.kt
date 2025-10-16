@@ -6488,7 +6488,6 @@ class EditItemsViewModel(
     }
 }
 
-// TODO: This may not actually need the repository passing in given we pass in a query
 open class GeneralSelectorViewModel<T>(
     private val savedStateHandle: SavedStateHandle,
     private val getName: (T) -> String,
@@ -6498,15 +6497,13 @@ open class GeneralSelectorViewModel<T>(
     // The idea here is that as we have no real state other than the results of dataQuery, we
     // optimise by having our caller provide initialList to give a good first composition during
     // normal navigation, but we can manage without it if we are reincarnated.
-    // TODO: This works and it is probably fine but not that for EditItemsViewModel we do actually
+    // TODO: This works and it is probably fine but note that for EditItemsViewModel we do actually
     // serialise, even though the general code doesn't require it. (We need it so we can pass a
     // DataSet through to EditItemScreen.)
 
-    // This will *not* filter uiContent.initialList, but that's OK because we know the initial filter doesn't exclude anything.
-    // TODO: We could persist the search string via savedStateHandle. That might not be
-    // unreasonable, and unless I gain a lot in the navcontroller by not making a savestatehandle
-    // available there is probably no real downside, but I won't do it just yet until I finish the
-    // current refactor. Might need to be careful to ensure we don't have a leftover search string when navigating in fresh, especially since we wouldn't even apply it.
+    // This will *not* filter uiContent.initialList, but that's OK because we know the initial
+    // filter doesn't exclude anything.
+    // ENHANCE: We could persist the search string via savedStateHandle.
     val searchStringFlow = MutableStateFlow("")
 
     @OptIn(ExperimentalCoroutinesApi::class)
