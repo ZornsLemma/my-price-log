@@ -2283,6 +2283,7 @@ const val maxDataSetNameLength =
 const val maxItemNameLength = 32
 const val maxSourceNameLength = 32
 const val maxNotesLength = 200 // TODO TEMP FOR TESTING, SHOULD BE 1024
+const val maxSearchLength = 32
 
 // 11 is a bit arbitrary but we're just trying to avoid the user filling the TextField full of junk.
 // With my current layouts on a small phone this avoids wrapping and it feels very generous anyway;
@@ -6075,7 +6076,7 @@ fun makeOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
 // Like TextField, but with some simple logic to allow input to be filtered and discarded via an
 // onCandidateValueChange callback. It also - although this is just a convenience and isn't
 // fundamental - automatically drives the internal TextField's trailingIcon from the isError
-// parameter.
+// parameter if it's not explictly specified.
 @Composable
 fun FilteredTextField(
     modifier: Modifier = Modifier,
@@ -6090,8 +6091,10 @@ fun FilteredTextField(
     isError: Boolean = false,
     supportingText: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    interactionSource: MutableInteractionSource? = null
-) {
+    interactionSource: MutableInteractionSource? = null,
+    leadingIcon: @Composable (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
+    ) {
     TextField(
         label = label,
         value = value,
@@ -6107,15 +6110,17 @@ fun FilteredTextField(
         keyboardOptions = keyboardOptions,
         modifier = modifier,
         supportingText = supportingText,
-        trailingIcon = if (isError) {
-            {
-                Icon(
-                    imageVector = Icons.Default.Warning,
-                    contentDescription = "Error",
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
-        } else null,
+        leadingIcon = leadingIcon,
+        trailingIcon = trailingIcon
+            ?: if (isError) {
+                {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Error",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            } else null,
         isError = isError,
         interactionSource = interactionSource,
     )
@@ -6504,7 +6509,7 @@ open class GeneralSelectorViewModel<T>(
     // This will *not* filter uiContent.initialList, but that's OK because we know the initial
     // filter doesn't exclude anything.
     // ENHANCE: We could persist the search string via savedStateHandle.
-    val searchStringFlow = MutableStateFlow("")
+    val searchStringFlow = MutableStateFlow(TextFieldValue(""))
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val dataFlow = combine(
@@ -6513,7 +6518,7 @@ open class GeneralSelectorViewModel<T>(
     ) { data, query ->
         data.filter {
             isCaseInsensitiveSubstring(
-                query.trim(),
+                query.text.trim(),
                 getName(it),
                 Locale.getDefault() /* TODO VERY TEMP HACK - WE ARE NOT SUPPOSED TO BE USING THIS FUNCTION */
             )
@@ -6573,7 +6578,6 @@ fun <T> GeneralSelectorScreen(
     showSearch: Boolean = false,
 ) {
     val dataList by vm.dataFlow.collectAsStateWithLifecycle()
-    val searchString by vm.searchStringFlow.collectAsStateWithLifecycle()
     Log.d("MyAppGS", "dataList $dataList")
 
     val floatingActionButton: (@Composable () -> Unit) = if (onAddClick == null) {
@@ -6634,10 +6638,11 @@ fun <T> GeneralSelectorScreen(
             // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
             // TODO: We could show e.g. a warning icon and/or some supporting text if nothing matches the substring (rather than just having an empty list)
-            // TODO: Ought to be a FilteredTextField, if only to restrict input length
             if (showSearch) {
-                TextField(
+                val searchString by vm.searchStringFlow.collectAsStateWithLifecycle()
+                FilteredTextField(
                     value = searchString,
+                    onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxSearchLength),
                     onValueChange = { it -> vm.searchStringFlow.value = it },
                     label = { Text("Search") },
                     leadingIcon = {
@@ -6652,7 +6657,7 @@ fun <T> GeneralSelectorScreen(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Clear search text",
                             // TODO: If we make the search string persist to SavedStateHandle, next line would have to call a vm function to update it and write it to the SSH
-                            modifier = Modifier.clickable { vm.searchStringFlow.value = "" },
+                            modifier = Modifier.clickable { vm.searchStringFlow.value = TextFieldValue("") },
                         )
                     },
                     modifier = Modifier
