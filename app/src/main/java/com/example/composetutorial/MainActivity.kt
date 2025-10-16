@@ -9195,3 +9195,16 @@ val capitalization = when (capString) {
 // last n days" (actually shwoing this for say n=30/60/90/180/365 simultaneously) might not be a
 // bad way to show the "spread" in a non-stats-nerd and useful way), I wouldn't feel ths reluctance
 // to update the price.
+
+// ENHANCE: A standalone unit (price) converter, although in some ways it would be nice (but not
+// sure Android really has this sort of thing) if it could pop up nicely "with" other screens. But
+// something where you can enter a price in one unit and have it show the unit price in any
+// specified unit, a bit like a no-db version of the middle card on the home screen. Maybe with the
+// option to just do unit conversions (454g->lb) with no price. And maybe some sort of
+// semi-persistent "tape" and you can press a button to "print" the current conversion onto it for
+// reference, if you want to compare a few things ad-hoc without having to remember (or have every
+// single thing you type "printed" and clogging up the screen). The idea being that if you're
+// evaluating a different product variant to the one you already have at this store, you might want
+// to explore this without relying on shelf unit price (if any) without actually updating the db and
+// finding the new price is worse. I'd envisage this beig available via the overflow menu at top
+// right of home screen.
