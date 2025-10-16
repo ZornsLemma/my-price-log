@@ -5366,7 +5366,8 @@ fun EditSourceScreen(
     }
 }
 
-// TODO: This might turn out to be more re-usable than for just TextFields
+// TODO: Rename this - it's not about TextFields and is used with various combinations of
+// composables, it is about wrapping up an ErrorHighlightBox with some validation logic.
 @Composable
 fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
     value: U,
@@ -5422,6 +5423,7 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
     }
 }
 
+// TODO: RENAME
 @Composable
 fun <T> ValidatedTextField2(
     label: @Composable() (() -> Unit)? = null,
@@ -5735,11 +5737,6 @@ fun EditDataSetScreen(
 // foo by remember { mutableStateOf(false) }" if we wanted, this would just be a convenient way to
 // keep things together.
 // TODO: So I suppose maybe we could also put a ScrollToFocusableHandle in here too??
-// TODO: NumericTextField and ValidatedTextField want paring down to omit the validation and just do
-// "input restriction", and their callers either using rememberValidationThing directly or we create
-// some kind of new NumericTextField2/ValidatedTextField2 which wraps those pared-down input
-// restriction only things with this. I'd probably have to start actually modifying the code to see
-// what really works.
 class ValidationThing(
     val interactionSource: MutableInteractionSource = MutableInteractionSource(),
     val validationResult: State<String?> // or Flow/LiveData/etc
