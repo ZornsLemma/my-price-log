@@ -6637,7 +6637,8 @@ fun <T> GeneralSelectorScreen(
                 .padding(vertical = screenBorder)
             // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
-            // TODO: We could show e.g. a warning icon and/or some supporting text if nothing matches the substring (rather than just having an empty list)
+            // ENHANCE: We could show a warning icon and/or some supporting text if nothing matches
+            // the substring, rather than just showing an empty list.
             if (showSearch) {
                 val searchString by vm.searchStringFlow.collectAsStateWithLifecycle()
                 FilteredTextField(
@@ -6656,7 +6657,6 @@ fun <T> GeneralSelectorScreen(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Clear search text",
-                            // TODO: If we make the search string persist to SavedStateHandle, next line would have to call a vm function to update it and write it to the SSH
                             modifier = Modifier.clickable { vm.searchStringFlow.value = TextFieldValue("") },
                         )
                     },
