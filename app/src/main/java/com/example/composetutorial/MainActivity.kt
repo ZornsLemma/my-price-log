@@ -7324,30 +7324,6 @@ inline fun <reified VM : ViewModel, UIContent> screenWithViewModel( // TODO: UNU
 }
 
 @Composable
-// TODO inline fun <reified VM : ViewModel, UIContent> todoRenameMe(
-// TODO: I suspect this shows that it makes more sense just to use screenWithViewModel directly and how to do it
-fun <T> todoRenameMe(
-    backStackEntry: NavBackStackEntry,
-    clearUIContent: () -> Unit,
-    buildViewModel: (MyApplication, SavedStateHandle) -> GeneralSelectorViewModel<T>,
-    content: @Composable (GeneralSelectorViewModel<T>) -> Unit // TODO: crossinline is copy and paste voodoo
-) {
-    screenWithViewModel<GeneralSelectorViewModel<T>, Int>(
-        backStackEntry = backStackEntry,
-        clearUIContent = clearUIContent,
-        buildViewModel = buildViewModel,
-    ) { vm ->
-        content(vm)
-    }
-}
-
-// TODO: Navigation is a mess - I'm completely unclear how the mysterious back stack and routes and
-// viewmodels being reused and various different kinds of composition and activity and process
-// destruction and reconstruction are supposed to interact.
-// TODO: Random Grok suggestion to maybe play with later: Use LinearOutSlowInEasing for enter
-// transitions (starts fast, slows down) and FastOutLinearInEasing for exit transitions (starts
-// slow, speeds up) to make the slide feel natural.
-@Composable
 fun AppNavigation() {
     val navController = rememberNavController()
     val sharedViewModel: SharedViewModel =
@@ -7357,12 +7333,8 @@ fun AppNavigation() {
         startDestination = "home",
     ) {
         // TODO: Move these up to where the other global-ish constants are defined?
-        val tweenDurationMillisEnter = 300 // 700 // TODO: should probably be 300 in final version
-        val tweenDurationMillisExit = 250 // 700 // TODO: should probably be 250 in final version
-
-        // TODO: The syntax required to factor these animations out into re-usable functions is pure
-        // ChatGPT voodoo (and it took several attempts to get it right, unless I just kept messing
-        // up myself).
+        val tweenDurationMillisEnter = 300
+        val tweenDurationMillisExit = 250
 
         // TODO: It might be good to look at adding a fade to some of these animations - maybe a
         // fade added to "top" screen and perhaps a fade added to the "bottom" screen as well. I
