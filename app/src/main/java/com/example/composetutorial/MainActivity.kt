@@ -6824,19 +6824,6 @@ class EditPriceViewModel(
     }
 }
 
-/* TODO DELETE
-enum class AsyncOperationStatus {
-    Idle, Busy, BusyForAWhile, Success, Error;
-
-    // We count Success as busy here, since it doesn't make sense to re-enable buttons after we
-    // succeeded and are about to close. (For longer term screens, we will transition from Success
-    // to Idle.)
-    fun isNotBusy(): Boolean {
-        return this != Busy && this != BusyForAWhile && this != Success
-    }
-}
-*/
-
 sealed class AsyncOperationStatus {
     object Idle : AsyncOperationStatus()
     object Busy : AsyncOperationStatus()
@@ -6903,7 +6890,9 @@ class EditSourceViewModel(
             .withVersion()
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
 
-    // TODO: Maybe we should allow zero here? We might need to tweak some messages accordingly. Zero isn't necessary as you can choose "None", but maybe it's a bit persnickety not to allow the user just to type 0 directly with one of the other options as well.
+    // ENHANCE: Maybe we should allow zero here? We might need to tweak some messages accordingly.
+    // Zero isn't necessary as you can choose "None", but maybe it's a bit persnickety not to allow
+    // the user just to type 0 directly with one of the other options as well.
     // TODO: Should we impose an upper bound? At the very least something like 100% is probably safe.
     // TODO: Not necessarily here, but extreme bonus/discount cases could maybe cause zero or
     // negative prices which might cause us to misbehave.
@@ -6932,7 +6921,8 @@ class EditSourceViewModel(
             _saveValidationEvents.emit(EditableField.NAME)
             return false
         }
-        // TODO: IS IT OK TO EXPLCIITLY CHECK loyaltyType HERE? CAN/SHOULD THIS BE FOLDED INTO VALIODATION RULES, E.G. BY VALIDATING A PAIR<DISCOUNTTYPE,STRINGDISCOUNTPERCENTAGE>??
+        // TODO: IS IT OK TO EXPLCIITLY CHECK loyaltyType HERE? CAN/SHOULD THIS BE FOLDED INTO
+        // VALIODATION RULES, E.G. BY VALIDATING A PAIR<DISCOUNTTYPE,STRINGDISCOUNTPERCENTAGE>??
         if (uiContent.editableSource.value.loyaltyType != LoyaltyType.NONE && !validationRulesOk(
                 loyaltyPercentageValidationRules,
                 uiContent.editableSource.value.loyaltyPercentage
@@ -6942,7 +6932,6 @@ class EditSourceViewModel(
             return false
         }
         Log.d("MyAppESS", "validateForSave passed")
-        // TODO: MORE
         return true
     }
 
@@ -7023,7 +7012,6 @@ class EditItemViewModel(
             _saveValidationEvents.emit(EditableField.NAME)
             return false
         }
-        // TODO: MORE
         Log.d("MyAppESS", "validateForSave passed")
         return true
     }
@@ -7054,7 +7042,6 @@ data class ViewPriceHistoryScreenUIContent(
     val source: Source,
     val price: Price,
     // TODO: We probably don't want this - we don't need a frozen local during this view only screen: val frozenLocale: Locale,
-    // TODO: WE PROBABLY DON'T NEED THIS ANY MORE val quantityType: QuantityType,
 ) {
     companion object {
         fun fromSavedState(handle: SavedStateHandle): ViewPriceHistoryScreenUIContent? {
@@ -7105,7 +7092,6 @@ fun diff(
     val rhsConfirmedAt = confirmedAtFormatter.format(rhs.confirmedAt)
     Log.d("MyApp", "lhsConfirmedAt $lhsConfirmedAt rhsConfirmedAt $rhsConfirmedAt")
     val confirmedAt = if (lhsConfirmedAt == rhsConfirmedAt) null else rhsConfirmedAt
-    // TODO: OK to trim()?
     val notes = if (lhs.notes.trim() == rhs.notes.trim()) null else rhs.notes
     val priceOrQuantityChanged = (lhs.price != rhs.price) || (lhs.quantityInBaseUnit != rhs.quantityInBaseUnit)
     if (priceOrQuantityChanged || confirmedAt != null || notes != null) {
@@ -7255,7 +7241,7 @@ class EditDataSetViewModel(
 
     enum class EditableField {
         NAME,
-        CURRENCY_CODE, // TODO: Just "CURRENCY"? THAT'S WHAT FIELD-ON-SCREEN AND SOME OTHER VARS ARE CALLED
+        CURRENCY_CODE,
         MEASUREMENT_SYSTEM,
         // TODO: MORE
     }
@@ -7276,7 +7262,6 @@ class EditDataSetViewModel(
             return false
         }
 
-        // TODO: We will need to validate currencyCode is not empty, for the add new data set case
         // TODO: Should maybe factor out forming this Boolean Triple from editableDataSet into a function
         if (!validationRulesOk(
                 measurementSystemValidationRules,
