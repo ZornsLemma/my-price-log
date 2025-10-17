@@ -158,14 +158,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.times
@@ -3496,7 +3493,7 @@ fun HomeScreen(
     onItemSearchClick: (HomeScreenUIContent) -> Unit,
     onViewHistoryClick: (HomeScreenUIContent) -> Unit,
     onEditDataSetsClick: (HomeScreenUIContent) -> Unit,
-    onEditProductsClick: (HomeScreenUIContent) -> Unit,
+    onEditItemsClick: (HomeScreenUIContent) -> Unit,
     onEditSourcesClick: (HomeScreenUIContent) -> Unit
 ) {
     // In order to minimise jank, we want the previous UI state to be available during the *very
@@ -3547,7 +3544,7 @@ fun HomeScreen(
         onItemSearchClick = { onItemSearchClick(uiContent) },
         onViewHistoryClick = { onViewHistoryClick(uiContent) },
         onEditDataSetsClick = { onEditDataSetsClick(uiContent) },
-        onEditItemsClick = { onEditProductsClick(uiContent) },
+        onEditItemsClick = { onEditItemsClick(uiContent) },
         onEditSourcesClick = { onEditSourcesClick(uiContent) }
     )
 }
@@ -7423,7 +7420,7 @@ fun AppNavigation() {
                     )
                     navController.navigate("editDataSets")
                 },
-                onEditProductsClick = { uiContent -> // TODO: This ought to be named re "Items" not "Products", using our internal conventions
+                onEditItemsClick = { uiContent ->
                     sharedViewModel.setEditItemsScreenContent(
                         uiContent
                     )
