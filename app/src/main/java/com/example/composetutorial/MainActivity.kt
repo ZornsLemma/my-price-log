@@ -7453,7 +7453,7 @@ fun AppNavigation() {
                 buildViewModel = { app, handle ->
                     GeneralSelectorViewModel(
                         savedStateHandle = handle,
-                        getName = { it -> it.name },  // TODO: not actually used, allow null?
+                        getName = { it -> it.name },
                         initialList = sharedViewModel.editDataSetsScreenUIContent,
                         dataQuery = app.priceTrackerRepository.getAllDataSets()
                     )
