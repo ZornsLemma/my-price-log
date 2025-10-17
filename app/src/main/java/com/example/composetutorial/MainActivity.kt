@@ -7503,9 +7503,7 @@ fun AppNavigation() {
                         getName = { it -> it.name },
                         sharedViewModel.editItemsScreenUIContent
                             ?: EditItemsScreenUIContent.fromSavedState(handle)!!,
-                        // TODO: DELETE initialList = sharedViewModel.editItemsScreenUIContent?.itemList,
                         dataQuery = app.priceTrackerRepository.getAllItems(dataSetId),
-                        // TODO: DELETE dataSet = sharedViewModel.editItemsScreenUIContent!!.dataSet
                     )
                 }
             ) { viewModel ->
