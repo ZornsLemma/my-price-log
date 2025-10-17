@@ -1862,6 +1862,9 @@ interface PriceHistoryDao {
     @Insert
     suspend fun insert(priceHistory: PriceHistory): Long
 
+    // Note that we get price history without using the price_id. This means that if a price is
+    // deleted and subsequently a new price is added (which will allocate a new price_id), both
+    // segments of the price history will be retrieved.
     @Query("SELECT * FROM price_history WHERE data_set_id = :dataSetId AND item_id = :itemId AND source_id = :sourceId ORDER BY modified_at DESC")
     fun getPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<List<PriceHistory>>
 
@@ -7410,7 +7413,7 @@ fun AppNavigation() {
                     // We navigate giving this ID triplet instead of the price ID here, so that if a
                     // price gets deleted, we can still see the full history (and we can tell where
                     // deletions occurred by discontinuities in the price ID, albeit we won't know
-                    // the precise time they happened). TODO: This comment is still relevant and should live somewhere, but now we aren't passing a triplet here it should be moved to the palce where we query the pricehistory table
+                    // the precise time they happened).
                     sharedViewModel.setViewPriceHistoryScreenContent(uiContent, locale)
                     navController.navigate(route = "viewPriceHistory")
                 },
