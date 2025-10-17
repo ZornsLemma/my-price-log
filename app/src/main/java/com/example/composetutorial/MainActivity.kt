@@ -7404,7 +7404,7 @@ fun AppNavigation() {
                 },
                 onItemSearchClick = { uiContent ->
                     sharedViewModel.setEditItemsScreenContent(uiContent)
-                    navController.navigate("editItems/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}/${true}")
+                    navController.navigate("editItems/select/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
                 },
                 onViewHistoryClick = { uiContent ->
                     // We navigate giving this ID triplet instead of the price ID here, so that if a
@@ -7424,7 +7424,7 @@ fun AppNavigation() {
                     sharedViewModel.setEditItemsScreenContent(
                         uiContent
                     )
-                    navController.navigate("editItems/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}/${false}")
+                    navController.navigate("editItems/edit/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
                 },
                 onEditSourcesClick = { uiContent ->
                     sharedViewModel.setEditSourcesScreenContent(
@@ -7483,22 +7483,17 @@ fun AppNavigation() {
             }
         }
 
-        // TODO: We might want to rename the path "editItems" now this is used in two different ways - maybe it's OK?
-        // TODO: I've used a simple boolean flag "select" on the end for convenience, but arguably we should move this
-        // to the first parameter and make it "edit" or "select" valued for neatness - perhaps change later?
-        // TODO: I am using a single path with two different modes (edit vs select) here to avoid duplicating a lot of the
-        // common code. That is probably the way to go, but in theory we could have two different paths which call functions
-        // where the duplicate code has been factored out. Given the general fiddly faffiness of all this shared view model
-        // and navigation stuff, I suspect it's cleaner the way I've done it, but reconsider later.
         composable(
-            "editItems/{dataSetId}/{dataSetName}/{select}", enterTransition = { slideLeftTransition() },
+            "editItems/{action}/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
             // TODO: We now have an actual DataSet passed to us so we can and perhaps should get rid of dataSetId and dataSetName
+            val action = backStackEntry.arguments?.getString("action")
+            devRequire(action == "edit" || action == "select") { "Invalid action: $action" }
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
-            val select = backStackEntry.arguments?.getString("select")!!.toBoolean() // TODO: rename "isSelect"??? but probably won't live anyway
+            val select = action == "select"
             screenWithViewModel<EditItemsViewModel, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.editItemsScreenUIContent = null },
