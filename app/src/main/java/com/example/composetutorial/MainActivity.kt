@@ -7532,7 +7532,7 @@ fun AppNavigation() {
                             navController.navigate("editItem")
                         } else {
                             savePreference(dataStore, SELECTED_ITEM_ID_KEY, it.id)
-                            navController.popBackStack() // return to home screen TODO: popUpTo() or something instead!?
+                            navController.popBackStack() // return to home screen
                         }
                     },
                     showSearch = true
