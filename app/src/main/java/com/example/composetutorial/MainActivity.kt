@@ -7404,7 +7404,7 @@ fun AppNavigation() {
                 },
                 onItemSearchClick = { uiContent ->
                     sharedViewModel.setEditItemsScreenContent(uiContent)
-                    navController.navigate("editItems/select/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
+                    navController.navigate("editItems/select")
                 },
                 onViewHistoryClick = { uiContent ->
                     // We navigate giving this ID triplet instead of the price ID here, so that if a
@@ -7424,7 +7424,7 @@ fun AppNavigation() {
                     sharedViewModel.setEditItemsScreenContent(
                         uiContent
                     )
-                    navController.navigate("editItems/edit/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
+                    navController.navigate("editItems/edit")
                 },
                 onEditSourcesClick = { uiContent ->
                     sharedViewModel.setEditSourcesScreenContent(
@@ -7484,26 +7484,24 @@ fun AppNavigation() {
         }
 
         composable(
-            "editItems/{action}/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
+            "editItems/{action}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
-            // TODO: We now have an actual DataSet passed to us so we can and perhaps should get rid of dataSetId and dataSetName
             val action = backStackEntry.arguments?.getString("action")
             devRequire(action == "edit" || action == "select") { "Invalid action: $action" }
-            val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
-            val dataSetName = backStackEntry.arguments?.getString("dataSetName")
             val select = action == "select"
             screenWithViewModel<EditItemsViewModel, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.editItemsScreenUIContent = null },
                 buildViewModel = { app, handle ->
+                    val uiContent = sharedViewModel.editItemsScreenUIContent
+                        ?: EditItemsScreenUIContent.fromSavedState(handle)!!
                     EditItemsViewModel(
                         savedStateHandle = handle,
                         getName = { it -> it.name },
-                        sharedViewModel.editItemsScreenUIContent
-                            ?: EditItemsScreenUIContent.fromSavedState(handle)!!,
-                        dataQuery = app.priceTrackerRepository.getAllItems(dataSetId),
+                        uiContent,
+                        dataQuery = app.priceTrackerRepository.getAllItems(uiContent.dataSet.id),
                     )
                 }
             ) { viewModel ->
@@ -7511,7 +7509,7 @@ fun AppNavigation() {
                 GeneralSelectorScreen(
                     viewModel,
                     navController,
-                    title = topAppBarTitle(if (!select) "Edit products" else "Select product", dataSetName),
+                    title = topAppBarTitle(if (!select) "Edit products" else "Select product", viewModel.uiContent.dataSet.name),
                     getId = { it.id },
                     getName = { it.name },
                     onAddClick = {
