@@ -8050,7 +8050,7 @@ fun ViewPriceHistoryScreen(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(/* TODO? enabled = isNotBusy, */ onClick = { requestClose() }) {
+                    IconButton(onClick = { requestClose() }) {
                         Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
