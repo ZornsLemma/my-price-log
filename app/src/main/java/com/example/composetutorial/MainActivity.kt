@@ -8099,19 +8099,7 @@ fun ViewPriceHistoryScreen(
 
 // TODO: I should probably lock the app to portrait mode
 
-// TODO: There is no colour in the app at all when running on P7! Material You active without me
-// realising it? I suspect so - look at Theme.kt, which appears to support dynamic colours. This
-// isn't a problem as such, but should make a note about it, and I may want to offer a setting which
-// allows newer Android versions to choose the app's native theme.
-
-
 // General note type comments to put somewhere appropriate in long term:
-
-// TODO: Terminology:
-// - "shop" may be better than "store", it is more UK-ish anyway but even in the US we can have a "barber shop" but not a "barber store", so it's slightly more generic
-// - "item" is fairly nicely generic and almost works as well as "product" in a supermarket context anyway
-// - we could offer (probably not in v1) a "pedant mode" toggle which switches shop->"source" and (if we go that way) "product"->"item", then users can toggle it if they want but they won't be misled on first opening the app
-// - not too sure what to do in source code, I have already mixed this up quite a lot but will need to standarise on item+source or product+shop for variable names etc at some point
 
 
 // Full-screen dialog implementation notes:
@@ -8128,7 +8116,7 @@ fun ViewPriceHistoryScreen(
 //
 // The other suggestions I received and tried very very hard to implement were:
 //
-// Dialog: This is the obvious way to do it. The documentation does not that it's not intended for
+// Dialog: This is the obvious way to do it. The documentation does note that it's not intended for
 // full-screen dialogs. The killer problem for me here was that since I needed keyboard input in my
 // dialog, I had to allow for the on-screen keyboard sliding in and this really seemed to interact
 // badly, even though it was near trivial to get it to work in normal full-screen composables.
@@ -8136,7 +8124,7 @@ fun ViewPriceHistoryScreen(
 // Popup: This does (I think) "guarantee" that the stuff on the popup is "on top", although it still
 // requires finicky hacks to trap focus and avoid touch input sometimes going to the screen
 // underneath. The killer problem for me was that a simple editable TextField didn't work on it,
-// even using a hardware keyboard in the emulator I never got to the point of trying it with an
+// even using a hardware keyboard in the emulator. I never got to the point of trying it with an
 // on-screen keyboard.
 //
 // Box with high Z-order: This visually ensures our fake dialog's stuff is "on top", but (as with
@@ -8151,8 +8139,6 @@ fun ViewPriceHistoryScreen(
 // could somehow steal touch input or whatever, focus navigation of the contents "just works", the
 // on-screen keyboard "just works" (once you make the appropriate tweaks to AndroidManifest.xml
 // required to make this work anywhere).
-//
-// TODO: Review/revise this comment later
 
 // TODO: Move this?
 //
