@@ -3636,7 +3636,12 @@ fun HomeScreenNavigationDrawer(
             ModalDrawerSheet(
                 modifier = Modifier
                     .wrapContentWidth()
-                    .widthIn(max = min(LocalConfiguration.current.screenWidthDp.dp * 2f / 3f, maxNavigationDrawerWidth))
+                    .widthIn(
+                        max = min(
+                            LocalConfiguration.current.screenWidthDp.dp * 2f / 3f,
+                            maxNavigationDrawerWidth
+                        )
+                    )
             ) {
                 Column {
                     Box(
@@ -8302,7 +8307,11 @@ suspend fun scrollAndFocusTo(focusManager: FocusManager, handle: ScrollToFocusab
         // TODO: Can/should we focus TextFields with the cursor at the end of the text?
     }
 
-    // TODO: Highly speculative, but would a small delay before doing this give things like the keyboard time to appear first and improve visual appeareance? Or maybe we should set it to visible right at the top of this function so it's fully visible and gets a chance to influence things like bringinto view!??!?! probably doesn't work that way but maybe worth experimenting
+    // TODO: Highly speculative, but would a small delay before doing this give things like the
+    // keyboard time to appear first and improve visual appeareance? Or maybe we should set it to
+    // visible right at the top of this function so it's fully visible and gets a chance to
+    // influence things like bringinto view!??!?! probably doesn't work that way but maybe worth
+    // experimenting
     handle.errorHighlightBoxVisible.value = true
     delay(errorHighlightBoxVisibleTimeMillis)
     handle.errorHighlightBoxVisible.value = false
@@ -8316,7 +8325,6 @@ fun rememberScrollToFocusable(): ScrollToFocusableHandle {
     }
 }
 
-// TODO: Grok magic, tweaked with help from my own brain and ChatGPT and Perplexity
 @Composable
 fun ErrorHighlightBox(
     hasError: Boolean, // TODO: rename "visible" or something, what's standard? "enabled"? It's not about "having an error", it's about our visibility.
@@ -8358,133 +8366,26 @@ fun ErrorHighlightBox(
                 // Draw the content (e.g., TextField or SegmentedButton)
                 // Useful for debugging: drawRect(Color.Green.copy(alpha=0.3f))
                 drawContent()
-                if (true /* hasError */) { // TODO: GET RID OF IF
-                    // Draw an outline slightly larger than the content
-                    val borderWidthPx = borderWidth.toPx()
-                    val offsetPx = offset.toPx()
-                    drawRect(
-                        color = borderColor,
-                        alpha = alpha.value,
-                        style = Stroke(width = borderWidthPx),
-                        topLeft = Offset(-offsetPx, -offsetPx),
-                        size = size.copy(
-                            width = size.width + 2 * offsetPx,
-                            height = size.height + 2 * offsetPx
-                        )
+                // Draw an outline slightly larger than the content
+                val borderWidthPx = borderWidth.toPx()
+                val offsetPx = offset.toPx()
+                drawRect(
+                    color = borderColor,
+                    alpha = alpha.value,
+                    style = Stroke(width = borderWidthPx),
+                    topLeft = Offset(-offsetPx, -offsetPx),
+                    size = size.copy(
+                        width = size.width + 2 * offsetPx,
+                        height = size.height + 2 * offsetPx
                     )
-                }
+                )
+
             }
             .scrollToFocusable(validationTarget, offset = offset + 2 * borderWidth)
-        // Add padding to ensure the outline isn't clipped
-        //.padding(4.dp)
     ) {
         content()
     }
-
-    /* TODO DELETE
-
-    val borderColor = MaterialTheme.colorScheme.error
-    val density = LocalDensity.current
-    val borderWidth = 2.dp
-    val borderPadding = 2.dp
-    var contentSize by remember { mutableStateOf(IntSize.Zero) }
-
-    Box(
-        modifier = modifier
-            .graphicsLayer(clip = false)
-            .drawWithContent {
-                drawContent()
-                if (hasError) {
-                    val strokeWidth = borderWidth.toPx()
-                    val padding = borderPadding.toPx()
-
-                    drawRect(
-                        color = borderColor,
-                        style = Stroke(width = strokeWidth),
-                        topLeft = Offset(0f /* -padding */, -padding),
-                        size = Size(
-                            width = contentSize.width.toFloat()/* + 2 * padding*/,
-                            height = contentSize.height.toFloat() + 2 * padding
-                        )
-                    )
-                }
-            }
-    ) {
-        // SubcomposeLayout gives us size of actual content
-        SubcomposeLayout { constraints ->
-            val placeables = subcompose("content", content).map {
-                it.measure(constraints)
-            }
-
-            val width = placeables.maxOfOrNull { it.width } ?: 0
-            val height = placeables.maxOfOrNull { it.height } ?: 0
-
-            // Update size used by drawBehind
-            contentSize = IntSize(width, height)
-
-            layout(width, height) {
-                placeables.forEach { it.place(0, 0) }
-            }
-        }
-    }
-
-    */
-
-    /* TODO DELETE
-    val borderWidth = 2.dp
-    val borderPadding = 2.dp
-    val borderColor = MaterialTheme.colorScheme.error
-    val density = LocalDensity.current
-    val strokeWidthPx = with(density) { borderWidth.toPx() }
-    val paddingPx = with(density) { borderPadding.toPx() }
-
-    Layout(
-        content = content,
-        modifier = modifier.graphicsLayer(clip = false).drawWithContent {
-            drawRect(Color.Green.copy(alpha = 0.3f))
-            drawContent()
-            if (hasError) {
-                drawRect(
-                    color = borderColor,
-                    style = Stroke(width = strokeWidthPx),
-                    topLeft = Offset.Zero,
-                    size = Size(size.width, size.height)
-                )
-            }
-        }
-    ) { measurables, constraints ->
-
-        val placeable = measurables.first().measure(constraints)
-
-        // Increase size by borderPadding * 2 to reserve space around child
-        val width = placeable.width + (paddingPx * 2).toInt()
-        val height = placeable.height + (paddingPx * 2).toInt()
-
-        layout(width, height) {
-            // Place the child inset by borderPadding, so it doesn't get shrunk
-            placeable.place(paddingPx.toInt(), paddingPx.toInt())
-        }
-    }
-    */
 }
-/* TODO: Perplexity fragment which says it uses dp. for reference/tweaking later:
-Box(
-    modifier = modifier.drawWithContent {
-        drawContent()
-        if (hasError) {
-            val borderWidthPx = 2.dp.toPx()
-            val offsetPx = borderWidthPx / 2
-            drawRect(
-                color = pulseColor.copy(alpha = borderAlpha),
-                style = Stroke(width = borderWidthPx),
-                topLeft = Offset(-offsetPx, -offsetPx),
-                size = Size(size.width + borderWidthPx, size.height + borderWidthPx)
-            )
-        }
-    }
-)
-
-*/
 
 // TODO: ChatGPT magic, review if keep - have hacked animations from 150ms to 1500ms just to test
 @Composable
