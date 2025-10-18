@@ -8347,13 +8347,15 @@ fun ErrorHighlightBox(
                     animationSpec = tween(1000, easing = LinearEasing)
                 )
                 alpha.animateTo(
-                    targetValue = 0.1f, // TODO: experimental, was 0f
+                    // We don't animate down to 0% alpha, as it's kind of jarring having the box
+                    // completely disappear.
+                    targetValue = 0.1f,
                     animationSpec = tween(1000, easing = LinearEasing)
                 )
             }
         } else {
             // Fade out smoothly once we're no longer animating.
-            // TODO: It would maybe be nice if we could always get to 1f *then* do this fade out
+            // ENHANCE: It would maybe be nice if we could always get to 1f *then* do this fade out
             // but it's probably faffy as hell.
             alpha.animateTo(targetValue = 0f, animationSpec = tween(500))
         }
@@ -8384,55 +8386,6 @@ fun ErrorHighlightBox(
             .scrollToFocusable(validationTarget, offset = offset + 2 * borderWidth)
     ) {
         content()
-    }
-}
-
-// TODO: ChatGPT magic, review if keep - have hacked animations from 150ms to 1500ms just to test
-@Composable
-fun AnimatedSupportingText(
-    text: String?,
-    modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.error,
-    style: TextStyle = MaterialTheme.typography.bodySmall
-) {
-    var lastNonNullText by remember { mutableStateOf<String?>(null) }
-    val visible = text != null
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 1500),
-        label = "supportingTextAlpha"
-    )
-
-    // Update the last known good message only when new text is non-null
-    if (text != null) {
-        lastNonNullText = text
-    }
-
-    // Only show the text if it's supposed to be visible or still fading out
-    if (lastNonNullText != null && alpha > 0f) {
-        Box(
-            modifier = modifier
-                .animateContentSize(animationSpec = tween(1500))
-                .alpha(alpha)
-        ) {
-            Text(
-                text = lastNonNullText!!,
-                color = color,
-                style = style
-            )
-        }
-    } else if (text != null) {
-        // fresh message with alpha = 1
-        Box(
-            modifier = modifier
-            //.animateContentSize(animationSpec = tween(1500))
-        ) {
-            Text(
-                text = text,
-                color = color,
-                style = style
-            )
-        }
     }
 }
 
