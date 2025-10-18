@@ -8164,11 +8164,13 @@ inline fun devCheck(condition: Boolean, lazyMessage: () -> String) {
     }
 }
 
-// TODO: Technically this should throw IllegalArgumentException but I don't care. Using the two
-// names allows me to preserve the distinction in the code FWIW but without duplicating the body of
-// devCheck.
-inline fun devRequire(condition: Boolean, lazyMessage: () -> String) =
-    devCheck(condition, lazyMessage)
+inline fun devRequire(condition: Boolean, lazyMessage: () -> String) {
+    if (!condition) {
+        val msg = lazyMessage()
+        Log.e("DevCheck", "FAILED REQUIRE: $msg", Throwable())
+        throw IllegalArgumentException(msg) // same as require()
+    }
+}
 
 data class CurrencyFormat(
     val decimalPlaces: Int, // TODO: We may not actually need this, if it's baked into validation rules and not used elsewhere
