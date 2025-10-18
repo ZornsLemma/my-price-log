@@ -2893,8 +2893,7 @@ fun ItemSourceInfo(
                     .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
             ) {
                 CardTitle(
-                    title = "Store price", // TODO: This label feels a bit "redundant" and wording may need tweaking
-                    subtitle = "Shelf price at ${source?.name ?: "TODO"}", // TODO: null handling!
+                    title = "Store price"
                 )
 
                 Log.d("MyApp", "ISI dataset $dataSet")
@@ -7860,13 +7859,8 @@ fun PackPriceAndSizeRow(
 //horizontalArrangement = Arrangement.SpaceBetween
     ) {
         LabeledItem(
-            modifier = Modifier.weight(1f), label = "Price as sold"
-        ) { // TODO: quite like this, but maybe "Shelf price"? This might also help distinguish this from the "effective/adjusted price". *Just possibly* some sort of similar wording tweak on "Unit price" in ItemSourceInfo might help.
-            // TODO: There might be an argument for designing the UI to separate the
-            // price and quantity here, then we side-step the internationalisation
-            // issues of "for", which is *probably* tractable but might be a
-            // problem. If I really prefer the UI with a single text string
-            // containing "for", don't let this put me off sticking with it.
+            modifier = Modifier.weight(1f), label = "Shelf price"
+        ) {
             Text(
                 "${
                     formatPrice(
@@ -7967,7 +7961,7 @@ fun PackPriceAndSizeRow(
 }
 
 @Composable
-fun CardTitle(title: String, subtitle: String?) {
+fun CardTitle(title: String, subtitle: String? = null) {
     Text(text = title, style = MaterialTheme.typography.titleLarge)
     if (subtitle != null) {
         Text(text = subtitle, style = MaterialTheme.typography.bodySmall)
