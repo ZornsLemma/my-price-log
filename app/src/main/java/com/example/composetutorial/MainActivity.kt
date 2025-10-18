@@ -5398,7 +5398,7 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
     )
 
     ErrorHighlightBox(
-        hasError = scrollToFocusableHandle.errorHighlightBoxVisible.value,
+        visible = scrollToFocusableHandle.errorHighlightBoxVisible.value,
         offset = errorHighlightOffset,
         validationTarget = scrollToFocusableHandle
     ) {
@@ -8327,7 +8327,7 @@ fun rememberScrollToFocusable(): ScrollToFocusableHandle {
 
 @Composable
 fun ErrorHighlightBox(
-    hasError: Boolean, // TODO: rename "visible" or something, what's standard? "enabled"? It's not about "having an error", it's about our visibility.
+    visible: Boolean,
     borderWidth: Dp = 2.dp,
     offset: Dp = defaultErrorHighlightOffset,
     modifier: Modifier = Modifier,
@@ -8335,13 +8335,13 @@ fun ErrorHighlightBox(
     content: @Composable () -> Unit
 ) {
     var alpha = remember { Animatable(0f) }
-    LaunchedEffect(hasError) {
-        if (hasError) {
+    LaunchedEffect(visible) {
+        if (visible) {
             // Start animating from completely transparent.
             alpha.snapTo(0f)
 
             // Pulse alpha while we're supposed to be visible.
-            while (hasError) {
+            while (visible) {
                 alpha.animateTo(
                     targetValue = 1f,
                     animationSpec = tween(1000, easing = LinearEasing)
