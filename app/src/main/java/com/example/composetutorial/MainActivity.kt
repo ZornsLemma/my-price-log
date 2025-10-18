@@ -8409,21 +8409,21 @@ data class AugmentedPrice(
     val priceJudgement: PriceJudgement,
 )
 
+// TODO: These should be user-configurable in settings
 val inflationThresholdDays =
     30L // 30L // TODO: rename staleThreshold or something? we use it for inflation, but it's about how we define "stale" really, and inflation only kicks in for stale prices
-val tooOldThresholdDays = 180L //180L // TODO: should be in settings
+val tooOldThresholdDays = 180L
+val annualInflationPercent = 5.0
 
 fun inflationAdjustedPrice(price: Double, ageDays: Long): Double {
-    // TODO: Hard-coded threshold and inflation rate should be taken from settings
     if (ageDays < inflationThresholdDays) {
         return price
     } else {
-        val annualInflationPercent = 5.0
         return price * (1.0 + annualInflationPercent / 100.0).pow((ageDays - inflationThresholdDays) / 365.25)
     }
 }
 
-enum class AgeClass { // TODO: PriceAgeClass?
+enum class AgeClass {
     FRESH,
     STALE,
     ANCIENT
