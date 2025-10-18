@@ -7966,7 +7966,7 @@ fun CardTitle(title: String, subtitle: String? = null) {
     if (subtitle != null) {
         Text(text = subtitle, style = MaterialTheme.typography.bodySmall)
     }
-    Spacer(modifier = Modifier.height(8.dp)) // TODO: Not sure if we want this in here or if callers should do it after calling us
+    Spacer(modifier = Modifier.height(8.dp))
 }
 
 @Composable
