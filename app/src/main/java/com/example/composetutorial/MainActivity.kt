@@ -8231,7 +8231,7 @@ fun <T> initialVersioned(initialValue: T): Versioned<T> =
 
 // TODO: Rename something like ValidationTargetHandle?
 // TODO: Might be nice to make members private, which probably requires moving to a file on its own
-// along with the custom Modifier and using internal vsibility. This would stop e.g. "accidentally"
+// along with the custom Modifier and using internal visibility. This would stop e.g. "accidentally"
 // passing the FocusRequester to Modifier.focusRequester() and avoiding the initialisation flag
 // being updated.
 class ScrollToFocusableHandle @OptIn(ExperimentalFoundationApi::class) constructor(
@@ -8261,7 +8261,6 @@ fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle, offset: Dp = 0.d
 
 }
 
-// TODO: Not necessarily the best name, but although we could overload the focusRequester name, it feels confusing to do it.
 fun Modifier.validationFocusRequester(handle: ScrollToFocusableHandle): Modifier {
     handle.focusRequesterInitialised = true
     return this.focusRequester(handle.focusRequester)
@@ -8276,7 +8275,7 @@ suspend fun scrollAndFocusTo(focusManager: FocusManager, handle: ScrollToFocusab
         // can't be focused. We therefore content ourselves with removing the focus from anything
         // else that has it. We do this before calling bringIntoView() since it may dismiss the
         // on-screen keyboard and in practice it looks much nicer to do it in this order.
-        // TODO: I half wonder if we should be using Modifier.focusTarget() to make it possible to
+        // ENHANCE: I half wonder if we should be using Modifier.focusTarget() to make it possible to
         // focus things like segmented buttons. However, this seems to work and I haven't
         // experimented with alternatives.
         Log.d("MyApp", "clearFocus")
