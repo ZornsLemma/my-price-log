@@ -3493,7 +3493,9 @@ fun HomeScreen(
     onViewHistoryClick: (HomeScreenUIContent) -> Unit,
     onEditDataSetsClick: (HomeScreenUIContent) -> Unit,
     onEditItemsClick: (HomeScreenUIContent) -> Unit,
-    onEditSourcesClick: (HomeScreenUIContent) -> Unit
+    onEditSourcesClick: (HomeScreenUIContent) -> Unit,
+    onBackupClick: () -> Unit,
+    onRestoreClick: () -> Unit,
 ) {
     // In order to minimise jank, we want the previous UI state to be available during the *very
     // first composition* when this screen is re-entered (e.g. after navigating back from another
@@ -3544,7 +3546,9 @@ fun HomeScreen(
         onViewHistoryClick = { onViewHistoryClick(uiContent) },
         onEditDataSetsClick = { onEditDataSetsClick(uiContent) },
         onEditItemsClick = { onEditItemsClick(uiContent) },
-        onEditSourcesClick = { onEditSourcesClick(uiContent) }
+        onEditSourcesClick = { onEditSourcesClick(uiContent) },
+        onBackupClick = onBackupClick,
+        onRestoreClick = onRestoreClick,
     )
 }
 
@@ -3692,6 +3696,8 @@ fun HomeScreenActualScaffold( // TODO: RENAME
     onEditDataSetsClick: () -> Unit,
     onEditItemsClick: () -> Unit,
     onEditSourcesClick: () -> Unit,
+    onBackupClick: () -> Unit,
+    onRestoreClick: () -> Unit,
 
     asyncOperationStatus: AsyncOperationStatus,
     coroutineScope: CoroutineScope,
@@ -3757,7 +3763,18 @@ fun HomeScreenActualScaffold( // TODO: RENAME
                             // invoke navController.navigate().
                             navController.navigate("settings")
                         })
-                    }
+                        // TODO: Backup/restore shoud probably move into Settings later, but since
+                        // it's not implemented yet I'll shove them here for now.
+                        MyDropdownMenuItem(text = { Text("Backup") },
+                            onClick = {
+                                menuExpanded = false
+                                onBackupClick()
+                            })
+                        MyDropdownMenuItem(text = { Text("Restore") },
+                            onClick = {
+                                menuExpanded = false
+                                onRestoreClick()
+                            })                    }
                 },
                 modifier = Modifier.background(MaterialTheme.colorScheme.surface /* TODO? */)
             )
@@ -3793,6 +3810,8 @@ fun HomeScreenScaffold(
     onEditDataSetsClick: () -> Unit,
     onEditItemsClick: () -> Unit,
     onEditSourcesClick: () -> Unit,
+    onBackupClick: () -> Unit,
+    onRestoreClick: () -> Unit,
 ) {
     // TODO: We need to disable all forms of interaction (navdrawer, dropdowns, menu, etc) while
     // this is "busy"
@@ -3817,7 +3836,7 @@ fun HomeScreenScaffold(
 
     HomeScreenNavigationDrawer(drawerState, dataSet, dataSetListSorted, onSelectedDataSetIdChange, coroutineScope) {
 
-        HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, saveStatus, coroutineScope)
+        HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, onBackupClick, onRestoreClick, saveStatus, coroutineScope)
  { innerPadding ->
             HomeScreenContent(vm, dataSet, item, itemList, onSelectedItemIdChange, source, sourceList, onSelectedSourceIdChange, priceAnalysis, onEditPriceClick, onItemSearchClick, onViewHistoryClick, saveStatus, innerPadding)
         }
@@ -7435,6 +7454,12 @@ fun AppNavigation() {
                         uiContent
                     )
                     navController.navigate("editSources/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
+                },
+                onBackupClick = {
+                    Log.d("MyAppBR", "Backup")
+                },
+                onRestoreClick = {
+                    Log.d("MyAppBR", "Restore")
                 },
             )
         }
