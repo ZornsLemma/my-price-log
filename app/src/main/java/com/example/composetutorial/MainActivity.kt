@@ -239,6 +239,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
+import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.text.DecimalFormatSymbols
@@ -8030,13 +8031,25 @@ fun PackPriceAndSizeRow(
 
 // TODO: ChatGPT magic
 fun backupDatabase(context: Context, targetUri: Uri) {
-    val dbFile = context.getDatabasePath("main.db")
+    val db = InventoryDatabase.getDatabase(context)
+    val dbPath = checkNotNull(db.openHelper.writableDatabase.path) { "Expected non-null database path" }
 
+    // Use a temp file to dump to
+    val backupFile = File(context.cacheDir, "backup_temp.db")
+
+    // Do the VACUUM INTO
+    val rawDb = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READWRITE)
+    rawDb.execSQL("VACUUM INTO '${backupFile.absolutePath.replace("'", "''")}'")
+    rawDb.close()
+
+    // Copy the temp file to the user-selected URI
     context.contentResolver.openOutputStream(targetUri)?.use { output ->
-        FileInputStream(dbFile).use { input ->
+        FileInputStream(backupFile).use { input ->
             input.copyTo(output)
         }
     }
+
+    backupFile.delete() // Clean up temp file
 }
 
 // TODO: ChatGPT magic
