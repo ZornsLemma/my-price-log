@@ -580,9 +580,10 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
         ) + if (quantityType == QuantityType.ITEM) "" else " ${unit.symbol}" // TODO: Here we *need* empty-for-unit
 }
 
+const val DB_VERSION = 1
 @Database(
     entities = [DataSet::class, Item::class, Source::class, PriceEntity::class, PriceHistory::class],
-    version = 1,
+    version = DB_VERSION,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -8057,7 +8058,7 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
     val dbFile = context.getDatabasePath("main.db")
 
     // Close Room to avoid conflicts
-    InventoryDatabase.clearInstance() //InventoryDatabase.getInstance(context).close()
+    InventoryDatabase.clearInstance()
 
     // Copy the selected file to overwrite the internal database
     context.contentResolver.openInputStream(sourceUri)?.use { input ->
@@ -8068,12 +8069,12 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
 
     // Validate version before reopening
     val restoredDbVersion = getDatabaseVersion(dbFile.path)
-    if (restoredDbVersion > 1 /* TODO: HACK I SUSPECT I NEED TO REFERE THE @Database version CONSTANT SOMEHOW InventoryDatabase.DB_VERSION */) {
-        throw IllegalStateException("Restored DB version is newer than app supports.")
+    if (restoredDbVersion > DB_VERSION) {
+        // TODO: We need to report the error differently, this just kills the app without even showing the message.
+        throw IllegalStateException("The restored database version is newer than this version of the app supports.")
     }
 
-    // Reopen Room (will handle upgrade/downgrade appropriately)
-    // TODO: probably not needed: InventoryDatabase.getInstance(context).open()
+    // The next call to InventoryDatabase.getIsntance() will re-open the database.
 }
 
 // TODO: ChatGPT magic
