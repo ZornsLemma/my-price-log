@@ -8084,6 +8084,8 @@ fun backupDatabase(context: Context, targetUri: Uri) {
 }
 
 // TODO: ChatGPT magic
+// TODO: We need some kind of "this will overwrite all your current data, OK/Cancel" dialog before
+// doing this.
 fun restoreDatabase(context: Context, sourceUri: Uri) {
     val dbFile = context.getDatabasePath("main.db")
 
