@@ -26,7 +26,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
 import android.app.Application
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import android.icu.text.Collator
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
@@ -37,8 +39,10 @@ import android.text.format.DateUtils
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
@@ -235,6 +239,8 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withTimeoutOrNull
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.text.DecimalFormatSymbols
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -579,7 +585,7 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
     exportSchema = false
 )
 @TypeConverters(Converters::class)
-// TODO: Should not be called *Inventory*Database
+// TODO: Should not be called *Inventory*Database - would AppDatabase be a standard generic name, or should it be something more app-specific?
 abstract class InventoryDatabase : RoomDatabase() {
 
     abstract fun dataSetDao(): DataSetDao
@@ -611,6 +617,12 @@ abstract class InventoryDatabase : RoomDatabase() {
                     .build()
                     .also { Instance = it }
             }
+        }
+
+        // TODO: ChatGPT magic
+        fun clearInstance() {
+            Instance?.close()
+            Instance = null
         }
     }
 }
@@ -7351,6 +7363,29 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val sharedViewModel: SharedViewModel =
         viewModel(LocalContext.current as ComponentActivity) // TODO: perplexity voodoo
+
+    // TODO: ChatGPT magic
+
+    val context = LocalContext.current
+
+    val backupLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/octet-stream"),
+        onResult = { uri ->
+            if (uri != null) {
+                backupDatabase(context, uri)
+            }
+        }
+    )
+
+    val restoreLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri ->
+            if (uri != null) {
+                restoreDatabase(context, uri)
+            }
+        }
+    )
+
     NavHost(
         navController = navController,
         startDestination = "home",
@@ -7456,10 +7491,10 @@ fun AppNavigation() {
                     navController.navigate("editSources/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
                 },
                 onBackupClick = {
-                    Log.d("MyAppBR", "Backup")
+                    backupLauncher.launch("my_backup_file.db") // TODO: What's the hardcoded string?
                 },
                 onRestoreClick = {
-                    Log.d("MyAppBR", "Restore")
+                    restoreLauncher.launch(arrayOf("*/*")) // TODO: argument!?
                 },
             )
         }
@@ -7988,6 +8023,52 @@ fun PackPriceAndSizeRow(
             selectedId = selectedUnitPriceUnit,
             onItemSelected = { selectedUnitPriceUnit = it })
     }
+}
+
+// TODO: I need to make "main.db" a compile-time constant and use it everywhere, and I also need to
+// think what the db should actually be called.
+
+// TODO: ChatGPT magic
+fun backupDatabase(context: Context, targetUri: Uri) {
+    val dbFile = context.getDatabasePath("main.db")
+
+    context.contentResolver.openOutputStream(targetUri)?.use { output ->
+        FileInputStream(dbFile).use { input ->
+            input.copyTo(output)
+        }
+    }
+}
+
+// TODO: ChatGPT magic
+fun restoreDatabase(context: Context, sourceUri: Uri) {
+    val dbFile = context.getDatabasePath("main.db")
+
+    // Close Room to avoid conflicts
+    InventoryDatabase.clearInstance() //InventoryDatabase.getInstance(context).close()
+
+    // Copy the selected file to overwrite the internal database
+    context.contentResolver.openInputStream(sourceUri)?.use { input ->
+        FileOutputStream(dbFile, false).use { output ->
+            input.copyTo(output)
+        }
+    }
+
+    // Validate version before reopening
+    val restoredDbVersion = getDatabaseVersion(dbFile.path)
+    if (restoredDbVersion > 1 /* TODO: HACK I SUSPECT I NEED TO REFERE THE @Database version CONSTANT SOMEHOW InventoryDatabase.DB_VERSION */) {
+        throw IllegalStateException("Restored DB version is newer than app supports.")
+    }
+
+    // Reopen Room (will handle upgrade/downgrade appropriately)
+    // TODO: probably not needed: InventoryDatabase.getInstance(context).open()
+}
+
+// TODO: ChatGPT magic
+fun getDatabaseVersion(dbPath: String): Int {
+    val db = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READONLY)
+    val version = db.version
+    db.close()
+    return version
 }
 
 @Composable
