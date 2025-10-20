@@ -8100,7 +8100,7 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
     // Validate version before reopening
     val restoredDbVersion = getDatabaseVersion(dbFile.path)
     if (restoredDbVersion > DB_VERSION) {
-        throw IllegalStateException("The restore database is a newer version ($restoredDbVersion) than this version of the app supports ($DB_VERSION).")
+        throw IllegalStateException("The database to restore is a newer version ($restoredDbVersion) than this version of the app supports ($DB_VERSION).")
     }
 
     // The next call to InventoryDatabase.getInstance() will re-open the database.
