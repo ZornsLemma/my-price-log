@@ -8058,10 +8058,17 @@ fun backupDatabase(context: Context, targetUri: Uri) {
     val db = InventoryDatabase.getDatabase(context)
     val dbPath = checkNotNull(db.openHelper.writableDatabase.path) { "Expected non-null database path" }
 
-    // Use a temp file to dump to
+    // Use a temp file to dump to.
+    // ENHANCE: Could/should we take steps to try to delete this afterwards if an exception occurs?
+    // I imagine it isn't too critical as we will have at most one temp file and thus at worst we
+    // double the size of our data storage, and our database isn't likely to be that big in the
+    // first place.
     val backupFile = File(context.cacheDir, "backup_temp.db")
 
-    // Do the VACUUM INTO
+    // VACUUM INTO the temp file. I tried using copy() but the WAL files make this unreliable, and
+    // based on discussions with both ChatGPT and Grok there is no simple workaround. VACUUM INTO
+    // needs a minSdk>=30 and if that proves annoying, it might be worth investigating the rather
+    // tricksy alternatives later on.
     val rawDb = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READWRITE)
     rawDb.execSQL("VACUUM INTO '${backupFile.absolutePath.replace("'", "''")}'")
     rawDb.close()
