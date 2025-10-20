@@ -7366,6 +7366,8 @@ fun AppNavigation() {
     val sharedViewModel: SharedViewModel =
         viewModel(LocalContext.current as ComponentActivity) // TODO: perplexity voodoo
 
+    var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
+
     // TODO: ChatGPT magic
 
     val context = LocalContext.current
@@ -7374,7 +7376,11 @@ fun AppNavigation() {
         contract = ActivityResultContracts.CreateDocument("application/octet-stream"),
         onResult = { uri ->
             if (uri != null) {
-                backupDatabase(context, uri)
+                try {
+                    backupDatabase(context, uri)
+                } catch (e: Exception) {
+                    errorMessage = e.localizedMessage ?: "An unknown error occurred."
+                }
             }
         }
     )
@@ -7383,7 +7389,11 @@ fun AppNavigation() {
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri ->
             if (uri != null) {
-                restoreDatabase(context, uri)
+                try {
+                    restoreDatabase(context, uri)
+                } catch (e: Exception) {
+                    errorMessage = e.localizedMessage ?: "An unknown error occurred."
+                }
             }
         }
     )
@@ -7493,10 +7503,10 @@ fun AppNavigation() {
                     navController.navigate("editSources/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
                 },
                 onBackupClick = {
-                    backupLauncher.launch("my_backup_file.db") // TODO: What's the hardcoded string?
+                    backupLauncher.launch("price_tracker_backup.db")
                 },
                 onRestoreClick = {
-                    restoreLauncher.launch(arrayOf("*/*")) // TODO: argument!?
+                    restoreLauncher.launch(arrayOf("*/*"))
                 },
             )
         }
@@ -7911,6 +7921,19 @@ This may be complete crap. The example of how to use it is probably as long as t
             }
         }
     }
+
+    if (errorMessage != null) {
+        AlertDialog(
+            onDismissRequest = { errorMessage = null },
+            title = { Text("Error") },
+            text = { Text(errorMessage!!) },
+            confirmButton = {
+                TextButton(onClick = { errorMessage = null }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -8070,11 +8093,10 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
     // Validate version before reopening
     val restoredDbVersion = getDatabaseVersion(dbFile.path)
     if (restoredDbVersion > DB_VERSION) {
-        // TODO: We need to report the error differently, this just kills the app without even showing the message.
-        throw IllegalStateException("The restored database version is newer than this version of the app supports.")
+        throw IllegalStateException("The restore database is a newer version ($restoredDbVersion) than this version of the app supports ($DB_VERSION).")
     }
 
-    // The next call to InventoryDatabase.getIsntance() will re-open the database.
+    // The next call to InventoryDatabase.getInstance() will re-open the database.
 }
 
 // TODO: ChatGPT magic
