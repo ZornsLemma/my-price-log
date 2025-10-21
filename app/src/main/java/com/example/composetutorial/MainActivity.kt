@@ -8160,6 +8160,11 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
     // Close Room to avoid conflicts
     InventoryDatabase.clearInstance()
 
+    // Delete existing database files for clean slate. I don't know if this is necessary but at
+    // one point Grok suggested this might be useful to avoid old SHM/WAL files hanging around and
+    // confusing things. I don't think this will hurt so let's be cautious.
+    context.deleteDatabase("main.db")
+
     // Copy the selected file to overwrite the internal database
     context.contentResolver.openInputStream(sourceUri)?.use { input ->
         FileOutputStream(dbFile, false).use { output ->
