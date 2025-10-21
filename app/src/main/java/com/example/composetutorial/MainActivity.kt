@@ -9154,7 +9154,7 @@ val capitalization = when (capString) {
 // offer price, because I probably won't be buying it tomorrow (so I don't "need" the correct price
 // shown, although logically that's how the app should work/be used) and I want to record the good
 // price so I know it's good when I see it again. If there was an easy way to see "best price over
-// last n days" (actually shwoing this for say n=30/60/90/180/365 simultaneously) might not be a
+// last n days" (actually showing this for say n=30/60/90/180/365 simultaneously) might not be a
 // bad way to show the "spread" in a non-stats-nerd and useful way), I wouldn't feel ths reluctance
 // to update the price.
 
