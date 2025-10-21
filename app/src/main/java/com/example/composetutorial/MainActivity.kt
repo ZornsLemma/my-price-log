@@ -8830,6 +8830,14 @@ fun analysePrices(
     val priceClassificationThresholds = if (recentEnoughPriceList.size <= 2) {
         null
     } else {
+        // This isn't necessarily the ideal way to classify things but it's what I settled on after
+        // much discussion with ChatGPT and thinking about it. We have so little data that we can't
+        // go full on stats nerd. We calculate a buffered IQR [Q1*(1-k), Q3+(1+k)] and use that to
+        // classify prices as good, OK or bad. The idea is not to obsess over small price variations
+        // when making our recommendation. Note that we only do this if we have at least three
+        // recent enough prices to work with. There are numerous flaws with this, but we're just
+        // trying to give an at-a-glance recommendation which is reasonably trustworthy. Users can
+        // obviously see the actual list of unit prices by store and judge from that if they prefer.
         val lowerQuartile = quantile(recentEnoughPriceList, 0.25)
         val upperQuartile = quantile(recentEnoughPriceList, 0.75)
         val k = 0.1 // TODO: should be in settings?
@@ -8975,7 +8983,7 @@ Log.d("MyApp", baz.toString())
 // what the name "should be". Wrt deleting, this problem is solved by having the delete on the list
 // screen not the edit screen, but I really don't like that as I don't want delete to be that
 // "prominent". This doesn't solve the "user changed name on screen and doesn't know what it
-// originall was" concern. In practice this is unlikely and not a huge deal. I do half wonder if we
+// originally was" concern. In practice this is unlikely and not a huge deal. I do half wonder if we
 // should show the original name somewhere in the top app bar, but then that could get confusing
 // when they are editing it ("which is current?"). Probably best as it is, but wanted to make a note
 // to think about this. One possibility might be for the delete confirmation dialog to mention the
@@ -9006,14 +9014,13 @@ Log.d("MyApp", baz.toString())
 // some/all waste bin things for real. But it probably is the way to go long term, even if it's not
 // part of MVP.
 
-// TODO: The list of prices for product across stores at bottom of home screen should probably be
-// clickable per item to expand into a read-only explanation of how the "effective price" was
-// arrived at (store level discounts, pseudo-inflation penalties, etc) and maybe also the same
-// "Good/bad/whatever price" recommendation we show in the "specific store" card (calculated the
-// same way).
+// ENHANCE: The list of prices for product across stores at bottom of home screen should probably
+// have some way of expanding in place or (more likely) opening a new screen showing a read-only
+// explanation of how the "effective price" was arrived at (store level discounts, pseudo-inflation
+// penalties, etc) and maybe also the same "Good/bad/whatever price" recommendation we show in the
+// "specific store" card (calculated the same way).
 
-// TODO: For the record, I used scaling 61% when importing app-icon-4.svg as a new image asset for
-// the icon.
+// Note to self: I used scaling 61% when importing app-icon-4.svg as a new image asset for the icon.
 
 // TODO: Validation text might be slightly warmer but still brief (which I think is desirable) e.g.
 // "Please enter a value" or "Pack size is required" or "Enter a valid number". (vs "Can't be
@@ -9022,21 +9029,19 @@ Log.d("MyApp", baz.toString())
 // - it may seem repetitive if we have lots of validation failures.
 
 // TODO: It may be desirable for users to be able to outright delete the price of a product at a
-// store - imagine they haven't visitied the store in a year and don't plan to and are sick of
-// seeing the outdated inflation-adjusted price with little connection to reality. Of course they
-// could just delete the store, but it's nice to give them the choice to delete just some prices -
-// maybe the store sells some items nowhere else does, so keeping *those* item prices around is
-// worth something.
+// store - imagine they haven't visited the store in a year and don't plan to and are sick of seeing
+// the outdated inflation-adjusted price with little connection to reality. Of course they could
+// just delete the store, but it's nice to give them the choice to delete just some prices - maybe
+// the store sells some items nowhere else does, so keeping *those* item prices around is worth
+// something. This is also useful because if the user accidentally e.g. enters a price against the
+// wrong store and the store they entered the price against doesn't actually sell it (or the price
+// is unknown) so you can't fix it by entering the correct price, you're stuck with meaningless data
+// at present.
 
-// TODO: I am thinking following extensive and confusing discussion with ChatGPT that we make
-// good/OK/bad judgements based on Buffered IQR=[Q1×(1−k), Q3×(1+k)] where k =0.05 or 0.1 (configurable by user of course). Q1 is 25th percentile, Q3 is 75th percentile.
-// We only ever offer judgement if:
-// - our store's price is <=inflation threshold (30?) days old (if it's older, our "judgement" is "Stale price - please check")
-// - there are two other stores with prices <=old data threshold (180 days?)
-// - our judgement is "good" if adjusted price is < low end of buffered IQR, "OK" if inside buffered IQR, "bad" if > high end of buffered IQR
-// - if all prices are "OK" we don't offer any judgement (though I guess we could? not sure)
-// The idea of buffered IQR is that if the data is tightly clustered, the 5th percentile or whatever is not really significantly "better" than the 95th percentile. We don't want to use absolute amounts to make this kind of judgement.
-// We should probably call our inflation "pessimistic inflation rate" in UI, and default it to 5% or 10% per year. For prices >inflation thresold old, we start applying it compounded daily *from the threshold* (not from day 0) - we don't want a sudden big inflation jump just because a price became "eligible" for inflation.
+// TODO: We should probably call our inflation "pessimistic inflation rate" in UI, and default it to
+// 5% or 10% per year. For prices >inflation thresold old, we start applying it compounded daily
+// *from the threshold* (not from day 0) - we don't want a sudden big inflation jump just because a
+// price became "eligible" for inflation.
 
 // TODO: "effective price" (after loyalty scheme and inflation) may be better than the "adjusted
 // price" terminology I think I have been using
@@ -9175,10 +9180,6 @@ val capitalization = when (capString) {
 
 // TODONOW: It might be a good idea to have a setting which controls whether view history elides
 // entries which are nothing but confirmation date changes.
-
-// TODONOW: We definitely need the ability to delete a price - I just accidentally entered a price
-// against the wrong supermarket on my phone and I have no way to fix this short of actually going
-// to the supermarket to find a price (and that's assuming they do sell this product).
 
 // TODONOW: Implement a simple e.g. list screen from scratch using async database fetch to just
 // experiment and see whether my anti-jank sharedviewmodel stuff is worthwhile or whether it would
