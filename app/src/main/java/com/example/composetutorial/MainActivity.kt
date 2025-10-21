@@ -8056,6 +8056,10 @@ fun PackPriceAndSizeRow(
 // TODO: ChatGPT magic
 fun backupDatabase(context: Context, targetUri: Uri) {
     val db = InventoryDatabase.getDatabase(context)
+    // The next line is voodoo which Grok suggested "might" be necessary and ChatGPT seemed to
+    // agree there could be borderline cases. I am not convinced but I guess it's likely harmless
+    // at worst.
+    db.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(FULL)")
     val dbPath = checkNotNull(db.openHelper.writableDatabase.path) { "Expected non-null database path" }
 
     // Use a temp file to dump to.
