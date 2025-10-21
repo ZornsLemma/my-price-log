@@ -8926,60 +8926,38 @@ Log.d("MyApp", baz.toString())
 // TODO: Should we remember current product and source (remember they *may* be null anyway) for each
 // data set?
 
-// TODO: Maybe I should have a settings option which completely hides or just disables all the
+// ENHANCE: Maybe I should have a settings option which completely hides or just disables all the
 // "delete" buttons. Users can turn that off if it makes them feel safer. We could possibly, if it
 // isn't a UI nightmare, allow delete to be enabled for the next 10 minutes or something, then
 // automatically re-disable. My thinking here is deletes could be very destructive of valuable data
 // and in general you do not really want to delete stuff, unless you manage to add something
 // completely junky rather than just adding something with a typo and needing to edit it to fix it,
-// or cancelling the add before you finish it. We could also make the settings option tri-state, with
-// an intermediate setting (which could perhaps even be the default) where delete buttons are shown/enabled (whatever I think best)
-// for "non scary" deletes (product X is in the database *but no price data is attached* etc) but
-// hidden/disabled for "scary" deletes (price data exists which would get cascade deleted).
+// or cancelling the add before you finish it. We could also make the settings option tri-state,
+// with an intermediate setting (which could perhaps even be the default) where delete buttons are
+// shown/enabled (whatever I think best) for "non scary" deletes (product X is in the database *but
+// no price data is attached* etc) but hidden/disabled for "scary" deletes (price data exists which
+// would get cascade deleted).
 
-// TODO: M3 recommends using a "container transform pattern" to transform FAB into a full-screen
+// ENHANCE: M3 recommends using a "container transform pattern" to transform FAB into a full-screen
 // dialog. Not sure if I can or should do this, but might be worth trying. (Do remember that as
-// noted elsewhere, my "full screen dialogs" are actually full screens in their own right and I don't
-// have enough hair to switch away from that, especially not just to make an animation work. The
-// animation may not depend on being a "true dialog", of course.) I do wonder - not seen
+// noted elsewhere, my "full screen dialogs" are actually full screens in their own right and I
+// don't have enough hair to switch away from that, especially not just to make an animation work.
+// The animation may not depend on being a "true dialog", of course.) I do wonder - not seen
 // anything in docs - if this also suggests some kind of "expansion" animation should happen from
 // the clicked-on source/item/dataset into the full screen dialog to edit it. Currently the code is
 // doing the "standard" full screen dialog slide in from bottom animation anyway. (I had some
 // discussions with LLMs about what to do for edit not add cases, where you click on a list item to
 // open the edit dialog - from a UI design perspective, not how/ease of implementation. Using the
 // standard slide in transform over a "container transform" was favoured 2:1 here. See how I feel
-// later, and I'm far from confident I can do the FAB container transofrm anyway and that would
+// later, and I'm far from confident I can do the FAB container transform anyway and that would
 // definitely be the thing to try first (as it *is* called out in MD3 specs).)
 
-// TODO: I do wonder if I've over-exaggerated the need to pass data between screens for perfect
-// first compositions. For screens with complex data-dependent layouts I could see this, and
-// although there's no passing data in, the home screen probably would be janky without the "all or
-// nothing" combine-driven flow. For simple list type screens like the "Edit X" stuff it may be fine
-// (and I could experiment by removing the initial list pass through). For stuff like Edit price I
-// am not sure, but it's pssible these might look OK, although they might not (e.g. the text field
-// titles would "slide up" from the "no data" prompt position to the "label above actual data"
-// position as the data filled in.
-
-// TODO: If/when we have some kind of auto-backup or export state thing, it might be nice to hook
+// ENHANCE: If/when we have some kind of auto-backup or export state thing, it might be nice to hook
 // this into delete operations (perhaps just cascading ones???) and auto-backup before deleting.
 // Minor concern here if the user is doing a lot of deletions that we don't end up with lots of
 // auto-backups, we could just possibly try to be clever and only do this if we haven't done an
 // auto-backup within the last hour or so. This limits the window of data loss while keeping backup
 // volume down.
-
-// TODO: When I finally write some actual code to "analyse" the price data coming back from the db
-// on the home screen (inside the viewmodel, probably inside its data pipeline before we emit to the
-// UI), it will probably be fine as the calculation is unlikely to be that heavy but I should keep
-// an eye open for the possibility of needing to move that work over to a new thread
-// (Dispatchers.IO) with some care about thread sync at that point, so as not to block the main
-// thread - if my code runs on the main thread and is not calling suspend functions, that blocks all
-// the other stuff including the Ui and may make it unresonsive. There is value in the UI being
-// responsive because at least the user can e.g. change the current item or source if they change
-// their mind without being blocked. But don't rush into making this multi-threaded for no reason,
-// as I say the calculation is probably pretty light, just be aware and maybe put a TODO in the
-// final version if it isn't multi-threaded to keep an eye on this once it's maybe pulling a bit
-// more data in a "realistic" database. Probably fine even then, given we're filtered down to a
-// single product and there can only be one price per store.
 
 // TODO: What happens/should happen if e.g. a user's "display unit" for a save price is in imperial
 // and then they turn imperial off for the collection? Will we still show in imperial by default but
