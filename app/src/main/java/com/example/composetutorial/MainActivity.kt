@@ -9049,13 +9049,6 @@ Log.d("MyApp", baz.toString())
 // a store with no price will not show up in that comparison list, so we need the dropdown to
 // allow selection of *any* store.)
 
-// TODO: I am half wondering if I could somehow (the full-width dropdown doesn't help) squeeze a
-// triple dot menu at the top right of the "store" card on the home screen to allow access to things
-// like price history or more detailed info. MD3 card guidelines do say this can be at the upper *or
-// lower* right corner of the card, so maybe if I moved "Edit" and "Confirm" to be left aligned
-// (though this feels a bit of a shame) and edged the "Good price" recommendation up onto another
-// line or put it between those now-left-aligned buttons and an overflow button, that *might* work.
-
 // TODO: I am starting to think (and have already said so in other TODOs, probably) that the
 // ItemSourceInfo card should perhaps be expanded a bit and have text messages saying things like
 // "Price is old, please try to update it" *as well as* the judgement (if any).
