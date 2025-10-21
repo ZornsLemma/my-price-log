@@ -4022,6 +4022,10 @@ fun HomeScreenContent(
 
 }
 
+// ENHANCE: We use primary/secondary/tertiary for good/OK/bad here. This isn't necessarily ideal
+// but it does avoid problem where a fixed green/grey-or-amber/red set of colours clashes with
+// a Material You-generated colour scheme.
+
 @Composable
 fun GoodPriceIcon() {
     Icon(
@@ -9018,7 +9022,9 @@ Log.d("MyApp", baz.toString())
 // have some way of expanding in place or (more likely) opening a new screen showing a read-only
 // explanation of how the "effective price" was arrived at (store level discounts, pseudo-inflation
 // penalties, etc) and maybe also the same "Good/bad/whatever price" recommendation we show in the
-// "specific store" card (calculated the same way).
+// "specific store" card (calculated the same way). This screen should probably start with the raw
+// shelf price in absolute form, then have subsequent lines like "Inflation adjustment +$0.04" or
+// "Loyalty discount (5%) -$0.03" with a final total at the end.
 
 // Note to self: I used scaling 61% when importing app-icon-4.svg as a new image asset for the icon.
 
@@ -9077,29 +9083,13 @@ Log.d("MyApp", baz.toString())
 // "Edit Foo" screens. - I have a feeling I fixed this, but i ought to put debug backgrounds in
 // again and check before deleting this TODO.
 
-// TODO: Should we have an icon (and just maybe text) in the product-at-all-stores list which shows
-// a loyalty discount applies? Then we'd have icons for everything that can cause a discrepancy
-// between the raw price in ItemSourceInfo and the price in the list. Although it might be hard to
-// "educate" the user on this icon, because it doesn't feel like it has a natural use in the
-// ItemSourceInfo at all (which is where it could appear paired with text to explain it).
-
-// TODO: It's probably obvious in hindsight but I had some idea of using absolute prices on all rows
-// of a "how the price was calculated" screen, whereas I almost certainly should show a start
-// absolute price then "Inflation adjustment +$0.04" or "Loyalty discount (5%) -$0.03" with a final
-// total at the end.
-
-// TODO: ChatGPT suggests tertiary/neutral/error colors for good/ok/bad indicator, i.e. not primary
-// for good. This has some appeal. If I do this, I may want to switch away from tertiary for
-// highlighting the current row in the price comparison, as I don't want it to convey "approval" of
-// this store's price.
-
 // TODO: In credits/licence, remember that I have pulled in some of the Material Design icons via
 // vector asset studio. Think (check) these are Apache 2 licence. ChatGPT says (but don't take this
 // on trust) I just need to say something like "This app includes vector icons from the Material
 // Design icon set by Google. Used under the Apache License 2.0." That feels plausible. I guess I
 // probably also want to indicate use of Compose etc libs but not at all sure.
 
-// TODO: It might be nice to offer an "are you sure? this is x% more/less than before" type
+// ENHANCE: It might be nice to offer an "are you sure? this is x% more/less than before" type
 // confirmation dialog when saving a price change where the (unit price? pack price? pack size?) has
 // changed by more than a threshold, to help catch typos early.
 
