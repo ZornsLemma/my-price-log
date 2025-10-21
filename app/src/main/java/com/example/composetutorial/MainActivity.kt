@@ -248,6 +248,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import java.text.DecimalFormatSymbols
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -8157,27 +8158,42 @@ fun backupDatabase(context: Context, targetUri: Uri) {
 fun restoreDatabase(context: Context, sourceUri: Uri) {
     val dbFile = context.getDatabasePath("main.db")
 
-    // Close Room to avoid conflicts
-    InventoryDatabase.clearInstance()
+    // Create a temp file from the URI.
+    val tempFile = File(context.cacheDir, "temp_backup.db")
+    try {
+        // Copy sourceUri to temp file.
+        context.contentResolver.openInputStream(sourceUri)?.use { input ->
+            FileOutputStream(tempFile).use { output ->
+                input.copyTo(output)
+            }
+        } ?: throw IOException("Failed to open input stream for URI: $sourceUri")
 
-    // Delete existing database files for clean slate. I don't know if this is necessary but at
-    // one point Grok suggested this might be useful to avoid old SHM/WAL files hanging around and
-    // confusing things. I don't think this will hurt so let's be cautious.
-    context.deleteDatabase("main.db")
-
-    // Copy the selected file to overwrite the internal database
-    context.contentResolver.openInputStream(sourceUri)?.use { input ->
-        FileOutputStream(dbFile, false).use { output ->
-            input.copyTo(output)
+        // Validate version on the backup file.
+        // TODO: This really needs testing, either by faking a newer DB_VERSION at some point or
+        // when we do actually have a newer one.
+        val restoredDbVersion = getDatabaseVersion(tempFile.path)
+        if (restoredDbVersion > DB_VERSION) {
+            throw IllegalStateException("The database to restore is a newer version ($restoredDbVersion) than this version of the app supports ($DB_VERSION).")
         }
-    }
 
-    // Validate version before reopening
-    // TODO: Shouldn't we do this *before* we blat our own internal copy? Is there some reason this
-    // won't work if we do it right at the start of this function?
-    val restoredDbVersion = getDatabaseVersion(dbFile.path)
-    if (restoredDbVersion > DB_VERSION) {
-        throw IllegalStateException("The database to restore is a newer version ($restoredDbVersion) than this version of the app supports ($DB_VERSION).")
+        // The backup file is OK, so we'll go ahead and overwrite our internal database now.
+
+        // Close Room to avoid conflicts.
+        InventoryDatabase.clearInstance()
+
+        // Delete existing database files for clean slate. I don't know if this is necessary but at
+        // one point Grok suggested this might be useful to avoid old SHM/WAL files hanging around and
+        // confusing things. I don't think this will hurt so let's be cautious.
+        context.deleteDatabase("main.db")
+
+        // Copy tempFile to internal database location.
+        FileInputStream(tempFile).use { input ->
+            FileOutputStream(dbFile, false).use { output ->
+                input.copyTo(output)
+            }
+        }
+    } finally {
+        tempFile.delete() // Clean up temp file
     }
 }
 
