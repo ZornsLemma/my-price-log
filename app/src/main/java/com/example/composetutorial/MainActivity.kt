@@ -2,6 +2,8 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import android.app.Activity
+import android.app.AlarmManager
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.Alignment
@@ -25,14 +27,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
 import android.app.Application
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.database.sqlite.SQLiteDatabase
 import android.icu.text.Collator
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
+import android.os.Handler
 import android.os.LocaleList
+import android.os.Looper
 import android.os.Parcelable
 import android.os.StrictMode
 import android.text.format.DateUtils
@@ -7360,6 +7366,42 @@ inline fun <reified VM : ViewModel, UIContent> screenWithViewModel( // TODO: UNU
     content(vm)
 }
 
+// TODO: ChatGPT/Perplexity magic
+fun safeRestartApp(context: Context) {
+    /* TODO: ChatGPT code, which doesn't restart the app and which Perplexity tells me doesn't work properly on Android 10+
+    Log.d("MyAppFFS", "safeRestartApp")
+    val restartIntent = context.packageManager
+        .getLaunchIntentForPackage(context.packageName)
+        ?.apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        } ?: return
+
+    val pendingIntent = PendingIntent.getActivity(
+        context,
+        0,
+        restartIntent,
+        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    alarmManager.set(
+        AlarmManager.RTC,
+        System.currentTimeMillis() + 1000, // Delay just enough for process to die
+        pendingIntent
+    )
+
+    // Now kill the app process
+    android.os.Process.killProcess(android.os.Process.myPid())
+    */
+    val packageManager = context.packageManager
+    val launchIntent = packageManager.getLaunchIntentForPackage(context.packageName) ?: return
+    val componentName = launchIntent.component ?: return
+
+    val restartIntent = Intent.makeRestartActivityTask(componentName)
+    context.startActivity(restartIntent)
+    Runtime.getRuntime().exit(0)
+}
+
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
@@ -7367,10 +7409,12 @@ fun AppNavigation() {
         viewModel(LocalContext.current as ComponentActivity) // TODO: perplexity voodoo
 
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    var showRestartDialog by rememberSaveable { mutableStateOf(false) }
 
     // TODO: ChatGPT magic
 
     val context = LocalContext.current
+    val activity = context as? Activity
 
     val backupLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/octet-stream"),
@@ -7391,6 +7435,10 @@ fun AppNavigation() {
             if (uri != null) {
                 try {
                     restoreDatabase(context, uri)
+                    // All sorts of internal state is probably outdated. This is a rare operation
+                    // and we don't want to massively complicate our code (e.g. the flows feeding
+                    // the home screen) to handle it, so we just force a restart.
+                    showRestartDialog = true
                 } catch (e: Exception) {
                     errorMessage = e.localizedMessage ?: "An unknown error occurred."
                 }
@@ -7934,6 +7982,22 @@ This may be complete crap. The example of how to use it is probably as long as t
             }
         )
     }
+
+    // TODO: ChatGPT semi-magic
+    if (showRestartDialog) {
+        LaunchedEffect(Unit) {
+            Log.d("MyAppFFS", "activity $activity")
+            delay(1500)
+            safeRestartApp(activity!!)
+        }
+
+        AlertDialog(
+            onDismissRequest = { /* prevent dismissal */ },
+            title = { Text("App will restart") },
+            text = { Text("Applying restored data. Please wait...") },
+            confirmButton = {}
+        )
+    }
 }
 
 @Composable
@@ -8108,8 +8172,6 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
     if (restoredDbVersion > DB_VERSION) {
         throw IllegalStateException("The database to restore is a newer version ($restoredDbVersion) than this version of the app supports ($DB_VERSION).")
     }
-
-    // The next call to InventoryDatabase.getInstance() will re-open the database.
 }
 
 // TODO: ChatGPT magic
