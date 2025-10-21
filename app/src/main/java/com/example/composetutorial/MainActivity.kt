@@ -9043,13 +9043,11 @@ Log.d("MyApp", baz.toString())
 // *from the threshold* (not from day 0) - we don't want a sudden big inflation jump just because a
 // price became "eligible" for inflation.
 
-// TODO: "effective price" (after loyalty scheme and inflation) may be better than the "adjusted
-// price" terminology I think I have been using
-
-// TODO: Possibly tapping on a row in the list of unit price by store should either a) open a "stats
-// for nerds" page (maybe not too heavy a one), which might for example help the user understand
-// what any icons-with-no-text (e.g. "this is stale") icons mean and/or might show where the
-// effective price comes from. Or b) set the "Store" dropdown to that store??
+// TODO: Tapping one of the stores in the price list at the bottom of the home screen should select
+// that store. This is technically redundant with the store selection dropdown, but I don't care -
+// I really want to do this so much when I'm using the app. (It's not a suitable replacement, as
+// a store with no price will not show up in that comparison list, so we need the dropdown to
+// allow selection of *any* store.)
 
 // TODO: I am half wondering if I could somehow (the full-width dropdown doesn't help) squeeze a
 // triple dot menu at the top right of the "store" card on the home screen to allow access to things
@@ -9136,24 +9134,8 @@ val capitalization = when (capString) {
 
 // TODONOW: I might (it's early days as I write this) have a tendency to start typing the name of a
 // product I want to add into the search box at the top of the "edit products" screen. It might be
-// worth copying any search search into the name field when the add button is clicked. Maybe this
-// would be annoying, but perhapos it's less annoying overall than having to type it twice.
-
-// TODONOW: Should we add a "+" FAB to the product selection from the home screen? This would be even
-// more natural if we dump the modal bottom sheet and use the "select a product to edit" screen
-// instead. We could even copy any search string into the name of the new product there. We probably
-// wouldn't do this for data sets and sources, given their different selection styles on the home
-// screen. I don't think the "+" makes this any more inconsistent than the different selection
-// styles already do.
-
-// TODONOW: I'm not theoretically averse to the idea of opening a "how was this calculated" button when
-// you tap a store in the price comparison at the bottom of the home screen, but TBH in practice it
-// feels like I'd really like to tap on one of these and switch to that store. Yes technically it is
-// not much harder to use the store dropdown on the same screen to change, but I think this might be
-// a good additional way.
-
-// TODO: If it lives, we need a "x" to delete the search text on the product selection modal dialog.
-// But it is probably going to be replaced with a re-use of the edit product selection screen.
+// worth copying any search string into the name field when the add button is clicked. Maybe this
+// would be annoying, but perhaps it's less annoying overall than having to type it twice.
 
 // TODO: I perhaps ought to be more aggressive at forcing focus into a textfield, e.g. when editing
 // a product/source/dataset. I think there is probably an argument for *not* forcing this when using
