@@ -9125,7 +9125,7 @@ val capitalization = when (capString) {
 // the "product list" screen with a search box, because the user might want to just scroll the list,
 // but for the edit screens the user is going to want to edit something. It may be the best
 // compromise to only do this if it is a brand new something though, as if there is already data,
-// the user may not want to edit the top thing. And it may in rpactice just be best not to force it.
+// the user may not want to edit the top thing. And it may in practice just be best not to force it.
 // All I know is I find myself vaguely annoyed on the O6 at having to do an extra tap to get the
 // focus there and bring up the OSK, but do be careful about this. No idea what is "standard" or
 // "advised" by MD3 or general Android conventions, a chat with an LLM might offer some perspectives
@@ -9145,12 +9145,6 @@ val capitalization = when (capString) {
 
 // TODONOW: It might be a good idea to have a setting which controls whether view history elides
 // entries which are nothing but confirmation date changes.
-
-// TODONOW: Implement a simple e.g. list screen from scratch using async database fetch to just
-// experiment and see whether my anti-jank sharedviewmodel stuff is worthwhile or whether it would
-// look "OK" if I just did it the naive way. Maybe also try an edit-individual-item screen. Don't
-// make this production quality or worry about refactoring, just hack something in which uses the
-// right basic approach to see how it feels.
 
 // ENHANCE: Some sort of feature for showing best ever price for a product across all stores, or
 // probably better some variant on this where we show some (not too stats nerdy) "best price range"
