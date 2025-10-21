@@ -8168,6 +8168,8 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
     }
 
     // Validate version before reopening
+    // TODO: Shouldn't we do this *before* we blat our own internal copy? Is there some reason this
+    // won't work if we do it right at the start of this function?
     val restoredDbVersion = getDatabaseVersion(dbFile.path)
     if (restoredDbVersion > DB_VERSION) {
         throw IllegalStateException("The database to restore is a newer version ($restoredDbVersion) than this version of the app supports ($DB_VERSION).")
