@@ -8701,7 +8701,10 @@ fun augmentPrice(
     candidateUnitPriceDenominators: List<MeasureUnit>
 ): AugmentedPrice {
     val loyaltyPrice = price.price * source.loyaltyMultiplier
-    // TODO: We could convert to floating point ageDays by getting .seconds and dividing by 86400, but it probably makes little difference in practice.
+    // We use an integer ageDays as there's little value in working to sub-day resolution and it
+    // will make the calculation a bit more repeatable/easy to follow for humans. If we add a screen
+    // showing how the calculation was done, ageDays will not be constantly increasing slightly
+    // every time it's shown.
     val ageDays = Duration.between(price.confirmedAt, Instant.now()).toDays()
     val inflatedLoyaltyPrice = inflationAdjustedPrice(loyaltyPrice, ageDays)
     return AugmentedPrice(
@@ -8807,7 +8810,8 @@ fun analysePrices(
     )
     var unitPriceDenominator: MeasureUnit? = null
     var augmentedPriceList = priceList.mapNotNull { price ->
-        // TODO: I don't think we can really be in a case where we have a Price but do not have the corresponding Source, but probably best to play it safe. (We fetched all the data "atomically" by combining flows so we shouldn't still be waiting for a query result, but maybe there's a corner case.)
+        // I don't think we can have a Price but not the corresponding Source, but we play it safe
+        // just in case.
         sourceById[price.sourceId]?.let { source ->
             val augmentedPrice =
                 augmentPrice(price, dataSet, source, unitPriceDenominator, candidateUnitPriceDenominators)
@@ -8831,10 +8835,6 @@ fun analysePrices(
         val k = 0.1 // TODO: should be in settings?
         PriceClassificationThresholds(lowerQuartile * (1 - k), upperQuartile * (1 + k))
     }
-    // TODO: This will happily return "all-OK" judgements if the prices are clustered. I think this
-    // is probably a good thing - if we think the price is OK, we should have the at-a-glance
-    // indicator say so, rathern than the user wondering if it's missing because we don't have
-    // enough data or we're just in an "all OK, none good or bad" case.
     augmentedPriceList = augmentedPriceList.map { augmentedPrice ->
         // TODO: This *will* classify prices even if they are themselves stale - this is probably good, *but* the UI should show
         // the "confirmed x days ago" thing in error color if the price is stale. (We do want to show the recommendation anyway,
@@ -8885,7 +8885,10 @@ Log.d("MyApp", baz.toString())
 // basically unrecoverable and it's semi-OK if the process just dies, but I'm not sure and it would
 // be good to read up on best practices.
 
-// TODO: I should probably limit all text fields to approx 1000 characters just to stop the user going crazy.
+// Note to self: We should not use raw TextFields. All free text input should be done via something
+// like FilteredTextField with a generous cap on the maximum input length. This will avoid users
+// deliberately or accidentally entering very large strings and breaking the layout badly as a
+// result.
 
 // Note to self: Locale.getDefault() is initialised to the current locale when our app process
 // starts and is not automatically updated if the user changes the system locale while the app is
