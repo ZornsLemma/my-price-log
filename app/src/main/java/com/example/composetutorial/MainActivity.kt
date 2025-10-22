@@ -9172,3 +9172,20 @@ val capitalization = when (capString) {
 // right of home screen. I'm imagine the three button metric/imperial/US customary selector from
 // the dataset configuration being shown on this screen, initialised with the current dataset
 // configuration, so you can choose which units appear in the dropdowns.
+
+// TODO: There might be an argument (and I don't think it would be technically hard) for making the
+// product and store text fields (currently greyed out, and possibly to be redesigned away because
+// of that) on the add/edit price screen "live". At least once - I think I was adding a first ever
+// price but not sure - I have started to add/edit a price for the wrong store, typed in half the
+// details then had to cancel when I realised, and re-type the data after selecting the right
+// store. Being able to change the store "live" in the edit screen would have avoided this. Note
+// that we wouldn't want this to re-populate the add/edit price screen with the latest data for
+// that store, unlike on the home screen - this is a sort of "write-only" change. We'd probably
+// want to make the new store the one selected on the home screen too. I wonder if this might make
+// it too easy to blat the wrong store's data, but worth thinking about. Just possibly we would
+// make these controls "live" only if adding a first ever pirce? Not sure. Likewise we might want
+// to do this only for store (as I tend to have written about here) even if technically the same
+// could apply to product - I don't think I've ever started editing for one product and then
+// realised I hadn't selected it correctly, though in theory it could happen. It's also perhaps
+// more UI complexity (and also user complexity even putting technicalities aside) to have to
+// open a separatre screen for product selection within our modal edit dialog.
