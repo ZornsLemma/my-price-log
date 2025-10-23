@@ -4526,6 +4526,10 @@ fun EditPriceScreenPackSize(
             modifier = Modifier.weight(1f)
         ) { validationResult, interactionSource, scrollToFocusableHandle ->
                 NumericTextField(
+                    // TODO: Now we have multipack support, "pack size" is arguably confusing.
+                    // There's also a practical consideration that when it grows larger because the
+                    // field is empty, it really doesn't fit horizontally on my small phone - so a
+                    // shorter label would be good there too.
                     label = { Text("Pack size") },
                     value = packSizeNumber,
                     onValueChange = {
