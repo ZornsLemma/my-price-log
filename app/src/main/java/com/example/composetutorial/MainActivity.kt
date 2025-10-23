@@ -158,6 +158,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -4443,6 +4444,7 @@ fun EditPriceScreenPackSize(
                 includeDisplayOnly = false
             )
         }
+    var packCountNumber by rememberSyncedTextFieldValue("42" /* TODO SHOULD COME FROM EDITABLE PRICE */)
     var packSizeNumber by rememberSyncedTextFieldValue(
         uiContent.editablePrice.value.measureValue
     )
@@ -4465,11 +4467,33 @@ fun EditPriceScreenPackSize(
         errorHighlightOffset = 4.dp,
     ) { validationResult, interactionSource, scrollToFocusableHandle ->
 
-
-    Row {
+        // We use CenterVertically so the "x" doesn't float up to the top. It would probably be nicer
+        // to have the "x" share its baseline with the user-entered text in the TextFields but this
+        // appears to be impossible via simple modifiers (e.g. adding alignByBaseline to all the
+        // components) and far more trouble than it's worth to achieve via more complex means like
+        // custom layouts.
+    Row(verticalAlignment = Alignment.CenterVertically) {
         // TODO: Using weight to size the components is also sucky, since we really
         // just want "a reasonable fixed size" for the unit with
         // the product taking whatever's left, but this will do for now.
+        if (true) { // TODO: THIS WILL BE CONTROLLED BY MULTIPACK FLAG OR THE MULTIPACK QTY>1
+            // TODO: THE HIGHLIGHING OF THIS IS BROKEN, PROBABLY BECAUSE IT IS SHARING INTERACTION SOURCE AND SCROLLTOFOCUSABLEHANDLE WITH THE PACK SIZE - NOT SURE HOW BEST TO FIX THIS
+            NumericTextField(
+                label = { Text("Count") },
+                value = packCountNumber,
+                onValueChange = {
+                    packCountNumber = it
+                    // TODO: THE IF UICONTENT BLOCK TO UPDATE EDITABLEPRICE
+                },
+                enabled = saveStatus.isNotBusy(),
+                isError = validationResult != null,
+                modifier = Modifier
+                    .weight(0.5f)
+                    .validationFocusRequester(scrollToFocusableHandle),
+                interactionSource = interactionSource
+            )
+                Text("x", modifier = Modifier.padding(horizontal = 4.dp)) // TODO: NEEDS PADDING?!
+        }
         NumericTextField(
             label = { Text("Pack size") },
             value = packSizeNumber,
@@ -4514,7 +4538,7 @@ fun EditPriceScreenPackSize(
                 },
                 label = { Text("Unit") },
                 items = units,
-                modifier = Modifier.weight(0.5f),
+                modifier = Modifier.weight(0.75f), // TODO: *May* need to make this 0.5 if we don't have a count, maybe we can find something that works in both cases
                 getId = { it.id },
                 getCollapsedItemText = { it.symbol },
                 getItemText = { "${it.fullName} (${it.symbol})" },
@@ -9188,4 +9212,4 @@ val capitalization = when (capString) {
 // could apply to product - I don't think I've ever started editing for one product and then
 // realised I hadn't selected it correctly, though in theory it could happen. It's also perhaps
 // more UI complexity (and also user complexity even putting technicalities aside) to have to
-// open a separatre screen for product selection within our modal edit dialog.
+// open a separate screen for product selection within our modal edit dialog.
