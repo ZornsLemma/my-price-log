@@ -639,6 +639,7 @@ abstract class InventoryDatabase : RoomDatabase() {
 
 suspend fun populateDemoData(repository: PriceTrackerRepository, context: Context) {
     // TODO DELETE val db = InventoryDatabase.getDatabase(context)
+    // TODO: We should maybe have an example of "multipack" in the demo data.
     // TODO: I may want to add multiple demo data sets - if so, given them all names of the form
     // "Demo (foo)", probably. I may at the very least want to do an imperial unit demo set, so new
     // potential users don't assume the app is metric only. This might be overkill but it may not
@@ -745,6 +746,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdGroundCoffee,
             sourceId = sourceIdValueMart,
             price = 2.03,
+            count = 1,
             quantity = MeasuredValue(500.0, MeasureUnit.G),
             confirmedAt = now.minus(2, ChronoUnit.MINUTES),
             notes = "Large pack own brand",
@@ -758,6 +760,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdGroundCoffee,
             sourceId = sourceIdSuperiorStore,
             price = 1.50,
+            count = 1,
             quantity = MeasuredValue(227.0, MeasureUnit.G),
             confirmedAt = now.minus(4, ChronoUnit.DAYS),
             notes = "Own brand",
@@ -771,6 +774,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdGroundCoffee,
             sourceId = sourceIdGrandways,
             price = 1.64,
+            count = 1,
             quantity = MeasuredValue(350.0, MeasureUnit.G),
             confirmedAt = now.minus(9, ChronoUnit.DAYS),
             notes = "",
@@ -784,6 +788,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdWholeMilk,
             sourceId = sourceIdValueMart,
             price = 1.99,
+            count = 1,
             quantity = MeasuredValue(
                 4.0,
                 MeasureUnit.IMPERIAL_PINT
@@ -800,6 +805,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdWholeMilk,
             sourceId = sourceIdSuperiorStore,
             price = 2.86,
+            count = 1,
             quantity = MeasuredValue(2.0, MeasureUnit.L),
             confirmedAt = now.minus(63, ChronoUnit.DAYS),
             notes = "",
@@ -813,6 +819,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdWholeMilk,
             sourceId = sourceIdGrandways,
             price = 3.28,
+            count = 1,
             quantity = MeasuredValue(
                 6.0,
                 MeasureUnit.IMPERIAL_PINT
@@ -829,6 +836,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdTeabags,
             sourceId = sourceIdValueMart,
             price = 0.76,
+            count = 1,
             quantity = MeasuredValue(40.0, MeasureUnit.EACH),
             confirmedAt = now.minus(7, ChronoUnit.DAYS),
             notes = "Soft pack own brand",
@@ -842,6 +850,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdTeabags,
             sourceId = sourceIdSuperiorStore,
             price = 0.60,
+            count = 1,
             quantity = MeasuredValue(20.0, MeasureUnit.EACH),
             confirmedAt = now.minus(4, ChronoUnit.HOURS),
             notes = "",
@@ -855,6 +864,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             itemId = itemIdTeabags,
             sourceId = sourceIdGrandways,
             price = 1.25,
+            count = 1,
             quantity = MeasuredValue(50.0, MeasureUnit.EACH),
             confirmedAt = now.minus(12, ChronoUnit.DAYS),
             notes = "",
@@ -1583,7 +1593,7 @@ data class PriceEntity(
     @ColumnInfo(name = "item_id") val itemId: Long,
     @ColumnInfo(name = "source_id") val sourceId: Long,
 
-    // The item is sold for "price" per "quantity_in_base_unit", e.g. £1.42 for 500g.
+    // The item is sold for "price" per "count"*"quantity_in_base_unit", e.g. £1.42 for 1x500g.
     //
     // We use floating point for the price - it saves worrying about storing in pence or the
     // currency's equivalent and then getting in a mess if somehow the conventional number of
@@ -1598,6 +1608,7 @@ data class PriceEntity(
     // allows us to round-trip non-metric measures perfectly (provided we round them for display),
     // and it doesn't seem to have any real downside in practice.
     val price: Double,
+    val count: Long,
     @ColumnInfo(name = "quantity_in_base_unit") val quantityInBaseUnit: Double,
 
     // Although quantity is stored in the base unit, we also record the actual unit the user entered
@@ -1666,6 +1677,7 @@ data class PriceHistory(
     @ColumnInfo(name = "item_id") val itemId: Long,
     @ColumnInfo(name = "source_id") val sourceId: Long,
     val price: Double,
+    val count: Long,
     @ColumnInfo(name = "quantity_in_base_unit") val quantityInBaseUnit: Double,
     @ColumnInfo(name = "user_unit") val userUnit: MeasureUnit,
     @ColumnInfo(name = "confirmed_at") val confirmedAt: Instant,
@@ -1680,6 +1692,7 @@ data class PriceHistory(
             itemId = itemId,
             sourceId = sourceId,
             price = price,
+            count = count,
             quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(userUnit.quantityType)).to(
                 userUnit
             ),
@@ -1699,6 +1712,7 @@ data class PriceHistory(
                 itemId = priceEntity.itemId,
                 sourceId = priceEntity.sourceId,
                 price = priceEntity.price,
+                count = priceEntity.count,
                 quantityInBaseUnit = priceEntity.quantityInBaseUnit,
                 userUnit = priceEntity.userUnit,
                 confirmedAt = priceEntity.confirmedAt,
@@ -1732,6 +1746,7 @@ data class Price(
     val dataSetId: Long,
     val itemId: Long,
     val sourceId: Long,
+    val count: Long,
     val price: Double,
     val quantity: MeasuredValue,
     val confirmedAt: Instant,
@@ -1761,6 +1776,7 @@ data class Price(
             itemId = itemId,
             sourceId = sourceId,
             price = price,
+            count = count,
             quantityInBaseUnit = quantity.asValue(baseUnitForQuantityType(itemDefaultUnit.quantityType)),
             userUnit = quantity.unit,
             confirmedAt = confirmedAt,
@@ -1795,6 +1811,7 @@ fun PriceWithItemEntity.toDomain(): Price {
         itemId = priceEntity.itemId,
         sourceId = priceEntity.sourceId,
         price = priceEntity.price,
+        count = priceEntity.count,
         quantity = MeasuredValue(
             priceEntity.quantityInBaseUnit,
             baseUnitForQuantityType(priceEntity.userUnit.quantityType)
@@ -2646,8 +2663,10 @@ data class UnitPrice(val numerator: Double, val denominator: MeasureUnit) : Comp
     }
 }
 
-fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUnit): UnitPrice =
-    UnitPrice(amount / measure.asValue(denominator), denominator)
+fun getUnitPrice(amount: Double, count: Long, measure: MeasuredValue, denominator: MeasureUnit): UnitPrice {
+    devRequire(count > 0) { "Expected positive count" }
+    return UnitPrice(amount / (count * measure.asValue(denominator)), denominator)
+}
 
 // This takes currencyDecimalPlaces not a CurrencyFormat because we only need the number of decimal
 // places and our caller will not always have a locale to get a CurrencyFormat with.
@@ -2674,6 +2693,7 @@ fun getUnitPrice(amount: Double, measure: MeasuredValue, denominator: MeasureUni
 fun getFriendlyUnitPrice(
     amount: Double,
     currencyDecimalPlaces: Int,
+    count: Long,
     measure: MeasuredValue,
     candidateDenominators: List<MeasureUnit>
 ): UnitPrice {
@@ -2686,7 +2706,7 @@ fun getFriendlyUnitPrice(
     var bestUnitPrice: UnitPrice? = null
     val baseUnit = baseUnitForQuantityType(measure.unit.quantityType)
     for (candidateDenominator in candidateDenominators) {
-        val candidateUnitPrice = getUnitPrice(amount, measure, candidateDenominator)
+        val candidateUnitPrice = getUnitPrice(amount, count, measure, candidateDenominator)
         // We compute a score (lower is better) for candidateUnitPrice which measures how far away
         // it is in "decimal place" terms from having a numerator of 1. In other words, we are trying
         // to get as close to a single digit before the decimal point as we can.
@@ -2943,7 +2963,7 @@ fun ItemSourceInfo(
                     } else {
                         val price = augmentedPrice.basePrice
 
-                        PackPriceAndSizeRow(price.price, price.quantity, dataSet)
+                        PackPriceAndSizeRow(price.price, price.count, price.quantity, dataSet)
 
                         LabeledItem(
                             modifier = Modifier.padding(bottom = 8.dp),
@@ -3220,8 +3240,8 @@ data class EditablePrice(
     val dataSetId: Long,
     val itemId: Long,
     val sourceId: Long,
-    val price: String,
     val count: String, // TODO: NEED THIS ON OTHER PRICE THINGS, JUST ADDED HERE TO START WITH FOR UI WORK
+    val price: String,
     val measureValue: String,
     val measureUnit: MeasureUnit,
     val confirmedAt: Instant,
@@ -3259,7 +3279,7 @@ data class EditablePrice(
         dataSetId = price.dataSetId,
         itemId = price.itemId,
         sourceId = price.sourceId,
-        count = "1", // TODO TEMP HACK WHILE NOT ADDED COUNT EVERYWHERE
+        count = price.count.toString(),
         price = formatDoubleForEditing(
             price.price,
             minDecimals = currencyFormat.decimalPlaces,
@@ -3289,8 +3309,9 @@ data class EditablePrice(
     // entity class
     fun toDomain(locale: Locale): Price? {
         val priceDouble = parseStringAsDoubleOrNull(locale, price)
+        val countLong = parseStringAsDoubleOrNull(locale, count)?.toLong()
         val measureValueDouble = parseStringAsDoubleOrNull(locale, measureValue)
-        return if (priceDouble == null || measureValueDouble == null) {
+        return if (priceDouble == null || countLong == null || measureValueDouble == null) {
             null
         } else {
             val now = Instant.now()
@@ -3300,6 +3321,7 @@ data class EditablePrice(
                 itemId = itemId,
                 sourceId = sourceId,
                 price = priceDouble,
+                count = countLong,
                 quantity = MeasuredValue(measureValueDouble, measureUnit),
                 confirmedAt = if (toConfirm) now else confirmedAt,
                 notes = notes,
@@ -7177,6 +7199,7 @@ data class ViewPriceHistoryScreenUIContent(
 data class PriceHistoryDelta(
     val priceHistory: PriceHistory, // TODO: having this here feels a bit crap, maybe it's OK
     val price: Double?,
+    val count: Long?,
     val quantity: MeasuredValue?,
     // confirmedAt is a string so we can do "user-resolution" de-duplication
     val confirmedAt: String?,
@@ -7189,6 +7212,7 @@ fun PriceHistory.toPriceHistoryDelta(confirmedAtFormatter: DateTimeFormatter): P
     return PriceHistoryDelta(
         priceHistory = this,
         price = price,
+        count = count,
         quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(userUnit.quantityType)).to(
             userUnit
         ),
@@ -7217,11 +7241,12 @@ fun diff(
     Log.d("MyApp", "lhsConfirmedAt $lhsConfirmedAt rhsConfirmedAt $rhsConfirmedAt")
     val confirmedAt = if (lhsConfirmedAt == rhsConfirmedAt) null else rhsConfirmedAt
     val notes = if (lhs.notes.trim() == rhs.notes.trim()) null else rhs.notes
-    val priceOrQuantityChanged = (lhs.price != rhs.price) || (lhs.quantityInBaseUnit != rhs.quantityInBaseUnit)
+    val priceOrQuantityChanged = (lhs.price != rhs.price) || (lhs.count != rhs.count) || (lhs.quantityInBaseUnit != rhs.quantityInBaseUnit)
     if (priceOrQuantityChanged || confirmedAt != null || notes != null) {
         return PriceHistoryDelta(
             priceHistory = rhs,
             price = if (!priceOrQuantityChanged) null else rhs.price,
+            count = if (!priceOrQuantityChanged) null else rhs.count,
             quantity = if (!priceOrQuantityChanged) null else rhsQuantity,
             confirmedAt = confirmedAt,
             notes = notes,
@@ -8084,9 +8109,14 @@ This may be complete crap. The example of how to use it is probably as long as t
 @Composable
 fun PackPriceAndSizeRow(
     price: Double,
+    count: Long,
     measure: MeasuredValue,
     dataSet: DataSet
 ) {
+    // TODO: With the new count display, the shelf price can run into the unit price. Since we
+    // don't currently have an actua grid layout, maybe we should simply give shelf price 60% of the
+    // horizontal space instead of (I assume) the 50% it gets by default - there are no other rows
+    // aligning with it to make this look too odd (I hope).
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -8103,7 +8133,7 @@ fun PackPriceAndSizeRow(
                         dataSet,
                         LocalConfiguration.current.locales[0]
                     )
-                } for ${
+                } for ${if (count > 1) "${count}${multiplicationSign}" else ""}${
                     measure.toDisplayString(LocalConfiguration.current.locales[0])
                 }" /*, color = MaterialTheme.colorScheme.onSurface*/
             )
@@ -8146,7 +8176,7 @@ fun PackPriceAndSizeRow(
         // this isn't super likely with realistic price data, but it could happen. There is
         // a subtlety here, as the user may have changed the unit price unit themselves and
         // *maybe* we should respect that if so.
-        var selectedUnitPriceUnit by remember(dataSet, price, measure) {
+        var selectedUnitPriceUnit by remember(dataSet, price, count, measure) {
             Log.d("MyAppQA", "rememberSaveable $price $measure")
             val candidateDenominators = getMeasureUnitsOfSameQuantityTypeAndUnitFamily(
                 dataSet,
@@ -8156,6 +8186,7 @@ fun PackPriceAndSizeRow(
             val friendlyUnitPrice = getFriendlyUnitPrice(
                 price,
                 getCurrencyDecimalPlaces(dataSet),
+                count,
                 measure,
                 candidateDenominators
             )
@@ -8176,6 +8207,7 @@ fun PackPriceAndSizeRow(
         val unitPriceString = formatUnitPrice(
             getUnitPrice(
                 price,
+                count,
                 measure,
                 selectedUnitPriceUnit,
             ), dataSet,
@@ -8314,11 +8346,11 @@ fun ItemSourceInfo2( // TODO: Rename
                 subtitle = modifiedAtSubtitleFormatter.format(priceHistoryDelta.modifiedAt)
             )
 
-            if (priceHistoryDelta.price != null || priceHistoryDelta.quantity != null) {
-                devCheck(priceHistoryDelta.price != null && priceHistoryDelta.quantity != null) {
-                    "Expected price and measure to both be non-null since one is"
+            if (priceHistoryDelta.price != null || priceHistoryDelta.count != null || priceHistoryDelta.quantity != null) {
+                devCheck(priceHistoryDelta.price != null && priceHistoryDelta.count != null && priceHistoryDelta.quantity != null) {
+                    "Expected price, count and quantity to all be non-null since one is"
                 }
-                PackPriceAndSizeRow(priceHistoryDelta.price!!, priceHistoryDelta.quantity!!, dataSet)
+                PackPriceAndSizeRow(priceHistoryDelta.price!!, priceHistoryDelta.count!!, priceHistoryDelta.quantity!!, dataSet)
             }
 
             // TODO: Next two are possible candidates for factoring out and sharing with ItemSourceInfo(),
@@ -8810,11 +8842,12 @@ fun augmentPrice(
         // could defer this decision to the UI layer and use e.g. the base unit for the relevant
         // quantity type here.
         unitPrice = if (unitPriceDenominator != null) {
-            getUnitPrice(inflatedLoyaltyPrice, price.quantity, unitPriceDenominator)
+            getUnitPrice(inflatedLoyaltyPrice, price.count, price.quantity, unitPriceDenominator)
         } else {
             getFriendlyUnitPrice(
                 inflatedLoyaltyPrice,
                 getCurrencyDecimalPlaces(dataSet),
+                price.count,
                 price.quantity,
                 candidateUnitPriceDenominators
             )
@@ -9265,3 +9298,5 @@ val capitalization = when (capString) {
 // realised I hadn't selected it correctly, though in theory it could happen. It's also perhaps
 // more UI complexity (and also user complexity even putting technicalities aside) to have to
 // open a separate screen for product selection within our modal edit dialog.
+
+// TODO: It appears to be allowed to type newlines into numerictextfields, need to look into this and ideally block it.
