@@ -5237,6 +5237,8 @@ fun EditItemScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // TODO: We need a "allow multi-pack" (not sure on wording) option here
+
         var notes by rememberSyncedTextFieldValue(uiContent.editableItem.value.notes)
         FilteredTextField(
             label = { Text("Notes") },
@@ -9300,3 +9302,5 @@ val capitalization = when (capString) {
 // open a separate screen for product selection within our modal edit dialog.
 
 // TODO: It appears to be allowed to type newlines into numerictextfields, need to look into this and ideally block it.
+
+// TODO: Should we allow empty strings when adding/editing a "count" for a price and treat that as 1 in the database? And/or should we default count to 1 rather than an empty string when adding a brand new price rather than editing an existing one?
