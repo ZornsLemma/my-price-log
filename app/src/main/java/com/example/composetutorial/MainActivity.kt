@@ -4447,7 +4447,7 @@ fun EditPriceScreenPackSize(
                 includeDisplayOnly = false
             )
         }
-    var packCountNumber by rememberSyncedTextFieldValue("42" /* TODO SHOULD COME FROM EDITABLE PRICE */)
+    var packCountNumber by rememberSyncedTextFieldValue(uiContent.editablePrice.value.count)
     var packSizeNumber by rememberSyncedTextFieldValue(
         uiContent.editablePrice.value.measureValue
     )
@@ -4460,6 +4460,8 @@ fun EditPriceScreenPackSize(
     // 6.dp. (I don't know, but I may have already increased the vertical spacing. So try 6.dp
     // here again - and check what other bits of the code use for their error offsets - before
     // automatically increasing the spacing.)
+
+    // TODO: If we don't already, we should probably impose a reasonable 3-4-ish digit restriction on count and pack size (maybe 5ish for pack size?)
 
     // TODO: ALL THE WEIGHTS HERE INCLUDING THE LEVELS AT WHICH THEY ARE APPLIED ARE UP IN THE AIR AND SHOULD BE CHECKED
 
@@ -4520,7 +4522,6 @@ fun EditPriceScreenPackSize(
             errorHighlightOffset = 4.dp,
             modifier = Modifier.weight(1f)
         ) { validationResult, interactionSource, scrollToFocusableHandle ->
-            Row { // TODO: NOT SURE WE NEED THIS, TRYING TO FIX BROKENNESS
                 NumericTextField(
                     label = { Text("Pack size") },
                     value = packSizeNumber,
@@ -4543,62 +4544,57 @@ fun EditPriceScreenPackSize(
                         .validationFocusRequester(scrollToFocusableHandle),
                     interactionSource = interactionSource
                 )
-
-                if (uiContent.item.defaultUnit.quantityType != QuantityType.ITEM) {
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    // fontSizeDp is used here so that the minimum width we request scales
-                    // correctly (TODO: we hope - not tested) when the user changes the system font
-                    // size.
-                    val fontSize = MaterialTheme.typography.bodyLarge.fontSize
-                    val fontSizeDp = with(LocalDensity.current) { fontSize.toDp() }
-
-                    MyExposedDropdownMenuBox(
-                        enabled = saveStatus.isNotBusy(),
-                        selectedId = uiContent.editablePrice.value.measureUnit.id,
-                        onItemSelected = {
-                            val measureUnit = MeasureUnit.fromValue(it)
-                            devCheck(measureUnit != null) {
-                                "Expected non-null measureUnit to be selected; got $it"
-                            }
-                            if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
-                                vm.setUIContentEditablePrice(
-                                    uiContent.editablePrice.value.copy(
-                                        measureUnit = measureUnit
-                                    )
-                                )
-                                onChange()
-                            }
-                        },
-                        label = { Text("Unit") },
-                        items = units,
-                        modifier = Modifier.width(6 * fontSizeDp), // wrapContentWidth(), // weight(0.75f), // TODO: *May* need to make this 0.5 if we don't have a count, maybe we can find something that works in both cases
-                        getId = { it.id },
-                        getCollapsedItemText = { it.symbol },
-                        getItemText = { "${it.fullName} (${it.symbol})" },
-                        getDividerBetween = { previousItem, item ->
-                            areDifferentUnitFamilies(
-                                previousItem,
-                                item
-                            )
-                        },
-                    )
-                }
-
-                /* TODO: WE MAY WANT TO JUST USE THE SUPPORTINGTEXCT FEATURE ON THE TEXTFIELDS NOW
-            if (validationResult != null) {
-                SupportingText(
-                    text = validationResult, isError = true,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 4.dp)
-                    //.background(Color.Cyan) // TODO HACK
-                )
-
-            }
-            */
-            }
         }
+
+
+        if (uiContent.item.defaultUnit.quantityType != QuantityType.ITEM) {
+            Spacer(modifier = Modifier.width(8.dp))
+
+            // fontSizeDp is used here so that the minimum width we request scales
+            // correctly (TODO: we hope - not tested) when the user changes the system font
+            // size.
+            val fontSize = MaterialTheme.typography.bodyLarge.fontSize
+            val fontSizeDp = with(LocalDensity.current) { fontSize.toDp() }
+
+            MyExposedDropdownMenuBox(
+                enabled = saveStatus.isNotBusy(),
+                selectedId = uiContent.editablePrice.value.measureUnit.id,
+                onItemSelected = {
+                    val measureUnit = MeasureUnit.fromValue(it)
+                    devCheck(measureUnit != null) {
+                        "Expected non-null measureUnit to be selected; got $it"
+                    }
+                    if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
+                        vm.setUIContentEditablePrice(
+                            uiContent.editablePrice.value.copy(
+                                measureUnit = measureUnit
+                            )
+                        )
+                        onChange()
+                    }
+                },
+                label = { Text("Unit") },
+                items = units,
+                // Although this could be a problem (particularly with i18n), we give the dropdown
+                // "about enough horizontal space" by calculating a hand-tuned multiplier of
+                // fontSizeDp. (I cannot get it to size itself to its non-dropdown width and use
+                // wrapContentWidth(), which would otherwise be ideal.) We could just give it equal
+                // weight with the pack count and pack size fields and let the system size them all.
+                // However, since pack count and pack size need to be able to show supportingText
+                // underneath them for errors, we want to give them as much space as possible.
+                modifier = Modifier.width(6 * fontSizeDp), // wrapContentWidth(), // weight(0.75f), // TODO: *May* need to make this 0.5 if we don't have a count, maybe we can find something that works in both cases
+                getId = { it.id },
+                getCollapsedItemText = { it.symbol },
+                getItemText = { "${it.fullName} (${it.symbol})" },
+                getDividerBetween = { previousItem, item ->
+                    areDifferentUnitFamilies(
+                        previousItem,
+                        item
+                    )
+                },
+            )
+        }
+
     }
 }
 
