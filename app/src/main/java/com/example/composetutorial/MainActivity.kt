@@ -5237,7 +5237,7 @@ fun EditItemScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // TODO: We need a "allow multi-pack" (not sure on wording) option here
+        // TODO: We need a "allow multipack" (not sure on wording) option here - chatgpt and a web search both seem to agree non-hyphenated "multipack" is most common spelling, possibly us has slight hyphen preference but it's not that strong
 
         var notes by rememberSyncedTextFieldValue(uiContent.editableItem.value.notes)
         FilteredTextField(
@@ -9303,4 +9303,6 @@ val capitalization = when (capString) {
 
 // TODO: It appears to be allowed to type newlines into numerictextfields, need to look into this and ideally block it.
 
-// TODO: Should we allow empty strings when adding/editing a "count" for a price and treat that as 1 in the database? And/or should we default count to 1 rather than an empty string when adding a brand new price rather than editing an existing one?
+// TODO: Should we allow empty strings when adding/editing a "count" for a price and treat that as 1
+// in the database? And/or should we default count to 1 rather than an empty string when adding a
+// brand new price rather than editing an existing one?
