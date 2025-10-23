@@ -680,6 +680,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             name = "Coffee (ground)",
             defaultUnit = MeasureUnit.G,
+            allowMultipack = false,
             notes = ""
         )
     )
@@ -688,6 +689,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             name = "Milk (whole)",
             defaultUnit = MeasureUnit.L,
+            allowMultipack = false,
             notes = "",
         )
     )
@@ -696,8 +698,8 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             name = "Teabags",
             defaultUnit = MeasureUnit.EACH,
+            allowMultipack = false,
             notes = "",
-
             )
     )
     // We have three sources with sample prices, because you need three non-ancient prices in order
@@ -1323,6 +1325,7 @@ data class Item(
     // TODO: GUI should probably restrict and/or warn before changing default_unit between
     // MeasureUnits - maybe if you have no prices yet you can do it. (It's completely fine to change
     // within a MeasureUnit.)
+    @ColumnInfo(name = "allow_multipack") val allowMultipack: Boolean,
     val notes: String,
 ) : Parcelable
 // TODO: Will temporarily make a note here - I may simply (especially in v1) refuse to allow changes
@@ -1356,6 +1359,7 @@ data class EditableItem private constructor(
     val name: String,
     val quantityType: QuantityType,
     val defaultUnitIdByQuantityTypeOrdinal: List<Long>,
+    val allowMultipack: Boolean,
     val notes: String,
 ) : Parcelable {
     val defaultUnit: MeasureUnit get() = MeasureUnit.fromValue(defaultUnitIdByQuantityTypeOrdinal[quantityType.ordinal])!!
@@ -1381,6 +1385,7 @@ data class EditableItem private constructor(
             dataSetId = dataSetId,
             name = trimmedName,
             defaultUnit = defaultUnit,
+            allowMultipack = allowMultipack,
             notes = notes
         )
     }
@@ -1412,6 +1417,7 @@ data class EditableItem private constructor(
                     "",
                     QuantityType.WEIGHT,
                     defaultUnitIdByQuantityTypeOrdinal,
+                    false,
                     ""
                 )
             } else {
@@ -1426,6 +1432,7 @@ data class EditableItem private constructor(
                     item.name,
                     item.defaultUnit.quantityType,
                     defaultUnitIdByQuantityTypeOrdinal,
+                    item.allowMultipack,
                     item.notes
                 )
             }
@@ -4476,25 +4483,19 @@ fun EditPriceScreenPackSize(
         uiContent.editablePrice.value.measureValue
     )
 
-    // This BaseValidatedTextField wraps the whole Row and its supporting text, because we do want
-    // it to surround the supporting text as well. TODO NOT TRUE NOW
-    // TODO: I wonder if this screen is actually a bit vertically squashed together, now I see
-    // that I "need" offset = 4.dp here instead of the current default 6.dp. It might be I
-    // should increase the vertical spacing of the components on this screen and then make this
-    // 6.dp. (I don't know, but I may have already increased the vertical spacing. So try 6.dp
-    // here again - and check what other bits of the code use for their error offsets - before
+    // TODO: I wonder if this screen is actually a bit vertically (and even horizontally?) squashed
+    // together, now I see that I "need" offset = 4.dp here instead of the current default 6.dp. It
+    // might be I should increase the vertical spacing of the components on this screen and then
+    // make this 6.dp. (I don't know, but I may have already increased the vertical spacing. So try
+    // 6.dp here again - and check what other bits of the code use for their error offsets - before
     // automatically increasing the spacing.)
-
-    // TODO: If we don't already, we should probably impose a reasonable 3-4-ish digit restriction on count and pack size (maybe 5ish for pack size?)
 
     // TODO: ALL THE WEIGHTS HERE INCLUDING THE LEVELS AT WHICH THEY ARE APPLIED ARE UP IN THE AIR AND SHOULD BE CHECKED
 
     Row {
-        // TODO: Using weight to size the components is also sucky, since we really
-        // just want "a reasonable fixed size" for the unit with
-        // the product taking whatever's left, but this will do for now.
-        if (true) { // TODO: THIS WILL BE CONTROLLED BY MULTIPACK FLAG OR THE MULTIPACK QTY>1
-            // TODO: THE HIGHLIGHING OF THIS IS BROKEN, PROBABLY BECAUSE IT IS SHARING INTERACTION SOURCE AND SCROLLTOFOCUSABLEHANDLE WITH THE PACK SIZE - NOT SURE HOW BEST TO FIX THIS
+        // "Count" is visible if the item explicitly allows multipacks or if (presumably because it
+        // used to) we have a count > 1, which we must not hide or silently throw away.
+        if (uiContent.item.allowMultipack || uiContent.originalPrice.count.toLong() > 1) {
             BaseValidatedTextField(
                 value = packCountNumber.text,
                 validationRules = vm.packCountValidationRules,
