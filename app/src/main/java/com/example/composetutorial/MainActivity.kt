@@ -2233,6 +2233,8 @@ enum class ThemePreference {
 }
 */
 
+private const val multiplicationSign = "\u00d7"
+
 // Since all our data is local, we generally expect to be able to respond promptly to user requests.
 // Things like the dropdown they touched closing or the button they touched animating provide
 // feedback that their touch has been noticed. We don't immediately show a spinner because AIUI
@@ -4465,12 +4467,7 @@ fun EditPriceScreenPackSize(
 
     // TODO: ALL THE WEIGHTS HERE INCLUDING THE LEVELS AT WHICH THEY ARE APPLIED ARE UP IN THE AIR AND SHOULD BE CHECKED
 
-    // We use CenterVertically so the "x" doesn't float up to the top. It would probably be nicer to
-    // have the "x" share its baseline with the user-entered text in the TextFields but this appears
-    // to be impossible via simple modifiers (e.g. adding alignByBaseline to all the components) and
-    // far more trouble than it's worth to achieve via more complex means like custom layouts.
-    // TODO: I suspect this centering screws up the layout when a supportingText appears for an error...
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row {
         // TODO: Using weight to size the components is also sucky, since we really
         // just want "a reasonable fixed size" for the unit with
         // the product taking whatever's left, but this will do for now.
@@ -4510,7 +4507,13 @@ fun EditPriceScreenPackSize(
                     )
                 }
             }
-            Text("x", modifier = Modifier.padding(horizontal = 4.dp)) // TODO: NEEDS PADDING?!
+            // We want the multiplication sign to be roughly centred vertically (ideally it would
+            // share a baseline with the user-entered text, but that is impossible to do, at least
+            // without loads of additional code) but we can't just vertically centre it, because the
+            // Row's bounding box will grow when supportingText appears and we don't want the "x" to
+            // move then. This is our attempt to try to get the
+            // TODO: Test this with font scaling
+            Text(multiplicationSign, modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp * LocalDensity.current.fontScale))
         }
         BaseValidatedTextField(
             value = packSizeNumber.text,
