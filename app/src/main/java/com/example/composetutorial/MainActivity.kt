@@ -3219,6 +3219,7 @@ data class EditablePrice(
     val itemId: Long,
     val sourceId: Long,
     val price: String,
+    val count: String, // TODO: NEED THIS ON OTHER PRICE THINGS, JUST ADDED HERE TO START WITH FOR UI WORK
     val measureValue: String,
     val measureUnit: MeasureUnit,
     val confirmedAt: Instant,
@@ -3240,6 +3241,7 @@ data class EditablePrice(
         dataSetId = dataSetId,
         itemId = itemId,
         sourceId = sourceId,
+        count = "",
         price = "",
         measureValue = "",
         measureUnit = itemDefaultUnit,
@@ -3255,6 +3257,7 @@ data class EditablePrice(
         dataSetId = price.dataSetId,
         itemId = price.itemId,
         sourceId = price.sourceId,
+        count = "1", // TODO TEMP HACK WHILE NOT ADDED COUNT EVERYWHERE
         price = formatDoubleForEditing(
             price.price,
             minDecimals = currencyFormat.decimalPlaces,
@@ -4450,120 +4453,153 @@ fun EditPriceScreenPackSize(
     )
 
     // This BaseValidatedTextField wraps the whole Row and its supporting text, because we do want
-    // it to surround the supporting text as well.
+    // it to surround the supporting text as well. TODO NOT TRUE NOW
     // TODO: I wonder if this screen is actually a bit vertically squashed together, now I see
     // that I "need" offset = 4.dp here instead of the current default 6.dp. It might be I
     // should increase the vertical spacing of the components on this screen and then make this
     // 6.dp. (I don't know, but I may have already increased the vertical spacing. So try 6.dp
     // here again - and check what other bits of the code use for their error offsets - before
     // automatically increasing the spacing.)
-    BaseValidatedTextField(
-        value = packSizeNumber.text,
-        validationRules = vm.packSizeValidationRules,
-        validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
-        allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
-        validationFlow = vm.saveValidationEvents,
-        validationFlowFieldId = EditPriceViewModel.EditableField.PACK_SIZE,
-        errorHighlightOffset = 4.dp,
-    ) { validationResult, interactionSource, scrollToFocusableHandle ->
 
-        // We use CenterVertically so the "x" doesn't float up to the top. It would probably be nicer
-        // to have the "x" share its baseline with the user-entered text in the TextFields but this
-        // appears to be impossible via simple modifiers (e.g. adding alignByBaseline to all the
-        // components) and far more trouble than it's worth to achieve via more complex means like
-        // custom layouts.
+    // TODO: ALL THE WEIGHTS HERE INCLUDING THE LEVELS AT WHICH THEY ARE APPLIED ARE UP IN THE AIR AND SHOULD BE CHECKED
+
+    // We use CenterVertically so the "x" doesn't float up to the top. It would probably be nicer to
+    // have the "x" share its baseline with the user-entered text in the TextFields but this appears
+    // to be impossible via simple modifiers (e.g. adding alignByBaseline to all the components) and
+    // far more trouble than it's worth to achieve via more complex means like custom layouts.
+    // TODO: I suspect this centering screws up the layout when a supportingText appears for an error...
     Row(verticalAlignment = Alignment.CenterVertically) {
         // TODO: Using weight to size the components is also sucky, since we really
         // just want "a reasonable fixed size" for the unit with
         // the product taking whatever's left, but this will do for now.
         if (true) { // TODO: THIS WILL BE CONTROLLED BY MULTIPACK FLAG OR THE MULTIPACK QTY>1
             // TODO: THE HIGHLIGHING OF THIS IS BROKEN, PROBABLY BECAUSE IT IS SHARING INTERACTION SOURCE AND SCROLLTOFOCUSABLEHANDLE WITH THE PACK SIZE - NOT SURE HOW BEST TO FIX THIS
-            NumericTextField(
-                label = { Text("Count") },
-                value = packCountNumber,
-                onValueChange = {
-                    packCountNumber = it
-                    // TODO: THE IF UICONTENT BLOCK TO UPDATE EDITABLEPRICE
-                },
-                enabled = saveStatus.isNotBusy(),
-                isError = validationResult != null,
-                modifier = Modifier
-                    .weight(0.5f)
-                    .validationFocusRequester(scrollToFocusableHandle),
-                interactionSource = interactionSource
-            )
-                Text("x", modifier = Modifier.padding(horizontal = 4.dp)) // TODO: NEEDS PADDING?!
-        }
-        NumericTextField(
-            label = { Text("Pack size") },
-            value = packSizeNumber,
-            onValueChange = {
-                packSizeNumber = it
-                if (uiContent.editablePrice.value.measureValue != it.text) {
-                    vm.setUIContentEditablePrice(
-                        uiContent.editablePrice.value.copy(
-                            measureValue = it.text
-                        )
+            BaseValidatedTextField(
+                value = packCountNumber.text,
+                validationRules = vm.packCountValidationRules,
+                // TODO DON'T THINK WE NEED THIS BUT CHECK, WIP RIGHT NOW validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
+                allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+                validationFlow = vm.saveValidationEvents,
+                validationFlowFieldId = EditPriceViewModel.EditableField.PACK_COUNT,
+                errorHighlightOffset = 4.dp, // TODO!?
+                modifier = Modifier.weight(1f)
+            ) { validationResult, interactionSource, scrollToFocusableHandle ->
+                Row { // TODO EXPERIMENTAL
+                    NumericTextField(
+                        label = { Text("Count") },
+                        value = packCountNumber,
+                        onValueChange = {
+                            packCountNumber = it
+                            if (uiContent.editablePrice.value.count != it.text) {
+                                vm.setUIContentEditablePrice(
+                                    uiContent.editablePrice.value.copy(
+                                        count = it.text
+                                    )
+                                )
+                                onChange()
+                            }
+                        },
+                        enabled = saveStatus.isNotBusy(),
+                        isError = validationResult != null,
+                        supportingText = if (validationResult == null) null else { { SupportingText(validationResult, true) } }, // TODO EXPERIMENTAL
+                        modifier = Modifier
+                            .validationFocusRequester(scrollToFocusableHandle),
+                        interactionSource = interactionSource
                     )
-                    onChange()
                 }
-            },
-            enabled = saveStatus.isNotBusy(),
-            isError = validationResult != null,
-            modifier = Modifier
-                .weight(1f)
-                .validationFocusRequester(scrollToFocusableHandle),
-            interactionSource = interactionSource
-        )
-
-        if (uiContent.item.defaultUnit.quantityType != QuantityType.ITEM) {
-            Spacer(modifier = Modifier.width(8.dp))
-
-            MyExposedDropdownMenuBox(
-                enabled = saveStatus.isNotBusy(),
-                selectedId = uiContent.editablePrice.value.measureUnit.id,
-                onItemSelected = {
-                    val measureUnit = MeasureUnit.fromValue(it)
-                    devCheck(measureUnit != null) {
-                        "Expected non-null measureUnit to be selected; got $it"
-                    }
-                    if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
-                        vm.setUIContentEditablePrice(
-                            uiContent.editablePrice.value.copy(
-                                measureUnit = measureUnit
+            }
+            Text("x", modifier = Modifier.padding(horizontal = 4.dp)) // TODO: NEEDS PADDING?!
+        }
+        BaseValidatedTextField(
+            value = packSizeNumber.text,
+            validationRules = vm.packSizeValidationRules,
+            validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
+            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+            validationFlow = vm.saveValidationEvents,
+            validationFlowFieldId = EditPriceViewModel.EditableField.PACK_SIZE,
+            errorHighlightOffset = 4.dp,
+            modifier = Modifier.weight(1f)
+        ) { validationResult, interactionSource, scrollToFocusableHandle ->
+            Row { // TODO: NOT SURE WE NEED THIS, TRYING TO FIX BROKENNESS
+                NumericTextField(
+                    label = { Text("Pack size") },
+                    value = packSizeNumber,
+                    onValueChange = {
+                        packSizeNumber = it
+                        if (uiContent.editablePrice.value.measureValue != it.text) {
+                            vm.setUIContentEditablePrice(
+                                uiContent.editablePrice.value.copy(
+                                    measureValue = it.text
+                                )
                             )
-                        )
-                        onChange()
-                    }
-                },
-                label = { Text("Unit") },
-                items = units,
-                modifier = Modifier.weight(0.75f), // TODO: *May* need to make this 0.5 if we don't have a count, maybe we can find something that works in both cases
-                getId = { it.id },
-                getCollapsedItemText = { it.symbol },
-                getItemText = { "${it.fullName} (${it.symbol})" },
-                getDividerBetween = { previousItem, item ->
-                    areDifferentUnitFamilies(
-                        previousItem,
-                        item
+                            onChange()
+                        }
+                    },
+                    enabled = saveStatus.isNotBusy(),
+                    isError = validationResult != null,
+                    supportingText = if (validationResult == null) null else { { SupportingText(validationResult, true) } }, // TODO EXPERIMENTAL
+                    modifier = Modifier
+                        // TODO DELETE? .weight(1f)
+                        .validationFocusRequester(scrollToFocusableHandle),
+                    interactionSource = interactionSource
+                )
+
+                if (uiContent.item.defaultUnit.quantityType != QuantityType.ITEM) {
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // fontSizeDp is used here so that the minimum width we request scales
+                    // correctly (TODO: we hope - not tested) when the user changes the system font
+                    // size.
+                    val fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                    val fontSizeDp = with(LocalDensity.current) { fontSize.toDp() }
+
+                    MyExposedDropdownMenuBox(
+                        enabled = saveStatus.isNotBusy(),
+                        selectedId = uiContent.editablePrice.value.measureUnit.id,
+                        onItemSelected = {
+                            val measureUnit = MeasureUnit.fromValue(it)
+                            devCheck(measureUnit != null) {
+                                "Expected non-null measureUnit to be selected; got $it"
+                            }
+                            if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
+                                vm.setUIContentEditablePrice(
+                                    uiContent.editablePrice.value.copy(
+                                        measureUnit = measureUnit
+                                    )
+                                )
+                                onChange()
+                            }
+                        },
+                        label = { Text("Unit") },
+                        items = units,
+                        modifier = Modifier.width(6 * fontSizeDp), // wrapContentWidth(), // weight(0.75f), // TODO: *May* need to make this 0.5 if we don't have a count, maybe we can find something that works in both cases
+                        getId = { it.id },
+                        getCollapsedItemText = { it.symbol },
+                        getItemText = { "${it.fullName} (${it.symbol})" },
+                        getDividerBetween = { previousItem, item ->
+                            areDifferentUnitFamilies(
+                                previousItem,
+                                item
+                            )
+                        },
                     )
-                },
-            )
+                }
+
+                /* TODO: WE MAY WANT TO JUST USE THE SUPPORTINGTEXCT FEATURE ON THE TEXTFIELDS NOW
+            if (validationResult != null) {
+                SupportingText(
+                    text = validationResult, isError = true,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 4.dp)
+                    //.background(Color.Cyan) // TODO HACK
+                )
+
+            }
+            */
+            }
         }
     }
-
-    if (validationResult != null) {
-        SupportingText(
-            text = validationResult, isError = true,
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(top = 4.dp)
-            //.background(Color.Cyan) // TODO HACK
-        )
-
-    }
-}
-
 }
 
 @Composable
@@ -5450,6 +5486,7 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
     validationFlow: SharedFlow<T>,
     validationFlowFieldId: T,
     errorHighlightOffset: Dp = defaultErrorHighlightOffset,
+    modifier: Modifier = Modifier,
     content: @Composable (
         validationResult: String?,
         interactionSource: MutableInteractionSource,
@@ -5465,10 +5502,12 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
         allowEmpty = allowEmpty
     )
 
+
     ErrorHighlightBox(
         visible = scrollToFocusableHandle.errorHighlightBoxVisible.value,
         offset = errorHighlightOffset,
-        validationTarget = scrollToFocusableHandle
+        validationTarget = scrollToFocusableHandle,
+        modifier = modifier
     ) {
         Column(modifier = Modifier.animateContentSize()) {
             // TODO: We could possibly pass validationThing201 directly. We could also maybe pass a
@@ -6796,6 +6835,7 @@ class EditPriceViewModel(
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
+    val packCountValidationRules = numericValidationRules(uiContent.frozenLocale, allowDecimals = false, allowZero = false)
     var packSizeValidationRules = generatePackSizeValidationRules()
     var currencyFormat = getCurrencyFormat(uiContent.dataSet, uiContent.frozenLocale)
 
@@ -6836,6 +6876,7 @@ class EditPriceViewModel(
 
     enum class EditableField {
         PRICE,
+        PACK_COUNT,
         PACK_SIZE,
     }
 
@@ -6854,6 +6895,14 @@ class EditPriceViewModel(
             )
         ) {
             _saveValidationEvents.emit(EditableField.PRICE)
+            return false
+        }
+        if (!validationRulesOk(
+                packCountValidationRules,
+                uiContent.editablePrice.value.count
+            )
+        ) {
+            _saveValidationEvents.emit(EditableField.PACK_COUNT)
             return false
         }
         if (!validationRulesOk(
