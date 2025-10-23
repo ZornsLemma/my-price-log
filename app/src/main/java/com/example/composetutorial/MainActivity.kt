@@ -639,7 +639,6 @@ abstract class InventoryDatabase : RoomDatabase() {
 
 suspend fun populateDemoData(repository: PriceTrackerRepository, context: Context) {
     // TODO DELETE val db = InventoryDatabase.getDatabase(context)
-    // TODO: We should maybe have an example of "multipack" in the demo data.
     // TODO: I may want to add multiple demo data sets - if so, given them all names of the form
     // "Demo (foo)", probably. I may at the very least want to do an imperial unit demo set, so new
     // potential users don't assume the app is metric only. This might be overkill but it may not
@@ -701,6 +700,15 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             allowMultipack = false,
             notes = "",
             )
+    )
+    val itemIdCola = repository.updateOrInsertItem(
+        Item(
+            dataSetId = dataSetId,
+            name = "Cola",
+            defaultUnit = MeasureUnit.ML,
+            allowMultipack = true,
+            notes = ""
+        )
     )
     // We have three sources with sample prices, because you need three non-ancient prices in order
     // to get good/OK/bad judgments and we want to show those off to new users.
@@ -872,6 +880,48 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             notes = "",
             itemDefaultUnit = MeasureUnit.EACH,
             modifiedAt = now.minus(12, ChronoUnit.DAYS),
+        )
+    )
+    repository.updateOrInsertPrice(
+        Price(
+            dataSetId = dataSetId,
+            itemId = itemIdCola,
+            sourceId = sourceIdValueMart,
+            price = 6.30,
+            count = 12,
+            quantity = MeasuredValue(400.0, MeasureUnit.ML),
+            confirmedAt = now.minus(6, ChronoUnit.DAYS),
+            notes = "",
+            itemDefaultUnit = MeasureUnit.ML,
+            modifiedAt = now.minus(6, ChronoUnit.DAYS),
+        )
+    )
+    repository.updateOrInsertPrice(
+        Price(
+            dataSetId = dataSetId,
+            itemId = itemIdCola,
+            sourceId = sourceIdSuperiorStore,
+            price = 2.79,
+            count = 4,
+            quantity = MeasuredValue(330.0, MeasureUnit.ML),
+            confirmedAt = now.minus(31, ChronoUnit.DAYS),
+            notes = "",
+            itemDefaultUnit = MeasureUnit.ML,
+            modifiedAt = now.minus(31, ChronoUnit.DAYS),
+        )
+    )
+    repository.updateOrInsertPrice(
+        Price(
+            dataSetId = dataSetId,
+            itemId = itemIdCola,
+            sourceId = sourceIdGrandways,
+            price = 3.82,
+            count = 6,
+            quantity = MeasuredValue(330.0, MeasureUnit.ML),
+            confirmedAt = now.minus(18, ChronoUnit.DAYS),
+            notes = "",
+            itemDefaultUnit = MeasureUnit.ML,
+            modifiedAt = now.minus(18, ChronoUnit.DAYS),
         )
     )
     // Set some defaults for the first run so the user isn't left with a screen with no data
@@ -5238,7 +5288,36 @@ fun EditItemScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // TODO: We need a "allow multipack" (not sure on wording) option here - chatgpt and a web search both seem to agree non-hyphenated "multipack" is most common spelling, possibly us has slight hyphen preference but it's not that strong
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = "May be sold in multipacks",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    // TODO: If I change the "pack size" terminology elsewhere, need to change this too
+                    text = "Allow entering a count as well as a pack size",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Switch(
+                enabled = saveStatus.isNotBusy(),
+                checked = uiContent.editableItem.value.allowMultipack,
+                onCheckedChange = {
+                    vm.setUIContentEditableItem(
+                        uiContent.editableItem.value.copy(
+                            allowMultipack = it
+                        )
+                    )
+                })
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         var notes by rememberSyncedTextFieldValue(uiContent.editableItem.value.notes)
         FilteredTextField(
