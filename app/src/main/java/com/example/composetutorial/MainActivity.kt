@@ -2727,19 +2727,8 @@ fun getUnitPrice(amount: Double, count: Long, measure: MeasuredValue, denominato
 
 // This takes currencyDecimalPlaces not a CurrencyFormat because we only need the number of decimal
 // places and our caller will not always have a locale to get a CurrencyFormat with.
-// TODO: I've been hacking around with this to experiment and try to get my head straight and the
-// current code is an utter mess both in terms of implementation and its undesirable behaviour,
-// but I'll commit it anyway. Current gut feeling is I need to work on something based purely on
-// penalising leading zeros (after filtering out a decimal point, if any) and also penalising
-// trailing zeroes but less so. But the result is never going to be perfect and I need to think
-// some more. It may not be fair to penalise trailing zeroes though - after all, if the price
-// happens to come out neatly at £1.20/kg, that's great - we don't want to be pushing for £0.12/100g
-// because it's unstable and if the price goes up by £0.01/kg, we'll change our auto-chosen unit
-// price denominator. Although for 0dp currencies, there will never be any leading zeroes, so we
-// probably need to be factoring in length-in-digits and/or penalising leading zeroes before the
-// decimal point. I'm going round in circles and probably missing all sorts of stuff.
 // TODO: While it is probably smart to try to get this as nice as we can, I am wondering if we
-// should store (in the db? in shared preferences?) the last user-selected value for each (item,
+// should store (in the db? in shared preferences? probably the db, based on talking to ChatGPT - shared preferences and the more modern DataStore thing are both not optimised for ~1000 keys as we'd probably have here, unless we serialise a huge ~1000 key map into a single shared preference key which also sucks) the last user-selected value for each (item,
 // source) combination (which implicitly is also per data set) - this way if the default isn't good,
 // it isn't critical. It may be faffy to use the real db here but since this is "nice to have but
 // not critical" data we can potentially save it async without too much fuss (definitely no spinners
@@ -2747,6 +2736,9 @@ fun getUnitPrice(amount: Double, count: Long, measure: MeasuredValue, denominato
 // is editing data in a dialog where saving is crucial), and *if* it's helpful we could use a
 // separate table to avoid worrying about our writes hanging around and subsequently blatting more
 // critical changes to the price table by "full effort and wait til it completes" saves.
+// It's tempting to ignore this for MVP, but since it requires a database table to support it, it
+// may be best to get that table in to reduce the need for a slightly stressful "production" database
+// upgrade in a subsequent release.
 fun getFriendlyUnitPrice(
     amount: Double,
     currencyDecimalPlaces: Int,
@@ -2754,49 +2746,29 @@ fun getFriendlyUnitPrice(
     measure: MeasuredValue,
     candidateDenominators: List<MeasureUnit>
 ): UnitPrice {
-    devCheck(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
-    devCheck(measure.value > 0.0) { "Expected positive measure; got $measure" }
-    // TODO: This needs to use currencyDecimalPlaces - imagine for example we're working with JPY,
-    // it's not about decimal places per se but about getting the "shortest" number which doesn't
-    // gratuitously push non-zero digits into the non-displayed part after rounding.
+    devRequire(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
+    devRequire(measure.value > 0.0) { "Expected positive measure; got $measure" }
     var bestScore: Double? = null
     var bestUnitPrice: UnitPrice? = null
-    val baseUnit = baseUnitForQuantityType(measure.unit.quantityType)
     for (candidateDenominator in candidateDenominators) {
         val candidateUnitPrice = getUnitPrice(amount, count, measure, candidateDenominator)
-        // We compute a score (lower is better) for candidateUnitPrice which measures how far away
-        // it is in "decimal place" terms from having a numerator of 1. In other words, we are trying
-        // to get as close to a single digit before the decimal point as we can.
-        // TODO: I'm not sure this score is right - e.g. looking at ground coffee at SuperiorStore,
-        // it chooses $0.66/100g but $6.61/kg is probably better. This code could maybe try to
-        // down-weight "display only" units, but I'm not sure - anyway, that isn't the issue here. I
-        // think we sort of don't want a 0 before the decimal point if we can help it, but our score
-        // doesn't take this into account. Off the top of my head, maybe something where we fairly
-        // heavily penalise for "more decimal places than our currency display format" and lightly
-        // penalise for every extra digit more significant than the units digit?! Actually what
-        // might work is using log10 with integer truncation to calculate the "index" of the most
-        // significant digit (0 for 1s place, 2 for 10s place, -1 for 0.1s place, etc), then scoring
-        // (low is good) by the index but with negative ones multipled by 2 to discourage them -
-        // given we have limited dp (because of currency display settings), we want to make full use
-        // of the space we have.
-        val log10Of1 = 0.0
+        // We compute a score (lower is better) for candidateUnitPrice. This is based on an ad-hoc
+        // weighted combination of factors:
+        // - We like to minimise relative error because significant figures get rounded off at
+        //   currencyDecimalPlaces.
+        // - We like to use the same unit the price is expressed in if it's practical. This is more
+        //   of an issue with non-metric, where e.g. milk might be sold in 4 pint containers and
+        //   without this preference we might express the unit price per gallon, which is OK but
+        //   not so clear in my opinion.
+        // - We like to have an integer part which is a short as possible. (Remember the non-integer
+        //   part isn't under our control; we will always have currencyDecimalPlaces of it.) But we
+        //   don't like to have "0.xx" because then we're wasting the digit before the decimal
+        //   separator which we always have to display.
         val relativeError = abs(candidateUnitPrice.numerator.roundTo(currencyDecimalPlaces) - candidateUnitPrice.numerator) / candidateUnitPrice.numerator
-        val displayLength = String.format("%.${currencyDecimalPlaces}f", candidateUnitPrice.numerator).length
-        // TODO OLD val candidateScore = abs(log10(candidateUnitPrice.numerator) - log10Of1) // lower is better
-        // TODO OLD val candidateScore = log10(relativeError) / displayLength
-        // TODO: Abusing MeasureValue to scale prices here, as in the fn above
-        //val absoluteError = MeasuredValue(abs(candidateUnitPrice.numerator.roundTo(currencyDecimalPlaces) - candidateUnitPrice.numerator), candidateUnitPrice.denominator).asValue(baseUnit)
-        val absoluteErrorThreshold = 10.0.pow(-currencyDecimalPlaces)
-        //val absoluteErrorScore = min(absoluteError - absoluteErrorThreshold, 0.0)
-        // val candidateScore: Double /* TODO CHANGE TO INT */ = if (absoluteError >= absoluteErrorThreshold) 0.0 else (-displayLength).toDouble()
-        val roundedCandidateUnitPrice = MeasuredValue(candidateUnitPrice.numerator.roundTo(currencyDecimalPlaces), candidateUnitPrice.denominator)
-        // TODO WRONG val amountFromRoundedCandidateUnitPrice = roundedCandidateUnitPrice.asValue(measure.unit) * measure.value
-        val amountFromRoundedCandidateUnitPrice = measure.asValue(roundedCandidateUnitPrice.unit) * roundedCandidateUnitPrice.value
-        val absoluteError = abs(amountFromRoundedCandidateUnitPrice - amount)
-        val candidateScore: Double /* TODO CHANGE TO INT */ = if (absoluteError >= absoluteErrorThreshold) 0.0 else (-displayLength).toDouble()
-        Log.d("MyAppFU", "$candidateDenominator $roundedCandidateUnitPrice $amountFromRoundedCandidateUnitPrice $absoluteError $candidateScore")
-
-        //Log.d("MyAppFU", "$candidateDenominator ${candidateUnitPrice.numerator} $candidateScore $absoluteError $displayLength")
+        val displayIntegerPart = String.format(Locale.US, "%.${currencyDecimalPlaces}f", candidateUnitPrice.numerator).substringBefore('.')
+        val displayIntegerLength = if (displayIntegerPart == "0") 0 else displayIntegerPart.length
+        val candidateScore = abs(displayIntegerLength - 1) + (10.0 * relativeError) - (if (candidateUnitPrice.denominator == measure.unit) 1.1 else 0.0)
+        Log.d("MyAppFU", "$candidateDenominator ${candidateUnitPrice.numerator} $displayIntegerLength $relativeError $candidateScore")
         if (bestScore == null || candidateScore < bestScore) {
             bestScore = candidateScore
             bestUnitPrice = candidateUnitPrice
