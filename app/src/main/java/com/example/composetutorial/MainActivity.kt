@@ -3158,6 +3158,7 @@ fun <T> NewDataTable( // TODO: Rename
     highlightRow: Int? = null,
     columnWeights: List<Float> = List(header.size) { 1f },
     columnAlignments: List<CellAlignment> = List(header.size) { CellAlignment.Start },
+    onClick: ((T) -> Unit)? = null,
 ) {
     devRequire(header.size == columns.size) { "Expected same header and columns size but have ${header.size} and ${columns.size} respectively" }
     devRequire(header.size == columnWeights.size) { "Expected same header and columnWeights size but have ${header.size} and ${columnWeights.size} respectively" }
@@ -3218,6 +3219,7 @@ fun <T> NewDataTable( // TODO: Rename
                     modifier = Modifier
                         .background(rowBackground)
                         .height(56.dp) // TODO EXPERIMENTAL - AND NOTE THAT UNLESS I ACTUALLY *DO* MAKE THE ROWS CLICKABLE, I DO NOT NEED THEM TO BE SO TALL AND CAN SHRINK THEM
+                        .then(if (onClick != null) Modifier.clickable { onClick(item) } else Modifier)
                     , verticalAlignment = Alignment.CenterVertically
                 ) {
                     columns.forEachIndexed { colIndex, cell ->
@@ -4099,7 +4101,12 @@ fun HomeScreenContent(
             // to go use the overflow menu to add stuff etc, once the layout otherwise
             // settles down.
             if (item != null) {
-                PriceComparisonCard(dataSet, source, priceAnalysis)
+                // Clicking on one of the items on this card selects its source, just as if it had
+                // been selected via the source dropdown. This is technically redundant but I found
+                // myself wanting to do it all the time to quickly see the details of a price, so
+                // I've implemented it. (The dropdown is still needed, as it's the only way to
+                // select sources which don't appear on the price comparison card.)
+                PriceComparisonCard(dataSet, source, priceAnalysis, onClick = { onSelectedSourceIdChange(it) })
             }
 
         }
@@ -4166,7 +4173,8 @@ fun AncientPriceIcon() {
 fun PriceComparisonCard(
     dataSet: DataSet,
     source: Source?,
-    priceAnalysis: PriceAnalysis
+    priceAnalysis: PriceAnalysis,
+    onClick: (Long) -> Unit,
 ) {
     // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a
     // contextDescription for screen readers which is "Price per 100g", so it gets read out
@@ -4259,10 +4267,6 @@ fun PriceComparisonCard(
                     },
                 )
             }
-            // TODO: If we make these rows clickable, we should probably have a little right
-            // pointing chevron at the far right or something. Maybe that would only apply if they
-            // open a new "how the calculation was performed" screen, not if they instead select the
-            // relevant source for this screen.
             NewDataTable(
                 header = header,
                 items = priceAnalysis.augmentedPriceList,
@@ -4278,6 +4282,7 @@ fun PriceComparisonCard(
                     CellAlignment.End,
                     CellAlignment.Start
                 ),
+                onClick = { augmentedPrice -> onClick(augmentedPrice.basePrice.sourceId) },
             )
         }
     }
@@ -9239,12 +9244,6 @@ Log.d("MyApp", baz.toString())
 // 5% or 10% per year. For prices >inflation thresold old, we start applying it compounded daily
 // *from the threshold* (not from day 0) - we don't want a sudden big inflation jump just because a
 // price became "eligible" for inflation.
-
-// TODO: Tapping one of the stores in the price list at the bottom of the home screen should select
-// that store. This is technically redundant with the store selection dropdown, but I don't care -
-// I really want to do this so much when I'm using the app. (It's not a suitable replacement, as
-// a store with no price will not show up in that comparison list, so we need the dropdown to
-// allow selection of *any* store.)
 
 // TODO: I am starting to think (and have already said so in other TODOs, probably) that the
 // ItemSourceInfo card should perhaps be expanded a bit and have text messages saying things like
