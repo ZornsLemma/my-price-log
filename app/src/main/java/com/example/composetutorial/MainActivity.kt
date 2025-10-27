@@ -6419,7 +6419,11 @@ fun SettingsScreen(navController: NavHostController) {
 
         if (showStalePriceThresholdDialog) {
             // TODO: We probably ought to pull this out as a re-usable thing taking parameters now it has so much damn logic in it
-            var textFieldValue by remember { mutableStateOf(TextFieldValue(text = editableStalePriceThreshold, selection = TextRange(editableStalePriceThreshold.length))) }
+            var textFieldValue by remember { mutableStateOf(
+                TextFieldValue(
+                    text = editableStalePriceThreshold,
+                    // Put the caret at the end of the string - this is why we need a TextFieldValue.
+                    selection = TextRange(editableStalePriceThreshold.length))) }
             val focusRequester = remember { FocusRequester() }
             AlertDialog(
                 // TODO: We're constantly repeating the next = false = null bit
