@@ -6379,7 +6379,7 @@ fun SettingsScreen(navController: NavHostController) {
                     subtitle = "Prices considered stale after $stalePriceThreshold days",
                     onClick = {
                         showStalePriceThresholdDialog = true
-                        editableStalePriceThreshold = "TODO"
+                        editableStalePriceThreshold = if (stalePriceThreshold == null) "" else stalePriceThreshold.toString()
                         stalePriceThresholdError = null
                     }
                 )
