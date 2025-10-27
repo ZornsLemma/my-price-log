@@ -6483,7 +6483,6 @@ fun SettingsTile(
             Text(title, style = MaterialTheme.typography.bodyLarge)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium)
         }
-        Icon(Icons.Default.ArrowForward, contentDescription = "Edit")
     }
 }
 
