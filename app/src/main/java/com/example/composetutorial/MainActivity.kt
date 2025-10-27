@@ -173,6 +173,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -6417,6 +6418,9 @@ fun SettingsScreen(navController: NavHostController) {
         }
 
         if (showStalePriceThresholdDialog) {
+            // TODO: We probably ought to pull this out as a re-usable thing taking parameters now it has so much damn logic in it
+            var textFieldValue by remember { mutableStateOf(TextFieldValue(text = editableStalePriceThreshold, selection = TextRange(editableStalePriceThreshold.length))) }
+            val focusRequester = remember { FocusRequester() }
             AlertDialog(
                 // TODO: We're constantly repeating the next = false = null bit
                 onDismissRequest = { showStalePriceThresholdDialog = false; stalePriceThresholdError = null },
@@ -6426,8 +6430,8 @@ fun SettingsScreen(navController: NavHostController) {
                     Column {
                         Text("Prices confirmed more than this many days ago are considered stale. Stale prices have an inflation adjustment applied when comparing across stores.", modifier = Modifier.padding(bottom = 16.dp))
                         OutlinedTextField(
-                            value = editableStalePriceThreshold,
-                            onValueChange = { editableStalePriceThreshold = it },
+                            value = textFieldValue,
+                            onValueChange = { textFieldValue = it; editableStalePriceThreshold = it.text },
                             label = { Text("Days") },
                             supportingText = {
                                 if (stalePriceThresholdError != null) Text(
@@ -6438,7 +6442,7 @@ fun SettingsScreen(navController: NavHostController) {
                             isError = stalePriceThresholdError != null,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
                         )
                     }
                 },
@@ -6461,6 +6465,12 @@ fun SettingsScreen(navController: NavHostController) {
                     TextButton(onClick = { showStalePriceThresholdDialog = false; stalePriceThresholdError = null }) { Text("Cancel") }
                 }
             )
+
+            LaunchedEffect(Unit) {
+                // This delay is a ChatGPT-suggested magic value to let the dialog animation complete before showing the keyboard. Apparently some versions of Android may not show the keyboard if focus is requested before this point.
+                delay(150)
+                focusRequester.requestFocus()
+            }
         }
     }
 }
