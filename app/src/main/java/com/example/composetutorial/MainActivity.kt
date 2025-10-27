@@ -2047,6 +2047,8 @@ class HomeViewModel(
     )
     val uiState = _uiState.asStateFlow()
 
+    val settingsRepository = SettingsRepository(app.dataStore)
+
     init {
         // This forces the delegate to initialize safely on the main thread TODO: VOODOO
         @Suppress("UNUSED_VARIABLE") val unused = app.dataStore
@@ -2130,14 +2132,17 @@ class HomeViewModel(
 
         val todoRenameMeFlow = combine(
             selectedSourceIdFlow,
-            combinedDatabaseFlow
-        ) { _, it -> it }
+            combinedDatabaseFlow,
+            settingsRepository.priceAgeSettingsFlow
+        ) { _, databaseResults, priceAgeSettings -> Pair(databaseResults, priceAgeSettings) }
 
         // completeUIStateFlow delivers complete, consistent results which reflect the user's
         // selection. However, it doesn't make any guarantees as to how long it takes to emit after
         // allUserInputFlow emits.
         val completeUIStateFlow =
-            todoRenameMeFlow.flatMapLatest { (dataSetList, taggedItemListAndSourceList, taggedPriceList) ->
+            todoRenameMeFlow.flatMapLatest { (databaseResults, priceAgeSettings) ->
+                Log.d("MyAppPAS", "priceAgeSettings $priceAgeSettings")
+                val (dataSetList, taggedItemListAndSourceList, taggedPriceList) = databaseResults
                 // We can take the current UI values here because ultimately that's all we care
                 // about; if the current flow value we're processing is older, we want to discard it
                 // anyway and because the flows are dependent on these parameters, they will emit
@@ -2185,7 +2190,7 @@ class HomeViewModel(
                     // fine doing it in this coroutine on the main thread, but just possibly we
                     // should shift (probably the whole database flow, but maybe just this work)
                     // onto a coroutine on a worker thread?
-                    val priceAnalysis = analysePrices(dataSet, priceList, sourceList)
+                    val priceAnalysis = analysePrices(dataSet, priceList, sourceList, priceAgeSettings)
 
                     Log.d("MyFlow", "derived analysedPriceList")
 
@@ -3234,6 +3239,31 @@ fun MyDropdownMenuItem(
         enabled = enabled,
         onClick = onClick,
     )
+}
+
+// TODO: RENAME?!?!
+data class PriceAgeSettings(val stalePriceThreshold: Int)
+
+// TODO: ChatGPT magic
+class SettingsRepository(private val dataStore: DataStore<Preferences>) {
+    /* TODO!?!?!?!?! SHOULD WE MOVE ALL OUR KEYS IN HERE? OR NONE? OR SOME?
+    private object Keys {
+        val myValue = intPreferencesKey("my_value")
+    }
+    */
+
+    val stalePriceThresholdFlow: Flow<Int> = dataStore.data
+        .map { prefs -> prefs[STALE_PRICE_THRESHOLD_KEY] ?: 30 } // TODO: MAGIC CONSTANT?
+
+    val priceAgeSettingsFlow: Flow<PriceAgeSettings> = combine(stalePriceThresholdFlow) { (stalePriceThreshold) ->
+        PriceAgeSettings(stalePriceThreshold)
+    }
+
+    /* TODO!?!?!?! MY EXISTING OTHER HACKS DON'T USE THIS BUT MAYBE THEY SHOULD!?!?!?!?!?!?!?!!
+    suspend fun setMyValue(value: Int) {
+        dataStore.edit { it[Keys.myValue] = value }
+    }
+    */
 }
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -8940,16 +8970,18 @@ data class AugmentedPrice(
 )
 
 // TODO: These should be user-configurable in settings
+/* TODO DELETE
 val inflationThresholdDays =
     30L // 30L // TODO: rename staleThreshold or something? we use it for inflation, but it's about how we define "stale" really, and inflation only kicks in for stale prices
+*/
 val tooOldThresholdDays = 180L
 val annualInflationPercent = 5.0
 
-fun inflationAdjustedPrice(price: Double, ageDays: Long): Double {
-    if (ageDays < inflationThresholdDays) {
+fun inflationAdjustedPrice(price: Double, ageDays: Long, priceAgeSettings: PriceAgeSettings): Double {
+    if (ageDays < priceAgeSettings.stalePriceThreshold) {
         return price
     } else {
-        return price * (1.0 + annualInflationPercent / 100.0).pow((ageDays - inflationThresholdDays) / 365.25)
+        return price * (1.0 + annualInflationPercent / 100.0).pow((ageDays - priceAgeSettings.stalePriceThreshold) / 365.25)
     }
 }
 
@@ -8988,7 +9020,8 @@ fun augmentPrice(
     dataSet: DataSet,
     source: Source,
     unitPriceDenominator: MeasureUnit?,
-    candidateUnitPriceDenominators: List<MeasureUnit>
+    candidateUnitPriceDenominators: List<MeasureUnit>,
+    priceAgeSettings: PriceAgeSettings
 ): AugmentedPrice {
     val loyaltyPrice = price.price * source.loyaltyMultiplier
     // We use an integer ageDays as there's little value in working to sub-day resolution and it
@@ -8996,13 +9029,13 @@ fun augmentPrice(
     // showing how the calculation was done, ageDays will not be constantly increasing slightly
     // every time it's shown.
     val ageDays = Duration.between(price.confirmedAt, Instant.now()).toDays()
-    val inflatedLoyaltyPrice = inflationAdjustedPrice(loyaltyPrice, ageDays)
+    val inflatedLoyaltyPrice = inflationAdjustedPrice(loyaltyPrice, ageDays, priceAgeSettings)
     return AugmentedPrice(
         basePrice = price,
         sourceName = source.name,
         loyaltyPrice = loyaltyPrice,
         ageDays = ageDays,
-        ageClass = if (ageDays < inflationThresholdDays) {
+        ageClass = if (ageDays < priceAgeSettings.stalePriceThreshold) {
             AgeClass.FRESH
         } else if (ageDays < tooOldThresholdDays) {
             AgeClass.STALE
@@ -9065,7 +9098,8 @@ fun quantile(sortedValues: List<Double>, q: Double): Double {
 fun analysePrices(
     dataSet: DataSet?,
     priceList: List<Price>,
-    sourceList: List<Source>
+    sourceList: List<Source>,
+    priceAgeSettings: PriceAgeSettings,
 ): PriceAnalysis {
     val sourceById = sourceList.associateBy { it.id }
     if (dataSet == null) {
@@ -9105,7 +9139,7 @@ fun analysePrices(
         // just in case.
         sourceById[price.sourceId]?.let { source ->
             val augmentedPrice =
-                augmentPrice(price, dataSet, source, unitPriceDenominator, candidateUnitPriceDenominators)
+                augmentPrice(price, dataSet, source, unitPriceDenominator, candidateUnitPriceDenominators, priceAgeSettings)
             unitPriceDenominator = augmentedPrice.unitPrice.denominator
             augmentedPrice
         }
