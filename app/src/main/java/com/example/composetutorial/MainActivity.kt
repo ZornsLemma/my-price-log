@@ -6418,7 +6418,7 @@ fun SettingsScreen(navController: NavHostController) {
         }
 
         if (showStalePriceThresholdDialog) {
-            // TODO: We probably ought to pull this out as a re-usable thing taking parameters now it has so much damn logic in it
+            // TODO: We probably ought to pull this out as a re-usable thing taking parameters now it has so much damn logic in it - we'd return the resulting string or int (however we choose to do it) via an onConfirm: (String) -> Unit lambda
             var textFieldValue by remember { mutableStateOf(
                 TextFieldValue(
                     text = editableStalePriceThreshold,
