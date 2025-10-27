@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.combine
 import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -100,6 +101,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -125,6 +127,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MultiChoiceSegmentedButtonRow
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SegmentedButton
@@ -142,6 +145,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -3236,6 +3240,8 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 val SELECTED_DATA_SET_ID_KEY = longPreferencesKey("selected_data_set_id")
 val SELECTED_ITEM_ID_KEY = longPreferencesKey("selected_item_id")
 val SELECTED_SOURCE_ID_KEY = longPreferencesKey("selected_source_id")
+// TODO: MOVE THE FOLLOWING!?
+val STALE_PRICE_THRESHOLD_KEY = intPreferencesKey("stale_price_threshold") // TODO: RENAME THIS AND ALL ASSOCIATED VARS TO INCLUDE "DAYS"?
 
 data class HomeScreenUIContent(
     val dataSet: DataSet?,
@@ -6337,13 +6343,20 @@ fun formatDoubleForEditing(value: Double, minDecimals: Int, maxDecimals: Int, lo
         locale = locale,
     )
 
+// TODO: Some Grok magic here - in particular, it may very well *not* be generating a standard-looking settings screen despite my requests, be good to compare it to something else
 @Composable
 fun SettingsScreen(navController: NavHostController) {
+    val scope = rememberCoroutineScope()
+    val dataStore = LocalContext.current.dataStore
+    val stalePriceThreshold by dataStore.data.map { it[STALE_PRICE_THRESHOLD_KEY] }.collectAsState(initial = null)
+    var showStalePriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
+    var editableStalePriceThreshold by rememberSaveable { mutableStateOf("") }
+    var stalePriceThresholdError by remember { mutableStateOf<String?>(null) }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(title = { Text("Settings") }, navigationIcon = {
-
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Default.ArrowBack,
@@ -6353,17 +6366,124 @@ fun SettingsScreen(navController: NavHostController) {
             })
         },
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.primary) // TODO: debug hack
+                //.background(MaterialTheme.colorScheme.primary) // TODO: debug hack
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = screenBorder)
-
-            // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
-            Text("TODO SETTINGS")
+            item {
+                SettingsTile(
+                    title = "Stale price threshold",
+                    subtitle = "Prices considered stale after $stalePriceThreshold days",
+                    onClick = {
+                        showStalePriceThresholdDialog = true
+                        editableStalePriceThreshold = "TODO"
+                        stalePriceThresholdError = null
+                    }
+                )
+            }
         }
+
+        if (showStalePriceThresholdDialog) {
+            AlertDialog(
+                // TODO: We're constantly repeating the next = false = null bit
+                onDismissRequest = { showStalePriceThresholdDialog = false; stalePriceThresholdError = null },
+                title = { Text("Stale price threshold") },
+                // TODO: I half wonder if we should do *<=* this threshold - currently we use < in code - just to match this description which feels more natural, but maybe we can reword this.
+                text = {
+                    Column {
+                        Text("Prices confirmed more than this many days ago are considered stale. Stale prices have an inflation adjustment applied when comparing across stores.", modifier = Modifier.padding(bottom = 16.dp))
+                        OutlinedTextField(
+                            value = editableStalePriceThreshold,
+                            onValueChange = { editableStalePriceThreshold = it },
+                            label = { Text("Days") },
+                            supportingText = {
+                                if (stalePriceThresholdError != null) Text(
+                                    stalePriceThresholdError!!,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            },
+                            isError = stalePriceThresholdError != null,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            val newVal = editableStalePriceThreshold.toIntOrNull()
+                            if (newVal != null && newVal in 1..365) { // TODO RANGE!?
+                                scope.launch { dataStore.edit { it[STALE_PRICE_THRESHOLD_KEY] = newVal } }
+                                showStalePriceThresholdDialog = false
+                                stalePriceThresholdError = null
+                            } else {
+                                stalePriceThresholdError = "Enter a number between 1 and 365"
+                            }
+                        },
+                        enabled = editableStalePriceThreshold.isNotEmpty() // Prevent saving empty input
+                    ) { Text("Save") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showStalePriceThresholdDialog = false; stalePriceThresholdError = null }) { Text("Cancel") }
+                }
+            )
+        }
+    }
+}
+
+// TODO: Grok magic
+/* TODO: THIS HAS THE WRONG APPEARANCE, BUT IT MIGH TBE WORTH KEEPING FOR REFERENCE IF I HAVE "GROUPS" WHICH LEAD TO OTHER SCREENS
+@Composable
+fun SettingsTile(
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium)
+            }
+            Icon(Icons.Default.ArrowForward, contentDescription = "Edit")
+        }
+    }
+}
+*/
+@Composable
+fun SettingsTile(
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium)
+        }
+        Icon(Icons.Default.ArrowForward, contentDescription = "Edit")
     }
 }
 
