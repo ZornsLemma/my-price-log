@@ -6564,7 +6564,7 @@ fun SettingsDialog(
                         onConfirm(currentValue.trim())
                     }
                 },
-                enabled = currentValue.trim().isNotEmpty()
+                enabled = currentValue.trim().isNotEmpty() && error == null
             ) { Text("Save") }
         },
         dismissButton = {
