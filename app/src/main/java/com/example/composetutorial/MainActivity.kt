@@ -3243,7 +3243,7 @@ fun MyDropdownMenuItem(
 }
 
 // TODO: RENAME?!?!
-data class PriceAgeSettings(val stalePriceThreshold: Int)
+data class PriceAgeSettings(val stalePriceThreshold: Int, val ancientPriceThresholdDays: Int)
 
 // TODO: ChatGPT magic
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
@@ -3256,8 +3256,10 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     val stalePriceThresholdFlow: Flow<Int> = dataStore.data
         .map { prefs -> prefs[STALE_PRICE_THRESHOLD_KEY] ?: defaultStalePriceThreshold }
 
-    val priceAgeSettingsFlow: Flow<PriceAgeSettings> = combine(stalePriceThresholdFlow) { (stalePriceThreshold) ->
-        PriceAgeSettings(stalePriceThreshold)
+    val ancientPriceThresholdDaysFlow: Flow<Int> = dataStore.data.map { prefs -> prefs[ANCIENT_PRICE_THRESHOLD_DAYS_KEY] ?: defaultAncientPriceThresholdDays }
+
+    val priceAgeSettingsFlow: Flow<PriceAgeSettings> = combine(stalePriceThresholdFlow, ancientPriceThresholdDaysFlow) { stalePriceThreshold, ancientPriceThresholdDays ->
+        PriceAgeSettings(stalePriceThreshold, ancientPriceThresholdDays)
     }
 
     /* TODO!?!?!?! MY EXISTING OTHER HACKS DON'T USE THIS BUT MAYBE THEY SHOULD!?!?!?!?!?!?!?!!
@@ -3273,7 +3275,9 @@ val SELECTED_ITEM_ID_KEY = longPreferencesKey("selected_item_id")
 val SELECTED_SOURCE_ID_KEY = longPreferencesKey("selected_source_id")
 // TODO: MOVE THE FOLLOWING!?
 val STALE_PRICE_THRESHOLD_KEY = intPreferencesKey("stale_price_threshold") // TODO: RENAME THIS AND ALL ASSOCIATED VARS TO INCLUDE "DAYS"?
+val ANCIENT_PRICE_THRESHOLD_DAYS_KEY = intPreferencesKey("ancient_price_threshold_days")
 const val defaultStalePriceThreshold = 30
+const val defaultAncientPriceThresholdDays = 180
 
 data class HomeScreenUIContent(
     val dataSet: DataSet?,
@@ -6393,9 +6397,9 @@ fun SettingsScreen(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val dataStore = LocalContext.current.dataStore
     val stalePriceThreshold by dataStore.data.map { it[STALE_PRICE_THRESHOLD_KEY] ?: defaultStalePriceThreshold }.collectAsState(initial = defaultStalePriceThreshold)
+    val ancientPriceThresholdDays by dataStore.data.map { it[ANCIENT_PRICE_THRESHOLD_DAYS_KEY] ?: defaultAncientPriceThresholdDays }.collectAsState(initial = defaultAncientPriceThresholdDays)
     var showStalePriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
-    var editableStalePriceThreshold by rememberSaveable { mutableStateOf("") }
-    var stalePriceThresholdError by remember { mutableStateOf<String?>(null) }
+    var showAncientPriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -6417,6 +6421,12 @@ fun SettingsScreen(navController: NavHostController) {
                 .padding(innerPadding)
                 .padding(horizontal = screenBorder)
         ) {
+            // ENHANCE: Since stale price threshold and ancient price threshold have interrelated
+            // validation, there just might be an argument for allowing them to be edited
+            // simultaneously to help avoid the annoyance of wanting to change one and having to
+            // cancel out and go change the other first. This is probably not a huge deal in
+            // practice. Editing these should not be an everyday activity so even if it is a bit
+            // fiddly it doesn't matter that much.
             item {
                 // TODO: I half wonder if we should do *<=* this threshold - currently we use < in code - just to match this description (subtitle) which feels more natural, but maybe we can reword this.
 
@@ -6425,8 +6435,16 @@ fun SettingsScreen(navController: NavHostController) {
                     subtitle = "Prices considered stale after $stalePriceThreshold days",
                     onClick = {
                         showStalePriceThresholdDialog = true
-                        editableStalePriceThreshold = if (stalePriceThreshold == null) "" else stalePriceThreshold.toString()
-                        stalePriceThresholdError = null
+                    }
+                )
+            }
+
+            item {
+                SettingsTile(
+                    title = "Ancient price threshold",
+                    subtitle = "Prices considered ancient after $ancientPriceThresholdDays days",
+                    onClick = {
+                        showAncientPriceThresholdDialog = true
                     }
                 )
             }
@@ -6438,7 +6456,7 @@ fun SettingsScreen(navController: NavHostController) {
                 title = "Stale price threshold",
                 subtitle = "Prices confirmed more than this many days ago are considered stale. Stale prices have an inflation adjustment applied when comparing across stores.",
                 label = "Days",
-                initialValue = if (stalePriceThreshold == null) "" else stalePriceThreshold.toString(),
+                initialValue = stalePriceThreshold.toString(),
                 validationRules = listOfNotNull(
                     ValidationRule(
                         {
@@ -6454,6 +6472,30 @@ fun SettingsScreen(navController: NavHostController) {
                 },
                 onDismissRequest = {
                     showStalePriceThresholdDialog = false
+                }
+            )
+        }
+
+        if (showAncientPriceThresholdDialog) {
+            SettingsDialog(
+                title = "Ancient price threshold",
+                subtitle = "Prices confirmed more than this many days ago are considered ancient. Ancient prices are ignored when classifying prices as good/OK/bad.",
+                label = "Days",
+                initialValue = ancientPriceThresholdDays.toString(),
+                validationRules = listOfNotNull(
+                    // TODO - REMEMBER WE NEED TO VALIDATE AGAINST STALE PRICE THREHSOLD TOO, AND VICE VERSA
+                ),
+                onConfirm = { ancientPriceThresholdDaysString ->
+                    showAncientPriceThresholdDialog = false
+                    scope.launch {
+                        dataStore.edit {
+                            it[ANCIENT_PRICE_THRESHOLD_DAYS_KEY] =
+                                ancientPriceThresholdDaysString.toIntOrNull()!!
+                        }
+                    }
+                },
+                onDismissRequest = {
+                    showAncientPriceThresholdDialog = false
                 }
             )
         }
@@ -9038,8 +9080,8 @@ data class AugmentedPrice(
 /* TODO DELETE
 val inflationThresholdDays =
     30L // 30L // TODO: rename staleThreshold or something? we use it for inflation, but it's about how we define "stale" really, and inflation only kicks in for stale prices
-*/
 val tooOldThresholdDays = 180L
+*/
 val annualInflationPercent = 5.0
 
 fun inflationAdjustedPrice(price: Double, ageDays: Long, priceAgeSettings: PriceAgeSettings): Double {
@@ -9102,7 +9144,7 @@ fun augmentPrice(
         ageDays = ageDays,
         ageClass = if (ageDays < priceAgeSettings.stalePriceThreshold) {
             AgeClass.FRESH
-        } else if (ageDays < tooOldThresholdDays) {
+        } else if (ageDays < priceAgeSettings.ancientPriceThresholdDays) {
             AgeClass.STALE
         } else {
             AgeClass.ANCIENT
