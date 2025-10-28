@@ -118,6 +118,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -6847,75 +6848,56 @@ fun AboutScreen(navController: NavHostController) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                LauncherIcon(sizeDp = 96) // TODO 120??
+                LauncherIcon(sizeDp = 96) // TODO 120
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = getAppVersion(),
-                    style = MaterialTheme.typography.titleMedium // slightly larger than bodyMedium
+                    getAppVersion(),
+                    style = MaterialTheme.typography.titleMedium
                 )
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            // --- Resources / Links card ---
-            Surface(
-                tonalElevation = 2.dp,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Resources",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    LicenseLink("Source code (GitHub)", "https://github.com/yourusername/yourrepo")
-                    LicenseLink("User manual", "https://yourusername.github.io/yourrepo-manual/")
-                    Text(
-                        text = "Links will open in your browser",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            "Resources",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                        LicenseLink("GitHub repo", "https://github.com/…")
+                        LicenseLink("User manual", "https://…")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            "Attributions",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                        Text(
+                            "This app includes vector icons from the Material Design icon set by Google.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        // Future library attributions (brief) can go here
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Button to legal screen
+                Button(onClick = { /* navigate to LegalScreen */ }) {
+                    Text("View full legal information")
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // --- Legal / Attribution card ---
-            Surface(
-                tonalElevation = 2.dp,
-                shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Legal & Attribution",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("© 2025 Your Name", style = MaterialTheme.typography.bodyMedium)
-                    LicenseLink("Licensed under the MIT License", "https://opensource.org/licenses/MIT")
-                    Text(
-                        "This app includes vector icons from the Material Design icon set by Google, used under the Apache License 2.0.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Placeholder for future third-party library attributions
-                    Text(
-                        text = "Third-party libraries",
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                    AttributionItem("ExampleLibrary - description", "https://example.com/license")
-                    AttributionItem("AnotherLibrary - optional description")
-                    // If full license screen exists, you could add a clickable line:
-                    LicenseLink("See full licenses", "app://licenses") // hypothetical internal deep link
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
