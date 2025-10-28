@@ -6392,7 +6392,7 @@ fun formatDoubleForEditing(value: Double, minDecimals: Int, maxDecimals: Int, lo
 fun SettingsScreen(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val dataStore = LocalContext.current.dataStore
-    val stalePriceThreshold by dataStore.data.map { it[STALE_PRICE_THRESHOLD_KEY] }.collectAsState(initial = defaultStalePriceThreshold)
+    val stalePriceThreshold by dataStore.data.map { it[STALE_PRICE_THRESHOLD_KEY] ?: defaultStalePriceThreshold }.collectAsState(initial = defaultStalePriceThreshold)
     var showStalePriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var editableStalePriceThreshold by rememberSaveable { mutableStateOf("") }
     var stalePriceThresholdError by remember { mutableStateOf<String?>(null) }
