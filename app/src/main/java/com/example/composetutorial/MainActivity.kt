@@ -6167,6 +6167,18 @@ fun <T> validationRulesOk(validationRules: List<ValidationRule<T>>, value: T): B
     return true
 }
 
+// TODO: Temporary semi-copy of validationRulesOk - I can probably convert vROk callers to use this
+// TODO: Call this "failedValidationRule"? Maybe makes null=none clearer?
+fun <T> validationRulesCheck(validationRules: List<ValidationRule<T>>, value: T): ValidationRule<T>? {
+    for (validationRule in validationRules) {
+        if (!validationRule.validate(value)) {
+            return validationRule
+        }
+    }
+    return null
+}
+
+
 
 // TODO: This duplicates code in numericValidationRules(). It may be as well to move some of these
 // functions and associated logic onto the ViewModel, as it is already locale-aware and is notified
@@ -6425,8 +6437,6 @@ fun SettingsScreen(navController: NavHostController) {
                 subtitle = "Prices confirmed more than this many days ago are considered stale. Stale prices have an inflation adjustment applied when comparing across stores.",
                 label = "Days",
                 initialValue = if (stalePriceThreshold == null) "" else stalePriceThreshold.toString(),
-                // TODO: Do we need to pass a lambda which defines when the save button is enabled (in this case, when trimmed string is non-empty)? This will also rule out some logic from the validationRules (they can assume non-null)
-                /* TODO TCO
                 validationRules = listOfNotNull(
                     ValidationRule(
                         {
@@ -6435,7 +6445,7 @@ fun SettingsScreen(navController: NavHostController) {
                         },
                         "Enter a number of days between 1 and 365"
                     )
-                ), */
+                ),
                 onConfirm = { stalePriceThresholdString ->
                     showStalePriceThresholdDialog = false
                     scope.launch { dataStore.edit { it[STALE_PRICE_THRESHOLD_KEY] = stalePriceThresholdString.toIntOrNull()!! } }
@@ -6511,6 +6521,7 @@ fun SettingsDialog(
     subtitle: String,
     label: String,
     initialValue: String,
+    validationRules: List<ValidationRule<String>>,
     onConfirm: (String) -> Unit,
     onDismissRequest: () -> Unit,
 ) {
@@ -6530,7 +6541,7 @@ fun SettingsDialog(
                 Text(subtitle, modifier = Modifier.padding(bottom = 16.dp))
                 OutlinedTextField(
                     value = textFieldValue,
-                    onValueChange = { textFieldValue = it; currentValue = it.text },
+                    onValueChange = { textFieldValue = it; currentValue = it.text; error = validationRulesCheck(validationRules, it.text.trim())?.message },
                     label = { Text(label) },
                     supportingText = {
                         if (error != null) Text(
@@ -6548,15 +6559,11 @@ fun SettingsDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    val newVal = currentValue.toIntOrNull()
-                    // TODO: For the moment left in this hard-coded logic but we need to use the validationrules passed in by caller of course
-                    if (newVal != null && newVal in 1..365) { // TODO RANGE!?
-                        onConfirm(currentValue)
-                    } else {
-                        error = "Enter a number between 1 and 365"
+                    if (error == null) {
+                        onConfirm(currentValue.trim())
                     }
                 },
-                enabled = currentValue.isNotEmpty() // Prevent saving empty input TODO: NEED TO ADD TRIM()?
+                enabled = currentValue.trim().isNotEmpty()
             ) { Text("Save") }
         },
         dismissButton = {
