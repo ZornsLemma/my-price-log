@@ -6405,6 +6405,8 @@ fun SettingsScreen(navController: NavHostController) {
                 .padding(horizontal = screenBorder)
         ) {
             item {
+                // TODO: I half wonder if we should do *<=* this threshold - currently we use < in code - just to match this description (subtitle) which feels more natural, but maybe we can reword this.
+
                 SettingsTile(
                     title = "Stale price threshold",
                     subtitle = "Prices considered stale after $stalePriceThreshold days",
@@ -6418,63 +6420,30 @@ fun SettingsScreen(navController: NavHostController) {
         }
 
         if (showStalePriceThresholdDialog) {
-            // TODO: We probably ought to pull this out as a re-usable thing taking parameters now it has so much damn logic in it - we'd return the resulting string or int (however we choose to do it) via an onConfirm: (String) -> Unit lambda
-            var textFieldValue by remember { mutableStateOf(
-                TextFieldValue(
-                    text = editableStalePriceThreshold,
-                    // Put the caret at the end of the string - this is why we need a TextFieldValue.
-                    selection = TextRange(editableStalePriceThreshold.length))) }
-            val focusRequester = remember { FocusRequester() }
-            AlertDialog(
-                // TODO: We're constantly repeating the next = false = null bit
-                onDismissRequest = { showStalePriceThresholdDialog = false; stalePriceThresholdError = null },
-                title = { Text("Stale price threshold") },
-                // TODO: I half wonder if we should do *<=* this threshold - currently we use < in code - just to match this description which feels more natural, but maybe we can reword this.
-                text = {
-                    Column {
-                        Text("Prices confirmed more than this many days ago are considered stale. Stale prices have an inflation adjustment applied when comparing across stores.", modifier = Modifier.padding(bottom = 16.dp))
-                        OutlinedTextField(
-                            value = textFieldValue,
-                            onValueChange = { textFieldValue = it; editableStalePriceThreshold = it.text },
-                            label = { Text("Days") },
-                            supportingText = {
-                                if (stalePriceThresholdError != null) Text(
-                                    stalePriceThresholdError!!,
-                                    color = MaterialTheme.colorScheme.error
-                                )
-                            },
-                            isError = stalePriceThresholdError != null,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
-                        )
-                    }
-                },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            val newVal = editableStalePriceThreshold.toIntOrNull()
-                            if (newVal != null && newVal in 1..365) { // TODO RANGE!?
-                                scope.launch { dataStore.edit { it[STALE_PRICE_THRESHOLD_KEY] = newVal } }
-                                showStalePriceThresholdDialog = false
-                                stalePriceThresholdError = null
-                            } else {
-                                stalePriceThresholdError = "Enter a number between 1 and 365"
-                            }
+            SettingsDialog(
+                title = "Stale price threshold",
+                subtitle = "Prices confirmed more than this many days ago are considered stale. Stale prices have an inflation adjustment applied when comparing across stores.",
+                label = "Days",
+                initialValue = if (stalePriceThreshold == null) "" else stalePriceThreshold.toString(),
+                // TODO: Do we need to pass a lambda which defines when the save button is enabled (in this case, when trimmed string is non-empty)? This will also rule out some logic from the validationRules (they can assume non-null)
+                /* TODO TCO
+                validationRules = listOfNotNull(
+                    ValidationRule(
+                        {
+                            val days = it.toIntOrNull()
+                            days != null && days in 1..365
                         },
-                        enabled = editableStalePriceThreshold.isNotEmpty() // Prevent saving empty input
-                    ) { Text("Save") }
+                        "Enter a number of days between 1 and 365"
+                    )
+                ), */
+                onConfirm = { stalePriceThresholdString ->
+                    showStalePriceThresholdDialog = false
+                    scope.launch { dataStore.edit { it[STALE_PRICE_THRESHOLD_KEY] = stalePriceThresholdString.toIntOrNull()!! } }
                 },
-                dismissButton = {
-                    TextButton(onClick = { showStalePriceThresholdDialog = false; stalePriceThresholdError = null }) { Text("Cancel") }
+                onDismissRequest = {
+                    showStalePriceThresholdDialog = false
                 }
             )
-
-            LaunchedEffect(Unit) {
-                // This delay is a ChatGPT-suggested magic value to let the dialog animation complete before showing the keyboard. Apparently some versions of Android may not show the keyboard if focus is requested before this point.
-                delay(150)
-                focusRequester.requestFocus()
-            }
         }
     }
 }
@@ -6528,6 +6497,74 @@ fun SettingsTile(
             Text(subtitle, style = MaterialTheme.typography.bodyMedium)
         }
     }
+}
+
+// TODO: Inconsistent naming between onConfirm and onDismiss*Request*? Just maybe this is OK?
+@Composable
+fun SettingsDialog(
+    title: String,
+    subtitle: String,
+    label: String,
+    initialValue: String,
+    onConfirm: (String) -> Unit,
+    onDismissRequest: () -> Unit,
+) {
+    var currentValue by rememberSaveable { mutableStateOf(initialValue) }
+    var textFieldValue by remember { mutableStateOf(
+        TextFieldValue(
+            text = currentValue,
+            // Put the caret at the end of the string - this is why we need a TextFieldValue.
+            selection = TextRange(currentValue.length))) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val focusRequester = remember { FocusRequester() }
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text(title) },
+        text = {
+            Column {
+                Text(subtitle, modifier = Modifier.padding(bottom = 16.dp))
+                OutlinedTextField(
+                    value = textFieldValue,
+                    onValueChange = { textFieldValue = it; currentValue = it.text },
+                    label = { Text(label) },
+                    supportingText = {
+                        if (error != null) Text(
+                            error!!,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    isError = error != null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), // TODO: this probably ought to be supplied by caller or at least overridable or something
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val newVal = currentValue.toIntOrNull()
+                    // TODO: For the moment left in this hard-coded logic but we need to use the validationrules passed in by caller of course
+                    if (newVal != null && newVal in 1..365) { // TODO RANGE!?
+                        onConfirm(currentValue)
+                    } else {
+                        error = "Enter a number between 1 and 365"
+                    }
+                },
+                enabled = currentValue.isNotEmpty() // Prevent saving empty input TODO: NEED TO ADD TRIM()?
+            ) { Text("Save") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) { Text("Cancel") }
+        }
+    )
+
+    LaunchedEffect(Unit) {
+        // This delay is a ChatGPT-suggested magic value to let the dialog animation complete before showing the keyboard. Apparently some versions of Android may not show the keyboard if focus is requested before this point.
+        delay(150)
+        focusRequester.requestFocus()
+    }
+
 }
 
 // TODO: This is a bit of a mess but probably best leave it alone until I either gain more
