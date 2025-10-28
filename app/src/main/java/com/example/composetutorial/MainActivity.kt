@@ -6840,90 +6840,80 @@ fun AboutScreen(navController: NavHostController) {
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = screenBorder)
-            // TODO: Anything needed to make this vertically scrollable? Modifier.verticalScroll(rememberScrollState())?
+                .verticalScroll(rememberScrollState())
         ) {
             // --- Centered icon + version ---
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                LauncherIcon(sizeDp = 96) // TODO 120?
+                LauncherIcon(sizeDp = 96) // TODO 120??
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Version ${getAppVersion()}",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = getAppVersion(),
+                    style = MaterialTheme.typography.titleMedium // slightly larger than bodyMedium
                 )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // --- Resources / Links card ---
+            Surface(
+                tonalElevation = 2.dp,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Resources",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LicenseLink("Source code (GitHub)", "https://github.com/yourusername/yourrepo")
+                    LicenseLink("User manual", "https://yourusername.github.io/yourrepo-manual/")
+                    Text(
+                        text = "Links will open in your browser",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- Resources / links (high visibility) ---
-            Text(
-                text = "Resources",
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
+            // --- Legal / Attribution card ---
+            Surface(
+                tonalElevation = 2.dp,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "Legal & Attribution",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("© 2025 Your Name", style = MaterialTheme.typography.bodyMedium)
+                    LicenseLink("Licensed under the MIT License", "https://opensource.org/licenses/MIT")
+                    Text(
+                        "This app includes vector icons from the Material Design icon set by Google, used under the Apache License 2.0.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(vertical = 4.dp)
+                    )
 
-            LicenseLink(
-                text = "Source code (GitHub)",
-                url = "https://github.com/yourusername/yourrepo"
-            )
+                    Spacer(modifier = Modifier.height(8.dp))
 
-            LicenseLink(
-                text = "User manual",
-                url = "https://yourusername.github.io/yourrepo-manual/"
-            )
-
-            Text(
-                text = "Links will open in your browser",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 2.dp, bottom = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // --- Legal / attribution ---
-            Text(
-                text = "Legal & Attribution",
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-
-            Text(
-                text = "© 2025 Your Name",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(vertical = 2.dp)
-            )
-
-            LicenseLink(
-                text = "Licensed under the MIT License",
-                url = "https://opensource.org/licenses/MIT"
-            )
-
-            Text(
-                text = "This app includes vector icons from the Material Design icon set by Google, used under the Apache License 2.0.",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(vertical = 2.dp)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Optional third-party library attributions
-            Text(
-                text = "Third-party libraries (optional)",
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-
-            // Example placeholders
-            AttributionItem(
-                text = "ExampleLibrary - description",
-                url = "https://example.com/license"
-            )
-            AttributionItem(
-                text = "AnotherLibrary - optional description"
-            )
+                    // Placeholder for future third-party library attributions
+                    Text(
+                        text = "Third-party libraries",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                    AttributionItem("ExampleLibrary - description", "https://example.com/license")
+                    AttributionItem("AnotherLibrary - optional description")
+                    // If full license screen exists, you could add a clickable line:
+                    LicenseLink("See full licenses", "app://licenses") // hypothetical internal deep link
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
         }
