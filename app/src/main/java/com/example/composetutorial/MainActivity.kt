@@ -6398,7 +6398,7 @@ fun formatDoubleForEditing(value: Double, minDecimals: Int, maxDecimals: Int, lo
 
 // TODO: Some Grok magic here - in particular, it may very well *not* be generating a standard-looking settings screen despite my requests, be good to compare it to something else
 @Composable
-fun SettingsScreen(navController: NavHostController) {
+fun SettingsScreen(navController: NavHostController, onAboutClick: () -> Unit) {
     val scope = rememberCoroutineScope()
     val dataStore = LocalContext.current.dataStore
     val stalePriceThreshold by dataStore.data.map { it[STALE_PRICE_THRESHOLD_KEY] ?: defaultStalePriceThreshold }.collectAsState(initial = defaultStalePriceThreshold)
@@ -6463,6 +6463,16 @@ fun SettingsScreen(navController: NavHostController) {
                     onClick = {
                         showAnnualInflationPercentDialog = true
                     }
+                )
+            }
+
+            // TODO: MOVE BACKUP/RESTORE IN HERE FROM HOME OVERFLOW MENU
+
+            item {
+                SettingsTile(
+                    title = "About TODOAPPNAME",
+                    subtitle = "", // TODO!? But I probably want it to take same vertical space as other tiles? Probably actually best to be consistent and have space allocated for an empty subtitle, so this is probably fine/what we really want
+                    onClick = onAboutClick
                 )
             }
         }
@@ -6702,6 +6712,35 @@ fun SettingsDialog(
         focusRequester.requestFocus()
     }
 
+}
+
+@Composable
+fun AboutScreen(navController: NavHostController) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(title = { Text("About TODOAPPNAME") }, navigationIcon = {
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+            })
+        },
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                //.background(MaterialTheme.colorScheme.primary) // TODO: debug hack
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = screenBorder)
+        ) {
+            item {
+                Text("TODO")
+            }
+        }
+    }
 }
 
 // TODO: This is a bit of a mess but probably best leave it alone until I either gain more
@@ -8062,10 +8101,15 @@ fun AppNavigation() {
         }
 
         composable(
-            "settings", enterTransition = { slideLeftTransition() },
+            "settings", enterTransition = { slideLeftTransition() }, popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
         ) {
-            SettingsScreen(navController)
+            SettingsScreen(navController, onAboutClick = { navController.navigate("about") })
+        }
+
+        composable(
+            "about", enterTransition = { slideLeftTransition() }, popExitTransition = { slideRightTransition() }, ) {
+            AboutScreen(navController)
         }
 
         composable(
