@@ -6542,7 +6542,27 @@ fun SettingsScreen(navController: NavHostController) {
                 label = "%", // TODO: Can/should I put a suffix on the OutlinedTextField instead?
                 initialValue = annualInflationPercent.toString(),
                 validationRules = listOfNotNull(
-                    // TODO!
+                    ValidationRule(
+                        {
+                            val inflation = it.toIntOrNull()
+                            inflation != null
+                        },
+                        "Must be a whole number"
+                    ),
+                    ValidationRule(
+                        {
+                            val inflation = it.toIntOrNull()
+                            inflation != null && inflation >= 0
+                        },
+                        "Must be zero or greater"
+                    ),
+                    ValidationRule(
+                        {
+                            val inflation = it.toIntOrNull()
+                            inflation != null && inflation <= 1000
+                        },
+                        "Must be no greater than 1000%"
+                    ),
                 ),
                 onConfirm = { annualInflationPercentString ->
                     showAnnualInflationPercentDialog = false
@@ -6618,6 +6638,8 @@ fun SettingsTile(
 // don't think we necessarily need to overdo this consistency - since there is literally a single
 // text field in play here, it's much more obvious that the reason you can't save is that it's
 // blank.
+// TODO: Can/should this have a small lag in updating supportingText as I think our normal full
+// screen edit dialogs did at one point (not sure if they still do)?
 @Composable
 fun SettingsDialog(
     title: String,
