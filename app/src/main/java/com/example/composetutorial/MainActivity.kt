@@ -6842,94 +6842,90 @@ fun AboutScreen(navController: NavHostController) {
                 .padding(horizontal = screenBorder)
             // TODO: Anything needed to make this vertically scrollable? Modifier.verticalScroll(rememberScrollState())?
         ) {
+            // --- Centered icon + version ---
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-/* TODO DELETE?
-                Box(modifier = Modifier.size(120.dp).clip(CircleShape)) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_launcher_background),
-                        contentDescription = null,
-                        tint = Color.Red,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                        contentDescription = "App Icon",
-                        tint = Color.Blue,
-                        modifier = Modifier.fillMaxSize(1.5f).align(Alignment.Center)
-                    )
-                }
-                */
-                /* TODO DELETE
-                Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = "App Icon",
-                    modifier = Modifier.size(120.dp)
-                )
-                */
-                LauncherIcon()
+                LauncherIcon(sizeDp = 96) // TODO 120?
                 Spacer(modifier = Modifier.height(16.dp))
-                /* TODO: DELETE - APP NAME IS ALREADY IN TOP BAR
                 Text(
-                    text = "My App Name",
-                    /* TODO DELETE?
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold
-                    )
-                    */
-                    style = MaterialTheme.typography.headlineSmall
-                ) */
-                Text(
-                    text = getAppVersion(), // "Version 1.0.0", // TODO: Cam I get this from app's own metadata?
-                    style = MaterialTheme.typography.bodyMedium,
-                    // TODO? color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Version ${getAppVersion()}",
+                    style = MaterialTheme.typography.bodyMedium
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Copyright/legal info
-                Text(
-                    text = "© 2025 Your Name",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(vertical = 2.dp)
-                )
-
-                // License information
-                LicenseLink(
-                    text = "Licensed under the MIT License",
-                    url = "https://opensource.org/licenses/MIT"
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Material Design icon attribution
-                Text(
-                    text = "This app includes vector icons from the Material Design icon set by Google, used under the Apache License 2.0.",
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(vertical = 2.dp)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Optional third-party library attributions
-                Text(
-                    text = "Third-party libraries used:",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-
-                // Example placeholder for future library
-                AttributionItem(
-                    text = "ExampleLibrary - Some description",
-                    url = "https://example.com/license"
-                )
-
-                AttributionItem(
-                    text = "AnotherLibrary - optional description"
-                )
-
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // --- Resources / links (high visibility) ---
+            Text(
+                text = "Resources",
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+
+            LicenseLink(
+                text = "Source code (GitHub)",
+                url = "https://github.com/yourusername/yourrepo"
+            )
+
+            LicenseLink(
+                text = "User manual",
+                url = "https://yourusername.github.io/yourrepo-manual/"
+            )
+
+            Text(
+                text = "Links will open in your browser",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 2.dp, bottom = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // --- Legal / attribution ---
+            Text(
+                text = "Legal & Attribution",
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+
+            Text(
+                text = "© 2025 Your Name",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(vertical = 2.dp)
+            )
+
+            LicenseLink(
+                text = "Licensed under the MIT License",
+                url = "https://opensource.org/licenses/MIT"
+            )
+
+            Text(
+                text = "This app includes vector icons from the Material Design icon set by Google, used under the Apache License 2.0.",
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(vertical = 2.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Optional third-party library attributions
+            Text(
+                text = "Third-party libraries (optional)",
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+
+            // Example placeholders
+            AttributionItem(
+                text = "ExampleLibrary - description",
+                url = "https://example.com/license"
+            )
+            AttributionItem(
+                text = "AnotherLibrary - optional description"
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
