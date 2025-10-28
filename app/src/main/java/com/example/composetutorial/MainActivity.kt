@@ -2,6 +2,9 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
+import android.graphics.Canvas
 import android.app.Activity
 import android.app.AlarmManager
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -31,7 +34,9 @@ import android.app.Application
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.database.sqlite.SQLiteDatabase
+import android.graphics.drawable.BitmapDrawable
 import android.icu.text.Collator
 import android.net.Uri
 import androidx.activity.compose.BackHandler
@@ -63,6 +68,7 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -96,6 +102,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -156,12 +163,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
@@ -6421,7 +6430,7 @@ fun SettingsScreen(navController: NavHostController, onAboutClick: () -> Unit) {
             })
         },
     ) { innerPadding ->
-        LazyColumn(
+        LazyColumn( // TODO: Use Column, since it's not very long!?
             modifier = Modifier
                 //.background(MaterialTheme.colorScheme.primary) // TODO: debug hack
                 .fillMaxSize()
@@ -6714,8 +6723,61 @@ fun SettingsDialog(
 
 }
 
+// TODO: ChatGPT magic
+fun Drawable.toBitmap(width: Int, height: Int): Bitmap {
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    this.setBounds(0, 0, canvas.width, canvas.height)
+    this.draw(canvas)
+    return bitmap
+}
+
+// TODO: ChatGPT magic
+@Composable
+fun LauncherIcon(sizeDp: Int = 120) {
+    val context = LocalContext.current
+    val density = LocalDensity.current
+    val px = with(density) { sizeDp.dp.toPx() }.toInt()
+    val drawable = context.packageManager.getApplicationIcon(context.packageName)
+    val bitmap = drawable.toBitmap(px, px)
+
+    Image(
+        bitmap = bitmap.asImageBitmap(),
+        contentDescription = "App Icon",
+        modifier = Modifier.size(sizeDp.dp)
+    )
+}
+
+// TODO: ChatGPT magic
+@Composable
+fun getAppVersion(): String {
+    val context = LocalContext.current
+    return remember {
+        try {
+            val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            // pInfo.versionName is the human-readable version (e.g., "1.2.3")
+            val versionName = pInfo.versionName
+            val versionCode = if (android.os.Build.VERSION.SDK_INT >= 28) {
+                pInfo.longVersionCode
+            } else {
+                pInfo.versionCode.toLong()
+            }
+            "Version $versionName ($versionCode)"
+        } catch (e: PackageManager.NameNotFoundException) {
+            "Version unknown"
+        }
+    }
+}
+
 @Composable
 fun AboutScreen(navController: NavHostController) {
+    /* TODO DELETE
+    val context = LocalContext.current
+    val appIcon = context.packageManager.getApplicationIcon(context.packageName) as BitmapDrawable
+    val bitmap = appIcon.bitmap
+    Log.d("MyAppJAZ", "bitmap $bitmap")
+    */
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -6729,15 +6791,58 @@ fun AboutScreen(navController: NavHostController) {
             })
         },
     ) { innerPadding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 //.background(MaterialTheme.colorScheme.primary) // TODO: debug hack
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = screenBorder)
+            // TODO: Anything needed to make this vertically scrollable? Modifier.verticalScroll(rememberScrollState())?
         ) {
-            item {
-                Text("TODO")
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+/* TODO DELETE?
+                Box(modifier = Modifier.size(120.dp).clip(CircleShape)) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_launcher_background),
+                        contentDescription = null,
+                        tint = Color.Red,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                        contentDescription = "App Icon",
+                        tint = Color.Blue,
+                        modifier = Modifier.fillMaxSize(1.5f).align(Alignment.Center)
+                    )
+                }
+                */
+                /* TODO DELETE
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "App Icon",
+                    modifier = Modifier.size(120.dp)
+                )
+                */
+                LauncherIcon()
+                Spacer(modifier = Modifier.height(16.dp))
+                /* TODO: DELETE - APP NAME IS ALREADY IN TOP BAR
+                Text(
+                    text = "My App Name",
+                    /* TODO DELETE?
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                    */
+                    style = MaterialTheme.typography.headlineSmall
+                ) */
+                Text(
+                    text = getAppVersion(), // "Version 1.0.0", // TODO: Cam I get this from app's own metadata?
+                    style = MaterialTheme.typography.bodyMedium,
+                    // TODO? color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
