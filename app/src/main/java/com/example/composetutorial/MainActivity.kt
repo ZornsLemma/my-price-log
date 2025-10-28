@@ -2,6 +2,7 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import androidx.compose.ui.platform.LocalUriHandler
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.graphics.Canvas
@@ -187,9 +188,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.min
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
@@ -6769,6 +6772,46 @@ fun getAppVersion(): String {
     }
 }
 
+// TODO: ChatGPT magic
+@Composable
+fun LicenseLink(text: String, url: String) {
+    val uriHandler = LocalUriHandler.current
+    Text(
+        text = text,
+        color = MaterialTheme.colorScheme.primary,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Normal,
+        textDecoration = TextDecoration.Underline,
+        modifier = Modifier
+            .clickable { uriHandler.openUri(url) }
+            .padding(vertical = 2.dp)
+    )
+}
+
+// TODO: ChatGPT magic
+@Composable
+fun AttributionItem(text: String, url: String? = null) {
+    val uriHandler = LocalUriHandler.current
+    if (url != null) {
+        Text(
+            text = text,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 12.sp,
+            modifier = Modifier
+                .clickable { uriHandler.openUri(url) }
+                .padding(vertical = 1.dp)
+        )
+    } else {
+        Text(
+            text = text,
+            color = MaterialTheme.colorScheme.onBackground,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(vertical = 1.dp)
+        )
+    }
+}
+
+
 @Composable
 fun AboutScreen(navController: NavHostController) {
     /* TODO DELETE
@@ -6843,6 +6886,49 @@ fun AboutScreen(navController: NavHostController) {
                     style = MaterialTheme.typography.bodyMedium,
                     // TODO? color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Copyright/legal info
+                Text(
+                    text = "© 2025 Your Name",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                )
+
+                // License information
+                LicenseLink(
+                    text = "Licensed under the MIT License",
+                    url = "https://opensource.org/licenses/MIT"
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Material Design icon attribution
+                Text(
+                    text = "This app includes vector icons from the Material Design icon set by Google, used under the Apache License 2.0.",
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(vertical = 2.dp)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Optional third-party library attributions
+                Text(
+                    text = "Third-party libraries used:",
+                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+
+                // Example placeholder for future library
+                AttributionItem(
+                    text = "ExampleLibrary - Some description",
+                    url = "https://example.com/license"
+                )
+
+                AttributionItem(
+                    text = "AnotherLibrary - optional description"
+                )
+
             }
         }
     }
