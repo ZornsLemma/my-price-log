@@ -3254,7 +3254,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     */
 
     val stalePriceThresholdFlow: Flow<Int> = dataStore.data
-        .map { prefs -> prefs[STALE_PRICE_THRESHOLD_KEY] ?: 30 } // TODO: MAGIC CONSTANT?
+        .map { prefs -> prefs[STALE_PRICE_THRESHOLD_KEY] ?: defaultStalePriceThreshold }
 
     val priceAgeSettingsFlow: Flow<PriceAgeSettings> = combine(stalePriceThresholdFlow) { (stalePriceThreshold) ->
         PriceAgeSettings(stalePriceThreshold)
@@ -3273,6 +3273,7 @@ val SELECTED_ITEM_ID_KEY = longPreferencesKey("selected_item_id")
 val SELECTED_SOURCE_ID_KEY = longPreferencesKey("selected_source_id")
 // TODO: MOVE THE FOLLOWING!?
 val STALE_PRICE_THRESHOLD_KEY = intPreferencesKey("stale_price_threshold") // TODO: RENAME THIS AND ALL ASSOCIATED VARS TO INCLUDE "DAYS"?
+const val defaultStalePriceThreshold = 30
 
 data class HomeScreenUIContent(
     val dataSet: DataSet?,
@@ -6391,7 +6392,7 @@ fun formatDoubleForEditing(value: Double, minDecimals: Int, maxDecimals: Int, lo
 fun SettingsScreen(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val dataStore = LocalContext.current.dataStore
-    val stalePriceThreshold by dataStore.data.map { it[STALE_PRICE_THRESHOLD_KEY] }.collectAsState(initial = null)
+    val stalePriceThreshold by dataStore.data.map { it[STALE_PRICE_THRESHOLD_KEY] }.collectAsState(initial = defaultStalePriceThreshold)
     var showStalePriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var editableStalePriceThreshold by rememberSaveable { mutableStateOf("") }
     var stalePriceThresholdError by remember { mutableStateOf<String?>(null) }
