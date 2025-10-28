@@ -6500,6 +6500,11 @@ fun SettingsTile(
 }
 
 // TODO: Inconsistent naming between onConfirm and onDismiss*Request*? Just maybe this is OK?
+// TODO: I could tweak this to be more like the full screen dialogs, in that Save is *always*
+// enabled but if you click it that then "enables" warnings about the field being empty. However, I
+// don't think we necessarily need to overdo this consistency - since there is literally a single
+// text field in play here, it's much more obvious that the reason you can't save is that it's
+// blank.
 @Composable
 fun SettingsDialog(
     title: String,
