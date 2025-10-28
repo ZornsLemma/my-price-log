@@ -9575,3 +9575,12 @@ val capitalization = when (capString) {
 // TODO: Should we allow empty strings when adding/editing a "count" for a price and treat that as 1
 // in the database? And/or should we default count to 1 rather than an empty string when adding a
 // brand new price rather than editing an existing one?
+
+// ENHANCE: On an emulated Android 11 phone, there is a strange pink tinge to the app. The home
+// screen background is pinkish, but beyond LLMs burbling at me about emulator bugs, I can't see why
+// that's relevant - there is not supposed to be any Material You auto-theming based on this on
+// Android 11. LLMs also babble about my "default background" being translucent and/or a Material 2
+// theme being used but none of their suggestions fixed this in the emulator. I don't have a real
+// Android 11 device to test on and I have zero confidence in what the LLMs are telling me here. I
+// have reverted all the temporary changes the LLMs had me make and will wait for feedback from real
+// users (if any) before attempting to address this.
