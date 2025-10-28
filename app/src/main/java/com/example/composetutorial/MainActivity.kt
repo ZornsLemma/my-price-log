@@ -6428,7 +6428,7 @@ fun SettingsScreen(navController: NavHostController) {
             // practice. Editing these should not be an everyday activity so even if it is a bit
             // fiddly it doesn't matter that much.
             item {
-                // TODO: I half wonder if we should do *<=* this threshold - currently we use < in code - just to match this description (subtitle) which feels more natural, but maybe we can reword this.
+                // TODO: I half wonder if we should do *<=* stale/ancient threshold - currently we use < in code for stale at least - just to match this description (subtitle) which feels more natural, but maybe we can reword this.
 
                 SettingsTile(
                     title = "Stale price threshold",
@@ -6450,20 +6450,25 @@ fun SettingsScreen(navController: NavHostController) {
             }
         }
 
-        // TODO: Stale price threshold and "too old"/"expired" threshold have to be validated against each other - former must be < (<=?) latter when either changes.
+        // TODO: Since I can have multiple validation rules, for both stale and ancient thresholds
+        // there is no need to check both ends of the range in one rule and give one message
+        // covering both. This is simpler for the user and also saves us some vertical space on
+        // small screens.
+
         if (showStalePriceThresholdDialog) {
             SettingsDialog(
                 title = "Stale price threshold",
-                subtitle = "Prices confirmed more than this many days ago are considered stale. Stale prices have an inflation adjustment applied when comparing across stores.",
+                // TODO subtitle = "Prices confirmed more than this many days ago are considered stale. Stale prices have an inflation adjustment applied when comparing across stores.",
+                subtitle = "Stale prices (confirmed more than this many days ago) have an inflation adjustment applied when comparing across stores.",
                 label = "Days",
                 initialValue = stalePriceThreshold.toString(),
                 validationRules = listOfNotNull(
                     ValidationRule(
                         {
                             val days = it.toIntOrNull()
-                            days != null && days in 1..365
+                            days != null && days in 1..<ancientPriceThresholdDays
                         },
-                        "Enter a number of days between 1 and 365"
+                        "Must be positive and less than $ancientPriceThresholdDays (ancient price threshold)"
                     )
                 ),
                 onConfirm = { stalePriceThresholdString ->
@@ -6479,11 +6484,18 @@ fun SettingsScreen(navController: NavHostController) {
         if (showAncientPriceThresholdDialog) {
             SettingsDialog(
                 title = "Ancient price threshold",
-                subtitle = "Prices confirmed more than this many days ago are considered ancient. Ancient prices are ignored when classifying prices as good/OK/bad.",
+                // TODO subtitle = "Prices confirmed more than this many days ago are considered ancient. Ancient prices are ignored when classifying prices as good/OK/bad.",
+                subtitle = "Ancient prices (confirmed more than this many days ago) are ignored when classifying prices as good/OK/bad.",
                 label = "Days",
                 initialValue = ancientPriceThresholdDays.toString(),
                 validationRules = listOfNotNull(
-                    // TODO - REMEMBER WE NEED TO VALIDATE AGAINST STALE PRICE THREHSOLD TOO, AND VICE VERSA
+                    ValidationRule(
+                        {
+                            val days = it.toIntOrNull()
+                            days != null && days > stalePriceThreshold && days <= 365
+                        },
+                    "Must be greater than $stalePriceThreshold (stale price threshold) and no greater than 365"
+                    ),
                 ),
                 onConfirm = { ancientPriceThresholdDaysString ->
                     showAncientPriceThresholdDialog = false
