@@ -17,7 +17,7 @@ android {
         // minSdk 30 to have a sqlite version supporting it. There are rather faffy workarounds
         // which could perhaps allow lowering this later on, but for now let's just accept this.
         minSdk = 30
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 

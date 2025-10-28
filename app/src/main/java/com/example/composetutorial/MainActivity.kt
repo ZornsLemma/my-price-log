@@ -6456,7 +6456,6 @@ fun SettingsScreen(navController: NavHostController) {
                 )
             }
 
-
             item {
                 SettingsTile(
                     title = "Annual inflation",
