@@ -2318,6 +2318,7 @@ enum class ThemePreference {
 */
 
 private const val multiplicationSign = "\u00d7"
+private const val emDash = "\u2014"
 
 // Since all our data is local, we generally expect to be able to respond promptly to user requests.
 // Things like the dropdown they touched closing or the button they touched animating provide
@@ -3243,7 +3244,7 @@ fun MyDropdownMenuItem(
 }
 
 // TODO: RENAME?!?!
-data class PriceAgeSettings(val stalePriceThreshold: Int, val ancientPriceThresholdDays: Int)
+data class PriceAgeSettings(val stalePriceThreshold: Int, val ancientPriceThresholdDays: Int, val annualInflationPercent: Int)
 
 // TODO: ChatGPT magic
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
@@ -3258,8 +3259,10 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
 
     val ancientPriceThresholdDaysFlow: Flow<Int> = dataStore.data.map { prefs -> prefs[ANCIENT_PRICE_THRESHOLD_DAYS_KEY] ?: defaultAncientPriceThresholdDays }
 
-    val priceAgeSettingsFlow: Flow<PriceAgeSettings> = combine(stalePriceThresholdFlow, ancientPriceThresholdDaysFlow) { stalePriceThreshold, ancientPriceThresholdDays ->
-        PriceAgeSettings(stalePriceThreshold, ancientPriceThresholdDays)
+    val annualInflationPercentFlow: Flow<Int> = dataStore.data.map { prefs -> prefs[ANNUAL_INFLATION_PERCENT_KEY] ?: defaultAnnualInflationPercent }
+
+    val priceAgeSettingsFlow: Flow<PriceAgeSettings> = combine(stalePriceThresholdFlow, ancientPriceThresholdDaysFlow, annualInflationPercentFlow) { stalePriceThreshold, ancientPriceThresholdDays, annualInflationPercent ->
+        PriceAgeSettings(stalePriceThreshold, ancientPriceThresholdDays, annualInflationPercent)
     }
 
     /* TODO!?!?!?! MY EXISTING OTHER HACKS DON'T USE THIS BUT MAYBE THEY SHOULD!?!?!?!?!?!?!?!!
@@ -3276,8 +3279,10 @@ val SELECTED_SOURCE_ID_KEY = longPreferencesKey("selected_source_id")
 // TODO: MOVE THE FOLLOWING!?
 val STALE_PRICE_THRESHOLD_KEY = intPreferencesKey("stale_price_threshold") // TODO: RENAME THIS AND ALL ASSOCIATED VARS TO INCLUDE "DAYS"?
 val ANCIENT_PRICE_THRESHOLD_DAYS_KEY = intPreferencesKey("ancient_price_threshold_days")
+val ANNUAL_INFLATION_PERCENT_KEY = intPreferencesKey("annual_inflation_percent")
 const val defaultStalePriceThreshold = 30
 const val defaultAncientPriceThresholdDays = 180
+const val defaultAnnualInflationPercent = 5
 
 data class HomeScreenUIContent(
     val dataSet: DataSet?,
@@ -6398,8 +6403,10 @@ fun SettingsScreen(navController: NavHostController) {
     val dataStore = LocalContext.current.dataStore
     val stalePriceThreshold by dataStore.data.map { it[STALE_PRICE_THRESHOLD_KEY] ?: defaultStalePriceThreshold }.collectAsState(initial = defaultStalePriceThreshold)
     val ancientPriceThresholdDays by dataStore.data.map { it[ANCIENT_PRICE_THRESHOLD_DAYS_KEY] ?: defaultAncientPriceThresholdDays }.collectAsState(initial = defaultAncientPriceThresholdDays)
+    val annualInflationPercent by dataStore.data.map { it[ANNUAL_INFLATION_PERCENT_KEY] ?: defaultAnnualInflationPercent }.collectAsState(initial = defaultAnnualInflationPercent)
     var showStalePriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var showAncientPriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
+    var showAnnualInflationPercentDialog by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -6445,6 +6452,17 @@ fun SettingsScreen(navController: NavHostController) {
                     subtitle = "Prices considered ancient after $ancientPriceThresholdDays days",
                     onClick = {
                         showAncientPriceThresholdDialog = true
+                    }
+                )
+            }
+
+
+            item {
+                SettingsTile(
+                    title = "Annual inflation",
+                    subtitle = "Stale prices increase by $annualInflationPercent% per year",
+                    onClick = {
+                        showAnnualInflationPercentDialog = true
                     }
                 )
             }
@@ -6508,6 +6526,36 @@ fun SettingsScreen(navController: NavHostController) {
                 },
                 onDismissRequest = {
                     showAncientPriceThresholdDialog = false
+                }
+            )
+        }
+
+        if (showAnnualInflationPercentDialog) {
+            SettingsDialog(
+                title = "Annual inflation",
+                subtitle = "Stale prices increase by this annual rate. This is only an estimate $emDash update prices when you can for better accuracy.",
+                // TODO: Other candidates (I have tinkered with this already, just keeping these temp for reference):
+                // Old (stale) prices are increased by this rate per year to roughly account for inflation. Update prices when you can for best accuracy.
+                // Once prices go stale, they’re adjusted upward at this annual rate to approximate inflation. Update prices regularly for better accuracy.
+                // Prices older than the stale threshold are adjusted upward each year by this rate, to reduce the effect of outdated data. It’s only an estimate — update prices when possible.
+                // Stale prices increase at this annual rate as an inflation estimate. This is only an approximation; update prices when possible.
+                // (Your wording is already solid; I’d just replace “inflate at this rate every year” with “increase at this annual rate” — it’s slightly clearer and avoids confusion with the economic concept of inflation versus the action of inflating a number.)
+                label = "%", // TODO: Can/should I put a suffix on the OutlinedTextField instead?
+                initialValue = annualInflationPercent.toString(),
+                validationRules = listOfNotNull(
+                    // TODO!
+                ),
+                onConfirm = { annualInflationPercentString ->
+                    showAnnualInflationPercentDialog = false
+                    scope.launch {
+                        dataStore.edit {
+                            it[ANNUAL_INFLATION_PERCENT_KEY] =
+                                annualInflationPercentString.toIntOrNull()!!
+                        }
+                    }
+                },
+                onDismissRequest = {
+                    showAnnualInflationPercentDialog = false
                 }
             )
         }
@@ -9088,19 +9136,11 @@ data class AugmentedPrice(
     val priceJudgement: PriceJudgement,
 )
 
-// TODO: These should be user-configurable in settings
-/* TODO DELETE
-val inflationThresholdDays =
-    30L // 30L // TODO: rename staleThreshold or something? we use it for inflation, but it's about how we define "stale" really, and inflation only kicks in for stale prices
-val tooOldThresholdDays = 180L
-*/
-val annualInflationPercent = 5.0
-
 fun inflationAdjustedPrice(price: Double, ageDays: Long, priceAgeSettings: PriceAgeSettings): Double {
     if (ageDays < priceAgeSettings.stalePriceThreshold) {
         return price
     } else {
-        return price * (1.0 + annualInflationPercent / 100.0).pow((ageDays - priceAgeSettings.stalePriceThreshold) / 365.25)
+        return price * (1.0 + priceAgeSettings.annualInflationPercent / 100.0).pow((ageDays - priceAgeSettings.stalePriceThreshold) / 365.25)
     }
 }
 
