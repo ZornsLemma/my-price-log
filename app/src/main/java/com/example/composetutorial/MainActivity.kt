@@ -6432,6 +6432,7 @@ fun SettingsScreen(navController: NavHostController) {
             }
         }
 
+        // TODO: Stale price threshold and "too old"/"expired" threshold have to be validated against each other - former must be < (<=?) latter when either changes.
         if (showStalePriceThresholdDialog) {
             SettingsDialog(
                 title = "Stale price threshold",
