@@ -2332,6 +2332,7 @@ enum class ThemePreference {
 
 private const val multiplicationSign = "\u00d7"
 private const val emDash = "\u2014"
+private const val copyrightSymbol = "\u00a9"
 
 // Since all our data is local, we generally expect to be able to respond promptly to user requests.
 // Things like the dropdown they touched closing or the button they touched animating provide
@@ -6746,17 +6747,21 @@ fun Drawable.toBitmap(width: Int, height: Int): Bitmap {
 
 // TODO: ChatGPT magic
 @Composable
-fun LauncherIcon(sizeDp: Int = 120) {
+
+fun LauncherIcon(size: Dp = 120.dp) {
     val context = LocalContext.current
     val density = LocalDensity.current
-    val px = with(density) { sizeDp.dp.toPx() }.toInt()
+
+    // Convert Dp to pixels for toBitmap()
+    val px = with(density) { size.toPx().toInt() }
+
     val drawable = context.packageManager.getApplicationIcon(context.packageName)
     val bitmap = drawable.toBitmap(px, px)
 
     Image(
         bitmap = bitmap.asImageBitmap(),
         contentDescription = "App Icon",
-        modifier = Modifier.size(sizeDp.dp)
+        modifier = Modifier.size(size) // still use Dp for layout
     )
 }
 
@@ -6782,15 +6787,16 @@ fun getAppVersion(): String {
 }
 
 // TODO: ChatGPT magic
+// TODO: RENAME THIS, IT IS NOT FOR LICENSE LINKS ANY MORE, IUT IS FOR LINKS IN GENERAL
 @Composable
 fun LicenseLink(text: String, url: String) {
     val uriHandler = LocalUriHandler.current
     Text(
         text = text,
-        color = MaterialTheme.colorScheme.primary,
-        fontSize = 12.sp,
-        fontWeight = FontWeight.Normal,
-        textDecoration = TextDecoration.Underline,
+        style = MaterialTheme.typography.bodyMedium.copy(
+            textDecoration = TextDecoration.Underline,
+            color = MaterialTheme.colorScheme.primary
+        ),
         modifier = Modifier
             .clickable { uriHandler.openUri(url) }
             .padding(vertical = 2.dp)
@@ -6820,9 +6826,21 @@ fun AttributionItem(text: String, url: String? = null) {
     }
 }
 
+// TODO: ChatGPT magic
+@Composable
+fun BulletPoint(text: String) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        Text("• ", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
 
 @Composable
-fun AboutScreen(navController: NavHostController) {
+fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) {
     /* TODO DELETE
     val context = LocalContext.current
     val appIcon = context.packageManager.getApplicationIcon(context.packageName) as BitmapDrawable
@@ -6849,63 +6867,135 @@ fun AboutScreen(navController: NavHostController) {
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = screenBorder)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
+            // TODO DELETEhorizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // --- Centered icon + version ---
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                LauncherIcon(sizeDp = 96) // TODO 120
+            Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+                // App icon
+                LauncherIcon(size = 96.dp)
+
                 Spacer(modifier = Modifier.height(16.dp))
+
+                // Version
                 Text(
-                    getAppVersion(),
+                    text = getAppVersion(),
                     style = MaterialTheme.typography.titleMedium
                 )
+            }
 
-                Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "Resources",
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
-                        )
-                        LicenseLink("GitHub repo", "https://github.com/…")
-                        LicenseLink("User manual", "https://…")
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "Attributions",
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
-                        )
-                        Text(
-                            "This app includes vector icons from the Material Design icon set by Google.",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        // Future library attributions (brief) can go here
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Button to legal screen
-                Button(onClick = { /* navigate to LegalScreen */ }) {
-                    Text("View full legal information")
+            // Links card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        "Resources",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Links below will open in your browser.",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    // TODO: These (probably by modifying LicenseLink's internals) should probably show the raw URL on the screen too so the user can enter it manually on another system?
+                    LicenseLink("GitHub repo", "https://github.com/yourusername/yourapp")
+                    LicenseLink("User manual", "https://yourappdocs.example.com")
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Attributions card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        "Attributions",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    BulletPoint("Material Design icons (Google, Apache 2.0)")
+                    BulletPoint("ExampleLibrary (MIT) — placeholder for future third-party library")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Button to legal screen
+            FilledTonalButton(onClick = onViewLegalClick,    shape = MaterialTheme.shapes.small) {
+                Text("View full legal information")
+            }
+        }
+    }
+}
+
+// TODO: ChatGPT magic
+@Composable
+fun LegalScreen(
+    navController: NavHostController,
+    modifier: Modifier = Modifier
+) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(title = { Text("Legal information") }, navigationIcon = {
+                IconButton(onClick = { navController.navigateUp() }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+            })
+        },
+    ) { innerPadding ->
+
+        Column(
+            modifier = modifier
+                .verticalScroll(rememberScrollState())
+                .padding(innerPadding)
+                .padding(horizontal = screenBorder)
+                //  TODO!? .padding(16.dp) - this is chatgpt, maybe redundant now i have scaffold
+        ) {
+            /* TODO DELETE NOW WE HAVE TOPAPPBAR
+            Text("Legal Information", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(16.dp))
+            */
+
+            // Your app's MIT license
+            Text(
+                "TODOMYAPPNAME $emDash MIT License\nCopyright $copyrightSymbol 2025 Steven Flintham\n\n" +
+                        "Permission is hereby granted, free of charge, to any person obtaining a copy " +
+                        "of this software and associated documentation files (the “Software”), to deal " +
+                        "in the Software without restriction, including without limitation the rights " +
+                        "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies " +
+                        "of the Software, and to permit persons to whom the Software is furnished to do so, " +
+                        "subject to the following conditions:\n\n" +
+                        "The above copyright notice and this permission notice shall be included in all copies " +
+                        "or substantial portions of the Software.\n\n" +
+                        "THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, " +
+                        "INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. " +
+                        "IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, " +
+                        "WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE " +
+                        "OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Placeholder for future third-party licenses
+            Text(
+                "Third-party libraries (future additions):\n\n" +
+                        "• Material Design icons (Google, Apache 2.0)\n" +
+                        "• ExampleLibrary (MIT)\n\n" +
+                        "Full license texts for these libraries will be included here.",
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }
@@ -8275,8 +8365,13 @@ fun AppNavigation() {
         }
 
         composable(
-            "about", enterTransition = { slideLeftTransition() }, popExitTransition = { slideRightTransition() }, ) {
-            AboutScreen(navController)
+            "about", enterTransition = { slideLeftTransition() }, popEnterTransition = { null }, popExitTransition = { slideRightTransition() }, ) {
+            AboutScreen(navController, onViewLegalClick = { navController.navigate("legal") })
+        }
+
+        composable(
+            "legal", enterTransition = { slideLeftTransition() }, popEnterTransition = { null }, popExitTransition = { slideRightTransition() }, ) {
+            LegalScreen(navController)
         }
 
         composable(
