@@ -2,6 +2,8 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.platform.LocalUriHandler
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
@@ -175,6 +177,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -6787,20 +6790,40 @@ fun getAppVersion(): String {
 }
 
 // TODO: ChatGPT magic
-// TODO: RENAME THIS, IT IS NOT FOR LICENSE LINKS ANY MORE, IUT IS FOR LINKS IN GENERAL
+// TODO: RENAME THIS, IT IS NOT FOR LICENSE LINKS ANY MORE, IUT IS FOR LINKS IN GENERAL - should probably just be Link()
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun LicenseLink(text: String, url: String) {
+fun LicenseLink(text: String, url: String, showRawUrl: Boolean = true
+) {
     val uriHandler = LocalUriHandler.current
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium.copy(
-            textDecoration = TextDecoration.Underline,
-            color = MaterialTheme.colorScheme.primary
-        ),
-        modifier = Modifier
-            .clickable { uriHandler.openUri(url) }
-            .padding(vertical = 2.dp)
-    )
+    val clipboardManager = LocalClipboardManager.current
+
+    Column(modifier = Modifier.padding(vertical = 2.dp)) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                textDecoration = TextDecoration.Underline,
+                color = MaterialTheme.colorScheme.primary
+            ),
+            modifier = Modifier
+                .clickable { uriHandler.openUri(url) }
+                .padding(bottom = if (showRawUrl) 2.dp else 0.dp)
+        )
+
+        if (showRawUrl) {
+            Text(
+                text = url,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                modifier = Modifier
+                    .combinedClickable(
+                        onClick = { /* no-op, raw URL not clickable */ },
+                        onLongClick = { clipboardManager.setText(AnnotatedString(url)) }
+                    )
+            )
+        }
+    }
 }
 
 // TODO: ChatGPT magic
@@ -6902,8 +6925,8 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     // TODO: These (probably by modifying LicenseLink's internals) should probably show the raw URL on the screen too so the user can enter it manually on another system?
-                    LicenseLink("GitHub repo", "https://github.com/yourusername/yourapp")
-                    LicenseLink("User manual", "https://yourappdocs.example.com")
+                    LicenseLink("GitHub repo", "https://github.com/yourusername/yourapp", showRawUrl = true)
+                    LicenseLink("User manual", "https://yourappdocs.example.com", showRawUrl = true)
                 }
             }
 
