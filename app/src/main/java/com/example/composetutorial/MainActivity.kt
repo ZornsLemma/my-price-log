@@ -107,6 +107,7 @@ import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -6811,17 +6812,14 @@ fun LicenseLink(text: String, url: String, showRawUrl: Boolean = true
         )
 
         if (showRawUrl) {
-            Text(
-                text = url,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                ),
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = { /* no-op, raw URL not clickable */ },
-                        onLongClick = { clipboardManager.setText(AnnotatedString(url)) }
-                    )
-            )
+            SelectionContainer {
+                Text(
+                    text = url,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                )
+            }
         }
     }
 }
@@ -6925,8 +6923,8 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     // TODO: These (probably by modifying LicenseLink's internals) should probably show the raw URL on the screen too so the user can enter it manually on another system?
-                    LicenseLink("GitHub repo", "https://github.com/yourusername/yourapp", showRawUrl = true)
-                    LicenseLink("User manual", "https://yourappdocs.example.com", showRawUrl = true)
+                    LicenseLink("User manual", "https://yourappdocs.example.com", showRawUrl = true) // TODO!
+                    LicenseLink("Source code on GitHub", "https://github.com/yourusername/yourapp", showRawUrl = true) // TODO!
                 }
             }
 
@@ -6938,6 +6936,9 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
+                    // This is where we give credit for third-party components we are using in a
+                    // readable way. The full legally compliant stuff which is not actually readable
+                    // doesn't go here, it goes on LegalScreen().
                     Text(
                         "Attributions",
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
