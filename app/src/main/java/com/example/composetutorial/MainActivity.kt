@@ -99,6 +99,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
@@ -6799,7 +6800,7 @@ fun LicenseLink(text: String, url: String, showRawUrl: Boolean = true
     val uriHandler = LocalUriHandler.current
     val clipboardManager = LocalClipboardManager.current
 
-    Column(modifier = Modifier.padding(vertical = 2.dp)) {
+    Column {
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium.copy(
@@ -6808,7 +6809,11 @@ fun LicenseLink(text: String, url: String, showRawUrl: Boolean = true
             ),
             modifier = Modifier
                 .clickable { uriHandler.openUri(url) }
-                .padding(bottom = if (showRawUrl) 2.dp else 0.dp)
+                // This padding feels slightly visually unattractive (although it's growing on me a
+                // bit), but we want to allow some clearance so the "tappable area" to click on the
+                // links isn't too small, roughly in accordance with MD3 guidelines even if we're
+                // not following them formally here.
+                .padding(vertical = 8.dp)
         )
 
         if (showRawUrl) {
@@ -6817,7 +6822,7 @@ fun LicenseLink(text: String, url: String, showRawUrl: Boolean = true
                     text = url,
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
-                    ),
+                    )
                 )
             }
         }
@@ -6922,8 +6927,8 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    // TODO: These (probably by modifying LicenseLink's internals) should probably show the raw URL on the screen too so the user can enter it manually on another system?
                     LicenseLink("User manual", "https://yourappdocs.example.com", showRawUrl = true) // TODO!
+                    Spacer(modifier = Modifier.height(8.dp))
                     LicenseLink("Source code on GitHub", "https://github.com/yourusername/yourapp", showRawUrl = true) // TODO!
                 }
             }
