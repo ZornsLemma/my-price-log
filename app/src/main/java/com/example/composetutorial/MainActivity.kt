@@ -6445,6 +6445,8 @@ fun SettingsScreen(navController: NavHostController, onAboutClick: () -> Unit) {
                 //.background(MaterialTheme.colorScheme.primary) // TODO: debug hack
                 .fillMaxSize()
                 .padding(innerPadding)
+                // Padding here follows the same approach as GeneralSelectorScreen() - see the
+                // comment there.
                 .padding(vertical = screenBorder)
         ) {
             // ENHANCE: Since stale price threshold and ancient price threshold have interrelated
@@ -6892,10 +6894,14 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
                 //.background(MaterialTheme.colorScheme.primary) // TODO: debug hack
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = screenBorder)
+                .padding(horizontal = fullScreenDialogBorder)
                 .verticalScroll(rememberScrollState()),
             // TODO DELETEhorizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // We manually implement the vertical border so it is part of the scrollable region, not
+            // something which reduces the size of the scrollable region. This feels a bit better to
+            // me and (albeit not for the same reason) matches what we do in GeneralEditScreen().
+            Spacer(modifier = Modifier.height(fullScreenDialogVerticalBorder))
             Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
                 // App icon
                 LauncherIcon(size = 96.dp)
@@ -6962,6 +6968,7 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
             FilledTonalButton(onClick = onViewLegalClick,    shape = MaterialTheme.shapes.small) {
                 Text("View full legal information")
             }
+            Spacer(modifier = Modifier.height(fullScreenDialogVerticalBorder))
         }
     }
 }
@@ -6990,9 +6997,14 @@ fun LegalScreen(
             modifier = modifier
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
-                .padding(horizontal = screenBorder)
+                .padding(horizontal = fullScreenDialogBorder)
                 //  TODO!? .padding(16.dp) - this is chatgpt, maybe redundant now i have scaffold
         ) {
+            // We manually implement the vertical border so it is part of the scrollable region, not
+            // something which reduces the size of the scrollable region. This feels a bit better to
+            // me and (albeit not for the same reason) matches what we do in GeneralEditScreen().
+            Spacer(modifier = Modifier.height(fullScreenDialogVerticalBorder))
+
             // --- Your App License ---
             Text(
                 text = "TODOMYAPPNAME $emDash MIT License",
@@ -7031,6 +7043,8 @@ fun LegalScreen(
                 licenseText = "[full MIT license text for ExampleLibrary]"
             )
                     */
+
+            Spacer(modifier = Modifier.height(fullScreenDialogVerticalBorder))
         }
     }
 }
