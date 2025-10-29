@@ -6439,7 +6439,7 @@ fun SettingsScreen(navController: NavHostController, onAboutClick: () -> Unit) {
                 //.background(MaterialTheme.colorScheme.primary) // TODO: debug hack
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = screenBorder)
+                .padding(vertical = screenBorder)
         ) {
             // ENHANCE: Since stale price threshold and ancient price threshold have interrelated
             // validation, there just might be an argument for allowing them to be edited
@@ -6641,18 +6641,26 @@ fun SettingsTile(
     subtitle: String,
     onClick: () -> Unit
 ) {
+    /* TODO!?
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp, horizontal = 16.dp),
+            .clickable(onClick = onClick),
+            // TODO!? .padding(/* TODO?! vertical = 12.dp */ /* TODO!? , horizontal = 16.dp */),
         verticalAlignment = Alignment.CenterVertically
-    ) {
+    ) { */
+        /* TODO!?!?!
         Column(modifier = Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium)
         }
-    }
+        */
+        ListItem(
+            headlineContent = { Text(title) },
+            supportingContent = { Text(subtitle) },
+            modifier = Modifier.clickable(onClick = onClick)
+        )
+//    }
 }
 
 // TODO: Inconsistent naming between onConfirm and onDismiss*Request*? Just maybe this is OK?
