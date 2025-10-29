@@ -6969,8 +6969,16 @@ fun LegalScreen(
 
             // Your app's MIT license
             Text(
-                "TODOMYAPPNAME $emDash MIT License\nCopyright $copyrightSymbol 2025 Steven Flintham\n\n" +
-                        "Permission is hereby granted, free of charge, to any person obtaining a copy " +
+                "TODOMYAPPNAME $emDash MIT License",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Copyright $copyrightSymbol 2025 Steven Flintham",
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Permission is hereby granted, free of charge, to any person obtaining a copy " +
                         "of this software and associated documentation files (the “Software”), to deal " +
                         "in the Software without restriction, including without limitation the rights " +
                         "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies " +
@@ -6983,20 +6991,59 @@ fun LegalScreen(
                         "IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, " +
                         "WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE " +
                         "OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodySmall
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Placeholder for future third-party licenses
+            // --- Third-party libraries section ---
             Text(
-                "Third-party libraries (future additions):\n\n" +
-                        "• Material Design icons (Google, Apache 2.0)\n" +
-                        "• ExampleLibrary (MIT)\n\n" +
-                        "Full license texts for these libraries will be included here.",
-                style = MaterialTheme.typography.bodyMedium
+                text = "Third-Party Libraries",
+                style = MaterialTheme.typography.titleMedium
             )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Example library entry
+            SubheadingLibrary(
+                name = "ExampleLibrary",
+                license = "Apache 2.0",
+                attribution = "Used under Apache License 2.0.",
+                link = "https://examplelibrary.org/license"
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SubheadingLibrary(
+                name = "AnotherLibrary",
+                license = "BSD 3-Clause",
+                attribution = "Used under BSD 3-Clause License.",
+                link = "https://anotherlibrary.org/license"
+            )
+
         }
+    }
+}
+
+// TODO: ChatGPT magic
+@Composable
+fun SubheadingLibrary(
+    name: String,
+    license: String,
+    attribution: String,
+    link: String
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "$name $emDash $license",
+            style = MaterialTheme.typography.titleSmall
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        // Simple attribution text with hyperlink style
+        Text(
+            text = "$attribution See license: $link", // TODO: Shouldn't these use our clickable URL thign!?
+            style = MaterialTheme.typography.bodySmall,
+            // TODO: LOOKS UGLY!? modifier = Modifier.padding(start = 4.dp)
+        )
     }
 }
 
