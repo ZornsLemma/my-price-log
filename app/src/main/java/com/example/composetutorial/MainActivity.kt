@@ -6962,66 +6962,77 @@ fun LegalScreen(
                 .padding(horizontal = screenBorder)
                 //  TODO!? .padding(16.dp) - this is chatgpt, maybe redundant now i have scaffold
         ) {
-            /* TODO DELETE NOW WE HAVE TOPAPPBAR
-            Text("Legal Information", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(16.dp))
-            */
-
-            // Your app's MIT license
+            // --- Your App License ---
             Text(
-                "TODOMYAPPNAME $emDash MIT License",
+                text = "TODOMYAPPNAME $emDash MIT License",
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Copyright $copyrightSymbol 2025 Steven Flintham",
+            Text(
+                text = "Copyright $copyrightSymbol 2025 TODOMYNAME",
                 style = MaterialTheme.typography.bodySmall
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Permission is hereby granted, free of charge, to any person obtaining a copy " +
-                        "of this software and associated documentation files (the “Software”), to deal " +
-                        "in the Software without restriction, including without limitation the rights " +
-                        "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies " +
-                        "of the Software, and to permit persons to whom the Software is furnished to do so, " +
-                        "subject to the following conditions:\n\n" +
-                        "The above copyright notice and this permission notice shall be included in all copies " +
-                        "or substantial portions of the Software.\n\n" +
-                        "THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, " +
-                        "INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. " +
-                        "IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, " +
-                        "WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE " +
-                        "OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.",
-                style = MaterialTheme.typography.bodySmall
+            Spacer(modifier = Modifier.height(8.dp))
+            LicenseText(
+                licenseText = """
+                    Permission is hereby granted, free of charge, to any person obtaining a copy
+                    of this software and associated documentation files (the "Software"), to deal
+                    in the Software without restriction, including without limitation the rights
+                    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+                    copies of the Software, and to permit persons to whom the Software is
+                    furnished to do so, subject to the following conditions:
+                    
+                    [rest of MIT license text here] TODO!!!!!!
+                """.trimIndent()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- Third-party libraries section ---
+            // --- Third-Party Licenses (full text if needed) ---
             Text(
-                text = "Third-Party Libraries",
+                text = "Third-Party Licenses",
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Example library entry
-            SubheadingLibrary(
-                name = "ExampleLibrary",
-                license = "Apache 2.0",
-                attribution = "Used under Apache License 2.0.",
-                link = "https://examplelibrary.org/license"
+            // Each third-party library gets a separate block
+            ThirdPartyLicense(
+                libraryName = "ExampleLibrary",
+                licenseName = "MIT License",
+                licenseText = "[full MIT license text for ExampleLibrary]"
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            SubheadingLibrary(
-                name = "AnotherLibrary",
-                license = "BSD 3-Clause",
-                attribution = "Used under BSD 3-Clause License.",
-                link = "https://anotherlibrary.org/license"
-            )
-
-        }
+            ThirdPartyLicense(
+                libraryName = "ExampleLibrary2",
+                licenseName = "MIT License",
+                licenseText = "[full MIT license text for ExampleLibrary]"
+            )        }
     }
+}
+
+// TODO: CHAT GPT MAGIC
+@Composable
+fun ThirdPartyLicense(
+    libraryName: String,
+    licenseName: String,
+    licenseText: String
+) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Text(
+            text = "$libraryName — $licenseName",
+            style = MaterialTheme.typography.titleSmall
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        LicenseText(licenseText)
+    }
+}
+
+// TODO: CHATGPT MAGIC
+@Composable
+fun LicenseText(licenseText: String) {
+    Text(
+        text = licenseText,
+        style = MaterialTheme.typography.bodySmall
+    )
 }
 
 // TODO: ChatGPT magic
