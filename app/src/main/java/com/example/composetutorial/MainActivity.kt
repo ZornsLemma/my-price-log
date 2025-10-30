@@ -2,14 +2,11 @@
 
 package com.example.composetutorial // TODO: change this!
 
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.platform.LocalUriHandler
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.graphics.Canvas
 import android.app.Activity
-import android.app.AlarmManager
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.Alignment
@@ -34,20 +31,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
 import android.app.Application
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.sqlite.SQLiteDatabase
-import android.graphics.drawable.BitmapDrawable
 import android.icu.text.Collator
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
-import android.os.Handler
 import android.os.LocaleList
-import android.os.Looper
 import android.os.Parcelable
 import android.os.StrictMode
 import android.text.format.DateUtils
@@ -68,7 +61,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -99,21 +91,18 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -122,7 +111,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -168,8 +156,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.focusRequester
@@ -177,7 +163,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.FirstBaseline
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
@@ -285,9 +270,7 @@ import kotlin.math.pow
 // weight or volume. This is fundamental as we make no effort to convert between them using some
 // sort of density estimate or whatever. Actual units (kg, oz, etc) of the same quantity type can
 // be varied much more freely.
-// TODO: Just possibly rename this "MeasureType"? ChatGPT suggestion, maybe has a point,
-// "QuantityType" is definitely not a terrible name though.
-enum class QuantityType(val value: Int) { // TODO: "value" -> "id"??
+enum class QuantityType(val id: Int) {
     ITEM(1),
     WEIGHT(2), // technically mass but everyone says "price per weight"
     VOLUME(3);
@@ -317,13 +300,12 @@ fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> = when (locale.count
     else -> setOf(UnitFamily.ITEM, UnitFamily.METRIC)
 }
 
-// TODO: IF WE KEEP G100 AND ML100, WE MAY NEED A FLAG TO INDICATE THESE ARE SECOND-CLASS CITIZENS AND ONLY ELIGIBLE FOR UNIT PRICE DENOMINATOR NOT GENERATE UNIT SELECTION
-// TODO: Could just maybe rename this "MeasurementUnit" but it's not a big deal and this is a bit more concise. "UnitOfMeasure" is a compromise on length but might also be nice. Maybe worth making note-to-self comment that we'd just call this Unit but Kotlin already took that. :-)
-enum class MeasureUnit(
+// It's tempting to call this just "Unit", but that's a keyword in Kotlin.
+enum class MeasurementUnit(
     val id: Long,
     val unitFamilies: Set<UnitFamily>,
     val quantityType: QuantityType,
-    val symbol: String, // TODO: this probably needs to be translatable (e.g. French prefers "L" for litre)
+    val symbol: String, // TODO: this probably needs to be translatable
     val fullName: String, // TODO: this will need to be translatable
     val maxDecimals: Int,
     val toBase: Double,
@@ -331,23 +313,19 @@ enum class MeasureUnit(
     val perSymbol: String = "/",
 ) {
     // Countable items
-    // TODO: Should symbol be empty string or something else here? feeling my way. I suspect ""
-    // looks best, it may lead to strings like "for 20 " with a trailing space but that's probably
-    // not a big deal in practice. (We could also just make a point of trimming strings generated
-    // using symbol.) We sort of might want "1" for the unit price denominator stuff though.
     EACH(
         101,
         setOf(UnitFamily.ITEM),
         QuantityType.ITEM,
         "each",
-        "", // TODO!?
+        "",
         0,
         1.0,
         false,
         perSymbol = " ",
     ), // TODO: RENAME "EACH" TO "ITEM"?
-    EACH10(102, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", "10" /* TODO?? */, 1, 10.0, true),
-    EACH100(103, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", "100" /* TODO? */,2, 100.0, true),
+    EACH10(102, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", "10", 1, 10.0, true),
+    EACH100(103, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", "100",2, 100.0, true),
 
     // Weight (metric)
     G(201, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "g", "gram",0, 1.0, false),
@@ -360,7 +338,7 @@ enum class MeasureUnit(
         2,
         100.0,
         true
-    ), // TODO: experimental
+    ),
     KG(203, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "kg", "kilogram",3, 1000.0, false),
 
     // Weight (imperial/US customary)
@@ -396,7 +374,7 @@ enum class MeasureUnit(
         2,
         100.0,
         true
-    ), // TODO: experimental
+    ),
     L(303, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "L", "litre", 3, 1000.0, false),
 
     // TODO: As a massive hack to help me notice problems during debugging, I have replaced the space in "fl oz" with a U or I to
@@ -470,10 +448,9 @@ enum class MeasureUnit(
     );
 
     companion object {
-        private val measureUnitById = entries.associateBy { it.id }
+        private val measurementUnitById = entries.associateBy { it.id }
 
-        // TODO: Rename "fromId"?
-        fun fromValue(measureUnitId: Long): MeasureUnit? = measureUnitById[measureUnitId]
+        fun fromId(measurementUnitId: Long): MeasurementUnit? = measurementUnitById[measurementUnitId]
     }
 }
 
@@ -492,75 +469,75 @@ fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {
 // Returns a sensibly-ordered list (which will probably be shown to the user in this order) of all
 // the measurement units for dataSet and quantityType.
 // ENHANCE: Where multiple unit families are enabled in the data set, this will currently always
-// follow the order in MeasureUnit. So metric will always come before imperial/US customary if they
+// follow the order in MeasurementUnit. So metric will always come before imperial/US customary if they
 // are enabled. It might be desirable to have some global or per-data set configuration which says
 // something like "I prefer family X to come first where it's included" or (in practice mostly
 // equivalent) "I prefer {metric/non-metric} to come first when both are available". The precise
 // wording and level of control would have to be decided, though in practice we are unlikely to add
 // new unit families so there isn't too much need for amazing amounts of flexibility - the real
 // choice is "metric first or non-metric first"?.
-fun getRelevantMeasureUnits(
+fun getRelevantMeasurementUnits(
     dataSet: DataSet,
     quantityType: QuantityType,
     includeDisplayOnly: Boolean
-): List<MeasureUnit> {
+): List<MeasurementUnit> {
     val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
-    val relevantMeasureUnits = MeasureUnit.entries.filter { measureUnit ->
-        measureUnit.quantityType == quantityType &&
-                measureUnit.unitFamilies.any { it in relevantUnitFamilies } &&
-                (!measureUnit.displayOnly || includeDisplayOnly)
+    val relevantMeasurementUnits = MeasurementUnit.entries.filter { measurementUnit ->
+        measurementUnit.quantityType == quantityType &&
+                measurementUnit.unitFamilies.any { it in relevantUnitFamilies } &&
+                (!measurementUnit.displayOnly || includeDisplayOnly)
     }
-    devCheck(relevantMeasureUnits.isNotEmpty()) {
+    devCheck(relevantMeasurementUnits.isNotEmpty()) {
         "Expected at least one relevant measure unit for QuantityType ${quantityType.name} in " +
                 "the context of data set ID ${dataSet.id} but found none"
     }
-    return relevantMeasureUnits
+    return relevantMeasurementUnits
 }
 
-// Return a list of the MeasureUnits of the same QuantityType and UnitFamily as measureUnit. Note
-// that measureUnit itself will be included in the results. The results are in the same order as
-// in MeasureUnit.entries, but in practice I don't believe this matters.
-fun getMeasureUnitsOfSameQuantityTypeAndUnitFamily(
+// Return a list of the MeasurementUnits of the same QuantityType and UnitFamily as measurementUnit. Note
+// that measurementUnit itself will be included in the results. The results are in the same order as
+// in MeasurementUnit.entries, but in practice I don't believe this matters.
+fun getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
     dataSet: DataSet,
-    measureUnit: MeasureUnit,
+    measurementUnit: MeasurementUnit,
     includeDisplayOnly: Boolean
-): List<MeasureUnit> {
-    // dataSet is used here to decide which of the possible multiple families measureUnit belongs to
+): List<MeasurementUnit> {
+    // dataSet is used here to decide which of the possible multiple families measurementUnit belongs to
     // is the one we're interested in. Suppose we have OZ - it could be imperial or US customary. As
-    // it happens, in all cases where a MeasureUnit belongs to two families, the families as we
+    // it happens, in all cases where a MeasurementUnit belongs to two families, the families as we
     // currently define them are identical anyway so the distinction doesn't matter. But we do the
     // right thing anyway just to be cautious. (It's not likely but to see why this matters, suppose
     // we add support for the cubic inch as a volume measurement. It's the same in imperial and US
-    // customary. But if measureUnit were CUBIC_INCH, the family would matter in deciding whether
-    // the returned MeasureUnits are US or imperial floz/pint/gallon.)
-    val unitFamily = measureUnit.unitFamilies.intersect(getRelevantUnitFamilies(dataSet))
+    // customary. But if measurementUnit were CUBIC_INCH, the family would matter in deciding whether
+    // the returned MeasurementUnits are US or imperial floz/pint/gallon.)
+    val unitFamily = measurementUnit.unitFamilies.intersect(getRelevantUnitFamilies(dataSet))
     devCheck(unitFamily.size == 1) {
-        "measureUnit ${measureUnit.id} belongs to multiple unit families for data set " +
+        "measurementUnit ${measurementUnit.id} belongs to multiple unit families for data set " +
                 "${dataSet.id}: ${unitFamily.size}"
     }
-    val result = MeasureUnit.entries.filter {
-        it.quantityType == measureUnit.quantityType &&
+    val result = MeasurementUnit.entries.filter {
+        it.quantityType == measurementUnit.quantityType &&
                 unitFamily.single() in it.unitFamilies &&
                 (!it.displayOnly || includeDisplayOnly)
     }
     devCheck(result.isNotEmpty()) {
-        "measureUnit ${measureUnit.id} belongs to no unit families for data set ${dataSet.id}"
+        "measurementUnit ${measurementUnit.id} belongs to no unit families for data set ${dataSet.id}"
     }
     // This is a linear search but it's a tiny list and we don't call this a lot.
-    devCheck(measureUnit in result) {
-        "Original measureUnit ${measureUnit.id} not present in result: ${result.map { it.id }}"
+    devCheck(measurementUnit in result) {
+        "Original measurementUnit ${measurementUnit.id} not present in result: ${result.map { it.id }}"
     }
     return result
 }
 
-// The arguments are mandatory here so we don't fail to think about what's correct when we call
-// this. For miscellaneous debug output we can just use string interpolation of course.
+// The arguments are mandatory here so we're forced to think about what's correct when we call this.
+// For miscellaneous debug output we can just use string interpolation of course.
 fun formatDouble(
     value: Double,
     minDecimals: Int,
     maxDecimals: Int,
     useLocaleGrouping: Boolean,
-    locale: Locale // = Locale.getDefault() // TODO: GET RID OF DEFAULT HERE?
+    locale: Locale
 ): String {
     val numberFormat = NumberFormat.getNumberInstance(locale)
     numberFormat.minimumFractionDigits = minDecimals
@@ -574,12 +551,12 @@ fun formatDouble(
 @Parcelize // TODO: can we get rid of this later?
 // TODO: Should we make "value" memeber private? Direct use could "encourage" buggy code.
 // TODO: Maybe rename this "Quantity"? (And keep QuantityType for MASS/VOLUME/etc)
-data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable {
+data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcelable {
     // TODO: We could make quantityType public and slightly simplify some of our callers, but it's
     // *probably* clearer to make them go through unit to get to it.
     private val quantityType: QuantityType get() = unit.quantityType
 
-    fun to(unit: MeasureUnit): MeasuredValue {
+    fun to(unit: MeasurementUnit): MeasuredValue {
         devRequire(this.quantityType == unit.quantityType) {
             "Cannot convert between different quantity types: trying to convert $this to $unit"
         }
@@ -595,7 +572,7 @@ data class MeasuredValue(val value: Double, val unit: MeasureUnit) : Parcelable 
         return MeasuredValue(this.value + otherInThis.value, this.unit)
     }
 
-    fun asValue(unit: MeasureUnit): Double = this.to(unit).value
+    fun asValue(unit: MeasurementUnit): Double = this.to(unit).value
 
     // Based on my own experience and a possibly-trustworthy discussion with ChatGPT for an
     // international angle, I suspect that in practice we don't want grouping separators in our
@@ -701,7 +678,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
         Item(
             dataSetId = dataSetId,
             name = "Coffee (ground)",
-            defaultUnit = MeasureUnit.G,
+            defaultUnit = MeasurementUnit.G,
             allowMultipack = false,
             notes = ""
         )
@@ -710,7 +687,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
         Item(
             dataSetId = dataSetId,
             name = "Milk (whole)",
-            defaultUnit = MeasureUnit.L,
+            defaultUnit = MeasurementUnit.L,
             allowMultipack = false,
             notes = "",
         )
@@ -719,7 +696,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
         Item(
             dataSetId = dataSetId,
             name = "Teabags",
-            defaultUnit = MeasureUnit.EACH,
+            defaultUnit = MeasurementUnit.EACH,
             allowMultipack = false,
             notes = "",
             )
@@ -728,7 +705,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
         Item(
             dataSetId = dataSetId,
             name = "Cola",
-            defaultUnit = MeasureUnit.ML,
+            defaultUnit = MeasurementUnit.ML,
             allowMultipack = true,
             notes = ""
         )
@@ -780,10 +757,10 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdValueMart,
             price = 2.03,
             count = 1,
-            quantity = MeasuredValue(500.0, MeasureUnit.G),
+            quantity = MeasuredValue(500.0, MeasurementUnit.G),
             confirmedAt = now.minus(2, ChronoUnit.MINUTES),
             notes = "Large pack own brand",
-            itemDefaultUnit = MeasureUnit.G,
+            itemDefaultUnit = MeasurementUnit.G,
             modifiedAt = now.minus(2, ChronoUnit.MINUTES)
         )
     )
@@ -794,10 +771,10 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdSuperiorStore,
             price = 1.50,
             count = 1,
-            quantity = MeasuredValue(227.0, MeasureUnit.G),
+            quantity = MeasuredValue(227.0, MeasurementUnit.G),
             confirmedAt = now.minus(4, ChronoUnit.DAYS),
             notes = "Own brand",
-            itemDefaultUnit = MeasureUnit.G,
+            itemDefaultUnit = MeasurementUnit.G,
             modifiedAt = now.minus(4, ChronoUnit.DAYS),
         )
     )
@@ -808,10 +785,10 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdGrandways,
             price = 1.64,
             count = 1,
-            quantity = MeasuredValue(350.0, MeasureUnit.G),
+            quantity = MeasuredValue(350.0, MeasurementUnit.G),
             confirmedAt = now.minus(9, ChronoUnit.DAYS),
             notes = "",
-            itemDefaultUnit = MeasureUnit.G,
+            itemDefaultUnit = MeasurementUnit.G,
             modifiedAt = now.minus(9, ChronoUnit.DAYS),
         )
     )
@@ -824,11 +801,11 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             count = 1,
             quantity = MeasuredValue(
                 4.0,
-                MeasureUnit.IMPERIAL_PINT
+                MeasurementUnit.IMPERIAL_PINT
             ),
             confirmedAt = now,
             notes = "",
-            itemDefaultUnit = MeasureUnit.L,
+            itemDefaultUnit = MeasurementUnit.L,
             modifiedAt = now,
         )
     )
@@ -839,10 +816,10 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdSuperiorStore,
             price = 2.86,
             count = 1,
-            quantity = MeasuredValue(2.0, MeasureUnit.L),
+            quantity = MeasuredValue(2.0, MeasurementUnit.L),
             confirmedAt = now.minus(63, ChronoUnit.DAYS),
             notes = "",
-            itemDefaultUnit = MeasureUnit.L,
+            itemDefaultUnit = MeasurementUnit.L,
             modifiedAt = now.minus(63, ChronoUnit.DAYS),
         )
     )
@@ -855,11 +832,11 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             count = 1,
             quantity = MeasuredValue(
                 6.0,
-                MeasureUnit.IMPERIAL_PINT
+                MeasurementUnit.IMPERIAL_PINT
             ),
             confirmedAt = now.minus(14, ChronoUnit.DAYS),
             notes = "",
-            itemDefaultUnit = MeasureUnit.L,
+            itemDefaultUnit = MeasurementUnit.L,
             modifiedAt = now.minus(14, ChronoUnit.DAYS),
         )
     )
@@ -870,10 +847,10 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdValueMart,
             price = 0.76,
             count = 1,
-            quantity = MeasuredValue(40.0, MeasureUnit.EACH),
+            quantity = MeasuredValue(40.0, MeasurementUnit.EACH),
             confirmedAt = now.minus(7, ChronoUnit.DAYS),
             notes = "Soft pack own brand",
-            itemDefaultUnit = MeasureUnit.EACH,
+            itemDefaultUnit = MeasurementUnit.EACH,
             modifiedAt = now.minus(7, ChronoUnit.DAYS),
         )
     )
@@ -884,10 +861,10 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdSuperiorStore,
             price = 0.60,
             count = 1,
-            quantity = MeasuredValue(20.0, MeasureUnit.EACH),
+            quantity = MeasuredValue(20.0, MeasurementUnit.EACH),
             confirmedAt = now.minus(4, ChronoUnit.HOURS),
             notes = "",
-            itemDefaultUnit = MeasureUnit.EACH,
+            itemDefaultUnit = MeasurementUnit.EACH,
             modifiedAt = now.minus(4, ChronoUnit.HOURS),
         )
     )
@@ -898,10 +875,10 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdGrandways,
             price = 1.25,
             count = 1,
-            quantity = MeasuredValue(50.0, MeasureUnit.EACH),
+            quantity = MeasuredValue(50.0, MeasurementUnit.EACH),
             confirmedAt = now.minus(12, ChronoUnit.DAYS),
             notes = "",
-            itemDefaultUnit = MeasureUnit.EACH,
+            itemDefaultUnit = MeasurementUnit.EACH,
             modifiedAt = now.minus(12, ChronoUnit.DAYS),
         )
     )
@@ -912,10 +889,10 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdValueMart,
             price = 6.30,
             count = 12,
-            quantity = MeasuredValue(400.0, MeasureUnit.ML),
+            quantity = MeasuredValue(400.0, MeasurementUnit.ML),
             confirmedAt = now.minus(6, ChronoUnit.DAYS),
             notes = "",
-            itemDefaultUnit = MeasureUnit.ML,
+            itemDefaultUnit = MeasurementUnit.ML,
             modifiedAt = now.minus(6, ChronoUnit.DAYS),
         )
     )
@@ -926,10 +903,10 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdSuperiorStore,
             price = 2.79,
             count = 4,
-            quantity = MeasuredValue(330.0, MeasureUnit.ML),
+            quantity = MeasuredValue(330.0, MeasurementUnit.ML),
             confirmedAt = now.minus(31, ChronoUnit.DAYS),
             notes = "",
-            itemDefaultUnit = MeasureUnit.ML,
+            itemDefaultUnit = MeasurementUnit.ML,
             modifiedAt = now.minus(31, ChronoUnit.DAYS),
         )
     )
@@ -940,10 +917,10 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             sourceId = sourceIdGrandways,
             price = 3.82,
             count = 6,
-            quantity = MeasuredValue(330.0, MeasureUnit.ML),
+            quantity = MeasuredValue(330.0, MeasurementUnit.ML),
             confirmedAt = now.minus(18, ChronoUnit.DAYS),
             notes = "",
-            itemDefaultUnit = MeasureUnit.ML,
+            itemDefaultUnit = MeasurementUnit.ML,
             modifiedAt = now.minus(18, ChronoUnit.DAYS),
         )
     )
@@ -1257,13 +1234,13 @@ class Converters {
     */
 
     @TypeConverter
-    fun fromMeasureUnit(measureUnit: MeasureUnit?): Long? {
-        return measureUnit?.id
+    fun fromMeasurementUnit(measurementUnit: MeasurementUnit?): Long? {
+        return measurementUnit?.id
     }
 
     @TypeConverter
-    fun toMeasureUnit(value: Long?): MeasureUnit? {
-        return value?.let { MeasureUnit.fromValue(it) }
+    fun toMeasurementUnit(value: Long?): MeasurementUnit? {
+        return value?.let { MeasurementUnit.fromId(it) }
     }
 
     @TypeConverter
@@ -1394,10 +1371,10 @@ data class Item(
     val name: String,
     // default_unit implicitly specifies the item's QuantityType. It also serves as the default unit
     // to use when the user is entering the first price for an (item, source) combination.
-    @ColumnInfo(name = "default_unit") val defaultUnit: MeasureUnit,
+    @ColumnInfo(name = "default_unit") val defaultUnit: MeasurementUnit,
     // TODO: GUI should probably restrict and/or warn before changing default_unit between
-    // MeasureUnits - maybe if you have no prices yet you can do it. (It's completely fine to change
-    // within a MeasureUnit.)
+    // MeasurementUnits - maybe if you have no prices yet you can do it. (It's completely fine to change
+    // within a MeasurementUnit.)
     @ColumnInfo(name = "allow_multipack") val allowMultipack: Boolean,
     val notes: String,
 ) : Parcelable
@@ -1416,7 +1393,7 @@ data class Item(
 // is any demand for it, but even if it exists we probably don't want to over-encourage its use.
 
 // Note that we have the suprisingly horrific code around defaultUnitIdByQuantityTypeOrdinal instead
-// of a simple "val defaultUnit: MeasureUnit" because I thought it would be user-friendly to keep
+// of a simple "val defaultUnit: MeasurementUnit" because I thought it would be user-friendly to keep
 // the selected unit for each quantity type while the user is editing, and then it turns into a
 // nightmare of un-parcelizable types and working with ordinals and IDs rather than enum class
 // objects themselves. It probably isn't that bad in hindsight, but the code is way more complex
@@ -1435,7 +1412,7 @@ data class EditableItem private constructor(
     val allowMultipack: Boolean,
     val notes: String,
 ) : Parcelable {
-    val defaultUnit: MeasureUnit get() = MeasureUnit.fromValue(defaultUnitIdByQuantityTypeOrdinal[quantityType.ordinal])!!
+    val defaultUnit: MeasurementUnit get() = MeasurementUnit.fromId(defaultUnitIdByQuantityTypeOrdinal[quantityType.ordinal])!!
 
     fun toDomain(): Item? { // TODO: not just here - would "toItem" pair better with fromItem?!
         val trimmedName = name.trim()
@@ -1465,7 +1442,7 @@ data class EditableItem private constructor(
     // TODO: I have had some intermittent crashes when on the "Edit product" screen and I put it in
     // background, adb kill it and then return to it via the overview menu. The error in logcat is
     // fairly consistently "java.lang.IllegalArgumentException: No enum constant
-    // com.example.composetutorial.MeasureUnit.ĭ????" with almost nothing helpful in the gigantic
+    // com.example.composetutorial.MeasurementUnit.ĭ????" with almost nothing helpful in the gigantic
     // stack backtrace. This does not seem very easy to reproduce, but has cropped up once or twice.
     // I really don't know what's going on. About all I can do is leave this note here to remind
     // me in case I spot something later or if this does go wrong again or to spend some more time
@@ -1474,7 +1451,7 @@ data class EditableItem private constructor(
     companion object {
         fun fromItem(item: Item?, dataSet: DataSet): EditableItem {
             val defaultUnitIdByQuantityTypeOrdinal = QuantityType.entries.map { quantityType ->
-                getRelevantMeasureUnits(
+                getRelevantMeasurementUnits(
                     dataSet,
                     quantityType,
                     includeDisplayOnly = false
@@ -1696,7 +1673,7 @@ data class PriceEntity(
     // e.g. comparing the database price with the current shelf price. We do have a default unit
     // stored on the item, but tracking it per actual price allows us to handle situations where
     // supermarket A sells milk in pint multiples while supermarket B sells it in litre multiples.
-    @ColumnInfo(name = "user_unit") val userUnit: MeasureUnit,
+    @ColumnInfo(name = "user_unit") val userUnit: MeasurementUnit,
 
     @ColumnInfo(name = "confirmed_at") val confirmedAt: Instant,
 
@@ -1759,7 +1736,7 @@ data class PriceHistory(
     val price: Double,
     val count: Long,
     @ColumnInfo(name = "quantity_in_base_unit") val quantityInBaseUnit: Double,
-    @ColumnInfo(name = "user_unit") val userUnit: MeasureUnit,
+    @ColumnInfo(name = "user_unit") val userUnit: MeasurementUnit,
     @ColumnInfo(name = "confirmed_at") val confirmedAt: Instant,
     val notes: String,
     @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
@@ -1815,7 +1792,7 @@ fun PriceHistory.toEditablePrice(priceId: Long, locale: Locale, dataSet: DataSet
 data class PriceWithItemEntity(
     // TODO: should be PriceWithItemEntity eventually
     @Embedded val priceEntity: PriceEntity,
-    @ColumnInfo(name = "default_unit") val itemDefaultUnit: MeasureUnit,
+    @ColumnInfo(name = "default_unit") val itemDefaultUnit: MeasurementUnit,
 )
 
 // Price is a domain-level class which is nice for us to work with, once we've got away from the
@@ -1838,7 +1815,7 @@ data class Price(
     // measure hasn't somehow mutated into a different QuantityType. TODO: NEED TO MAKE SURE I
     // ACTUALLY USE THIS WHEN DOING INSERT/UPDATE - I THINK Price.toEntity() IS NOW DOING THIS,
     // SEE COMMENT BELOW - BUT THINK ABOUT THIS FRESH
-    val itemDefaultUnit: MeasureUnit
+    val itemDefaultUnit: MeasurementUnit
 ) : Parcelable {
 
     fun toEntity(): PriceEntity {
@@ -1867,9 +1844,9 @@ data class Price(
 }
 
 fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
-    QuantityType.WEIGHT -> MeasureUnit.G
-    QuantityType.VOLUME -> MeasureUnit.ML
-    QuantityType.ITEM -> MeasureUnit.EACH
+    QuantityType.WEIGHT -> MeasurementUnit.G
+    QuantityType.VOLUME -> MeasurementUnit.ML
+    QuantityType.ITEM -> MeasurementUnit.EACH
 }
 
 // TODO: Whiff of ChatGPT magic
@@ -2335,6 +2312,8 @@ enum class ThemePreference {
 }
 */
 
+private const val appName = "My Price Log"
+
 private const val multiplicationSign = "\u00d7"
 private const val emDash = "\u2014"
 private const val copyrightSymbol = "\u00a9"
@@ -2733,7 +2712,7 @@ fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
     }
 }
 
-data class UnitPrice(val numerator: Double, val denominator: MeasureUnit) : Comparable<UnitPrice> {
+data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) : Comparable<UnitPrice> {
     override fun compareTo(other: UnitPrice): Int {
         // We are abusing MeasuredValue here by treating the currency amount as a quantity measured
         // in the unit price's unit. This is a convenient hack to allow us to scale the currency
@@ -2750,7 +2729,7 @@ data class UnitPrice(val numerator: Double, val denominator: MeasureUnit) : Comp
     }
 }
 
-fun getUnitPrice(amount: Double, count: Long, measure: MeasuredValue, denominator: MeasureUnit): UnitPrice {
+fun getUnitPrice(amount: Double, count: Long, measure: MeasuredValue, denominator: MeasurementUnit): UnitPrice {
     devRequire(count > 0) { "Expected positive count" }
     return UnitPrice(amount / (count * measure.asValue(denominator)), denominator)
 }
@@ -2774,7 +2753,7 @@ fun getFriendlyUnitPrice(
     currencyDecimalPlaces: Int,
     count: Long,
     measure: MeasuredValue,
-    candidateDenominators: List<MeasureUnit>
+    candidateDenominators: List<MeasurementUnit>
 ): UnitPrice {
     devRequire(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
     devRequire(measure.value > 0.0) { "Expected positive measure; got $measure" }
@@ -3340,11 +3319,11 @@ data class EditablePrice(
     val count: String, // TODO: NEED THIS ON OTHER PRICE THINGS, JUST ADDED HERE TO START WITH FOR UI WORK
     val price: String,
     val measureValue: String,
-    val measureUnit: MeasureUnit,
+    val measurementUnit: MeasurementUnit,
     val confirmedAt: Instant,
     val toConfirm: Boolean,
     val notes: String,
-    val itemDefaultUnit: MeasureUnit,
+    val itemDefaultUnit: MeasurementUnit,
 
     ) : Parcelable {
 
@@ -3354,7 +3333,7 @@ data class EditablePrice(
         dataSetId: Long,
         itemId: Long,
         sourceId: Long,
-        itemDefaultUnit: MeasureUnit
+        itemDefaultUnit: MeasurementUnit
     ) : this(
         id = 0,
         dataSetId = dataSetId,
@@ -3363,7 +3342,7 @@ data class EditablePrice(
         count = "",
         price = "",
         measureValue = "",
-        measureUnit = itemDefaultUnit,
+        measurementUnit = itemDefaultUnit,
         confirmedAt = Instant.now(),
         toConfirm = true,
         notes = "",
@@ -3393,7 +3372,7 @@ data class EditablePrice(
                 maxDecimals = price.quantity.unit.maxDecimals,
                 locale
             ),
-        measureUnit = price.quantity.unit,
+        measurementUnit = price.quantity.unit,
         confirmedAt = price.confirmedAt,
         toConfirm = false,
         notes = price.notes,
@@ -3419,7 +3398,7 @@ data class EditablePrice(
                 sourceId = sourceId,
                 price = priceDouble,
                 count = countLong,
-                quantity = MeasuredValue(measureValueDouble, measureUnit),
+                quantity = MeasuredValue(measureValueDouble, measurementUnit),
                 confirmedAt = if (toConfirm) now else confirmedAt,
                 notes = notes,
                 modifiedAt = now,
@@ -4332,7 +4311,7 @@ fun rememberSyncedTextFieldValue(modelState: String): MutableState<TextFieldValu
     return tfv
 }
 
-fun areDifferentUnitFamilies(lhs: MeasureUnit, rhs: MeasureUnit) =
+fun areDifferentUnitFamilies(lhs: MeasurementUnit, rhs: MeasurementUnit) =
     lhs.unitFamilies.intersect(rhs.unitFamilies).isEmpty()
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -4543,9 +4522,9 @@ fun EditPriceScreenPackSize(
 
     val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
-    val units: List<MeasureUnit> =
+    val units: List<MeasurementUnit> =
         remember(uiContent.dataSet, uiContent.item.defaultUnit.quantityType) {
-            getRelevantMeasureUnits(
+            getRelevantMeasurementUnits(
                 uiContent.dataSet,
                 uiContent.item.defaultUnit.quantityType,
                 includeDisplayOnly = false
@@ -4572,7 +4551,7 @@ fun EditPriceScreenPackSize(
             BaseValidatedTextField(
                 value = packCountNumber.text,
                 validationRules = vm.packCountValidationRules,
-                // TODO DON'T THINK WE NEED THIS BUT CHECK, WIP RIGHT NOW validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
+                // TODO DON'T THINK WE NEED THIS BUT CHECK, WIP RIGHT NOW validationRulesKey = uiContent.editablePrice.value.measurementUnit.id,
                 allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
                 validationFlow = vm.saveValidationEvents,
                 validationFlowFieldId = EditPriceViewModel.EditableField.PACK_COUNT,
@@ -4614,7 +4593,7 @@ fun EditPriceScreenPackSize(
         BaseValidatedTextField(
             value = packSizeNumber.text,
             validationRules = vm.packSizeValidationRules,
-            validationRulesKey = uiContent.editablePrice.value.measureUnit.id,
+            validationRulesKey = uiContent.editablePrice.value.measurementUnit.id,
             allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
             validationFlow = vm.saveValidationEvents,
             validationFlowFieldId = EditPriceViewModel.EditableField.PACK_SIZE,
@@ -4661,16 +4640,16 @@ fun EditPriceScreenPackSize(
 
             MyExposedDropdownMenuBox(
                 enabled = saveStatus.isNotBusy(),
-                selectedId = uiContent.editablePrice.value.measureUnit.id,
+                selectedId = uiContent.editablePrice.value.measurementUnit.id,
                 onItemSelected = {
-                    val measureUnit = MeasureUnit.fromValue(it)
-                    devCheck(measureUnit != null) {
-                        "Expected non-null measureUnit to be selected; got $it"
+                    val measurementUnit = MeasurementUnit.fromId(it)
+                    devCheck(measurementUnit != null) {
+                        "Expected non-null measurementUnit to be selected; got $it"
                     }
-                    if (uiContent.editablePrice.value.measureUnit != measureUnit!!) {
+                    if (uiContent.editablePrice.value.measurementUnit != measurementUnit!!) {
                         vm.setUIContentEditablePrice(
                             uiContent.editablePrice.value.copy(
-                                measureUnit = measureUnit
+                                measurementUnit = measurementUnit
                             )
                         )
                         onChange()
@@ -5101,7 +5080,7 @@ fun EditItemScreen(
     // of course). I am not going to add this now partly as I'd like to mull over the UI choices in
     // background and partly because I don't want to restrict things which might help me investigate
     // the "java.lang.IllegalArgumentException: No enum constant
-    // com.example.composetutorial.MeasureUnit.ĭ????" problem. (I don't think that's caused by
+    // com.example.composetutorial.MeasurementUnit.ĭ????" problem. (I don't think that's caused by
     // creating inconsistencies. You can make other things go wrong by creating inconsistencies
     // between the product's quantity type and the existing prices, but you have to navigate around
     // and that crash was triggered immediately on returning via overview menu.)
@@ -5265,7 +5244,7 @@ fun EditItemScreen(
                             vm.uiContent.dataSet,
                             vm.uiContent.editableItem.value.quantityType
                         ) {
-                            getRelevantMeasureUnits(
+                            getRelevantMeasurementUnits(
                                 vm.uiContent.dataSet,
                                 vm.uiContent.editableItem.value.quantityType,
                                 includeDisplayOnly = false
@@ -5278,7 +5257,7 @@ fun EditItemScreen(
                         enabled = saveStatus.isNotBusy(),
                         selectedId = uiContent.editableItem.value.defaultUnit.id,
                         onItemSelected = {
-                            val defaultUnit = MeasureUnit.fromValue(it)
+                            val defaultUnit = MeasurementUnit.fromId(it)
                             devCheck(defaultUnit != null) {
                                 "Expected non-null defaultUnit to be selected; got $it"
                             }
@@ -6490,7 +6469,7 @@ fun SettingsScreen(
 
             item {
                 SettingsTile(
-                    title = "About TODOAPPNAME",
+                    title = "About $appName",
                     subtitle = "", // TODO!? But I probably want it to take same vertical space as other tiles? Probably actually best to be consistent and have space allocated for an empty subtitle, so this is probably fine/what we really want
                     onClick = onAboutClick
                 )
@@ -6878,7 +6857,7 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text("About TODOAPPNAME") }, navigationIcon = {
+            TopAppBar(title = { Text("About $appName") }, navigationIcon = {
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Default.ArrowBack,
@@ -7006,7 +6985,7 @@ fun LegalScreen(
 
             // --- Your App License ---
             Text(
-                text = "TODOMYAPPNAME $emDash MIT License",
+                text = "$appName $emDash MIT License",
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -7674,7 +7653,7 @@ class EditPriceViewModel(
     // anyway (e.g. numericValidationRules() also performs work) and some kind of tidying up of the
     // naming generally might be in order.
     private fun generatePackSizeValidationRules(): List<ValidationRule<String>> {
-        val maxDecimals = uiContent.editablePrice.value.measureUnit.maxDecimals
+        val maxDecimals = uiContent.editablePrice.value.measurementUnit.maxDecimals
         return numericValidationRules(
             uiContent.frozenLocale,
             allowDecimals = maxDecimals > 0,
@@ -8945,7 +8924,7 @@ fun PackPriceAndSizeRow(
 
         val relevantUnitList =
             remember(dataSet, measure.unit.quantityType) {
-                getRelevantMeasureUnits(
+                getRelevantMeasurementUnits(
                     dataSet,
                     measure.unit.quantityType,
                     includeDisplayOnly = true
@@ -8979,7 +8958,7 @@ fun PackPriceAndSizeRow(
         // *maybe* we should respect that if so.
         var selectedUnitPriceUnit by remember(dataSet, price, count, measure) {
             Log.d("MyAppQA", "rememberSaveable $price $measure")
-            val candidateDenominators = getMeasureUnitsOfSameQuantityTypeAndUnitFamily(
+            val candidateDenominators = getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
                 dataSet,
                 measure.unit,
                 includeDisplayOnly = true
@@ -9604,8 +9583,8 @@ fun augmentPrice(
     price: Price,
     dataSet: DataSet,
     source: Source,
-    unitPriceDenominator: MeasureUnit?,
-    candidateUnitPriceDenominators: List<MeasureUnit>,
+    unitPriceDenominator: MeasurementUnit?,
+    candidateUnitPriceDenominators: List<MeasurementUnit>,
     priceAgeSettings: PriceAgeSettings
 ): AugmentedPrice {
     val loyaltyPrice = price.price * source.loyaltyMultiplier
@@ -9713,12 +9692,12 @@ fun analysePrices(
     // price. (At risk of stating the obvious, but it's easy to get lost in the details here, we are showing the
     // unit prices sorted as a list, so they all need to use the same denominator otherwise the list is not much
     // use.)
-    val candidateUnitPriceDenominators = getMeasureUnitsOfSameQuantityTypeAndUnitFamily(
+    val candidateUnitPriceDenominators = getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
         dataSet,
         priceList.first().quantity.unit,
         includeDisplayOnly = true
     )
-    var unitPriceDenominator: MeasureUnit? = null
+    var unitPriceDenominator: MeasurementUnit? = null
     var augmentedPriceList = priceList.mapNotNull { price ->
         // I don't think we can have a Price but not the corresponding Source, but we play it safe
         // just in case.
@@ -9790,9 +9769,9 @@ fun OnAppLifecycleEvent(
 }
 
 /* TODO TEMP TEST CODE FOR MEASUREDVALUE
-val foo = MeasuredValue(5.0, MeasureUnit.KG)
-val bar = MeasuredValue(2.3, MeasureUnit.ML)
-val quux = bar.to(MeasureUnit.FLOZ)
+val foo = MeasuredValue(5.0, MeasurementUnit.KG)
+val bar = MeasuredValue(2.3, MeasurementUnit.ML)
+val quux = bar.to(MeasurementUnit.FLOZ)
 Log.d("MyApp", quux.toString())
 var baz = foo + barq
 Log.d("MyApp", baz.toString())
