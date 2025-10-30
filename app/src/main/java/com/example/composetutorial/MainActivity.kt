@@ -1298,8 +1298,6 @@ data class EditableDataSet(
         if (trimmedName.isEmpty()) {
             return null
         }
-        // TODO: Is this a reasonable place to do trimming? Gut feeling is that yes it is, since
-        // validation doesn't care about this, it's just a bit of "tidying". But not sure.
         return DataSet(
             id = id,
             name = trimmedName,
@@ -1410,9 +1408,6 @@ data class EditableItem private constructor(
         if (trimmedName.isEmpty()) {
             return null
         }
-        // TODO: Is this a reasonable place to do trimming? Gut feeling is that yes it is, since
-        // validation doesn't care about this, it's just a bit of "tidying". But not sure.
-
         // This is a devCheck not a "return null" check because it indicates an internal error.
         devCheck(quantityType == defaultUnit.quantityType) {
             "Expected consistent quantity types on EditableItem but have $quantityType and $defaultUnit"
@@ -1512,6 +1507,22 @@ enum class LoyaltyType(val id: Long) {
     }
 }
 
+// EditableSource contains logic to convert loyalty percentages to/from price multipliers.
+// 5% bonus is not the same as 5% discount/cashback. Suppose we want to buy something costing
+// £100:
+// - If there is a 5% discount, the price is £95 and we hand over £95.
+// - If we get 5% cashback, we hand over £100 and get £5 back, so £95 net.
+// - If we get 5% bonus in some "store account", we need to deposit £95.24 and the 5% bonus makes
+//   that up to the £100 we need.
+// - If we get 5% bonus as points on our spending, we theoretically spend £95.24, get 5% bonus as
+//   points and that makes up the £100 we need. (In reality you can't do this, but I think in the
+//   long term it works out as if you can.)
+//
+// I think an alternative but equivalent way to look at this is that with cashback, we can spend the
+// cashback at the same store and get another 5% back on it, and repeat that. Whereas with a 5%
+// bonus, we can't compound like this - we don't get a 5% bonus on bonus spending, only on cash
+// spending.
+
 @Parcelize
 data class EditableSource(
     val id: Long,
@@ -1530,12 +1541,10 @@ data class EditableSource(
         if (trimmedName.isEmpty()) {
             return null
         }
-        // TODO: Is this a reasonable place to do trimming? Gut feeling is that yes it is, since
-        // validation doesn't care about this, it's just a bit of "tidying". But not sure.
         val loyaltyPercentage = parseStringAsDoubleOrNull(locale, loyaltyPercentage)
         val loyaltyMultiplier = when (loyaltyType) {
             LoyaltyType.NONE -> 1.0
-            LoyaltyType.BONUS -> if (loyaltyPercentage != null) 100.0 / (100.0 + loyaltyPercentage) else null // TODO: double check this calculation later - I think I am confusing myself and there may not be a difference between bonus and discount, but I am really not sure any more - hmm, *maybe* this is right, and maybe the insight is that a discount is a discount, but with cashback I don't actually get my 5% or whatever *on the cashback* (it's not literal cash back so I can't spend it again for another 5%) - still very unsure though
+            LoyaltyType.BONUS -> if (loyaltyPercentage != null) 100.0 / (100.0 + loyaltyPercentage) else null
             LoyaltyType.DISCOUNT -> if (loyaltyPercentage != null) 1.0 - (loyaltyPercentage / 100.0) else null
         }
         if (loyaltyMultiplier == null) {
@@ -1551,13 +1560,7 @@ data class EditableSource(
         )
     }
 
-    // 5% bonus is not the same as 5% discount/cashback. Suppose we want to buy something costing £100.
-    // - If there is a 5% discount, the price is £95 and we hand over £95.
-    // - If we get 5% cashback, we hand over £100 and get £5 back, so £95 net.
-    // - If we get 5% bonus in some "store account", we need to deposit £95.24 and the 5% bonus makes that up to the £100 we need.
-    // - If we get 5% bonus as points on our spending, we "theoretically" spend £95.24, get 5% bonus as points and that makes up the £100 we need. (In reality you can't do this, but I think in the long term it works out as if you can.) I think an alternate way of looking at this is that you spend £100, get £5 worth of points but those points are not quite as good as cash because you don't get 5% back when you spend those points, so we value the points at £4.76 instead of £5.
-    // I think an alternative but equivalent way to look at this is that with cashback, we can spend the cashback at the same store and get another 5% back on it, and repeat that. Whereas with a 5% bonus, we can't compound like this. (I believe this is typically true, but in theory a store could offer the same bonus on reward spending, so I am arguably using misleading terminology here.)
-    // TODO: Revisit this later as I have found myself flip-flopping
+
     companion object {
         fun fromSource(source: Source?, dataSetId: Long, locale: Locale): EditableSource {
             if (source == null) {
