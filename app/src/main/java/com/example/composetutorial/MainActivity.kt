@@ -275,13 +275,11 @@ enum class QuantityType(val id: Int) {
     WEIGHT(2), // technically mass but everyone says "price per weight"
     VOLUME(3);
 
-    /* TODO: DELETE?
     companion object {
-        fun fromValue(value: Int): QuantityType? {
-            return entries.find { it.value == value }
+        fun fromId(id: Int): QuantityType? {
+            return entries.find { it.id == id }
         }
     }
-    */
 }
 
 enum class UnitFamily {
@@ -549,7 +547,6 @@ fun formatDouble(
 }
 
 @Parcelize // TODO: can we get rid of this later?
-// TODO: Should we make "value" memeber private? Direct use could "encourage" buggy code.
 // TODO: Maybe rename this "Quantity"? (And keep QuantityType for MASS/VOLUME/etc)
 data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcelable {
     // TODO: We could make quantityType public and slightly simplify some of our callers, but it's
@@ -585,7 +582,7 @@ data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcela
             maxDecimals = unit.maxDecimals,
             useLocaleGrouping = false,
             locale
-        ) + if (quantityType == QuantityType.ITEM) "" else " ${unit.symbol}" // TODO: Here we *need* empty-for-unit
+        ) + if (quantityType == QuantityType.ITEM) "" else " ${unit.symbol}"
 }
 
 const val DB_VERSION = 1
@@ -595,9 +592,7 @@ const val DB_VERSION = 1
     exportSchema = false
 )
 @TypeConverters(Converters::class)
-// TODO: Should not be called *Inventory*Database - would AppDatabase be a standard generic name, or should it be something more app-specific?
-abstract class InventoryDatabase : RoomDatabase() {
-
+abstract class AppDatabase : RoomDatabase() {
     abstract fun dataSetDao(): DataSetDao
     abstract fun productDao(): ItemDao
     abstract fun sourceDao(): SourceDao
@@ -606,12 +601,12 @@ abstract class InventoryDatabase : RoomDatabase() {
 
     companion object {
         @Volatile
-        private var Instance: InventoryDatabase? = null
+        private var Instance: AppDatabase? = null
 
-        fun getDatabase(context: Context): InventoryDatabase {
+        fun getDatabase(context: Context): AppDatabase {
             // if the Instance is not null, return it, otherwise create a new database instance.
             return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context, InventoryDatabase::class.java, "main.db")
+                Room.databaseBuilder(context, AppDatabase::class.java, "main.db")
                     // TODO: Disable query logging in final version of course
                     .setQueryCallback({ sqlQuery, bindArgs ->
                         Log.d("MyApp", "SQL Query: $sqlQuery SQL Args: $bindArgs")
@@ -638,23 +633,17 @@ abstract class InventoryDatabase : RoomDatabase() {
 }
 
 suspend fun populateDemoData(repository: PriceTrackerRepository, context: Context) {
-    // TODO DELETE val db = InventoryDatabase.getDatabase(context)
-    // TODO: I may want to add multiple demo data sets - if so, given them all names of the form
-    // "Demo (foo)", probably. I may at the very least want to do an imperial unit demo set, so new
-    // potential users don't assume the app is metric only. This might be overkill but it may not
-    // hurt. We could just use imperial with the metric-ish data set (i.e. just configure the
-    // display units to be the user's current regional ones by default when we set the database up),
-    // and that might well be reasonable - it would give "odd" pack sizes (e.g. nominally imperial
-    // demo data selling 2 litre cartons of milk which the shops call a 3.52 pint pack) but for demo
-    // purposes it is probably fine.
+    // ENHANCE: More demo data sets might be nice, but don't want to burden the user with too many.
+    // I was thinking that an imperial data set might be nice, but then again we already have pints
+    // in the grocery demo data.
+    // ENHANCE: We could pick one of IMPERIAL or US_CUSTOMARY based on the current locale, but in
+    // practice we just want to show we support multiple units, and it isn't as if a native US
+    // customary user is going to get too confused (if they even notice) that "pint" (for example)
+    // has the wrong metric equivalent here - it's just demo data.
     // TODO: It's probably smart to default the demo data to the local currency, since that will
     // look most natural to our new user, but do rethink this afterwards. (It's also just possible,
     // remember, that they will start editing the demo dataset for their own use, rather than
     // starting again with a fresh dataset.)
-    // TODO: Just experimentally, make sure to set the demo data up with a non-local currency and
-    // see that the app works!
-    // TODO: We should probably pick one of IMPERIAL or US_CUSTOMARY here based on the current
-    // locale (and make sure any non-metric units in the data below are changed accordingly)
     // TODO: We should have some demo products which are (fake) "branded" products, so get the idea
     // across that this is another way to do things if you are brand-sensitive on a particular item
     // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp - or
@@ -934,8 +923,8 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
 
 }
 
-// TODO: This interface is here to help with mocking the database during testing. I may want to do
-// this eventually, so let's keep it around for now.
+// ENHANCE: Although this interface seems a bit pointless at the moment, it is here to help with
+// mocking the database if/when I add some test code.
 interface PriceTrackerRepository {
     fun getAllDataSets(): Flow<List<DataSet>>
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
@@ -976,7 +965,7 @@ fun <T> List<T>.sortedByLocale(
 }
 
 class PriceTrackerRepositoryImpl(
-    private val db: InventoryDatabase,
+    private val db: AppDatabase,
     private val dataSetDao: DataSetDao,
     private val itemDao: ItemDao,
     private val sourceDao: SourceDao,
@@ -1014,7 +1003,6 @@ class PriceTrackerRepositoryImpl(
         itemDao.upsert(item)
 
     override suspend fun updateOrInsertSource(source: Source): Long =
-        // throw IOException("Simulated database failure") // TODO TEMP
         sourceDao.upsert(source)
 
     override suspend fun deleteDataSetById(dataSetId: Long): Int = dataSetDao.deleteById(dataSetId)
@@ -1125,7 +1113,7 @@ object AppViewModelProvider {
 // and what it maybe ought to be doing.
 class MyApplication : Application() {
     val priceTrackerRepository: PriceTrackerRepositoryImpl by lazy {
-        val db = InventoryDatabase.getDatabase(this)
+        val db = AppDatabase.getDatabase(this)
         PriceTrackerRepositoryImpl(
             db,
             db.dataSetDao(),
@@ -1195,7 +1183,7 @@ class MyApplication : Application() {
             // TODO: ChatGPT code - may want to tweak keys or style of sharedPrefs stuff to match my other uses
             val sharedPrefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
             if (!sharedPrefs.getBoolean("demo_data_inserted", false)) {
-                val db = InventoryDatabase.getDatabase(this@MyApplication)
+                val db = AppDatabase.getDatabase(this@MyApplication)
 
                 db.withTransaction {
                     // Manually adjust the starting sequence values for various tables. This
@@ -1220,18 +1208,17 @@ class MyApplication : Application() {
 }
 
 class Converters {
-    /* TODO: DELETE? I don't believe we have any QuantityType fields in the database any more. Maybe
-       wait until we're more sure there won't be any in the future before deleting these.
+    // I don't think we actually have any QuantityType fields in the database at the moment, but it
+    // probably doesn't hurt to keep these around so it does the right thing if we add one later.
     @TypeConverter
     fun fromQuantityType(quantityType: QuantityType?): Int? {
-        return quantityType?.value
+        return quantityType?.id
     }
 
     @TypeConverter
     fun toQuantityType(value: Int?): QuantityType? {
-        return value?.let { QuantityType.fromValue(it) }
+        return value?.let { QuantityType.fromId(it) }
     }
-    */
 
     @TypeConverter
     fun fromMeasurementUnit(measurementUnit: MeasurementUnit?): Long? {
@@ -9012,7 +8999,7 @@ fun PackPriceAndSizeRow(
 
 // TODO: ChatGPT magic
 fun backupDatabase(context: Context, targetUri: Uri) {
-    val db = InventoryDatabase.getDatabase(context)
+    val db = AppDatabase.getDatabase(context)
     // The next line is voodoo which Grok suggested "might" be necessary and ChatGPT seemed to
     // agree there could be borderline cases. I am not convinced but I guess it's likely harmless
     // at worst.
@@ -9071,7 +9058,7 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
         // The backup file is OK, so we'll go ahead and overwrite our internal database now.
 
         // Close Room to avoid conflicts.
-        InventoryDatabase.clearInstance()
+        AppDatabase.clearInstance()
 
         // Delete existing database files for clean slate. I don't know if this is necessary but at
         // one point Grok suggested this might be useful to avoid old SHM/WAL files hanging around and
