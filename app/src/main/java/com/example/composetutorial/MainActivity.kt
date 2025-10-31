@@ -3365,7 +3365,12 @@ data class EditablePrice(
     // entity class
     fun toDomain(locale: Locale): Price? {
         val priceDouble = parseStringAsDoubleOrNull(locale, price)
-        val countLong = parseStringAsDoubleOrNull(locale, count)?.toLong()
+        // If we are adding a first price for a non-multipack item, count may be an empty string and
+        // we interpret that as 1. It's possible that at some point we will also allow count to be
+        // empty for multipack items and interpret that as one, although currently the validation
+        // will prevent us getting this far in that case. trim() is used to help with that case,
+        // even though it's currently not strictly necessary.
+        val countLong = if (count.trim().isEmpty()) 1L else parseStringAsDoubleOrNull(locale, count)?.toLong()
         val measureValueDouble = parseStringAsDoubleOrNull(locale, measureValue)
         return if (priceDouble == null || countLong == null || measureValueDouble == null) {
             null
@@ -4558,10 +4563,7 @@ fun EditPriceScreenPackSize(
     // TODO: ALL THE WEIGHTS HERE INCLUDING THE LEVELS AT WHICH THEY ARE APPLIED ARE UP IN THE AIR AND SHOULD BE CHECKED
 
     Row {
-        // "Count" is visible if the item explicitly allows multipacks or if (presumably because it
-        // used to) we have a count > 1, which we must not hide or silently throw away. Note that
-        // uiContent.originalPrice.count can be an empty string if we are adding a first price.
-        if (uiContent.item.allowMultipack || (uiContent.originalPrice.count.toLongOrNull() ?: 1) > 1) {
+        if (vm.showPackCount) {
             BaseValidatedTextField(
                 value = packCountNumber.text,
                 validationRules = vm.packCountValidationRules,
@@ -7644,7 +7646,12 @@ class EditPriceViewModel(
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
-    val packCountValidationRules = numericValidationRules(uiContent.frozenLocale, allowDecimals = false, allowZero = false)
+    // "Count" is visible if the item explicitly allows multipacks or if (presumably because it
+    // used to) we have a count > 1, which we must not hide or silently throw away. Note that
+    // uiContent.originalPrice.count can be an empty string if we are adding a first price.
+    val showPackCount = uiContent.item.allowMultipack || (uiContent.originalPrice.count.toLongOrNull() ?: 1) > 1
+
+    val packCountValidationRules = if (showPackCount) numericValidationRules(uiContent.frozenLocale, allowDecimals = false, allowZero = false) else emptyList()
     var packSizeValidationRules = generatePackSizeValidationRules()
     var currencyFormat = getCurrencyFormat(uiContent.dataSet, uiContent.frozenLocale)
 
