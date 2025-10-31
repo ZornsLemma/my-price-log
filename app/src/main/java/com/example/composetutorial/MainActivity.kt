@@ -4199,29 +4199,6 @@ fun PriceComparisonCard(
         getCurrencyFormat(dataSet, locale)
     }
 
-    // We use "prefix or suffix" in the header because although the prefix or suffix nature of a
-    // currency symbol in a locale matters in some other places, here it is appearing in isolation
-    // *without* a price next to it.
-    // TODO: Arguably we could/should use remember or something like that to store the header
-    // currency/unit string and avoid rederiving it all the time, albeit it isn't that involved and
-    // we are already doing that with the currencycode, but still, we could move this into that
-    // remember block and not expose the currency code outside it or something
-    // TODO: I'm hacking this together out of old prototype code but as this evolves we need to be
-    // "neater" about how we cope with generating the denominator part of the unit price header on
-    // the list when the list is empty - or just not showing the list at all in that case (which
-    // might make more sense, and maybe we already *do*, I'm not sure right now)
-    val headerUnitPriceDenominator = priceAnalysis.augmentedPriceList.firstOrNull()?.unitPrice?.denominator
-    val header = listOf(
-        "Store",
-        // TODO: here empty-for-unit is bad
-        "${currencyFormat?.prefix ?: currencyFormat?.suffix ?: ""}${headerUnitPriceDenominator?.perSymbol ?: "TODO"}${headerUnitPriceDenominator?.symbol ?: "TODO"}",
-        "" // TODO?
-    )
-    // It may be technically incorrect to show the currency symbol both in the header ("£/100g") and
-    // on the individual unit prices, but I think that for practical purposes this is the least
-    // confusing way to show it. An "incomplete" header ("/100g") feels unclear, as does having
-    // prices which aren't marked with a currency symbol.
-
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -4242,59 +4219,87 @@ fun PriceComparisonCard(
                 subtitle = "Adjusted for loyalty discounts and old prices"
             )
 
-            val highlightRow =
-                priceAnalysis.augmentedPriceList.indexOfFirst { it.sourceName == source?.name }.takeIf { it != -1 }
+            if (priceAnalysis.augmentedPriceList.isEmpty()) {
+                Text("There are no prices recorded for this product at any store yet.")
+            } else {
+                // We use "prefix or suffix" in the header because although the prefix or suffix nature of a
+                // currency symbol in a locale matters in some other places, here it is appearing in isolation
+                // *without* a price next to it.
+                // TODO: Arguably we could/should use remember or something like that to store the header
+                // currency/unit string and avoid rederiving it all the time, albeit it isn't that involved and
+                // we are already doing that with the currencycode, but still, we could move this into that
+                // remember block and not expose the currency code outside it or something
+                // TODO: I'm hacking this together out of old prototype code but as this evolves we need to be
+                // "neater" about how we cope with generating the denominator part of the unit price header on
+                // the list when the list is empty - or just not showing the list at all in that case (which
+                // might make more sense, and maybe we already *do*, I'm not sure right now)
+                val headerUnitPriceDenominator =
+                    priceAnalysis.augmentedPriceList.first().unitPrice.denominator
+                val header = listOf(
+                    "Store",
+                    "${currencyFormat.prefix ?: currencyFormat.suffix ?: ""}${headerUnitPriceDenominator.perSymbol}${headerUnitPriceDenominator.symbol}",
+                    "" // TODO?
+                )
+                // It may be technically incorrect to show the currency symbol both in the header ("£/100g") and
+                // on the individual unit prices, but I think that for practical purposes this is the least
+                // confusing way to show it. An "incomplete" header ("/100g") feels unclear, as does having
+                // prices which aren't marked with a currency symbol.
 
-            val columns = remember(dataSet, locale) {
-                listOf<@Composable (AugmentedPrice) -> Unit>(
-                    { augmentedPrice -> Text(augmentedPrice.sourceName) },
-                    { augmentedPrice ->
-                        Text(
-                            formatPrice(
-                                augmentedPrice.unitPrice.numerator,
-                                dataSet,
-                                locale
+                val highlightRow =
+                    priceAnalysis.augmentedPriceList.indexOfFirst { it.sourceName == source?.name }
+                        .takeIf { it != -1 }
+
+                val columns = remember(dataSet, locale) {
+                    listOf<@Composable (AugmentedPrice) -> Unit>(
+                        { augmentedPrice -> Text(augmentedPrice.sourceName) },
+                        { augmentedPrice ->
+                            Text(
+                                formatPrice(
+                                    augmentedPrice.unitPrice.numerator,
+                                    dataSet,
+                                    locale
+                                )
                             )
-                        )
-                    },
-                    // TODO: Should I effectively line the price judgement and age icons up in columns, e.g. by putting a dummy blank icon in the judgement column if we aren't willing to make a judgement? or is it ok to just have a "row" of icons and not worry about vertical alignment across rows?
-                    { augmentedPrice ->
-                        Row {
-                            if (augmentedPrice.ageClass != AgeClass.ANCIENT) {
-                                when (augmentedPrice.priceJudgement) {
-                                    PriceJudgement.NONE -> {}
-                                    PriceJudgement.GOOD -> GoodPriceIcon()
-                                    PriceJudgement.OK -> OkPriceIcon()
-                                    PriceJudgement.BAD -> BadPriceIcon()
+                        },
+                        // TODO: Should I effectively line the price judgement and age icons up in columns, e.g. by putting a dummy blank icon in the judgement column if we aren't willing to make a judgement? or is it ok to just have a "row" of icons and not worry about vertical alignment across rows?
+                        { augmentedPrice ->
+                            Row {
+                                if (augmentedPrice.ageClass != AgeClass.ANCIENT) {
+                                    when (augmentedPrice.priceJudgement) {
+                                        PriceJudgement.NONE -> {}
+                                        PriceJudgement.GOOD -> GoodPriceIcon()
+                                        PriceJudgement.OK -> OkPriceIcon()
+                                        PriceJudgement.BAD -> BadPriceIcon()
+                                    }
+                                }
+
+                                if (augmentedPrice.ageClass == AgeClass.STALE) {
+                                    StalePriceIcon()
+                                } else if (augmentedPrice.ageClass == AgeClass.ANCIENT) {
+                                    AncientPriceIcon()
                                 }
                             }
-
-                            if (augmentedPrice.ageClass == AgeClass.STALE) {
-                                StalePriceIcon()
-                            } else if (augmentedPrice.ageClass == AgeClass.ANCIENT) {
-                                AncientPriceIcon()
-                            }
-                        }
-                    },
+                        },
+                    )
+                }
+                NewDataTable(
+                    header = header,
+                    items = priceAnalysis.augmentedPriceList,
+                    columns = columns,
+                    highlightRow = highlightRow,
+                    // ENHANCE: It might be better to calculate the space needed for the longest unit
+                    // price and the longest number of icons, then assign anything left over to the
+                    // source name. In practice these simple fixed weights seem to be working quite
+                    // well for now.
+                    columnWeights = listOf(1.7f, 1f, 0.8f),
+                    columnAlignments = listOf(
+                        CellAlignment.Start,
+                        CellAlignment.End,
+                        CellAlignment.Start
+                    ),
+                    onClick = { augmentedPrice -> onClick(augmentedPrice.basePrice.sourceId) },
                 )
             }
-            NewDataTable(
-                header = header,
-                items = priceAnalysis.augmentedPriceList,
-                columns = columns,
-                highlightRow = highlightRow,
-                // ENHANCE: It might be better to calculate the space needed for the longest unit
-                // price and the longest number of icons, then assign anything left over to the
-                // source name. In practice these simple fixed weights seem to be working quite
-                // well for now.
-                columnWeights = listOf(1.7f, 1f, 0.8f),
-                columnAlignments = listOf(
-                    CellAlignment.Start,
-                    CellAlignment.End,
-                    CellAlignment.Start
-                ),
-                onClick = { augmentedPrice -> onClick(augmentedPrice.basePrice.sourceId) },
-            )
         }
     }
 }
