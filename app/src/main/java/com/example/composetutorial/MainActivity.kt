@@ -2376,10 +2376,9 @@ const val maxSearchLength = 32
 // could tighten this up a bit if desirable.
 const val maxDecimalLength = 11
 
-// TODO: RENAME THIS IF IT SURVIVES REFACTORING
 @OptIn(ExperimentalMaterial3Api::class) // TODO: STILL NEEDED?
 @Composable
-fun MainScreen(
+fun ItemSourceSelector(
     asyncOperationStatus: AsyncOperationStatus,
     source: Source?,
     sourceList: List<Source>,
@@ -2392,11 +2391,6 @@ fun MainScreen(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // TODONOW: If we have no data sets, we should (analogous to how the source dropdown works)
-        // show a message about selecting/creating one *and hide the rest of the UI*. Nothing makes
-        // sense without a dataset, there is no way to pick a product or source. This probably means
-        // we need support from our parent (or this needs moving up into the parent) to do that.
-
         // Item selector
         val clickableModifier = if (asyncOperationStatus.isNotBusy()) {
             Modifier.clickable { onItemSearchClick() }
@@ -3921,7 +3915,23 @@ fun HomeScreenScaffold(
 
         HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, saveStatus, coroutineScope)
  { innerPadding ->
-            HomeScreenContent(vm, dataSet, item, itemList, onSelectedItemIdChange, source, sourceList, onSelectedSourceIdChange, priceAnalysis, onEditPriceClick, onItemSearchClick, onViewHistoryClick, saveStatus, innerPadding)
+                HomeScreenContent(
+                    vm,
+                    dataSet,
+                    dataSetList,
+                    item,
+                    itemList,
+                    onSelectedItemIdChange,
+                    source,
+                    sourceList,
+                    onSelectedSourceIdChange,
+                    priceAnalysis,
+                    onEditPriceClick,
+                    onItemSearchClick,
+                    onViewHistoryClick,
+                    saveStatus,
+                    innerPadding
+                )
         }
     }
 
@@ -3980,6 +3990,7 @@ fun HomeScreenScaffold(
 fun HomeScreenContent(
     vm: HomeViewModel,
     dataSet: DataSet?,
+    dataSetList: List<DataSet>,
     item: Item?,
     itemList: List<Item>,
     onSelectedItemIdChange: (Long) -> Unit,
@@ -4002,91 +4013,105 @@ fun HomeScreenContent(
             .padding(innerPadding)
             .padding(screenBorder)
     ) {
-        MainScreen(
-            asyncOperationStatus = asyncOperationStatus,
-            source = source,
-            sourceList = sourceList,
-            item = item,
-            itemList = itemList,
-            onSelectedItemIdChange = onSelectedItemIdChange,
-            onSelectedSourceIdChange = onSelectedSourceIdChange,
-            onItemSearchClick = onItemSearchClick,
-        ) // TODO: rename this
+        if (dataSet == null) {
+            // These are corner cases, caused by the current data set being deleted or all data
+            // sets being deleted. It wouldn't technically hurt to show the normal screen content,
+            // but it seems friendlier to explain what's going on.
+            if (dataSetList.isEmpty()) {
+                Text("There are no collections. Add one using the overflow menu at the top right.")
+            } else {
+                Text("No collection is selected. Use the hamburger menu at the top left to select one.")
+            }
+        } else {
+            ItemSourceSelector(
+                asyncOperationStatus = asyncOperationStatus,
+                source = source,
+                sourceList = sourceList,
+                item = item,
+                itemList = itemList,
+                onSelectedItemIdChange = onSelectedItemIdChange,
+                onSelectedSourceIdChange = onSelectedSourceIdChange,
+                onItemSearchClick = onItemSearchClick,
+            ) // TODO: rename this
 
-        Spacer(
-            modifier = Modifier
-                .height(
-                    16.dp
-                )
-                .fillMaxWidth()
-            //.background(color = Color.Red) // TODO DEBUG HACK
-        )
-
-        if (dataSet != null) {
-            // TODO: While it has told me so much crap I don't trust it, ChatGPT suggests:
-            // var lastFoo by remember { mutableStateOf<Foo?>(null) }
-            //if (foo != null) lastFoo = foo
-            // and then using  lastFoo?.let { safeFoo ->
-            // to compose the contents of the AnimatedVisibility. This (might) give us
-            // consistent appearance as we animate out without requiring actual ability to
-            // handle null source/item  inside the content, and would (if this works) actually
-            // make things mildly *less* janky as the content would be *the same* not some
-            // null-based approximation. But there may well be subtleties.
-            AnimatedVisibility(
-                visible = item != null && source != null,
-                // enter = TODO?
-                // exit = TODO?
-            ) {
-                Column {
-                    Log.d("MyApp", "HSS dataSet $dataSet")
-                    Log.d("MyApp", "HSS item $item")
-                    ItemSourceInfo(
-                        vm = vm,
-                        asyncOperationStatus = asyncOperationStatus,
-                        dataSet = dataSet,
-                        item = item,
-                        source = source,
-                        sourceList = sourceList,
-                        augmentedPrice = priceAnalysis.augmentedPriceList.singleOrNull { it.basePrice.sourceId == source?.id },
-                        onEditPriceClick = onEditPriceClick,
-                        onViewHistoryClick = onViewHistoryClick,
+            Spacer(
+                modifier = Modifier
+                    .height(
+                        16.dp
                     )
+                    .fillMaxWidth()
+                //.background(color = Color.Red) // TODO DEBUG HACK
+            )
 
-                    Spacer(
-                        modifier = Modifier.height(
-                            16.dp
+            if (dataSet != null) {
+                // TODO: While it has told me so much crap I don't trust it, ChatGPT suggests:
+                // var lastFoo by remember { mutableStateOf<Foo?>(null) }
+                //if (foo != null) lastFoo = foo
+                // and then using  lastFoo?.let { safeFoo ->
+                // to compose the contents of the AnimatedVisibility. This (might) give us
+                // consistent appearance as we animate out without requiring actual ability to
+                // handle null source/item  inside the content, and would (if this works) actually
+                // make things mildly *less* janky as the content would be *the same* not some
+                // null-based approximation. But there may well be subtleties.
+                AnimatedVisibility(
+                    visible = item != null && source != null,
+                    // enter = TODO?
+                    // exit = TODO?
+                ) {
+                    Column {
+                        Log.d("MyApp", "HSS dataSet $dataSet")
+                        Log.d("MyApp", "HSS item $item")
+                        ItemSourceInfo(
+                            vm = vm,
+                            asyncOperationStatus = asyncOperationStatus,
+                            dataSet = dataSet,
+                            item = item,
+                            source = source,
+                            sourceList = sourceList,
+                            augmentedPrice = priceAnalysis.augmentedPriceList.singleOrNull { it.basePrice.sourceId == source?.id },
+                            onEditPriceClick = onEditPriceClick,
+                            onViewHistoryClick = onViewHistoryClick,
                         )
-                        //.background(color = Color.Red) // TODO DEBUG HACK
-                    )
+
+                        Spacer(
+                            modifier = Modifier.height(
+                                16.dp
+                            )
+                            //.background(color = Color.Red) // TODO DEBUG HACK
+                        )
+                    }
                 }
-            }
 
-            // TODO: Just possibly we should use AnimatedVisibility here. However, it's not
-            // that big a deal (but maybe do look into it) as the only way to have item be
-            // null is if there *are* no items - unlike source, you can't deliberately set
-            // it to null. So this is not a particularly common case and the animation would
-            // only be firing if we were navigating back from an edit item screen where
-            // we've removed the last item or something like that - it's not a "something
-            // changed within the screen itself" animation like having source go between
-            // null and non-null is.
-            // TODO: Should we avoid showing this card if we have no stores in storeList? It
-            // works but maybe looks a bit ugly and is a bit pointless. I probably in general
-            // need to revise all the corner case "no data" handling to be consistent and
-            // (if appropriate) use the otherwise wasted screen space to hint to the user
-            // to go use the overflow menu to add stuff etc, once the layout otherwise
-            // settles down.
-            if (item != null) {
-                // Clicking on one of the items on this card selects its source, just as if it had
-                // been selected via the source dropdown. This is technically redundant but I found
-                // myself wanting to do it all the time to quickly see the details of a price, so
-                // I've implemented it. (The dropdown is still needed, as it's the only way to
-                // select sources which don't appear on the price comparison card.)
-                PriceComparisonCard(dataSet, source, priceAnalysis, onClick = { onSelectedSourceIdChange(it) })
-            }
+                // TODO: Just possibly we should use AnimatedVisibility here. However, it's not
+                // that big a deal (but maybe do look into it) as the only way to have item be
+                // null is if there *are* no items - unlike source, you can't deliberately set
+                // it to null. So this is not a particularly common case and the animation would
+                // only be firing if we were navigating back from an edit item screen where
+                // we've removed the last item or something like that - it's not a "something
+                // changed within the screen itself" animation like having source go between
+                // null and non-null is.
+                // TODO: Should we avoid showing this card if we have no stores in storeList? It
+                // works but maybe looks a bit ugly and is a bit pointless. I probably in general
+                // need to revise all the corner case "no data" handling to be consistent and
+                // (if appropriate) use the otherwise wasted screen space to hint to the user
+                // to go use the overflow menu to add stuff etc, once the layout otherwise
+                // settles down.
+                if (item != null) {
+                    // Clicking on one of the items on this card selects its source, just as if it had
+                    // been selected via the source dropdown. This is technically redundant but I found
+                    // myself wanting to do it all the time to quickly see the details of a price, so
+                    // I've implemented it. (The dropdown is still needed, as it's the only way to
+                    // select sources which don't appear on the price comparison card.)
+                    PriceComparisonCard(
+                        dataSet,
+                        source,
+                        priceAnalysis,
+                        onClick = { onSelectedSourceIdChange(it) })
+                }
 
+            }
         }
     }
-
 }
 
 // ENHANCE: We use primary/secondary/tertiary for good/OK/bad here. This isn't necessarily ideal
