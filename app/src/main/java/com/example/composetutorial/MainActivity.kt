@@ -1581,7 +1581,7 @@ data class EditableSource(
                             maxDecimals = 2,
                             locale
                         )
-                    } // TODO CHECK AGAIN LATER
+                    }
                     LoyaltyType.DISCOUNT -> {
                         formatDoubleForEditing(
                             100.0 * (1 - source.loyaltyMultiplier),
@@ -1674,7 +1674,7 @@ data class PriceEntity(
     @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
 ) : Parcelable
 
-// TODO: Keep this in sync with PriceEntity!
+// This must be kept in sync with any changes to PriceEntity.
 @Entity(
     tableName = "price_history", foreignKeys = [
         // We don't declare a foreign key relationship of our price_id to price.id. At some point it
@@ -1715,7 +1715,9 @@ data class PriceEntity(
         Index(value = ["item_id", "source_id"], unique = false)
     ]
 )
-// TODO: Rename this? Maybe HistoricalPrice or something? I am happy to have the database table called price_history but it is arguably confusing to have a class representing a point-in-time historical price called PriceHistory, as the name seems to imply it is "a history" in itself.
+// TODO: Rename this? Maybe HistoricalPrice or something? I am happy to have the database table
+// called price_history but it is arguably confusing to have a class representing a point-in-time
+// historical price called PriceHistory, as the name seems to imply it is "a history" in itself.
 data class PriceHistory(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -1746,7 +1748,15 @@ data class PriceHistory(
             confirmedAt = confirmedAt,
             notes = notes,
             modifiedAt = modifiedAt,
-            itemDefaultUnit = baseUnitForQuantityType(userUnit.quantityType) // TODO: This is a hack, I don't know if it matters but it isn't ideal even if it does work in practice
+            // itemDefaultUnit "ought" to be taken from the Item table for itemId. It's not really
+            // convenient to have to do that (it would mean introducing an extra layer into the
+            // history-related data classes, as we do with PriceWithItemEntity, so we can do the
+            // join) and I don't think it would buy us that much in terms of catching errors, so we
+            // just fake up a plausible value here. Note that this won't get written back to the
+            // database if a historical price gets converted back into a current price, as it is not
+            // present on the database's price table in the first place. It's used entirely for
+            // in-memory consistency checks.
+            itemDefaultUnit = baseUnitForQuantityType(userUnit.quantityType)
         )
     }
 
@@ -1775,12 +1785,12 @@ fun PriceHistory.toEditablePrice(priceId: Long, locale: Locale, dataSet: DataSet
     return EditablePrice(toPrice().copy(id = priceId), locale, getCurrencyFormat(dataSet, locale))
 }
 
-// TODO: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
+// ENHANCE: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
 // that effectively tells us the quantity type implicitly and we don't need to join to item to get
 // it. However, I suspect it still has some value because it allows us to do a bit of extra
-// validation which may catch bugs. Probably worth thinking about this again later.
+// validation which may catch bugs. My inclination is to keep it for now, since the code already
+// exists, and perhaps refactor to remove this at some point in the future.
 data class PriceWithItemEntity(
-    // TODO: should be PriceWithItemEntity eventually
     @Embedded val priceEntity: PriceEntity,
     @ColumnInfo(name = "default_unit") val itemDefaultUnit: MeasurementUnit,
 )
@@ -1802,9 +1812,7 @@ data class Price(
     // itemDefaultUnit is a copy of the defaultUnit from the Item when we originally read the
     // PriceWithItemEntity in from the database. It is intended to allow a best effort (protecting
     // against buggy code, not malicious code) validation that when we write back to the database,
-    // measure hasn't somehow mutated into a different QuantityType. TODO: NEED TO MAKE SURE I
-    // ACTUALLY USE THIS WHEN DOING INSERT/UPDATE - I THINK Price.toEntity() IS NOW DOING THIS,
-    // SEE COMMENT BELOW - BUT THINK ABOUT THIS FRESH
+    // quantity hasn't somehow mutated into a different QuantityType.
     val itemDefaultUnit: MeasurementUnit
 ) : Parcelable {
 
@@ -1839,15 +1847,11 @@ fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
     QuantityType.ITEM -> MeasurementUnit.EACH
 }
 
-// TODO: Whiff of ChatGPT magic
 fun PriceWithItemEntity.toDomain(): Price {
     // I have checks like this in various places but this is probably a pretty solid place for one.
     // On the way from database->domain, this is where we have a "solid" itemDefaultUnit value
     // (because it came from a database join) and that gives us an independent cross-check that
-    // priceEntity.originalUnit is of the right QuantityType. (TODO: We should also be doing a check
-    // before we write to the database, to stop bad data getting in, but at that point we don't have
-    // such absolutely confidence in our itemDefaultUnit.)
-    // TODO: That comment must be at least slightly wrong, as "originalUnit" no longer exists.
+    // priceEntity.userUnit is of the right QuantityType.
     devCheck(priceEntity.userUnit.quantityType == itemDefaultUnit.quantityType) {
         "Expected consistent units on PriceWithItemEntity but we have userUnit " +
                 "${priceEntity.userUnit} and itemDefaultUnit $itemDefaultUnit"
