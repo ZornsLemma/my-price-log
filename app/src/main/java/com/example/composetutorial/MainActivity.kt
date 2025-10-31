@@ -2774,7 +2774,7 @@ fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet, locale: Locale): Str
             dataSet,
             locale
         )
-    }${unitPrice.denominator.perSymbol}${unitPrice.denominator.symbol}" // TODO: Here empty-for-unit is bad
+    }${unitPrice.denominator.perSymbol}${unitPrice.denominator.symbol}"
 }
 
 // ENHANCE: Note that selectedId is not used. I would like to use this to focus the previously
@@ -2795,9 +2795,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     getDividerBetween: ((T, T) -> Boolean)? = null,
     content: @Composable () -> Unit,
 ) {
-    // TODO: rememberSaveable? A simple dark mode toggle could lose this otherwise. But maybe that
-    // is "expected", and users probably also expect the dropdown to close on rotation.
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
     Box(
@@ -3064,11 +3062,13 @@ fun ItemSourceInfo(
                                             )
                                         }
                                     },
-                                    shape = MaterialTheme.shapes.small /* TODO: is this right shape? what's the default? */
+                                    shape = MaterialTheme.shapes.small
                                 ) {
                                     AnimatedContent(targetState = showConfirmButton) { showConfirm ->
-
-                                        Text(if (showConfirm) "Confirm" else "Undo") // TODO: "Undo confirm" to probably poor wording/too long to be a good "toggle", and we need animation etc etc
+                                        // "Undo confirm" is maybe a bit too long, but it's not
+                                        // terrible and it's probably better to be clear what we're
+                                        // undoing than just using "Undo".
+                                        Text(if (showConfirm) "Confirm" else "Undo confirm")
                                     }
                                 }
                             }
@@ -3082,7 +3082,7 @@ fun ItemSourceInfo(
             // ENHANCE: I am not sure this is the right way to put the overflow menu in or what
             // precise positioning it should have, but in the absence of any official documentation
             // let's go with this Grok/ChatGPT suggestion.
-            var menuExpanded by remember { mutableStateOf(false) } // TODO: rememberSaveable???
+            var menuExpanded by rememberSaveable { mutableStateOf(false) }
             IconButton(
                 enabled = asyncOperationStatus.isNotBusy(),
                 onClick = { menuExpanded = true },
@@ -3109,8 +3109,7 @@ fun ItemSourceInfo(
 }
 
 @Composable
-fun <T> NewDataTable(
-    // TODO: Rename
+fun <T> DataTable(
     header: List<String>,
     items: List<T>,
     columns: List<@Composable (T) -> Unit>,
@@ -3177,7 +3176,7 @@ fun <T> NewDataTable(
                 Row(
                     modifier = Modifier
                         .background(rowBackground)
-                        .height(56.dp) // TODO EXPERIMENTAL - AND NOTE THAT UNLESS I ACTUALLY *DO* MAKE THE ROWS CLICKABLE, I DO NOT NEED THEM TO BE SO TALL AND CAN SHRINK THEM
+                        .height(56.dp)
                         .then(if (onClick != null) Modifier.clickable { onClick(item) } else Modifier)
                     , verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -4279,7 +4278,7 @@ fun PriceComparisonCard(
                         },
                     )
                 }
-                NewDataTable(
+                DataTable(
                     header = header,
                     items = priceAnalysis.augmentedPriceList,
                     columns = columns,
