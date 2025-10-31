@@ -2659,9 +2659,8 @@ fun RelativeTimeText(augmentedPrice: AugmentedPrice) {
         DateUtils.MINUTE_IN_MILLIS,
         DateUtils.FORMAT_ABBREV_RELATIVE
     ).toString()
-    // TODO: Not 100% sure about coloring this with no further indication to show it's "stale" and
-    // try to encourage action, maybe we need a supportingText or a different layout or both. I'll
-    // leave the code in for now anyway.
+    // ENHANCE: I don't know if it's slightly weird to color this to indicate it's stale without
+    // showing a stale icon or having some supporting text. May want to revisit this in the future.
     Text(
         relativeTime,
         color = if (augmentedPrice.ageClass == AgeClass.FRESH) Color.Unspecified else MaterialTheme.colorScheme.error
@@ -2715,18 +2714,17 @@ fun getUnitPrice(amount: Double, count: Long, measure: MeasuredValue, denominato
 
 // This takes currencyDecimalPlaces not a CurrencyFormat because we only need the number of decimal
 // places and our caller will not always have a locale to get a CurrencyFormat with.
-// TODO: While it is probably smart to try to get this as nice as we can, I am wondering if we
-// should store (in the db? in shared preferences? probably the db, based on talking to ChatGPT - shared preferences and the more modern DataStore thing are both not optimised for ~1000 keys as we'd probably have here, unless we serialise a huge ~1000 key map into a single shared preference key which also sucks) the last user-selected value for each (item,
-// source) combination (which implicitly is also per data set) - this way if the default isn't good,
-// it isn't critical. It may be faffy to use the real db here but since this is "nice to have but
-// not critical" data we can potentially save it async without too much fuss (definitely no spinners
-// etc - we don't even want the user to be aware we regard this as a "save", it's not like the used
-// is editing data in a dialog where saving is crucial), and *if* it's helpful we could use a
-// separate table to avoid worrying about our writes hanging around and subsequently blatting more
-// critical changes to the price table by "full effort and wait til it completes" saves.
-// It's tempting to ignore this for MVP, but since it requires a database table to support it, it
-// may be best to get that table in to reduce the need for a slightly stressful "production" database
-// upgrade in a subsequent release.
+// ENHANCE: While this function probably does a fairly good job in practice (albeit I haven't used
+// it much in anger yet), it might be nice to record the user's last-chosen unit price unit for each
+// (item, source) combination. This way, even if this function makes a poor choice, it will not
+// matter much in the long run as the user will just change the selected unit once per (item,
+// source) and that's that. We could do store this in a separate database table and write to it
+// asynchronously on a best-effort basis (as opposed to the "save is initiated and we make the user
+// wait, trapped, until it completes" saves for critical data). Based on discussions with ChatGPT
+// this is the way to go, rather than trying to put it in any form of shared preferences, as even
+// the more modern DataStore is not optimised for this. Although this would involve a database
+// upgrade to add later, it is just adding a new table which would start off empty with no data
+// migration, so it's probably not too scary.
 fun getFriendlyUnitPrice(
     amount: Double,
     currencyDecimalPlaces: Int,
