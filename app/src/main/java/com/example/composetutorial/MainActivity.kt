@@ -4222,17 +4222,15 @@ fun PriceComparisonCard(
             if (priceAnalysis.augmentedPriceList.isEmpty()) {
                 Text("There are no prices recorded for this product at any store yet.")
             } else {
-                // We use "prefix or suffix" in the header because although the prefix or suffix nature of a
-                // currency symbol in a locale matters in some other places, here it is appearing in isolation
-                // *without* a price next to it.
-                // TODO: Arguably we could/should use remember or something like that to store the header
-                // currency/unit string and avoid rederiving it all the time, albeit it isn't that involved and
-                // we are already doing that with the currencycode, but still, we could move this into that
-                // remember block and not expose the currency code outside it or something
-                // TODO: I'm hacking this together out of old prototype code but as this evolves we need to be
-                // "neater" about how we cope with generating the denominator part of the unit price header on
-                // the list when the list is empty - or just not showing the list at all in that case (which
-                // might make more sense, and maybe we already *do*, I'm not sure right now)
+                // It may be technically incorrect to show the currency symbol both in the header
+                // ("£/100g") and on the individual unit prices, but I think that for practical
+                // purposes this is the least confusing way to show it. An "incomplete" header
+                // ("/100g") feels unclear, as does having prices which aren't marked with a
+                // currency symbol.
+
+                // We use "prefix or suffix" in the header because although the prefix or suffix
+                // nature of a currency symbol in a locale matters in some other places, here it is
+                // appearing in isolation *without* a price next to it.
                 val headerUnitPriceDenominator =
                     priceAnalysis.augmentedPriceList.first().unitPrice.denominator
                 val header = listOf(
@@ -4240,10 +4238,6 @@ fun PriceComparisonCard(
                     "${currencyFormat.prefix ?: currencyFormat.suffix ?: ""}${headerUnitPriceDenominator.perSymbol}${headerUnitPriceDenominator.symbol}",
                     "" // TODO?
                 )
-                // It may be technically incorrect to show the currency symbol both in the header ("£/100g") and
-                // on the individual unit prices, but I think that for practical purposes this is the least
-                // confusing way to show it. An "incomplete" header ("/100g") feels unclear, as does having
-                // prices which aren't marked with a currency symbol.
 
                 val highlightRow =
                     priceAnalysis.augmentedPriceList.indexOfFirst { it.sourceName == source?.name }
@@ -7717,6 +7711,7 @@ class EditPriceViewModel(
                 uiContent.editablePrice.value.count
             )
         ) {
+            Log.d("MyAppPC", "Pack count failed validation")
             _saveValidationEvents.emit(EditableField.PACK_COUNT)
             return false
         }
