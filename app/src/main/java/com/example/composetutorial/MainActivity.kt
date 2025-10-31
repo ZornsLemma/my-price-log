@@ -2470,11 +2470,11 @@ fun ItemSourceSelector(
                 onItemSelected = { onSelectedSourceIdChange(if (it == -1L) null else it) },
                 enabled = asyncOperationStatus.isNotBusy(),
                 label = { Text("Store") },
-                supportingText = null,
-                /* TODO? if (haveItemAndSource) null else {
-                { Text("Select a product and store to view or change the price there") } // TODO: poor wording? *normally* product will not be null, so maybe we should have variant wording, or maybe the message should just not mention product
-            },
-                            */
+                // It's normal to have no source selected, but if there are no sources defined at
+                // all it seems best to offer the user a hint.
+                supportingText = if (sourceList.isNotEmpty()) null else { {
+                    Text("There are no stores in this collection. Add one using the overflow menu at the top right.")
+                } },
                 items = sourceListSorted,
                 getId = { it.first },
                 getItemText = { it.second },
