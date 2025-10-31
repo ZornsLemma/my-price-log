@@ -2421,7 +2421,14 @@ fun ItemSourceSelector(
                 // There might be an argument that this should "sometimes" get the focused colours,
                 // but since clicking on it immediately opens a full screen dialog, I think it's
                 // probably reasonable to hard-code false here.
-                colors = if (asyncOperationStatus.isNotBusy()) myTextFieldColors(false) else TextFieldDefaults.colors()
+                colors = if (asyncOperationStatus.isNotBusy()) myTextFieldColors(false) else TextFieldDefaults.colors(),
+                // It is rare to have no item selected, but if this happens and some items are
+                // defined, the user should fairly easily figure out what's happening (they just
+                // need to tap this TextField to open the selector). So we show a supportingText
+                // only if there are no items at all.
+                supportingText = if (item != null || itemList.isNotEmpty()) null else { {
+                        Text("There are no products in this collection. Add one using the overflow menu at the top right.")
+                } }
             )
         }
 
@@ -3104,7 +3111,8 @@ fun ItemSourceInfo(
 }
 
 @Composable
-fun <T> NewDataTable( // TODO: Rename
+fun <T> NewDataTable(
+    // TODO: Rename
     header: List<String>,
     items: List<T>,
     columns: List<@Composable (T) -> Unit>,
@@ -4013,6 +4021,9 @@ fun HomeScreenContent(
             .padding(innerPadding)
             .padding(screenBorder)
     ) {
+        // TODO: This is briefly visible during first startup, which is really ugly. Are we getting an
+        // async read of dataSet or something which causes it to be briefly null? Really need to fix
+        // this.
         if (dataSet == null) {
             // These are corner cases, caused by the current data set being deleted or all data
             // sets being deleted. It wouldn't technically hurt to show the normal screen content,
@@ -6697,7 +6708,9 @@ fun SettingsDialog(
                     isError = error != null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), // TODO: this probably ought to be supplied by caller or at least overridable or something
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester)
                 )
             }
         },
