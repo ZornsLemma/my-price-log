@@ -4560,8 +4560,9 @@ fun EditPriceScreenPackSize(
 
     Row {
         // "Count" is visible if the item explicitly allows multipacks or if (presumably because it
-        // used to) we have a count > 1, which we must not hide or silently throw away.
-        if (uiContent.item.allowMultipack || uiContent.originalPrice.count.toLong() > 1) {
+        // used to) we have a count > 1, which we must not hide or silently throw away. Note that
+        // uiContent.originalPrice.count can be an empty string if we are adding a first price.
+        if (uiContent.item.allowMultipack || (uiContent.originalPrice.count.toLongOrNull() ?: 1) > 1) {
             BaseValidatedTextField(
                 value = packCountNumber.text,
                 validationRules = vm.packCountValidationRules,
