@@ -2042,16 +2042,6 @@ class HomeViewModel(
         // This forces the delegate to initialize safely on the main thread TODO: VOODOO
         @Suppress("UNUSED_VARIABLE") val unused = app.dataStore
 
-        // TODO: On the very first run when the database is created, we appear to end up with the
-        // app running with no data sets - it has to be killed and restarted to see them. Not
-        // investigated what's going on - superficially this looks like it ought to cause events
-        // to be generated, but maybe the fact the database is *actually empty* without the dataset
-        // table on the first run is an edge case. We need to fix this, otherwise users will get a
-        // very poor first impression. OK, this certainly doesn't *always* happen and I do wonder
-        // if I just got impatient and it was running a bit slow. I will just have to keep an eye
-        // on it. It's by no means conclusive but I discussed this with ChatGPT and Perplexity and
-        // both seemed to feel that what I am doing should not be at risk of this happening (barring
-        // bugs of course).
         val dataSetFlow = priceTrackerRepository.getAllDataSets()
 
         val dataSetOnlyDatabaseFlow = selectedDataSetFlow.flatMapLatest { dataSetId ->
@@ -2299,12 +2289,6 @@ class HomeViewModel(
     }
 }
 
-/* TODO?
-enum class ThemePreference {
-    LIGHT, DARK, SYSTEM
-}
-*/
-
 private const val appName = "My Price Log"
 
 private const val multiplicationSign = "\u00d7"
@@ -2326,7 +2310,7 @@ private const val copyrightSymbol = "\u00a9"
 // on-screen data is outdated, but we retain consistency. Even if the data retrieval is quicker than
 // spinnerDelay ms, we don't want a janky double-update where the dropdown's content changes
 // instantly then the associated data changes a few ms later.
-const val spinnerDelayMillis = 200L // 1000L // TODO SHOULD BE 200L
+const val spinnerDelayMillis = 200L
 
 // This value is a trade-off between showing the user validation failures ASAP and not annoying them
 // by showing transient validation failures while they are in the middle of actively editing. This
@@ -2376,23 +2360,24 @@ val listItemHorizontalPadding = 16.dp
 // Seems best to make the right padding symmetrical.
 val menuRightPadding = menuLeftPadding
 
-// TODO: These arbitrary lengths are UI-only and are just intended to stop the user typing insane
-// amounts of text into TextFields and breaking layouts. They may well want to be tweaked later.
+// These arbitrary lengths apply to the UI only (not the database) and are just intended to stop the
+// user typing insane amounts of text into TextFields and breaking layouts. They may need to be
+// tweaked later.
 const val maxDataSetNameLength =
     32 // TODO: just possibly shorter than others due to use of nav drawer to show these?!
 const val maxItemNameLength = 32
 const val maxSourceNameLength = 32
-const val maxNotesLength = 200 // TODO TEMP FOR TESTING, SHOULD BE 1024
+const val maxNotesLength = 1024
 const val maxSearchLength = 32
 
-// 11 is a bit arbitrary but we're just trying to avoid the user filling the TextField full of junk.
-// With my current layouts on a small phone this avoids wrapping and it feels very generous anyway;
-// it allows just under a million with two decimal places and a (manually entered) thousands
-// separator.
+// 11 is a bit arbitrary but we're just trying to avoid the user filling the TextField with hundreds
+// of characters of junk and breaking the screen layout badly. 11 is pretty generous as it allows
+// just under a million with two decimal places and a (manually entered) thousands separator, so we
+// could tighten this up a bit if desirable.
 const val maxDecimalLength = 11
 
 // TODO: RENAME THIS IF IT SURVIVES REFACTORING
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class) // TODO: STILL NEEDED?
 @Composable
 fun MainScreen(
     asyncOperationStatus: AsyncOperationStatus,
@@ -10076,3 +10061,10 @@ val capitalization = when (capString) {
 // Android 11 device to test on and I have zero confidence in what the LLMs are telling me here. I
 // have reverted all the temporary changes the LLMs had me make and will wait for feedback from real
 // users (if any) before attempting to address this.
+// TODO: I'm not actually sure this isn't just my imagination, come back to it.
+
+// ENHANCE: Add a settings option which allows toggling between explicit themes, e.g. at a minimum
+// light/dark/system. It may be - really not sure - only newer Android versions with Material You
+// *have* a concept of a system theme in a way that's relevant to our app, in which case we might
+// want to hide or grey out the "system" option on these versions. Need to think this through at the
+// time and find out what's normal and what the possibilities are.
