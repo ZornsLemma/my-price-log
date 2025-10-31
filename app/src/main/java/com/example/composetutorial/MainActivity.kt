@@ -1817,10 +1817,8 @@ data class Price(
 ) : Parcelable {
 
     fun toEntity(): PriceEntity {
-        // TODO: Is this a reasonable place to be doing this check?
-        // TODO: I think this check is technically redundant because using
-        // itemDefaultUnit.quantityType to determine the base unit will cause an internal check
-        // error if measure's own unit is a different type - but this is maybe a bit more explicit.
+        // This check is just a more explicit version of that implicitly done inside the
+        // quantity.asValue() call below.
         devCheck(quantity.unit.quantityType == itemDefaultUnit.quantityType) {
             "Expected consistent quantity type when converting Price to PriceEntity but found " +
                     "measure $quantity with itemDefaultUnit $itemDefaultUnit"
@@ -1874,6 +1872,12 @@ fun PriceWithItemEntity.toDomain(): Price {
     )
 }
 
+// NB: We cannot rely on the database to order our results by name as it isn't locale-sensitive, so
+// we have to sort the results in memory later. We could therefore omit ORDER BY clauses completely,
+// (ENHANCE: and doing this later on would give a small performance/efficiency improvement) but
+// instead we use a deliberately wrong ORDER BY DESC to make it obvious if we are failing to apply
+// sorting to the results before showing them.
+
 @Dao
 interface DataSetDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -1881,10 +1885,6 @@ interface DataSetDao {
 
     @Upsert
     suspend fun upsert(dataSet: DataSet): Long
-
-    // TODO: Not just here - I am going to start sorting explicity by DESC to make sure I don't have
-    // any missing places where I apply a locale-sensitive sort in the UI. Technically the ORDER BY
-    // clauses can be removed later for a small efficiency gain.
 
     @Query("SELECT * FROM data_set ORDER BY name DESC")
     fun getAllDataSets(): Flow<List<DataSet>>
@@ -1979,7 +1979,6 @@ class SyncedStateEvent<T>(initialState: T) {
     }
 }
 
-// TODO: Very mild ChatGPT magic
 // TODO: Some code duplication with HomeViewModel.savePreference
 fun <T> savePreference(
     dataStore: DataStore<Preferences>,
