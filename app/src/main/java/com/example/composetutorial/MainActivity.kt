@@ -4502,13 +4502,6 @@ fun EditPriceScreenPrice(
             value = packPrice,
             prefix = textOrNull(currencyFormat.prefix),
             suffix = textOrNull(currencyFormat.suffix),
-            // TODO: Is it correct to right-align like this? I will assume it is for now.
-            // Maybe there's an argument since the unit on the pack size is pseudo-suffixy,
-            // we should right-align the pack size - but I think that might look ugly. But
-            // maybe that means this looks ugly. But maybe it's different if you're used to
-            // the currency symbol being on the right. Or maybe the currency symbol should
-            // be on the left in this kind of form *anyway*. Very hard for me to know. Maybe
-            // wait for user feedback?
             textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
                 textAlign = TextAlign.End
             ) else LocalTextStyle.current,
