@@ -4129,7 +4129,7 @@ fun HomeScreenContent(
 fun GoodPriceIcon() {
     Icon(
         imageVector = Icons.Default.CheckCircle,
-        contentDescription = "Good price",
+        contentDescription = "Good value",
         tint = MaterialTheme.colorScheme.primary,
     )
 }
@@ -4140,7 +4140,7 @@ fun OkPriceIcon() {
         // ENHANCE: Maybe we could have a better icon for this. There is a vague hint of the UK "no
         // entry" road sign about this one which doesn't quite fit with "OK" for me.
         painter = painterResource(R.drawable.baseline_remove_circle_24),
-        contentDescription = "OK price",
+        contentDescription = "OK value",
         tint = MaterialTheme.colorScheme.secondary,
     )
 }
@@ -4149,7 +4149,7 @@ fun OkPriceIcon() {
 fun BadPriceIcon() {
     Icon(
         painter = painterResource(R.drawable.baseline_cancel_24),
-        contentDescription = "Bad price", // TODO: Should we say "X value" not "X price" everywhere, as "Bad price" sounds a bit like it is an error, rather than just "not a good price"
+        contentDescription = "Bad value",
         tint = MaterialTheme.colorScheme.tertiary,
     )
 }
@@ -4188,7 +4188,7 @@ fun PriceComparisonCard(
     // contextDescription for screen readers which is "Price per 100g", so it gets read out
     // properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows
     // themselves contain the currency symbol.
-    // TODO: We may want the denominator to be user-selectable in this list header, if so it should
+    // ENHANCE: We could make denominator user-selectable in this list header. If so it should
     // probably offer all the user's selected units of the right type, as the unit price dropdown on
     // ItemSourceInfo does.
     val locale = LocalConfiguration.current.locales[0]
