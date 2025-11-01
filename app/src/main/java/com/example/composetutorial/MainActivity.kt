@@ -3599,6 +3599,7 @@ fun HomeScreen(
     onEditDataSetsClick: (HomeScreenUIContent) -> Unit,
     onEditItemsClick: (HomeScreenUIContent) -> Unit,
     onEditSourcesClick: (HomeScreenUIContent) -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
     // In order to minimise jank, we want the previous UI state to be available during the *very
     // first composition* when this screen is re-entered (e.g. after navigating back from another
@@ -3650,6 +3651,7 @@ fun HomeScreen(
         onEditDataSetsClick = { onEditDataSetsClick(uiContent) },
         onEditItemsClick = { onEditItemsClick(uiContent) },
         onEditSourcesClick = { onEditSourcesClick(uiContent) },
+        onSettingsClick = onSettingsClick,
     )
 }
 
@@ -3797,6 +3799,7 @@ fun HomeScreenActualScaffold( // TODO: RENAME
     onEditDataSetsClick: () -> Unit,
     onEditItemsClick: () -> Unit,
     onEditSourcesClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     asyncOperationStatus: AsyncOperationStatus,
     coroutineScope: CoroutineScope,
 
@@ -3856,12 +3859,7 @@ fun HomeScreenActualScaffold( // TODO: RENAME
                             })
                         MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
                             menuExpanded = false
-                            // TODO: This should probably be done via a callback function provided
-                            // to HomeScreen and passed through to us, and this function should
-                            // probably *not* have the navController directly available. We might
-                            // pass a *route* back but the function passed to us would actually
-                            // invoke navController.navigate().
-                            navController.navigate("settings")
+                            onSettingsClick()
                         })
                     }
                 },
@@ -3899,6 +3897,7 @@ fun HomeScreenScaffold(
     onEditDataSetsClick: () -> Unit,
     onEditItemsClick: () -> Unit,
     onEditSourcesClick: () -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
     // TODO: We need to disable all forms of interaction (navdrawer, dropdowns, menu, etc) while
     // this is "busy"
@@ -3923,7 +3922,7 @@ fun HomeScreenScaffold(
 
     HomeScreenNavigationDrawer(drawerState, dataSet, dataSetListSorted, onSelectedDataSetIdChange, coroutineScope) {
 
-        HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, saveStatus, coroutineScope)
+        HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, onSettingsClick,saveStatus, coroutineScope)
  { innerPadding ->
                 HomeScreenContent(
                     vm,
@@ -8445,6 +8444,7 @@ fun AppNavigation() {
                     )
                     navController.navigate("editSources/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
                 },
+                onSettingsClick = { navController.navigate("settings") },
             )
         }
 
