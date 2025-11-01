@@ -4024,7 +4024,7 @@ fun HomeScreenContent(
     ) {
         // TODO: This is briefly visible during first startup, which is really ugly. Are we getting an
         // async read of dataSet or something which causes it to be briefly null? Really need to fix
-        // this.
+        // this. I suspect there's thought needed, but just possibly we need dataSetList to be null-capable and have it null rather than empty if the query hasn't returned yet, then we can detect dataSetList null here and not do anything (maybe)
         Log.d("MyAppSU", "dataSet $dataSet dataSetList $dataSetList")
         if (dataSet == null) {
             // These are corner cases, caused by the current data set being deleted or all data
@@ -4045,7 +4045,7 @@ fun HomeScreenContent(
                 onSelectedItemIdChange = onSelectedItemIdChange,
                 onSelectedSourceIdChange = onSelectedSourceIdChange,
                 onItemSearchClick = onItemSearchClick,
-            ) // TODO: rename this
+            )
 
             Spacer(
                 modifier = Modifier
@@ -4103,12 +4103,6 @@ fun HomeScreenContent(
                 // we've removed the last item or something like that - it's not a "something
                 // changed within the screen itself" animation like having source go between
                 // null and non-null is.
-                // TODO: Should we avoid showing this card if we have no stores in storeList? It
-                // works but maybe looks a bit ugly and is a bit pointless. I probably in general
-                // need to revise all the corner case "no data" handling to be consistent and
-                // (if appropriate) use the otherwise wasted screen space to hint to the user
-                // to go use the overflow menu to add stuff etc, once the layout otherwise
-                // settles down.
                 if (item != null) {
                     // Clicking on one of the items on this card selects its source, just as if it had
                     // been selected via the source dropdown. This is technically redundant but I found
@@ -4143,7 +4137,8 @@ fun GoodPriceIcon() {
 @Composable
 fun OkPriceIcon() {
     Icon(
-        // TODO: Not sure this is a great icon, maybe rethink.
+        // ENHANCE: Maybe we could have a better icon for this. There is a vague hint of the UK "no
+        // entry" road sign about this one which doesn't quite fit with "OK" for me.
         painter = painterResource(R.drawable.baseline_remove_circle_24),
         contentDescription = "OK price",
         tint = MaterialTheme.colorScheme.secondary,
@@ -4162,8 +4157,8 @@ fun BadPriceIcon() {
 @Composable
 fun StalePriceIcon() {
     Icon(
-        // Idea with this icon is "the 'fresh' period is over, we started a timer now it's stale"
-        // TODO: Just possibly create my own hourglass_middle icon and use that here instead? We
+        // Idea with this icon is "the 'fresh' period is over, we started a timer now it's stale".
+        // ENHANCE: Just possibly create my own hourglass_middle icon and use that here instead? We
         // probably would keep to no icon for fresh rather than using hourglass top, but the
         // "tri-state metaphor" would maybe be a bit more obvious to users.
         painter = painterResource(R.drawable.baseline_hourglass_top_24),
