@@ -5777,10 +5777,9 @@ fun EditDataSetScreen(
                 buildCurrencyList(currentLocalConfiguration.locales)
             }
 
-            // TODO: Without getting sidetracked just yet into e.g. third party libraries to support
-            // currency selection between, we try to do half-decent job by showing a gigantic list
-            // in an unwieldy dropdown but putting the currencies the user is likely to care about
-            // at the top. In the longer term  I see three options:
+            // We try to do half-decent job by showing a gigantic list in an unwieldy dropdown but
+            // putting the currencies the user is likely to care about at the top.
+            // ENHANCE: In the longer term I see three options:
             // 1 - optionally allow the user to just enter a three letter currency code directly
             // 2 - optionally allow the user to define their own currency (in which case we don't
             //     care about three letter codes) by specifying prefix, suffix and decimal places
@@ -5789,7 +5788,7 @@ fun EditDataSetScreen(
             // support currency selection in some form, but the specific escape hatch of being able
             // to type in a three letter code is not so important. But maybe we'd do both.
             //
-            // We could create our own pop-up (probably not full screen) dialog to pick a currency.
+            // We could create our own pop-up (maybe full screen?) dialog to pick a currency.
             // We could also use our existing item selection dialog - which is substring search
             // capable - to help the user pick something out of the gigantic list of currencies
             // instead of scrolling through a giant dropdown.
@@ -5898,14 +5897,6 @@ fun EditDataSetScreen(
             }
 
             if (validationResult != null) {
-                // TODO: Should we show a red warning triangle e.g. at left or right of this text?
-                // Not sure, but we do show one in the case of TextFields so although the layout
-                // isn't quite the same, maybe showing one here is not a bad idea. Current gut
-                // feeling following some LLM discussion is that the warning triangle is probably
-                // not a good idea, but it should be at the left if I do add it. And maybe I should
-                // make the border of the segmented button red if we're in an error state as well,
-                // although my inclination is that this might look ugly and is not particularly
-                // blessed as standard.
                 SupportingText(
                     validationResult,
                     isError = true,
@@ -5976,7 +5967,7 @@ fun <T> rememberValidationThing(
     delayMillis: Long = defaultValidationMessageDelayMillis,
     // We default allowEmpty to false since this will be relatively obvious if we forget to specify
     // it somewhere it ought to have a more sophisticated condition ("add new X" will immediately
-    // show a "name is emtpy" warning without waiting for a save attempt first). It is just about
+    // show a "name is empty" warning without waiting for a save attempt first). It is just about
     // worth having a default so cases where this isn't meaningful don't have to specify it.
     allowEmpty: Boolean = false
 ): ValidationThing {
