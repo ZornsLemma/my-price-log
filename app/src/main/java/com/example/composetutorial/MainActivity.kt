@@ -6370,7 +6370,6 @@ fun formatDoubleForEditing(value: Double, minDecimals: Int, maxDecimals: Int, lo
         locale = locale,
     )
 
-// TODO: Some Grok magic here - in particular, it may very well *not* be generating a standard-looking settings screen despite my requests, be good to compare it to something else
 @Composable
 fun SettingsScreen(
     navController: NavHostController,
@@ -6466,7 +6465,7 @@ fun SettingsScreen(
             item {
                 SettingsTile(
                     title = "About $appName",
-                    subtitle = "", // TODO!? But I probably want it to take same vertical space as other tiles? Probably actually best to be consistent and have space allocated for an empty subtitle, so this is probably fine/what we really want
+                    subtitle = "", // empty subtitle gives consistent layout with other tiles
                     onClick = onAboutClick
                 )
             }
