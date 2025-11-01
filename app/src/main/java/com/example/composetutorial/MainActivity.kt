@@ -2427,6 +2427,10 @@ fun ItemSourceSelector(
                 // need to tap this TextField to open the selector). So we show a supportingText
                 // only if there are no items at all.
                 supportingText = if (item != null || itemList.isNotEmpty()) null else { {
+                    // TODO: This text seems to be a different color than the analogous
+                    // supportingText for sources. Need to decide which is right and make sure they
+                    // are both the same - this is most obvious when both are shown together, of
+                    // course.
                         Text("There are no products in this collection. Add one using the overflow menu at the top right.")
                 } }
             )
@@ -3892,7 +3896,7 @@ fun HomeScreenScaffold(
     priceList: List<Price>,
     priceAnalysis: PriceAnalysis,
     onEditPriceClick: () -> Unit,
-    onItemSearchClick: () -> Unit, // TODO: Jump this up one place and cascade that through callees and callers?
+    onItemSearchClick: () -> Unit,
     onViewHistoryClick: () -> Unit,
     onEditDataSetsClick: () -> Unit,
     onEditItemsClick: () -> Unit,
@@ -3914,10 +3918,6 @@ fun HomeScreenScaffold(
         dataSetList.sortedByLocale({ it.name }, locale)
     }
 
-    // TODO: rememberDrawerState seems to persist across rotations, which feels a bit odd to me -
-    // given how we seem to be expected to treat e.g. dropdowns, I'd have expected the drawer to
-    // close. Should we try to force it to close on a rotation or just accept this default
-    // behaviour? If you look at the implementation it uses rememberSaveable internally.
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
     HomeScreenNavigationDrawer(drawerState, dataSet, dataSetListSorted, onSelectedDataSetIdChange, coroutineScope) {
@@ -4025,6 +4025,7 @@ fun HomeScreenContent(
         // TODO: This is briefly visible during first startup, which is really ugly. Are we getting an
         // async read of dataSet or something which causes it to be briefly null? Really need to fix
         // this.
+        Log.d("MyAppSU", "dataSet $dataSet dataSetList $dataSetList")
         if (dataSet == null) {
             // These are corner cases, caused by the current data set being deleted or all data
             // sets being deleted. It wouldn't technically hurt to show the normal screen content,
