@@ -2218,7 +2218,11 @@ class HomeViewModel(
             // there should not be any reordering *within* flows from the merge, right? And if we
             // put a distinctUntilChanged() after the merge that will catch any cases where we get a
             // duplicate emission because the database flow also emits the same thing at
-            // approximately the same time
+            // approximately the same time. I don't know for sure that it's down to this, but on the
+            // emulator on the Windows PC where for some reason it is *very* slow, it very often
+            // seems to get irrevocably stuck on the home screen with the loading scrimwithspinner
+            // up, so there may well be some kind of lurking bug here, and even if it's extremely
+            // unlikely to trigger on a real device, it is likely worth investigating.
             val todo3 = merge(todo1, todo2)
 
             todo3.collectLatest { todoRename ->
