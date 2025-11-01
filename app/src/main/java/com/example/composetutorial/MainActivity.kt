@@ -4233,7 +4233,7 @@ fun PriceComparisonCard(
                 val header = listOf(
                     "Store",
                     "${currencyFormat.prefix ?: currencyFormat.suffix ?: ""}${headerUnitPriceDenominator.perSymbol}${headerUnitPriceDenominator.symbol}",
-                    "" // TODO?
+                    ""
                 )
 
                 val highlightRow =
@@ -4252,7 +4252,9 @@ fun PriceComparisonCard(
                                 )
                             )
                         },
-                        // TODO: Should I effectively line the price judgement and age icons up in columns, e.g. by putting a dummy blank icon in the judgement column if we aren't willing to make a judgement? or is it ok to just have a "row" of icons and not worry about vertical alignment across rows?
+                        // ENHANCE: We could add blank icons here so we have a column of "judgement"
+                        // icons and a column of "age class" icons. Not sure if that would look
+                        // better or not.
                         { augmentedPrice ->
                             Row {
                                 if (augmentedPrice.ageClass != AgeClass.ANCIENT) {
