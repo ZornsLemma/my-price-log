@@ -5384,7 +5384,7 @@ fun EditSourceScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
         // TODO: Different title for add vs edit? Title should maybe show data set name?
-        title = { Text("TODO: TITLE") },
+        title = { Text("TODO: TITLE") }, // TODO: probably use topAppBarTitle for title and subtitle
         isDirty = { uiContent.editableSource.value != uiContent.originalSource },
         validateForSave = { vm.validateForSave() },
         performSave = { vm.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
@@ -5430,7 +5430,6 @@ fun EditSourceScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // TODO: We should almost certainly be doing this via an integer ID - we now have LoyaltyDiscountType
         // TODO: Can I put these string versions inside LoyaltyDiscountType or won't that play well with i18n?
         val options = listOf(
             Triple(LoyaltyType.NONE, "None", null),
@@ -5713,7 +5712,7 @@ fun EditDataSetScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
         // TODO: Different title for add vs edit?
-        title = { Text("TODO: TITLE") },
+        title = { Text("TODO: TITLE") }, // TODO: may want to use topAppBarTitle() for title+subtitle
         isDirty = { uiContent.editableDataSet.value != uiContent.originalDataSet },
         validateForSave = { vm.validateForSave() },
         performSave = { vm.performSave(); /* throw IllegalArgumentException("TODO2") */ },
