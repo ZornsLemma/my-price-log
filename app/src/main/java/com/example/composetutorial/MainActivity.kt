@@ -3218,7 +3218,6 @@ fun MyDropdownMenuItem(
     )
 }
 
-// TODO: RENAME?!?!
 data class PriceAgeSettings(val stalePriceThreshold: Int, val ancientPriceThresholdDays: Int, val annualInflationPercent: Int)
 
 // TODO: ChatGPT magic
@@ -3293,8 +3292,8 @@ data class EditablePrice(
     val dataSetId: Long,
     val itemId: Long,
     val sourceId: Long,
-    val count: String, // TODO: NEED THIS ON OTHER PRICE THINGS, JUST ADDED HERE TO START WITH FOR UI WORK
     val price: String,
+    val count: String,
     val measureValue: String,
     val measurementUnit: MeasurementUnit,
     val confirmedAt: Instant,
@@ -3316,8 +3315,8 @@ data class EditablePrice(
         dataSetId = dataSetId,
         itemId = itemId,
         sourceId = sourceId,
-        count = "",
         price = "",
+        count = "",
         measureValue = "",
         measurementUnit = itemDefaultUnit,
         confirmedAt = Instant.now(),
@@ -3417,7 +3416,6 @@ fun textOrNull(
 data class EditPriceScreenUIContent(
     val editablePrice: MutableState<EditablePrice>,
     val originalPrice: EditablePrice,
-    // TODO: Move the following three to the start of this data class? Entirely cosmetic of course.
     val dataSet: DataSet,
     val item: Item,
     val source: Source,
@@ -3813,7 +3811,9 @@ fun HomeScreenActualScaffold( // TODO: RENAME
             .background(Color.Red /* TODO DEBUG HACK */),
         topBar = {
             TopAppBar(
-                title = { Text(dataSet?.name ?: "") }, // TODO: better null handling?
+                // We will almost always always have a DataSet to show the name of but we might as
+                // well show the app name if we don't.
+                title = { Text(dataSet?.name ?: "$appName") },
                 navigationIcon = {
                     IconButton(
                         enabled = asyncOperationStatus.isNotBusy(),
