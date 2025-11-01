@@ -4628,7 +4628,7 @@ fun EditPriceScreenPackSize(
                     },
                     enabled = saveStatus.isNotBusy(),
                     isError = validationResult != null,
-                    supportingText = if (validationResult == null) null else { { SupportingText(validationResult, true) } }, // TODO EXPERIMENTAL
+                    supportingText = if (validationResult == null) null else { { SupportingText(validationResult, true) } },
                     modifier = Modifier
                         // TODO DELETE? .weight(1f)
                         .validationFocusRequester(scrollToFocusableHandle),
@@ -4759,7 +4759,9 @@ fun GeneralEditScreen(
 
     var saving by rememberSaveable { mutableStateOf(false) }
 
-    // TODO: We may need to make this available to the content() so it can use it for scrolling to highlight errors, or it may be that we don't need it here at all and it can be entirely in the content()
+    // TODO: We may need to make this available to the content() so it can use it for scrolling to
+    // highlight errors, or it may be that we don't need it here at all and it can be entirely in
+    // the content()
     val scrollState = rememberScrollState()
 
     // We can't use dropUnlessResumed here as we have a parameter, so pseudo-inline it.
@@ -4907,9 +4909,6 @@ fun GeneralEditScreen(
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                // TODO: MD3 spec also has surfaceContainer background for "on-scroll", I am
-                // struggling to find any non-LLM explanations here, but *maybe* *if we have
-                // scrolled away from the top* we should change the background to surfaceContainer
                 .background(/* Color.Cyan TODO TEMP FOR DEBUG, SHOULD BE */ MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -5036,7 +5035,7 @@ fun GeneralEditAndDeleteScreen(
         AlertDialog(
             icon = if (isSimpleDelete) null else {
                 {
-                    Icon( // TODO: Do I need to set the size of this icon explicitly?
+                    Icon(
                         imageVector = Icons.Default.Warning,
                         contentDescription = "Warning",
                         tint = MaterialTheme.colorScheme.error
