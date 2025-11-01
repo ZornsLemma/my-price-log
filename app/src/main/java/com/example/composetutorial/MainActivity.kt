@@ -5103,7 +5103,7 @@ fun EditItemScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
         // TODO: Different title for add vs edit? Title should maybe show data set name?
-        title = { Text("TODO: TITLE") },
+        title = { Text("TODO: TITLE") }, // TODO: Don't forget topAppBarTitle, we quite poss want a title and subtitle
         isDirty = { uiContent.editableItem.value != uiContent.originalItem },
         validateForSave = { vm.validateForSave() },
         performSave = { vm.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
@@ -5172,9 +5172,6 @@ fun EditItemScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-
-            // TODO: colors?
-            // TODO: elevation???
         ) {
             // We would like to use horizontal padding of 16.dp on this Column, but we don't want
             // the ripple effect on the radio button Rows to "stop" at the left edge of the circular
@@ -5218,7 +5215,7 @@ fun EditItemScreen(
                     ) {
                         RadioButton(
                             selected = (selectedOption == id),
-                            onClick = null // TODO onClick
+                            onClick = null // the enclosing Row is clickable instead
                         )
                         Column(modifier = Modifier.padding(start = 8.dp)) {
                             Text(
@@ -5238,8 +5235,6 @@ fun EditItemScreen(
 
                 if (selectedOption != QuantityType.ITEM) {
                     Spacer(modifier = Modifier.height(8.dp))
-
-                    // TODO: Not just here, but the use of abbreviations for units is maybe not ideal here, it's a bit confusing to just see e.g. a bare "l" instead of "litre"
 
                     // TODO: RelevantUnit* here are sort of copy and paste from ItemSourceInfo and
                     // could possibly be factored out along with the code using them
