@@ -6784,13 +6784,6 @@ fun BulletPoint(text: String) {
 
 @Composable
 fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) {
-    /* TODO DELETE
-    val context = LocalContext.current
-    val appIcon = context.packageManager.getApplicationIcon(context.packageName) as BitmapDrawable
-    val bitmap = appIcon.bitmap
-    Log.d("MyAppJAZ", "bitmap $bitmap")
-    */
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -6806,12 +6799,10 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                //.background(MaterialTheme.colorScheme.primary) // TODO: debug hack
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = fullScreenDialogBorder)
                 .verticalScroll(rememberScrollState()),
-            // TODO DELETEhorizontalAlignment = Alignment.CenterHorizontally
         ) {
             // We manually implement the vertical border so it is part of the scrollable region, not
             // something which reduces the size of the scrollable region. This feels a bit better to
@@ -6888,7 +6879,6 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
     }
 }
 
-// TODO: ChatGPT magic
 @Composable
 fun LegalScreen(
     navController: NavHostController,
@@ -6920,7 +6910,7 @@ fun LegalScreen(
             // me and (albeit not for the same reason) matches what we do in GeneralEditScreen().
             Spacer(modifier = Modifier.height(fullScreenDialogVerticalBorder))
 
-            // --- Your App License ---
+            // Our license
             Text(
                 text = "$appName $emDash MIT License",
                 style = MaterialTheme.typography.titleMedium
@@ -6935,11 +6925,10 @@ fun LegalScreen(
                 licenseText = "Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
             )
 
-            /* For future reference:
+            /* Third-party licences, if/when we have some:
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- Third-Party Licenses (full text if needed) ---
             Text(
                 text = "Third-Party Licenses",
                 style = MaterialTheme.typography.titleMedium
@@ -6957,14 +6946,14 @@ fun LegalScreen(
                 licenseName = "MIT License",
                 licenseText = "[full MIT license text for ExampleLibrary]"
             )
-                    */
+            */
 
             Spacer(modifier = Modifier.height(fullScreenDialogVerticalBorder))
         }
     }
 }
 
-// TODO: CHAT GPT MAGIC
+@Suppress("unused")
 @Composable
 fun ThirdPartyLicense(
     libraryName: String,
@@ -6981,36 +6970,12 @@ fun ThirdPartyLicense(
     }
 }
 
-// TODO: CHATGPT MAGIC
 @Composable
 fun LicenseText(licenseText: String) {
     Text(
         text = licenseText,
         style = MaterialTheme.typography.bodySmall
     )
-}
-
-// TODO: ChatGPT magic
-@Composable
-fun SubheadingLibrary(
-    name: String,
-    license: String,
-    attribution: String,
-    link: String
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "$name $emDash $license",
-            style = MaterialTheme.typography.titleSmall
-        )
-        Spacer(modifier = Modifier.height(2.dp))
-        // Simple attribution text with hyperlink style
-        Text(
-            text = "$attribution See license: $link", // TODO: Shouldn't these use our clickable URL thign!?
-            style = MaterialTheme.typography.bodySmall,
-            // TODO: LOOKS UGLY!? modifier = Modifier.padding(start = 4.dp)
-        )
-    }
 }
 
 // TODO: This is a bit of a mess but probably best leave it alone until I either gain more
