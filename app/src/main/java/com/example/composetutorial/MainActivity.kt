@@ -6483,7 +6483,6 @@ fun SettingsScreen(
         if (showStalePriceThresholdDialog) {
             SettingsDialog(
                 title = "Stale price threshold",
-                // TODO subtitle = "Prices confirmed more than this many days ago are considered stale. Stale prices have an inflation adjustment applied when comparing across stores.",
                 subtitle = "Stale prices (confirmed more than this many days ago) have an inflation adjustment applied when comparing across stores.",
                 label = "Days",
                 initialValue = stalePriceThreshold.toString(),
@@ -6516,7 +6515,6 @@ fun SettingsScreen(
         if (showAncientPriceThresholdDialog) {
             SettingsDialog(
                 title = "Ancient price threshold",
-                // TODO subtitle = "Prices confirmed more than this many days ago are considered ancient. Ancient prices are ignored when classifying prices as good/OK/bad.",
                 subtitle = "Ancient prices (confirmed more than this many days ago) are ignored when classifying prices as good/OK/bad.",
                 label = "Days",
                 initialValue = ancientPriceThresholdDays.toString(),
