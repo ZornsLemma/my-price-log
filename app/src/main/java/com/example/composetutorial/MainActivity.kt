@@ -6555,12 +6555,6 @@ fun SettingsScreen(
             SettingsDialog(
                 title = "Annual inflation",
                 subtitle = "Stale prices increase by this annual rate. This is only an estimate $emDash update prices when you can for better accuracy.",
-                // TODO: Other candidates (I have tinkered with this already, just keeping these temp for reference):
-                // Old (stale) prices are increased by this rate per year to roughly account for inflation. Update prices when you can for best accuracy.
-                // Once prices go stale, they’re adjusted upward at this annual rate to approximate inflation. Update prices regularly for better accuracy.
-                // Prices older than the stale threshold are adjusted upward each year by this rate, to reduce the effect of outdated data. It’s only an estimate — update prices when possible.
-                // Stale prices increase at this annual rate as an inflation estimate. This is only an approximation; update prices when possible.
-                // (Your wording is already solid; I’d just replace “inflate at this rate every year” with “increase at this annual rate” — it’s slightly clearer and avoids confusion with the economic concept of inflation versus the action of inflating a number.)
                 label = "%", // TODO: Can/should I put a suffix on the OutlinedTextField instead?
                 initialValue = annualInflationPercent.toString(),
                 validationRules = listOfNotNull(
@@ -6603,66 +6597,19 @@ fun SettingsScreen(
     }
 }
 
-// TODO: Grok magic
-/* TODO: THIS HAS THE WRONG APPEARANCE, BUT IT MIGH TBE WORTH KEEPING FOR REFERENCE IF I HAVE "GROUPS" WHICH LEAD TO OTHER SCREENS
 @Composable
 fun SettingsTile(
     title: String,
     subtitle: String,
     onClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(title, style = MaterialTheme.typography.titleMedium)
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium)
-            }
-            Icon(Icons.Default.ArrowForward, contentDescription = "Edit")
-        }
-    }
-}
-*/
-@Composable
-fun SettingsTile(
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-    /* TODO!?
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-            // TODO!? .padding(/* TODO?! vertical = 12.dp */ /* TODO!? , horizontal = 16.dp */),
-        verticalAlignment = Alignment.CenterVertically
-    ) { */
-        /* TODO!?!?!
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium)
-        }
-        */
-        ListItem(
-            headlineContent = { Text(title) },
-            supportingContent = { Text(subtitle) },
-            modifier = Modifier.clickable(onClick = onClick)
-        )
-//    }
+    ListItem(
+        headlineContent = { Text(title) },
+        supportingContent = { Text(subtitle) },
+        modifier = Modifier.clickable(onClick = onClick)
+    )
 }
 
-// TODO: Inconsistent naming between onConfirm and onDismiss*Request*? Just maybe this is OK?
 // TODO: I could tweak this to be more like the full screen dialogs, in that Save is *always*
 // enabled but if you click it that then "enables" warnings about the field being empty. However, I
 // don't think we necessarily need to overdo this consistency - since there is literally a single
@@ -6705,7 +6652,7 @@ fun SettingsDialog(
                         )
                     },
                     isError = error != null,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), // TODO: this probably ought to be supplied by caller or at least overridable or something
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
