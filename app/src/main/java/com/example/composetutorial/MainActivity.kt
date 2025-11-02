@@ -6733,14 +6733,10 @@ fun getAppVersion(): String {
     }
 }
 
-// TODO: ChatGPT magic
-// TODO: RENAME THIS, IT IS NOT FOR LICENSE LINKS ANY MORE, IUT IS FOR LINKS IN GENERAL - should probably just be Link()
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun LicenseLink(text: String, url: String, showRawUrl: Boolean = true
-) {
+fun ClickableLink(text: String, url: String, showRawUrl: Boolean = true) {
     val uriHandler = LocalUriHandler.current
-    val clipboardManager = LocalClipboardManager.current
 
     Column {
         Text(
@@ -6759,6 +6755,8 @@ fun LicenseLink(text: String, url: String, showRawUrl: Boolean = true
         )
 
         if (showRawUrl) {
+            // SelectionContainer allows the user to select the link so they can copy it to their
+            // clipboard for further use.
             SelectionContainer {
                 Text(
                     text = url,
@@ -6873,9 +6871,9 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    LicenseLink("User manual", "https://yourappdocs.example.com", showRawUrl = true) // TODO!
+                    ClickableLink("User manual", "https://yourappdocs.example.com", showRawUrl = true) // TODO!
                     Spacer(modifier = Modifier.height(8.dp))
-                    LicenseLink("Source code on GitHub", "https://github.com/yourusername/yourapp", showRawUrl = true) // TODO!
+                    ClickableLink("Source code on GitHub", "https://github.com/yourusername/yourapp", showRawUrl = true) // TODO!
                 }
             }
 
