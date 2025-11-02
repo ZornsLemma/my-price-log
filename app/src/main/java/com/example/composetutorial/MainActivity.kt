@@ -2307,6 +2307,7 @@ private const val appName = "My Price Log"
 private const val multiplicationSign = "\u00d7"
 private const val emDash = "\u2014"
 private const val copyrightSymbol = "\u00a9"
+private const val bulletPoint = "\u2022"
 
 // Since all our data is local, we generally expect to be able to respond promptly to user requests.
 // Things like the dropdown they touched closing or the button they touched animating provide
@@ -6769,34 +6770,10 @@ fun ClickableLink(text: String, url: String, showRawUrl: Boolean = true) {
     }
 }
 
-// TODO: ChatGPT magic
-@Composable
-fun AttributionItem(text: String, url: String? = null) {
-    val uriHandler = LocalUriHandler.current
-    if (url != null) {
-        Text(
-            text = text,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 12.sp,
-            modifier = Modifier
-                .clickable { uriHandler.openUri(url) }
-                .padding(vertical = 1.dp)
-        )
-    } else {
-        Text(
-            text = text,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(vertical = 1.dp)
-        )
-    }
-}
-
-// TODO: ChatGPT magic
 @Composable
 fun BulletPoint(text: String) {
     Row(modifier = Modifier.fillMaxWidth()) {
-        Text("• ", style = MaterialTheme.typography.bodyMedium)
+        Text("$bulletPoint ", style = MaterialTheme.typography.bodyMedium)
         Text(
             text,
             style = MaterialTheme.typography.bodyMedium,
