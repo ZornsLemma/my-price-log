@@ -6999,13 +6999,6 @@ class MainActivity : ComponentActivity() {
                 .build()
         )
 
-        /*
-        // TODO: Experiment with adding a Settings activity and make the dark/light/follow system available and grey out (with some text saying why) follow system on Android < 10
-        val isDarkTheme = true when (userThemePref) {
-        ThemePreference.DARK -> true
-        ThemePreference.LIGHT -> false
-        ThemePreference.SYSTEM -> isSystemInDarkTheme()
-    } */
         setContent {
             val darkTheme = isSystemInDarkTheme()
 
