@@ -6480,11 +6480,6 @@ fun SettingsScreen(
             }
         }
 
-        // TODO: Since I can have multiple validation rules, for both stale and ancient thresholds
-        // there is no need to check both ends of the range in one rule and give one message
-        // covering both. This is simpler for the user and also saves us some vertical space on
-        // small screens.
-
         if (showStalePriceThresholdDialog) {
             SettingsDialog(
                 title = "Stale price threshold",
@@ -6494,11 +6489,18 @@ fun SettingsScreen(
                 initialValue = stalePriceThreshold.toString(),
                 validationRules = listOfNotNull(
                     ValidationRule(
+                            {
+                                val days = it.toIntOrNull()
+                                days != null && days >= 1
+                            },
+                    "Must be positive"
+                    ),
+                    ValidationRule(
                         {
                             val days = it.toIntOrNull()
-                            days != null && days in 1..<ancientPriceThresholdDays
+                            days != null && days < ancientPriceThresholdDays
                         },
-                        "Must be positive and less than $ancientPriceThresholdDays (ancient price threshold)"
+                        "Must be less than $ancientPriceThresholdDays (ancient price threshold)"
                     )
                 ),
                 onConfirm = { stalePriceThresholdString ->
@@ -6522,9 +6524,18 @@ fun SettingsScreen(
                     ValidationRule(
                         {
                             val days = it.toIntOrNull()
-                            days != null && days > stalePriceThreshold && days <= 365
+                            days != null && days > stalePriceThreshold
                         },
-                    "Must be greater than $stalePriceThreshold (stale price threshold) and no greater than 365"
+                        "Must be greater than $stalePriceThreshold (stale price threshold)"
+                    ),
+                    // TODO: Just maybe drop this upper bound? Or make it something like 9999999
+                    // just for sanity? Maybe users don't want an upper bound (unlikely but possible).
+                    ValidationRule(
+                        {
+                            val days = it.toIntOrNull()
+                            days != null && days <= 365
+                        },
+                    "Must be no greater than 365"
                     ),
                 ),
                 onConfirm = { ancientPriceThresholdDaysString ->
