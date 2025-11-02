@@ -2200,15 +2200,19 @@ class HomeViewModel(
             val todo1 = allUserInputFlow.flatMapLatest { _ ->
                 val newUIContent = withTimeoutOrNull(spinnerDelayMillis) {
                     Log.d("MyAppHVM", "todo1a")
-                    completeUIStateFlow.first()
+                    val TODOTEMP = completeUIStateFlow.first()
+                    Log.d("MyAppHVM", "todo1aa")
+                    TODOTEMP
                 }
                 Log.d("MyAppHVM", "todo1b $newUIContent")
                 if (newUIContent == null) {
                     // We timed out. Make a new state available which is the current (old) state but
                     // flagged as loading.
+                    Log.d("MyAppHVM", "todo1b-timedout $newUIContent")
                     flowOf(Pair(true /* loading */, _uiState.value.second))
                 } else {
                     // We didn't time out.
+                    Log.d("MyAppHVM", "todo1b-nottimedout $newUIContent")
                     flowOf(Pair(false /* loading */, newUIContent))
                 }
             }
