@@ -2099,8 +2099,11 @@ class HomeViewModel(
                 }
             }
 
-        val combinedDatabaseFlow =
-            combine(dataSetFlow, dataSetOnlyDatabaseFlow, dataSetIdAndItemIdDatabaseFlow, ::Triple)
+        val combinedDatabaseFlow = combine(
+            dataSetFlow,
+            dataSetOnlyDatabaseFlow,
+            dataSetIdAndItemIdDatabaseFlow,
+            ::Triple)
 
         val allUserInputFlow = combine(
             selectedDataSetFlow,
@@ -2196,8 +2199,10 @@ class HomeViewModel(
             // what we want.
             val todo1 = allUserInputFlow.flatMapLatest { _ ->
                 val newUIContent = withTimeoutOrNull(spinnerDelayMillis) {
+                    Log.d("MyAppHVM", "todo1a")
                     completeUIStateFlow.first()
                 }
+                Log.d("MyAppHVM", "todo1b $newUIContent")
                 if (newUIContent == null) {
                     // We timed out. Make a new state available which is the current (old) state but
                     // flagged as loading.
@@ -2208,7 +2213,10 @@ class HomeViewModel(
                 }
             }
 
-            val todo2 = completeUIStateFlow.map { Pair(false /* loading */, it) }
+            val todo2 = completeUIStateFlow.map {
+                Log.d("MyAppHVM", "todo2")
+                Pair(false /* loading */, it)
+            }
 
             // TODO: Is there a risk with merge().collectLatest() here that a "loading" state will
             // somehow come *after* the corresponding *loaded* state? If so we'd end up stuck with
@@ -2226,6 +2234,7 @@ class HomeViewModel(
             val todo3 = merge(todo1, todo2)
 
             todo3.collectLatest { todoRename ->
+                Log.d("MyAppHVM", "todo3 $todoRename")
                 Log.d("MyFoo", "newUIState")
                 _uiState.value = todoRename
             }
