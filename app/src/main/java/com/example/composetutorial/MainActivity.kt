@@ -7271,14 +7271,15 @@ data class GeneralSelectorScreenUIContent<T>(
 fun isCaseInsensitiveSubstring(lhs: String, rhs: String, locale: Locale) =
     rhs.lowercase(locale).contains(lhs.lowercase(locale))
 
-// TODO: We probably *can* do a half-decent job of implementing this locale-sensitive, probably
+fun squashSpaces(s: String) = s.trim().replace(Regex("\\s+"), " ")
+
+// ENHANCE: We probably *can* do a half-decent job of implementing this locale-sensitive, probably
 // something to do with collate(), but need to look into it. This is different to
 // isCaseInsensitiveSubstring() because we are dealing with the string as a whole, not substrings.
 // But for now I will hack it with this English-ish version.
-// TODO: Even in English-only, it might be good to squash sequences of whitespace down to a single
-// space for comparison so "foo  bar" == "foo bar" != "foobar"
-fun areHumanEqual(lhs: String, rhs: String) =
-    lhs.trim().lowercase() == rhs.trim().lowercase()
+fun areHumanEqual(lhs: String, rhs: String): Boolean {
+    return squashSpaces(lhs.lowercase()) == squashSpaces(rhs.lowercase())
+}
 
 class EditItemsViewModel(
     savedStateHandle: SavedStateHandle,
