@@ -241,18 +241,27 @@ import androidx.navigation.NavBackStackEntry
 import androidx.room.Index
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 import java.io.FileInputStream
@@ -2038,6 +2047,7 @@ class HomeViewModel(
 
     val settingsRepository = SettingsRepository(app.dataStore)
 
+    private val loadingTrigger = MutableStateFlow(0L) // bump on user input // TODO GROK MAGIC
     init {
         // This forces the delegate to initialize safely on the main thread TODO: VOODOO
         @Suppress("UNUSED_VARIABLE") val unused = app.dataStore
@@ -2176,7 +2186,7 @@ class HomeViewModel(
 
                     Log.d("MyFlow", "derived analysedPriceList")
 
-                    // delay(5000) // TODO HACK
+                    //delay(5000) // TODO HACK
                     flowOf(
                         HomeScreenUIContent(
                             dataSet,
@@ -2192,56 +2202,158 @@ class HomeViewModel(
                 }
             }
 
+        val TodoSomeSortOfUiStateFlow = allUserInputFlow
+            .flatMapLatest { input ->
+                channelFlow /* TODO DELETE <Pair<Boolean, HomeScreenUIContent>> */ {
+                    var loadingJob: Job? = null
+
+                    // Subscribe to data
+                    val dataJob = launch {
+                        completeUIStateFlow.collect { data ->
+                            // Cancel loading if it's pending
+                            loadingJob?.cancel()
+                            loadingJob = null
+
+                            // Emit data
+                            send(Pair(false, data))
+                        }
+                    }
+
+                    // Start loading timer
+                    loadingJob = launch {
+                        delay(spinnerDelayMillis)
+                        // Only emit loading if not already canceled
+                        if (isActive) {
+                            send(Pair(true, _uiState.value.second))
+                        }
+                    }
+
+                    // Cleanup on cancel (input change)
+                    // TODO: NOT NEEDED AFTER ALL!?!?!?! awaitCancellation()
+                }
+                // TODO!? .catch { emit(Pair(false) }
+            }
+
         viewModelScope.launch(Dispatchers.Default) {
+            /* TODO THIS DOESN'T WORK AS IT DOESN'T TAKE ACCOUNT OF NEW WEMISSIONS TRIGGERED BY DATA NOT BY USER INPUT, BUT KEEPING IT FOR NOW FOR REF
             // Add the "loading" flag to the UI state flow, rather than allowing arbitrarily long
             // delays before the user sees any kind of response. Note that because we use
             // collectLatest(), if the user changes the inputs the timeout starts again, which is
             // what we want.
             val todo1 = allUserInputFlow.flatMapLatest { _ ->
-                val newUIContent = withTimeoutOrNull(spinnerDelayMillis) {
-                    Log.d("MyAppHVM", "todo1a")
-                    val TODOTEMP = completeUIStateFlow.first()
-                    Log.d("MyAppHVM", "todo1aa")
-                    TODOTEMP
-                }
-                Log.d("MyAppHVM", "todo1b $newUIContent")
-                if (newUIContent == null) {
-                    // We timed out. Make a new state available which is the current (old) state but
-                    // flagged as loading.
-                    Log.d("MyAppHVM", "todo1b-timedout $newUIContent")
-                    flowOf(Pair(true /* loading */, _uiState.value.second))
-                } else {
-                    // We didn't time out.
-                    Log.d("MyAppHVM", "todo1b-nottimedout $newUIContent")
-                    flowOf(Pair(false /* loading */, newUIContent))
-                }
+                val newUIContent = completeUIStateFlow.withDelayedLoading(spinnerDelayMillis, _uiState.value.second)
+                newUIContent
             }
 
-            val todo2 = completeUIStateFlow.map {
-                Log.d("MyAppHVM", "todo2")
-                Pair(false /* loading */, it)
-            }
 
-            // TODO: Is there a risk with merge().collectLatest() here that a "loading" state will
-            // somehow come *after* the corresponding *loaded* state? If so we'd end up stuck with
-            // the scrim up forever. I am not sure there *is* a risk, but one possible fix *might*
-            // be to have the "allUserInput-only" flow (the one with the timeout) *redo the
-            // collection* in the "we timed out" branch after it emits the "loading=true" state -
-            // there should not be any reordering *within* flows from the merge, right? And if we
-            // put a distinctUntilChanged() after the merge that will catch any cases where we get a
-            // duplicate emission because the database flow also emits the same thing at
-            // approximately the same time. I don't know for sure that it's down to this, but on the
-            // emulator on the Windows PC where for some reason it is *very* slow, it very often
-            // seems to get irrevocably stuck on the home screen with the loading scrimwithspinner
-            // up, so there may well be some kind of lurking bug here, and even if it's extremely
-            // unlikely to trigger on a real device, it is likely worth investigating.
-            val todo3 = merge(todo1, todo2)
-
-            todo3.collectLatest { todoRename ->
+            todo1.collectLatest { todoRename ->
                 Log.d("MyAppHVM", "todo3 $todoRename")
                 Log.d("MyFoo", "newUIState")
                 _uiState.value = todoRename
             }
+            */
+
+            // TODO: NEW TRY, MORE GROK MAGIC
+
+            /* TODO NEVER EVEN TRIED BUT PROBABLY BROKEN
+            val uiStateFlow = allUserInputFlow
+                .flatMapLatest { input ->
+                    completeUIStateFlow
+                        .map { Pair(false /* loading */, it) }
+                        .onStart {
+                            // Emit loading only after delay, and only if no data yet
+                            delay(spinnerDelayMillis)
+                            emit(Pair(true /* loading */, _uiState.value))
+                        }
+                        .conflate() // drop stale data if DB floods
+                }
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5000),
+                    initialValue = null // TODO!?!?!?!?!?!?! UiState()
+                )
+                */
+
+            // TODO GROK MAGIC
+            /*
+            val uiStateFlow = allUserInputFlow
+                .flatMapLatest { input ->
+                    channelFlow {
+                        var loadingJob: Job? = null
+
+                        // Subscribe to data
+                        val dataJob = launch {
+                            completeUIStateFlow.collect { data ->
+                                // Cancel loading if it's pending
+                                loadingJob?.cancel()
+                                loadingJob = null
+
+                                // Emit data
+                                send(Pair(false, data))
+                            }
+                        }
+
+                        // Start loading timer
+                        loadingJob = launch {
+                            delay(spinnerDelayMillis)
+                            // Only emit loading if not already canceled
+                            if (isActive) {
+                                send(Pair(true, _uiState.value))
+                            }
+                        }
+
+                        // Cleanup on cancel (input change)
+                        awaitCancellation()
+                    }
+                        // TODO!? .catch { emit(Pair(false) }
+                }
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 0),
+                    initialValue = Pair(false, _uiState.value) // TODO!?!?!?!?!?! UiState()
+                )
+                */
+
+            /*I TODO THIS MAYBE KINDA SORTA WORKS!?
+            TodoSomeSortOfUiStateFlow.collectLatest { todoRename ->
+                Log.d("MyAppHVM", "todo3 $todoRename")
+                Log.d("MyFoo", "newUIState")
+                _uiState.value = todoRename
+            }
+            */
+
+            // TODO: MORE GROK MAGIC
+            // TODO: This *might* actually be correct. I need to look at it calmly and fresh, read
+            // up on channelFlow, give it more testing. But I think there is a chance it's sound.
+            allUserInputFlow
+                .flatMapLatest { input ->
+                    channelFlow {
+                        var loadingJob: Job? = null
+                        //var lastKnownData = _uiState.value.second
+
+                        // === DATA STREAM ===
+                        /* val dataJob = */ launch {
+                            completeUIStateFlow.collect { data ->
+                                //lastKnownData = data
+                                loadingJob?.cancel()
+                                send(false to data)
+                            }
+                        }
+
+                        // === LOADING TIMER ===
+                        loadingJob = launch {
+                            delay(spinnerDelayMillis)
+                            if (isActive) {
+                                send(true to _uiState.value.second)
+                            }
+                        }
+
+                        // No awaitCancellation() — not needed
+                    }
+                }
+                .collectLatest { (isLoading, data) ->
+                    _uiState.value = isLoading to data
+                }
         }
     }
 
@@ -3737,6 +3849,44 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
         }
     }
 }
+
+// TODO: Grok magic
+data class TimedData<T>(val data: T, val triggerTime: Long)
+
+// TODO: Grok magic
+/* TODO DELETE
+fun <T> Flow<T>.withDelayedLoading(
+    loadingDelayMillis: Long,
+    loadingValue: T
+): Flow<Pair<Boolean, T>> = flow {
+    // Emit loading = true after delay, *without canceling the original*
+    val delayedLoading = flow {
+        delay(loadingDelayMillis)
+        emit(true)
+    }
+
+    // Race: either the original flow emits first, OR loading delay triggers
+    val firstEmission = this@withDelayedLoading
+        .map { Pair(false, it) }
+        .take(1) // Only care about first real emission
+        .mergeWith(delayedLoading.map { Pair(it, loadingValue) })
+        .first()
+
+    // Emit whichever comes first
+    emit(firstEmission)
+
+    // If loading was shown, wait for actual data and emit it
+    if (firstEmission.first) {
+        val result = this@withDelayedLoading.first() // Wait for real data
+        emit(false to result)
+    }
+}
+*/
+
+/**
+ * Helper to merge two flows and emit from whichever emits first
+ */
+private fun <T> Flow<T>.mergeWith(other: Flow<T>): Flow<T> = merge(this, other)
 
 @Composable
 fun HomeScreenNavigationDrawer(
