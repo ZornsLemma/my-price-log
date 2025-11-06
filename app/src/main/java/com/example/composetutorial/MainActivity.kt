@@ -8182,10 +8182,10 @@ class EditDataSetViewModel(
         ValidationRule<String>(
             { it.isNotEmpty() },
             "Currency must be specified"
-        ) // TODO: poor wording?
+        )
     )
 
-    // TODO: I should probably replace the Triple<3xBoolean> with a data class for readability.
+    // ENHANCE: I should probably replace the Triple<3xBoolean> with a data class for readability.
     // Maybe it should even be used in a domain-level DataSet class with the current raw database
     // one being renamed DataSetEntity? We could potentially pass it into various functions and that
     // might simplify the code - but check before blindly doing this, it may not be a big enough
@@ -8212,7 +8212,6 @@ class EditDataSetViewModel(
         NAME,
         CURRENCY_CODE,
         MEASUREMENT_SYSTEM,
-        // TODO: MORE
     }
 
     private val _saveValidationEvents = MutableSharedFlow<EditableField>()
@@ -8231,7 +8230,6 @@ class EditDataSetViewModel(
             return false
         }
 
-        // TODO: Should maybe factor out forming this Boolean Triple from editableDataSet into a function
         if (!validationRulesOk(
                 measurementSystemValidationRules,
                 Triple(
@@ -8244,8 +8242,8 @@ class EditDataSetViewModel(
             _saveValidationEvents.emit(EditableField.MEASUREMENT_SYSTEM)
             return false
         }
+
         Log.d("MyAppESS", "validateForSave passed")
-        // TODO: MORE
         return true
     }
 
@@ -8268,7 +8266,8 @@ class EditDataSetViewModel(
     }
 }
 
-// TODO: ChatGPT magic
+// ENHANCE: This function was mostly written by ChatGPT. I'm loosely aware of what it does but I
+// don't pretend to understand the details at this point.
 @Composable
 inline fun <reified VM : ViewModel, UIContent> screenWithViewModel( // TODO: UNUSED TYPE ARG!
     backStackEntry: NavBackStackEntry,
@@ -8292,37 +8291,16 @@ inline fun <reified VM : ViewModel, UIContent> screenWithViewModel( // TODO: UNU
     content(vm)
 }
 
-// TODO: ChatGPT/Perplexity magic
 fun safeRestartApp(context: Context) {
-    /* TODO: ChatGPT code, which doesn't restart the app and which Perplexity tells me doesn't work properly on Android 10+
-    Log.d("MyAppFFS", "safeRestartApp")
-    val restartIntent = context.packageManager
-        .getLaunchIntentForPackage(context.packageName)
-        ?.apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        } ?: return
-
-    val pendingIntent = PendingIntent.getActivity(
-        context,
-        0,
-        restartIntent,
-        PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-    )
-
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    alarmManager.set(
-        AlarmManager.RTC,
-        System.currentTimeMillis() + 1000, // Delay just enough for process to die
-        pendingIntent
-    )
-
-    // Now kill the app process
-    android.os.Process.killProcess(android.os.Process.myPid())
-    */
+    // ChatGPT told me to do this with AlarmManager, but that didn't work and I believe it isn't
+    // the recommended approach on Android 10+. Perplexity recommended the following approach, which
+    // feels like it has a subtle theoretical hole in it where the app might kill itself without
+    // restarting, but I don't think it's possible to do better and in practice this probably won't
+    // happen, and if it does it's a bit user-unfriendly but at least safe (the user just has to
+    // restart the app manually).
     val packageManager = context.packageManager
     val launchIntent = packageManager.getLaunchIntentForPackage(context.packageName) ?: return
     val componentName = launchIntent.component ?: return
-
     val restartIntent = Intent.makeRestartActivityTask(componentName)
     context.startActivity(restartIntent)
     Runtime.getRuntime().exit(0)
@@ -8376,11 +8354,12 @@ fun AppNavigation() {
         navController = navController,
         startDestination = "home",
     ) {
-        // TODO: Move these up to where the other global-ish constants are defined?
+        // I think these are fairly standard values, and Android's system level support for tweaking
+        // animation speeds mean there's no need to allow these to be tweakable via Settings.
         val tweenDurationMillisEnter = 300
         val tweenDurationMillisExit = 250
 
-        // TODO: It might be good to look at adding a fade to some of these animations - maybe a
+        // ENHANCE: It might be good to look at adding a fade to some of these animations - maybe a
         // fade added to "top" screen and perhaps a fade added to the "bottom" screen as well. I
         // don't think it's a huge deal and it is "correct", but the border on the incoming screen
         // can - if you're really looking at the transition with paranoid eyes - give an impression
@@ -8922,7 +8901,6 @@ This may be complete crap. The example of how to use it is probably as long as t
         )
     }
 
-    // TODO: ChatGPT semi-magic
     if (showRestartDialog) {
         LaunchedEffect(Unit) {
             Log.d("MyAppFFS", "activity $activity")
