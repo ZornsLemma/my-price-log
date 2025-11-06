@@ -7731,11 +7731,6 @@ class EditPriceViewModel(
     private val _saveValidationEvents = MutableSharedFlow<EditableField>()
     val saveValidationEvents = _saveValidationEvents.asSharedFlow()
 
-    // TODO: It's tempting to think this should be on EditablePrice itself, but the whole point is
-    // that it will apply (sharing as much as possible) the same validation rules that the
-    // ValidatedTextFields are using - and those aren't available to EditablePrice, and based on
-    // discussion with ChatGPT I think it's better to have this function here than pass this
-    // ViewModel as an argument to EditablePrice.toDomain()
     suspend fun validateForSave(): Boolean {
         if (!validationRulesOk(
                 currencyFormat.validationRules,
