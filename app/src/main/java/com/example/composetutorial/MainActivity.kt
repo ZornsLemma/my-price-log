@@ -9033,7 +9033,6 @@ fun PackPriceAndSizeRow(
     }
 }
 
-// TODO: ChatGPT magic
 fun backupDatabase(context: Context, targetUri: Uri) {
     val db = AppDatabase.getDatabase(context)
     // The next line is voodoo which Grok suggested "might" be necessary and ChatGPT seemed to
@@ -9046,7 +9045,8 @@ fun backupDatabase(context: Context, targetUri: Uri) {
     // ENHANCE: Could/should we take steps to try to delete this afterwards if an exception occurs?
     // I imagine it isn't too critical as we will have at most one temp file and thus at worst we
     // double the size of our data storage, and our database isn't likely to be that big in the
-    // first place.
+    // first place. It's probably as simple as a try-finally block though, just needs a bit of
+    // testing.
     val backupFile = File(context.cacheDir, "backup_temp.db")
 
     // VACUUM INTO the temp file. I tried using copy() but the WAL files make this unreliable, and
@@ -9057,7 +9057,7 @@ fun backupDatabase(context: Context, targetUri: Uri) {
     rawDb.execSQL("VACUUM INTO '${backupFile.absolutePath.replace("'", "''")}'")
     rawDb.close()
 
-    // Copy the temp file to the user-selected URI
+    // Copy the temp file to the user-selected URI.
     context.contentResolver.openOutputStream(targetUri)?.use { output ->
         FileInputStream(backupFile).use { input ->
             input.copyTo(output)
@@ -9067,7 +9067,6 @@ fun backupDatabase(context: Context, targetUri: Uri) {
     backupFile.delete() // Clean up temp file
 }
 
-// TODO: ChatGPT magic
 // TODO: We need some kind of "this will overwrite all your current data, OK/Cancel" dialog before
 // doing this.
 fun restoreDatabase(context: Context, sourceUri: Uri) {
@@ -9091,6 +9090,13 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
             throw IllegalStateException("The database to restore is a newer version ($restoredDbVersion) than this version of the app supports ($DB_VERSION).")
         }
 
+        // ENHANCE: It might be nice to do a sanity check on the backup file, e.g. checking that
+        // the tables defined on it are a subset of the ones we expect or at least that one or two
+        // key tables like "price" exist. The idea is not to even try to prevent deliberately bad
+        // databases being installed - if the user wants to grief themselves that is their business
+        // - but to catch accidental restoration of other sqlite databases which aren't from this
+        // app.
+
         // The backup file is OK, so we'll go ahead and overwrite our internal database now.
 
         // Close Room to avoid conflicts.
@@ -9112,7 +9118,6 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
     }
 }
 
-// TODO: ChatGPT magic
 fun getDatabaseVersion(dbPath: String): Int {
     val db = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READONLY)
     val version = db.version
