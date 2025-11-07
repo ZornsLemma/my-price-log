@@ -8961,7 +8961,6 @@ fun PackPriceAndSizeRow(
                     includeDisplayOnly = true
                 )
             }
-        // TODO: "candidateDenominators" is also derived inside the UIContent "flow" and we could easily make it available directly here. It probably doesn't save much but we could.
         // TODO: If we edit the price and return to the home screen, the unit price
         // unit is not re-evaluated. This is arguably OK, but *if* the user never
         // changed it manually, it might be smart to re-evaluate it. This might be
@@ -9004,16 +9003,11 @@ fun PackPriceAndSizeRow(
             Log.d("MyAppQA", "rememberSaveable returning $friendlyUnitPrice")
             mutableStateOf(friendlyUnitPrice.denominator)
         }
-        // TODO: If the user selects "g" for a product sold in relative bulk, the
-        // standard decimal places on the currency is a bit misleading. This isn't a
-        // bug as such, but can/should we try to increase the decimal places on the
-        // currency in this case? Does the standard formatting stuff we are using
-        // have any concept of "not a shelf price so smaller fractions make sense
-        // than usual"? Maybe at the very least we should always round prices *up*
-        // when showing with official dp - although we are not doing the conversion
-        // ourselves, maybe the standard function has an option to do this? We could
-        // perhaps even omit units which would give a "display zero" price from the
-        // dropdown, though that might be more confusing than helpful.
+        // If the user chooses a "bad" unit price denominator, we might end up with the unit price
+        // being formatted to 0 with the available decimal places. I don't think this is really a
+        // big deal and the alternatives (e.g. adding extra decimal places beyond the currency's
+        // standard dps or rounding up instead of to nearest so the value isn't zero) are probably
+        // worse.
         Log.d("MyAppQA", "calling formatUnitPrice $price $measure $selectedUnitPriceUnit")
         val unitPriceString = formatUnitPrice(
             getUnitPrice(
@@ -9028,10 +9022,10 @@ fun PackPriceAndSizeRow(
             modifier = Modifier.weight(1f), label = "Unit price",
             dropdownContentDescription = "Select unit",
             text = unitPriceString,
-            enabled = true, // TODO: hardcoding to true for now, while this is on price history only and that has no save
+            enabled = true,
             items = relevantUnitList,
             getId = { it },
-            getItemText = { "${it.perSymbol}${it.symbol}".trim() }, // TODO: Here empty-for-unit is bad
+            getItemText = { "${it.perSymbol}${it.symbol}".trim() },
             getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
             selectedId = selectedUnitPriceUnit,
             onItemSelected = { selectedUnitPriceUnit = it })
