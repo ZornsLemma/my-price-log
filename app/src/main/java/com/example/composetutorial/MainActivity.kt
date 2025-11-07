@@ -3203,10 +3203,13 @@ fun ItemSourceInfo(
                                     enabled = asyncOperationStatus.isNotBusy(),
                                     ) {
                                     AnimatedContent(targetState = showConfirmButton) { showConfirm ->
-                                        // "Undo confirm" is maybe a bit too long, but it's not
-                                        // terrible and it's probably better to be clear what we're
-                                        // undoing than just using "Undo".
-                                        Text(if (showConfirm) "Confirm" else "Undo confirm") // TODO: "Undo confirm" is wrapping on my small phone emulator
+                                        // ENHANCE: "Undo" is perhaps borderline unclear as to what
+                                        // it is undoing (although I hope the user observing the
+                                        // transition from "Confirm"->"Undo" will act as a hint),
+                                        // but at least on my small emulated phone, "Undo confirm"
+                                        // looks a bit ugly or (with "Good price") doesn't fit and
+                                        // causes the button to become multi-line.
+                                        Text(if (showConfirm) "Confirm" else "Undo")
                                     }
                                 }
                             }
