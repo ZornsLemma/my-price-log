@@ -1035,19 +1035,37 @@ class PriceTrackerRepositoryImpl(
     }
 
     override suspend fun revertPrice(priceBeforeRevert: Price, priceAfterRevert: Price) {
-        // It might be arguably OK for "id" not to match between priceBeforeRevert and
-        // priceAfterRevert, but in practice it ought to so let's include that in the check.
-        devRequire(priceBeforeRevert.id == priceAfterRevert.id && priceBeforeRevert.dataSetId == priceAfterRevert.dataSetId && priceBeforeRevert.itemId == priceAfterRevert.itemId && priceBeforeRevert.sourceId == priceAfterRevert.sourceId) { "Inconsistent IDs between priceBeforeRevert ($priceBeforeRevert) and priceAfterRevert ($priceAfterRevert)" }
+        // We don't include details in all the messages below, so let's log the inputs here once,
+        // which in conjunction with the database should be enough to investigate problems.
+        Log.d("MyApp", "priceBeforeRevert: $priceBeforeRevert")
+        Log.d("MyApp", "priceAfterRevert: $priceAfterRevert")
+
+        // Check priceBeforeRevert and priceAfterRevert relate to the same price. It might be
+        // arguably OK for "id" not to match between priceBeforeRevert and priceAfterRevert, but in
+        // practice it ought to so let's include that in the check.
+        devRequire(priceBeforeRevert.id == priceAfterRevert.id && priceBeforeRevert.dataSetId == priceAfterRevert.dataSetId && priceBeforeRevert.itemId == priceAfterRevert.itemId && priceBeforeRevert.sourceId == priceAfterRevert.sourceId) { "Inconsistent IDs between priceBeforeRevert and priceAfterRevert" }
+
+        // ENHANCE: This could be streamlined if we did less checking, but for now at least we are
+        // as paranoid as we can be to avoid corrupting anything. Our caller has expressed the
+        // change in terms of Price objects, but as we need to fix up the history as well and we
+        // don't want to complicate things by updating history entries (we know we should just be
+        // deleting the last price_history) we check that what the caller is asking for is
+        // equivalent.
         db.withTransaction {
-            Log.d("MyApp", "revertPrice 1")
-            // TODO: This retrieves more data than necessary, we could be more efficient.
+            // Check that priceBeforeRevert matches the current price in the database.
+            // ENHANCE: This retrieves more data than necessary and could be optimised with a new
+            // PriceTrackerRepository function, but it's not likely to be performance critical and
+            // may not be done at all later on.
             val currentPrice = getPricesForItem(
                 dataSetId = priceBeforeRevert.dataSetId,
                 itemId = priceBeforeRevert.itemId
             ).first().firstOrNull { it.id == priceBeforeRevert.id }
-            devCheck(currentPrice != null) { "TODO" }
-            devCheck(currentPrice == priceBeforeRevert) { "TODO1" }
+            devCheck(currentPrice != null) { "Can't find database price for priceBeforeRevert" }
+            devCheck(currentPrice == priceBeforeRevert) { "Database price doesn't match priceBeforeRevert" }
 
+            // We will just delete the most recent price_history entry as part of the reversion,
+            // leaving the second-to-last as the new latest entry, so pick out the most recent two
+            // entries for inspection.
             val priceHistoryList = priceHistoryDao.getPriceHistory(
                 dataSetId = priceBeforeRevert.dataSetId,
                 itemId = priceBeforeRevert.itemId,
@@ -1057,37 +1075,22 @@ class PriceTrackerRepositoryImpl(
             val priceHistoryToDelete = priceHistoryList[0]
             val priceHistoryToRevertTo = priceHistoryList[1]
 
-            // TODO: I suspect these will *always* fail because lhs and rhs are different types - yes, TODO2 certainly is
-            Log.d("MyApp", "priceBeforeRevert $priceBeforeRevert")
-            Log.d("MyApp", "priceHistoryToDelete $priceHistoryToDelete")
-            Log.d(
-                "MyApp",
-                "PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity()) ${
-                    PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity())
-                }"
-            )
-            // TODO: This comparison logic feels faintly insane but the basic idea is sound
+            // Check that priceBeforeRevert is the same as priceHistoryToDelete after converting
+            // between the former from a PriceEntity to a PriceHistory and fixing up the ID.
             devCheck(
                 PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity())
                     .copy(id = priceHistoryToDelete.id) == priceHistoryToDelete
-            ) { "TODO2" }
-            Log.d(
-                "MyApp",
-                "PriceHistory.fromPriceEntity(priceAfterRevert.toEntity()) ${
-                    PriceHistory.fromPriceEntity(priceAfterRevert.toEntity())
-                }"
-            )
-            Log.d("MyApp", "priceHistoryToRevertTo $priceHistoryToRevertTo")
+            ) { "Expected priceBeforeRevert and priceHistoryToDelete to match" }
+            // Similarly, check priceAfterRevert matches priceHistoryToRevertTo.
             devCheck(
                 PriceHistory.fromPriceEntity(priceAfterRevert.toEntity())
                     .copy(id = priceHistoryToRevertTo.id)
                     .copy(modifiedAt = priceHistoryToRevertTo.modifiedAt) == priceHistoryToRevertTo
-            ) { "TODO3" }
+            ) { "Expected priceAfterRevert and priceHistoryToReverTo to match" }
 
+            // We can now go ahead and modify the price and price_history tables to actually revert.
             priceDao.upsert(priceAfterRevert.toEntity())
             priceHistoryDao.deleteById(priceHistoryToDelete.id)
-            Log.d("MyApp", "revertPrice 100")
-
         }
     }
 }
