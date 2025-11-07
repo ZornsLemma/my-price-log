@@ -5305,6 +5305,7 @@ fun EditItemScreen(
             validationRules = nameValidationRules.value,
             validationRulesKey = nameValidationRules.version,
             allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+            singleLine = true,
             validationFlow = vm.saveValidationEvents,
             validationFlowFieldId = EditItemViewModel.EditableField.NAME
         )
@@ -5583,6 +5584,7 @@ fun EditSourceScreen(
             validationRules = nameValidationRules.value,
             validationRulesKey = nameValidationRules.version,
             allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+            singleLine = true,
             validationFlow = vm.saveValidationEvents,
             validationFlowFieldId = EditSourceViewModel.EditableField.NAME
         )
@@ -5820,6 +5822,7 @@ fun <T> ValidatedTextField2(
     validationRules: List<ValidationRule<String>>,
     validationRulesKey: Any? = null,
     allowEmpty: Boolean = false,
+    singleLine: Boolean = false,
     validationFlow: SharedFlow<T>,
     validationFlowFieldId: T
 ) {
@@ -5846,6 +5849,7 @@ fun <T> ValidatedTextField2(
                 .fillMaxWidth()
                 .validationFocusRequester(scrollToFocusableHandle),
             keyboardOptions = keyboardOptions,
+            singleLine = singleLine,
             interactionSource = interactionSource
         )
     }
@@ -5910,6 +5914,7 @@ fun EditDataSetScreen(
             validationRules = nameValidationRules.value,
             validationRulesKey = nameValidationRules.version,
             allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+            singleLine = true,
             validationFlow = vm.saveValidationEvents,
             validationFlowFieldId = EditDataSetViewModel.EditableField.NAME
         )
@@ -6437,6 +6442,7 @@ fun NumericTextField(
         modifier = modifier,
         supportingText = supportingText,
         keyboardOptions = keyboardOptions,
+        singleLine = true,
         interactionSource = interactionSource,
     )
 }
@@ -6478,6 +6484,7 @@ fun FilteredTextField(
     isError: Boolean = false,
     supportingText: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    singleLine: Boolean = false,
     interactionSource: MutableInteractionSource? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
@@ -6509,6 +6516,7 @@ fun FilteredTextField(
                 }
             } else null,
         isError = isError,
+        singleLine = singleLine,
         interactionSource = interactionSource,
     )
 }
@@ -7613,6 +7621,7 @@ fun <T> GeneralSelectorScreen(
                         .fillMaxWidth()
                         .padding(horizontal = screenBorder)
                         .padding(bottom = 8.dp),
+                    singleLine = true,
                 )
             }
 
@@ -10073,8 +10082,6 @@ val capitalization = when (capString) {
 // realised I hadn't selected it correctly, though in theory it could happen. It's also perhaps
 // more UI complexity (and also user complexity even putting technicalities aside) to have to
 // open a separate screen for product selection within our modal edit dialog.
-
-// TODO: It appears to be allowed to type newlines into numerictextfields, need to look into this and ideally block it.
 
 // TODO: Should we allow empty strings when adding/editing a "count" for a price and treat that as 1
 // in the database? And/or should we default count to 1 rather than an empty string when adding a
