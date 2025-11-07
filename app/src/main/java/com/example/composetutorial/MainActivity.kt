@@ -2355,8 +2355,6 @@ class HomeViewModel(
         }
     }
 
-    // TODONOW: We need to set this to null if we navigate away from the home screen or if we change
-    // the dataset/product/source selectors!
     var previousPrice: MutableState<Price?> = mutableStateOf(null)
 
     // TODO: I hate the need to pass some of these arguments and I am rushing, think through later
