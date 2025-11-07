@@ -238,6 +238,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.room.Index
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -3179,8 +3180,6 @@ fun ItemSourceInfo(
                                 // button users click on most on this card (most of the time prices
                                 // won't have changed on subsequent visits) - so it gets the position on
                                 // the right.
-                                // TODONOW: Confirm button sets last updated to "today" and turns itself into "Undo confirm" (or something) on being clicked, we should ideally make this as obvious as possible to the user, maybe some kind of animation
-                                // TODO: This button needs to be disabled during save and ideally have a spinner on it a la full screen dialog "Save"
                                 val locale = LocalConfiguration.current.locales[0]
                                 val showConfirmButton = vm.previousPrice.value == null
                                 FilledTonalButton(/* modifier = Modifier.width(confirmButtonWidth) ,*/
@@ -3772,16 +3771,19 @@ fun HomeScreen(
         uiContent.dataSet,
         uiContent.dataSetList,
         onSelectedDataSetIdChange = {
+            vm.previousPrice.value = null
             vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
         },
         uiContent.item,
         uiContent.itemList,
         onSelectedItemIdChange = {
+            vm.previousPrice.value = null
             vm.savePreference(SELECTED_ITEM_ID_KEY, it)
         },
         uiContent.source,
         uiContent.sourceList,
         onSelectedSourceIdChange = {
+            vm.previousPrice.value = null
             vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
         },
         uiContent.priceList,
@@ -4094,6 +4096,14 @@ fun HomeScreenScaffold(
     }
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    LaunchedEffect(navBackStackEntry) {
+        if (navBackStackEntry == null) {
+            // This screen has been navigated away from.
+            vm.previousPrice.value = null
+        }
+    }
 
     HomeScreenNavigationDrawer(drawerState, dataSet, dataSetListSorted, onSelectedDataSetIdChange, coroutineScope) {
 
