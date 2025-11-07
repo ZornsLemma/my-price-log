@@ -2357,18 +2357,15 @@ class HomeViewModel(
 
     var previousPrice: MutableState<Price?> = mutableStateOf(null)
 
-    // TODO: I hate the need to pass some of these arguments and I am rushing, think through later
-    fun confirmPrice(dataSet: DataSet, price: Price, locale: Locale) {
-        // TODO: This round-tripping is insane but currently the only way to "confirm" a price is via EditablePrice
-        val editablePrice = EditablePrice(price, locale, getCurrencyFormat(dataSet, locale))
-        val currentPrice = price
-        val newPrice = editablePrice.copy(toConfirm = true).toDomain(locale)
+    fun confirmPrice(price: Price) {
+        val now = Instant.now()
+        val newPrice = price.copy(confirmedAt = now, modifiedAt = now)
         viewModelScope.launch {
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 delay(5000) // TODO TEMP HACK
-                priceTrackerRepository.updateOrInsertPrice(newPrice!!)
-                previousPrice.value = currentPrice
+                priceTrackerRepository.updateOrInsertPrice(newPrice)
+                previousPrice.value = price
                 asyncOperationStatus.update(AsyncOperationStatus.Success(null))
             } catch (e: Exception) {
                 e("HomeViewModel", "Unexpected exception", e)
@@ -3163,11 +3160,7 @@ fun ItemSourceInfo(
                                 FilledTonalButton(/* modifier = Modifier.width(confirmButtonWidth) ,*/
                                     onClick = {
                                         if (showConfirmButton) {
-                                            vm.confirmPrice(
-                                                dataSet,
-                                                augmentedPrice.basePrice,
-                                                locale
-                                            )
+                                            vm.confirmPrice(augmentedPrice.basePrice)
                                         } else {
                                             // TODO: Maybe some of these args should be supplied inside undoConfirmPrice()?
                                             vm.undoConfirmPrice(
