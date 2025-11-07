@@ -2378,10 +2378,11 @@ class HomeViewModel(
         // TODO: This needs to update modified_at even though it otherwise persists all previous data
         // TODO: Should we avoid updating history when we undo this? And delete the "confirmed" history item? or is it cleaner and more "honest" to just let the history entries accumulate?
         // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
+        // TODO: Should this be using updatePrice()? possibly not, just check...
         viewModelScope.launch {
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
-                //delay(5000) // TODO TEMP HACK
+                delay(5000) // TODO TEMP HACK
                 priceTrackerRepository.revertPrice(
                     priceBeforeRevert = priceBeforeRevert,
                     priceAfterRevert = priceAfterRevert
@@ -2404,7 +2405,7 @@ class HomeViewModel(
         viewModelScope.launch {
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
-                // delay(5000) // TODO TEMP HACK
+                delay(5000) // TODO TEMP HACK
                 priceTrackerRepository.updateOrInsertPrice(newPrice)
                 previousPrice.value = newPreviousPrice
                 // TODO: We don't really care about the ID here (although newPrice.id is of course
@@ -3111,7 +3112,7 @@ fun ItemSourceInfo(
                     } else {
                         val price = augmentedPrice.basePrice
 
-                        PackPriceAndSizeRow(price.price, price.count, price.quantity, dataSet)
+                        PackPriceAndSizeRow(price.price, price.count, price.quantity, dataSet, asyncOperationStatus)
 
                         LabeledItem(
                             modifier = Modifier.padding(bottom = 8.dp),
@@ -3158,7 +3159,8 @@ fun ItemSourceInfo(
                             ) {
                                 FilledTonalButton(
                                     onClick = onEditPriceClick,
-                                    shape = MaterialTheme.shapes.small
+                                    shape = MaterialTheme.shapes.small,
+                                    enabled = asyncOperationStatus.isNotBusy(),
                                 ) {
                                     Text("Edit")
                                 }
@@ -3197,13 +3199,14 @@ fun ItemSourceInfo(
                                             )
                                         }
                                     },
-                                    shape = MaterialTheme.shapes.small
-                                ) {
+                                    shape = MaterialTheme.shapes.small,
+                                    enabled = asyncOperationStatus.isNotBusy(),
+                                    ) {
                                     AnimatedContent(targetState = showConfirmButton) { showConfirm ->
                                         // "Undo confirm" is maybe a bit too long, but it's not
                                         // terrible and it's probably better to be clear what we're
                                         // undoing than just using "Undo".
-                                        Text(if (showConfirm) "Confirm" else "Undo confirm")
+                                        Text(if (showConfirm) "Confirm" else "Undo confirm") // TODO: "Undo confirm" is wrapping on my small phone emulator
                                     }
                                 }
                             }
@@ -4155,9 +4158,14 @@ fun HomeScreenScaffold(
         }
     }
 
-    // TODO: Is it OK to hack saveStatus into spinner like this? I suspect it is but need to come back to this calmly. Note that this *doesn't* eliminate the need to check saveStatus.isNotBusy() to disable all user interaction, as the scrim doesn't kick in straight away
-    // TODO: It's probably OK and if it's not it isn't necessarily specifically here that it will go wrong, but is there any lurking corner case where we've just returned from making an edit and the user very quickly clicks confirm and things go tits up?
-    ScrimWithSpinner(visible = loading || saveStatus == AsyncOperationStatus.BusyForAWhile)
+    // TODO: Is it OK to hack saveStatus into spinner like this? I suspect it is but need to come
+    // back to this calmly. Note that this *doesn't* eliminate the need to check
+    // saveStatus.isNotBusy() to disable all user interaction, as the scrim doesn't kick in straight
+    // away
+    // TODO: It's probably OK and if it's not it isn't necessarily specifically here that it will go
+    // wrong, but is there any lurking corner case where we've just returned from making an edit and
+    // the user very quickly clicks confirm and things go tits up?
+    // TODO: TCO SO I CAN WORK ON ADDING THE "DISABLE ON SAVE" LOGIC TO THE HOME SCREEN WITHOUT THIS GETTING IN THE WAY ScrimWithSpinner(visible = loading || saveStatus == AsyncOperationStatus.BusyForAWhile)
 
     if (showErrorDialog) {
         SaveErrorAlertDialog(requestClose = { showErrorDialog = false })
@@ -4193,7 +4201,7 @@ fun HomeScreenContent(
     ) {
         // TODO: This is briefly visible during first startup, which is really ugly. Are we getting an
         // async read of dataSet or something which causes it to be briefly null? Really need to fix
-        // this. I suspect there's thought needed, but just possibly we need dataSetList to be null-capable and have it null rather than empty if the query hasn't returned yet, then we can detect dataSetList null here and not do anything (maybe)
+        // this. I suspect there's thought needed, but just possibly we need dataSetList to be null-capable and have it null rather than empty if the query hasn't returned yet, then we can detect dataSetList null here and not do anything (maybe). Failing that (probably clunkier) we could just start off showing nothing (so home screen pops in shortly after when we do get data on first launch) and have a LaunchedEffect which will set a flag triggered display of no collection stuff if nothing has changed
         Log.d("MyAppSU", "dataSet $dataSet dataSetList $dataSetList")
         if (dataSet == null) {
             // These are corner cases, caused by the current data set being deleted or all data
@@ -4282,7 +4290,8 @@ fun HomeScreenContent(
                         dataSet,
                         source,
                         priceAnalysis,
-                        onClick = { onSelectedSourceIdChange(it) })
+                        onClick = { onSelectedSourceIdChange(it) },
+                        asyncOperationStatus)
                 }
 
             }
@@ -4352,6 +4361,7 @@ fun PriceComparisonCard(
     source: Source?,
     priceAnalysis: PriceAnalysis,
     onClick: (Long) -> Unit,
+    asyncOperationStatus: AsyncOperationStatus,
 ) {
     // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a
     // contextDescription for screen readers which is "Price per 100g", so it gets read out
@@ -4459,7 +4469,7 @@ fun PriceComparisonCard(
                         CellAlignment.End,
                         CellAlignment.Start
                     ),
-                    onClick = { augmentedPrice -> onClick(augmentedPrice.basePrice.sourceId) },
+                    onClick = if (asyncOperationStatus.isNotBusy()) { { augmentedPrice -> onClick(augmentedPrice.basePrice.sourceId) } } else null,
                 )
             }
         }
@@ -8923,7 +8933,8 @@ fun PackPriceAndSizeRow(
     price: Double,
     count: Long,
     measure: MeasuredValue,
-    dataSet: DataSet
+    dataSet: DataSet,
+    asyncOperationStatus: AsyncOperationStatus
 ) {
     // TODO: With the new count display, the shelf price can run into the unit price. Since we
     // don't currently have an actua grid layout, maybe we should simply give shelf price 60% of the
@@ -9023,7 +9034,7 @@ fun PackPriceAndSizeRow(
             modifier = Modifier.weight(1f), label = "Unit price",
             dropdownContentDescription = "Select unit",
             text = unitPriceString,
-            enabled = true,
+            enabled = asyncOperationStatus.isNotBusy(),
             items = relevantUnitList,
             getId = { it },
             getItemText = { "${it.perSymbol}${it.symbol}".trim() },
@@ -9158,7 +9169,7 @@ fun ItemSourceInfo2( // TODO: Rename
                 devCheck(priceHistoryDelta.price != null && priceHistoryDelta.count != null && priceHistoryDelta.quantity != null) {
                     "Expected price, count and quantity to all be non-null since one is"
                 }
-                PackPriceAndSizeRow(priceHistoryDelta.price!!, priceHistoryDelta.count!!, priceHistoryDelta.quantity!!, dataSet)
+                PackPriceAndSizeRow(priceHistoryDelta.price!!, priceHistoryDelta.count!!, priceHistoryDelta.quantity!!, dataSet, AsyncOperationStatus.Idle)
             }
 
             // TODO: Next two are possible candidates for factoring out and sharing with ItemSourceInfo(),
