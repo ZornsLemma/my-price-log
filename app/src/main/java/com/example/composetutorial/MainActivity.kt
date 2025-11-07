@@ -2368,16 +2368,20 @@ class HomeViewModel(
         // TODO: Problems with errors and previousPrice getting out of step etc?
         // TODO: This round-tripping is insane but currently the only way to "confirm" a price is via EditablePrice
         val editablePrice = EditablePrice(price, locale, getCurrencyFormat(dataSet, locale))
+        // ENHANCE: Using editablePrice.toDomain() here means currentPrice has its modifiedAt
+        // updated to "now", rather than the value it used to have. This in turn means that if the
+        // confirmation is undone, the modifiedAt date is effectively updated, rather than being
+        // rolled back to what it was. I don't think this is a big deal, but since the undo is an
+        // option available only briefly and it removes the confirm from the price history too,
+        // arguably it would be better to preserve the original modifiedAt.
         val currentPrice =
-            editablePrice.toDomain(locale) // TODO: not a huge deal, but note that this means currentPrice has "now" as the modifiedAt, not its actual time
+            editablePrice.toDomain(locale)
         val newPrice = editablePrice.copy(toConfirm = true).toDomain(locale)
         updatePrice(newPrice!!, currentPrice)
     }
 
     fun undoConfirmPrice(priceBeforeRevert: Price, priceAfterRevert: Price) {
         // TODO: Problems with errors and previousPrice getting out of step etc?
-        // TODO: This needs to update modified_at even though it otherwise persists all previous data
-        // TODO: Should we avoid updating history when we undo this? And delete the "confirmed" history item? or is it cleaner and more "honest" to just let the history entries accumulate?
         // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
         // TODO: Should this be using updatePrice()? possibly not, just check...
         viewModelScope.launch {
@@ -2401,6 +2405,8 @@ class HomeViewModel(
     // TODO: requestClose() might be more idiomatically called onDismissRequest(), but this is a ChatGPT suggestion and I'd need to research it before changing it. AlertDialog might be a real example of this.
 
     val asyncOperationStatus = SyncedStateEvent<AsyncOperationStatus>(AsyncOperationStatus.Idle)
+
+    // TODO: If updatePrice() has only a single caller, maybe fold it inline for clarity?
     fun updatePrice(newPrice: Price, newPreviousPrice: Price?) {
         // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
         viewModelScope.launch {
