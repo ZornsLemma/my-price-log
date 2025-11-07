@@ -2374,9 +2374,7 @@ class HomeViewModel(
                 delay(5000) // TODO TEMP HACK
                 priceTrackerRepository.updateOrInsertPrice(newPrice!!)
                 previousPrice.value = currentPrice
-                // TODO: We don't really care about the ID here (although newPrice.id is of course
-                // available) so we use 0 - is this OK? Should we allow nulls? Use -1?
-                asyncOperationStatus.update(AsyncOperationStatus.Success(0))
+                asyncOperationStatus.update(AsyncOperationStatus.Success(null))
             } catch (e: Exception) {
                 e("HomeViewModel", "Unexpected exception", e)
                 asyncOperationStatus.update(AsyncOperationStatus.Error("updatePrice failed: ${e.toString()}"))
@@ -2394,8 +2392,7 @@ class HomeViewModel(
                     priceAfterRevert = priceAfterRevert
                 )
                 previousPrice.value = null
-                // TODO: I think Success(0) is fine - we don't really care about an ID in this screen - but revisit later.
-                asyncOperationStatus.update(AsyncOperationStatus.Success(0))
+                asyncOperationStatus.update(AsyncOperationStatus.Success(null))
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "Unexpected exception", e)
                 asyncOperationStatus.update(AsyncOperationStatus.Error("undoConfirmPrice failed: ${e.toString()}"))
@@ -7803,7 +7800,7 @@ sealed class AsyncOperationStatus {
     object Idle : AsyncOperationStatus()
     object Busy : AsyncOperationStatus()
     object BusyForAWhile : AsyncOperationStatus()
-    data class Success(val id: Long) : AsyncOperationStatus()
+    data class Success(val id: Long?) : AsyncOperationStatus()
     data class Error(val message: String) : AsyncOperationStatus()
 }
 
