@@ -45,6 +45,7 @@ import android.os.Parcelable
 import android.os.StrictMode
 import android.text.format.DateUtils
 import android.util.Log
+import android.util.Log.e
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -164,7 +165,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -183,7 +183,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.min
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
@@ -243,27 +242,20 @@ import androidx.room.Index
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -2365,7 +2357,6 @@ class HomeViewModel(
 
     // TODO: I hate the need to pass some of these arguments and I am rushing, think through later
     fun confirmPrice(dataSet: DataSet, price: Price, locale: Locale) {
-        // TODO: Problems with errors and previousPrice getting out of step etc?
         // TODO: This round-tripping is insane but currently the only way to "confirm" a price is via EditablePrice
         val editablePrice = EditablePrice(price, locale, getCurrencyFormat(dataSet, locale))
         // ENHANCE: Using editablePrice.toDomain() here means currentPrice has its modifiedAt
@@ -2377,12 +2368,23 @@ class HomeViewModel(
         val currentPrice =
             editablePrice.toDomain(locale)
         val newPrice = editablePrice.copy(toConfirm = true).toDomain(locale)
-        updatePrice(newPrice!!, currentPrice)
+        viewModelScope.launch {
+            asyncOperationStatus.update(AsyncOperationStatus.Busy)
+            try {
+                delay(5000) // TODO TEMP HACK
+                priceTrackerRepository.updateOrInsertPrice(newPrice!!)
+                previousPrice.value = currentPrice
+                // TODO: We don't really care about the ID here (although newPrice.id is of course
+                // available) so we use 0 - is this OK? Should we allow nulls? Use -1?
+                asyncOperationStatus.update(AsyncOperationStatus.Success(0))
+            } catch (e: Exception) {
+                e("HomeViewModel", "Unexpected exception", e)
+                asyncOperationStatus.update(AsyncOperationStatus.Error("updatePrice failed: ${e.toString()}"))
+            }
+        }
     }
 
     fun undoConfirmPrice(priceBeforeRevert: Price, priceAfterRevert: Price) {
-        // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
-        // TODO: Should this be using updatePrice()? possibly not, just check...
         viewModelScope.launch {
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
@@ -2403,24 +2405,6 @@ class HomeViewModel(
 
     val asyncOperationStatus = SyncedStateEvent<AsyncOperationStatus>(AsyncOperationStatus.Idle)
 
-    // TODO: If updatePrice() has only a single caller, maybe fold it inline for clarity?
-    fun updatePrice(newPrice: Price, newPreviousPrice: Price?) {
-        viewModelScope.launch {
-            asyncOperationStatus.update(AsyncOperationStatus.Busy)
-            try {
-                delay(5000) // TODO TEMP HACK
-                priceTrackerRepository.updateOrInsertPrice(newPrice)
-                previousPrice.value = newPreviousPrice
-                // TODO: We don't really care about the ID here (although newPrice.id is of course
-                // available) so we use 0 - is this OK? Should we allow nulls? Use -1?
-                asyncOperationStatus.update(AsyncOperationStatus.Success(0))
-            } catch (e: Exception) {
-                Log.e("HomeViewModel", "Unexpected exception", e)
-                asyncOperationStatus.update(AsyncOperationStatus.Error("updatePrice failed: ${e.toString()}"))
-            }
-        }
-
-    }
 }
 
 private const val appName = "My Price Log"
