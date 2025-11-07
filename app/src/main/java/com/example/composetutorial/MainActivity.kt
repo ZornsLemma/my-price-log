@@ -1076,7 +1076,7 @@ class PriceTrackerRepositoryImpl(
             val priceHistoryToRevertTo = priceHistoryList[1]
 
             // Check that priceBeforeRevert is the same as priceHistoryToDelete after converting
-            // between the former from a PriceEntity to a PriceHistory and fixing up the ID.
+            // the former from a PriceEntity to a PriceHistory and fixing up the ID.
             devCheck(
                 PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity())
                     .copy(id = priceHistoryToDelete.id) == priceHistoryToDelete
@@ -1085,8 +1085,9 @@ class PriceTrackerRepositoryImpl(
             devCheck(
                 PriceHistory.fromPriceEntity(priceAfterRevert.toEntity())
                     .copy(id = priceHistoryToRevertTo.id)
-                    .copy(modifiedAt = priceHistoryToRevertTo.modifiedAt) == priceHistoryToRevertTo
-            ) { "Expected priceAfterRevert and priceHistoryToReverTo to match" }
+                    // TODO DELETE.copy(modifiedAt = priceHistoryToRevertTo.modifiedAt)
+            == priceHistoryToRevertTo
+            ) { "Expected priceAfterRevert and priceHistoryToRevertTo to match" }
 
             // We can now go ahead and modify the price and price_history tables to actually revert.
             priceDao.upsert(priceAfterRevert.toEntity())
@@ -2362,14 +2363,7 @@ class HomeViewModel(
     fun confirmPrice(dataSet: DataSet, price: Price, locale: Locale) {
         // TODO: This round-tripping is insane but currently the only way to "confirm" a price is via EditablePrice
         val editablePrice = EditablePrice(price, locale, getCurrencyFormat(dataSet, locale))
-        // ENHANCE: Using editablePrice.toDomain() here means currentPrice has its modifiedAt
-        // updated to "now", rather than the value it used to have. This in turn means that if the
-        // confirmation is undone, the modifiedAt date is effectively updated, rather than being
-        // rolled back to what it was. I don't think this is a big deal, but since the undo is an
-        // option available only briefly and it removes the confirm from the price history too,
-        // arguably it would be better to preserve the original modifiedAt.
-        val currentPrice =
-            editablePrice.toDomain(locale)
+        val currentPrice = price
         val newPrice = editablePrice.copy(toConfirm = true).toDomain(locale)
         viewModelScope.launch {
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
