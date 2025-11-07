@@ -4161,13 +4161,13 @@ fun HomeScreenScaffold(
         }
     }
 
-    // TODO: Is it OK to hack saveStatus into spinner like this? I suspect it is but need to come
-    // back to this calmly. Note that this *doesn't* eliminate the need to check
-    // saveStatus.isNotBusy() to disable all user interaction, as the scrim doesn't kick in straight
-    // away
-    // TODO: It's probably OK and if it's not it isn't necessarily specifically here that it will go
-    // wrong, but is there any lurking corner case where we've just returned from making an edit and
-    // the user very quickly clicks confirm and things go tits up?
+    // We use this scrim with spinner to handle the (unlikely) case where a confirm/undo confirm
+    // operation takes a long time as we as slow initial loading. Because of this, we don't bother
+    // to implement a spinner on the confirm/undo confirm button itself. We do still disable all the
+    // controls on the screen based on asyncSaveStatus so the user can't fiddle with anything during
+    // the brief period before the scrim appears.
+    // TODO: Should we just be using Busy or !isNotBusy() instead of BusyForAWhile or something like
+    // that in next line? The scrim already has an internal delay on becoming visible.
     // TODO: TCO SO I CAN WORK ON ADDING THE "DISABLE ON SAVE" LOGIC TO THE HOME SCREEN WITHOUT THIS GETTING IN THE WAY ScrimWithSpinner(visible = loading || saveStatus == AsyncOperationStatus.BusyForAWhile)
 
     if (showErrorDialog) {
