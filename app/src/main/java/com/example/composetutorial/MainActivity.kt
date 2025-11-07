@@ -2381,7 +2381,6 @@ class HomeViewModel(
     }
 
     fun undoConfirmPrice(priceBeforeRevert: Price, priceAfterRevert: Price) {
-        // TODO: Problems with errors and previousPrice getting out of step etc?
         // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
         // TODO: Should this be using updatePrice()? possibly not, just check...
         viewModelScope.launch {
@@ -2402,13 +2401,10 @@ class HomeViewModel(
         }
     }
 
-    // TODO: requestClose() might be more idiomatically called onDismissRequest(), but this is a ChatGPT suggestion and I'd need to research it before changing it. AlertDialog might be a real example of this.
-
     val asyncOperationStatus = SyncedStateEvent<AsyncOperationStatus>(AsyncOperationStatus.Idle)
 
     // TODO: If updatePrice() has only a single caller, maybe fold it inline for clarity?
     fun updatePrice(newPrice: Price, newPreviousPrice: Price?) {
-        // TODO: What if we get an error in the middle of this? Have we corrupted vm.previousPrice too soon?
         viewModelScope.launch {
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
@@ -5166,7 +5162,7 @@ fun GeneralEditScreen(
 }
 
 @Composable
-fun SaveErrorAlertDialog(requestClose: () -> Unit) {
+fun SaveErrorAlertDialog(requestClose: () -> Unit) { // TODO: rename argument onDismissRequest?
     // We use an AlertDialog not a snackbar here. This is a local database save which is
     // failing so it is very unlikely to be transient. We also don't want the user
     // missing the snackbar, thinking the app is buggy ("I already saved, why didn't the
@@ -9222,7 +9218,7 @@ fun ItemSourceInfo2( // TODO: Rename
 fun ViewPriceHistoryScreen(
     viewModel: ViewPriceHistoryViewModel,
     navController: NavHostController,
-    requestClose: () -> Unit, // TODO: requestDismiss? Am I inconsistent about this across different functions or is there a difference?,
+    requestClose: () -> Unit,
     requestEditAsNew: (priceHistory: PriceHistory) -> Unit
 ) {
     val locale = LocalConfiguration.current.locales[0]
