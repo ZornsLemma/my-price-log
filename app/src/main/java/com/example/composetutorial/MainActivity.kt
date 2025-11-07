@@ -594,6 +594,7 @@ data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcela
         ) + if (quantityType == QuantityType.ITEM) "" else " ${unit.symbol}"
 }
 
+const val DB_NAME = "main.db" // TODO: should I change this filename?
 const val DB_VERSION = 1
 @Database(
     entities = [DataSet::class, Item::class, Source::class, PriceEntity::class, PriceHistory::class],
@@ -615,7 +616,7 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(context: Context): AppDatabase {
             // if the Instance is not null, return it, otherwise create a new database instance.
             return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context, AppDatabase::class.java, "main.db")
+                Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME)
                     // TODO: Disable query logging in final version of course
                     .setQueryCallback({ sqlQuery, bindArgs ->
                         Log.d("MyApp", "SQL Query: $sqlQuery SQL Args: $bindArgs")
@@ -9032,9 +9033,6 @@ fun PackPriceAndSizeRow(
     }
 }
 
-// TODO: I need to make "main.db" a compile-time constant and use it everywhere, and I also need to
-// think what the db should actually be called.
-
 // TODO: ChatGPT magic
 fun backupDatabase(context: Context, targetUri: Uri) {
     val db = AppDatabase.getDatabase(context)
@@ -9073,7 +9071,7 @@ fun backupDatabase(context: Context, targetUri: Uri) {
 // TODO: We need some kind of "this will overwrite all your current data, OK/Cancel" dialog before
 // doing this.
 fun restoreDatabase(context: Context, sourceUri: Uri) {
-    val dbFile = context.getDatabasePath("main.db")
+    val dbFile = context.getDatabasePath(DB_NAME)
 
     // Create a temp file from the URI.
     val tempFile = File(context.cacheDir, "temp_backup.db")
@@ -9101,7 +9099,7 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
         // Delete existing database files for clean slate. I don't know if this is necessary but at
         // one point Grok suggested this might be useful to avoid old SHM/WAL files hanging around and
         // confusing things. I don't think this will hurt so let's be cautious.
-        context.deleteDatabase("main.db")
+        context.deleteDatabase(DB_NAME)
 
         // Copy tempFile to internal database location.
         FileInputStream(tempFile).use { input ->
