@@ -936,6 +936,7 @@ interface PriceTrackerRepository {
     fun getPricesForItem(dataSetId: Long, itemId: Long): Flow<List<Price>>
 
     fun getPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<List<PriceHistory>>
+    fun countPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<Long>
 
     fun countPricesForItem(itemId: Long): Flow<Long>
     fun countPricesForSource(sourceId: Long): Flow<Long>
@@ -993,6 +994,12 @@ class PriceTrackerRepositoryImpl(
         sourceId: Long
     ): Flow<List<PriceHistory>> =
         priceHistoryDao.getPriceHistory(dataSetId, itemId, sourceId)
+
+    override fun countPriceHistory(
+        dataSetId: Long,
+        itemId: Long,
+        sourceId: Long
+    ) = priceHistoryDao.countPriceHistory(dataSetId, itemId, sourceId)
 
     override fun countPricesForItem(itemId: Long): Flow<Long> =
         priceDao.countPricesForItem(itemId)
@@ -1639,7 +1646,9 @@ data class EditableSource(
         Index(value = ["data_set_id"], unique = false), // just because this is a foreign key
         // We don't include data_set_id here because although some queries specify it along with item_id, it's just belt-and-braces - item_id already implies a data_set_id if all is well.
         Index(value = ["item_id"], unique = false),
-        Index(value = ["source_id"], unique = false)
+        Index(value = ["source_id"], unique = false),
+        // TODO: I need to remember to manually apply this index to my own "production" db on O6.
+        Index(value = ["item_id", "source_id"], unique = true),
     ]
 )
 @Parcelize // TODO: probably won't need this once the edit dialog is written to use new style viewmodel data stuff
@@ -1967,6 +1976,9 @@ interface PriceHistoryDao {
     // segments of the price history will be retrieved.
     @Query("SELECT * FROM price_history WHERE data_set_id = :dataSetId AND item_id = :itemId AND source_id = :sourceId ORDER BY modified_at DESC")
     fun getPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<List<PriceHistory>>
+
+    @Query("SELECT COUNT(*) FROM price_history WHERE data_set_id = :dataSetId AND item_id = :itemId AND source_id = :sourceId")
+    fun countPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<Long>
 
     @Query("DELETE FROM price_history WHERE id = :priceHistoryId")
     suspend fun deleteById(priceHistoryId: Long): Int
@@ -2412,6 +2424,8 @@ class HomeViewModel(
             }
         }
     }
+
+    fun countPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long) = priceTrackerRepository.countPriceHistory(dataSetId, itemId, sourceId)
 
     val asyncOperationStatus = SyncedStateEvent<AsyncOperationStatus>(AsyncOperationStatus.Idle)
 
@@ -3048,6 +3062,14 @@ fun ItemSourceInfo(
     onViewHistoryClick: () -> Unit,
     onDeletePriceClick: () -> Unit,
 ) {
+    val priceHistoryCount by remember(dataSet.id, item?.id, source?.id) {
+        if (item != null && source != null) {
+            vm.countPriceHistory(dataSet.id, item.id, source.id)
+        } else {
+            flowOf(0L)
+        }
+    }.collectAsStateWithLifecycle(initialValue = 0L)
+
     // TODO: Maybe this should live on the viewmodel
     OnAppLifecycleEvent { event ->
         if (event == Lifecycle.Event.ON_STOP) { // app has left the foreground
@@ -3230,9 +3252,8 @@ fun ItemSourceInfo(
                     // ,modifier = Modifier.align(Alignment.TopEnd)
                 ) {
                     MyDropdownMenuItem(
-                        // TODO: We may need to tweak "enabled" here - if a price has been deleted, there can still be a history which it is useful to view
                         text = { Text("View history") },
-                        enabled = augmentedPrice != null,
+                        enabled = priceHistoryCount > 0,
                         onClick = { menuExpanded = false; onViewHistoryClick() }
                     )
                     MyDropdownMenuItem(
@@ -4636,8 +4657,10 @@ fun EditPriceScreen(
         EditPriceScreenPackSize(vm, ::onPackSizeOrPriceChange)
 
         // We don't show the switch if this is the first price for an item and source; the price is
-        // confirmed, otherwise why are we entering it?
-        if (uiContent.editablePrice.value.id != 0L) {
+        // confirmed, otherwise why are we entering it? Note that this is not the same as id being
+        // 0, because if we deleted the price and are re-creating it from the history, we have no
+        // ID but toConfirm will be false so we can preserve the old confirmation date by default.
+        if (!uiContent.originalPrice.toConfirm) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
@@ -4823,6 +4846,8 @@ fun EditPriceScreenPackSize(
             // TODO: Test this with font scaling
             Text(multiplicationSign, modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp * LocalDensity.current.fontScale))
         }
+        // TODO: When adding a brand new price for an "each" item (e.g. teabags), this appears to
+        // not fill the screen width.
         BaseValidatedTextField(
             value = packSizeNumber.text,
             validationRules = vm.packSizeValidationRules,
@@ -7352,13 +7377,13 @@ class SharedViewModel : ViewModel() {
         uiContent: HomeScreenUIContent,
         frozenLocale: Locale
     ) {
-        // !! is justified because uiContent was shown on the home screen and the edit price button
-        // was visible, which can only happen if we have all three available.
+        // !! is justified because uiContent was shown on the home screen and the view history option
+        // was enabled, which can only happen if we have all three available.
         val dataSet = uiContent.dataSet!!
         val item = uiContent.item!!
         val source = uiContent.source!!
         val price =
-            uiContent.priceList.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }!!
+            uiContent.priceList.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
         viewPriceHistoryScreenUIContent = ViewPriceHistoryScreenUIContent(
             dataSet = dataSet,
@@ -8071,7 +8096,7 @@ data class ViewPriceHistoryScreenUIContent(
     val dataSet: DataSet,
     val item: Item,
     val source: Source,
-    val price: Price,
+    val price: Price?,
 ) {
     companion object {
         fun fromSavedState(handle: SavedStateHandle): ViewPriceHistoryScreenUIContent? {
@@ -8156,6 +8181,9 @@ class ViewPriceHistoryViewModel(
         uiContent.source.id
     )
 
+    // TODO: It would be good to include "the price ID changed => the price was deleted" in this
+    // history. I don't believe we can know the date of the deletion, but we could show a trivial
+    // diff card which just says "price was deleted", so we can at least see it happened.
     fun generatePriceHistoryDeltaList(
         priceHistoryList: List<PriceHistory>,
         locale: Locale,
@@ -8939,7 +8967,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                                 // update the current existing record instead of adding a new one.
                                 // The price ID might in principle have changed since the history
                                 // record was created.
-                                priceId = viewModel.uiContent.price.id,
+                                priceId = viewModel.uiContent.price?.id ?: 0,
                                 locale,
                                 viewModel.uiContent.dataSet
                             ),
@@ -9241,6 +9269,9 @@ fun ItemSourceInfo2( // TODO: Rename
             }
 
             // TODO: Should we show this if it changed *to* an empty string, or should we elide it?
+            // I think this does cause slightly odd looking diffs if *all* we do is change a note from
+            // empty to non-empty, as we get a card showing up which has nothing but the date on it.
+            // Need to test this to make sure I'm diagnosing the problem correctly.
             if (priceHistoryDelta.notes != null) {
                 if (priceHistoryDelta.notes.isNotEmpty()) {
                     Row(modifier = Modifier.padding(bottom = 8.dp)) {
@@ -10164,3 +10195,14 @@ val capitalization = when (capString) {
 // *have* a concept of a system theme in a way that's relevant to our app, in which case we might
 // want to hide or grey out the "system" option on these versions. Need to think this through at the
 // time and find out what's normal and what the possibilities are.
+
+// TODO: I need to carefully test things around deleting prices and adding new ones via main GUI
+// and "reverting" to old ones via history. A quick test now suggests this is working but at one
+// point I did end up with the same store appearing multiple times in the price comparison on the
+// home screen for a single item. I suspect this was caused by bugs during development but it's
+// hard to be sure. Since then I have added a unique index on (item_id, source_id) so any remaining
+// bugs here (which I am not sure exist) will probably trigger an error on database writes rather
+// than breaking in precisely this way, but I still need to test to make sure all is working OK. I
+// didn't necessarily test this all that thoroughly to start with but the most likely source of
+// breakage is the fact that when "restoring" a historical price after a deletion, there is no
+// "current" price ID to update, we are instead inserting a new price with a new ID.
