@@ -4846,8 +4846,6 @@ fun EditPriceScreenPackSize(
             // TODO: Test this with font scaling
             Text(multiplicationSign, modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp * LocalDensity.current.fontScale))
         }
-        // TODO: When adding a brand new price for an "each" item (e.g. teabags), this appears to
-        // not fill the screen width.
         BaseValidatedTextField(
             value = packSizeNumber.text,
             validationRules = vm.packSizeValidationRules,
@@ -4881,6 +4879,7 @@ fun EditPriceScreenPackSize(
                     supportingText = if (validationResult == null) null else { { SupportingText(validationResult, true) } },
                     modifier = Modifier
                         // TODO DELETE? .weight(1f)
+                        .fillMaxSize()
                         .validationFocusRequester(scrollToFocusableHandle),
                     interactionSource = interactionSource
                 )
