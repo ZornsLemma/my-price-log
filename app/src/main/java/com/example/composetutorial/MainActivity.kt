@@ -1648,6 +1648,10 @@ data class EditableSource(
         Index(value = ["item_id"], unique = false),
         Index(value = ["source_id"], unique = false),
         // TODO: I need to remember to manually apply this index to my own "production" db on O6.
+        // We put item_id first in this index as it's likely to be more selective than source_id and
+        // ENHANCE: it may allow us to remove the index on item_id by itself later on. This index is
+        // not just for efficiency; it will also prevent data corruption if a bug causes us to try
+        // to insert more than one price for an (item, source) pair.
         Index(value = ["item_id", "source_id"], unique = true),
     ]
 )
