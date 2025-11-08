@@ -9068,18 +9068,15 @@ fun PackPriceAndSizeRow(
         // "$dataSet-$price-$measure", but that's a hack and not an ideal solution.
         // TODONOW: I need to review other uses of rememberSaveable() to make sure I'm not
         // vulnerable to the same problem.
-        // TODO: I am not actually sure that's the whole story, because selectedUnitPriceUnit is
+        // ENHANCE: That's not even the whole story. selectedUnitPriceUnit is
         // *initialised* by an expensive computation, but the user can change it, and we really
-        // ought to be remembering what they select fairly persistently, e.g. via
-        // rememberSaveable(). It may be the right thing to do is to compute the default inside
-        // remember() but use rememberSaveable() for the actual user selection and just initialise
-        // it from that remember()-ed computed default. This may be moot if I am going to persist
-        // the user's selection in the database anyway.
-        // TODO: There's a small bug here, if we edit the price so a different unit price
-        // would be more appropriate we do *not* change it when we navigate back. Obviously
-        // this isn't super likely with realistic price data, but it could happen. There is
-        // a subtlety here, as the user may have changed the unit price unit themselves and
-        // *maybe* we should respect that if so.
+        // ought to be remembering what they select fairly persistently, at least across config
+        // changes (e.g. dark mode toggle). This would seem to argue for some use of rememberSaveable()
+        // but there is some hellishly subtle behaviour here whether with keys or "inputs=" and if
+        // we're not careful we end up crashing as well because we preserve a denominator of the
+        // wrong quantity type as the item changes. On top of these technical complexities, I am
+        // not even sure when we should preserve the user's value - if for example the price changes
+        // enough that our recommended denominator changes, should we override the user's selection?
         var selectedUnitPriceUnit by remember(dataSet, price, count, measure) {
             Log.d("MyAppQA", "rememberSaveable $price $measure")
             val candidateDenominators = getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
