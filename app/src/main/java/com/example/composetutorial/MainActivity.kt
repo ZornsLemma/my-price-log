@@ -951,6 +951,7 @@ interface PriceTrackerRepository {
     suspend fun deleteDataSetById(dataSetId: Long): Int
     suspend fun deleteItemById(itemId: Long): Int
     suspend fun deleteSourceById(sourceId: Long): Int
+    suspend fun deletePriceById(priceId: Long): Int
 }
 
 // TODO: Should this be an extension function on List or some "free" function or something else?
@@ -1013,6 +1014,8 @@ class PriceTrackerRepositoryImpl(
     override suspend fun deleteItemById(itemId: Long): Int = itemDao.deleteById(itemId)
 
     override suspend fun deleteSourceById(sourceId: Long): Int = sourceDao.deleteById(sourceId)
+
+    override suspend fun deletePriceById(priceId: Long): Int = priceDao.deleteById(priceId)
 
     // TODO: Tempish note (maybe make permanent) - I discussed with ChatGPT and it seemed to make
     // sense - the repository should take "validated domain level" entities (where we aren't just
@@ -1949,6 +1952,9 @@ interface PriceDao {
 
     @Query("SELECT COUNT(*) FROM price WHERE source_id = :sourceId")
     fun countPricesForSource(sourceId: Long): Flow<Long>
+
+    @Query("DELETE FROM price WHERE id = :priceId")
+    suspend fun deleteById(priceId: Long): Int
 }
 
 @Dao
@@ -2388,6 +2394,21 @@ class HomeViewModel(
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "Unexpected exception", e)
                 asyncOperationStatus.update(AsyncOperationStatus.Error("undoConfirmPrice failed: ${e.toString()}"))
+            }
+        }
+    }
+
+    fun deletePrice(price: Price) {
+        viewModelScope.launch {
+            asyncOperationStatus.update(AsyncOperationStatus.Busy)
+            try {
+                delay(5000) // TODO TEMP HACK
+                priceTrackerRepository.deletePriceById(price.id)
+                previousPrice.value = null
+                asyncOperationStatus.update(AsyncOperationStatus.Success(null))
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Unexpected exception", e)
+                asyncOperationStatus.update(AsyncOperationStatus.Error("deletePrice failed: ${e.toString()}"))
             }
         }
     }
@@ -3025,6 +3046,7 @@ fun ItemSourceInfo(
     augmentedPrice: AugmentedPrice?,
     onEditPriceClick: () -> Unit,
     onViewHistoryClick: () -> Unit,
+    onDeletePriceClick: () -> Unit,
 ) {
     // TODO: Maybe this should live on the viewmodel
     OnAppLifecycleEvent { event ->
@@ -3208,9 +3230,15 @@ fun ItemSourceInfo(
                     // ,modifier = Modifier.align(Alignment.TopEnd)
                 ) {
                     MyDropdownMenuItem(
+                        // TODO: We may need to tweak "enabled" here - if a price has been deleted, there can still be a history which it is useful to view
                         text = { Text("View history") },
                         enabled = augmentedPrice != null,
                         onClick = { menuExpanded = false; onViewHistoryClick() }
+                    )
+                    MyDropdownMenuItem(
+                        text = { Text("Delete price") },
+                        enabled = augmentedPrice != null,
+                        onClick = { menuExpanded = false; onDeletePriceClick() }
                     )
                 }
             }
@@ -4154,6 +4182,7 @@ fun HomeScreenScaffold(
     if (showErrorDialog) {
         SaveErrorAlertDialog(requestClose = { showErrorDialog = false })
     }
+
 }
 
 @Composable
@@ -4174,6 +4203,8 @@ fun HomeScreenContent(
     asyncOperationStatus: AsyncOperationStatus,
     innerPadding: PaddingValues,
 ) {
+    var showDeletePriceConfirmDialog by rememberSaveable { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             // .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
@@ -4245,6 +4276,7 @@ fun HomeScreenContent(
                             augmentedPrice = priceAnalysis.augmentedPriceList.singleOrNull { it.basePrice.sourceId == source?.id },
                             onEditPriceClick = onEditPriceClick,
                             onViewHistoryClick = onViewHistoryClick,
+                            onDeletePriceClick = { showDeletePriceConfirmDialog = true },
                         )
 
                         Spacer(
@@ -4281,6 +4313,36 @@ fun HomeScreenContent(
             }
         }
     }
+
+    if (showDeletePriceConfirmDialog) {
+        val augmentedPrice = priceAnalysis.augmentedPriceList.single { it.basePrice.sourceId == source?.id }
+        DeletePriceConfirmDialog(vm, augmentedPrice, requestClose = { showDeletePriceConfirmDialog = false })
+    }
+}
+
+@Composable
+fun DeletePriceConfirmDialog(
+    vm: HomeViewModel,
+    augmentedPrice: AugmentedPrice,
+    requestClose: () -> Unit // TODO: Rename onDismissRequest? see SaveErrorAlertDialog()
+) {
+    AlertDialog(
+        icon = null,
+        title = { Text("Delete price") },
+        // TODO: When/if it works, we could possibly mention being able to recover it via the
+        // history. But it may be best to keep the message simple anyway.
+        text = { Text("Are you sure you want to delete this price?") },
+        onDismissRequest = requestClose,
+        dismissButton = {
+            TextButton(onClick = requestClose) { Text("Cancel") }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                requestClose()
+                vm.deletePrice(augmentedPrice.basePrice)
+            }) { Text("Delete") }
+        }
+    )
 }
 
 // ENHANCE: We use primary/secondary/tertiary for good/OK/bad here. This isn't necessarily ideal
