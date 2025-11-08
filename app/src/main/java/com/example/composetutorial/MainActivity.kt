@@ -3054,7 +3054,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 
 // TODO: This is quite a long function and might benefit from subcomposables being factored out.
 @Composable
-fun ItemSourceInfo(
+fun ItemSourceInfoLive(
     vm: HomeViewModel,
     asyncOperationStatus: AsyncOperationStatus,
     dataSet: DataSet,
@@ -4291,7 +4291,7 @@ fun HomeScreenContent(
                     Column {
                         Log.d("MyApp", "HSS dataSet $dataSet")
                         Log.d("MyApp", "HSS item $item")
-                        ItemSourceInfo(
+                        ItemSourceInfoLive(
                             vm = vm,
                             asyncOperationStatus = asyncOperationStatus,
                             dataSet = dataSet,
@@ -9242,7 +9242,7 @@ fun CardTitle(title: String, subtitle: String? = null) {
 }
 
 @Composable
-fun ItemSourceInfo2( // TODO: Rename
+fun ItemSourceInfoHistory(
     dataSet: DataSet,
     priceHistoryDelta: PriceHistoryDelta,
     modifiedAtTitleFormatter: DateTimeFormatter,
@@ -9359,7 +9359,7 @@ fun ViewPriceHistoryScreen(
                 items(priceHistoryDeltaList) { priceHistoryDelta ->
                     // TODO: This box is just a temp hack so I can attach a clickable - I will probably actually show a single-item "overflow" menu at top right to allow this "edit as new" action but this will do for the moment
                     Box(modifier = Modifier.clickable { requestEditAsNew(priceHistoryDelta.priceHistory) }) {
-                        ItemSourceInfo2(
+                        ItemSourceInfoHistory(
                             dataSet,
                             priceHistoryDelta,
                             dateFormatter,
