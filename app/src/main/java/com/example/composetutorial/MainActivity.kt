@@ -9060,11 +9060,6 @@ fun PackPriceAndSizeRow(
                     includeDisplayOnly = true
                 )
             }
-        // TODO: If we edit the price and return to the home screen, the unit price
-        // unit is not re-evaluated. This is arguably OK, but *if* the user never
-        // changed it manually, it might be smart to re-evaluate it. This might be
-        // mildly confusing. Think about it. (And test to check I have the current
-        // behaviour understood; this is a quick note.)
         Log.d("MyAppQA", "measure identityHashCode=${System.identityHashCode(measure)}")
         // NB: We are using remember() here to avoid redoing an expensive computation on every
         // recomposition. We *must not* use rememberSaveable(), because it does *not* recompute when
