@@ -8174,6 +8174,13 @@ fun diff(
     val notes = if (lhs.notes.trim() == rhs.notes.trim()) null else rhs.notes
     val priceOrQuantityChanged = (lhs.price != rhs.price) || (lhs.count != rhs.count) || (lhs.quantityInBaseUnit != rhs.quantityInBaseUnit)
     if (priceOrQuantityChanged || confirmedAt != null || notes != null) {
+        // The notes field is a legitimate source of diffs, but in practice it sometimes looks a bit
+        // odd showing it when it's empty. For the moment we elide diffs where the only change is
+        // that a note used to be empty and now it isn't. ENHANCE: There is probably scope for
+        // tweaking this.
+        if (!priceOrQuantityChanged && confirmedAt == null && notes != null && notes.trim().isEmpty()) {
+            return null
+        }
         return PriceHistoryDelta(
             priceHistory = rhs,
             price = if (!priceOrQuantityChanged) null else rhs.price,
@@ -9268,10 +9275,6 @@ fun ItemSourceInfoHistory(
                 PackPriceAndSizeRow(priceHistoryDelta.price!!, priceHistoryDelta.count!!, priceHistoryDelta.quantity!!, dataSet, AsyncOperationStatus.Idle)
             }
 
-            // TODO: Next two are possible candidates for factoring out and sharing with ItemSourceInfo(),
-            // but note that the confirmed at format differs (relative vs absolute and colour vs no colour),
-            // and the handling of empty notes just might be different too, so be careful.
-
             if (priceHistoryDelta.confirmedAt != null) {
                 LabeledItem(
                     modifier = Modifier.padding(bottom = 8.dp),
@@ -9281,18 +9284,12 @@ fun ItemSourceInfoHistory(
                 }
             }
 
-            // TODO: Should we show this if it changed *to* an empty string, or should we elide it?
-            // I think this does cause slightly odd looking diffs if *all* we do is change a note from
-            // empty to non-empty, as we get a card showing up which has nothing but the date on it.
-            // Need to test this to make sure I'm diagnosing the problem correctly.
             if (priceHistoryDelta.notes != null) {
-                if (priceHistoryDelta.notes.isNotEmpty()) {
                     Row(modifier = Modifier.padding(bottom = 8.dp)) {
                         LabeledItem("Notes") {
                             Text(priceHistoryDelta.notes)
                         }
                     }
-                }
             }
         }
     }
