@@ -6642,6 +6642,7 @@ fun SettingsScreen(
     var showStalePriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var showAncientPriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var showAnnualInflationPercentDialog by rememberSaveable { mutableStateOf(false) }
+    var showRestoreConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -6715,7 +6716,7 @@ fun SettingsScreen(
                 SettingsTile(
                     title = "Restore",
                     subtitle = "Replace all data with a backup you made earlier",
-                    onClick = onRestoreClick
+                    onClick = { showRestoreConfirmDialog = true }
                 )
             }
 
@@ -6839,6 +6840,21 @@ fun SettingsScreen(
                 },
                 onDismissRequest = {
                     showAnnualInflationPercentDialog = false
+                }
+            )
+        }
+
+        if (showRestoreConfirmDialog) {
+            AlertDialog(
+                icon = null,
+                title = { Text("Restore from backup") },
+                text = { Text("This will replace all current app data with the data from your backup. This action is permanent and cannot be undone. Do you want to continue?") },
+                onDismissRequest = { showRestoreConfirmDialog = false },
+                dismissButton = {
+                    TextButton(onClick = { showRestoreConfirmDialog = false }) { Text("Cancel") }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showRestoreConfirmDialog = false; onRestoreClick() }) { Text("Restore") }
                 }
             )
         }
@@ -9157,8 +9173,6 @@ fun backupDatabase(context: Context, targetUri: Uri) {
     backupFile.delete() // Clean up temp file
 }
 
-// TODO: We need some kind of "this will overwrite all your current data, OK/Cancel" dialog before
-// doing this.
 fun restoreDatabase(context: Context, sourceUri: Uri) {
     val dbFile = context.getDatabasePath(DB_NAME)
 
