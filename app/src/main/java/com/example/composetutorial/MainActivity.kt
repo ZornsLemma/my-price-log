@@ -6845,6 +6845,12 @@ fun SettingsScreen(
         }
 
         if (showRestoreConfirmDialog) {
+            // ENHANCE: I don't want to overdo it - but this is both destructive and rare - but
+            // should we show another final "are you sure?" dialog after the user has chosen a file
+            // inside onRestoreClick() before we actually go ahead? I think it is still good to have
+            // a dialog at this point, as it immediately makes it obvious if the user mis-tapped on
+            // restore when they meant to tap on backup - both of which would otherwise go straight
+            // into a system file selection dialog.
             AlertDialog(
                 icon = null,
                 title = { Text("Restore from backup") },
