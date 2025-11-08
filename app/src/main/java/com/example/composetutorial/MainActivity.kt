@@ -9022,18 +9022,19 @@ fun PackPriceAndSizeRow(
     dataSet: DataSet,
     asyncOperationStatus: AsyncOperationStatus
 ) {
-    // TODO: With the new count display, the shelf price can run into the unit price. Since we
-    // don't currently have an actua grid layout, maybe we should simply give shelf price 60% of the
-    // horizontal space instead of (I assume) the 50% it gets by default - there are no other rows
-    // aligning with it to make this look too odd (I hope).
+    // The two elements of this row share the space 60%/40%. The shelf price can get quite long for
+    // multipack items and 50%/50% starts to get right on small phones. We don't really need that
+    // much space for the unit price either. This might ruin a proper 2x2 grid, but in practice at
+    // least for now the row below is "Confirmed" and it theoretically has the full width of the
+    // display.
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 8.dp),
-//horizontalArrangement = Arrangement.SpaceBetween
     ) {
         LabeledItem(
-            modifier = Modifier.weight(1f), label = "Shelf price"
+            modifier = Modifier.weight(0.6f), label = "Shelf price"
         ) {
             Text(
                 "${
@@ -9117,7 +9118,7 @@ fun PackPriceAndSizeRow(
             LocalConfiguration.current.locales[0]
         )
         LabeledItemWithDropdown(
-            modifier = Modifier.weight(1f), label = "Unit price",
+            modifier = Modifier.weight(0.4f), label = "Unit price",
             dropdownContentDescription = "Select unit",
             text = unitPriceString,
             enabled = asyncOperationStatus.isNotBusy(),
