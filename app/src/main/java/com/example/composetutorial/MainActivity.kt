@@ -5286,15 +5286,7 @@ fun GeneralEditAndDeleteScreen(
         val dialogText = deleteConfirmationDetails.third
 
         AlertDialog(
-            icon = if (isSimpleDelete) null else {
-                {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = "Warning",
-                        tint = MaterialTheme.colorScheme.error
-                    )
-                }
-            },
+            icon = if (isSimpleDelete) null else { { WarningIcon(contentDescription = "Warning") } },
             title = dialogTitle,
             text = dialogText,
             onDismissRequest = { requestDeleteCancel() },
@@ -6598,11 +6590,7 @@ fun FilteredTextField(
         trailingIcon = trailingIcon
             ?: if (isError) {
                 {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = "Error",
-                        tint = MaterialTheme.colorScheme.error
-                    )
+                    WarningIcon(contentDescription = "Error")
                 }
             } else null,
         isError = isError,
@@ -6852,7 +6840,7 @@ fun SettingsScreen(
             // restore when they meant to tap on backup - both of which would otherwise go straight
             // into a system file selection dialog.
             AlertDialog(
-                icon = null,
+                icon = { WarningIcon(contentDescription = "Warning") },
                 title = { Text("Restore from backup") },
                 text = { Text("This will replace all current app data with the data from your backup. This action is permanent and cannot be undone. Do you want to continue?") },
                 onDismissRequest = { showRestoreConfirmDialog = false },
@@ -6865,6 +6853,15 @@ fun SettingsScreen(
             )
         }
     }
+}
+
+@Composable
+fun WarningIcon(contentDescription: String) {
+    Icon(
+        imageVector = Icons.Default.Warning,
+        contentDescription = contentDescription,
+        tint = MaterialTheme.colorScheme.error
+    )
 }
 
 @Composable
