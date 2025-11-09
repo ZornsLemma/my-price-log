@@ -9183,8 +9183,6 @@ fun PackPriceAndSizeRow(
         // navigating back after a new item is selected in another screen, due to saved state
         // restoration behaviour. We could force recomputation by adding a composite key like
         // "$dataSet-$price-$measure", but that's a hack and not an ideal solution.
-        // TODONOW: I need to review other uses of rememberSaveable() to make sure I'm not
-        // vulnerable to the same problem.
         // ENHANCE: That's not even the whole story. selectedUnitPriceUnit is
         // *initialised* by an expensive computation, but the user can change it, and we really
         // ought to be remembering what they select fairly persistently, at least across config
