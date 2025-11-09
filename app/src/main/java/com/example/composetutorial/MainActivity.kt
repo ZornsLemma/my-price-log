@@ -6636,7 +6636,7 @@ fun SettingsScreen(
             })
         },
     ) { innerPadding ->
-        LazyColumn( // TODO: Use Column, since it's not very long!?
+        Column(
             modifier = Modifier
                 //.background(MaterialTheme.colorScheme.primary) // TODO: debug hack
                 .fillMaxSize()
@@ -6644,6 +6644,7 @@ fun SettingsScreen(
                 // Padding here follows the same approach as GeneralSelectorScreen() - see the
                 // comment there.
                 .padding(vertical = screenBorder)
+                .verticalScroll(rememberScrollState())
         ) {
             // ENHANCE: Since stale price threshold and ancient price threshold have interrelated
             // validation, there just might be an argument for allowing them to be edited
@@ -6651,61 +6652,50 @@ fun SettingsScreen(
             // cancel out and go change the other first. This is probably not a huge deal in
             // practice. Editing these should not be an everyday activity so even if it is a bit
             // fiddly it doesn't matter that much.
-            item {
-                // TODO: I half wonder if we should do *<=* stale/ancient threshold - currently we use < in code for stale at least - just to match this description (subtitle) which feels more natural, but maybe we can reword this.
 
-                SettingsTile(
-                    title = "Stale price threshold",
-                    subtitle = "Prices considered stale after $stalePriceThreshold days",
-                    onClick = {
-                        showStalePriceThresholdDialog = true
-                    }
-                )
-            }
+            // TODO: I half wonder if we should do *<=* stale/ancient threshold - currently we use < in code for stale at least - just to match this description (subtitle) which feels more natural, but maybe we can reword this.
 
-            item {
-                SettingsTile(
-                    title = "Ancient price threshold",
-                    subtitle = "Prices considered ancient after $ancientPriceThresholdDays days",
-                    onClick = {
-                        showAncientPriceThresholdDialog = true
-                    }
-                )
-            }
+            SettingsTile(
+                title = "Stale price threshold",
+                subtitle = "Prices considered stale after $stalePriceThreshold days",
+                onClick = {
+                    showStalePriceThresholdDialog = true
+                }
+            )
 
-            item {
-                SettingsTile(
-                    title = "Annual inflation",
-                    subtitle = "Stale prices increase by $annualInflationPercent% per year",
-                    onClick = {
-                        showAnnualInflationPercentDialog = true
-                    }
-                )
-            }
+            SettingsTile(
+                title = "Ancient price threshold",
+                subtitle = "Prices considered ancient after $ancientPriceThresholdDays days",
+                onClick = {
+                    showAncientPriceThresholdDialog = true
+                }
+            )
 
-            item {
-                SettingsTile(
-                    title = "Backup",
-                    subtitle = "Back up your data to a file to keep it safe",
-                    onClick = onBackupClick
-                )
-            }
+            SettingsTile(
+                title = "Annual inflation",
+                subtitle = "Stale prices increase by $annualInflationPercent% per year",
+                onClick = {
+                    showAnnualInflationPercentDialog = true
+                }
+            )
 
-            item {
-                SettingsTile(
-                    title = "Restore",
-                    subtitle = "Replace all data with a backup you made earlier",
-                    onClick = { showRestoreConfirmDialog = true }
-                )
-            }
+            SettingsTile(
+                title = "Backup",
+                subtitle = "Back up your data to a file to keep it safe",
+                onClick = onBackupClick
+            )
 
-            item {
-                SettingsTile(
-                    title = "About $appName",
-                    subtitle = "", // empty subtitle gives consistent layout with other tiles
-                    onClick = onAboutClick
-                )
-            }
+            SettingsTile(
+                title = "Restore",
+                subtitle = "Replace all data with a backup you made earlier",
+                onClick = { showRestoreConfirmDialog = true }
+            )
+
+            SettingsTile(
+                title = "About $appName",
+                subtitle = "", // empty subtitle gives consistent layout with other tiles
+                onClick = onAboutClick
+            )
         }
 
         if (showStalePriceThresholdDialog) {
