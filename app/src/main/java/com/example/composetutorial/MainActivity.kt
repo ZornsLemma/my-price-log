@@ -3696,6 +3696,7 @@ data class EditItemScreenUIContent(
 data class EditSourceScreenUIContent(
     val editableSource: MutableState<EditableSource>,
     val originalSource: EditableSource,
+    val dataSet: DataSet,
     val frozenLocale: Locale,
 ) {
     fun saveState(savedStateHandle: SavedStateHandle) {
@@ -3712,16 +3713,19 @@ data class EditSourceScreenUIContent(
     companion object {
         private const val EDITABLE_SOURCE_KEY = "editableSource"
         private const val ORIGINAL_SOURCE_KEY = "originalSource"
+        private const val DATA_SET_KEY = "dataSet"
         private const val LOCALE_TAG = "localeTag"
 
         fun fromSavedState(savedStateHandle: SavedStateHandle): EditSourceScreenUIContent? {
             val savedEditableSource: EditableSource? = savedStateHandle[EDITABLE_SOURCE_KEY]
             val savedOriginalSource: EditableSource? = savedStateHandle[ORIGINAL_SOURCE_KEY]
+            val savedDataSet: DataSet? = savedStateHandle[DATA_SET_KEY]
             val savedLocaleTag: String? = savedStateHandle[LOCALE_TAG]
-            if (savedEditableSource != null && savedOriginalSource != null && savedLocaleTag != null) {
+            if (savedEditableSource != null && savedOriginalSource != null && savedDataSet != null && savedLocaleTag != null) {
                 return EditSourceScreenUIContent(
                     mutableStateOf(savedEditableSource),
                     savedOriginalSource,
+                    savedDataSet,
                     Locale.forLanguageTag(savedLocaleTag)
                 )
             } else {
@@ -4620,11 +4624,7 @@ fun EditPriceScreen(
     GeneralEditScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
-        // TODO: Do not use "Edit price" (even though we call it that internally, because it's the
-        // "price" table), you can also eg edit pack size and probably a free text notes field etc.
-        // See also the TODO below about the two disabled text fields we currently have and maybe
-        // getting rid of them.
-        title = { Text("TODO: Dialog Title") }, // TODO: use topAppBarTitle to have title and subtitle?
+        title = topAppBarTitle(vm.uiContent.item.name, vm.uiContent.source.name),
         isDirty = {
             uiContent.editablePrice.value.copy(toConfirm = false) !=
                     uiContent.originalPrice.copy(toConfirm = false)
@@ -4634,29 +4634,6 @@ fun EditPriceScreen(
         onIdle = {},
         requestClose = requestClose,
     ) {
-        // TODO: Probably have a note elsewhere but these two disabled text fields are perhaps a bit ugly
-        // and maybe not MD3-ish. Moving these into the title and subtitle of the top bar may be the
-        // way to go. Or something else, but I do feel they look a bit ugly and maybe even confusing,
-        // as the user might wonder "how" they could become enabled.
-        TextField(
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Product") },
-            value = uiContent.item.name,
-            enabled = false,
-            onValueChange = {})
-
-        // TODO: Maybe pull this 16.dp form vertical spacing value out into a named constant.
-        Spacer(modifier = Modifier.height(16.dp))
-
-        TextField(
-            modifier = Modifier.fillMaxWidth(),
-            label = { Text("Store") },
-            value = uiContent.source.name,
-            enabled = false,
-            onValueChange = {})
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         // We put the price above the pack size. This matches the order we show things (at least in
         // English) on the read-only home screen. It also ties in with the price usually being the
         // primary item on a shelf label. ENHANCE: If anyone expresses an interest, we could make
@@ -5358,8 +5335,7 @@ fun EditItemScreen(
     GeneralEditAndDeleteScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
-        // TODO: Different title for add vs edit? Title should maybe show data set name?
-        title = { Text("TODO: TITLE") }, // TODO: Don't forget topAppBarTitle, we quite poss want a title and subtitle
+        title = topAppBarTitle( if (vm.uiContent.editableItem.value.id == 0L) "Add product" else "Edit product", vm.uiContent.dataSet.name),
         isDirty = { uiContent.editableItem.value != uiContent.originalItem },
         validateForSave = { vm.validateForSave() },
         performSave = { vm.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
@@ -5636,8 +5612,7 @@ fun EditSourceScreen(
     GeneralEditAndDeleteScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
-        // TODO: Different title for add vs edit? Title should maybe show data set name?
-        title = { Text("TODO: TITLE") }, // TODO: probably use topAppBarTitle for title and subtitle
+        title = topAppBarTitle(if (vm.uiContent.editableSource.value.id == 0L) "Add store" else "Edit store", vm.uiContent.dataSet.name),
         isDirty = { uiContent.editableSource.value != uiContent.originalSource },
         validateForSave = { vm.validateForSave() },
         performSave = { vm.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
@@ -5967,8 +5942,7 @@ fun EditDataSetScreen(
     GeneralEditAndDeleteScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
-        // TODO: Different title for add vs edit?
-        title = { Text("TODO: TITLE") }, // TODO: may want to use topAppBarTitle() for title+subtitle
+        title = { Text(if (uiContent.editableDataSet.value.id == 0L) "Add collection" else "Edit collection") },
         isDirty = { uiContent.editableDataSet.value != uiContent.originalDataSet },
         validateForSave = { vm.validateForSave() },
         performSave = { vm.performSave(); /* throw IllegalArgumentException("TODO2") */ },
@@ -7359,6 +7333,34 @@ data class EditItemsScreenUIContent(
     }
 }
 
+
+data class EditSourcesScreenUIContent(
+    val sourceList: List<Source>,
+    val dataSet: DataSet
+) {
+    fun saveState(handle: SavedStateHandle) {
+        handle[SOURCE_LIST_KEY] = sourceList
+        handle[DATA_SET_KEY] = dataSet
+    }
+
+    companion object {
+        private const val SOURCE_LIST_KEY = "sourceList"
+        private const val DATA_SET_KEY = "dataSet"
+
+        fun fromSavedState(handle: SavedStateHandle): EditSourcesScreenUIContent? {
+            val savedSourceList: List<Source>? = handle[SOURCE_LIST_KEY]
+            val savedDataSet: DataSet? = handle[DATA_SET_KEY]
+            if (savedSourceList != null && savedDataSet != null) {
+                Log.d("MyApp", "reconstructed EditSourcesScreenUIContent")
+                return EditSourcesScreenUIContent(savedSourceList, savedDataSet)
+            } else {
+                Log.d("MyApp", "couldn't reconstruct EditSourcesScreenUIContent")
+                return null
+            }
+        }
+    }
+}
+
 // Shared ViewModel to pass data between screens
 // TODO: Some inconsistency between "UIContent" and "Content" here - think about renaming.
 class SharedViewModel : ViewModel() {
@@ -7454,7 +7456,7 @@ class SharedViewModel : ViewModel() {
     // TODO: Rename the following now they are just List<T>? not a UIContent structure? Or is the "UIContent" convention more valuable?
     var editDataSetsScreenUIContent: List<DataSet>? = null
     var editItemsScreenUIContent: EditItemsScreenUIContent? = null
-    var editSourcesScreenUIContent: List<Source>? = null
+    var editSourcesScreenUIContent: EditSourcesScreenUIContent? = null
 
     // TODO: The "doubling" in the next three functions is a temporary hack to show that we use the
     // initial list and then it gets replaced by the query results from the database. The map step
@@ -7474,8 +7476,10 @@ class SharedViewModel : ViewModel() {
     }
 
     fun setEditSourcesScreenContent(uiContent: HomeScreenUIContent) {
-        editSourcesScreenUIContent =
-            uiContent.sourceList + uiContent.sourceList.map { it -> it.copy(id = it.id * 1000) }
+        editSourcesScreenUIContent = EditSourcesScreenUIContent(
+            uiContent.sourceList + uiContent.sourceList.map { it -> it.copy(id = it.id * 1000) },
+            uiContent.dataSet!!
+        )
     }
 
     var editDataSetScreenUIContent: EditDataSetScreenUIContent? = null
@@ -7504,13 +7508,14 @@ class SharedViewModel : ViewModel() {
     fun setEditSourceScreenContent(
         // TODO: name should include "FromBlah"? or maybe that's a silly convention?
         source: Source?,
-        dataSetId: Long,
+        dataSet: DataSet,
         frozenLocale: Locale
     ) {
-        val editableSource = EditableSource.fromSource(source, dataSetId, frozenLocale)
+        val editableSource = EditableSource.fromSource(source, dataSet.id, frozenLocale)
         editSourceScreenUIContent = EditSourceScreenUIContent(
             editableSource = mutableStateOf(editableSource),
             originalSource = editableSource,
+            dataSet = dataSet,
             frozenLocale = frozenLocale,
         )
     }
@@ -7585,6 +7590,22 @@ class EditItemsViewModel(
     savedStateHandle,
     getName,
     uiContent.itemList /* TODO: rename initialList for consistency with other cases? */,
+    dataQuery
+) {
+    init {
+        uiContent.saveState(savedStateHandle)
+    }
+}
+
+class EditSourcesViewModel(
+    savedStateHandle: SavedStateHandle,
+    getName: (Source) -> String,
+    val uiContent: EditSourcesScreenUIContent,
+    dataQuery: Flow<List<Source>>,
+) : GeneralSelectorViewModel<Source>(
+    savedStateHandle,
+    getName,
+    uiContent.sourceList /* TODO: rename initialList for consistency with other cases? */,
     dataQuery
 ) {
     init {
@@ -8746,17 +8767,18 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
-            screenWithViewModel<GeneralSelectorViewModel<Source>, Int /* TODO DUMMY */>(
+            screenWithViewModel<EditSourcesViewModel, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
                 // TODO: Could should sharedViewModel have a clearAllContent() or similar function
                 // and we just call that in clearUIContent? That way we could be sure *no* old
                 // content is lurking around.
                 clearUIContent = { sharedViewModel.editSourcesScreenUIContent = null },
                 buildViewModel = { app, handle ->
-                    GeneralSelectorViewModel(
+                    val uiContent = sharedViewModel.editSourcesScreenUIContent ?: EditSourcesScreenUIContent.fromSavedState(handle)!!
+                    EditSourcesViewModel(
                         savedStateHandle = handle,
                         getName = { it -> it.name },
-                        initialList = sharedViewModel.editSourcesScreenUIContent,
+                        uiContent,
                         dataQuery = app.priceTrackerRepository.getAllSources(dataSetId)
                     )
                 }
@@ -8773,13 +8795,13 @@ fun AppNavigation() {
                     getName = { it.name },
                     onAddClick = {
                         Log.d("MyAppGS", "Add source")
-                        sharedViewModel.setEditSourceScreenContent(null, dataSetId, locale)
+                        sharedViewModel.setEditSourceScreenContent(null, viewModel.uiContent.dataSet, locale)
                         navController.navigate("editSource")
                     },
                     addContentDescription = "Add source",
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
-                        sharedViewModel.setEditSourceScreenContent(it, dataSetId, locale)
+                        sharedViewModel.setEditSourceScreenContent(it, viewModel.uiContent.dataSet, locale)
                         navController.navigate("editSource")
                     })
             }
@@ -9359,7 +9381,7 @@ fun ViewPriceHistoryScreen(
                         Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Back")
                     }
                 },
-                title = { Text("TODO") },
+                title = topAppBarTitle(viewModel.uiContent.item.name, viewModel.uiContent.source.name),
             )
         },
 
@@ -10206,3 +10228,7 @@ val capitalization = when (capString) {
 // didn't necessarily test this all that thoroughly to start with but the most likely source of
 // breakage is the fact that when "restoring" a historical price after a deletion, there is no
 // "current" price ID to update, we are instead inserting a new price with a new ID.
+
+// ENHANCE: It is possible that using SQLDelight would simplify the database queries. In particular,
+// it may avoid the problem where Room flows are not clearly tagged with the query parameters that
+// originated them, which I think is responsible for some of my data flow complexity.
