@@ -330,7 +330,7 @@ enum class MeasurementUnit(
         1.0,
         false,
         perSymbol = " ",
-    ), // TODO: RENAME "EACH" TO "ITEM"?
+    ),
     EACH10(102, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", "10", 1, 10.0, true),
     EACH100(103, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", "100",2, 100.0, true),
 
