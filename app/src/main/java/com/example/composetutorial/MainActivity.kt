@@ -10072,12 +10072,6 @@ Log.d("MyApp", baz.toString())
 
 // Note to self: I used scaling 61% when importing app-icon-4.svg as a new image asset for the icon.
 
-// TODO: Validation text might be slightly warmer but still brief (which I think is desirable) e.g.
-// "Please enter a value" or "Pack size is required" or "Enter a valid number". (vs "Can't be
-// empty", "Must specify a pack size", "Invalid number" - I just made these up talking to ChatGPT,
-// they are not necessarily what the code actually says, I didn't check.) Perhaps don't use "Please"
-// - it may seem repetitive if we have lots of validation failures.
-
 // ENHANCE: It might be nice to offer an "are you sure? this is x% more/less than before" type
 // confirmation dialog when saving a price change where the (unit price? pack price? pack size?) has
 // changed by more than a threshold, to help catch typos early.
