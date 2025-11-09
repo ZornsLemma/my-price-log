@@ -240,6 +240,12 @@ import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.room.Index
+import com.example.composetutorial.EditPriceScreenUIContent.Companion.DATA_SET_KEY
+import com.example.composetutorial.EditPriceScreenUIContent.Companion.ITEM_KEY
+import com.example.composetutorial.EditPriceScreenUIContent.Companion.LOCALE_TAG
+import com.example.composetutorial.EditPriceScreenUIContent.Companion.NON_LINEAR_EDIT_KEY
+import com.example.composetutorial.EditPriceScreenUIContent.Companion.ORIGINAL_PRICE_KEY
+import com.example.composetutorial.EditPriceScreenUIContent.Companion.SOURCE_KEY
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -8174,7 +8180,19 @@ data class ViewPriceHistoryScreenUIContent(
     val source: Source,
     val price: Price?,
 ) {
+    fun saveState(handle: SavedStateHandle) {
+        handle[DATA_SET_KEY] = dataSet
+        handle[ITEM_KEY] = item
+        handle[SOURCE_KEY] = source
+        handle[PRICE_KEY] = price
+    }
+
     companion object {
+        private const val DATA_SET_KEY = "dataSet"
+        private const val ITEM_KEY = "item"
+        private const val SOURCE_KEY = "source"
+        private const val PRICE_KEY = "price"
+
         fun fromSavedState(handle: SavedStateHandle): ViewPriceHistoryScreenUIContent? {
             TODO() // TODO: We also need to make sure this actually gets saved in the first place
         }
@@ -8255,7 +8273,8 @@ class ViewPriceHistoryViewModel(
     val uiContent: ViewPriceHistoryScreenUIContent,
 ) : ViewModel() {
     init {
-        // TODO!?uiContent.saveState(savedStateHandle)
+        Log.d("MyApp", "ViewPriceHistoryViewModel.init($uiContent)")
+        uiContent.saveState(savedStateHandle)
     }
 
     val priceHistoryListFlow = priceTrackerRepository.getPriceHistory(
