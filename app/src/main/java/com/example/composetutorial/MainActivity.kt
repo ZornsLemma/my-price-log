@@ -556,7 +556,7 @@ fun formatDouble(
     return numberFormat.format(value)
 }
 
-@Parcelize // TODO: can we get rid of this later?
+@Parcelize
 // TODO: Maybe rename this "Quantity"? (And keep QuantityType for MASS/VOLUME/etc)
 data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcelable {
     // TODO: We could make quantityType public and slightly simplify some of our callers, but it's
@@ -1828,7 +1828,7 @@ data class PriceWithItemEntity(
 
 // Price is a domain-level class which is nice for us to work with, once we've got away from the
 // database layer.
-@Parcelize // TODO: Can we get rid of this later!?
+@Parcelize
 data class Price(
     val id: Long = 0,
     val dataSetId: Long,
