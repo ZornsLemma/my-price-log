@@ -3437,6 +3437,9 @@ data class HomeScreenUIContent(
     val itemList: List<Item>,
     val source: Source?,
     val sourceList: List<Source>,
+    // TODO: priceList is almost unused, and since priceAnalysis includes all prices and has a Price
+    // object for each price as well, we could almost certainly remove priceList and just use
+    // priceAnalysis everywhere.
     val priceList: List<Price>,
     val priceAnalysis: PriceAnalysis,
 ) {
