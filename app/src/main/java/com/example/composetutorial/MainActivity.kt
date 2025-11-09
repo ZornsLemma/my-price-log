@@ -6978,7 +6978,7 @@ fun getAppVersion(): String {
             } else {
                 pInfo.versionCode.toLong()
             }
-            "Version $versionName ($versionCode)"
+            "Version $versionName" // could add " ($versionCode)"?
         } catch (e: PackageManager.NameNotFoundException) {
             "Version unknown"
         }
