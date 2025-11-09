@@ -8194,7 +8194,24 @@ data class ViewPriceHistoryScreenUIContent(
         private const val PRICE_KEY = "price"
 
         fun fromSavedState(handle: SavedStateHandle): ViewPriceHistoryScreenUIContent? {
-            TODO() // TODO: We also need to make sure this actually gets saved in the first place
+            val savedDataSet: DataSet? = handle[DATA_SET_KEY]
+            val savedItem: Item? = handle[ITEM_KEY]
+            val savedSource: Source? = handle[SOURCE_KEY]
+            val savedPrice: Price? = handle[PRICE_KEY]
+            // We don't check savedPrice in the next line, because it can be null even if we have
+            // saved state. The other non-nullable keys act as our sentinels.
+            if (savedDataSet != null && savedItem != null && savedSource != null) {
+                Log.d("MyApp", "reconstructed ViewPriceHistoryScreenUIContent")
+                return ViewPriceHistoryScreenUIContent(
+                    savedDataSet,
+                    savedItem,
+                    savedSource,
+                    savedPrice
+                )
+            } else {
+                Log.d("MyApp", "couldn't reconstruct ViewPriceHistoryScreenUIContent")
+                return null
+            }
         }
     }
 }
