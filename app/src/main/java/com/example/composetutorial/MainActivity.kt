@@ -9392,8 +9392,6 @@ fun ViewPriceHistoryScreen(
     }
 }
 
-// TODO: I should probably lock the app to portrait mode
-
 // General note type comments to put somewhere appropriate in long term:
 
 
