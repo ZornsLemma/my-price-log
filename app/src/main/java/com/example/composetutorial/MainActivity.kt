@@ -513,6 +513,7 @@ fun getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
     // the returned MeasurementUnits are US or imperial floz/pint/gallon.)
     val unitFamily = measurementUnit.unitFamilies.intersect(getRelevantUnitFamilies(dataSet))
     devCheck(unitFamily.size == 1) {
+        // TODO: This message is technically incorrect, size could be 0 - tweak if this possibility remains
         "measurementUnit ${measurementUnit.id} belongs to multiple unit families for data set " +
                 "${dataSet.id}: ${unitFamily.size}"
     }
@@ -2198,6 +2199,12 @@ class HomeViewModel(
                         "MyFlow",
                         "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
                     )
+
+                    // TODO: Possibly at this point we should be "sanitising" price list to change
+                    // user-entered "display units" from anything which isn't currently part of the
+                    // dataset to one that is. This would non-destructively fix the problem when we
+                    // come to display it and its unit family is no longer valid without hacking
+                    // around it there.
 
                     // ENHANCE: I suspect in practice this analysis is lightweight enough we are
                     // fine doing it in this coroutine on the main thread, but just possibly we
@@ -10019,6 +10026,10 @@ Log.d("MyApp", baz.toString())
 // and then they turn imperial off for the collection? Will we still show in imperial by default but
 // not allow it in the drop down? Will we force display into a unit (picking the best on a
 // significant digits basis or something) in an allowed system?
+
+// TODO: Is there a corner case where a user has a saved price in imperial oz, edits the data set
+// to switch from imperial to US customary, and then a) sees a misleading "oz" using the imperial
+// measurement (we don't convert) b) some our logic to attempt to "interpret" oz gets confused?
 
 // TODO: ErrorHighlightBoxes and their offsets and the general layout of the forms they highlight is
 // probably a bit inconsistent and could do with a review.
