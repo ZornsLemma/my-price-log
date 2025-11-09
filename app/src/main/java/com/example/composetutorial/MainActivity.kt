@@ -9701,6 +9701,9 @@ fun inflationAdjustedPrice(price: Double, ageDays: Long, priceAgeSettings: Price
     if (ageDays < priceAgeSettings.stalePriceThreshold) {
         return price
     } else {
+        // Note that inflation starts to apply only from stalePriceThreshold; the exponent here is
+        // ageDays - stalePriceThreshold. We don't want to suddenly apply the previous
+        // stalePriceThreshold days' worth of inflation the instant a price becomes stale.
         return price * (1.0 + priceAgeSettings.annualInflationPercent / 100.0).pow((ageDays - priceAgeSettings.stalePriceThreshold) / 365.25)
     }
 }
@@ -10074,39 +10077,6 @@ Log.d("MyApp", baz.toString())
 // empty", "Must specify a pack size", "Invalid number" - I just made these up talking to ChatGPT,
 // they are not necessarily what the code actually says, I didn't check.) Perhaps don't use "Please"
 // - it may seem repetitive if we have lots of validation failures.
-
-// TODO: It may be desirable for users to be able to outright delete the price of a product at a
-// store - imagine they haven't visited the store in a year and don't plan to and are sick of seeing
-// the outdated inflation-adjusted price with little connection to reality. Of course they could
-// just delete the store, but it's nice to give them the choice to delete just some prices - maybe
-// the store sells some items nowhere else does, so keeping *those* item prices around is worth
-// something. This is also useful because if the user accidentally e.g. enters a price against the
-// wrong store and the store they entered the price against doesn't actually sell it (or the price
-// is unknown) so you can't fix it by entering the correct price, you're stuck with meaningless data
-// at present.
-
-// TODO: We should probably call our inflation "pessimistic inflation rate" in UI, and default it to
-// 5% or 10% per year. For prices >inflation thresold old, we start applying it compounded daily
-// *from the threshold* (not from day 0) - we don't want a sudden big inflation jump just because a
-// price became "eligible" for inflation.
-
-// TODO: I am starting to think (and have already said so in other TODOs, probably) that the
-// ItemSourceInfo card should perhaps be expanded a bit and have text messages saying things like
-// "Price is old, please try to update it" *as well as* the judgement (if any).
-
-// TODO: Maybe it would be OK to use *just* icons to indicate both judgement and age in the by-store
-// list at the bottom of the home screen *if* those *exact same icons with the same colouring*  were
-// used on the "specific store" card - the judgement one next to our text judgement, and the age one
-// in the "confirmed" box ()where we might then get rid of the coloured text if it's old and just
-// stick with the icon) Part of my thinking here is that with e.g. "Sainsbury's Local" on a single
-// line in that unit-price-by-store list, after shwoing the unit price as well, even "(tick) Good
-// price" is a real push to fit in the remaining space on my small emulated phone.
-
-// TODO: Just possibly each entry in the unit-price-by-store list could show the percentage increase
-// from the previous item? Or the percentage increase compared to the best price? But even the fact
-// I can think of these two interpretations might mean this is unnecessarily confusing, and does the
-// user really need/want to know this percentage difference that badly? They can see the price is
-// "a pound extra per 100" or "nearly double" or whatever, I guess.
 
 // ENHANCE: It might be nice to offer an "are you sure? this is x% more/less than before" type
 // confirmation dialog when saving a price change where the (unit price? pack price? pack size?) has
