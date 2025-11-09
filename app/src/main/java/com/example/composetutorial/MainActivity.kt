@@ -10108,26 +10108,13 @@ Log.d("MyApp", baz.toString())
 // user really need/want to know this percentage difference that badly? They can see the price is
 // "a pound extra per 100" or "nearly double" or whatever, I guess.
 
-// TODO: It is just about possible to notice that e.g. the "Product" dropdown at the top of the
-// home screen is higher than the search field at the top of the Edit Product screen as you navigate
-// between them. In the absence of solid guidance otherwise (and I may have TODOs about this elsewhere,
-// not sure), there might be a consistency argument for having a gap between top app bar and top
-// component. There may be a similar cosistency argument (again towards "Edit products" and maybe
-// its siblings changing, though they will show the problem less dramatically as they don't have a
-// TextField at top) with the vertical positioning of the "Name" field at the top of the individual
-// "Edit Foo" screens. - I have a feeling I fixed this, but i ought to put debug backgrounds in
-// again and check before deleting this TODO.
-
 // ENHANCE: It might be nice to offer an "are you sure? this is x% more/less than before" type
 // confirmation dialog when saving a price change where the (unit price? pack price? pack size?) has
 // changed by more than a threshold, to help catch typos early.
 
-// TODO: Some thoughts on confirm/undo confirm/history after talking with ChatGPT:
-// - allow user to pick a historical entry and it appears in the "edit price" dialog (maybe with the confirm option missing - we would *always* preserve the old confirmed_at), then if they save from there that saves as the newest version of the record - this gives a "long range undo"
-// - don't allow users to edit history except maybe (what ChatGPT actually said) to edit an "oops" field/flag where they can type "price is a typo" if they want - I could possibly tweak this to just use the notes field, but maybe a separate un-editable historical_note/oops text field is nice - albeit this is extra UI
-// - I personally think it might be OK to allow users to delete historical entries if they *really* want, but not sure this is necessary or ideal
-// - the "confirm" button turns into "undo confirm" only briefly, for say 30-60s and it goes away if they change product or store or the app is closed and re-opened and has been reincarnated or whatever - it's a convenient, we don't *want* it to appear for very long as it invites accidental *undo* when it's too late to fix (albeit everything is in the history), and there is the history based "clone this point as new state, with chance to edit first" undo to fall back on whatever
-// - maybe have a restored_at nullable instant on the price table, which is *not* preserved as we update the record (it gets set to null) but is used (purely internally, at least for now) to track when a new price was created based on restoring from a (perhaps edited) historical price
+// ENHANCE: I don't think it's that important, but some history editing support might be nice:
+// - maybe allow the notes field to be edited in history entries ("this was a price typo")
+// - maybe allow history entries to be outright deleted (expunge mistakes completely)
 
 /* TODO: When I add translation, I should probably allow the translator to indirectly specify
    keyboard hints - e.g. product name in English probably wants Words, but in Spanish probably None.
@@ -10144,12 +10131,12 @@ val capitalization = when (capString) {
         <string name="grocery_capitalization">none</string>
 */
 
-// TODONOW: I might (it's early days as I write this) have a tendency to start typing the name of a
-// product I want to add into the search box at the top of the "edit products" screen. It might be
-// worth copying any search string into the name field when the add button is clicked. Maybe this
-// would be annoying, but perhaps it's less annoying overall than having to type it twice.
+// ENHANCE: I sometimes start typing the name of a product into the search box at the top of the
+// "edit products" screen, realise it's not there and want to add it. It might be worth (maybe gated
+// by a setting) copying the search string from that screen into the name field on the add product
+// screen when you click the add button in this case. This would save having to re-type it.
 
-// TODO: I perhaps ought to be more aggressive at forcing focus into a textfield, e.g. when editing
+// ENHANCE: I perhaps ought to be more aggressive at forcing focus into a textfield, e.g. when editing
 // a product/source/dataset. I think there is probably an argument for *not* forcing this when using
 // the "product list" screen with a search box, because the user might want to just scroll the list,
 // but for the edit screens the user is going to want to edit something. It may be the best
@@ -10158,10 +10145,14 @@ val capitalization = when (capString) {
 // All I know is I find myself vaguely annoyed on the O6 at having to do an extra tap to get the
 // focus there and bring up the OSK, but do be careful about this. No idea what is "standard" or
 // "advised" by MD3 or general Android conventions, a chat with an LLM might offer some perspectives
-// even if they're not guaranteed to be "correct".
+// even if they're not guaranteed to be "correct". It might also be a good idea to have a setting
+// which controls whether we force focus onto the search control on the product selection dialog -
+// some people (including me?) might nearly always want to do a text search rather than scrolling
+// the list to browse, and in that case the experience is nicer if you can avoid needing to tap to
+// focus.
 
-// TODONOW: It might be a good idea to have a setting which controls whether view history elides
-// entries which are nothing but confirmation date changes.
+// ENHANCE: It might be a good idea to have a setting which controls whether the view history elides
+// diffs which are nothing but confirmation date changes.
 
 // ENHANCE: Some sort of feature for showing best ever price for a product across all stores, or
 // probably better some variant on this where we show some (not too stats nerdy) "best price range"
