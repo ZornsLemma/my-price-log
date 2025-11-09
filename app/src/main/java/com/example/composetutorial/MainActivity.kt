@@ -1663,7 +1663,6 @@ data class EditableSource(
         Index(value = ["item_id", "source_id"], unique = true),
     ]
 )
-@Parcelize // TODO: probably won't need this once the edit dialog is written to use new style viewmodel data stuff
 data class PriceEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
@@ -1703,7 +1702,7 @@ data class PriceEntity(
     // modifiedAt is borderline redundant here, but it feels generally neater to have it here as
     // well as on PriceHistory and probably simplifies things.
     @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
-) : Parcelable
+)
 
 // This must be kept in sync with any changes to PriceEntity.
 @Entity(
