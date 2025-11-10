@@ -1372,25 +1372,9 @@ data class Item(
     // default_unit implicitly specifies the item's QuantityType. It also serves as the default unit
     // to use when the user is entering the first price for an (item, source) combination.
     @ColumnInfo(name = "default_unit") val defaultUnit: MeasurementUnit,
-    // TODO: GUI should probably restrict and/or warn before changing default_unit between
-    // MeasurementUnits - maybe if you have no prices yet you can do it. (It's completely fine to change
-    // within a MeasurementUnit.)
     @ColumnInfo(name = "allow_multipack") val allowMultipack: Boolean,
     val notes: String,
 ) : Parcelable
-// TODO: Will temporarily make a note here - I may simply (especially in v1) refuse to allow changes
-// of quantity_type in the product edit screen. There is no trivial way to convert. If the user gets
-// it wrong and cares, they will notice pretty quickly so having to delete and recreate the product
-// shouldn't a huge loss. If the user doesn't notice and doesn't care (and things will mostly "just
-// work"), e.g. if the quantity type should be weight but they choose volume and we end up with
-// default unit ml but they just type in pack sizes in grammes, things will work as long as they are
-// consistent and don't try to do any conversions (which are not a major feature of the current
-// design). Fixing this up properly would require a fairly sophisticated and unintuitive GUI where
-// we ask the user "what they thought they were entering" so we can apply a suitable correction
-// factor (imagine they entered oz weights but the system recorded them as ml, we need to convert
-// the "fake" ml values via an oz->gramme conversion to fix up the prices in the database, as
-// weights are stored as grammes in there). Not saying a fix it up option won't ever appear if there
-// is any demand for it, but even if it exists we probably don't want to over-encourage its use.
 
 // Note that we have the suprisingly horrific code around defaultUnitIdByQuantityTypeOrdinal instead
 // of a simple "val defaultUnit: MeasurementUnit" because I thought it would be user-friendly to keep
@@ -5423,18 +5407,19 @@ fun EditItemScreen(
                 )
                 //Spacer(modifier = Modifier.height(8.dp))
                 options.forEach { (id, name, supportingText) ->
+                    val clickableModifier = if (itemReferenceCount != 0L) Modifier else Modifier.clickable {
+                        vm.setUIContentEditableItem(
+                            uiContent.editableItem.value.copy(
+                                quantityType = id
+                            )
+                        )
+                    }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
                             //.background(Color.Blue)
-                            .clickable {
-                                vm.setUIContentEditableItem(
-                                    uiContent.editableItem.value.copy(
-                                        quantityType = id
-                                    )
-                                )
-                            }
+                            .then(clickableModifier)
                             .padding(horizontal = 8.dp)
                             .height(48.dp) // 40.dp is MD3 spec but we want extra space for our supporting text while still having some spacing between items
                             .semantics {
@@ -5443,6 +5428,7 @@ fun EditItemScreen(
                     ) {
                         RadioButton(
                             selected = (selectedOption == id),
+                            enabled = itemReferenceCount == 0L,
                             onClick = null // the enclosing Row is clickable instead
                         )
                         Column(modifier = Modifier.padding(start = 8.dp)) {
@@ -5460,9 +5446,16 @@ fun EditItemScreen(
                         }
                     }
                 }
+                if (itemReferenceCount != 0L) {
+                    SupportingText(
+                        "The 'Sold by' setting can’t be changed because there are prices recorded for this product.",
+                        isError = false,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
 
                 if (selectedOption != QuantityType.ITEM) {
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // TODO: RelevantUnit* here are sort of copy and paste from ItemSourceInfo and
                     // could possibly be factored out along with the code using them
