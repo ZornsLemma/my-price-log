@@ -129,8 +129,6 @@ fun PriceWithItemEntity.toDomain(): Price {
     )
 }
 
-// Price is a domain-level class which is nice for us to work with, once we've got away from the
-// database layer.
 @Parcelize
 data class Price(
     val id: Long = 0,
@@ -184,9 +182,9 @@ fun Price.toEditable(locale: Locale, currencyFormat: CurrencyFormat): EditablePr
         maxDecimals = currencyFormat.decimalPlaces,
         locale
     ),
-// Rounding is particularly important here - for non-metric measures, which are stored in
-// doubles in metric base units in the database, if we didn't round we could end up with
-// some visible noise in the least significant decimal places.
+    // Rounding is particularly important here - for non-metric measures, which are stored in
+    // doubles in metric base units in the database, if we didn't round we could end up with some
+    // visible noise in the least significant decimal places.
     measureValue = formatDoubleForEditing(
         quantity.value, minDecimals = 0, maxDecimals = quantity.unit.maxDecimals, locale
     ),
@@ -197,8 +195,6 @@ fun Price.toEditable(locale: Locale, currencyFormat: CurrencyFormat): EditablePr
     itemDefaultUnit = itemDefaultUnit
 )
 
-// A version of Price we can use while editing - it holds the same basic information but with mostly
-// string representations for editability.
 @Parcelize
 data class EditablePrice(
     val id: Long,
@@ -236,17 +232,13 @@ data class EditablePrice(
     }
 }
 
-// TODO: Tempish note - EditablePrice is a sort of "variant domain" class just for editing - we
-// need to convert it to the "primary" domain class Price here. This name might be confusing
-// all the same, as we are approaching domain from the opposite side to a toDomain() on an
-// entity class
 fun EditablePrice.toDomain(locale: Locale): Price? {
     val priceDouble = parseStringAsDoubleOrNull(locale, price)
-    // If we are adding a first price for a non-multipack item, count may be an empty string and
-    // we interpret that as 1. It's possible that at some point we will also allow count to be
-    // empty for multipack items and interpret that as one, although currently the validation
-    // will prevent us getting this far in that case. trim() is used to help with that case,
-    // even though it's currently not strictly necessary.
+    // If we are adding a first price for a non-multipack item, count may be an empty string and we
+    // interpret that as 1. It's possible that at some point we will also allow count to be empty
+    // for multipack items and interpret that as 1, although currently the validation will prevent
+    // us getting this far in that case. trim() is used to help with that case, even though it's
+    // currently not strictly necessary.
     val countLong =
         if (count.trim().isEmpty()) 1L else parseStringAsDoubleOrNull(locale, count)?.toLong()
     val measureValueDouble = parseStringAsDoubleOrNull(locale, measureValue)
