@@ -559,8 +559,6 @@ fun formatDouble(
 @Parcelize
 // TODO: Maybe rename this "Quantity"? (And keep QuantityType for MASS/VOLUME/etc)
 data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcelable {
-    // TODO: We could make quantityType public and slightly simplify some of our callers, but it's
-    // *probably* clearer to make them go through unit to get to it.
     private val quantityType: QuantityType get() = unit.quantityType
 
     fun to(unit: MeasurementUnit): MeasuredValue {
@@ -644,30 +642,22 @@ abstract class AppDatabase : RoomDatabase() {
 }
 
 suspend fun populateDemoData(repository: PriceTrackerRepository, context: Context) {
-    // ENHANCE: More demo data sets might be nice, but don't want to burden the user with too many.
-    // I was thinking that an imperial data set might be nice, but then again we already have pints
-    // in the grocery demo data.
     // ENHANCE: We could pick one of IMPERIAL or US_CUSTOMARY based on the current locale, but in
     // practice we just want to show we support multiple units, and it isn't as if a native US
     // customary user is going to get too confused (if they even notice) that "pint" (for example)
     // has the wrong metric equivalent here - it's just demo data.
-    // TODO: It's probably smart to default the demo data to the local currency, since that will
-    // look most natural to our new user, but do rethink this afterwards. (It's also just possible,
-    // remember, that they will start editing the demo dataset for their own use, rather than
-    // starting again with a fresh dataset.)
-    // TODO: We should have some demo products which are (fake) "branded" products, so get the idea
-    // across that this is another way to do things if you are brand-sensitive on a particular item
-    // TODO: I should probably have a demo set using a currency like JPY which doesn't have 2dp - or
-    // perhaps better, have something I can turn on for debug builds which will do that, but don't
-    // pollute the user initial database with it
-    // TODO: We should maybe - perhaps not worth worrying about - avoid using the demo data designed
-    // for 2dp currencies with e.g. JPY, if only by forcing the currency to be something else even
-    // if that's the system default, or perhaps applying a multiplier of 10^(2-currencydps) to all
-    // the prices just so they are "readable"
+    // ENHANCE: We could add some demo products which are (fake) branded products rather than
+    // generic categories, as this is a legitimate thing to do where the user is brand-sensitive.
+    // It probably doesn't really matter though.
+    val currency = Currency.getInstance(Locale.getDefault())
+    // The demo data uses 2 decimal places so we scale it by currencyMultiplier when inserting so
+    // we have unrealistic but at least workable prices for things like JPY. The prices aren't meant
+    // to be realistic anyway.
+    val currencyMultiplier = 10.0.pow(2 - currency.defaultFractionDigits)
     val dataSetId = repository.updateOrInsertDataSet(
         DataSet(
             name = "Groceries (demo)",
-            currencyCode = "EUR", // TODO TEMP HACK Currency.getInstance(Locale.getDefault()).currencyCode,
+            currencyCode = currency.currencyCode,
             allowMetric = true,
             allowImperial = true,
             allowUSCustomary = false,
@@ -755,7 +745,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             itemId = itemIdGroundCoffee,
             sourceId = sourceIdValueMart,
-            price = 2.03,
+            price = 2.03 * currencyMultiplier,
             count = 1,
             quantity = MeasuredValue(500.0, MeasurementUnit.G),
             confirmedAt = now.minus(2, ChronoUnit.MINUTES),
@@ -769,7 +759,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             itemId = itemIdGroundCoffee,
             sourceId = sourceIdSuperiorStore,
-            price = 1.50,
+            price = 1.50 * currencyMultiplier,
             count = 1,
             quantity = MeasuredValue(227.0, MeasurementUnit.G),
             confirmedAt = now.minus(4, ChronoUnit.DAYS),
@@ -783,7 +773,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             itemId = itemIdGroundCoffee,
             sourceId = sourceIdGrandways,
-            price = 1.64,
+            price = 1.64 * currencyMultiplier,
             count = 1,
             quantity = MeasuredValue(350.0, MeasurementUnit.G),
             confirmedAt = now.minus(9, ChronoUnit.DAYS),
@@ -797,7 +787,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             itemId = itemIdWholeMilk,
             sourceId = sourceIdValueMart,
-            price = 1.99,
+            price = 1.99 * currencyMultiplier,
             count = 1,
             quantity = MeasuredValue(
                 4.0,
@@ -814,7 +804,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             itemId = itemIdWholeMilk,
             sourceId = sourceIdSuperiorStore,
-            price = 2.86,
+            price = 2.86 * currencyMultiplier,
             count = 1,
             quantity = MeasuredValue(2.0, MeasurementUnit.L),
             confirmedAt = now.minus(63, ChronoUnit.DAYS),
@@ -828,7 +818,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             itemId = itemIdWholeMilk,
             sourceId = sourceIdGrandways,
-            price = 3.28,
+            price = 3.28 * currencyMultiplier,
             count = 1,
             quantity = MeasuredValue(
                 6.0,
@@ -845,7 +835,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             itemId = itemIdTeabags,
             sourceId = sourceIdValueMart,
-            price = 0.76,
+            price = 0.76 * currencyMultiplier,
             count = 1,
             quantity = MeasuredValue(40.0, MeasurementUnit.EACH),
             confirmedAt = now.minus(7, ChronoUnit.DAYS),
@@ -859,7 +849,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             itemId = itemIdTeabags,
             sourceId = sourceIdSuperiorStore,
-            price = 0.60,
+            price = 0.60 * currencyMultiplier,
             count = 1,
             quantity = MeasuredValue(20.0, MeasurementUnit.EACH),
             confirmedAt = now.minus(4, ChronoUnit.HOURS),
@@ -873,7 +863,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             itemId = itemIdTeabags,
             sourceId = sourceIdGrandways,
-            price = 1.25,
+            price = 1.25 * currencyMultiplier,
             count = 1,
             quantity = MeasuredValue(50.0, MeasurementUnit.EACH),
             confirmedAt = now.minus(12, ChronoUnit.DAYS),
@@ -887,7 +877,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             itemId = itemIdCola,
             sourceId = sourceIdValueMart,
-            price = 6.30,
+            price = 6.30 * currencyMultiplier,
             count = 12,
             quantity = MeasuredValue(400.0, MeasurementUnit.ML),
             confirmedAt = now.minus(6, ChronoUnit.DAYS),
@@ -901,7 +891,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             itemId = itemIdCola,
             sourceId = sourceIdSuperiorStore,
-            price = 2.79,
+            price = 2.79 * currencyMultiplier,
             count = 4,
             quantity = MeasuredValue(330.0, MeasurementUnit.ML),
             confirmedAt = now.minus(31, ChronoUnit.DAYS),
@@ -915,7 +905,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
             dataSetId = dataSetId,
             itemId = itemIdCola,
             sourceId = sourceIdGrandways,
-            price = 3.82,
+            price = 3.82 * currencyMultiplier,
             count = 6,
             quantity = MeasuredValue(330.0, MeasurementUnit.ML),
             confirmedAt = now.minus(18, ChronoUnit.DAYS),
