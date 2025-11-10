@@ -22,26 +22,23 @@ import java.time.Instant
 import java.util.Locale
 
 @Entity(
-    tableName = "price", foreignKeys = [
-        ForeignKey(
-            entity = DataSet::class,
-            parentColumns = ["id"],
-            childColumns = ["data_set_id"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = Item::class,
-            parentColumns = ["id"],
-            childColumns = ["item_id"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = Source::class,
-            parentColumns = ["id"],
-            childColumns = ["source_id"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
+    tableName = "price",
+    foreignKeys = [ForeignKey(
+        entity = DataSet::class,
+        parentColumns = ["id"],
+        childColumns = ["data_set_id"],
+        onDelete = ForeignKey.CASCADE
+    ), ForeignKey(
+        entity = Item::class,
+        parentColumns = ["id"],
+        childColumns = ["item_id"],
+        onDelete = ForeignKey.CASCADE
+    ), ForeignKey(
+        entity = Source::class,
+        parentColumns = ["id"],
+        childColumns = ["source_id"],
+        onDelete = ForeignKey.CASCADE
+    )],
     indices = [
         Index(value = ["data_set_id"], unique = false), // just because this is a foreign key
         // We don't include data_set_id here because although some queries specify it along with item_id, it's just belt-and-braces - item_id already implies a data_set_id if all is well.
@@ -56,8 +53,7 @@ import java.util.Locale
     ]
 )
 data class PriceEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId: Long,
     @ColumnInfo(name = "item_id") val itemId: Long,
     @ColumnInfo(name = "source_id") val sourceId: Long,
@@ -112,8 +108,8 @@ fun PriceWithItemEntity.toDomain(): Price {
     // (because it came from a database join) and that gives us an independent cross-check that
     // priceEntity.userUnit is of the right QuantityType.
     devCheck(priceEntity.userUnit.quantityType == itemDefaultUnit.quantityType) {
-        "Expected consistent units on PriceWithItemEntity but we have userUnit " +
-                "${priceEntity.userUnit} and itemDefaultUnit $itemDefaultUnit"
+        "Expected consistent units on PriceWithItemEntity but we have userUnit " + 
+        "${priceEntity.userUnit} and itemDefaultUnit $itemDefaultUnit"
     }
     return Price(
         id = priceEntity.id,
@@ -152,15 +148,14 @@ data class Price(
     // against buggy code, not malicious code) validation that when we write back to the database,
     // quantity hasn't somehow mutated into a different QuantityType.
     val itemDefaultUnit: MeasurementUnit
-) : Parcelable {
-}
+) : Parcelable
 
 fun Price.toEntity(): PriceEntity {
     // This check is just a more explicit version of that implicitly done inside the
     // quantity.asValue() call below.
     devCheck(quantity.unit.quantityType == itemDefaultUnit.quantityType) {
-        "Expected consistent quantity type when converting Price to PriceEntity but found " +
-                "measure $quantity with itemDefaultUnit $itemDefaultUnit"
+        "Expected consistent quantity type when converting Price to PriceEntity but found " + 
+        "measure $quantity with itemDefaultUnit $itemDefaultUnit"
     }
     return PriceEntity(
         id = id,
@@ -177,34 +172,29 @@ fun Price.toEntity(): PriceEntity {
     )
 }
 
-// Constructor for editing an existing Price.
-fun Price.toEditable(locale: Locale, currencyFormat: CurrencyFormat) : EditablePrice = EditablePrice(
-id = id,
-dataSetId = dataSetId,
-itemId = itemId,
-sourceId = sourceId,
-count = count.toString(),
-price = formatDoubleForEditing(
-price,
-minDecimals = currencyFormat.decimalPlaces,
-maxDecimals = currencyFormat.decimalPlaces,
-locale
-),
+fun Price.toEditable(locale: Locale, currencyFormat: CurrencyFormat): EditablePrice = EditablePrice(
+    id = id,
+    dataSetId = dataSetId,
+    itemId = itemId,
+    sourceId = sourceId,
+    count = count.toString(),
+    price = formatDoubleForEditing(
+        price,
+        minDecimals = currencyFormat.decimalPlaces,
+        maxDecimals = currencyFormat.decimalPlaces,
+        locale
+    ),
 // Rounding is particularly important here - for non-metric measures, which are stored in
 // doubles in metric base units in the database, if we didn't round we could end up with
 // some visible noise in the least significant decimal places.
-measureValue =
-formatDoubleForEditing(
-quantity.value,
-minDecimals = 0,
-maxDecimals = quantity.unit.maxDecimals,
-locale
-),
-measurementUnit = quantity.unit,
-confirmedAt = confirmedAt,
-toConfirm = false,
-notes = notes,
-itemDefaultUnit = itemDefaultUnit
+    measureValue = formatDoubleForEditing(
+        quantity.value, minDecimals = 0, maxDecimals = quantity.unit.maxDecimals, locale
+    ),
+    measurementUnit = quantity.unit,
+    confirmedAt = confirmedAt,
+    toConfirm = false,
+    notes = notes,
+    itemDefaultUnit = itemDefaultUnit
 )
 
 // A version of Price we can use while editing - it holds the same basic information but with mostly
@@ -228,11 +218,9 @@ data class EditablePrice(
 
     // Constructor for adding the first price for a (source, item) combination - we have the
     // "parent" fields, but everything else starts off blank/default.
+    // TODO: Is this a valid reason to use a contructor in Kotlin?
     constructor(
-        dataSetId: Long,
-        itemId: Long,
-        sourceId: Long,
-        itemDefaultUnit: MeasurementUnit
+        dataSetId: Long, itemId: Long, sourceId: Long, itemDefaultUnit: MeasurementUnit
     ) : this(
         id = 0,
         dataSetId = dataSetId,
@@ -260,7 +248,8 @@ fun EditablePrice.toDomain(locale: Locale): Price? {
     // empty for multipack items and interpret that as one, although currently the validation
     // will prevent us getting this far in that case. trim() is used to help with that case,
     // even though it's currently not strictly necessary.
-    val countLong = if (count.trim().isEmpty()) 1L else parseStringAsDoubleOrNull(locale, count)?.toLong()
+    val countLong =
+        if (count.trim().isEmpty()) 1L else parseStringAsDoubleOrNull(locale, count)?.toLong()
     val measureValueDouble = parseStringAsDoubleOrNull(locale, measureValue)
     return if (priceDouble == null || countLong == null || measureValueDouble == null) {
         null
