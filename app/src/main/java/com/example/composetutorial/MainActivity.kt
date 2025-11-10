@@ -2,6 +2,9 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import com.example.composetutorial.models.PriceEntity
+import com.example.composetutorial.models.Price
+import com.example.composetutorial.models.toDomain
 import androidx.compose.ui.platform.LocalUriHandler
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
@@ -246,6 +249,8 @@ import com.example.composetutorial.EditPriceScreenUIContent.Companion.LOCALE_TAG
 import com.example.composetutorial.EditPriceScreenUIContent.Companion.NON_LINEAR_EDIT_KEY
 import com.example.composetutorial.EditPriceScreenUIContent.Companion.ORIGINAL_PRICE_KEY
 import com.example.composetutorial.EditPriceScreenUIContent.Companion.SOURCE_KEY
+import com.example.composetutorial.models.EditablePrice
+import com.example.composetutorial.models.toEditable
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -1603,80 +1608,6 @@ data class EditableSource(
     }
 }
 
-@Entity(
-    tableName = "price", foreignKeys = [
-        ForeignKey(
-            entity = DataSet::class,
-            parentColumns = ["id"],
-            childColumns = ["data_set_id"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = Item::class,
-            parentColumns = ["id"],
-            childColumns = ["item_id"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = Source::class,
-            parentColumns = ["id"],
-            childColumns = ["source_id"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [
-        Index(value = ["data_set_id"], unique = false), // just because this is a foreign key
-        // We don't include data_set_id here because although some queries specify it along with item_id, it's just belt-and-braces - item_id already implies a data_set_id if all is well.
-        Index(value = ["item_id"], unique = false),
-        Index(value = ["source_id"], unique = false),
-        // TODO: I need to remember to manually apply this index to my own "production" db on O6.
-        // We put item_id first in this index as it's likely to be more selective than source_id and
-        // ENHANCE: it may allow us to remove the index on item_id by itself later on. This index is
-        // not just for efficiency; it will also prevent data corruption if a bug causes us to try
-        // to insert more than one price for an (item, source) pair.
-        Index(value = ["item_id", "source_id"], unique = true),
-    ]
-)
-data class PriceEntity(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    @ColumnInfo(name = "data_set_id") val dataSetId: Long,
-    @ColumnInfo(name = "item_id") val itemId: Long,
-    @ColumnInfo(name = "source_id") val sourceId: Long,
-
-    // The item is sold for "price" per "count"*"quantity_in_base_unit", e.g. £1.42 for 1x500g.
-    //
-    // We use floating point for the price - it saves worrying about storing in pence or the
-    // currency's equivalent and then getting in a mess if somehow the conventional number of
-    // decimal places changes. For the kinds of prices we are representing and the limited amount of
-    // calculation we are doing on them, there should in practice be no problems at all, as long as
-    // we round to the relevant number of decimal places on display.
-    //
-    // "quantity_in_base_unit" is stored in the metric base unit associated with the item_id's
-    // quantity_type. This avoids having to do bulk database updates if the user wants to change
-    // unit conventions - this could happen even within a measurement system if shops switch to
-    // marking pack sizes in ounces instead of lbs, for example. We use floating point because it
-    // allows us to round-trip non-metric measures perfectly (provided we round them for display),
-    // and it doesn't seem to have any real downside in practice.
-    val price: Double,
-    val count: Long,
-    @ColumnInfo(name = "quantity_in_base_unit") val quantityInBaseUnit: Double,
-
-    // Although quantity is stored in the base unit, we also record the actual unit the user entered
-    // the price in. This allows us to show it back to them in the most natural form when they are
-    // e.g. comparing the database price with the current shelf price. We do have a default unit
-    // stored on the item, but tracking it per actual price allows us to handle situations where
-    // supermarket A sells milk in pint multiples while supermarket B sells it in litre multiples.
-    @ColumnInfo(name = "user_unit") val userUnit: MeasurementUnit,
-
-    @ColumnInfo(name = "confirmed_at") val confirmedAt: Instant,
-
-    val notes: String,
-
-    // modifiedAt is borderline redundant here, but it feels generally neater to have it here as
-    // well as on PriceHistory and probably simplifies things.
-    @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
-)
 
 // This must be kept in sync with any changes to PriceEntity.
 @Entity(
@@ -1786,7 +1717,7 @@ data class PriceHistory(
 
 // TODO: No idea where this should belong or what style it should have
 fun PriceHistory.toEditablePrice(priceId: Long, locale: Locale, dataSet: DataSet): EditablePrice {
-    return EditablePrice(toPrice().copy(id = priceId), locale, getCurrencyFormat(dataSet, locale))
+    return toPrice().copy(id = priceId).toEditable(locale, getCurrencyFormat(dataSet, locale))
 }
 
 // ENHANCE: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
@@ -1798,50 +1729,6 @@ data class PriceWithItemEntity(
     @Embedded val priceEntity: PriceEntity,
     @ColumnInfo(name = "default_unit") val itemDefaultUnit: MeasurementUnit,
 )
-
-// Price is a domain-level class which is nice for us to work with, once we've got away from the
-// database layer.
-@Parcelize
-data class Price(
-    val id: Long = 0,
-    val dataSetId: Long,
-    val itemId: Long,
-    val sourceId: Long,
-    val count: Long,
-    val price: Double,
-    val quantity: MeasuredValue,
-    val confirmedAt: Instant,
-    val notes: String,
-    val modifiedAt: Instant,
-    // itemDefaultUnit is a copy of the defaultUnit from the Item when we originally read the
-    // PriceWithItemEntity in from the database. It is intended to allow a best effort (protecting
-    // against buggy code, not malicious code) validation that when we write back to the database,
-    // quantity hasn't somehow mutated into a different QuantityType.
-    val itemDefaultUnit: MeasurementUnit
-) : Parcelable {
-
-    fun toEntity(): PriceEntity {
-        // This check is just a more explicit version of that implicitly done inside the
-        // quantity.asValue() call below.
-        devCheck(quantity.unit.quantityType == itemDefaultUnit.quantityType) {
-            "Expected consistent quantity type when converting Price to PriceEntity but found " +
-                    "measure $quantity with itemDefaultUnit $itemDefaultUnit"
-        }
-        return PriceEntity(
-            id = id,
-            dataSetId = dataSetId,
-            itemId = itemId,
-            sourceId = sourceId,
-            price = price,
-            count = count,
-            quantityInBaseUnit = quantity.asValue(baseUnitForQuantityType(itemDefaultUnit.quantityType)),
-            userUnit = quantity.unit,
-            confirmedAt = confirmedAt,
-            notes = notes,
-            modifiedAt = modifiedAt,
-        )
-    }
-}
 
 fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
     QuantityType.WEIGHT -> MeasurementUnit.G
@@ -3433,111 +3320,6 @@ data class HomeScreenUIContent(
                 sourceList = emptyList(),
                 priceList = emptyList(),
                 priceAnalysis = PriceAnalysis(emptyList(), null),
-            )
-        }
-    }
-}
-
-// A version of Price we can use while editing - it holds the same basic information but with mostly
-// string representations for editability.
-@Parcelize
-data class EditablePrice(
-    val id: Long,
-    val dataSetId: Long,
-    val itemId: Long,
-    val sourceId: Long,
-    val price: String,
-    val count: String,
-    val measureValue: String,
-    val measurementUnit: MeasurementUnit,
-    val confirmedAt: Instant,
-    val toConfirm: Boolean,
-    val notes: String,
-    val itemDefaultUnit: MeasurementUnit,
-
-    ) : Parcelable {
-
-    // Constructor for adding the first price for a (source, item) combination - we have the
-    // "parent" fields, but everything else starts off blank/default.
-    constructor(
-        dataSetId: Long,
-        itemId: Long,
-        sourceId: Long,
-        itemDefaultUnit: MeasurementUnit
-    ) : this(
-        id = 0,
-        dataSetId = dataSetId,
-        itemId = itemId,
-        sourceId = sourceId,
-        price = "",
-        count = "",
-        measureValue = "",
-        measurementUnit = itemDefaultUnit,
-        confirmedAt = Instant.now(),
-        toConfirm = true,
-        notes = "",
-        itemDefaultUnit = itemDefaultUnit
-    )
-
-    // Constructor for editing an existing Price.
-    constructor(price: Price, locale: Locale, currencyFormat: CurrencyFormat) : this(
-        id = price.id,
-        dataSetId = price.dataSetId,
-        itemId = price.itemId,
-        sourceId = price.sourceId,
-        count = price.count.toString(),
-        price = formatDoubleForEditing(
-            price.price,
-            minDecimals = currencyFormat.decimalPlaces,
-            maxDecimals = currencyFormat.decimalPlaces,
-            locale
-        ),
-        // Rounding is particularly important here - for non-metric measures, which are stored in
-        // doubles in metric base units in the database, if we didn't round we could end up with
-        // some visible noise in the least significant decimal places.
-        measureValue =
-            formatDoubleForEditing(
-                price.quantity.value,
-                minDecimals = 0,
-                maxDecimals = price.quantity.unit.maxDecimals,
-                locale
-            ),
-        measurementUnit = price.quantity.unit,
-        confirmedAt = price.confirmedAt,
-        toConfirm = false,
-        notes = price.notes,
-        itemDefaultUnit = price.itemDefaultUnit
-    )
-
-    // TODO: Tempish note - EditablePrice is a sort of "variant domain" class just for editing - we
-    // need to convert it to the "primary" domain class Price here. This name might be confusing
-    // all the same, as we are approaching domain from the opposite side to a toDomain() on an
-    // entity class
-    fun toDomain(locale: Locale): Price? {
-        val priceDouble = parseStringAsDoubleOrNull(locale, price)
-        // If we are adding a first price for a non-multipack item, count may be an empty string and
-        // we interpret that as 1. It's possible that at some point we will also allow count to be
-        // empty for multipack items and interpret that as one, although currently the validation
-        // will prevent us getting this far in that case. trim() is used to help with that case,
-        // even though it's currently not strictly necessary.
-        val countLong = if (count.trim().isEmpty()) 1L else parseStringAsDoubleOrNull(locale, count)?.toLong()
-        val measureValueDouble = parseStringAsDoubleOrNull(locale, measureValue)
-        return if (priceDouble == null || countLong == null || measureValueDouble == null) {
-            null
-        } else {
-            val now = Instant.now()
-            Price(
-                id = id,
-                dataSetId = dataSetId,
-                itemId = itemId,
-                sourceId = sourceId,
-                price = priceDouble,
-                count = countLong,
-                quantity = MeasuredValue(measureValueDouble, measurementUnit),
-                confirmedAt = if (toConfirm) now else confirmedAt,
-                notes = notes,
-                modifiedAt = now,
-                itemDefaultUnit = itemDefaultUnit,
             )
         }
     }
@@ -7369,7 +7151,7 @@ class SharedViewModel : ViewModel() {
             uiContent.priceList.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
         val editablePrice = if (price != null)
-            EditablePrice(price, frozenLocale, getCurrencyFormat(dataSet, frozenLocale))
+            price.toEditable(frozenLocale, getCurrencyFormat(dataSet, frozenLocale))
         else EditablePrice(
             dataSetId = dataSet.id,
             itemId = item.id,
