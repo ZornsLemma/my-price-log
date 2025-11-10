@@ -5,6 +5,14 @@ plugins {
     //alias(libs.plugins.kotlin.parcelize)
     id("kotlin-parcelize")
     id("com.google.devtools.ksp") version "2.0.21-1.0.28"
+    id("com.diffplug.spotless") version "6.25.0"
+}
+
+spotless {
+    kotlin {
+        target("**/*.kt")
+        ktfmt() // Google style, no config
+    }
 }
 
 android {
