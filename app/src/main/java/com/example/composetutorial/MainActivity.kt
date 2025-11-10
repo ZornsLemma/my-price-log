@@ -2,6 +2,8 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import com.example.composetutorial.models.Item
+import com.example.composetutorial.models.EditableItem
 import com.example.composetutorial.models.PriceEntity
 import com.example.composetutorial.models.Price
 import com.example.composetutorial.models.PriceWithItemEntity
@@ -1353,125 +1355,6 @@ data class EditableDataSet(
                     allowImperial = dataSet.allowImperial,
                     allowUSCustomary = dataSet.allowUSCustomary,
                     notes = dataSet.notes
-                )
-            }
-        }
-    }
-}
-
-@Entity(
-    tableName = "item", foreignKeys = [
-        ForeignKey(
-            entity = DataSet::class,
-            parentColumns = ["id"],
-            childColumns = ["data_set_id"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [Index(value = ["data_set_id"], unique = false)]
-)
-@Parcelize
-data class Item(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    @ColumnInfo(name = "data_set_id") val dataSetId: Long,
-    val name: String,
-    // default_unit implicitly specifies the item's QuantityType. It also serves as the default unit
-    // to use when the user is entering the first price for an (item, source) combination.
-    @ColumnInfo(name = "default_unit") val defaultUnit: MeasurementUnit,
-    @ColumnInfo(name = "allow_multipack") val allowMultipack: Boolean,
-    val notes: String,
-) : Parcelable
-
-// Note that we have the suprisingly horrific code around defaultUnitIdByQuantityTypeOrdinal instead
-// of a simple "val defaultUnit: MeasurementUnit" because I thought it would be user-friendly to keep
-// the selected unit for each quantity type while the user is editing, and then it turns into a
-// nightmare of un-parcelizable types and working with ordinals and IDs rather than enum class
-// objects themselves. It probably isn't that bad in hindsight, but the code is way more complex
-// than feels necessary.
-@Parcelize
-data class EditableItem private constructor(
-    val id: Long,
-    // TODO: although the non-editable Item has a dataSetId and that is probably a strong argument
-    // for keeping this is, I half wonder if we should just shove our full DataSet object in here.
-    // OTOH it will slightly add to the serialisation burden and we do serialise this every time
-    // anything changes.
-    val dataSetId: Long,
-    val name: String,
-    val quantityType: QuantityType,
-    val defaultUnitIdByQuantityTypeOrdinal: List<Long>,
-    val allowMultipack: Boolean,
-    val notes: String,
-) : Parcelable {
-    val defaultUnit: MeasurementUnit get() = MeasurementUnit.fromId(defaultUnitIdByQuantityTypeOrdinal[quantityType.ordinal])!!
-
-    fun toDomain(): Item? { // TODO: not just here - would "toItem" pair better with fromItem?!
-        val trimmedName = name.trim()
-        // It could get confusing if an empty name leaked into the database (it would be
-        // semi-invisible in the UI) so we'll check that here, even though we could generate an
-        // Item with such a name and this is not really validation code - we expect to have been
-        // called on a pre-validated EditableItem.
-        if (trimmedName.isEmpty()) {
-            return null
-        }
-        // This is a devCheck not a "return null" check because it indicates an internal error.
-        devCheck(quantityType == defaultUnit.quantityType) {
-            "Expected consistent quantity types on EditableItem but have $quantityType and $defaultUnit"
-        }
-        return Item(
-            id = id,
-            dataSetId = dataSetId,
-            name = trimmedName,
-            defaultUnit = defaultUnit,
-            allowMultipack = allowMultipack,
-            notes = notes
-        )
-    }
-    // TODO: I have had some intermittent crashes when on the "Edit product" screen and I put it in
-    // background, adb kill it and then return to it via the overview menu. The error in logcat is
-    // fairly consistently "java.lang.IllegalArgumentException: No enum constant
-    // com.example.composetutorial.MeasurementUnit.ĭ????" with almost nothing helpful in the gigantic
-    // stack backtrace. This does not seem very easy to reproduce, but has cropped up once or twice.
-    // I really don't know what's going on. About all I can do is leave this note here to remind
-    // me in case I spot something later or if this does go wrong again or to spend some more time
-    // trying to reproduce this later.
-
-    companion object {
-        fun fromItem(item: Item?, dataSet: DataSet): EditableItem {
-            val defaultUnitIdByQuantityTypeOrdinal = QuantityType.entries.map { quantityType ->
-                getRelevantMeasurementUnits(
-                    dataSet,
-                    quantityType,
-                    includeDisplayOnly = false
-                ).first().id
-            }.toMutableList()
-            if (item == null) {
-                // It's probably reasonable to default to sold by weight, and it's nice not to have
-                // the possibility of a null state.
-                val quantityType = QuantityType.WEIGHT
-                return EditableItem(
-                    0,
-                    dataSet.id,
-                    "",
-                    QuantityType.WEIGHT,
-                    defaultUnitIdByQuantityTypeOrdinal,
-                    false,
-                    ""
-                )
-            } else {
-                devCheck(dataSet.id == item.dataSetId) {
-                    "Expected identical dataSetIds but have dataSet.id ${dataSet.id} and item.dataSetid ${item.dataSetId}"
-                }
-                defaultUnitIdByQuantityTypeOrdinal[item.defaultUnit.quantityType.ordinal] =
-                    item.defaultUnit.id
-                return EditableItem(
-                    item.id,
-                    dataSet.id,
-                    item.name,
-                    item.defaultUnit.quantityType,
-                    defaultUnitIdByQuantityTypeOrdinal,
-                    item.allowMultipack,
-                    item.notes
                 )
             }
         }
@@ -7220,7 +7103,7 @@ class SharedViewModel : ViewModel() {
     var editItemScreenUIContent: EditItemScreenUIContent? = null
 
     fun setEditItemScreenContent(item: Item?, dataSet: DataSet) {
-        val editableItem = EditableItem.fromItem(item, dataSet)
+        val editableItem = item.toEditable(dataSet)
         editItemScreenUIContent = EditItemScreenUIContent(
             editableItem = mutableStateOf(editableItem),
             originalItem = editableItem,
