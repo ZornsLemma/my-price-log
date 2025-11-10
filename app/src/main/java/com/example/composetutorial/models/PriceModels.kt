@@ -216,25 +216,24 @@ data class EditablePrice(
 
     ) : Parcelable {
 
-    // Constructor for adding the first price for a (source, item) combination - we have the
-    // "parent" fields, but everything else starts off blank/default.
-    // TODO: Is this a valid reason to use a contructor in Kotlin?
-    constructor(
-        dataSetId: Long, itemId: Long, sourceId: Long, itemDefaultUnit: MeasurementUnit
-    ) : this(
-        id = 0,
-        dataSetId = dataSetId,
-        itemId = itemId,
-        sourceId = sourceId,
-        price = "",
-        count = "",
-        measureValue = "",
-        measurementUnit = itemDefaultUnit,
-        confirmedAt = Instant.now(),
-        toConfirm = true,
-        notes = "",
-        itemDefaultUnit = itemDefaultUnit
-    )
+    companion object {
+        fun forNew(
+            dataSetId: Long, itemId: Long, sourceId: Long, itemDefaultUnit: MeasurementUnit
+        ) = EditablePrice(
+            id = 0,
+            dataSetId = dataSetId,
+            itemId = itemId,
+            sourceId = sourceId,
+            price = "",
+            count = "",
+            measureValue = "",
+            measurementUnit = itemDefaultUnit,
+            confirmedAt = Instant.now(),
+            toConfirm = true,
+            notes = "",
+            itemDefaultUnit = itemDefaultUnit
+        )
+    }
 }
 
 // TODO: Tempish note - EditablePrice is a sort of "variant domain" class just for editing - we

@@ -7117,7 +7117,7 @@ class SharedViewModel : ViewModel() {
 
         val editablePrice = if (price != null)
             price.toEditable(frozenLocale, getCurrencyFormat(dataSet, frozenLocale))
-        else EditablePrice(
+        else EditablePrice.forNew(
             dataSetId = dataSet.id,
             itemId = item.id,
             sourceId = source.id,
