@@ -14,20 +14,16 @@ import com.example.composetutorial.getRelevantMeasurementUnits
 import kotlinx.parcelize.Parcelize
 
 @Entity(
-    tableName = "item", foreignKeys = [
-        ForeignKey(
-            entity = DataSet::class,
-            parentColumns = ["id"],
-            childColumns = ["data_set_id"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [Index(value = ["data_set_id"], unique = false)]
+    tableName = "item", foreignKeys = [ForeignKey(
+        entity = DataSet::class,
+        parentColumns = ["id"],
+        childColumns = ["data_set_id"],
+        onDelete = ForeignKey.CASCADE
+    )], indices = [Index(value = ["data_set_id"], unique = false)]
 )
 @Parcelize
 data class Item(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId: Long,
     val name: String,
     // default_unit implicitly specifies the item's QuantityType. It also serves as the default unit
@@ -40,30 +36,25 @@ data class Item(
 fun Item?.toEditable(dataSet: DataSet): EditableItem {
     val defaultUnitIdByQuantityTypeOrdinal = QuantityType.entries.map { quantityType ->
         getRelevantMeasurementUnits(
-            dataSet,
-            quantityType,
-            includeDisplayOnly = false
+            dataSet, quantityType, includeDisplayOnly = false
         ).first().id
     }.toMutableList()
+    // TODO: I think this "this == null" case is reasonable here, but it may (I need to check - am
+    // in the middle of refactoring now and trying to avoid gross reworking) be inconsistent with
+    // how other "new" cases are added, and we should probably be consistent (either use this style,
+    // or a style where the caller handles new-vs-edit-existing, everywhere).
     if (this == null) {
         // It's probably reasonable to default to sold by weight, and it's nice not to have
         // the possibility of a null state.
-        val quantityType = QuantityType.WEIGHT
         return EditableItem(
-            0,
-            dataSet.id,
-            "",
-            QuantityType.WEIGHT,
-            defaultUnitIdByQuantityTypeOrdinal,
-            false,
-            ""
+            0, dataSet.id, "", QuantityType.WEIGHT,
+            defaultUnitIdByQuantityTypeOrdinal, false, ""
         )
     } else {
         devCheck(dataSet.id == dataSetId) {
             "Expected identical dataSetIds but have dataSet.id ${dataSet.id} and dataSetid ${dataSetId}"
         }
-        defaultUnitIdByQuantityTypeOrdinal[defaultUnit.quantityType.ordinal] =
-            defaultUnit.id
+        defaultUnitIdByQuantityTypeOrdinal[defaultUnit.quantityType.ordinal] = defaultUnit.id
         return EditableItem(
             id,
             dataSet.id,
@@ -96,7 +87,10 @@ data class EditableItem(
     val allowMultipack: Boolean,
     val notes: String,
 ) : Parcelable {
-    val defaultUnit: MeasurementUnit get() = MeasurementUnit.fromId(defaultUnitIdByQuantityTypeOrdinal[quantityType.ordinal])!!
+    val defaultUnit: MeasurementUnit
+        get() = MeasurementUnit.fromId(
+            defaultUnitIdByQuantityTypeOrdinal[quantityType.ordinal]
+        )!!
 
     // TODO: I have had some intermittent crashes when on the "Edit product" screen and I put it in
     // background, adb kill it and then return to it via the overview menu. The error in logcat is
@@ -112,7 +106,7 @@ data class EditableItem(
 // It might be best to say toItem(), but then - although ChatGPT says it's fine, it's just the basic
 // model and not sure I trust it - it feels odd that we are using toEntity()/toEditable()/toDomain()
 // on Price, maybe we should use toActualName everywhere??
-fun EditableItem.toDomain(): Item? { // TODO: not just here - would "toItem" pair better with fromItem?!
+fun EditableItem.toDomain(): Item? {
     val trimmedName = name.trim()
     // It could get confusing if an empty name leaked into the database (it would be
     // semi-invisible in the UI) so we'll check that here, even though we could generate an
