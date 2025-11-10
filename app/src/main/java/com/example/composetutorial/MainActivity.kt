@@ -9868,3 +9868,7 @@ val capitalization = when (capString) {
 // ENHANCE: It is possible that using SQLDelight would simplify the database queries. In particular,
 // it may avoid the problem where Room flows are not clearly tagged with the query parameters that
 // originated them, which I think is responsible for some of my data flow complexity.
+
+// TODO: At some point I should apply the spotless auto-formatting, but that will obviously
+// break diffs so I should be careful when I do it - maybe when the code is very stable and
+// shortly before release?
