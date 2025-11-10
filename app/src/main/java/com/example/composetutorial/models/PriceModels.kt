@@ -2,6 +2,7 @@ package com.example.composetutorial.models
 
 import android.os.Parcelable
 import androidx.room.ColumnInfo
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -95,6 +96,43 @@ data class PriceEntity(
     @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
 )
 
+// ENHANCE: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
+// that effectively tells us the quantity type implicitly and we don't need to join to item to get
+// it. However, I suspect it still has some value because it allows us to do a bit of extra
+// validation which may catch bugs. My inclination is to keep it for now, since the code already
+// exists, and perhaps refactor to remove this at some point in the future.
+data class PriceWithItemEntity(
+    @Embedded val priceEntity: PriceEntity,
+    @ColumnInfo(name = "default_unit") val itemDefaultUnit: MeasurementUnit,
+)
+
+fun PriceWithItemEntity.toDomain(): Price {
+    // I have checks like this in various places but this is probably a pretty solid place for one.
+    // On the way from database->domain, this is where we have a "solid" itemDefaultUnit value
+    // (because it came from a database join) and that gives us an independent cross-check that
+    // priceEntity.userUnit is of the right QuantityType.
+    devCheck(priceEntity.userUnit.quantityType == itemDefaultUnit.quantityType) {
+        "Expected consistent units on PriceWithItemEntity but we have userUnit " +
+                "${priceEntity.userUnit} and itemDefaultUnit $itemDefaultUnit"
+    }
+    return Price(
+        id = priceEntity.id,
+        dataSetId = priceEntity.dataSetId,
+        itemId = priceEntity.itemId,
+        sourceId = priceEntity.sourceId,
+        price = priceEntity.price,
+        count = priceEntity.count,
+        quantity = MeasuredValue(
+            priceEntity.quantityInBaseUnit,
+            baseUnitForQuantityType(priceEntity.userUnit.quantityType)
+        ).to(priceEntity.userUnit),
+        confirmedAt = priceEntity.confirmedAt,
+        notes = priceEntity.notes,
+        modifiedAt = priceEntity.modifiedAt,
+        itemDefaultUnit = itemDefaultUnit,
+    )
+}
+
 // Price is a domain-level class which is nice for us to work with, once we've got away from the
 // database layer.
 @Parcelize
@@ -115,30 +153,29 @@ data class Price(
     // quantity hasn't somehow mutated into a different QuantityType.
     val itemDefaultUnit: MeasurementUnit
 ) : Parcelable {
-
-    fun toEntity(): PriceEntity {
-        // This check is just a more explicit version of that implicitly done inside the
-        // quantity.asValue() call below.
-        devCheck(quantity.unit.quantityType == itemDefaultUnit.quantityType) {
-            "Expected consistent quantity type when converting Price to PriceEntity but found " +
-                    "measure $quantity with itemDefaultUnit $itemDefaultUnit"
-        }
-        return PriceEntity(
-            id = id,
-            dataSetId = dataSetId,
-            itemId = itemId,
-            sourceId = sourceId,
-            price = price,
-            count = count,
-            quantityInBaseUnit = quantity.asValue(baseUnitForQuantityType(itemDefaultUnit.quantityType)),
-            userUnit = quantity.unit,
-            confirmedAt = confirmedAt,
-            notes = notes,
-            modifiedAt = modifiedAt,
-        )
-    }
 }
 
+fun Price.toEntity(): PriceEntity {
+    // This check is just a more explicit version of that implicitly done inside the
+    // quantity.asValue() call below.
+    devCheck(quantity.unit.quantityType == itemDefaultUnit.quantityType) {
+        "Expected consistent quantity type when converting Price to PriceEntity but found " +
+                "measure $quantity with itemDefaultUnit $itemDefaultUnit"
+    }
+    return PriceEntity(
+        id = id,
+        dataSetId = dataSetId,
+        itemId = itemId,
+        sourceId = sourceId,
+        price = price,
+        count = count,
+        quantityInBaseUnit = quantity.asValue(baseUnitForQuantityType(itemDefaultUnit.quantityType)),
+        userUnit = quantity.unit,
+        confirmedAt = confirmedAt,
+        notes = notes,
+        modifiedAt = modifiedAt,
+    )
+}
 
 // Constructor for editing an existing Price.
 fun Price.toEditable(locale: Locale, currencyFormat: CurrencyFormat) : EditablePrice = EditablePrice(
@@ -169,9 +206,6 @@ toConfirm = false,
 notes = notes,
 itemDefaultUnit = itemDefaultUnit
 )
-
-
-
 
 // A version of Price we can use while editing - it holds the same basic information but with mostly
 // string representations for editability.

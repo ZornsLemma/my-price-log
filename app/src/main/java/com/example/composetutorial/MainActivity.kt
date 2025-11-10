@@ -4,6 +4,7 @@ package com.example.composetutorial // TODO: change this!
 
 import com.example.composetutorial.models.PriceEntity
 import com.example.composetutorial.models.Price
+import com.example.composetutorial.models.PriceWithItemEntity
 import com.example.composetutorial.models.toDomain
 import androidx.compose.ui.platform.LocalUriHandler
 import android.graphics.Bitmap
@@ -251,6 +252,7 @@ import com.example.composetutorial.EditPriceScreenUIContent.Companion.ORIGINAL_P
 import com.example.composetutorial.EditPriceScreenUIContent.Companion.SOURCE_KEY
 import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.models.toEditable
+import com.example.composetutorial.models.toEntity
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -1720,47 +1722,10 @@ fun PriceHistory.toEditablePrice(priceId: Long, locale: Locale, dataSet: DataSet
     return toPrice().copy(id = priceId).toEditable(locale, getCurrencyFormat(dataSet, locale))
 }
 
-// ENHANCE: PriceWithItem is arguably redundant now - given we have an original_unit on each price,
-// that effectively tells us the quantity type implicitly and we don't need to join to item to get
-// it. However, I suspect it still has some value because it allows us to do a bit of extra
-// validation which may catch bugs. My inclination is to keep it for now, since the code already
-// exists, and perhaps refactor to remove this at some point in the future.
-data class PriceWithItemEntity(
-    @Embedded val priceEntity: PriceEntity,
-    @ColumnInfo(name = "default_unit") val itemDefaultUnit: MeasurementUnit,
-)
-
 fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
     QuantityType.WEIGHT -> MeasurementUnit.G
     QuantityType.VOLUME -> MeasurementUnit.ML
     QuantityType.ITEM -> MeasurementUnit.EACH
-}
-
-fun PriceWithItemEntity.toDomain(): Price {
-    // I have checks like this in various places but this is probably a pretty solid place for one.
-    // On the way from database->domain, this is where we have a "solid" itemDefaultUnit value
-    // (because it came from a database join) and that gives us an independent cross-check that
-    // priceEntity.userUnit is of the right QuantityType.
-    devCheck(priceEntity.userUnit.quantityType == itemDefaultUnit.quantityType) {
-        "Expected consistent units on PriceWithItemEntity but we have userUnit " +
-                "${priceEntity.userUnit} and itemDefaultUnit $itemDefaultUnit"
-    }
-    return Price(
-        id = priceEntity.id,
-        dataSetId = priceEntity.dataSetId,
-        itemId = priceEntity.itemId,
-        sourceId = priceEntity.sourceId,
-        price = priceEntity.price,
-        count = priceEntity.count,
-        quantity = MeasuredValue(
-            priceEntity.quantityInBaseUnit,
-            baseUnitForQuantityType(priceEntity.userUnit.quantityType)
-        ).to(priceEntity.userUnit),
-        confirmedAt = priceEntity.confirmedAt,
-        notes = priceEntity.notes,
-        modifiedAt = priceEntity.modifiedAt,
-        itemDefaultUnit = itemDefaultUnit,
-    )
 }
 
 // NB: We cannot rely on the database to order our results by name as it isn't locale-sensitive, so
