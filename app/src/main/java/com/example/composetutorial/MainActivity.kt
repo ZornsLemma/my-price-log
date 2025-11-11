@@ -3426,8 +3426,9 @@ fun HomeScreenScaffold(
     // this is "busy"
     val asyncOperationStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
 
+    // TODO: We probably can and should get rid of coroutinescope and have child(ren) get their own
+    // - saves parameter passing and has no real downside here.
     val coroutineScope = rememberCoroutineScope()
-    var showErrorDialog by rememberSaveable { mutableStateOf(false) }
     // TODO: Do I need the showBusySnackbar stuff here? I suppose the user might hit back while we
     // are saving (confirm/undo)
 
@@ -3449,7 +3450,7 @@ fun HomeScreenScaffold(
 
     HomeScreenNavigationDrawer(drawerState, dataSet, dataSetListSorted, onSelectedDataSetIdChange, coroutineScope) {
 
-        HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, onSettingsClick,asyncOperationStatus, coroutineScope)
+        HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, onSettingsClick, asyncOperationStatus, coroutineScope)
  { innerPadding ->
                 HomeScreenContent(
                     vm,
@@ -3471,9 +3472,46 @@ fun HomeScreenScaffold(
         }
     }
 
-    // TODO: ALL THE FOLLOWING CODE CODE PROBABLY BE FACTORED OUT/MOVED INTO A RENAMED HOME..>STATEMACHINE
+    HomeScreenStateManager(vm, loading, asyncOperationStatus)
+}
 
-    HomeScreenAsyncOperationStatusStateMachine(vm, onError = { showErrorDialog = true })
+@Composable
+fun HomeScreenStateManager(
+    vm: HomeViewModel,
+    loading: Boolean,
+    asyncOperationStatus: AsyncOperationStatus
+) {
+    var showErrorDialog by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        // TODO: I have thrown in a buffer() here voodoo-style based on an actual observed problem
+        // in other cases. Not sure if it's really necessary or best practice here.
+        vm.asyncOperationStatus.events.buffer().collect { event ->
+            when (event) {
+                AsyncOperationStatus.Busy -> {
+                    // We expect the operation to complete quickly so we don't want the visual distraction
+                    // of a progress indicator appearing straight away. Let the progress indicator kick
+                    // in after a short delay if we're still here waiting.
+                    delay(spinnerDelayMillis)
+                    // The state might not be busy any more, so check first before updating to avoid a race condition.
+                    if (vm.asyncOperationStatus.state.value == AsyncOperationStatus.Busy) {
+                        vm.asyncOperationStatus.update(AsyncOperationStatus.BusyForAWhile)
+                    }
+                }
+
+                is AsyncOperationStatus.Success -> {
+                    vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
+                }
+
+                is AsyncOperationStatus.Error -> { // TODO: We might want to destructure the parameter here so we can save/show the error
+                    vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
+                    showErrorDialog = true
+                }
+
+                else -> {}
+            }
+        }
+    }
 
     // We use this scrim with spinner to handle the (unlikely) cases where:
     // - The initial data load takes a long time.
@@ -3502,42 +3540,6 @@ fun HomeScreenScaffold(
 
     if (showErrorDialog) {
         SaveErrorAlertDialog(requestClose = { showErrorDialog = false })
-    }
-}
-
-@Composable
-fun HomeScreenAsyncOperationStatusStateMachine(
-    vm: HomeViewModel,
-    onError: () -> Unit,
-) {
-    LaunchedEffect(Unit) {
-        // TODO: I have thrown in a buffer() here voodoo-style based on an actual observed problem
-        // in other cases. Not sure if it's really necessary or best practice here.
-        vm.asyncOperationStatus.events.buffer().collect { event ->
-            when (event) {
-                AsyncOperationStatus.Busy -> {
-                    // We expect the operation to complete quickly so we don't want the visual distraction
-                    // of a progress indicator appearing straight away. Let the progress indicator kick
-                    // in after a short delay if we're still here waiting.
-                    delay(spinnerDelayMillis)
-                    // The state might not be busy any more, so check first before updating to avoid a race condition.
-                    if (vm.asyncOperationStatus.state.value == AsyncOperationStatus.Busy) {
-                        vm.asyncOperationStatus.update(AsyncOperationStatus.BusyForAWhile)
-                    }
-                }
-
-                is AsyncOperationStatus.Success -> {
-                    vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
-                }
-
-                is AsyncOperationStatus.Error -> { // TODO: We might want to destructure the parameter here so we can save/show the error
-                    vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
-                    onError()
-                }
-
-                else -> {}
-            }
-        }
     }
 }
 
