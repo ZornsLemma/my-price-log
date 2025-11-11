@@ -2955,7 +2955,6 @@ data class EditPriceScreenUIContent(
     }
 }
 
-// TODO: I wonder if these EditFooScreenUIContent classes are similar enough we can use generics to save duplicating code.
 data class EditItemScreenUIContent(
     val editableItem: MutableState<EditableItem>,
     val originalItem: EditableItem,
