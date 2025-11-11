@@ -208,15 +208,10 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
-import androidx.room.Embedded
-import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
-import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -250,13 +245,6 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.room.Index
-import com.example.composetutorial.EditPriceScreenUIContent.Companion.DATA_SET_KEY
-import com.example.composetutorial.EditPriceScreenUIContent.Companion.ITEM_KEY
-import com.example.composetutorial.EditPriceScreenUIContent.Companion.LOCALE_TAG
-import com.example.composetutorial.EditPriceScreenUIContent.Companion.NON_LINEAR_EDIT_KEY
-import com.example.composetutorial.EditPriceScreenUIContent.Companion.ORIGINAL_PRICE_KEY
-import com.example.composetutorial.EditPriceScreenUIContent.Companion.SOURCE_KEY
 import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.models.toEditable
 import com.example.composetutorial.models.toEntity
@@ -1092,14 +1080,13 @@ class PriceTrackerRepositoryImpl(
             // Check that priceBeforeRevert is the same as priceHistoryToDelete after converting
             // the former from a PriceEntity to a PriceHistory and fixing up the ID.
             devCheck(
-                priceBeforeRevert.toEntity().toHistory() // TODO: double to() looks a bit iffy?
+                priceBeforeRevert.toEntity().toHistory()
                     .copy(id = priceHistoryToDelete.id) == priceHistoryToDelete
             ) { "Expected priceBeforeRevert and priceHistoryToDelete to match" }
             // Similarly, check priceAfterRevert matches priceHistoryToRevertTo.
             devCheck(
-                priceAfterRevert.toEntity().toHistory() // TODO: double to() looks a bit iffy?
+                priceAfterRevert.toEntity().toHistory()
                     .copy(id = priceHistoryToRevertTo.id)
-                    // TODO DELETE.copy(modifiedAt = priceHistoryToRevertTo.modifiedAt)
             == priceHistoryToRevertTo
             ) { "Expected priceAfterRevert and priceHistoryToRevertTo to match" }
 
@@ -1887,15 +1874,14 @@ const val errorHighlightBoxVisibleTimeMillis = 1000L
 // right of the top app bar as well? Or just the body content below it?
 val screenBorder = 8.dp
 
-// TODO: MD3 specs say there should be a 24.dp horizontal border, but this seems quite ugly. The
-// left hand edge of the dialog's body controls don't line up with the close icon and the right hand
-// edges don't line up with the right hand edge of the "Save" text button. Some of the screenshots
-// in the documentation seem to show some but not all of these misalignments. It just feels
-// half-baked and inconsistent so I'm going to go with this.
-val fullScreenDialogBorder = 16.dp // TODO: rename ...HorizontalBorder?
+// MD3 specs say there should be a 24.dp horizontal border, but this seems quite ugly. The left hand
+// edge of the dialog's body controls don't line up with the close icon and the right hand edges
+// don't line up with the right hand edge of the "Save" text button. Some of the screenshots in the
+// documentation seem to show some but not all of these misalignments. It just feels half-baked and
+// inconsistent so I'm going to go with this.
+val fullScreenDialogHorizontalBorder = 16.dp
 
 val fullScreenDialogVerticalBorder = 8.dp
-
 
 // MD3 says 12.dp but MyExposedDropdownMenuBox's dropdown item text doesn't line up with the parent
 // TextField text with that. TODO: We could override it for that specific case and use 12.dp for
@@ -4452,7 +4438,7 @@ fun GeneralEditScreen(
                 .background(/* Color.Cyan TODO TEMP FOR DEBUG, SHOULD BE */ MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = fullScreenDialogBorder)
+                .padding(horizontal = fullScreenDialogHorizontalBorder)
                 .verticalScroll(scrollState)
         ) {
             // The two vertical spacers here are to create a vertical border which we *can* draw
@@ -6340,7 +6326,7 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = fullScreenDialogBorder)
+                .padding(horizontal = fullScreenDialogHorizontalBorder)
                 .verticalScroll(rememberScrollState()),
         ) {
             // We manually implement the vertical border so it is part of the scrollable region, not
@@ -6441,7 +6427,7 @@ fun LegalScreen(
             modifier = modifier
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
-                .padding(horizontal = fullScreenDialogBorder)
+                .padding(horizontal = fullScreenDialogHorizontalBorder)
                 //  TODO!? .padding(16.dp) - this is chatgpt, maybe redundant now i have scaffold
         ) {
             // We manually implement the vertical border so it is part of the scrollable region, not
