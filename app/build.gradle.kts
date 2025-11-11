@@ -11,7 +11,8 @@ plugins {
 spotless {
     kotlin {
         target("**/*.kt")
-        ktfmt() // Google style, no config
+        // ktfmt() // Google style, no config
+        ktfmt().kotlinlangStyle() // 4-space indents
     }
 }
 
