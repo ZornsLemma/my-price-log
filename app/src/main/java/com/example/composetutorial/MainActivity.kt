@@ -1614,7 +1614,6 @@ class HomeViewModel(
                             itemList,
                             source,
                             sourceList,
-                            priceList,
                             priceAnalysis
                         )
                     )
@@ -2854,10 +2853,6 @@ data class HomeScreenUIContent(
     val itemList: List<Item>,
     val source: Source?,
     val sourceList: List<Source>,
-    // TODO: priceList is almost unused, and since priceAnalysis includes all prices and has a Price
-    // object for each price as well, we could almost certainly remove priceList and just use
-    // priceAnalysis everywhere.
-    val priceList: List<Price>,
     val priceAnalysis: PriceAnalysis,
 ) {
     companion object {
@@ -2869,7 +2864,6 @@ data class HomeScreenUIContent(
                 itemList = emptyList(),
                 source = null,
                 sourceList = emptyList(),
-                priceList = emptyList(),
                 priceAnalysis = PriceAnalysis(emptyList(), null),
             )
         }
@@ -3137,7 +3131,6 @@ fun HomeScreen(
             vm.previousPrice.value = null
             vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
         },
-        uiContent.priceList,
         uiContent.priceAnalysis,
         onEditPriceClick = { onEditPriceClick(uiContent) },
         onItemSearchClick = { onItemSearchClick(uiContent) },
@@ -3421,7 +3414,6 @@ fun HomeScreenScaffold(
     source: Source?,
     sourceList: List<Source>,
     onSelectedSourceIdChange: (Long?) -> Unit,
-    priceList: List<Price>,
     priceAnalysis: PriceAnalysis,
     onEditPriceClick: () -> Unit,
     onItemSearchClick: () -> Unit,
@@ -6689,7 +6681,7 @@ class SharedViewModel : ViewModel() {
         val source = uiContent.source!!
 
         val price =
-            uiContent.priceList.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
+            uiContent.priceAnalysis.augmentedPriceList.map { it.basePrice }.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
         val editablePrice = if (price != null)
             price.toEditable(frozenLocale, getCurrencyFormat(dataSet, frozenLocale))
@@ -6741,7 +6733,7 @@ class SharedViewModel : ViewModel() {
         val item = uiContent.item!!
         val source = uiContent.source!!
         val price =
-            uiContent.priceList.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
+            uiContent.priceAnalysis.augmentedPriceList.map { it.basePrice }.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
         viewPriceHistoryScreenUIContent = ViewPriceHistoryScreenUIContent(
             dataSet = dataSet,
