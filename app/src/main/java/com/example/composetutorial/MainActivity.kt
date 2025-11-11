@@ -4919,20 +4919,6 @@ fun EditItemScreen(
 ) {
     val uiContent = vm.uiContent
 
-    // TODO: If itemReferenceCount > 0, we should probably disable changing the quantity type, maybe
-    // with an explanatory note (although that feels maybe confusing). I think as per wafflings
-    // elsewhere if the user wants to change it once data exists, they have to delete the product
-    // (thereby deleting that data) and add it again. We could perhaps not use a radio button and
-    // just show a simple text (probably *not* a TextField, just because that's probably not the
-    // right look, just as it isn't elsewhere even though I've done it) "statement" that the product
-    // is sold by weight, in this case (while still showing radio button if itemReferenceCount is 0
-    // of course). I am not going to add this now partly as I'd like to mull over the UI choices in
-    // background and partly because I don't want to restrict things which might help me investigate
-    // the "java.lang.IllegalArgumentException: No enum constant
-    // com.example.composetutorial.MeasurementUnit.ĭ????" problem. (I don't think that's caused by
-    // creating inconsistencies. You can make other things go wrong by creating inconsistencies
-    // between the product's quantity type and the existing prices, but you have to navigate around
-    // and that crash was triggered immediately on returning via overview menu.)
     val itemReferenceCount by vm.itemReferenceCountFlow.collectAsStateWithLifecycle()
     Log.d("MyApp", "itemReferenceCount $itemReferenceCount")
 
@@ -5011,6 +4997,10 @@ fun EditItemScreen(
         var selectedOption = uiContent.editableItem.value.quantityType
         // TODO: This radio group needs to be enabled iff saveStatus.isNotBusy()
 
+        // ENHANCE: If itemReferenceCount != 0L and we disallow changing "sold by" as a result, just
+        // maybe we should switch to displaying a disabled TextField or similar with a
+        // supportingText instead of the radio buttons. I half suspect that might look ugly and be
+        // confusingly different, but maybe it wouldn't.
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
