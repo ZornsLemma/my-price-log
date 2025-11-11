@@ -2656,13 +2656,14 @@ fun EditConfirmButtons(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // TODO: Mixed feelings, but should we grey out the confirm button
-        // if the confirmed label shows "now"? (obviously not greying out
-        // "undo", but if for whatever reason we are not showing "undo" and
-        // it is "now")
-        // TODO: We should probably animate the "Confirmed" text label
-        // changing *if it happens due to confirm/undo click* (not because
-        // timer ticks over to e.g. next minute)
+        // ENHANCE: A couple of possible polish opportunities here:
+        // - We should maybe disable the "Confirm" button if the label is "now", although arguably
+        //   this is a bit unnecessary and leads to a small visual distraction if the user is
+        //   looking at the screen when it ticks over to 1 minute and is re-enabled.
+        // - We should maybe animate changes to the "Confirmed" text label if it changes due to a
+        //   confirm/undo click (rather than just because time passed and it ticked to the next
+        //   value). This would help make it more obvious to the user what Confirm/Undo are actually
+        //   affecting.
 
         // The "Confirm" button is the primary button - we expect it to be the
         // button users click on most on this card (most of the time prices
