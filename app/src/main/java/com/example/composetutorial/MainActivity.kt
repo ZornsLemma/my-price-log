@@ -1887,6 +1887,8 @@ val fullScreenDialogVerticalBorder = 8.dp
 // TextField text with that. TODO: We could override it for that specific case and use 12.dp for
 // other menus?
 val menuLeftPadding = 16.dp
+// Seems best to make the right padding symmetrical.
+val menuRightPadding = menuLeftPadding
 
 val defaultErrorHighlightOffset = 6.dp
 
@@ -1896,20 +1898,14 @@ val defaultErrorHighlightOffset = 6.dp
 // in unless someone is using the app on a tablet, but still.
 val maxNavigationDrawerWidth = 360.dp
 
-/* TODO DELETE
 // MD3 standard values
 val oneLineListItemHeight = 56.dp
 val listItemHorizontalPadding = 16.dp
-*/
-
-// Seems best to make the right padding symmetrical.
-val menuRightPadding = menuLeftPadding
 
 // These arbitrary lengths apply to the UI only (not the database) and are just intended to stop the
 // user typing insane amounts of text into TextFields and breaking layouts. They may need to be
 // tweaked later.
-const val maxDataSetNameLength =
-    32 // TODO: just possibly shorter than others due to use of nav drawer to show these?!
+const val maxDataSetNameLength = 32
 const val maxItemNameLength = 32
 const val maxSourceNameLength = 32
 const val maxNotesLength = 1024
@@ -2692,7 +2688,7 @@ fun <T> DataTable(
 
     Column {
         // ENHANCE: If we allow user-selectable units in this header via a dropdown, its height may
-        // need increasing to 56 dp.
+        // need increasing to oneLineListItemHeight.
         Row(
             modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceContainerHighest),
             verticalAlignment = Alignment.CenterVertically
@@ -2738,7 +2734,7 @@ fun <T> DataTable(
                 Row(
                     modifier = Modifier
                         .background(rowBackground)
-                        .height(56.dp)
+                        .height(oneLineListItemHeight)
                         .then(if (onClick != null) Modifier.clickable { onClick(item) } else Modifier)
                     , verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -3258,8 +3254,8 @@ fun HomeScreenNavigationDrawer(
                 Column {
                     Box(
                         modifier = Modifier
-                            .height(56.dp)
-                            .padding(start = 16.dp),
+                            .height(oneLineListItemHeight)
+                            .padding(start = listItemHorizontalPadding),
                         contentAlignment = Alignment.CenterStart
                     ) {
                         Text(
@@ -3273,7 +3269,7 @@ fun HomeScreenNavigationDrawer(
                             NavigationDrawerItem(
                                 modifier = Modifier
                                     .padding(horizontal = 12.dp)
-                                    .height(56.dp),
+                                    .height(oneLineListItemHeight),
                                 label = {
                                     Text(
                                         item.name,
