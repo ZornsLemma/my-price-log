@@ -3426,8 +3426,17 @@ fun HomeScreenScaffold(
     // this is "busy"
     val asyncOperationStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
 
-    // TODO: Do I need the showBusySnackbar stuff here? I suppose the user might hit back while we
-    // are saving (confirm/undo)
+    // Unlike GeneralEditScreen(), we don't try to trap "back" and show a busy snackbar. We probably
+    // could but:
+    // - The data being saved here is "just" a confirm/undo confirm, it's not quite so critical or
+    //   "user has put effort into this data entry" as in GeneralEditScreen.
+    // - "Back" from the home screen would leave the app. It's not so clear we should even try to
+    //   stop the user doing that.
+    // - The user can use the home or overview buttons/gestures to do leave the app, and we probably
+    //   can't and almost certainly shouldn't trap those if we are saving. (They can also do this
+    //   during GeneralEditScreen too. It's just that there "back" has an in-app meaning and is
+    //   a particularly expected case where we can reasonably interfere.)
+    // - A slow save is extremely unlikely anyway.
 
     // TODO: Can/should I factor this little fragment of code out into a helper function?
     val locale = LocalConfiguration.current.locales[0]
@@ -4290,6 +4299,7 @@ fun runGeneralEditScreenOperation(
     }
 }
 
+// TODO: This is a very long function, can we split it up?
 @Composable
 fun GeneralEditScreen(
     vm: GeneralEditScreenViewModel,
