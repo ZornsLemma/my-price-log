@@ -3246,7 +3246,6 @@ fun HomeScreenNavigationDrawer(
     dataSet: DataSet?,
     dataSetListSorted: List<DataSet>,
     onSelectedDataSetIdChange: (Long) -> Unit,
-    coroutineScope: CoroutineScope,
     content: @Composable () -> Unit
 ) {
     // ENHANCE: Navigation drawer is being deprecated in favour of expanded navigation rail in
@@ -3256,6 +3255,8 @@ fun HomeScreenNavigationDrawer(
     // maybe 5-10+ user-defined categories. It also seems to want to live at the bottom of the
     // screen on a portrait smartphone layout. So I am going to stick with the navigation drawer for
     // now.
+
+    val coroutineScope = rememberCoroutineScope()
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -3325,11 +3326,10 @@ fun HomeScreenActualScaffold( // TODO: RENAME
     onEditSourcesClick: () -> Unit,
     onSettingsClick: () -> Unit,
     asyncOperationStatus: AsyncOperationStatus,
-    coroutineScope: CoroutineScope,
-
     content: @Composable (innerPadding: PaddingValues) -> Unit
 
 ) {
+    val coroutineScope = rememberCoroutineScope()
     var menuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -3426,9 +3426,6 @@ fun HomeScreenScaffold(
     // this is "busy"
     val asyncOperationStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
 
-    // TODO: We probably can and should get rid of coroutinescope and have child(ren) get their own
-    // - saves parameter passing and has no real downside here.
-    val coroutineScope = rememberCoroutineScope()
     // TODO: Do I need the showBusySnackbar stuff here? I suppose the user might hit back while we
     // are saving (confirm/undo)
 
@@ -3448,9 +3445,9 @@ fun HomeScreenScaffold(
         }
     }
 
-    HomeScreenNavigationDrawer(drawerState, dataSet, dataSetListSorted, onSelectedDataSetIdChange, coroutineScope) {
+    HomeScreenNavigationDrawer(drawerState, dataSet, dataSetListSorted, onSelectedDataSetIdChange) {
 
-        HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, onSettingsClick, asyncOperationStatus, coroutineScope)
+        HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, onSettingsClick, asyncOperationStatus)
  { innerPadding ->
                 HomeScreenContent(
                     vm,
