@@ -3424,7 +3424,7 @@ fun HomeScreenScaffold(
 ) {
     // TODO: We need to disable all forms of interaction (navdrawer, dropdowns, menu, etc) while
     // this is "busy"
-    val saveStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
+    val asyncOperationStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val coroutineScope = rememberCoroutineScope()
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
@@ -3449,7 +3449,7 @@ fun HomeScreenScaffold(
 
     HomeScreenNavigationDrawer(drawerState, dataSet, dataSetListSorted, onSelectedDataSetIdChange, coroutineScope) {
 
-        HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, onSettingsClick,saveStatus, coroutineScope)
+        HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, onSettingsClick,asyncOperationStatus, coroutineScope)
  { innerPadding ->
                 HomeScreenContent(
                     vm,
@@ -3465,24 +3465,51 @@ fun HomeScreenScaffold(
                     onEditPriceClick,
                     onItemSearchClick,
                     onViewHistoryClick,
-                    saveStatus,
+                    asyncOperationStatus,
                     innerPadding
                 )
         }
     }
 
-    // In an ideal world the scrim with spinner would cover only the lower two cards and leave the
-    // rest of the home screen functional. I experimented with doing this and although I think I
+    // TODO: ALL THE FOLLOWING CODE CODE PROBABLY BE FACTORED OUT/MOVED INTO A RENAMED HOME..>STATEMACHINE
+
+    HomeScreenAsyncOperationStatusStateMachine(vm, onError = { showErrorDialog = true })
+
+    // We use this scrim with spinner to handle the (unlikely) cases where:
+    // - The initial data load takes a long time.
+    // - Saving a confirm/undo confirm to the database takes a long time.
+    //
+    // The latter could be handled via showing a spinner on the confirm/undo confirm button itself
+    // (and continuing to disable all controls while waiting for the save to complete, as we already
+    // do), but for such an unlikely case it seems best to keep things simple.
+    //
+    // In an ideal world the scrim with spinner for loading would cover only the lower two cards and
+    // leave the rest of the home screen functional; it would be legitimate to abandon a slow load
+    // and choose to load something different. (It would not be legitimate to do this while waiting
+    // for a save to complete.) I experimented with doing this and although I think I
     // could have made it work, it felt incredibly brittle and likely to go wrong depending on
     // Android version and things like edge-to-edge and the SDK implementing that differently on
     // different Android versions etc. Given how rarely we expect the spinner to appear at all (and
     // therefore also how little testing it would get), it seemed best to go with this relatively
-    // simple full screen spinner.
+    // simple full screen spinner. (It is just possible I had some buggy/sub-optimal setup of the
+    // higher level composables which made this seem harder than it should have been, but I'm not
+    // sure.)
     //
-    // Note that we do not pass a delayMillis parameter here; the delay before the scrim appears
-    // is implemented in the logic which sets the loading flag, so as soon as loading is true, we
-    // want the scrim.
-    // TODO: Is this in right place in hierarchy wrt navigation drawer?
+    // Note that we do not pass a delayMillis parameter here. The delay before the scrim appears is
+    // implemented in the logic which sets the loading flag or BusyForAWhile state, so as soon as
+    // either is true we want to show the scrim.
+    ScrimWithSpinner(visible = loading || asyncOperationStatus == AsyncOperationStatus.BusyForAWhile)
+
+    if (showErrorDialog) {
+        SaveErrorAlertDialog(requestClose = { showErrorDialog = false })
+    }
+}
+
+@Composable
+fun HomeScreenAsyncOperationStatusStateMachine(
+    vm: HomeViewModel,
+    onError: () -> Unit,
+) {
     LaunchedEffect(Unit) {
         // TODO: I have thrown in a buffer() here voodoo-style based on an actual observed problem
         // in other cases. Not sure if it's really necessary or best practice here.
@@ -3505,27 +3532,13 @@ fun HomeScreenScaffold(
 
                 is AsyncOperationStatus.Error -> { // TODO: We might want to destructure the parameter here so we can save/show the error
                     vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
-                    showErrorDialog = true
+                    onError()
                 }
 
                 else -> {}
             }
         }
     }
-
-    // We use this scrim with spinner to handle the (unlikely) case where a confirm/undo confirm
-    // operation takes a long time as we as slow initial loading. Because of this, we don't bother
-    // to implement a spinner on the confirm/undo confirm button itself. We do still disable all the
-    // controls on the screen based on asyncSaveStatus so the user can't fiddle with anything during
-    // the brief period before the scrim appears.
-    // TODO: Should we just be using Busy or !isNotBusy() instead of BusyForAWhile or something like
-    // that in next line? The scrim already has an internal delay on becoming visible.
-    // TODO: TCO SO I CAN WORK ON ADDING THE "DISABLE ON SAVE" LOGIC TO THE HOME SCREEN WITHOUT THIS GETTING IN THE WAY ScrimWithSpinner(visible = loading || saveStatus == AsyncOperationStatus.BusyForAWhile)
-
-    if (showErrorDialog) {
-        SaveErrorAlertDialog(requestClose = { showErrorDialog = false })
-    }
-
 }
 
 @Composable
