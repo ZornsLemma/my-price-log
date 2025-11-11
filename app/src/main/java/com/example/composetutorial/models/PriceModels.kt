@@ -13,6 +13,7 @@ import com.example.composetutorial.MeasurementUnit
 import com.example.composetutorial.baseUnitForQuantityType
 import com.example.composetutorial.devCheck
 import com.example.composetutorial.formatDoubleForEditing
+import com.example.composetutorial.getCurrencyFormat
 import com.example.composetutorial.parseStringAsDoubleOrNull
 import kotlinx.parcelize.Parcelize
 import java.time.Instant
@@ -145,6 +146,26 @@ data class Price(
     val itemDefaultUnit: MeasurementUnit
 ) : Parcelable
 
+// TODO: "toHistory" is new, and almost seems to me to be suggesting we should drop all the
+// toDomain()/toEditable() stuff and maybe use explicit names everywhere, but I'm far from
+// confident. Maybe it's fine, maybe there is a notional "history" variant layer, it's just that
+// in practice only prices have this.
+fun PriceEntity.toHistory(): PriceHistory {
+    return PriceHistory(
+        priceId = id,
+        dataSetId = dataSetId,
+        itemId = itemId,
+        sourceId = sourceId,
+        price = price,
+        count = count,
+        quantityInBaseUnit = quantityInBaseUnit,
+        userUnit = userUnit,
+        confirmedAt = confirmedAt,
+        notes = notes,
+        modifiedAt = modifiedAt,
+    )
+}
+
 fun Price.toEntity(): PriceEntity {
     // This check is just a more explicit version of that implicitly done inside the
     // quantity.asValue() call below.
@@ -257,4 +278,99 @@ fun EditablePrice.toDomain(locale: Locale): Price? {
             itemDefaultUnit = itemDefaultUnit,
         )
     }
+}
+
+// This must be kept in sync with any changes to PriceEntity.
+@Entity(
+    tableName = "price_history", foreignKeys = [
+        // We don't declare a foreign key relationship of our price_id to price.id. At some point it
+        // will probably be possible to delete a price but retain the history, which wouldn't work
+        // with such a foreign key relationship. Arguably we don't need price_id at all on this
+        // table, but having it will (e.g.) allow us to observe when it changes for the same
+        // (data_set_id, source_id, item_id) combination and infer a price deletion at that point in
+        // the history.
+        ForeignKey(
+            entity = DataSet::class,
+            parentColumns = ["id"],
+            childColumns = ["data_set_id"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = Item::class,
+            parentColumns = ["id"],
+            childColumns = ["item_id"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = Source::class,
+            parentColumns = ["id"],
+            childColumns = ["source_id"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [
+        Index(value = ["data_set_id"], unique = false), // because this is a foreign key
+        Index(value = ["source_id"], unique = false), // because this is a foreign key
+        Index(value = ["item_id"], unique = false), // because this is a foreign key, although the composite index below might well be good enough we'll add this one too to play it safe
+        // We don't include data_set_id in this index as it's technically redundant - item_id and
+        // source_id both imply a data_set_id and it should be the same. We put item_id first
+        // because it feels more likely we might want to select history using just item_id than just
+        // source_id in the future. I also suspect it helps that item_id is far more selective than
+        // source_id - there will typically be many more items than sources and our queries will
+        // be using equality conditions..
+        Index(value = ["item_id", "source_id"], unique = false)
+    ]
+)
+// TODO: Rename this? Maybe HistoricalPrice or something? I am happy to have the database table
+// called price_history but it is arguably confusing to have a class representing a point-in-time
+// historical price called PriceHistory, as the name seems to imply it is "a history" in itself.
+data class PriceHistory(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    @ColumnInfo(name = "price_id") val priceId: Long,
+    @ColumnInfo(name = "data_set_id") val dataSetId: Long,
+    @ColumnInfo(name = "item_id") val itemId: Long,
+    @ColumnInfo(name = "source_id") val sourceId: Long,
+    val price: Double,
+    val count: Long,
+    @ColumnInfo(name = "quantity_in_base_unit") val quantityInBaseUnit: Double,
+    @ColumnInfo(name = "user_unit") val userUnit: MeasurementUnit,
+    @ColumnInfo(name = "confirmed_at") val confirmedAt: Instant,
+    val notes: String,
+    @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
+) {
+    // TODO: No idea where this should live or what it should be called or if it's a good idea.
+    fun toPrice(): Price {
+        return Price(
+            id = priceId,
+            dataSetId = dataSetId,
+            itemId = itemId,
+            sourceId = sourceId,
+            price = price,
+            count = count,
+            quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(userUnit.quantityType)).to(
+                userUnit
+            ),
+            confirmedAt = confirmedAt,
+            notes = notes,
+            modifiedAt = modifiedAt,
+            // itemDefaultUnit "ought" to be taken from the Item table for itemId. It's not really
+            // convenient to have to do that (it would mean introducing an extra layer into the
+            // history-related data classes, as we do with PriceWithItemEntity, so we can do the
+            // join) and I don't think it would buy us that much in terms of catching errors, so we
+            // just fake up a plausible value here. Note that this won't get written back to the
+            // database if a historical price gets converted back into a current price, as it is not
+            // present on the database's price table in the first place. It's used entirely for
+            // in-memory consistency checks.
+            itemDefaultUnit = baseUnitForQuantityType(userUnit.quantityType)
+        )
+    }
+
+    companion object {
+        // TODO: Should this be somewhere else or something else or something going in the other direction!?!?!?!?!?!
+    }
+}
+
+fun PriceHistory.toEditable(priceId: Long, locale: Locale, dataSet: DataSet): EditablePrice {
+    return toPrice().copy(id = priceId).toEditable(locale, getCurrencyFormat(dataSet, locale))
 }

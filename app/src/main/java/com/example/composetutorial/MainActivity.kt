@@ -11,6 +11,7 @@ import com.example.composetutorial.models.EditableSource
 import com.example.composetutorial.models.PriceEntity
 import com.example.composetutorial.models.Price
 import com.example.composetutorial.models.PriceWithItemEntity
+import com.example.composetutorial.models.PriceHistory
 import com.example.composetutorial.models.toDomain
 import androidx.compose.ui.platform.LocalUriHandler
 import android.graphics.Bitmap
@@ -259,6 +260,7 @@ import com.example.composetutorial.EditPriceScreenUIContent.Companion.SOURCE_KEY
 import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.models.toEditable
 import com.example.composetutorial.models.toEntity
+import com.example.composetutorial.models.toHistory
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -1050,7 +1052,7 @@ class PriceTrackerRepositoryImpl(
             priceId = priceDao.upsert(priceEntity)
             val priceEntityWithId =
                 if (priceEntity.id != 0L) priceEntity else priceEntity.copy(id = priceId)
-            priceHistoryDao.insert(PriceHistory.fromPriceEntity(priceEntityWithId))
+            priceHistoryDao.insert(priceEntityWithId.toHistory())
         }
         return priceId
     }
@@ -1099,12 +1101,12 @@ class PriceTrackerRepositoryImpl(
             // Check that priceBeforeRevert is the same as priceHistoryToDelete after converting
             // the former from a PriceEntity to a PriceHistory and fixing up the ID.
             devCheck(
-                PriceHistory.fromPriceEntity(priceBeforeRevert.toEntity())
+                priceBeforeRevert.toEntity().toHistory() // TODO: double to() looks a bit iffy?
                     .copy(id = priceHistoryToDelete.id) == priceHistoryToDelete
             ) { "Expected priceBeforeRevert and priceHistoryToDelete to match" }
             // Similarly, check priceAfterRevert matches priceHistoryToRevertTo.
             devCheck(
-                PriceHistory.fromPriceEntity(priceAfterRevert.toEntity())
+                priceAfterRevert.toEntity().toHistory() // TODO: double to() looks a bit iffy?
                     .copy(id = priceHistoryToRevertTo.id)
                     // TODO DELETE.copy(modifiedAt = priceHistoryToRevertTo.modifiedAt)
             == priceHistoryToRevertTo
@@ -1300,117 +1302,6 @@ enum class LoyaltyType(val id: Long) {
         fun fromValue(loyaltyDiscountTypeId: Long): LoyaltyType? =
             loyaltyTypeById[loyaltyDiscountTypeId]
     }
-}
-
-// This must be kept in sync with any changes to PriceEntity.
-@Entity(
-    tableName = "price_history", foreignKeys = [
-        // We don't declare a foreign key relationship of our price_id to price.id. At some point it
-        // will probably be possible to delete a price but retain the history, which wouldn't work
-        // with such a foreign key relationship. Arguably we don't need price_id at all on this
-        // table, but having it will (e.g.) allow us to observe when it changes for the same
-        // (data_set_id, source_id, item_id) combination and infer a price deletion at that point in
-        // the history.
-        ForeignKey(
-            entity = DataSet::class,
-            parentColumns = ["id"],
-            childColumns = ["data_set_id"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = Item::class,
-            parentColumns = ["id"],
-            childColumns = ["item_id"],
-            onDelete = ForeignKey.CASCADE
-        ),
-        ForeignKey(
-            entity = Source::class,
-            parentColumns = ["id"],
-            childColumns = ["source_id"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [
-        Index(value = ["data_set_id"], unique = false), // because this is a foreign key
-        Index(value = ["source_id"], unique = false), // because this is a foreign key
-        Index(value = ["item_id"], unique = false), // because this is a foreign key, although the composite index below might well be good enough we'll add this one too to play it safe
-        // We don't include data_set_id in this index as it's technically redundant - item_id and
-        // source_id both imply a data_set_id and it should be the same. We put item_id first
-        // because it feels more likely we might want to select history using just item_id than just
-        // source_id in the future. I also suspect it helps that item_id is far more selective than
-        // source_id - there will typically be many more items than sources and our queries will
-        // be using equality conditions..
-        Index(value = ["item_id", "source_id"], unique = false)
-    ]
-)
-// TODO: Rename this? Maybe HistoricalPrice or something? I am happy to have the database table
-// called price_history but it is arguably confusing to have a class representing a point-in-time
-// historical price called PriceHistory, as the name seems to imply it is "a history" in itself.
-data class PriceHistory(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    @ColumnInfo(name = "price_id") val priceId: Long,
-    @ColumnInfo(name = "data_set_id") val dataSetId: Long,
-    @ColumnInfo(name = "item_id") val itemId: Long,
-    @ColumnInfo(name = "source_id") val sourceId: Long,
-    val price: Double,
-    val count: Long,
-    @ColumnInfo(name = "quantity_in_base_unit") val quantityInBaseUnit: Double,
-    @ColumnInfo(name = "user_unit") val userUnit: MeasurementUnit,
-    @ColumnInfo(name = "confirmed_at") val confirmedAt: Instant,
-    val notes: String,
-    @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
-) {
-    // TODO: No idea where this should live or what it should be called or if it's a good idea.
-    fun toPrice(): Price {
-        return Price(
-            id = priceId,
-            dataSetId = dataSetId,
-            itemId = itemId,
-            sourceId = sourceId,
-            price = price,
-            count = count,
-            quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(userUnit.quantityType)).to(
-                userUnit
-            ),
-            confirmedAt = confirmedAt,
-            notes = notes,
-            modifiedAt = modifiedAt,
-            // itemDefaultUnit "ought" to be taken from the Item table for itemId. It's not really
-            // convenient to have to do that (it would mean introducing an extra layer into the
-            // history-related data classes, as we do with PriceWithItemEntity, so we can do the
-            // join) and I don't think it would buy us that much in terms of catching errors, so we
-            // just fake up a plausible value here. Note that this won't get written back to the
-            // database if a historical price gets converted back into a current price, as it is not
-            // present on the database's price table in the first place. It's used entirely for
-            // in-memory consistency checks.
-            itemDefaultUnit = baseUnitForQuantityType(userUnit.quantityType)
-        )
-    }
-
-    companion object {
-        // TODO: Should this be somewhere else or something else or something going in the other direction!?!?!?!?!?!
-        fun fromPriceEntity(priceEntity: PriceEntity): PriceHistory {
-            return PriceHistory(
-                priceId = priceEntity.id,
-                dataSetId = priceEntity.dataSetId,
-                itemId = priceEntity.itemId,
-                sourceId = priceEntity.sourceId,
-                price = priceEntity.price,
-                count = priceEntity.count,
-                quantityInBaseUnit = priceEntity.quantityInBaseUnit,
-                userUnit = priceEntity.userUnit,
-                confirmedAt = priceEntity.confirmedAt,
-                notes = priceEntity.notes,
-                modifiedAt = priceEntity.modifiedAt,
-            )
-        }
-    }
-}
-
-// TODO: No idea where this should belong or what style it should have
-fun PriceHistory.toEditablePrice(priceId: Long, locale: Locale, dataSet: DataSet): EditablePrice {
-    return toPrice().copy(id = priceId).toEditable(locale, getCurrencyFormat(dataSet, locale))
 }
 
 fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
@@ -8482,7 +8373,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                             viewModel.uiContent.dataSet,
                             viewModel.uiContent.item,
                             viewModel.uiContent.source,
-                            editablePrice = priceHistory.toEditablePrice(
+                            editablePrice = priceHistory.toEditable(
                                 // It's important we provide the current price ID, since we must
                                 // update the current existing record instead of adding a new one.
                                 // The price ID might in principle have changed since the history
