@@ -8099,7 +8099,6 @@ fun AppNavigation() {
             }
         }
 
-        // TODO: Can we factor out a lot of the commonality in the GeneralSelector-based composables here?
         composable(
             "editSources/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
@@ -8349,15 +8348,11 @@ This may be complete crap. The example of how to use it is probably as long as t
             val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
             screenWithViewModel<ViewPriceHistoryViewModel, ViewPriceHistoryScreenUIContent>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { /* TODO! */ },
+                clearUIContent = { sharedViewModel.viewPriceHistoryScreenUIContent = null },
                 buildViewModel = { app, handle ->
                     ViewPriceHistoryViewModel(
                         app.priceTrackerRepository,
                         handle,
-                        /* TODO!?
-                        sharedViewModel.viewPriceHistoryUIContent
-                            ?: ViewPriceHistoryScreenUIContent.fromSavedState(handle)!!
-                            */
                         sharedViewModel.viewPriceHistoryScreenUIContent
                             ?: ViewPriceHistoryScreenUIContent.fromSavedState(handle)!!
                     )
