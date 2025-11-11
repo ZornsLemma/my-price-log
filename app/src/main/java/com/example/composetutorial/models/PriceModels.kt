@@ -8,7 +8,6 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.composetutorial.CurrencyFormat
-import com.example.composetutorial.DataSet
 import com.example.composetutorial.MeasuredValue
 import com.example.composetutorial.MeasurementUnit
 import com.example.composetutorial.baseUnitForQuantityType

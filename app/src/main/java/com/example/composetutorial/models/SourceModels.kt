@@ -6,7 +6,6 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.composetutorial.DataSet
 import com.example.composetutorial.LoyaltyType
 import com.example.composetutorial.devCheck
 import com.example.composetutorial.formatDoubleForEditing
