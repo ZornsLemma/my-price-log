@@ -339,36 +339,33 @@ data class PriceHistory(
     val notes: String,
     @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
 ) {
-    // TODO: No idea where this should live or what it should be called or if it's a good idea.
-    fun toPrice(): Price {
-        return Price(
-            id = priceId,
-            dataSetId = dataSetId,
-            itemId = itemId,
-            sourceId = sourceId,
-            price = price,
-            count = count,
-            quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(userUnit.quantityType)).to(
-                userUnit
-            ),
-            confirmedAt = confirmedAt,
-            notes = notes,
-            modifiedAt = modifiedAt,
-            // itemDefaultUnit "ought" to be taken from the Item table for itemId. It's not really
-            // convenient to have to do that (it would mean introducing an extra layer into the
-            // history-related data classes, as we do with PriceWithItemEntity, so we can do the
-            // join) and I don't think it would buy us that much in terms of catching errors, so we
-            // just fake up a plausible value here. Note that this won't get written back to the
-            // database if a historical price gets converted back into a current price, as it is not
-            // present on the database's price table in the first place. It's used entirely for
-            // in-memory consistency checks.
-            itemDefaultUnit = baseUnitForQuantityType(userUnit.quantityType)
-        )
-    }
+}
 
-    companion object {
-        // TODO: Should this be somewhere else or something else or something going in the other direction!?!?!?!?!?!
-    }
+// TODO: As elsewhere, iffiness re the naming here
+fun PriceHistory.toPrice(): Price {
+    return Price(
+        id = priceId,
+        dataSetId = dataSetId,
+        itemId = itemId,
+        sourceId = sourceId,
+        price = price,
+        count = count,
+        quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(userUnit.quantityType)).to(
+            userUnit
+        ),
+        confirmedAt = confirmedAt,
+        notes = notes,
+        modifiedAt = modifiedAt,
+        // itemDefaultUnit "ought" to be taken from the Item table for itemId. It's not really
+        // convenient to have to do that (it would mean introducing an extra layer into the
+        // history-related data classes, as we do with PriceWithItemEntity, so we can do the
+        // join) and I don't think it would buy us that much in terms of catching errors, so we
+        // just fake up a plausible value here. Note that this won't get written back to the
+        // database if a historical price gets converted back into a current price, as it is not
+        // present on the database's price table in the first place. It's used entirely for
+        // in-memory consistency checks.
+        itemDefaultUnit = baseUnitForQuantityType(userUnit.quantityType)
+    )
 }
 
 fun PriceHistory.toEditable(priceId: Long, locale: Locale, dataSet: DataSet): EditablePrice {
