@@ -969,6 +969,17 @@ fun <T> List<T>.sortedByLocale(
     }
 }
 
+// TODO: Use this everywhere relevant
+@Composable
+fun <T> List<T>.rememberSortedByLocale(
+    selector: (T) -> String,
+): List<T> {
+    val locale = LocalConfiguration.current.locales[0]
+    return remember(this, locale) {
+        this.sortedByLocale(selector, locale)
+    }
+}
+
 class PriceTrackerRepositoryImpl(
     private val db: AppDatabase,
     private val dataSetDao: DataSetDao,
@@ -3438,11 +3449,7 @@ fun HomeScreenScaffold(
     //   a particularly expected case where we can reasonably interfere.)
     // - A slow save is extremely unlikely anyway.
 
-    // TODO: Can/should I factor this little fragment of code out into a helper function?
-    val locale = LocalConfiguration.current.locales[0]
-    val dataSetListSorted = remember(dataSetList, locale) {
-        dataSetList.sortedByLocale({ it.name }, locale)
-    }
+    val dataSetListSorted = dataSetList.rememberSortedByLocale { it.name }
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
@@ -5680,7 +5687,6 @@ fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Strin
     )
 }
 
-
 // The idea here is this does not insist the input is actually parseable as a decimal (for example,
 // we allow "24.2.3" so the user can enter a new decimal point and then go delete the old one
 // afterwards), but that it rejects obviously incorrect things. We allow digits, commas, full stops
@@ -7102,10 +7108,7 @@ fun <T> GeneralSelectorScreen(
                 )
             }
 
-            val locale = LocalConfiguration.current.locales[0]
-            val dataListSorted = remember(dataList, locale) {
-                dataList.sortedByLocale({ getName(it) }, locale)
-            }
+            val dataListSorted = dataList.rememberSortedByLocale { getName(it) }
             Box(
                 modifier = Modifier
                     //.background(Color.Green /* TODO! */)
