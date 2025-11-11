@@ -7321,12 +7321,6 @@ class EditSourceViewModel(
         uiContent.saveEditableSourceState(savedStateHandle)
     }
 
-    // TODO: There just might be an argument for not using emptyList() in stateIn, so we can head
-    // off a theoretical possibility of the user entering invalid data (maybe just leaving the
-    // form empty when creating a new entry) and starting a save before the validation rules are
-    // present, which will pass (because no validation rules) and then they either insert invalid
-    // data or get a database level constraint validation. If we have null, we can make sure the
-    // validation rules *are present* during save validation.
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
         priceTrackerRepository.getAllSources(uiContent.editableSource.value.dataSetId)
             .map { sourceList ->
@@ -7336,7 +7330,10 @@ class EditSourceViewModel(
                 )
             }
             .withVersion()
-            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
+            // initialValue here is set to an unsatisfiable validation list to avoid a theoretical
+            // corner case. If we defaulted to emptyList(), the user might be able to save with an
+            // invalid name before the real validation rules become available.
+            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(listOf(ValidationRule({ false }, ""))))
 
     // ENHANCE: Maybe we should allow zero here? We might need to tweak some messages accordingly.
     // Zero isn't necessary as you can choose "None", but maybe it's a bit persnickety not to allow
