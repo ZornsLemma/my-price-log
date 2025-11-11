@@ -2544,88 +2544,11 @@ fun ItemSourceInfoLive(
                         }
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Row {
-                                when (augmentedPrice.priceJudgement) {
-                                    PriceJudgement.NONE -> {}
-                                    PriceJudgement.GOOD -> {
-                                        GoodPriceIcon()
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Good price")
-                                    }
-
-                                    PriceJudgement.OK -> {
-                                        OkPriceIcon()
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("OK price")
-                                    }
-
-                                    PriceJudgement.BAD -> {
-                                        BadPriceIcon()
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Bad price")
-                                    }
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                FilledTonalButton(
-                                    onClick = onEditPriceClick,
-                                    shape = MaterialTheme.shapes.small,
-                                    enabled = asyncOperationStatus.isNotBusy(),
-                                ) {
-                                    Text("Edit")
-                                }
-
-                                Spacer(modifier = Modifier.width(8.dp))
-
-                                // TODO: Mixed feelings, but should we grey out the confirm button
-                                // if the confirmed label shows "now"? (obviously not greying out
-                                // "undo", but if for whatever reason we are not showing "undo" and
-                                // it is "now")
-                                // TODO: We should probably animate the "Confirmed" text label
-                                // changing *if it happens due to confirm/undo click* (not because
-                                // timer ticks over to e.g. next minute)
-
-                                // The "Confirm" button is the primary button - we expect it to be the
-                                // button users click on most on this card (most of the time prices
-                                // won't have changed on subsequent visits) - so it gets the position on
-                                // the right.
-                                val locale = LocalConfiguration.current.locales[0]
-                                val showConfirmButton = vm.previousPrice.value == null
-                                FilledTonalButton(/* modifier = Modifier.width(confirmButtonWidth) ,*/
-                                    onClick = {
-                                        if (showConfirmButton) {
-                                            vm.confirmPrice(augmentedPrice.basePrice)
-                                        } else {
-                                            // TODO: Maybe some of these args should be supplied inside undoConfirmPrice()?
-                                            vm.undoConfirmPrice(
-                                                augmentedPrice.basePrice,
-                                                vm.previousPrice.value!!
-                                            )
-                                        }
-                                    },
-                                    shape = MaterialTheme.shapes.small,
-                                    enabled = asyncOperationStatus.isNotBusy(),
-                                    ) {
-                                    AnimatedContent(targetState = showConfirmButton) { showConfirm ->
-                                        // ENHANCE: "Undo" is perhaps borderline unclear as to what
-                                        // it is undoing (although I hope the user observing the
-                                        // transition from "Confirm"->"Undo" will act as a hint),
-                                        // but at least on my small emulated phone, "Undo confirm"
-                                        // looks a bit ugly or (with "Good price") doesn't fit and
-                                        // causes the button to become multi-line.
-                                        Text(if (showConfirm) "Confirm" else "Undo")
-                                    }
-                                }
-                            }
+                            PriceJudgementIndicator(augmentedPrice.priceJudgement)
+                            EditConfirmButtons(vm, asyncOperationStatus, augmentedPrice, onEditPriceClick)
                         }
                     }
                 }
-                Log.d("MyApp", "TODO5")
-
             }
 
             // ENHANCE: I am not sure this is the right way to put the overflow menu in or what
@@ -2660,6 +2583,96 @@ fun ItemSourceInfoLive(
 
         }
     }
+}
+
+@Composable
+fun PriceJudgementIndicator(priceJudgement: PriceJudgement) {
+    Row {
+        when (priceJudgement) {
+            PriceJudgement.NONE -> {}
+            PriceJudgement.GOOD -> {
+                GoodPriceIcon()
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Good price")
+            }
+
+            PriceJudgement.OK -> {
+                OkPriceIcon()
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("OK price")
+            }
+
+            PriceJudgement.BAD -> {
+                BadPriceIcon()
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Bad price")
+            }
+        }
+    }
+}
+
+@Composable
+fun EditConfirmButtons(
+    vm: HomeViewModel,
+    asyncOperationStatus: AsyncOperationStatus,
+    augmentedPrice: AugmentedPrice,
+    onEditPriceClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End
+    ) {
+        FilledTonalButton(
+            onClick = onEditPriceClick,
+            shape = MaterialTheme.shapes.small,
+            enabled = asyncOperationStatus.isNotBusy(),
+        ) {
+            Text("Edit")
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // TODO: Mixed feelings, but should we grey out the confirm button
+        // if the confirmed label shows "now"? (obviously not greying out
+        // "undo", but if for whatever reason we are not showing "undo" and
+        // it is "now")
+        // TODO: We should probably animate the "Confirmed" text label
+        // changing *if it happens due to confirm/undo click* (not because
+        // timer ticks over to e.g. next minute)
+
+        // The "Confirm" button is the primary button - we expect it to be the
+        // button users click on most on this card (most of the time prices
+        // won't have changed on subsequent visits) - so it gets the position on
+        // the right.
+        val locale = LocalConfiguration.current.locales[0]
+        val showConfirmButton = vm.previousPrice.value == null
+        FilledTonalButton(/* modifier = Modifier.width(confirmButtonWidth) ,*/
+            onClick = {
+                if (showConfirmButton) {
+                    vm.confirmPrice(augmentedPrice.basePrice)
+                } else {
+                    // TODO: Maybe some of these args should be supplied inside undoConfirmPrice()?
+                    vm.undoConfirmPrice(
+                        augmentedPrice.basePrice,
+                        vm.previousPrice.value!!
+                    )
+                }
+            },
+            shape = MaterialTheme.shapes.small,
+            enabled = asyncOperationStatus.isNotBusy(),
+        ) {
+            AnimatedContent(targetState = showConfirmButton) { showConfirm ->
+                // ENHANCE: "Undo" is perhaps borderline unclear as to what
+                // it is undoing (although I hope the user observing the
+                // transition from "Confirm"->"Undo" will act as a hint),
+                // but at least on my small emulated phone, "Undo confirm"
+                // looks a bit ugly or (with "Good price") doesn't fit and
+                // causes the button to become multi-line.
+                Text(if (showConfirm) "Confirm" else "Undo")
+            }
+        }
+    }
+
 }
 
 @Composable
