@@ -7373,8 +7373,6 @@ class EditSourceViewModel(
             _saveValidationEvents.emit(EditableField.NAME)
             return false
         }
-        // TODO: IS IT OK TO EXPLCIITLY CHECK loyaltyType HERE? CAN/SHOULD THIS BE FOLDED INTO
-        // VALIODATION RULES, E.G. BY VALIDATING A PAIR<DISCOUNTTYPE,STRINGDISCOUNTPERCENTAGE>??
         if (uiContent.editableSource.value.loyaltyType != LoyaltyType.NONE && !validationRulesOk(
                 loyaltyPercentageValidationRules,
                 uiContent.editableSource.value.loyaltyPercentage
@@ -7430,12 +7428,6 @@ class EditItemViewModel(
         uiContent.saveEditableItemState(savedStateHandle)
     }
 
-    // TODO: There just might be an argument for not using emptyList() in stateIn, so we can head
-    // off a theoretical possibility of the user entering invalid data (maybe just leaving the
-    // form empty when creating a new entry) and starting a save before the validation rules are
-    // present, which will pass (because no validation rules) and then they either insert invalid
-    // data or get a database level constraint validation. If we have null, we can make sure the
-    // validation rules *are present* during save validation.
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
         priceTrackerRepository.getAllItems(uiContent.editableItem.value.dataSetId)
             .map { itemList ->
@@ -7445,7 +7437,10 @@ class EditItemViewModel(
                 )
             }
             .withVersion()
-            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
+            // initialValue here is set to an unsatisfiable validation list to avoid a theoretical
+            // corner case. If we defaulted to emptyList(), the user might be able to save with an
+            // invalid name before the real validation rules become available.
+            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(listOf(ValidationRule({ false }, ""))))
 
     enum class EditableField {
         NAME
@@ -7541,9 +7536,8 @@ data class PriceHistoryDelta(
     val modifiedAt: Instant
 )
 
-// TODO: Yet another utterly incoherent style of adding conversion between data classes, no idea what I "ought" to do and this code is an inconsistent mish-mash of styles.
-fun PriceHistory.toPriceHistoryDelta(confirmedAtFormatter: DateTimeFormatter): PriceHistoryDelta {
-    return PriceHistoryDelta(
+fun PriceHistory.toPriceHistoryDelta(confirmedAtFormatter: DateTimeFormatter): PriceHistoryDelta =
+    PriceHistoryDelta(
         priceHistory = this,
         price = price,
         count = count,
@@ -7554,7 +7548,6 @@ fun PriceHistory.toPriceHistoryDelta(confirmedAtFormatter: DateTimeFormatter): P
         notes = notes,
         modifiedAt = modifiedAt
     )
-}
 
 // TODO: Where does this belong and what naming and calling convention should it have?!?!?!
 fun diff(
@@ -7688,12 +7681,6 @@ class EditDataSetViewModel(
         uiContent.saveEditableDataSetState(savedStateHandle)
     }
 
-    // TODO: There just might be an argument for not using emptyList() in stateIn, so we can head
-    // off a theoretical possibility of the user entering invalid data (maybe just leaving the
-    // form empty when creating a new entry) and starting a save before the validation rules are
-    // present, which will pass (because no validation rules) and then they either insert invalid
-    // data or get a database level constraint validation. If we have null, we can make sure the
-    // validation rules *are present* during save validation.
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
         priceTrackerRepository.getAllDataSets()
             .map { dataSetList ->
@@ -7703,7 +7690,10 @@ class EditDataSetViewModel(
                 )
             }
             .withVersion()
-            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(emptyList()))
+            // initialValue here is set to an unsatisfiable validation list to avoid a theoretical
+            // corner case. If we defaulted to emptyList(), the user might be able to save with an
+            // invalid name before the real validation rules become available.
+            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(listOf(ValidationRule({ false }, ""))))
 
     val currencyValidationRules = listOf(
         ValidationRule<String>(
