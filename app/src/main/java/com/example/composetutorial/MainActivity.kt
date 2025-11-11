@@ -5755,6 +5755,7 @@ fun numericValidationRules(
     allowDecimals: Boolean = true,
     allowZero: Boolean = true,
     maxDecimals: Int? = null,
+    maxValue: Int? = null,
 ): List<ValidationRule<String>> {
     val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
     val maxDecimalSeparators = if (allowDecimals) 1 else 0
@@ -5793,6 +5794,12 @@ fun numericValidationRules(
             // This message assumes you can't enter a negative value because input filtering rejects
             // '-'.
             ValidationRule({ attemptedParse(it) != 0.0 }, "Must be greater than zero")
+        } else {
+            null
+        },
+
+        if (maxValue != null) {
+            ValidationRule( { (attemptedParse(it) ?: 0.0) <= maxValue }, "Must be no greater than $maxValue")
         } else {
             null
         },
@@ -7338,14 +7345,14 @@ class EditSourceViewModel(
     // ENHANCE: Maybe we should allow zero here? We might need to tweak some messages accordingly.
     // Zero isn't necessary as you can choose "None", but maybe it's a bit persnickety not to allow
     // the user just to type 0 directly with one of the other options as well.
-    // TODO: Should we impose an upper bound? At the very least something like 100% is probably safe.
-    // TODO: Not necessarily here, but extreme bonus/discount cases could maybe cause zero or
-    // negative prices which might cause us to misbehave.
     val loyaltyPercentageValidationRules = numericValidationRules(
         uiContent.frozenLocale,
         allowDecimals = true,
         allowZero = false,
-        maxDecimals = 2
+        maxDecimals = 2,
+        // A discount of 100% or more might lead to corner cases, so let's choose an already
+        // unrealistically high maximum of 99% as an easy workaround.
+        maxValue = 99,
     )
 
     enum class EditableField {
