@@ -968,7 +968,6 @@ interface PriceTrackerRepository {
     suspend fun deletePriceById(priceId: Long): Int
 }
 
-// TODO: Should this be an extension function on List or some "free" function or something else?
 fun <T> List<T>.sortedByLocale(
     selector: (T) -> String,
     locale: Locale
@@ -1037,14 +1036,6 @@ class PriceTrackerRepositoryImpl(
 
     override suspend fun deletePriceById(priceId: Long): Int = priceDao.deleteById(priceId)
 
-    // TODO: Tempish note (maybe make permanent) - I discussed with ChatGPT and it seemed to make
-    // sense - the repository should take "validated domain level" entities (where we aren't just
-    // reusing the database entities throughout all levels for simplicity - which we aren't with
-    // Price). So this should take a *Price* and convert it to a PriceEntity for writing, and there
-    // shouldn't be any user-error-catching validation here - this might go wrong, but it would be
-    // down to hardware failures or bugs in my code. The viewmodel-ish layer code is responsible
-    // for turning an EditablePrice (a special variant domain level thing with nullness etc) into
-    // a Price and *that* is where final validation occurs.
     override suspend fun updateOrInsertPrice(price: Price): Long {
         var priceId: Long = 0
         db.withTransaction {
