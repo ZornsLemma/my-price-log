@@ -969,7 +969,6 @@ fun <T> List<T>.sortedByLocale(
     }
 }
 
-// TODO: Use this everywhere relevant
 @Composable
 fun <T> List<T>.rememberSortedByLocale(
     selector: (T) -> String,
