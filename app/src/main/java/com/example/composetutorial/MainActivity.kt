@@ -2442,7 +2442,6 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     }
 }
 
-// TODO: This is quite a long function and might benefit from subcomposables being factored out.
 @Composable
 fun ItemSourceInfoLive(
     vm: HomeViewModel,
@@ -2456,14 +2455,6 @@ fun ItemSourceInfoLive(
     onViewHistoryClick: () -> Unit,
     onDeletePriceClick: () -> Unit,
 ) {
-    val priceHistoryCount by remember(dataSet.id, item?.id, source?.id) {
-        if (item != null && source != null) {
-            vm.countPriceHistory(dataSet.id, item.id, source.id)
-        } else {
-            flowOf(0L)
-        }
-    }.collectAsStateWithLifecycle(initialValue = 0L)
-
     // TODO: Maybe this should live on the viewmodel
     OnAppLifecycleEvent { event ->
         if (event == Lifecycle.Event.ON_STOP) { // app has left the foreground
@@ -2481,106 +2472,139 @@ fun ItemSourceInfoLive(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Box {
-            // ENHANCE: When the card expands, the button(s) on the "bottom" row of the card jump
-            // down instead of animating smoothly "following" the bottom of the card - probably
-            // because this layout is sort of "top to bottom". I suspect this can be worked around
-            // by using a box and having most of the content inside a column with
-            // .align(Alignment.TopStart) and then follow that by the button row with
-            // .align(Alignment.BottomCenter) or something along these lines. The trouble with the
-            // code as currently structured is that the buttons are generated in conditional code
-            // and getting the right layout of composables isn't trivial. It is probably worth
-            // tweaking this for visual polish - it might make things clearer anyway, e.g. if we
-            // factor out some sub-composables - but I'm not going to get involved with it right
-            // now. We may need to attach .animateContentSize() to the Card instead of the Column.
-            // All this said, because the "Store" dropdown tends to obscure this card in practice,
-            // this isn't all that noticeable.
-            Column(
-                modifier = Modifier
-                    .animateContentSize()
-                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
-            ) {
-                CardTitle(
-                    title = "Store price"
-                )
+            StorePriceCardBody(vm, asyncOperationStatus, dataSet, augmentedPrice, onEditPriceClick)
+            StorePriceCardMenu(vm, asyncOperationStatus, dataSet, item, source, augmentedPrice, onViewHistoryClick, onDeletePriceClick, menuModifier = Modifier.align(Alignment.TopEnd))
+        }
+    }
+}
 
-                Log.d("MyApp", "ISI dataset $dataSet")
-                Log.d("MyApp", "ISI item $item")
-                Log.d("MyApp", "ISI source $item")
+@Composable
+fun StorePriceCardBody(
+    vm: HomeViewModel,
+    asyncOperationStatus: AsyncOperationStatus,
+    dataSet: DataSet,
+    augmentedPrice: AugmentedPrice?,
+    onEditPriceClick: () -> Unit,
+) {
+    // ENHANCE: When the card expands, the button(s) on the "bottom" row of the card jump
+    // down instead of animating smoothly "following" the bottom of the card - probably
+    // because this layout is sort of "top to bottom". I suspect this can be worked around
+    // by using a box and having most of the content inside a column with
+    // .align(Alignment.TopStart) and then follow that by the button row with
+    // .align(Alignment.BottomCenter) or something along these lines. The trouble with the
+    // code as currently structured is that the buttons are generated in conditional code
+    // and getting the right layout of composables isn't trivial. It is probably worth
+    // tweaking this for visual polish - it might make things clearer anyway, e.g. if we
+    // factor out some sub-composables - but I'm not going to get involved with it right
+    // now. We may need to attach .animateContentSize() to the Card instead of the Column.
+    // All this said, because the "Store" dropdown tends to obscure this card in practice,
+    // this isn't all that noticeable.
+    Column(
+        modifier = Modifier
+            .animateContentSize()
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
+    ) {
+        CardTitle("Store price")
 
-                if (true) {
-                    if (augmentedPrice == null) {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text("There is no price recorded for this product at this store yet.")
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                FilledTonalButton(
-                                    onClick = onEditPriceClick,
-                                    shape = MaterialTheme.shapes.small
-                                ) {
-                                    Text("Add")
-                                }
-                            }
-                        }
-                    } else {
-                        val price = augmentedPrice.basePrice
-
-                        PackPriceAndSizeRow(price.price, price.count, price.quantity, dataSet, asyncOperationStatus)
-
-                        LabeledItem(
-                            modifier = Modifier.padding(bottom = 8.dp),
-                            label = "Confirmed" /* "Last checked" */
+        if (true) {
+            if (augmentedPrice == null) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text("There is no price recorded for this product at this store yet.")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        FilledTonalButton(
+                            onClick = onEditPriceClick,
+                            shape = MaterialTheme.shapes.small
                         ) {
-                            RelativeTimeText(augmentedPrice)
-                        }
-
-                        if (price.notes.isNotEmpty()) {
-                            Row(modifier = Modifier.padding(bottom = 8.dp)) {
-                                LabeledItem("Notes") {
-                                    Text(price.notes)
-                                }
-                            }
-                        }
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            PriceJudgementIndicator(augmentedPrice.priceJudgement)
-                            EditConfirmButtons(vm, asyncOperationStatus, augmentedPrice, onEditPriceClick)
+                            Text("Add")
                         }
                     }
                 }
-            }
+            } else {
+                val price = augmentedPrice.basePrice
 
-            // ENHANCE: I am not sure this is the right way to put the overflow menu in or what
-            // precise positioning it should have, but in the absence of any official documentation
-            // let's go with this Grok/ChatGPT suggestion.
-            var menuExpanded by rememberSaveable { mutableStateOf(false) }
-            IconButton(
-                enabled = asyncOperationStatus.isNotBusy(),
-                onClick = { menuExpanded = true },
-                modifier = Modifier.align(Alignment.TopEnd)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "More options"
+                PackPriceAndSizeRow(
+                    price.price,
+                    price.count,
+                    price.quantity,
+                    dataSet,
+                    asyncOperationStatus
                 )
-                DropdownMenu(
-                    expanded = menuExpanded, onDismissRequest = { menuExpanded = false }
-                    // ,modifier = Modifier.align(Alignment.TopEnd)
+
+                LabeledItem(
+                    modifier = Modifier.padding(bottom = 8.dp),
+                    label = "Confirmed" /* "Last checked" */
                 ) {
-                    MyDropdownMenuItem(
-                        text = { Text("View history") },
-                        enabled = priceHistoryCount > 0,
-                        onClick = { menuExpanded = false; onViewHistoryClick() }
-                    )
-                    MyDropdownMenuItem(
-                        text = { Text("Delete price") },
-                        enabled = augmentedPrice != null,
-                        onClick = { menuExpanded = false; onDeletePriceClick() }
-                    )
+                    RelativeTimeText(augmentedPrice)
+                }
+
+                if (price.notes.isNotEmpty()) {
+                    Row(modifier = Modifier.padding(bottom = 8.dp)) {
+                        LabeledItem("Notes") {
+                            Text(price.notes)
+                        }
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    PriceJudgementIndicator(augmentedPrice.priceJudgement)
+                    EditConfirmButtons(vm, asyncOperationStatus, augmentedPrice, onEditPriceClick)
                 }
             }
+        }
+    }
+}
 
+@Composable
+fun StorePriceCardMenu(
+    vm: HomeViewModel,
+    asyncOperationStatus: AsyncOperationStatus,
+    dataSet: DataSet,
+    item: Item?,
+    source: Source?,
+    augmentedPrice: AugmentedPrice?,
+    onViewHistoryClick: () -> Unit,
+    onDeletePriceClick: () -> Unit,
+    menuModifier: Modifier,
+    )
+{
+    val priceHistoryCount by remember(dataSet.id, item?.id, source?.id) {
+        if (item != null && source != null) {
+            vm.countPriceHistory(dataSet.id, item.id, source.id)
+        } else {
+            flowOf(0L)
+        }
+    }.collectAsStateWithLifecycle(initialValue = 0L)
+
+    // ENHANCE: I am not sure this is the right way to put the overflow menu in or what
+    // precise positioning it should have, but in the absence of any official documentation
+    // let's go with this Grok/ChatGPT suggestion.
+    var menuExpanded by rememberSaveable { mutableStateOf(false) }
+    IconButton(
+        enabled = asyncOperationStatus.isNotBusy(),
+        onClick = { menuExpanded = true },
+        modifier = menuModifier,
+    ) {
+        Icon(
+            imageVector = Icons.Default.MoreVert,
+            contentDescription = "More options"
+        )
+        DropdownMenu(
+            expanded = menuExpanded, onDismissRequest = { menuExpanded = false }
+            // ,modifier = Modifier.align(Alignment.TopEnd)
+        ) {
+            MyDropdownMenuItem(
+                text = { Text("View history") },
+                enabled = priceHistoryCount > 0,
+                onClick = { menuExpanded = false; onViewHistoryClick() }
+            )
+            MyDropdownMenuItem(
+                text = { Text("Delete price") },
+                enabled = augmentedPrice != null,
+                onClick = { menuExpanded = false; onDeletePriceClick() }
+            )
         }
     }
 }
