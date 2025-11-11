@@ -2676,7 +2676,6 @@ fun EditConfirmButtons(
                 if (showConfirmButton) {
                     vm.confirmPrice(augmentedPrice.basePrice)
                 } else {
-                    // TODO: Maybe some of these args should be supplied inside undoConfirmPrice()?
                     vm.undoConfirmPrice(
                         augmentedPrice.basePrice,
                         vm.previousPrice.value!!
@@ -2687,12 +2686,10 @@ fun EditConfirmButtons(
             enabled = asyncOperationStatus.isNotBusy(),
         ) {
             AnimatedContent(targetState = showConfirmButton) { showConfirm ->
-                // ENHANCE: "Undo" is perhaps borderline unclear as to what
-                // it is undoing (although I hope the user observing the
-                // transition from "Confirm"->"Undo" will act as a hint),
-                // but at least on my small emulated phone, "Undo confirm"
-                // looks a bit ugly or (with "Good price") doesn't fit and
-                // causes the button to become multi-line.
+                // ENHANCE: "Undo" is perhaps borderline unclear as to what it is undoing (although
+                // I hope the user observing the transition from "Confirm"->"Undo" will act as a
+                // hint), but at least on my small emulated phone, "Undo confirm" looks a bit ugly
+                // or (with "Good price") doesn't fit and causes the button to become multi-line.
                 Text(if (showConfirm) "Confirm" else "Undo")
             }
         }
