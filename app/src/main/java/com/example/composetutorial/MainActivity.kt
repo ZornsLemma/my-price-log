@@ -1917,7 +1917,6 @@ const val maxSearchLength = 32
 // could tighten this up a bit if desirable.
 const val maxDecimalLength = 11
 
-@OptIn(ExperimentalMaterial3Api::class) // TODO: STILL NEEDED?
 @Composable
 fun ItemSourceSelector(
     asyncOperationStatus: AsyncOperationStatus,
@@ -1968,10 +1967,6 @@ fun ItemSourceSelector(
                 // need to tap this TextField to open the selector). So we show a supportingText
                 // only if there are no items at all.
                 supportingText = if (item != null || itemList.isNotEmpty()) null else { {
-                    // TODO: This text seems to be a different color than the analogous
-                    // supportingText for sources. Need to decide which is right and make sure they
-                    // are both the same - this is most obvious when both are shown together, of
-                    // course.
                         Text("There are no products in this collection. Add one using the overflow menu at the top right.")
                 } }
             )
@@ -2043,6 +2038,7 @@ fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
         MaterialTheme.colorScheme.primary
     else
         MaterialTheme.colorScheme.onSurfaceVariant,
+    disabledSupportingTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
 )
 
 // ENHANCE: I am not sure if we should disable the on-click ripple here when opening the menu. It's
