@@ -8980,9 +8980,8 @@ data class PriceAnalysis(
 )
 
 data class AugmentedPrice(
-    // TODO: not sure about name but experimenting
-    val basePrice: Price, // TODO: just possibly we don't even want this embedded in here
-    val sourceName: String, // saves faffing with associatedBy and remember in UI code
+    val basePrice: Price,
+    val sourceName: String, // technically redundant but saves much id->name lookup faff
     val loyaltyPrice: Double,
     val ageDays: Long,
     val ageClass: AgeClass,
