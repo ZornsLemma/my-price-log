@@ -9014,7 +9014,7 @@ enum class PriceJudgement {
     BAD
 }
 
-// TODO: Should this be a member of PriceJudgement??
+// TODO: Should this be a member of PriceJudgement?? Or AugmentedPrice?
 fun judgePrice(
     augmentedPrice: AugmentedPrice,
     priceClassificationThresholds: PriceClassificationThresholds?
@@ -9030,7 +9030,7 @@ fun judgePrice(
     }
 }
 
-// TODO: Should this be a companion function/constructor on AugmentedPrice or something like that?
+// TODO: Should this be a companion function/constructor on AugmentedPrice or something like that? Or an extension function on Price?
 fun augmentPrice(
     price: Price,
     dataSet: DataSet,
