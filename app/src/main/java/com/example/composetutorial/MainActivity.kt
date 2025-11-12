@@ -2,6 +2,7 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import com.example.composetutorial.ui.components.ValidationInputHandle
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.EditableDataSet
 import com.example.composetutorial.models.Item
@@ -249,6 +250,10 @@ import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.models.toEditable
 import com.example.composetutorial.models.toEntity
 import com.example.composetutorial.models.toHistory
+import com.example.composetutorial.ui.components.rememberValidationInputHandle
+import com.example.composetutorial.ui.components.requestUserAttention
+import com.example.composetutorial.ui.components.validationInputHandleBringIntoViewRequester
+import com.example.composetutorial.ui.components.validationInputHandleFocusRequester
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -8910,98 +8915,6 @@ fun <T> Flow<T>.withVersion(): Flow<Versioned<T>> = flow {
 fun <T> initialVersioned(initialValue: T): Versioned<T> =
     Versioned(version = -1L, value = initialValue)
 
-// TODO: Might be nice to make members private, which probably requires moving to a file on its own
-// along with the custom Modifier and using internal visibility. This would stop e.g. "accidentally"
-// passing the FocusRequester to Modifier.focusRequester() and avoiding the initialisation flag
-// being updated.
-// A ValidationInputHandle represents the idea "this composable is a user-supplied input which can
-// cause validation failures, so we need to be able to attract the user's attention to it and (if
-// appropriate; not all composables can receive focus) focus it ready for them to fix the problem".
-// It is initialised by using validationInputHandleBringIntoViewRequester() and (optionally, and
-// possibly on a different composable) validationInputHandleFocusRequester().
-// TODO: Once pulled out into its own file, I may be able to opt into the experimental API once at
-// file level.
-class ValidationInputHandle @OptIn(ExperimentalFoundationApi::class) constructor(
-    val focusRequester: FocusRequester = FocusRequester(),
-    var focusRequesterInitialised: Boolean = false,
-    val bringIntoViewRequester: BringIntoViewRequester = BringIntoViewRequester(),
-    var bringIntoViewOffset: Float = 0f,
-    var bringIntoViewHeight: Int = 0,
-    val errorHighlightBoxVisible: MutableState<Boolean> = mutableStateOf(false),
-)
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun Modifier.validationInputHandleBringIntoViewRequester(handle: ValidationInputHandle, offset: Dp = 0.dp): Modifier {
-    // Specifying a negative offset allows us to scroll to a bit above this composable. This is
-    // useful when it may be wrapped in an ErrorHighlightBox. TODO: Is this true, it isn't obvious to me we are using a negative offset and yet I think we *do* scroll to just above but not sure.
-    handle.bringIntoViewOffset = with(LocalDensity.current) { offset.toPx() }
-    return this
-        //.focusRequester(handle.focusRequester)
-        .onGloballyPositioned { coordinates ->
-            handle.bringIntoViewHeight = coordinates.size.height
-        }
-        .bringIntoViewRequester(handle.bringIntoViewRequester)
-
-}
-
-fun Modifier.validationInputHandleFocusRequester(handle: ValidationInputHandle): Modifier {
-    handle.focusRequesterInitialised = true
-    return this.focusRequester(handle.focusRequester)
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-suspend fun ValidationInputHandle.requestUserAttention(focusManager: FocusManager) {
-    Log.d("MyAppScroll", "$bringIntoViewOffset $bringIntoViewHeight")
-
-    if (!focusRequesterInitialised) {
-        // If we didn't (couldn't meaningfully) initialise the focusRequester, that means the target
-        // can't be focused. We therefore content ourselves with removing the focus from anything
-        // else that has it. We do this before calling bringIntoView() since it may dismiss the
-        // on-screen keyboard and in practice it looks much nicer to do it in this order.
-        // ENHANCE: I half wonder if we should be using Modifier.focusTarget() to make it possible to
-        // focus things like segmented buttons. However, this seems to work and I haven't
-        // experimented with alternatives.
-        Log.d("MyApp", "clearFocus")
-        focusManager.clearFocus()
-    }
-
-    bringIntoViewRequester.bringIntoView(
-        Rect(
-            left = 0f,
-            top = -bringIntoViewOffset,
-            right = 0f,
-            bottom = bringIntoViewHeight + 2 * bringIntoViewOffset
-        )
-    )
-
-    if (focusRequesterInitialised) {
-        // I am a bit unsure as to why, but it seems to work much better to do requestFocus() *after*
-        // bringIntoView(). The precise behaviour depends on whether the control already has the focus
-        // and maybe whether there is a keyboard on screen already and what type it is.
-        Log.d("MyApp", "requestFocus")
-        // TODO: Should we maybe do a clearfocus first? That may or may not help if the problematic control already has the focus.
-        focusRequester.requestFocus()
-        // TODO: Can/should we focus TextFields with the cursor at the end of the text?
-    }
-
-    // TODO: Highly speculative, but would a small delay before doing this give things like the
-    // keyboard time to appear first and improve visual appeareance? Or maybe we should set it to
-    // visible right at the top of this function so it's fully visible and gets a chance to
-    // influence things like bringinto view!??!?! probably doesn't work that way but maybe worth
-    // experimenting
-    errorHighlightBoxVisible.value = true
-    delay(errorHighlightBoxVisibleTimeMillis)
-    errorHighlightBoxVisible.value = false
-}
-
-@Composable
-@OptIn(ExperimentalFoundationApi::class)
-fun rememberValidationInputHandle(): ValidationInputHandle {
-    return remember {
-        ValidationInputHandle()
-    }
-}
 
 @Composable
 fun ErrorHighlightBox(
