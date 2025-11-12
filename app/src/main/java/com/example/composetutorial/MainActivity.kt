@@ -9521,3 +9521,8 @@ com.example.myapp/
 │   └── models/
 
 */
+
+// TODO: We maybe want some kind of tie break on alphabetical order of sourceName for AugmentedPrice
+// comparisons - yes it's floating point, but it's perfectly possible the numerator and denominator
+// of the division are identical across two stores, and we want consistent ordering of sorted
+// results
