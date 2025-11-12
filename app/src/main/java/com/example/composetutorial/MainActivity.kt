@@ -2567,6 +2567,30 @@ fun StorePriceCardBody(
 }
 
 @Composable
+fun OverflowMenu(
+    enabled: Boolean = true,
+    modifier: Modifier,
+    content: @Composable (requestMenuClose: () -> Unit) -> Unit
+) {
+    var menuExpanded by rememberSaveable { mutableStateOf(false) }
+    IconButton(
+        enabled = enabled,
+        onClick = { menuExpanded = true },
+        modifier = modifier,
+    ) {
+        Icon(
+            imageVector = Icons.Default.MoreVert,
+            contentDescription = "More options"
+        )
+        DropdownMenu(
+            expanded = menuExpanded, onDismissRequest = { menuExpanded = false }
+        ) {
+            content({menuExpanded = false })
+        }
+    }
+}
+
+@Composable
 fun StorePriceCardMenu(
     vm: HomeViewModel,
     asyncOperationStatus: AsyncOperationStatus,
@@ -2577,8 +2601,7 @@ fun StorePriceCardMenu(
     onViewHistoryClick: () -> Unit,
     onDeletePriceClick: () -> Unit,
     menuModifier: Modifier,
-    )
-{
+    ) {
     val priceHistoryCount by remember(dataSet.id, item?.id, source?.id) {
         if (item != null && source != null) {
             vm.countPriceHistory(dataSet.id, item.id, source.id)
@@ -2587,36 +2610,23 @@ fun StorePriceCardMenu(
         }
     }.collectAsStateWithLifecycle(initialValue = 0L)
 
-    // ENHANCE: I am not sure this is the right way to put the overflow menu in or what
-    // precise positioning it should have, but in the absence of any official documentation
-    // let's go with this Grok/ChatGPT suggestion.
-    var menuExpanded by rememberSaveable { mutableStateOf(false) }
-    IconButton(
+    OverflowMenu(
         enabled = asyncOperationStatus.isNotBusy(),
-        onClick = { menuExpanded = true },
-        modifier = menuModifier,
-    ) {
-        Icon(
-            imageVector = Icons.Default.MoreVert,
-            contentDescription = "More options"
+        modifier = menuModifier
+    ) { requestMenuClose ->
+        MyDropdownMenuItem(
+            text = { Text("View history") },
+            enabled = priceHistoryCount > 0,
+            onClick = { requestMenuClose(); onViewHistoryClick() }
         )
-        DropdownMenu(
-            expanded = menuExpanded, onDismissRequest = { menuExpanded = false }
-            // ,modifier = Modifier.align(Alignment.TopEnd)
-        ) {
-            MyDropdownMenuItem(
-                text = { Text("View history") },
-                enabled = priceHistoryCount > 0,
-                onClick = { menuExpanded = false; onViewHistoryClick() }
-            )
-            MyDropdownMenuItem(
-                text = { Text("Delete price") },
-                enabled = augmentedPrice != null,
-                onClick = { menuExpanded = false; onDeletePriceClick() }
-            )
-        }
+        MyDropdownMenuItem(
+            text = { Text("Delete price") },
+            enabled = augmentedPrice != null,
+            onClick = { requestMenuClose(); onDeletePriceClick() }
+        )
     }
 }
+
 
 @Composable
 fun PriceJudgementIndicator(priceJudgement: PriceJudgement) {
@@ -8753,25 +8763,11 @@ fun ViewPriceHistoryScreen(
                             timeFormatter
                         )
 
-                        // TODO: Possibly I can factor out this "overflow menu" structure from StorePriceCardMenu and here and share it
-                        var menuExpanded by rememberSaveable { mutableStateOf(false) }
-                        IconButton(
-                            onClick = { menuExpanded = true },
-                            modifier = Modifier.align(Alignment.TopEnd),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = "More options"
-                            )
-                            DropdownMenu(
-                                expanded = menuExpanded, onDismissRequest = { menuExpanded = false }
-                                // ,modifier = Modifier.align(Alignment.TopEnd)
-                            ) {
+                        OverflowMenu(modifier = Modifier.align(Alignment.TopEnd)) { requestMenuClose ->
                                 MyDropdownMenuItem(
                                     text = { Text("Edit as new price") },
-                                    onClick = { menuExpanded = false; requestEditAsNew(priceHistoryDelta.priceHistory) }
+                                    onClick = { requestMenuClose(); requestEditAsNew(priceHistoryDelta.priceHistory) }
                                 )
-                            }
                         }
                     }
                 }
