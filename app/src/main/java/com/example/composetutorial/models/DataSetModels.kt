@@ -5,7 +5,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.composetutorial.UnitFamily
-import com.example.composetutorial.getCurrencyForLocale
+import com.example.composetutorial.currencyOrNull
 import com.example.composetutorial.getDefaultUnitFamilies
 import kotlinx.parcelize.Parcelize
 import java.util.Locale
@@ -36,7 +36,7 @@ fun DataSet?.toEditable(locale: Locale): EditableDataSet {
         return EditableDataSet(
             0,
             "",
-            getCurrencyForLocale(locale)?.currencyCode ?: "",
+            locale.currencyOrNull()?.currencyCode ?: "",
             allowMetric = UnitFamily.METRIC in defaultUnitFamilies,
             allowImperial = UnitFamily.IMPERIAL in defaultUnitFamilies,
             allowUSCustomary = UnitFamily.US_CUSTOMARY in defaultUnitFamilies,

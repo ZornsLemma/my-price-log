@@ -3798,7 +3798,7 @@ fun PriceComparisonCard(
     // ItemSourceInfo does.
     val locale = LocalConfiguration.current.locales[0]
     val currencyFormat = remember(dataSet, locale) {
-        createCurrencyFormat(dataSet, locale)
+        dataSet.createCurrencyFormat(locale)
     }
 
     Card(
@@ -5607,10 +5607,9 @@ fun <T> rememberValidationThing(
 }
 
 
-// TODO: Make this an extension function on locale?
-fun getCurrencyForLocale(locale: Locale): Currency? {
+fun Locale.currencyOrNull(): Currency? {
     try {
-        return Currency.getInstance(locale)
+        return Currency.getInstance(this)
     } catch (e: IllegalArgumentException) {
         // Some locales (e.g. zz_ZZ) might not have a valid currency.
         return null
@@ -5674,7 +5673,7 @@ fun createCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Stri
     val mainCurrencyCodeSet = mutableSetOf<String>()
     for (i in 0 until locales.size()) {
         val locale = locales[i]
-        val currency = getCurrencyForLocale(locale)
+        val currency = locale.currencyOrNull()
         if (currency != null && currency.currencyCode !in mainCurrencyCodeSet) {
             mainCurrencyList.add(createPair(currency))
             mainCurrencyCodeSet.add(currency.currencyCode)
@@ -6727,7 +6726,7 @@ class SharedViewModel : ViewModel() {
             uiContent.priceAnalysis.augmentedPriceList.map { it.basePrice }.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
         val editablePrice = if (price != null)
-            price.toEditable(frozenLocale, createCurrencyFormat(dataSet, frozenLocale))
+            price.toEditable(frozenLocale, dataSet.createCurrencyFormat(frozenLocale))
         else EditablePrice.forNew(
             dataSetId = dataSet.id,
             itemId = item.id,
@@ -7185,7 +7184,7 @@ class EditPriceViewModel(
 
     val packCountValidationRules = if (showPackCount) numericValidationRules(uiContent.frozenLocale, allowDecimals = false, allowZero = false) else emptyList()
     var packSizeValidationRules = generatePackSizeValidationRules()
-    var currencyFormat = createCurrencyFormat(uiContent.dataSet, uiContent.frozenLocale)
+    var currencyFormat = uiContent.dataSet.createCurrencyFormat(uiContent.frozenLocale)
 
     init {
         Log.d("MyApp", "EditPriceScreenViewModel $instanceId $this")
@@ -8861,11 +8860,11 @@ data class CurrencyFormat(
     val validationRules: List<ValidationRule<String>>
 )
 
-// This takes a DataSet not a currency code because later on a DataSet may allow custom currency
-// formatting which overrides whatever the current locale wants to do.
-// TODO: Make this an extension function on DataSet?
-fun createCurrencyFormat(dataSet: DataSet, locale: Locale): CurrencyFormat {
-    val currencyInstance = Currency.getInstance(dataSet.currencyCode)
+// This is an extension function on DataSet rather than a top-level function taking a currency code
+// because at some point a DataSet may contain custom currency formatting which overrides whatever
+// the current locale says to do.
+fun DataSet.createCurrencyFormat(locale: Locale): CurrencyFormat {
+    val currencyInstance = Currency.getInstance(currencyCode)
     // currencyInstance will give us the number of decimal places, but it won't give us a
     // prefix or suffix to use - which we need for currency TextFields. So we ask it to
     // format a sample price and take the prefix and suffix from that.
@@ -8875,7 +8874,7 @@ fun createCurrencyFormat(dataSet: DataSet, locale: Locale): CurrencyFormat {
     val sampleFormattedCurrency = numberFormat.format(1.0)
     Log.d(
         "MyApp",
-        "sampleFormattedCurrency for ${dataSet.currencyCode} is '$sampleFormattedCurrency'"
+        "sampleFormattedCurrency for $currencyCode is '$sampleFormattedCurrency'"
     )
     val (prefix, suffix) = splitAroundDigits(sampleFormattedCurrency)
     return CurrencyFormat(
@@ -8884,7 +8883,7 @@ fun createCurrencyFormat(dataSet: DataSet, locale: Locale): CurrencyFormat {
         suffix = suffix.trim().ifBlank { null },
         validationRules = numericValidationRules(
             locale,
-            allowDecimals = true,
+            allowDecimals = currencyInstance.defaultFractionDigits > 0,
             allowZero = false,
             maxDecimals = currencyInstance.defaultFractionDigits
         )

@@ -369,5 +369,5 @@ fun PriceHistory.toPrice(): Price {
 }
 
 fun PriceHistory.toEditable(priceId: Long, locale: Locale, dataSet: DataSet): EditablePrice {
-    return toPrice().copy(id = priceId).toEditable(locale, createCurrencyFormat(dataSet, locale))
+    return toPrice().copy(id = priceId).toEditable(locale, dataSet.createCurrencyFormat(locale))
 }
