@@ -8979,9 +8979,6 @@ data class PriceAnalysis(
     val priceClassificationThresholds: PriceClassificationThresholds?
 )
 
-
-// TODO: We may want to return a Price with swizzled internal double price value rather than having a custom AugmentedPrice, let's see how it goes.
-// TODO: Make constructor private so we can only construct these via augmentPrice()?
 data class AugmentedPrice(
     // TODO: not sure about name but experimenting
     val basePrice: Price, // TODO: just possibly we don't even want this embedded in here
