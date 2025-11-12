@@ -13,7 +13,7 @@ import com.example.composetutorial.MeasurementUnit
 import com.example.composetutorial.baseUnitForQuantityType
 import com.example.composetutorial.devCheck
 import com.example.composetutorial.formatDoubleForEditing
-import com.example.composetutorial.getCurrencyFormat
+import com.example.composetutorial.createCurrencyFormat
 import com.example.composetutorial.parseStringAsDoubleOrNull
 import kotlinx.parcelize.Parcelize
 import java.time.Instant
@@ -369,5 +369,5 @@ fun PriceHistory.toPrice(): Price {
 }
 
 fun PriceHistory.toEditable(priceId: Long, locale: Locale, dataSet: DataSet): EditablePrice {
-    return toPrice().copy(id = priceId).toEditable(locale, getCurrencyFormat(dataSet, locale))
+    return toPrice().copy(id = priceId).toEditable(locale, createCurrencyFormat(dataSet, locale))
 }

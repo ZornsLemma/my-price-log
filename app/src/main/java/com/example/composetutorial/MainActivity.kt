@@ -3798,7 +3798,7 @@ fun PriceComparisonCard(
     // ItemSourceInfo does.
     val locale = LocalConfiguration.current.locales[0]
     val currencyFormat = remember(dataSet, locale) {
-        getCurrencyFormat(dataSet, locale)
+        createCurrencyFormat(dataSet, locale)
     }
 
     Card(
@@ -4038,7 +4038,7 @@ fun EditPriceScreen(
             label = { Text("Notes") },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = notes,
-            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
+            onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
                 vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(notes = it.text))
@@ -4901,7 +4901,7 @@ fun EditItemScreen(
             label = { Text("Notes") },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = notes,
-            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
+            onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
                 vm.setUIContentEditableItem(uiContent.editableItem.value.copy(notes = it.text))
@@ -5126,7 +5126,7 @@ fun EditSourceScreen(
             label = { Text("Notes") },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = notes,
-            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
+            onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
                 vm.setUIContentEditableSource(uiContent.editableSource.value.copy(notes = it.text))
@@ -5245,7 +5245,7 @@ fun <T> ValidatedTextField2(
         FilteredTextField(
             label = label,
             value = value,
-            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxLength),
+            onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxLength),
             onValueChange = onValueChange,
             enabled = enabled,
             isError = validationResult != null,
@@ -5345,7 +5345,7 @@ fun EditDataSetScreen(
             val currentLocalConfiguration = LocalConfiguration.current
             val currencyList = remember(currentLocalConfiguration.locales) {
                 // TODO: Test this updates if we change locales on the fly?
-                buildCurrencyList(currentLocalConfiguration.locales)
+                createCurrencyList(currentLocalConfiguration.locales)
             }
 
             // We try to do half-decent job by showing a gigantic list in an unwieldy dropdown but
@@ -5483,7 +5483,7 @@ fun EditDataSetScreen(
             label = { Text("Notes") },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = notes,
-            onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxNotesLength),
+            onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
                 vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(notes = it.text))
@@ -5607,6 +5607,7 @@ fun <T> rememberValidationThing(
 }
 
 
+// TODO: Make this an extension function on locale?
 fun getCurrencyForLocale(locale: Locale): Currency? {
     try {
         return Currency.getInstance(locale)
@@ -5650,8 +5651,8 @@ val validCurrencyCodes = setOf(
 // case to appease my native English speaker brain. I will trust that getDisplayName() does the
 // right thing for the current locale, until an actual native speaker of some non-English language
 // tells me otherwise.
-fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, String>>> {
-    fun buildPair(currency: Currency): Pair<String, String> {
+fun createCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, String>>> {
+    fun createPair(currency: Currency): Pair<String, String> {
         val currencyCode = currency.currencyCode
         val displayName = currency.getDisplayName(locales[0])
         if (displayName.contains(currencyCode)) {
@@ -5675,7 +5676,7 @@ fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Strin
         val locale = locales[i]
         val currency = getCurrencyForLocale(locale)
         if (currency != null && currency.currencyCode !in mainCurrencyCodeSet) {
-            mainCurrencyList.add(buildPair(currency))
+            mainCurrencyList.add(createPair(currency))
             mainCurrencyCodeSet.add(currency.currencyCode)
         }
     }
@@ -5687,7 +5688,7 @@ fun buildCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Strin
         Currency.getAvailableCurrencies().mapNotNull { currency ->
             if (currency.currencyCode in mainCurrencyCodeSet ||
                 currency.currencyCode !in validCurrencyCodes) {
-                null } else { buildPair(currency) }
+                null } else { createPair(currency) }
         }
 
     return Pair(
@@ -5874,8 +5875,7 @@ fun NumericTextField(
 // kind of transitory supportingText message (not one of the more persistent ones our validation
 // infrastructure generates), but even ignoring the implementation difficulties I am not sure that
 // would be better than just silently dropping input.
-// TODO: Maybe "build" instead of "make" (in other places too) would be more idiomatic? I suspect "create" might be most idiomatic.
-fun makeOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
+fun createOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
     { it.length <= maxLength }
 
 
@@ -6727,7 +6727,7 @@ class SharedViewModel : ViewModel() {
             uiContent.priceAnalysis.augmentedPriceList.map { it.basePrice }.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
         val editablePrice = if (price != null)
-            price.toEditable(frozenLocale, getCurrencyFormat(dataSet, frozenLocale))
+            price.toEditable(frozenLocale, createCurrencyFormat(dataSet, frozenLocale))
         else EditablePrice.forNew(
             dataSetId = dataSet.id,
             itemId = item.id,
@@ -7099,7 +7099,7 @@ fun <T> GeneralSelectorScreen(
                 val searchString by vm.searchStringFlow.collectAsStateWithLifecycle()
                 FilteredTextField(
                     value = searchString,
-                    onCandidateValueChange = makeOnCandidateValueChangeMaxLength(maxSearchLength),
+                    onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxSearchLength),
                     onValueChange = { it -> vm.searchStringFlow.value = it },
                     label = { Text("Search") },
                     leadingIcon = {
@@ -7185,7 +7185,7 @@ class EditPriceViewModel(
 
     val packCountValidationRules = if (showPackCount) numericValidationRules(uiContent.frozenLocale, allowDecimals = false, allowZero = false) else emptyList()
     var packSizeValidationRules = generatePackSizeValidationRules()
-    var currencyFormat = getCurrencyFormat(uiContent.dataSet, uiContent.frozenLocale)
+    var currencyFormat = createCurrencyFormat(uiContent.dataSet, uiContent.frozenLocale)
 
     init {
         Log.d("MyApp", "EditPriceScreenViewModel $instanceId $this")
@@ -7341,7 +7341,7 @@ class EditSourceViewModel(
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
         priceTrackerRepository.getAllSources(uiContent.editableSource.value.dataSetId)
             .map { sourceList ->
-                buildNameValidationRules(
+                createNameValidationRules(
                     sourceList.filter { source -> source.id != uiContent.editableSource.value.id }
                         .map { source -> source.name }
                 )
@@ -7441,7 +7441,7 @@ class EditItemViewModel(
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
         priceTrackerRepository.getAllItems(uiContent.editableItem.value.dataSetId)
             .map { itemList ->
-                buildNameValidationRules(
+                createNameValidationRules(
                     itemList.filter { item -> item.id != uiContent.editableItem.value.id }
                         .map { item -> item.name }
                 )
@@ -7651,7 +7651,7 @@ class ViewPriceHistoryViewModel(
 // this would perhaps add subtle behavioural quirks around the ordering of the list which might
 // be brittle. (Then again, with respect to brittleness, some rules' error messages might implicitly
 // assume earlier rules already filtered out some unacceptable cases anyway.)
-fun buildNameValidationRules(existingNameList: List<String>): List<ValidationRule<String>> {
+fun createNameValidationRules(existingNameList: List<String>): List<ValidationRule<String>> {
     return listOf(
         ValidationRule<String>({ it.isNotEmpty() }, "Must have a name"),
     ) + existingNameList.map { name ->
@@ -7694,7 +7694,7 @@ class EditDataSetViewModel(
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
         priceTrackerRepository.getAllDataSets()
             .map { dataSetList ->
-                buildNameValidationRules(
+                createNameValidationRules(
                     dataSetList.filter { dataSet -> dataSet.id != uiContent.editableDataSet.value.id }
                         .map { dataSet -> dataSet.name }
                 )
@@ -8855,7 +8855,7 @@ inline fun devRequire(condition: Boolean, lazyMessage: () -> String) {
 }
 
 data class CurrencyFormat(
-    val decimalPlaces: Int, // TODO: We may not actually need this, if it's baked into validation rules and not used elsewhere
+    val decimalPlaces: Int,
     val prefix: String?,
     val suffix: String?,
     val validationRules: List<ValidationRule<String>>
@@ -8863,8 +8863,8 @@ data class CurrencyFormat(
 
 // This takes a DataSet not a currency code because later on a DataSet may allow custom currency
 // formatting which overrides whatever the current locale wants to do.
-// TODO: Rename this from "getFoo" syntax to make it clear it's not "cheap"?
-fun getCurrencyFormat(dataSet: DataSet, locale: Locale): CurrencyFormat {
+// TODO: Make this an extension function on DataSet?
+fun createCurrencyFormat(dataSet: DataSet, locale: Locale): CurrencyFormat {
     val currencyInstance = Currency.getInstance(dataSet.currencyCode)
     // currencyInstance will give us the number of decimal places, but it won't give us a
     // prefix or suffix to use - which we need for currency TextFields. So we ask it to
