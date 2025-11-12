@@ -9610,4 +9610,23 @@ com.example.myapp/
 │   └── maybe local db or repository (if needed)
 │
 └── util/ (optional)    # small helpers, extensions, etc.
+
+but also:
+
+com.example.myapp/
+│
+├── MainActivity.kt
+│
+├── ui/
+│   ├── theme/
+│   ├── home/
+│   │   ├── HomeScreen.kt
+│   │   └── HomeViewModel.kt
+│   └── settings/
+│       ├── SettingsScreen.kt
+│       └── SettingsViewModel.kt
+│
+├── data/
+│   └── models/
+
 */
