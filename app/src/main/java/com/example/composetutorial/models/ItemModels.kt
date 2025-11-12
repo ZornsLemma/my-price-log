@@ -8,7 +8,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.composetutorial.MeasurementUnit
 import com.example.composetutorial.QuantityType
-import com.example.composetutorial.devCheck
+import com.example.composetutorial.myCheck
 import com.example.composetutorial.getRelevantMeasurementUnits
 import kotlinx.parcelize.Parcelize
 
@@ -50,7 +50,7 @@ fun Item?.toEditable(dataSet: DataSet): EditableItem {
             defaultUnitIdByQuantityTypeOrdinal, false, ""
         )
     } else {
-        devCheck(dataSet.id == dataSetId) {
+        myCheck(dataSet.id == dataSetId) {
             "Expected identical dataSetIds but have dataSet.id ${dataSet.id} and dataSetid ${dataSetId}"
         }
         defaultUnitIdByQuantityTypeOrdinal[defaultUnit.quantityType.ordinal] = defaultUnit.id
@@ -115,7 +115,7 @@ fun EditableItem.toDomain(): Item? {
         return null
     }
     // This is a devCheck not a "return null" check because it indicates an internal error.
-    devCheck(quantityType == defaultUnit.quantityType) {
+    myCheck(quantityType == defaultUnit.quantityType) {
         "Expected consistent quantity types on EditableItem but have $quantityType and $defaultUnit"
     }
     return Item(

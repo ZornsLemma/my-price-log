@@ -11,7 +11,7 @@ import com.example.composetutorial.CurrencyFormat
 import com.example.composetutorial.MeasuredValue
 import com.example.composetutorial.MeasurementUnit
 import com.example.composetutorial.baseUnitForQuantityType
-import com.example.composetutorial.devCheck
+import com.example.composetutorial.myCheck
 import com.example.composetutorial.formatDoubleForEditing
 import com.example.composetutorial.createCurrencyFormat
 import com.example.composetutorial.parseStringAsDoubleOrNull
@@ -105,7 +105,7 @@ fun PriceWithItemEntity.toDomain(): Price {
     // On the way from database->domain, this is where we have a "solid" itemDefaultUnit value
     // (because it came from a database join) and that gives us an independent cross-check that
     // priceEntity.userUnit is of the right QuantityType.
-    devCheck(priceEntity.userUnit.quantityType == itemDefaultUnit.quantityType) {
+    myCheck(priceEntity.userUnit.quantityType == itemDefaultUnit.quantityType) {
         "Expected consistent units on PriceWithItemEntity but we have userUnit " + 
         "${priceEntity.userUnit} and itemDefaultUnit $itemDefaultUnit"
     }
@@ -169,7 +169,7 @@ fun PriceEntity.toHistory(): PriceHistory {
 fun Price.toEntity(): PriceEntity {
     // This check is just a more explicit version of that implicitly done inside the
     // quantity.asValue() call below.
-    devCheck(quantity.unit.quantityType == itemDefaultUnit.quantityType) {
+    myCheck(quantity.unit.quantityType == itemDefaultUnit.quantityType) {
         "Expected consistent quantity type when converting Price to PriceEntity but found " + 
         "measure $quantity with itemDefaultUnit $itemDefaultUnit"
     }

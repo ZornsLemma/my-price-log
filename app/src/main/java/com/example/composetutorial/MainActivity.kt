@@ -109,8 +109,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -171,10 +169,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -476,8 +472,8 @@ fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {
         if (dataSet.allowUSCustomary) UnitFamily.US_CUSTOMARY else null,
         UnitFamily.ITEM,
     )
-    devCheck(relevantUnitFamilies.isNotEmpty()) { "Data set ID ${dataSet.id} has no unit families enabled" }
-    devCheck(!(dataSet.allowImperial && dataSet.allowUSCustomary)) { "Data set ID ${dataSet.id} has both imperial and US customary unit families enabled" }
+    myCheck(relevantUnitFamilies.isNotEmpty()) { "Data set ID ${dataSet.id} has no unit families enabled" }
+    myCheck(!(dataSet.allowImperial && dataSet.allowUSCustomary)) { "Data set ID ${dataSet.id} has both imperial and US customary unit families enabled" }
     return relevantUnitFamilies
 }
 
@@ -502,7 +498,7 @@ fun getRelevantMeasurementUnits(
                 measurementUnit.unitFamilies.any { it in relevantUnitFamilies } &&
                 (!measurementUnit.displayOnly || includeDisplayOnly)
     }
-    devCheck(relevantMeasurementUnits.isNotEmpty()) {
+    myCheck(relevantMeasurementUnits.isNotEmpty()) {
         "Expected at least one relevant measure unit for QuantityType ${quantityType.name} in " +
                 "the context of data set ID ${dataSet.id} but found none"
     }
@@ -526,7 +522,7 @@ fun getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
     // customary. But if measurementUnit were CUBIC_INCH, the family would matter in deciding whether
     // the returned MeasurementUnits are US or imperial floz/pint/gallon.)
     val unitFamily = measurementUnit.unitFamilies.intersect(getRelevantUnitFamilies(dataSet))
-    devCheck(unitFamily.size == 1) {
+    myCheck(unitFamily.size == 1) {
         // TODO: This message is technically incorrect, size could be 0 - tweak if this possibility remains
         "measurementUnit ${measurementUnit.id} belongs to multiple unit families for data set " +
                 "${dataSet.id}: ${unitFamily.size}"
@@ -536,11 +532,11 @@ fun getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
                 unitFamily.single() in it.unitFamilies &&
                 (!it.displayOnly || includeDisplayOnly)
     }
-    devCheck(result.isNotEmpty()) {
+    myCheck(result.isNotEmpty()) {
         "measurementUnit ${measurementUnit.id} belongs to no unit families for data set ${dataSet.id}"
     }
     // This is a linear search but it's a tiny list and we don't call this a lot.
-    devCheck(measurementUnit in result) {
+    myCheck(measurementUnit in result) {
         "Original measurementUnit ${measurementUnit.id} not present in result: ${result.map { it.id }}"
     }
     return result
@@ -570,7 +566,7 @@ data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcela
     private val quantityType: QuantityType get() = unit.quantityType
 
     fun to(unit: MeasurementUnit): MeasuredValue {
-        devRequire(this.quantityType == unit.quantityType) {
+        myRequire(this.quantityType == unit.quantityType) {
             "Cannot convert between different quantity types: trying to convert $this to $unit"
         }
         val baseValue = this.value * this.unit.toBase
@@ -578,7 +574,7 @@ data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcela
     }
 
     operator fun plus(other: MeasuredValue): MeasuredValue {
-        devRequire(this.quantityType == other.quantityType) {
+        myRequire(this.quantityType == other.quantityType) {
             "Cannot add values of different quantity types (this: $this, other: $other)"
         }
         val otherInThis = other.to(this.unit)
@@ -1060,7 +1056,7 @@ class PriceTrackerRepositoryImpl(
         // Check priceBeforeRevert and priceAfterRevert relate to the same price. It might be
         // arguably OK for "id" not to match between priceBeforeRevert and priceAfterRevert, but in
         // practice it ought to so let's include that in the check.
-        devRequire(priceBeforeRevert.id == priceAfterRevert.id && priceBeforeRevert.dataSetId == priceAfterRevert.dataSetId && priceBeforeRevert.itemId == priceAfterRevert.itemId && priceBeforeRevert.sourceId == priceAfterRevert.sourceId) { "Inconsistent IDs between priceBeforeRevert and priceAfterRevert" }
+        myRequire(priceBeforeRevert.id == priceAfterRevert.id && priceBeforeRevert.dataSetId == priceAfterRevert.dataSetId && priceBeforeRevert.itemId == priceAfterRevert.itemId && priceBeforeRevert.sourceId == priceAfterRevert.sourceId) { "Inconsistent IDs between priceBeforeRevert and priceAfterRevert" }
 
         // ENHANCE: This could be streamlined if we did less checking, but for now at least we are
         // as paranoid as we can be to avoid corrupting anything. Our caller has expressed the
@@ -1077,8 +1073,8 @@ class PriceTrackerRepositoryImpl(
                 dataSetId = priceBeforeRevert.dataSetId,
                 itemId = priceBeforeRevert.itemId
             ).first().firstOrNull { it.id == priceBeforeRevert.id }
-            devCheck(currentPrice != null) { "Can't find database price for priceBeforeRevert" }
-            devCheck(currentPrice == priceBeforeRevert) { "Database price doesn't match priceBeforeRevert" }
+            myCheck(currentPrice != null) { "Can't find database price for priceBeforeRevert" }
+            myCheck(currentPrice == priceBeforeRevert) { "Database price doesn't match priceBeforeRevert" }
 
             // We will just delete the most recent price_history entry as part of the reversion,
             // leaving the second-to-last as the new latest entry, so pick out the most recent two
@@ -1088,18 +1084,18 @@ class PriceTrackerRepositoryImpl(
                 itemId = priceBeforeRevert.itemId,
                 sourceId = priceBeforeRevert.sourceId
             ).first()
-            devCheck(priceHistoryList.size >= 2) { "Expected at least two price history entries when reverting a price update" }
+            myCheck(priceHistoryList.size >= 2) { "Expected at least two price history entries when reverting a price update" }
             val priceHistoryToDelete = priceHistoryList[0]
             val priceHistoryToRevertTo = priceHistoryList[1]
 
             // Check that priceBeforeRevert is the same as priceHistoryToDelete after converting
             // the former from a PriceEntity to a PriceHistory and fixing up the ID.
-            devCheck(
+            myCheck(
                 priceBeforeRevert.toEntity().toHistory()
                     .copy(id = priceHistoryToDelete.id) == priceHistoryToDelete
             ) { "Expected priceBeforeRevert and priceHistoryToDelete to match" }
             // Similarly, check priceAfterRevert matches priceHistoryToRevertTo.
-            devCheck(
+            myCheck(
                 priceAfterRevert.toEntity().toHistory()
                     .copy(id = priceHistoryToRevertTo.id)
             == priceHistoryToRevertTo
@@ -2263,7 +2259,7 @@ data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) : 
 }
 
 fun getUnitPrice(amount: Double, count: Long, measure: MeasuredValue, denominator: MeasurementUnit): UnitPrice {
-    devRequire(count > 0) { "Expected positive count" }
+    myRequire(count > 0) { "Expected positive count" }
     return UnitPrice(amount / (count * measure.asValue(denominator)), denominator)
 }
 
@@ -2287,8 +2283,8 @@ fun getFriendlyUnitPrice(
     measure: MeasuredValue,
     candidateDenominators: List<MeasurementUnit>
 ): UnitPrice {
-    devRequire(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
-    devRequire(measure.value > 0.0) { "Expected positive measure; got $measure" }
+    myRequire(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
+    myRequire(measure.value > 0.0) { "Expected positive measure; got $measure" }
     var bestScore: Double? = null
     var bestUnitPrice: UnitPrice? = null
     for (candidateDenominator in candidateDenominators) {
@@ -2731,9 +2727,9 @@ fun <T> DataTable(
     columnAlignments: List<CellAlignment> = List(header.size) { CellAlignment.Start },
     onClick: ((T) -> Unit)? = null,
 ) {
-    devRequire(header.size == columns.size) { "Expected same header and columns size but have ${header.size} and ${columns.size} respectively" }
-    devRequire(header.size == columnWeights.size) { "Expected same header and columnWeights size but have ${header.size} and ${columnWeights.size} respectively" }
-    devRequire(header.size == columnAlignments.size) { "Expected same header and columnAlignments size but have ${header.size} and ${columnAlignments.size} respectively" }
+    myRequire(header.size == columns.size) { "Expected same header and columns size but have ${header.size} and ${columns.size} respectively" }
+    myRequire(header.size == columnWeights.size) { "Expected same header and columnWeights size but have ${header.size} and ${columnWeights.size} respectively" }
+    myRequire(header.size == columnAlignments.size) { "Expected same header and columnAlignments size but have ${header.size} and ${columnAlignments.size} respectively" }
 
     fun alignmentModifier(cellAlignment: CellAlignment): Modifier = when (cellAlignment) {
         CellAlignment.Start -> Modifier.wrapContentWidth(Alignment.Start)
@@ -4028,7 +4024,7 @@ fun EditPriceScreen(
                     })
             }
         } else {
-            devCheck(uiContent.editablePrice.value.toConfirm) {
+            myCheck(uiContent.editablePrice.value.toConfirm) {
                 "Expected toConfirm to be true as this is the first price, but it's false"
             }
         }
@@ -4237,7 +4233,7 @@ fun EditPriceScreenPackSize(
                 selectedId = uiContent.editablePrice.value.measurementUnit.id,
                 onItemSelected = {
                     val measurementUnit = MeasurementUnit.fromId(it)
-                    devCheck(measurementUnit != null) {
+                    myCheck(measurementUnit != null) {
                         "Expected non-null measurementUnit to be selected; got $it"
                     }
                     if (uiContent.editablePrice.value.measurementUnit != measurementUnit!!) {
@@ -4838,7 +4834,7 @@ fun EditItemScreen(
                         selectedId = uiContent.editableItem.value.defaultUnit.id,
                         onItemSelected = {
                             val defaultUnit = MeasurementUnit.fromId(it)
-                            devCheck(defaultUnit != null) {
+                            myCheck(defaultUnit != null) {
                                 "Expected non-null defaultUnit to be selected; got $it"
                             }
                             if (uiContent.editableItem.value.defaultUnit != defaultUnit!!) {
@@ -7412,7 +7408,7 @@ class EditSourceViewModel(
     suspend fun performDelete() {
         Log.d("MyApp", "entered performDelete")
         val sourceId = uiContent.editableSource.value.id
-        devCheck(sourceId != 0L) { "Expected to delete an actual source but have ID 0" }
+        myCheck(sourceId != 0L) { "Expected to delete an actual source but have ID 0" }
         val rowsDeleted = priceTrackerRepository.deleteSourceById(sourceId)
         Log.d("MyApp", "Deleted $rowsDeleted rows with sourceId $sourceId")
     }
@@ -7491,7 +7487,7 @@ class EditItemViewModel(
     suspend fun performDelete() {
         Log.d("MyApp", "entered performDelete")
         val itemId = uiContent.editableItem.value.id
-        devCheck(itemId != 0L) { "Expected to delete an actual item but have ID 0" }
+        myCheck(itemId != 0L) { "Expected to delete an actual item but have ID 0" }
         val rowsDeleted = priceTrackerRepository.deleteItemById(itemId)
         Log.d("MyApp", "Deleted $rowsDeleted rows with itemId $itemId")
     }
@@ -7791,7 +7787,7 @@ class EditDataSetViewModel(
     suspend fun performDelete() {
         Log.d("MyApp", "entered performDelete")
         val dataSetId = uiContent.editableDataSet.value.id
-        devCheck(dataSetId != 0L) { "Expected to delete an actual data set but have ID 0" }
+        myCheck(dataSetId != 0L) { "Expected to delete an actual data set but have ID 0" }
         val rowsDeleted = priceTrackerRepository.deleteDataSetById(dataSetId)
         Log.d("MyApp", "Deleted $rowsDeleted rows with dataSetId $dataSetId")
     }
@@ -8062,7 +8058,7 @@ fun AppNavigation() {
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
             val action = backStackEntry.arguments?.getString("action")
-            devRequire(action == "edit" || action == "select") { "Invalid action: $action" }
+            myRequire(action == "edit" || action == "select") { "Invalid action: $action" }
             val select = action == "select"
             screenWithViewModel<EditItemsViewModel, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
@@ -8674,7 +8670,7 @@ fun ItemSourceInfoHistory(
             )
 
             if (priceHistoryDelta.price != null || priceHistoryDelta.count != null || priceHistoryDelta.quantity != null) {
-                devCheck(priceHistoryDelta.price != null && priceHistoryDelta.count != null && priceHistoryDelta.quantity != null) {
+                myCheck(priceHistoryDelta.price != null && priceHistoryDelta.count != null && priceHistoryDelta.quantity != null) {
                     "Expected price, count and quantity to all be non-null since one is"
                 }
                 PackPriceAndSizeRow(priceHistoryDelta.price!!, priceHistoryDelta.count!!, priceHistoryDelta.quantity!!, dataSet, AsyncOperationStatus.Idle)
@@ -8837,23 +8833,21 @@ fun ViewPriceHistoryScreen(
 // continuing to use them. I'm just not certain they are necessary. It's possible that having the
 // Log.e() occur *before* an exception is thrown increases the chances the log entry makes it to
 // logcat.
-// TODO: Rename devCheck->myCheck and devRequire->myRequire, to make it clear these are equally
-// valid in release builds?
 
-inline fun devCheck(condition: Boolean, lazyMessage: () -> String) {
+inline fun myCheck(condition: Boolean, lazyMessage: () -> String) {
     if (!condition) {
         val msg = lazyMessage()
         val ex = IllegalStateException(msg) // same as check()
-        Log.e("DevCheck", "FAILED CHECK: $msg", ex)
+        Log.e("MyCheck", "FAILED CHECK: $msg", ex)
         throw ex
     }
 }
 
-inline fun devRequire(condition: Boolean, lazyMessage: () -> String) {
+inline fun myRequire(condition: Boolean, lazyMessage: () -> String) {
     if (!condition) {
         val msg = lazyMessage()
         val ex = IllegalArgumentException(msg) // same as require()
-        Log.e("DevCheck", "FAILED REQUIRE: $msg", ex)
+        Log.e("MyRequire", "FAILED REQUIRE: $msg", ex)
         throw ex
     }
 }
@@ -9099,15 +9093,15 @@ data class PriceClassificationThresholds(
 )
 
 fun quantile(sortedValues: List<Double>, q: Double): Double {
-    devRequire(q in 0.0..1.0) { "Expected q in [0, 1] but got $q" }
+    myRequire(q in 0.0..1.0) { "Expected q in [0, 1] but got $q" }
 
     // We could return null for empty, but in reality we don't expect this to happen and it feels
     // better to avoid making the result nullable.
-    devRequire(sortedValues.isNotEmpty()) { "Expected non-empty list" }
+    myRequire(sortedValues.isNotEmpty()) { "Expected non-empty list" }
 
     // It's slightly inefficient to be checking sortedValues is sorted every time, but for our tiny
     // lists it is very cheap and it might catch a bug causing invalid results to be generated.
-    devRequire(
+    myRequire(
         sortedValues.zipWithNext()
             .all { (a, b) -> a <= b }) { "Expected sortedValues to be sorted but got $sortedValues" }
 
