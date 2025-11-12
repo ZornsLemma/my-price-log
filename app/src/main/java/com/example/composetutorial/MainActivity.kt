@@ -9165,6 +9165,9 @@ fun analysePrices(
     // to remember()-ing code in the UI (which after all could in the future allow overriding this
     // anyway) and do an on-the-fly (maybe remember-ed) conversion at display time of the in-base-unit
     // unitPrice on the AugmentedPrices.
+    // TODO: More generally, the use of unitPrice.***numerator*** in isolation anywhere in the
+    // code feels like an invitation to bugs where it turns out that the unit prices don't all happen
+    // to share the same denominator. I am not saying such a bug exists right now, but it feels bad.
     var augmentedPriceList = priceList.mapNotNull { price ->
         // I don't think we can have a Price but not the corresponding Source, but we play it safe
         // just in case.
