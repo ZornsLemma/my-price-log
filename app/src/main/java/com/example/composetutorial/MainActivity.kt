@@ -8910,7 +8910,12 @@ fun <T> Flow<T>.withVersion(): Flow<Versioned<T>> = flow {
 fun <T> initialVersioned(initialValue: T): Versioned<T> =
     Versioned(version = -1L, value = initialValue)
 
-// TODO: Rename something like ValidationTargetHandle?
+// TODO: Rename something like ValidationTargetHandle? The basic concept is "this is an input thing
+// the user can get wrong and which we need to be able to draw the user's attention to and (if
+// supported by the thing) give it focus".
+// TODO: I think the current name of this and related functions is confusing, because it's quite
+// possible (hence focusRequestedInitialised=false being a legit long term case, e.g. for a button
+// group) we *cannot* focus the thing this is attached to.
 // TODO: Might be nice to make members private, which probably requires moving to a file on its own
 // along with the custom Modifier and using internal visibility. This would stop e.g. "accidentally"
 // passing the FocusRequester to Modifier.focusRequester() and avoiding the initialisation flag
@@ -8928,10 +8933,7 @@ class ScrollToFocusableHandle @OptIn(ExperimentalFoundationApi::class) construct
 @Composable
 fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle, offset: Dp = 0.dp): Modifier {
     // Specifying a negative offset allows us to scroll to a bit above this composable. This is
-    // useful when it may be wrapped in an ErrorHighlightBox.
-    // TODO: Maybe we should attach this modifier to the ErrorHighlightBox, but there's tension
-    // there as we also want to attach it to the "real" composable for focusing purposes, and if we
-    // split the two things up we're losing a lot of the convenience of having it all in one place.
+    // useful when it may be wrapped in an ErrorHighlightBox. TODO: Is this true, it isn't obvious to me we are using a negative offset and yet I think we *do* scroll to just above but not sure.
     handle.bringIntoViewOffset = with(LocalDensity.current) { offset.toPx() }
     return this
         //.focusRequester(handle.focusRequester)
@@ -9592,3 +9594,20 @@ val capitalization = when (capString) {
 // TODO: At some point I should apply the spotless auto-formatting, but that will obviously
 // break diffs so I should be careful when I do it - maybe when the code is very stable and
 // shortly before release?
+
+/* TODO: Temp copy from ChatGPT for possible lightweight-ish subpackage structure
+com.example.myapp/
+│
+├── MainActivity.kt
+│
+├── ui/
+│   ├── theme/          # (standard Compose auto-generated package)
+│   ├── components/     # optional: reusable composables, dialogs, etc.
+│   ├── screens/        # optional: one file per screen if you have >1
+│
+├── data/
+│   ├── models/         # your entity + domain objects
+│   └── maybe local db or repository (if needed)
+│
+└── util/ (optional)    # small helpers, extensions, etc.
+*/
