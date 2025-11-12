@@ -8164,7 +8164,7 @@ fun AppNavigation() {
             ) { viewModel ->
                 EditPriceScreen(
                     viewModel, navController,
-                    requestClose = { navController.popBackStack() }
+                    requestClose = { navController.popBackStack("home", inclusive = false) }
                 )
             }
         }
@@ -8393,9 +8393,6 @@ This may be complete crap. The example of how to use it is probably as long as t
                             locale
                         )
                         navController.navigate("editPrice")
-                        // TODO: After this edit, we probably want to scroll to the top of the
-                        // price history screen so the user can see the new record. Or maybe back
-                        // to the home screen, which will naturally show the new record.
                     })
             }
         }
