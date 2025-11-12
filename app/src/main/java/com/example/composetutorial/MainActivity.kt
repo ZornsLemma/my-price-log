@@ -5209,7 +5209,7 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
             Log.d("MyApp", "LaunchedEffect saveValidationError $field")
             when (field) {
                 validationFlowFieldId -> {
-                    requestUserAttentionTo(focusManager, validationInputHandle)
+                    validationInputHandle.requestUserAttention(focusManager)
                 }
 
                 else -> {}
@@ -8919,7 +8919,6 @@ fun <T> initialVersioned(initialValue: T): Versioned<T> =
 // appropriate; not all composables can receive focus) focus it ready for them to fix the problem".
 // It is initialised by using validationInputHandleBringIntoViewRequester() and (optionally, and
 // possibly on a different composable) validationInputHandleFocusRequester().
-// TODO: Should this be a data class???
 // TODO: Once pulled out into its own file, I may be able to opt into the experimental API once at
 // file level.
 class ValidationInputHandle @OptIn(ExperimentalFoundationApi::class) constructor(
@@ -8952,12 +8951,10 @@ fun Modifier.validationInputHandleFocusRequester(handle: ValidationInputHandle):
 }
 
 @OptIn(ExperimentalFoundationApi::class)
-// TODO: Swap arguments so the "handle" is the thing we are requesting attention "to" (func name)?
-// TODO: Make this an extension function on ValidationInputHandle??
-suspend fun requestUserAttentionTo(focusManager: FocusManager, handle: ValidationInputHandle) {
-    Log.d("MyAppScroll", "${handle.bringIntoViewOffset} ${handle.bringIntoViewHeight}")
+suspend fun ValidationInputHandle.requestUserAttention(focusManager: FocusManager) {
+    Log.d("MyAppScroll", "$bringIntoViewOffset $bringIntoViewHeight")
 
-    if (!handle.focusRequesterInitialised) {
+    if (!focusRequesterInitialised) {
         // If we didn't (couldn't meaningfully) initialise the focusRequester, that means the target
         // can't be focused. We therefore content ourselves with removing the focus from anything
         // else that has it. We do this before calling bringIntoView() since it may dismiss the
@@ -8969,23 +8966,22 @@ suspend fun requestUserAttentionTo(focusManager: FocusManager, handle: Validatio
         focusManager.clearFocus()
     }
 
-    val totalBorderThickness = handle.bringIntoViewOffset
-    handle.bringIntoViewRequester.bringIntoView(
+    bringIntoViewRequester.bringIntoView(
         Rect(
             left = 0f,
-            top = -handle.bringIntoViewOffset,
+            top = -bringIntoViewOffset,
             right = 0f,
-            bottom = handle.bringIntoViewHeight + 2 * handle.bringIntoViewOffset
+            bottom = bringIntoViewHeight + 2 * bringIntoViewOffset
         )
     )
 
-    if (handle.focusRequesterInitialised) {
+    if (focusRequesterInitialised) {
         // I am a bit unsure as to why, but it seems to work much better to do requestFocus() *after*
         // bringIntoView(). The precise behaviour depends on whether the control already has the focus
         // and maybe whether there is a keyboard on screen already and what type it is.
         Log.d("MyApp", "requestFocus")
         // TODO: Should we maybe do a clearfocus first? That may or may not help if the problematic control already has the focus.
-        handle.focusRequester.requestFocus()
+        focusRequester.requestFocus()
         // TODO: Can/should we focus TextFields with the cursor at the end of the text?
     }
 
@@ -8994,9 +8990,9 @@ suspend fun requestUserAttentionTo(focusManager: FocusManager, handle: Validatio
     // visible right at the top of this function so it's fully visible and gets a chance to
     // influence things like bringinto view!??!?! probably doesn't work that way but maybe worth
     // experimenting
-    handle.errorHighlightBoxVisible.value = true
+    errorHighlightBoxVisible.value = true
     delay(errorHighlightBoxVisibleTimeMillis)
-    handle.errorHighlightBoxVisible.value = false
+    errorHighlightBoxVisible.value = false
 }
 
 @Composable
