@@ -9351,21 +9351,23 @@ Log.d("MyApp", baz.toString())
 // and be more consistent about naming variables functions around the whole sharedviewmodel thing
 // and also the resulting structure inside the fooscreenviewmodel.
 
-// ENHANCE: We should probably implement a "recycle bin" type delete - have a "deleted" flag on all
-// the tables, and when something is deleted we set that. (We would not cascade-set this if we e.g.
-// delete a data set.) We can then undelete (subject to verifying names are still unique - deleted
-// things would not count towards uniqueness checks). This is a UI faff because it means three-ish
+// ENHANCE: We should probably implement a "recycle bin" type delete for data set/item/source - have
+// a "deleted" flag on all the tables, and when something is deleted we set that. (We would not
+// cascade-set this if we delete a data set; being unable to select the data set would effectively
+// hide the items/sources in it anyway, and no point forcing extra work to cacade set or unset on
+// delete.) Most queries would then simply have a "deleted=false" condition to ignore deleted
+// things. We can then undelete (subject to verifying names are still unique - deleted things would
+// not count towards uniqueness checks, so you could create a potential duplicate after deleting
+// something) simply by clearing the deleted flag. This is a UI faff because it means three-ish
 // screens to select things to undelete, and maybe some other facility somewhere else to purge
-// some/all waste bin things for real. But it probably is the way to go long term, even if it's not
-// part of MVP.
+// some/all things in the "recycle bin" for real. But it probably is the way to go long term.
 
 // ENHANCE: The list of prices for product across stores at bottom of home screen should probably
 // have some way of expanding in place or (more likely) opening a new screen showing a read-only
-// explanation of how the "effective price" was arrived at (store level discounts, pseudo-inflation
-// penalties, etc) and maybe also the same "Good/bad/whatever price" recommendation we show in the
-// "specific store" card (calculated the same way). This screen should probably start with the raw
-// shelf price in absolute form, then have subsequent lines like "Inflation adjustment +$0.04" or
-// "Loyalty discount (5%) -$0.03" with a final total at the end.
+// explanation of how the augmented price was arrived at (store level discounts, pseudo-inflation
+// penalties, etc). This screen should probably start with the raw shelf unit price in absolute
+// form, then have subsequent lines like "Inflation adjustment +$0.04" or "Loyalty discount (5%)
+// -$0.03" with a final total at the end.
 
 // Note to self: I used scaling 61% when importing app-icon-4.svg as a new image asset for the icon.
 
