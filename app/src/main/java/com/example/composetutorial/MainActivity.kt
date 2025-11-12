@@ -2241,6 +2241,8 @@ fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
     }
 }
 
+// TODO: It may be helpful to have a function on/extending UnitPrice which returns a version of it
+// converted to a specific denominator. compareTo() could probably use it, for example.
 data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) : Comparable<UnitPrice> {
     override fun compareTo(other: UnitPrice): Int {
         // We are abusing MeasuredValue here by treating the currency amount as a quantity measured
@@ -9150,6 +9152,19 @@ fun analysePrices(
         includeDisplayOnly = true
     )
     var unitPriceDenominator: MeasurementUnit? = null
+    // TODO: I may be getting confused here, but this feels a bit off - we pick unitPriceDenominator
+    // based on whichever price happens to be first, but we have *not* sorted them at this point
+    // (nor can we, because we'd need to use the inflatedLoyaltyPrice from AugmentedPrice, not the
+    // shelf price). We do sort on the unitPrice after, but unless I'm overlooking some subvsequent
+    // complexity, the unit price denominator for display will be *taken* from whichever has the
+    // lowest unit price, but we will not have automatically chosen the *best* unit price denominator
+    // based on that first price - it will be set based on which price happened to come first here?!
+    // I am starting to suspect it may be cleanest to use the base unit for the unit price denominator
+    // right here, then sort, *then* choose a friendly denominator for the first thing in the sorted
+    // list and then modify every element in the list to use that, or just leave the friendly choice
+    // to remember()-ing code in the UI (which after all could in the future allow overriding this
+    // anyway) and do an on-the-fly (maybe remember-ed) conversion at display time of the in-base-unit
+    // unitPrice on the AugmentedPrices.
     var augmentedPriceList = priceList.mapNotNull { price ->
         // I don't think we can have a Price but not the corresponding Source, but we play it safe
         // just in case.
