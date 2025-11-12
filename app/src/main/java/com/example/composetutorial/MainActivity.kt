@@ -9112,7 +9112,9 @@ fun quantile(sortedValues: List<Double>, q: Double): Double {
 }
 
 
-// TODO: This code feels a bit awkward somehow, maybe the unit price calculation code needs refactoring and maybe augmentPrice should be inlined as this is its only caller and that *might* help. It also feels like we're having to pass far too much random stuff in as parameters.
+// TODO: This code feels a bit awkward somehow, maybe the unit price calculation code needs
+// refactoring and maybe augmentPrice should be inlined as this is its only caller and that *might*
+// help. It also feels like we're having to pass far too much random stuff in as parameters.
 fun analysePrices(
     dataSet: DataSet?,
     priceList: List<Price>,
@@ -9199,14 +9201,13 @@ fun analysePrices(
         // obviously see the actual list of unit prices by store and judge from that if they prefer.
         val lowerQuartile = quantile(recentEnoughPriceList, 0.25)
         val upperQuartile = quantile(recentEnoughPriceList, 0.75)
-        val k = 0.1 // TODO: should be in settings?
+        val k = 0.1 // ENHANCE: Make this configurable in settings? May be too "advanced"...
         PriceClassificationThresholds(lowerQuartile * (1 - k), upperQuartile * (1 + k))
     }
     augmentedPriceList = augmentedPriceList.map { augmentedPrice ->
-        // TODO: This *will* classify prices even if they are themselves stale - this is probably good, *but* the UI should show
-        // the "confirmed x days ago" thing in error color if the price is stale. (We do want to show the recommendation anyway,
-        // since maybe the user is checking the store out at home before deciding if they want to go there, so showing the
-        // recommendation is probably desirable.)
+        // We classify prices even if they aren't fresh. This seems best, they are marked as stale
+        // so the user can tell, but it's not unreasonable to offer a judgement.
+        // ENHANCE: Possibly we should not offer a judgement on ancient prices?
         augmentedPrice.copy(
             priceJudgement = judgePrice(
                 augmentedPrice,
@@ -9247,16 +9248,14 @@ var baz = foo + barq
 Log.d("MyApp", baz.toString())
 */
 
-// TODO: I have completely ignore "unlikely" errors (like exceptions being thrown when accessing the
-// database) in most of this code - what can/should we do about this? I suspect most such errors are
-// basically unrecoverable and it's semi-OK if the process just dies, but I'm not sure and it would
-// be good to read up on best practices.
+// ENHANCE: I have completely ignored "unlikely" errors (like exceptions being thrown when accessing
+// the database) in most of this code - what can/should we do about this? I suspect most such errors
+// are basically unrecoverable and it's more-or-less OK if the process just dies, but I'm not sure
+// and we may be able to do better.
 
-// Note to self: We should not use raw TextFields. All free text input should be done via something
-// like FilteredTextField with a generous cap on the maximum input length. This will avoid users
-// deliberately or accidentally entering very large strings and breaking the layout badly as a
-// result.
-
+// TODO: Move this into coding-notes.md once I'm sure I am respecting it and that it is in fact
+// appropriate etc.
+//
 // Note to self: Locale.getDefault() is initialised to the current locale when our app process
 // starts and is not automatically updated if the user changes the system locale while the app is
 // running. However, Compose's LocalConfiguration.current.locales[0] is updated live and immediately
@@ -9283,12 +9282,6 @@ Log.d("MyApp", baz.toString())
 
 // TODO: Eventually will need to remove misc Log.d() lines and/or replace them with permanent
 // well-thought-out ones if that is not inefficient.
-
-// TODO: Note that when we save a source/dataset/item after editing, we need to refuse to save if
-// there is another entry (excluding any old version of us) with the same name, and ideally with a
-// "very similar" name (e.g. up to case and with inter-word whitespace squashed and leading/trailing
-// space trimmed), to avoid confusion. - OK, I think I have fixed this but test all the different
-// edit static screens later.
 
 // TODO: Should we remember current product and source (remember they *may* be null anyway) for each
 // data set?
@@ -9341,27 +9334,16 @@ Log.d("MyApp", baz.toString())
 // TODO: General Kotlin point which may simplify my code - unlike in say C++, you can apparently
 // "call methods" on nulls, e.g. stringvariable.orEmpty().
 
-// TODO: General note: when we're editing a thing and changing its name, there is some possibility
-// of the user getting confused e.g. about what they are deleting or (wrt the "unique name" check)
-// what the name "should be". Wrt deleting, this problem is solved by having the delete on the list
-// screen not the edit screen, but I really don't like that as I don't want delete to be that
-// "prominent". This doesn't solve the "user changed name on screen and doesn't know what it
-// originally was" concern. In practice this is unlikely and not a huge deal. I do half wonder if we
-// should show the original name somewhere in the top app bar, but then that could get confusing
-// when they are editing it ("which is current?"). Probably best as it is, but wanted to make a note
-// to think about this. One possibility might be for the delete confirmation dialog to mention the
-// original name *if* it has been changed, but that might also be confusing (especially if the
-// change is minor, not a wholesale replacement of "Coffee" with "Eggs" or somethimg like that) and
-// it might be slightly fiddly to implement. We could also potentially show the original name of
-// the item on the main form (indented or greyed out or whatever), although right now that feels a
-// bit awkward. (I suppose we could maybe use the name textfield's supportingText for this when it
-// isn't showing an error, although I am still not sure it would look right even ignoring the error
-// use, and users might find themselves wondering how to get back to the grey message when an error
-// occurs, although again probably not and we can only second-guess hapless user behaviour so much.)
-
-// TODO: On Lenovo laptop, the "main" Android Studio text window with the two toolbar things down
-// the left and right would fit better with 95 character lines than 100. Since there's not much in
-// it, maybe we should adopt that as our standard line width?
+// ENHANCE: Is it worth worrying about the case where the user is editing (say) an item, changes it
+// name completely ("Coffee" -> "Eggs"), forgets about having done that and then hits "Delete"
+// thinking they are deleting "Eggs" when they are really deleting "Coffee" (and all associated
+// data)? This is probably sufficiently implausible it's not a big deal. We could find some way to
+// show the "original" name on screen as a kind of reminder, but that might be confusing or clunky.
+// Possibly the delete confirmation dialog could show the original name and the edited name if both
+// are different, but that could be confusing if the names have just had cosmetic tweaks. Moving the
+// delete operation onto the "list" screen rather than the individual item edit dialog would help
+// with this, but I really don't want delete to be implemented on the list as it is a very rare and
+// potentially devastating operation.
 
 // TODO: May want to semi-formally document that "state" for a screen is "what's in the screen's
 // view model" (and arguably also in remembered stuff in composable etc), while "content" is what
