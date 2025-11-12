@@ -8164,6 +8164,7 @@ fun AppNavigation() {
             ) { viewModel ->
                 EditPriceScreen(
                     viewModel, navController,
+                    // TODO: We should probably distinguish "close without save" and "close with save" here - for the view history edit case, close wiuthout save probably ought to popbackstack (and that would be fine for the home screen use too)
                     requestClose = { navController.popBackStack("home", inclusive = false) }
                 )
             }
@@ -8739,14 +8740,34 @@ fun ViewPriceHistoryScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(priceHistoryDeltaList) { priceHistoryDelta ->
-                    // TODO: This box is just a temp hack so I can attach a clickable - I will probably actually show a single-item "overflow" menu at top right to allow this "edit as new" action but this will do for the moment
-                    Box(modifier = Modifier.clickable { requestEditAsNew(priceHistoryDelta.priceHistory) }) {
+                    Box {
                         ItemSourceInfoHistory(
                             dataSet,
                             priceHistoryDelta,
                             dateFormatter,
                             timeFormatter
                         )
+
+                        // TODO: Possibly I can factor out this "overflow menu" structure from StorePriceCardMenu and here and share it
+                        var menuExpanded by rememberSaveable { mutableStateOf(false) }
+                        IconButton(
+                            onClick = { menuExpanded = true },
+                            modifier = Modifier.align(Alignment.TopEnd),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More options"
+                            )
+                            DropdownMenu(
+                                expanded = menuExpanded, onDismissRequest = { menuExpanded = false }
+                                // ,modifier = Modifier.align(Alignment.TopEnd)
+                            ) {
+                                MyDropdownMenuItem(
+                                    text = { Text("Edit as new price") },
+                                    onClick = { menuExpanded = false; requestEditAsNew(priceHistoryDelta.priceHistory) }
+                                )
+                            }
+                        }
                     }
                 }
             }
