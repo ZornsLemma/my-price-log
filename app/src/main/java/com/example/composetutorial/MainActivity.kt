@@ -4073,11 +4073,11 @@ fun EditPriceScreenPrice(
         validationFlow = vm.saveValidationEvents,
         validationFlowFieldId = EditPriceViewModel.EditableField.PRICE,
         errorHighlightOffset = 4.dp,
-    ) { validationResult, interactionSource, scrollToFocusableHandle ->
+    ) { validationResult, interactionSource, validationInputHandle ->
         NumericTextField(
             modifier = Modifier
                 .fillMaxWidth()
-                .validationFocusRequester(scrollToFocusableHandle),
+                .validationInputHandleFocusRequester(validationInputHandle),
             label = { Text("Pack price") },
             value = packPrice,
             prefix = textOrNull(currencyFormat.prefix),
@@ -4145,7 +4145,7 @@ fun EditPriceScreenPackSize(
                 validationFlowFieldId = EditPriceViewModel.EditableField.PACK_COUNT,
                 errorHighlightOffset = 4.dp, // TODO!?
                 modifier = Modifier.weight(1f)
-            ) { validationResult, interactionSource, scrollToFocusableHandle ->
+            ) { validationResult, interactionSource, validationInputHandle ->
                 Row { // TODO EXPERIMENTAL
                     NumericTextField(
                         label = { Text("Count") },
@@ -4165,7 +4165,7 @@ fun EditPriceScreenPackSize(
                         isError = validationResult != null,
                         supportingText = if (validationResult == null) null else { { SupportingText(validationResult, true) } }, // TODO EXPERIMENTAL
                         modifier = Modifier
-                            .validationFocusRequester(scrollToFocusableHandle),
+                            .validationInputHandleFocusRequester(validationInputHandle),
                         interactionSource = interactionSource
                     )
                 }
@@ -4187,7 +4187,7 @@ fun EditPriceScreenPackSize(
             validationFlowFieldId = EditPriceViewModel.EditableField.PACK_SIZE,
             errorHighlightOffset = 4.dp,
             modifier = Modifier.weight(1f)
-        ) { validationResult, interactionSource, scrollToFocusableHandle ->
+        ) { validationResult, interactionSource, validationInputHandle ->
                 NumericTextField(
                     // TODO: Now we have multipack support, "pack size" is arguably confusing.
                     // There's also a practical consideration that when it grows larger because the
@@ -4212,7 +4212,7 @@ fun EditPriceScreenPackSize(
                     modifier = Modifier
                         // TODO DELETE? .weight(1f)
                         .fillMaxSize()
-                        .validationFocusRequester(scrollToFocusableHandle),
+                        .validationInputHandleFocusRequester(validationInputHandle),
                     interactionSource = interactionSource
                 )
         }
@@ -5088,11 +5088,11 @@ fun EditSourceScreen(
                             allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
                             validationFlow = vm.saveValidationEvents,
                             validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
-                        ) { validationResult, interactionSource, scrollToFocusableHandle ->
+                        ) { validationResult, interactionSource, validationInputHandle ->
                             NumericTextField(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .validationFocusRequester(scrollToFocusableHandle),
+                                    .validationInputHandleFocusRequester(validationInputHandle),
                                 // TODO: I can't help feeling this looks a bit confusing when it's empty, maybe it's just lack of a "%" or something.
                                 label = { Text("Loyalty scheme reward") },
                                 value = loyaltyPercentage,
@@ -5173,10 +5173,10 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
     content: @Composable (
         validationResult: String?,
         interactionSource: MutableInteractionSource,
-        scrollToFocusableHandle: ScrollToFocusableHandle,
+        validationInputHandle: ValidationInputHandle,
     ) -> Unit
 ) {
-    val scrollToFocusableHandle = rememberScrollToFocusable()
+    val validationInputHandle = rememberValidationInputHandle()
 
     val validationThing201 = rememberValidationThing(
         value = value,
@@ -5187,9 +5187,9 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
 
 
     ErrorHighlightBox(
-        visible = scrollToFocusableHandle.errorHighlightBoxVisible.value,
+        visible = validationInputHandle.errorHighlightBoxVisible.value,
         offset = errorHighlightOffset,
-        validationTarget = scrollToFocusableHandle,
+        validationTarget = validationInputHandle,
         modifier = modifier
     ) {
         Column(modifier = Modifier.animateContentSize()) {
@@ -5198,7 +5198,7 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
             content(
                 validationThing201.validationResult.value,
                 validationThing201.interactionSource,
-                scrollToFocusableHandle,
+                validationInputHandle,
             )
         }
     }
@@ -5209,7 +5209,7 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
             Log.d("MyApp", "LaunchedEffect saveValidationError $field")
             when (field) {
                 validationFlowFieldId -> {
-                    scrollAndFocusTo(focusManager, scrollToFocusableHandle)
+                    requestUserAttentionTo(focusManager, validationInputHandle)
                 }
 
                 else -> {}
@@ -5241,7 +5241,7 @@ fun <T> ValidatedTextField2(
         allowEmpty = allowEmpty,
         validationFlow = validationFlow,
         validationFlowFieldId = validationFlowFieldId,
-    ) { validationResult, interactionSource, scrollToFocusableHandle ->
+    ) { validationResult, interactionSource, validationInputHandle ->
         FilteredTextField(
             label = label,
             value = value,
@@ -5255,7 +5255,7 @@ fun <T> ValidatedTextField2(
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .validationFocusRequester(scrollToFocusableHandle),
+                .validationInputHandleFocusRequester(validationInputHandle),
             keyboardOptions = keyboardOptions,
             singleLine = singleLine,
             interactionSource = interactionSource
@@ -5335,7 +5335,7 @@ fun EditDataSetScreen(
             allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
             validationFlow = vm.saveValidationEvents,
             validationFlowFieldId = EditDataSetViewModel.EditableField.CURRENCY_CODE
-        ) { validationResult, interactionSource, scrollToFocusableHandle ->
+        ) { validationResult, interactionSource, validationInputHandle ->
             // TODO: According to a long comment I wrote elsewhere, we probably should be using a
             // frozen LocalConfiguration from when this screen was first opened here. However, at
             // present it includes no floating point values that are awkward if the locale changes,
@@ -5372,7 +5372,7 @@ fun EditDataSetScreen(
             MyExposedDropdownMenuBox(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .validationFocusRequester(scrollToFocusableHandle),
+                    .validationInputHandleFocusRequester(validationInputHandle),
 
                 selectedId = if (uiContent.editableDataSet.value.currencyCode != "") uiContent.editableDataSet.value.currencyCode else null,
                 onItemSelected = {
@@ -8910,17 +8910,19 @@ fun <T> Flow<T>.withVersion(): Flow<Versioned<T>> = flow {
 fun <T> initialVersioned(initialValue: T): Versioned<T> =
     Versioned(version = -1L, value = initialValue)
 
-// TODO: Rename something like ValidationTargetHandle? The basic concept is "this is an input thing
-// the user can get wrong and which we need to be able to draw the user's attention to and (if
-// supported by the thing) give it focus".
-// TODO: I think the current name of this and related functions is confusing, because it's quite
-// possible (hence focusRequestedInitialised=false being a legit long term case, e.g. for a button
-// group) we *cannot* focus the thing this is attached to.
 // TODO: Might be nice to make members private, which probably requires moving to a file on its own
 // along with the custom Modifier and using internal visibility. This would stop e.g. "accidentally"
 // passing the FocusRequester to Modifier.focusRequester() and avoiding the initialisation flag
 // being updated.
-class ScrollToFocusableHandle @OptIn(ExperimentalFoundationApi::class) constructor(
+// A ValidationInputHandle represents the idea "this composable is a user-supplied input which can
+// cause validation failures, so we need to be able to attract the user's attention to it and (if
+// appropriate; not all composables can receive focus) focus it ready for them to fix the problem".
+// It is initialised by using validationInputHandleBringIntoViewRequester() and (optionally, and
+// possibly on a different composable) validationInputHandleFocusRequester().
+// TODO: Should this be a data class???
+// TODO: Once pulled out into its own file, I may be able to opt into the experimental API once at
+// file level.
+class ValidationInputHandle @OptIn(ExperimentalFoundationApi::class) constructor(
     val focusRequester: FocusRequester = FocusRequester(),
     var focusRequesterInitialised: Boolean = false,
     val bringIntoViewRequester: BringIntoViewRequester = BringIntoViewRequester(),
@@ -8931,7 +8933,7 @@ class ScrollToFocusableHandle @OptIn(ExperimentalFoundationApi::class) construct
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle, offset: Dp = 0.dp): Modifier {
+fun Modifier.validationInputHandleBringIntoViewRequester(handle: ValidationInputHandle, offset: Dp = 0.dp): Modifier {
     // Specifying a negative offset allows us to scroll to a bit above this composable. This is
     // useful when it may be wrapped in an ErrorHighlightBox. TODO: Is this true, it isn't obvious to me we are using a negative offset and yet I think we *do* scroll to just above but not sure.
     handle.bringIntoViewOffset = with(LocalDensity.current) { offset.toPx() }
@@ -8944,13 +8946,15 @@ fun Modifier.scrollToFocusable(handle: ScrollToFocusableHandle, offset: Dp = 0.d
 
 }
 
-fun Modifier.validationFocusRequester(handle: ScrollToFocusableHandle): Modifier {
+fun Modifier.validationInputHandleFocusRequester(handle: ValidationInputHandle): Modifier {
     handle.focusRequesterInitialised = true
     return this.focusRequester(handle.focusRequester)
 }
 
 @OptIn(ExperimentalFoundationApi::class)
-suspend fun scrollAndFocusTo(focusManager: FocusManager, handle: ScrollToFocusableHandle) {
+// TODO: Swap arguments so the "handle" is the thing we are requesting attention "to" (func name)?
+// TODO: Make this an extension function on ValidationInputHandle??
+suspend fun requestUserAttentionTo(focusManager: FocusManager, handle: ValidationInputHandle) {
     Log.d("MyAppScroll", "${handle.bringIntoViewOffset} ${handle.bringIntoViewHeight}")
 
     if (!handle.focusRequesterInitialised) {
@@ -8997,9 +9001,9 @@ suspend fun scrollAndFocusTo(focusManager: FocusManager, handle: ScrollToFocusab
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-fun rememberScrollToFocusable(): ScrollToFocusableHandle {
+fun rememberValidationInputHandle(): ValidationInputHandle {
     return remember {
-        ScrollToFocusableHandle()
+        ValidationInputHandle()
     }
 }
 
@@ -9009,7 +9013,7 @@ fun ErrorHighlightBox(
     borderWidth: Dp = 2.dp,
     offset: Dp = defaultErrorHighlightOffset,
     modifier: Modifier = Modifier,
-    validationTarget: ScrollToFocusableHandle,
+    validationTarget: ValidationInputHandle,
     content: @Composable () -> Unit
 ) {
     var alpha = remember { Animatable(0f) }
@@ -9061,7 +9065,7 @@ fun ErrorHighlightBox(
                 )
 
             }
-            .scrollToFocusable(validationTarget, offset = offset + 2 * borderWidth)
+            .validationInputHandleBringIntoViewRequester(validationTarget, offset = offset + 2 * borderWidth)
     ) {
         content()
     }
