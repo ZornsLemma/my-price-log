@@ -25,6 +25,8 @@ android {
         // minSdk could probably be 24, but because we use VACUUM INTO for the sqlite backup we need
         // minSdk 30 to have a sqlite version supporting it. There are rather faffy workarounds
         // which could perhaps allow lowering this later on, but for now let's just accept this.
+        // I've disabled desugaring now we have minSdk 30 by commenting out the relevant lines; if
+        // we revert to minSdk 24 later on, these may need re-enabling.
         minSdk = 30
         targetSdk = 36
         versionCode = 1
@@ -50,7 +52,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-        isCoreLibraryDesugaringEnabled = true // TODO: ChatGPT magic
+        // isCoreLibraryDesugaringEnabled = true
     }
     kotlinOptions {
         jvmTarget = "11"
@@ -61,7 +63,7 @@ android {
 }
 
 dependencies {
-    coreLibraryDesugaring(libs.desugar.jdk.libs) // TODO: ChatGPT magic
+    // coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(platform(libs.compose.bom))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
