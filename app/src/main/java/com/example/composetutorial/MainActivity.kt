@@ -9399,23 +9399,25 @@ val capitalization = when (capString) {
 // by a setting) copying the search string from that screen into the name field on the add product
 // screen when you click the add button in this case. This would save having to re-type it.
 
-// ENHANCE: I perhaps ought to be more aggressive at forcing focus into a textfield, e.g. when editing
-// a product/source/dataset. I think there is probably an argument for *not* forcing this when using
-// the "product list" screen with a search box, because the user might want to just scroll the list,
-// but for the edit screens the user is going to want to edit something. It may be the best
-// compromise to only do this if it is a brand new something though, as if there is already data,
-// the user may not want to edit the top thing. And it may in practice just be best not to force it.
-// All I know is I find myself vaguely annoyed on the O6 at having to do an extra tap to get the
-// focus there and bring up the OSK, but do be careful about this. No idea what is "standard" or
+// ENHANCE: I perhaps ought to be more aggressive at forcing focus into text fields, e.g. when
+// editing a product/source/dataset. I think there is probably an argument for *not* forcing this
+// when using the "product list" screen with a search box, because the user might want to just
+// scroll the list, but for the edit screens the user is going to want to edit something. It may be
+// the best compromise to only do this if it is a brand new something though, as if there is already
+// data, the user may not want to edit the name, which comes first and is probably what we'd force
+// focus on to. And it may in practice just be best not to force it. No idea what is "standard" or
 // "advised" by MD3 or general Android conventions, a chat with an LLM might offer some perspectives
-// even if they're not guaranteed to be "correct". It might also be a good idea to have a setting
+// even if they're not guaranteed to be correct. It might also be a good idea to have a setting
 // which controls whether we force focus onto the search control on the product selection dialog -
 // some people (including me?) might nearly always want to do a text search rather than scrolling
 // the list to browse, and in that case the experience is nicer if you can avoid needing to tap to
 // focus.
 
-// ENHANCE: It might be a good idea to have a setting which controls whether the view history elides
-// diffs which are nothing but confirmation date changes.
+// ENHANCE: It might be a good idea to have a setting which controls whether the price history view
+// elides diffs which are nothing but confirmation date changes. And/or have a tick box on the
+// screen itself to toggle this, maybe with the initial value of that tick box being set based on
+// a setting. Or maybe we'd just persist the value of that tick box to a saved preference and avoid
+// complicating the settings with it.
 
 // ENHANCE: Some sort of feature for showing best ever price for a product across all stores, or
 // probably better some variant on this where we show some (not too stats nerdy) "best price range"
@@ -9425,41 +9427,24 @@ val capitalization = when (capString) {
 // offer price, because I probably won't be buying it tomorrow (so I don't "need" the correct price
 // shown, although logically that's how the app should work/be used) and I want to record the good
 // price so I know it's good when I see it again. If there was an easy way to see "best price over
-// last n days" (actually showing this for say n=30/60/90/180/365 simultaneously) might not be a
-// bad way to show the "spread" in a non-stats-nerd and useful way), I wouldn't feel ths reluctance
-// to update the price.
+// last n days" (actually showing this for say n=30/60/90/180/365 simultaneously) might not be a bad
+// way to show the "spread" in a non-stats-nerd and useful way), I wouldn't feel ths reluctance to
+// update the price.
 
 // ENHANCE: A standalone unit (price) converter, although in some ways it would be nice (but not
 // sure Android really has this sort of thing) if it could pop up nicely "with" other screens. But
 // something where you can enter a price in one unit and have it show the unit price in any
-// specified unit, a bit like a no-db version of the middle card on the home screen. Maybe with the
-// option to just do unit conversions (454g->lb) with no price. And maybe some sort of
-// semi-persistent "tape" and you can press a button to "print" the current conversion onto it for
-// reference, if you want to compare a few things ad-hoc without having to remember (or have every
-// single thing you type "printed" and clogging up the screen). The idea being that if you're
+// specified unit, a bit like a no-db version of the "Store price" card on the home screen. Maybe
+// with the option to just do unit conversions (454g->lb) with no price. And maybe some sort of
+// semi-persistent "printing tape" and you can press a button to "print" the current conversion onto
+// it for reference, if you want to compare a few things ad-hoc without having to remember (or have
+// every single thing you type "printed" and clogging up the screen). The idea being that if you're
 // evaluating a different product variant to the one you already have at this store, you might want
-// to explore this without relying on shelf unit price (if any) without actually updating the db and
-// finding the new price is worse. I'd envisage this beig available via the overflow menu at top
-// right of home screen. I'm imagine the three button metric/imperial/US customary selector from
-// the dataset configuration being shown on this screen, initialised with the current dataset
-// configuration, so you can choose which units appear in the dropdowns.
-
-// TODO: There might be an argument (and I don't think it would be technically hard) for making the
-// product and store text fields (currently greyed out, and possibly to be redesigned away because
-// of that) on the add/edit price screen "live". At least once - I think I was adding a first ever
-// price but not sure - I have started to add/edit a price for the wrong store, typed in half the
-// details then had to cancel when I realised, and re-type the data after selecting the right
-// store. Being able to change the store "live" in the edit screen would have avoided this. Note
-// that we wouldn't want this to re-populate the add/edit price screen with the latest data for
-// that store, unlike on the home screen - this is a sort of "write-only" change. We'd probably
-// want to make the new store the one selected on the home screen too. I wonder if this might make
-// it too easy to blat the wrong store's data, but worth thinking about. Just possibly we would
-// make these controls "live" only if adding a first ever pirce? Not sure. Likewise we might want
-// to do this only for store (as I tend to have written about here) even if technically the same
-// could apply to product - I don't think I've ever started editing for one product and then
-// realised I hadn't selected it correctly, though in theory it could happen. It's also perhaps
-// more UI complexity (and also user complexity even putting technicalities aside) to have to
-// open a separate screen for product selection within our modal edit dialog.
+// to explore this without relying on a unit price (if any) shown on the shelf without actually
+// updating the db and finding the new price is worse. I'd envisage this being available via the
+// overflow menu at top right of home screen. I'd imagine the three button metric/imperial/US
+// customary selector from the dataset configuration being shown on this screen, initialised with
+// the current dataset configuration, so you can choose which units appear in the dropdowns.
 
 // TODO: Should we allow empty strings when adding/editing a "count" for a price and treat that as 1
 // in the database? And/or should we default count to 1 rather than an empty string when adding a
@@ -9494,7 +9479,8 @@ val capitalization = when (capString) {
 
 // ENHANCE: It is possible that using SQLDelight would simplify the database queries. In particular,
 // it may avoid the problem where Room flows are not clearly tagged with the query parameters that
-// originated them, which I think is responsible for some of my data flow complexity.
+// originated them, which I think is responsible for some of my data flow complexity in
+// HomeViewModel.
 
 // TODO: At some point I should apply the spotless auto-formatting, but that will obviously
 // break diffs so I should be careful when I do it - maybe when the code is very stable and
