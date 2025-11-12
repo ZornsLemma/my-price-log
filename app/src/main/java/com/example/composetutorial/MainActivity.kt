@@ -8164,8 +8164,13 @@ fun AppNavigation() {
             ) { viewModel ->
                 EditPriceScreen(
                     viewModel, navController,
-                    // TODO: We should probably distinguish "close without save" and "close with save" here - for the view history edit case, close wiuthout save probably ought to popbackstack (and that would be fine for the home screen use too)
-                    requestClose = { navController.popBackStack("home", inclusive = false) }
+                    requestClose = { id ->
+                        if (id == null) {
+                            navController.popBackStack()
+                        } else {
+                            navController.popBackStack("home", inclusive = false)
+                        }
+                    }
                 )
             }
         }
