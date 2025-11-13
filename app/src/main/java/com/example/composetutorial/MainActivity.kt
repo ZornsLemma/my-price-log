@@ -2245,24 +2245,49 @@ fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
 // converted to a specific denominator. compareTo() could probably use it, for example.
 data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) : Comparable<UnitPrice> {
     override fun compareTo(other: UnitPrice): Int {
-        // We are abusing MeasuredValue here by treating the currency amount as a quantity measured
-        // in the unit price's unit. This is a convenient hack to allow us to scale the currency
-        // amounts to compare them with a common unit, but it's not strictly logical.
-        Log.d("MyApp", "compareTo $this $other")
-        val thisAsMeasuredValue = MeasuredValue(this.numerator, this.denominator)
-        val otherAsMeasuredValue = MeasuredValue(other.numerator, other.denominator)
-        // We could convert thisAsMeasuredValue to otherAsMeasuredValue.unit in order to compare the
-        // two. Although it may be a bit superstitious of me, it feels safer
-        // ("rounding"/"consistency") to compare in the base unit and the extra work is negligible.
-        val baseUnit = baseUnitForQuantityType(thisAsMeasuredValue.unit.quantityType)
-        return thisAsMeasuredValue.asValue(baseUnit)
-            .compareTo(otherAsMeasuredValue.asValue(baseUnit))
+        myRequire(denominator.quantityType == other.denominator.quantityType) {
+            "UnitPrices with denominators $denominator and ${other.denominator} are incommensurable"
+        }
+        // We could convert this to other's denominator in order to compare the two. Although it may
+        // be a bit superstitious of me, it feels safer ("rounding"/"consistency") to compare in the
+        // base unit. The extra work is negligible in practice.
+        val baseUnit = baseUnitForQuantityType(denominator.quantityType)
+        val thisWithBaseUnit = withNewDenominator(baseUnit)
+        val otherWithBaseUnit = other.withNewDenominator(baseUnit)
+        return thisWithBaseUnit.numerator.compareTo(otherWithBaseUnit.numerator)
     }
 }
 
-fun getUnitPrice(amount: Double, count: Long, measure: MeasuredValue, denominator: MeasurementUnit): UnitPrice {
+// TODO: Not sure if this should be a straight member function but I just want to bash on writing it
+// for now without worrying about that.
+fun UnitPrice.withNewDenominator(newDenominator: MeasurementUnit) : UnitPrice {
+    myRequire(denominator.quantityType == newDenominator.quantityType) {
+        "UnitPrice with denominator $denominator can't be converted to denominator $newDenominator"
+    }
+    val TODOTEMP = UnitPrice(numerator * newDenominator.toBase / denominator.toBase, newDenominator)
+    /* TODO OLD DELETE LOAD OF CRAP WRONG
+    // We are abusing MeasuredValue here by treating the currency amount as a quantity measured
+    // in the unit price's unit. This is a convenient hack but it's not strictly logical.
+    val thisAsMeasuredValue = MeasuredValue(this.numerator, this.denominator)
+    // TODO: Use asValue() here not to()?
+    val newAsMeasuredValue = thisAsMeasuredValue.to(newDenominator)
+    val TODOTEMP = UnitPrice(newAsMeasuredValue.value, newAsMeasuredValue.unit)
+    */
+    Log.d("MyAppAA", "withNewDenominator $this -> $TODOTEMP")
+    return TODOTEMP
+}
+
+fun getUnitPrice(
+    amount: Double, // TODO: RENAME? "AMOUNT" IS AMBIGUOUS FOR PRICE VS QUANTITY CHECK FOR OTHER USES OF "AMOUNT" IN VARIABLE/FUN NAMES TOO
+    count: Long,
+    measure: MeasuredValue,
+    denominator: MeasurementUnit = baseUnitForQuantityType(measure.unit.quantityType)
+): UnitPrice {
+    Log.d("MyAppAA", "getUnitPrice(amount $amount, count $count, measure $measure, denominator $denominator")
     myRequire(count > 0) { "Expected positive count" }
-    return UnitPrice(amount / (count * measure.asValue(denominator)), denominator)
+    val TODOTEMP =  UnitPrice(amount / (count * measure.asValue(denominator)), denominator)
+    Log.d("MyAppAA", "getUnitPrice(amount $amount, count $count, measure $measure, denominator $denominator -> $TODOTEMP")
+    return TODOTEMP
 }
 
 // This takes currencyDecimalPlaces not a CurrencyFormat because we only need the number of decimal
@@ -2278,8 +2303,8 @@ fun getUnitPrice(amount: Double, count: Long, measure: MeasuredValue, denominato
 // the more modern DataStore is not optimised for this. Although this would involve a database
 // upgrade to add later, it is just adding a new table which would start off empty with no data
 // migration, so it's probably not too scary.
-fun getFriendlyUnitPrice(
-    amount: Double,
+fun getFriendlyUnitPrice( // TODO: createFriendlyUnitPrice() to suggest "workiness"??? "chooseFUP"?
+    amount: Double, // TODO: RENAME THIS AS PRICE? THAT'S WHAT IT IS RIGHT? WE AVOID "AMOUNT" ELSEWHERE AS IT IS AMBIGUOUS FOR PRICE VS QTY
     currencyDecimalPlaces: Int,
     count: Long,
     measure: MeasuredValue,
@@ -2693,14 +2718,14 @@ fun EditConfirmButtons(
         // the right.
         val locale = LocalConfiguration.current.locales[0]
         val showConfirmButton = vm.previousPrice.value == null
-        FilledTonalButton(/* modifier = Modifier.width(confirmButtonWidth) ,*/
+        FilledTonalButton(
+            /* modifier = Modifier.width(confirmButtonWidth) ,*/
             onClick = {
                 if (showConfirmButton) {
                     vm.confirmPrice(augmentedPrice.basePrice)
                 } else {
                     vm.undoConfirmPrice(
-                        augmentedPrice.basePrice,
-                        vm.previousPrice.value!!
+                        augmentedPrice.basePrice, vm.previousPrice.value!!
                     )
                 }
             },
@@ -3833,11 +3858,28 @@ fun PriceComparisonCard(
                 // ("/100g") feels unclear, as does having prices which aren't marked with a
                 // currency symbol.
 
+                val bestValueAugmentedPrice = priceAnalysis.augmentedPriceList.first()
+                val headerUnitPriceDenominator = remember(bestValueAugmentedPrice) {
+                    Log.d("MyAppAA", "bestValueAugmentedPrice $bestValueAugmentedPrice")
+                    val candidateDenominators = getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
+                        dataSet,
+                        bestValueAugmentedPrice.basePrice.quantity.unit,
+                        includeDisplayOnly = true
+                    )
+                    Log.d("MyAppAA", "candidateDenominators $candidateDenominators")
+                    // TODO: We should maybe have a vsn of getFUP() which takes a UnitPrice instead of an amount, count and measure. Maybe that should be the only version, bearing in my getUnitPrice() can trivially compute a UP given those three. But for the moment let's hack this.
+                    getFriendlyUnitPrice(
+                        amount = bestValueAugmentedPrice.unitPrice.numerator,
+                        currencyDecimalPlaces = currencyFormat.decimalPlaces,
+                        count = 1,
+                        measure = MeasuredValue(1.0, bestValueAugmentedPrice.unitPrice.denominator),
+                        candidateDenominators = candidateDenominators
+                    ).denominator
+                }
+                Log.d("MyAppAA", "headerUnitPriceDenominator $headerUnitPriceDenominator")
                 // We use "prefix or suffix" in the header because although the prefix or suffix
                 // nature of a currency symbol in a locale matters in some other places, here it is
                 // appearing in isolation *without* a price next to it.
-                val headerUnitPriceDenominator =
-                    priceAnalysis.augmentedPriceList.first().unitPrice.denominator
                 val header = listOf(
                     "Store",
                     "${currencyFormat.prefix ?: currencyFormat.suffix ?: ""}${headerUnitPriceDenominator.perSymbol}${headerUnitPriceDenominator.symbol}",
@@ -3848,13 +3890,14 @@ fun PriceComparisonCard(
                     priceAnalysis.augmentedPriceList.indexOfFirst { it.sourceName == source?.name }
                         .takeIf { it != -1 }
 
-                val columns = remember(dataSet, locale) {
+                val columns = remember(dataSet, locale, headerUnitPriceDenominator) {
                     listOf<@Composable (AugmentedPrice) -> Unit>(
                         { augmentedPrice -> Text(augmentedPrice.sourceName) },
                         { augmentedPrice ->
+                            Log.d("MyAppAA", "inside columns, unitPrice ${augmentedPrice.unitPrice}, headerUnitPriceDenominator $headerUnitPriceDenominator")
                             Text(
                                 formatPrice(
-                                    augmentedPrice.unitPrice.numerator,
+                                    augmentedPrice.unitPrice.withNewDenominator(headerUnitPriceDenominator).numerator,
                                     dataSet,
                                     locale
                                 )
@@ -8964,13 +9007,15 @@ fun ErrorHighlightBox(
                     style = Stroke(width = borderWidthPx),
                     topLeft = Offset(-offsetPx, -offsetPx),
                     size = size.copy(
-                        width = size.width + 2 * offsetPx,
-                        height = size.height + 2 * offsetPx
+                        width = size.width + 2 * offsetPx, height = size.height + 2 * offsetPx
                     )
                 )
 
             }
-            .validationInputHandleBringIntoViewRequester(validationTarget, offset = offset + 2 * borderWidth)
+            .validationInputHandleBringIntoViewRequester(
+                validationTarget,
+                offset = offset + 2 * borderWidth
+            )
     ) {
         content()
     }
@@ -9033,6 +9078,7 @@ fun judgePrice(
 }
 
 // TODO: Should this be a companion function/constructor on AugmentedPrice or something like that? Or an extension function on Price?
+// TODO: Note unused arguments as part of WIP refactor - remove if continue to be unneeded
 fun augmentPrice(
     price: Price,
     dataSet: DataSet,
@@ -9048,7 +9094,7 @@ fun augmentPrice(
     // every time it's shown.
     val ageDays = Duration.between(price.confirmedAt, Instant.now()).toDays()
     val inflatedLoyaltyPrice = inflationAdjustedPrice(loyaltyPrice, ageDays, priceAgeSettings)
-    return AugmentedPrice(
+    val TODOTEMP = AugmentedPrice(
         basePrice = price,
         sourceName = source.name,
         loyaltyPrice = loyaltyPrice,
@@ -9069,20 +9115,12 @@ fun augmentPrice(
         // mixed-up, because we *do* choose a friendly unit price based on the first price and
         // then stick to it, and we use this when we're displaying. In principle though we certainly
         // could defer this decision to the UI layer and use e.g. the base unit for the relevant
-        // quantity type here.
-        unitPrice = if (unitPriceDenominator != null) {
-            getUnitPrice(inflatedLoyaltyPrice, price.count, price.quantity, unitPriceDenominator)
-        } else {
-            getFriendlyUnitPrice(
-                inflatedLoyaltyPrice,
-                getCurrencyDecimalPlaces(dataSet),
-                price.count,
-                price.quantity,
-                candidateUnitPriceDenominators
-            )
-        },
+        // quantity type here. - OK, I AM WIP CHANGING THIS, COMMENT LIKELY OUTDATED
+        unitPrice = getUnitPrice(inflatedLoyaltyPrice, price.count, price.quantity),
         priceJudgement = PriceJudgement.NONE
     )
+    Log.d("MyAppAA", "augmentPrice ILP ${TODOTEMP.inflatedLoyaltyPrice} -> unitPrice ${TODOTEMP.unitPrice}")
+    return TODOTEMP
 }
 
 data class PriceClassificationThresholds(
