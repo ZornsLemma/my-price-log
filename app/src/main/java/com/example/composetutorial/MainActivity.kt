@@ -2248,7 +2248,9 @@ data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) : 
         }
         // We could convert this to other's denominator in order to compare the two. Although it may
         // be a bit superstitious of me, it feels safer ("rounding"/"consistency") to compare in the
-        // base unit. The extra work is negligible in practice.
+        // base unit. The extra work is negligible in practice. Similarly, we avoid the probably
+        // premature optimisation of checking to see if the two denominators are the same and just
+        // comparing the numerators directly if they are.
         val baseUnit = baseUnitForQuantityType(denominator.quantityType)
         val thisWithBaseUnit = withNewDenominator(baseUnit)
         val otherWithBaseUnit = other.withNewDenominator(baseUnit)
