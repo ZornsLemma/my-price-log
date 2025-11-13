@@ -2241,8 +2241,6 @@ fun formatPrice(price: Double, dataSet: DataSet, locale: Locale): String {
     }
 }
 
-// TODO: It may be helpful to have a function on/extending UnitPrice which returns a version of it
-// converted to a specific denominator. compareTo() could probably use it, for example.
 data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) : Comparable<UnitPrice> {
     override fun compareTo(other: UnitPrice): Int {
         myRequire(denominator.quantityType == other.denominator.quantityType) {
@@ -9060,14 +9058,11 @@ fun judgePrice(
     augmentedPrice: AugmentedPrice,
     priceClassificationThresholds: PriceClassificationThresholds?
 ): PriceJudgement {
-    // TODO: It's probably fine but use of raw .numerator with no attention to denominator here
-    // worries me - should priceClassificationThresholds be expressed in UnitPrices for
-    // clarity/safety?
     if (priceClassificationThresholds == null) {
         return PriceJudgement.NONE
-    } else if (augmentedPrice.unitPrice.numerator < priceClassificationThresholds.good) {
+    } else if (augmentedPrice.unitPrice < priceClassificationThresholds.good) {
         return PriceJudgement.GOOD
-    } else if (augmentedPrice.unitPrice.numerator <= priceClassificationThresholds.bad) {
+    } else if (augmentedPrice.unitPrice <= priceClassificationThresholds.bad) {
         return PriceJudgement.OK
     } else {
         return PriceJudgement.BAD
@@ -9106,8 +9101,8 @@ fun augmentPrice(
 }
 
 data class PriceClassificationThresholds(
-    val good: Double,
-    val bad: Double
+    val good: UnitPrice,
+    val bad: UnitPrice
 )
 
 fun quantile(sortedValues: List<Double>, q: Double): Double {
@@ -9162,6 +9157,14 @@ fun analysePrices(
                 augmentPrice(price, source, priceAgeSettings)
         }
     }.sortedBy { it.unitPrice }
+
+    // augmentPrice() should have generated all unit prices using the base unit, but let's check
+    // as otherwise recentEnoughPriceList (which discards the denominators) will be meaningless.
+    val unitPriceDenominator = augmentedPriceList.first().unitPrice.denominator
+    myCheck(augmentedPriceList.all { it.unitPrice.denominator == unitPriceDenominator }) {
+        "Not all augmentedPriceList values have identical unitPrice denominators"
+    }
+
     val recentEnoughPriceList = augmentedPriceList.mapNotNull { augmentedPrice ->
         if (augmentedPrice.ageClass == AgeClass.ANCIENT) {
             null
@@ -9169,6 +9172,7 @@ fun analysePrices(
             augmentedPrice.unitPrice.numerator
         }
     }
+
     Log.d("MyApp", "recentEnoughPriceList $recentEnoughPriceList")
     val priceClassificationThresholds = if (recentEnoughPriceList.size <= 2) {
         null
@@ -9184,7 +9188,7 @@ fun analysePrices(
         val lowerQuartile = quantile(recentEnoughPriceList, 0.25)
         val upperQuartile = quantile(recentEnoughPriceList, 0.75)
         val k = 0.1 // ENHANCE: Make this configurable in settings? May be too "advanced"...
-        PriceClassificationThresholds(lowerQuartile * (1 - k), upperQuartile * (1 + k))
+        PriceClassificationThresholds(good = UnitPrice(lowerQuartile * (1 - k), unitPriceDenominator), bad = UnitPrice(upperQuartile * (1 + k), unitPriceDenominator))
     }
     augmentedPriceList = augmentedPriceList.map { augmentedPrice ->
         // We classify prices even if they aren't fresh. This seems best, they are marked as stale
