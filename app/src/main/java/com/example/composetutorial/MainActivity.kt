@@ -2218,7 +2218,7 @@ fun RelativeTimeText(augmentedPrice: AugmentedPrice) {
     )
 }
 
-fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
+fun formatPrice(price: Double, dataSet: DataSet, locale: Locale): String {
     // At least on Android this doesn't throw for invalid three-letter currency codes but it will
     // throw if given currency code "AAAA", so it seems safest to catch exceptions and have a
     // fallback, even if it's not great.
@@ -2226,7 +2226,7 @@ fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
         val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
             currency = Currency.getInstance(dataSet.currencyCode)
         }
-        return numberFormat.format(amount)
+        return numberFormat.format(price)
     } catch (e: Exception) {
         // Generate a generic-ish "USD 1234" value as a fallback, without trying to use any
         // localisation settings.
@@ -2237,7 +2237,7 @@ fun formatPrice(amount: Double, dataSet: DataSet, locale: Locale): String {
         val numberFormat = NumberFormat.getNumberInstance()
         // TODO: The "x" instead of a space in the next line is temporary, just to make it more
         // obvious if this code is coming into play while I am developing/testing.
-        return "${dataSet.currencyCode}x${numberFormat.format(amount)}"
+        return "${dataSet.currencyCode}x${numberFormat.format(price)}"
     }
 }
 
@@ -2264,30 +2264,18 @@ fun UnitPrice.withNewDenominator(newDenominator: MeasurementUnit) : UnitPrice {
     myRequire(denominator.quantityType == newDenominator.quantityType) {
         "UnitPrice with denominator $denominator can't be converted to denominator $newDenominator"
     }
-    val TODOTEMP = UnitPrice(numerator * newDenominator.toBase / denominator.toBase, newDenominator)
-    /* TODO OLD DELETE LOAD OF CRAP WRONG
-    // We are abusing MeasuredValue here by treating the currency amount as a quantity measured
-    // in the unit price's unit. This is a convenient hack but it's not strictly logical.
-    val thisAsMeasuredValue = MeasuredValue(this.numerator, this.denominator)
-    // TODO: Use asValue() here not to()?
-    val newAsMeasuredValue = thisAsMeasuredValue.to(newDenominator)
-    val TODOTEMP = UnitPrice(newAsMeasuredValue.value, newAsMeasuredValue.unit)
-    */
-    Log.d("MyAppAA", "withNewDenominator $this -> $TODOTEMP")
-    return TODOTEMP
+    return UnitPrice(numerator * newDenominator.toBase / denominator.toBase, newDenominator)
 }
 
+// TODO: Should this be an extension function on Price?
 fun getUnitPrice(
-    amount: Double, // TODO: RENAME? "AMOUNT" IS AMBIGUOUS FOR PRICE VS QUANTITY CHECK FOR OTHER USES OF "AMOUNT" IN VARIABLE/FUN NAMES TOO
+    price: Double,
     count: Long,
     measure: MeasuredValue,
     denominator: MeasurementUnit = baseUnitForQuantityType(measure.unit.quantityType)
 ): UnitPrice {
-    Log.d("MyAppAA", "getUnitPrice(amount $amount, count $count, measure $measure, denominator $denominator")
     myRequire(count > 0) { "Expected positive count" }
-    val TODOTEMP =  UnitPrice(amount / (count * measure.asValue(denominator)), denominator)
-    Log.d("MyAppAA", "getUnitPrice(amount $amount, count $count, measure $measure, denominator $denominator -> $TODOTEMP")
-    return TODOTEMP
+    return UnitPrice(price / (count * measure.asValue(denominator)), denominator)
 }
 
 // This takes currencyDecimalPlaces not a CurrencyFormat because we only need the number of decimal
@@ -2303,19 +2291,18 @@ fun getUnitPrice(
 // the more modern DataStore is not optimised for this. Although this would involve a database
 // upgrade to add later, it is just adding a new table which would start off empty with no data
 // migration, so it's probably not too scary.
+// TODO: Possibly this should be an extension function on UnitPrice? Maybe renamed withFriendlyDenominator()?
 fun getFriendlyUnitPrice( // TODO: createFriendlyUnitPrice() to suggest "workiness"??? "chooseFUP"?
-    amount: Double, // TODO: RENAME THIS AS PRICE? THAT'S WHAT IT IS RIGHT? WE AVOID "AMOUNT" ELSEWHERE AS IT IS AMBIGUOUS FOR PRICE VS QTY
+    unitPrice: UnitPrice,
+    preferredUnit: MeasurementUnit,
     currencyDecimalPlaces: Int,
-    count: Long,
-    measure: MeasuredValue,
     candidateDenominators: List<MeasurementUnit>
 ): UnitPrice {
     myRequire(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
-    myRequire(measure.value > 0.0) { "Expected positive measure; got $measure" }
     var bestScore: Double? = null
     var bestUnitPrice: UnitPrice? = null
     for (candidateDenominator in candidateDenominators) {
-        val candidateUnitPrice = getUnitPrice(amount, count, measure, candidateDenominator)
+        val candidateUnitPrice = unitPrice.withNewDenominator(candidateDenominator)
         // We compute a score (lower is better) for candidateUnitPrice. This is based on an ad-hoc
         // weighted combination of factors:
         // - We like to minimise relative error because significant figures get rounded off at
@@ -2331,7 +2318,7 @@ fun getFriendlyUnitPrice( // TODO: createFriendlyUnitPrice() to suggest "workine
         val relativeError = abs(candidateUnitPrice.numerator.roundTo(currencyDecimalPlaces) - candidateUnitPrice.numerator) / candidateUnitPrice.numerator
         val displayIntegerPart = String.format(Locale.US, "%.${currencyDecimalPlaces}f", candidateUnitPrice.numerator).substringBefore('.')
         val displayIntegerLength = if (displayIntegerPart == "0") 0 else displayIntegerPart.length
-        val candidateScore = abs(displayIntegerLength - 1) + (10.0 * relativeError) - (if (candidateUnitPrice.denominator == measure.unit) 1.1 else 0.0)
+        val candidateScore = abs(displayIntegerLength - 1) + (10.0 * relativeError) - (if (candidateUnitPrice.denominator == preferredUnit) 1.1 else 0.0)
         Log.d("MyAppFU", "$candidateDenominator ${candidateUnitPrice.numerator} $displayIntegerLength $relativeError $candidateScore")
         if (bestScore == null || candidateScore < bestScore) {
             bestScore = candidateScore
@@ -3860,23 +3847,31 @@ fun PriceComparisonCard(
 
                 val bestValueAugmentedPrice = priceAnalysis.augmentedPriceList.first()
                 val headerUnitPriceDenominator = remember(bestValueAugmentedPrice) {
-                    Log.d("MyAppAA", "bestValueAugmentedPrice $bestValueAugmentedPrice")
+                    // TODO: I am not sure we exactly want "sibling" here - we don't necessarily have a single
+                    // system to pick from, or we maybe do/should but it's not so obvious - because we are in the
+                    // context of multiple prices and they might be using a mixture of the user's available systems
+                    // - so it's not as simple as "translating" price.measure.unit
+                    // TODO: It's not so obvious which unit family we want to use here - in the context of showing the price at a
+                    // particular source in ItemSourceInfo, we have "the unit the price was entered in for that source" to implicitly
+                    // select a family, but here we are working with multiple prices which may use a mix of families (imagine milk,
+                    // where in the UK we may have pints and litres at different stores). We probably don't want to ask the user to
+                    // specify a *preferred* unit family. We could potentially have each source price vote with its unit family, but
+                    // instead - and this is probably best, but will see how I feel later - we take the unit family of the cheapest
+                    // price. (At risk of stating the obvious, but it's easy to get lost in the details here, we are showing the
+                    // unit prices sorted as a list, so they all need to use the same denominator otherwise the list is not much
+                    // use.)
                     val candidateDenominators = getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
                         dataSet,
                         bestValueAugmentedPrice.basePrice.quantity.unit,
                         includeDisplayOnly = true
                     )
-                    Log.d("MyAppAA", "candidateDenominators $candidateDenominators")
-                    // TODO: We should maybe have a vsn of getFUP() which takes a UnitPrice instead of an amount, count and measure. Maybe that should be the only version, bearing in my getUnitPrice() can trivially compute a UP given those three. But for the moment let's hack this.
                     getFriendlyUnitPrice(
-                        amount = bestValueAugmentedPrice.unitPrice.numerator,
+                        unitPrice = bestValueAugmentedPrice.unitPrice,
+                        preferredUnit = bestValueAugmentedPrice.basePrice.quantity.unit,
                         currencyDecimalPlaces = currencyFormat.decimalPlaces,
-                        count = 1,
-                        measure = MeasuredValue(1.0, bestValueAugmentedPrice.unitPrice.denominator),
                         candidateDenominators = candidateDenominators
                     ).denominator
                 }
-                Log.d("MyAppAA", "headerUnitPriceDenominator $headerUnitPriceDenominator")
                 // We use "prefix or suffix" in the header because although the prefix or suffix
                 // nature of a currency symbol in a locale matters in some other places, here it is
                 // appearing in isolation *without* a price next to it.
@@ -8557,10 +8552,9 @@ fun PackPriceAndSizeRow(
                 includeDisplayOnly = true
             )
             val friendlyUnitPrice = getFriendlyUnitPrice(
-                price,
+                getUnitPrice(price, count, measure),
+                measure.unit,
                 getCurrencyDecimalPlaces(dataSet),
-                count,
-                measure,
                 candidateDenominators
             )
             Log.d("MyAppQA", "rememberSaveable returning $friendlyUnitPrice")
@@ -9066,6 +9060,9 @@ fun judgePrice(
     augmentedPrice: AugmentedPrice,
     priceClassificationThresholds: PriceClassificationThresholds?
 ): PriceJudgement {
+    // TODO: It's probably fine but use of raw .numerator with no attention to denominator here
+    // worries me - should priceClassificationThresholds be expressed in UnitPrices for
+    // clarity/safety?
     if (priceClassificationThresholds == null) {
         return PriceJudgement.NONE
     } else if (augmentedPrice.unitPrice.numerator < priceClassificationThresholds.good) {
@@ -9078,13 +9075,9 @@ fun judgePrice(
 }
 
 // TODO: Should this be a companion function/constructor on AugmentedPrice or something like that? Or an extension function on Price?
-// TODO: Note unused arguments as part of WIP refactor - remove if continue to be unneeded
 fun augmentPrice(
     price: Price,
-    dataSet: DataSet,
     source: Source,
-    unitPriceDenominator: MeasurementUnit?,
-    candidateUnitPriceDenominators: List<MeasurementUnit>,
     priceAgeSettings: PriceAgeSettings
 ): AugmentedPrice {
     val loyaltyPrice = price.price * source.loyaltyMultiplier
@@ -9094,7 +9087,7 @@ fun augmentPrice(
     // every time it's shown.
     val ageDays = Duration.between(price.confirmedAt, Instant.now()).toDays()
     val inflatedLoyaltyPrice = inflationAdjustedPrice(loyaltyPrice, ageDays, priceAgeSettings)
-    val TODOTEMP = AugmentedPrice(
+    return AugmentedPrice(
         basePrice = price,
         sourceName = source.name,
         loyaltyPrice = loyaltyPrice,
@@ -9107,20 +9100,9 @@ fun augmentPrice(
             AgeClass.ANCIENT
         },
         inflatedLoyaltyPrice = inflatedLoyaltyPrice,
-        // TODO: It feels slightly off that we have to specify a denominator for our unit prices
-        // here, but I suppose it's OK - but maybe we could improve the API. We can't choose a
-        // "friendly" unit at this point since we don't have all the data across all sources yet
-        // (we're building it up). We also have to pass in dataSet to this function just so we
-        // can use it to get a "friendly" unit price. That said, this comment is already a bit
-        // mixed-up, because we *do* choose a friendly unit price based on the first price and
-        // then stick to it, and we use this when we're displaying. In principle though we certainly
-        // could defer this decision to the UI layer and use e.g. the base unit for the relevant
-        // quantity type here. - OK, I AM WIP CHANGING THIS, COMMENT LIKELY OUTDATED
         unitPrice = getUnitPrice(inflatedLoyaltyPrice, price.count, price.quantity),
         priceJudgement = PriceJudgement.NONE
     )
-    Log.d("MyAppAA", "augmentPrice ILP ${TODOTEMP.inflatedLoyaltyPrice} -> unitPrice ${TODOTEMP.unitPrice}")
-    return TODOTEMP
 }
 
 data class PriceClassificationThresholds(
@@ -9173,49 +9155,11 @@ fun analysePrices(
         return PriceAnalysis(emptyList(), null)
     }
 
-    // TODO: I am not sure we exactly want "sibling" here - we don't necessarily have a single
-    // system to pick from, or we maybe do/should but it's not so obvious - because we are in the
-    // context of multiple prices and they might be using a mixture of the user's available systems
-    // - so it's not as simple as "translating" price.measure.unit
-    // TODO: It's not so obvious which unit family we want to use here - in the context of showing the price at a
-    // particular source in ItemSourceInfo, we have "the unit the price was entered in for that source" to implicitly
-    // select a family, but here we are working with multiple prices which may use a mix of families (imagine milk,
-    // where in the UK we may have pints and litres at different stores). We probably don't want to ask the user to
-    // specify a *preferred* unit family. We could potentially have each source price vote with its unit family, but
-    // instead - and this is probably best, but will see how I feel later - we take the unit family of the cheapest
-    // price. (At risk of stating the obvious, but it's easy to get lost in the details here, we are showing the
-    // unit prices sorted as a list, so they all need to use the same denominator otherwise the list is not much
-    // use.)
-    val candidateUnitPriceDenominators = getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
-        dataSet,
-        priceList.first().quantity.unit,
-        includeDisplayOnly = true
-    )
-    var unitPriceDenominator: MeasurementUnit? = null
-    // TODO: I may be getting confused here, but this feels a bit off - we pick unitPriceDenominator
-    // based on whichever price happens to be first, but we have *not* sorted them at this point
-    // (nor can we, because we'd need to use the inflatedLoyaltyPrice from AugmentedPrice, not the
-    // shelf price). We do sort on the unitPrice after, but unless I'm overlooking some subvsequent
-    // complexity, the unit price denominator for display will be *taken* from whichever has the
-    // lowest unit price, but we will not have automatically chosen the *best* unit price denominator
-    // based on that first price - it will be set based on which price happened to come first here?!
-    // I am starting to suspect it may be cleanest to use the base unit for the unit price denominator
-    // right here, then sort, *then* choose a friendly denominator for the first thing in the sorted
-    // list and then modify every element in the list to use that, or just leave the friendly choice
-    // to remember()-ing code in the UI (which after all could in the future allow overriding this
-    // anyway) and do an on-the-fly (maybe remember-ed) conversion at display time of the in-base-unit
-    // unitPrice on the AugmentedPrices.
-    // TODO: More generally, the use of unitPrice.***numerator*** in isolation anywhere in the
-    // code feels like an invitation to bugs where it turns out that the unit prices don't all happen
-    // to share the same denominator. I am not saying such a bug exists right now, but it feels bad.
     var augmentedPriceList = priceList.mapNotNull { price ->
         // I don't think we can have a Price but not the corresponding Source, but we play it safe
         // just in case.
         sourceById[price.sourceId]?.let { source ->
-            val augmentedPrice =
-                augmentPrice(price, dataSet, source, unitPriceDenominator, candidateUnitPriceDenominators, priceAgeSettings)
-            unitPriceDenominator = augmentedPrice.unitPrice.denominator
-            augmentedPrice
+                augmentPrice(price, source, priceAgeSettings)
         }
     }.sortedBy { it.unitPrice }
     val recentEnoughPriceList = augmentedPriceList.mapNotNull { augmentedPrice ->
