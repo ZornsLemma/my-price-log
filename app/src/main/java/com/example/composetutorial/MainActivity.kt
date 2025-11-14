@@ -792,9 +792,9 @@ class MyApplication : Application() {
 }
 
 class Converters {
-    // I don't think we actually have any QuantityType fields in the database at the moment, but it
-    // probably doesn't hurt to keep these around so we do the right thing automatically if we add
-    // one later.
+    // We don't have any QuantityType fields in the database at the moment, but we'll keep the
+    // converters for it around so if we add one in the future it will just work rather than ending
+    // up being stored as a string.
 
     @Suppress("unused")
     @TypeConverter
@@ -1031,6 +1031,8 @@ class HomeViewModel(
     val settingsRepository = SettingsRepository(app.dataStore)
 
     private val loadingTrigger = MutableStateFlow(0L) // bump on user input // TODO GROK MAGIC
+    // TODO: This is quite long and could probably be improved by factoring stuff out into helper
+    // functions.
     init {
         // This forces the delegate to initialize safely on the main thread TODO: VOODOO
         @Suppress("UNUSED_VARIABLE") val unused = app.dataStore
