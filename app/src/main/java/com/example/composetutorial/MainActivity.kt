@@ -366,7 +366,7 @@ abstract class AppDatabase : RoomDatabase() {
     }
 }
 
-suspend fun populateDemoData(repository: PriceTrackerRepository, context: Context) {
+suspend fun populateDemoData(repository: Repository, context: Context) {
     // ENHANCE: We could pick one of IMPERIAL or US_CUSTOMARY based on the current locale, but in
     // practice we just want to show we support multiple units, and it isn't as if a native US
     // customary user is going to get too confused (if they even notice) that "pint" (for example)
@@ -651,7 +651,7 @@ suspend fun populateDemoData(repository: PriceTrackerRepository, context: Contex
 
 // ENHANCE: Although this interface seems a bit pointless at the moment, it is here to help with
 // mocking the database if/when I add some test code.
-interface PriceTrackerRepository {
+interface Repository {
     fun getAllDataSets(): Flow<List<DataSet>>
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
@@ -701,14 +701,14 @@ fun <T> List<T>.rememberSortedByLocale(
     }
 }
 
-class PriceTrackerRepositoryImpl(
+class RepositoryImpl(
     private val db: AppDatabase,
     private val dataSetDao: DataSetDao,
     private val itemDao: ItemDao,
     private val sourceDao: SourceDao,
     private val priceDao: PriceDao,
     private val priceHistoryDao: PriceHistoryDao,
-) : PriceTrackerRepository {
+) : Repository {
     override fun getAllDataSets(): Flow<List<DataSet>> = dataSetDao.getAllDataSets()
 
     override fun getAllItems(dataSetId: Long): Flow<List<Item>> = itemDao.getAllItems(dataSetId)
@@ -788,8 +788,8 @@ class PriceTrackerRepositoryImpl(
         db.withTransaction {
             // Check that priceBeforeRevert matches the current price in the database.
             // ENHANCE: This retrieves more data than necessary and could be optimised with a new
-            // PriceTrackerRepository function, but it's not likely to be performance critical and
-            // may not be done at all later on.
+            // Repository function, but it's not likely to be performance critical and may not be
+            // done at all later on.
             val currentPrice = getPricesForItem(
                 dataSetId = priceBeforeRevert.dataSetId,
                 itemId = priceBeforeRevert.itemId
@@ -836,14 +836,14 @@ object AppViewModelProvider {
         initializer {
             val app =
                 this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
-            HomeViewModel(app.priceTrackerRepository, app)
+            HomeViewModel(app.repository, app)
         }
         /* TODO DELETE LATER, KEEPING AROUND FOR REF FOR OTHER VIEWS IF NEC FOR NOW
         initializer {
             val app =
                 this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
             val savedStateHandle = createSavedStateHandle()
-            EditPriceViewModel(app.priceTrackerRepository, savedStateHandle)
+            EditPriceViewModel(app.repository, savedStateHandle)
         }
         */
     }
@@ -852,9 +852,9 @@ object AppViewModelProvider {
 // TODO: Lots of AI voodoo here, probably worth reading up later on how MyApplication should behave
 // and what it maybe ought to be doing.
 class MyApplication : Application() {
-    val priceTrackerRepository: PriceTrackerRepositoryImpl by lazy {
+    val repository: RepositoryImpl by lazy {
         val db = AppDatabase.getDatabase(this)
-        PriceTrackerRepositoryImpl(
+        RepositoryImpl(
             db,
             db.dataSetDao(),
             db.productDao(),
@@ -938,7 +938,7 @@ class MyApplication : Application() {
                     db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('price', 10000)")
                     db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('price_history', 100000)")
 
-                    populateDemoData(priceTrackerRepository, this@MyApplication)
+                    populateDemoData(repository, this@MyApplication)
                 }
 
                 sharedPrefs.edit().putBoolean("demo_data_inserted", true).apply()
@@ -1145,7 +1145,7 @@ fun <T> savePreference(
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(
-    private val priceTrackerRepository: PriceTrackerRepository,
+    private val repository: Repository,
     application: Application
 ) : ViewModel() {
     init {
@@ -1191,7 +1191,7 @@ class HomeViewModel(
         // This forces the delegate to initialize safely on the main thread TODO: VOODOO
         @Suppress("UNUSED_VARIABLE") val unused = app.dataStore
 
-        val dataSetFlow = priceTrackerRepository.getAllDataSets()
+        val dataSetFlow = repository.getAllDataSets()
 
         val dataSetOnlyDatabaseFlow = selectedDataSetFlow.flatMapLatest { dataSetId ->
             // dataSetId can be null here (e.g. during startup when we haven't yet got the
@@ -1209,10 +1209,10 @@ class HomeViewModel(
             // lists correctly too.)
             combine(
                 flowOf(dataSetId),
-                if (dataSetId != null) priceTrackerRepository.getAllItems(dataSetId) else flowOf(
+                if (dataSetId != null) repository.getAllItems(dataSetId) else flowOf(
                     emptyList()
                 ),
-                if (dataSetId != null) priceTrackerRepository.getAllSources(dataSetId) else flowOf(
+                if (dataSetId != null) repository.getAllSources(dataSetId) else flowOf(
                     emptyList()
                 ),
                 ::Triple
@@ -1232,7 +1232,7 @@ class HomeViewModel(
                     "dataSetIdAndItemIdDatabaseFlow dataSetId $dataSetId, itemId $itemId"
                 )
                 val priceFlow = if (dataSetId != null && itemId != null)
-                    priceTrackerRepository.getPricesForItem(dataSetId = dataSetId, itemId = itemId)
+                    repository.getPricesForItem(dataSetId = dataSetId, itemId = itemId)
                 else
                     flowOf(emptyList())
                 // We are creating a flow based on a freshly created DAO flow, so we cannot see
@@ -1510,7 +1510,7 @@ class HomeViewModel(
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 delay(5000) // TODO TEMP HACK
-                priceTrackerRepository.updateOrInsertPrice(newPrice)
+                repository.updateOrInsertPrice(newPrice)
                 previousPrice.value = price
                 asyncOperationStatus.update(AsyncOperationStatus.Success(null))
             } catch (e: Exception) {
@@ -1525,7 +1525,7 @@ class HomeViewModel(
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 delay(5000) // TODO TEMP HACK
-                priceTrackerRepository.revertPrice(
+                repository.revertPrice(
                     priceBeforeRevert = priceBeforeRevert,
                     priceAfterRevert = priceAfterRevert
                 )
@@ -1543,7 +1543,7 @@ class HomeViewModel(
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 delay(5000) // TODO TEMP HACK
-                priceTrackerRepository.deletePriceById(price.id)
+                repository.deletePriceById(price.id)
                 previousPrice.value = null
                 asyncOperationStatus.update(AsyncOperationStatus.Success(null))
             } catch (e: Exception) {
@@ -1553,7 +1553,7 @@ class HomeViewModel(
         }
     }
 
-    fun countPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long) = priceTrackerRepository.countPriceHistory(dataSetId, itemId, sourceId)
+    fun countPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long) = repository.countPriceHistory(dataSetId, itemId, sourceId)
 
     val asyncOperationStatus = SyncedStateEvent<AsyncOperationStatus>(AsyncOperationStatus.Idle)
 
@@ -6839,7 +6839,7 @@ fun GeneralSelectorListItem(id: Long, name: String, onItemSelected: () -> Unit) 
 // the parameters being explicit may be useful for unit testing later on. I can always refactor when
 // I've had a go at writing some tests.
 class EditPriceViewModel(
-    private val priceTrackerRepository: PriceTrackerRepository,
+    private val repository: Repository,
     private val savedStateHandle: SavedStateHandle,
     val uiContent: EditPriceScreenUIContent,
 ) : ViewModel() {
@@ -6954,7 +6954,7 @@ class EditPriceViewModel(
         if (price == null) {
             throw IllegalStateException("saveEditablePrice() called with an inconvertible editablePrice: ${uiContent.editablePrice.value}")
         }
-        return priceTrackerRepository.updateOrInsertPrice(price)
+        return repository.updateOrInsertPrice(price)
     }
 }
 
@@ -6984,7 +6984,7 @@ fun SmallCircularProgressIndicator() {
 }
 
 class EditSourceViewModel(
-    private val priceTrackerRepository: PriceTrackerRepository,
+    private val repository: Repository,
     private val savedStateHandle: SavedStateHandle,
     val uiContent: EditSourceScreenUIContent,
 ) : ViewModel() {
@@ -6994,7 +6994,7 @@ class EditSourceViewModel(
 
     val sourceReferenceCountFlow = uiContent.editableSource.value.id.let { sourceId ->
         if (sourceId != 0L) {
-            priceTrackerRepository.countPricesForSource(sourceId)
+            repository.countPricesForSource(sourceId)
         } else {
             flowOf(0L) // new sources have no references
         }
@@ -7008,7 +7008,7 @@ class EditSourceViewModel(
     }
 
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
-        priceTrackerRepository.getAllSources(uiContent.editableSource.value.dataSetId)
+        repository.getAllSources(uiContent.editableSource.value.dataSetId)
             .map { sourceList ->
                 createNameValidationRules(
                     sourceList.filter { source -> source.id != uiContent.editableSource.value.id }
@@ -7070,7 +7070,7 @@ class EditSourceViewModel(
             throw IllegalStateException("performSave() called with an inconvertible EditableSource: ${uiContent.editableSource.value}")
         }
         // updateOrInsertSource() returns -1 if it's an update or the new ID if it was an insert.
-        val newId = priceTrackerRepository.updateOrInsertSource(source)
+        val newId = repository.updateOrInsertSource(source)
         return if (newId == -1L) source.id else newId
     }
 
@@ -7078,13 +7078,13 @@ class EditSourceViewModel(
         Log.d("MyApp", "entered performDelete")
         val sourceId = uiContent.editableSource.value.id
         myCheck(sourceId != 0L) { "Expected to delete an actual source but have ID 0" }
-        val rowsDeleted = priceTrackerRepository.deleteSourceById(sourceId)
+        val rowsDeleted = repository.deleteSourceById(sourceId)
         Log.d("MyApp", "Deleted $rowsDeleted rows with sourceId $sourceId")
     }
 }
 
 class EditItemViewModel(
-    private val priceTrackerRepository: PriceTrackerRepository,
+    private val repository: Repository,
     private val savedStateHandle: SavedStateHandle,
     val uiContent: EditItemScreenUIContent,
 ) : ViewModel() {
@@ -7094,7 +7094,7 @@ class EditItemViewModel(
 
     val itemReferenceCountFlow = uiContent.editableItem.value.id.let { itemId ->
         if (itemId != 0L) {
-            priceTrackerRepository.countPricesForItem(itemId)
+            repository.countPricesForItem(itemId)
         } else {
             flowOf(0L) // new items have no references
         }
@@ -7108,7 +7108,7 @@ class EditItemViewModel(
     }
 
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
-        priceTrackerRepository.getAllItems(uiContent.editableItem.value.dataSetId)
+        repository.getAllItems(uiContent.editableItem.value.dataSetId)
             .map { itemList ->
                 createNameValidationRules(
                     itemList.filter { item -> item.id != uiContent.editableItem.value.id }
@@ -7148,7 +7148,7 @@ class EditItemViewModel(
             throw IllegalStateException("performSave() called with an inconvertible EditableItem: ${uiContent.editableItem.value}")
         }
         // updateOrInsertItem() returns -1 if it's an update or the new ID if it was an insert.
-        val newId =  priceTrackerRepository.updateOrInsertItem(item)
+        val newId =  repository.updateOrInsertItem(item)
         Log.d("MyAppQZ", "updateOrInsertItem returned $newId")
         return if (newId == -1L) item.id else newId
     }
@@ -7157,7 +7157,7 @@ class EditItemViewModel(
         Log.d("MyApp", "entered performDelete")
         val itemId = uiContent.editableItem.value.id
         myCheck(itemId != 0L) { "Expected to delete an actual item but have ID 0" }
-        val rowsDeleted = priceTrackerRepository.deleteItemById(itemId)
+        val rowsDeleted = repository.deleteItemById(itemId)
         Log.d("MyApp", "Deleted $rowsDeleted rows with itemId $itemId")
     }
 }
@@ -7271,7 +7271,7 @@ fun diff(
 }
 
 class ViewPriceHistoryViewModel(
-    private val priceTrackerRepository: PriceTrackerRepository,
+    private val repository: Repository,
     private val savedStateHandle: SavedStateHandle,
     val uiContent: ViewPriceHistoryScreenUIContent,
 ) : ViewModel() {
@@ -7280,7 +7280,7 @@ class ViewPriceHistoryViewModel(
         uiContent.saveState(savedStateHandle)
     }
 
-    val priceHistoryListFlow = priceTrackerRepository.getPriceHistory(
+    val priceHistoryListFlow = repository.getPriceHistory(
         uiContent.dataSet.id,
         uiContent.item.id,
         uiContent.source.id
@@ -7305,7 +7305,7 @@ class ViewPriceHistoryViewModel(
             }
 
     // TODO: dataSetFlow is probably a temp hack
-    val dataSetFlow = priceTrackerRepository.getAllDataSets()
+    val dataSetFlow = repository.getAllDataSets()
 
 }
 
@@ -7336,7 +7336,7 @@ fun createNameValidationRules(existingNameList: List<String>): List<ValidationRu
 // knots coping with generic attempts that don't quite match reality, but later on it would be good
 // to see what can be factored out.
 class EditDataSetViewModel(
-    private val priceTrackerRepository: PriceTrackerRepository,
+    private val repository: Repository,
     private val savedStateHandle: SavedStateHandle,
     val uiContent: EditDataSetScreenUIContent,
 ) : ViewModel() {
@@ -7361,7 +7361,7 @@ class EditDataSetViewModel(
     }
 
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
-        priceTrackerRepository.getAllDataSets()
+        repository.getAllDataSets()
             .map { dataSetList ->
                 createNameValidationRules(
                     dataSetList.filter { dataSet -> dataSet.id != uiContent.editableDataSet.value.id }
@@ -7449,7 +7449,7 @@ class EditDataSetViewModel(
             throw IllegalStateException("performSave() called with an inconvertible EditableDataSet: ${uiContent.editableDataSet.value}")
         }
         // updateOrInsertDataSet() returns -1 if it's an update or the new ID if it was an insert.
-        val newId = priceTrackerRepository.updateOrInsertDataSet(dataSet)
+        val newId = repository.updateOrInsertDataSet(dataSet)
         return if (newId == -1L) dataSet.id else newId
     }
 
@@ -7457,7 +7457,7 @@ class EditDataSetViewModel(
         Log.d("MyApp", "entered performDelete")
         val dataSetId = uiContent.editableDataSet.value.id
         myCheck(dataSetId != 0L) { "Expected to delete an actual data set but have ID 0" }
-        val rowsDeleted = priceTrackerRepository.deleteDataSetById(dataSetId)
+        val rowsDeleted = repository.deleteDataSetById(dataSetId)
         Log.d("MyApp", "Deleted $rowsDeleted rows with dataSetId $dataSetId")
     }
 }
@@ -7693,7 +7693,7 @@ fun AppNavigation() {
                         savedStateHandle = handle,
                         getName = { it -> it.name },
                         initialList = sharedViewModel.editDataSetsScreenUIContent,
-                        dataQuery = app.priceTrackerRepository.getAllDataSets()
+                        dataQuery = app.repository.getAllDataSets()
                     )
                 }
             ) { viewModel ->
@@ -7739,7 +7739,7 @@ fun AppNavigation() {
                         savedStateHandle = handle,
                         getName = { it -> it.name },
                         uiContent,
-                        dataQuery = app.priceTrackerRepository.getAllItems(uiContent.dataSet.id),
+                        dataQuery = app.repository.getAllItems(uiContent.dataSet.id),
                     )
                 }
             ) { viewModel ->
@@ -7797,7 +7797,7 @@ fun AppNavigation() {
                         savedStateHandle = handle,
                         getName = { it -> it.name },
                         uiContent,
-                        dataQuery = app.priceTrackerRepository.getAllSources(dataSetId)
+                        dataQuery = app.repository.getAllSources(dataSetId)
                     )
                 }
             ) { viewModel ->
@@ -7834,7 +7834,7 @@ fun AppNavigation() {
                 clearUIContent = { sharedViewModel.editPriceScreenUIContent = null },
                 buildViewModel = { app, handle ->
                     EditPriceViewModel(
-                        app.priceTrackerRepository,
+                        app.repository,
                         handle,
                         sharedViewModel.editPriceScreenUIContent
                             ?: EditPriceScreenUIContent.fromSavedState(handle)!!
@@ -7863,7 +7863,7 @@ fun AppNavigation() {
                 clearUIContent = { sharedViewModel.editDataSetScreenUIContent = null },
                 buildViewModel = { app, handle ->
                     EditDataSetViewModel(
-                        app.priceTrackerRepository,
+                        app.repository,
                         handle,
                         sharedViewModel.editDataSetScreenUIContent
                             ?: EditDataSetScreenUIContent.fromSavedState(handle)!!
@@ -7963,7 +7963,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                 clearUIContent = { sharedViewModel.editItemScreenUIContent = null },
                 buildViewModel = { app, handle ->
                     EditItemViewModel(
-                        app.priceTrackerRepository,
+                        app.repository,
                         handle,
                         sharedViewModel.editItemScreenUIContent
                             ?: EditItemScreenUIContent.fromSavedState(handle)!!
@@ -8004,7 +8004,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                 clearUIContent = { sharedViewModel.editSourceScreenUIContent = null },
                 buildViewModel = { app, handle ->
                     EditSourceViewModel(
-                        app.priceTrackerRepository,
+                        app.repository,
                         handle,
                         sharedViewModel.editSourceScreenUIContent
                             ?: EditSourceScreenUIContent.fromSavedState(handle)!!
@@ -8036,7 +8036,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                 clearUIContent = { sharedViewModel.viewPriceHistoryScreenUIContent = null },
                 buildViewModel = { app, handle ->
                     ViewPriceHistoryViewModel(
-                        app.priceTrackerRepository,
+                        app.repository,
                         handle,
                         sharedViewModel.viewPriceHistoryScreenUIContent
                             ?: ViewPriceHistoryScreenUIContent.fromSavedState(handle)!!
