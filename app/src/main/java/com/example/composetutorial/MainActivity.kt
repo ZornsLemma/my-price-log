@@ -3,7 +3,10 @@
 package com.example.composetutorial // TODO: change this!
 
 import com.example.composetutorial.ui.components.ValidationInputHandle
+import com.example.composetutorial.domain.UnitFamily
+import com.example.composetutorial.domain.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily
 import com.example.composetutorial.models.DataSet
+import com.example.composetutorial.domain.MeasuredValue
 import com.example.composetutorial.models.EditableDataSet
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.EditableItem
@@ -241,7 +244,11 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.composetutorial.domain.MeasurementUnit
+import com.example.composetutorial.domain.QuantityType
 import com.example.composetutorial.domain.UnitPrice
+import com.example.composetutorial.domain.getRelevantMeasurementUnits
+import com.example.composetutorial.domain.getRelevantUnitFamilies
 import com.example.composetutorial.domain.withFriendlyDenominator
 import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.models.toEditable
@@ -280,28 +287,7 @@ import java.util.concurrent.Executors
 import kotlin.math.ceil
 import kotlin.math.pow
 
-// Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
-// weight or volume. This is fundamental as we make no effort to convert between them using some
-// sort of density estimate or whatever. Actual units (kg, oz, etc) of the same quantity type can
-// be varied much more freely.
-enum class QuantityType(val id: Int) {
-    ITEM(1),
-    WEIGHT(2), // technically mass but everyone says "price per weight"
-    VOLUME(3);
 
-    companion object {
-        fun fromId(id: Int): QuantityType? {
-            return entries.find { it.id == id }
-        }
-    }
-}
-
-enum class UnitFamily {
-    ITEM,
-    METRIC,
-    IMPERIAL, // as used in UK
-    US_CUSTOMARY, // as used in US
-}
 
 fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> = when (locale.country.uppercase()) {
     // ChatGPT suggests it's common to have dual metric and US Customary labelling in US
@@ -312,236 +298,6 @@ fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> = when (locale.count
     else -> setOf(UnitFamily.ITEM, UnitFamily.METRIC)
 }
 
-// It's tempting to call this just "Unit", but that's a keyword in Kotlin.
-enum class MeasurementUnit(
-    val id: Long,
-    val unitFamilies: Set<UnitFamily>,
-    val quantityType: QuantityType,
-    val symbol: String, // TODO: this probably needs to be translatable
-    val fullName: String, // TODO: this will need to be translatable
-    val maxDecimals: Int,
-    val toBase: Double,
-    val displayOnly: Boolean,
-    val perSymbol: String = "/",
-) {
-    // Countable items
-    EACH(
-        101,
-        setOf(UnitFamily.ITEM),
-        QuantityType.ITEM,
-        "each",
-        "",
-        0,
-        1.0,
-        false,
-        perSymbol = " ",
-    ),
-    EACH10(102, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", "10", 1, 10.0, true),
-    EACH100(103, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", "100",2, 100.0, true),
-
-    // Weight (metric)
-    G(201, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "g", "gram",0, 1.0, false),
-    G100(
-        202,
-        setOf(UnitFamily.METRIC),
-        QuantityType.WEIGHT,
-        "100 g",
-        "100 gram",
-        2,
-        100.0,
-        true
-    ),
-    KG(203, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "kg", "kilogram",3, 1000.0, false),
-
-    // Weight (imperial/US customary)
-    OZ(
-        211,
-        setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
-        QuantityType.WEIGHT,
-        "oz",
-        "ounce",
-        3, // allow for eighths
-        28.349523125,
-        false
-    ),
-    LB(
-        212,
-        setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
-        QuantityType.WEIGHT,
-        "lb",
-        "pound",
-        3, // allow for eighths
-        453.59237,
-        false
-    ),
-
-    // Volume (metric)
-    ML(301, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml", "millilitre",0, 1.0, false),
-    ML100(
-        302,
-        setOf(UnitFamily.METRIC),
-        QuantityType.VOLUME,
-        "100 ml",
-        "100 millilitre",
-        2,
-        100.0,
-        true
-    ),
-    L(303, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "L", "litre", 3, 1000.0, false),
-
-    // TODO: As a massive hack to help me notice problems during debugging, I have replaced the space in "fl oz" with a U or I to
-    // let me see which type is in use. I don't seriously expect subtle bugs here (if we do mess up our unit family handling, we
-    // will probably end up with duplicated values in dropdowns which will be fairly obvious), but might as well keep an eye on it.
-    // I don't want to add a suffix " (US)" or whatever just for debugging as it will mean the unit sizes aren't realistic in
-    // layouts.
-
-    // Volume (imperial)
-    IMPERIAL_FLOZ(
-        311,
-        setOf(UnitFamily.IMPERIAL),
-        QuantityType.VOLUME,
-        "flIoz",
-        "fluid ounce",
-        3, // allow for eighths
-        28.4130625,
-        false
-    ),
-    IMPERIAL_PINT(
-        312,
-        setOf(UnitFamily.IMPERIAL),
-        QuantityType.VOLUME,
-        "pt",
-        "pint",
-        3, // allow for eighths
-        568.26125,
-        false
-    ),
-    IMPERIAL_GAL(
-        313,
-        setOf(UnitFamily.IMPERIAL),
-        QuantityType.VOLUME,
-        "gal",
-        "gallon",
-        3, // allow for eighths
-        4546.09,
-        false
-    ),
-
-    // Volume (US customary)
-    US_CUSTOMARY_FLOZ(
-        321,
-        setOf(UnitFamily.US_CUSTOMARY),
-        QuantityType.VOLUME,
-        "flUoz",
-        "fluid ounce",
-        3, // allow for eighths
-        29.5735295625,
-        false
-    ),
-    US_CUSTOMARY_PINT(
-        322,
-        setOf(UnitFamily.US_CUSTOMARY),
-        QuantityType.VOLUME,
-        "pt",
-        "pint",
-        3, // allow for eighths
-        473.176473,
-        false
-    ),
-    US_CUSTOMARY_GAL(
-        323,
-        setOf(UnitFamily.US_CUSTOMARY),
-        QuantityType.VOLUME,
-        "gal",
-        "gallon",
-        3, // allow for eighths
-        3785.411784,
-        false
-    );
-
-    companion object {
-        private val measurementUnitById = entries.associateBy { it.id }
-
-        fun fromId(measurementUnitId: Long): MeasurementUnit? = measurementUnitById[measurementUnitId]
-    }
-}
-
-fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {
-    val relevantUnitFamilies = setOfNotNull(
-        if (dataSet.allowMetric) UnitFamily.METRIC else null,
-        if (dataSet.allowImperial) UnitFamily.IMPERIAL else null,
-        if (dataSet.allowUSCustomary) UnitFamily.US_CUSTOMARY else null,
-        UnitFamily.ITEM,
-    )
-    myCheck(relevantUnitFamilies.isNotEmpty()) { "Data set ID ${dataSet.id} has no unit families enabled" }
-    myCheck(!(dataSet.allowImperial && dataSet.allowUSCustomary)) { "Data set ID ${dataSet.id} has both imperial and US customary unit families enabled" }
-    return relevantUnitFamilies
-}
-
-// Returns a sensibly-ordered list (which will probably be shown to the user in this order) of all
-// the measurement units for dataSet and quantityType.
-// ENHANCE: Where multiple unit families are enabled in the data set, this will currently always
-// follow the order in MeasurementUnit. So metric will always come before imperial/US customary if they
-// are enabled. It might be desirable to have some global or per-data set configuration which says
-// something like "I prefer family X to come first where it's included" or (in practice mostly
-// equivalent) "I prefer {metric/non-metric} to come first when both are available". The precise
-// wording and level of control would have to be decided, though in practice we are unlikely to add
-// new unit families so there isn't too much need for amazing amounts of flexibility - the real
-// choice is "metric first or non-metric first"?.
-fun getRelevantMeasurementUnits(
-    dataSet: DataSet,
-    quantityType: QuantityType,
-    includeDisplayOnly: Boolean
-): List<MeasurementUnit> {
-    val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
-    val relevantMeasurementUnits = MeasurementUnit.entries.filter { measurementUnit ->
-        measurementUnit.quantityType == quantityType &&
-                measurementUnit.unitFamilies.any { it in relevantUnitFamilies } &&
-                (!measurementUnit.displayOnly || includeDisplayOnly)
-    }
-    myCheck(relevantMeasurementUnits.isNotEmpty()) {
-        "Expected at least one relevant measure unit for QuantityType ${quantityType.name} in " +
-                "the context of data set ID ${dataSet.id} but found none"
-    }
-    return relevantMeasurementUnits
-}
-
-// Return a list of the MeasurementUnits of the same QuantityType and UnitFamily as measurementUnit. Note
-// that measurementUnit itself will be included in the results. The results are in the same order as
-// in MeasurementUnit.entries, but in practice I don't believe this matters.
-fun getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
-    dataSet: DataSet,
-    measurementUnit: MeasurementUnit,
-    includeDisplayOnly: Boolean
-): List<MeasurementUnit> {
-    // dataSet is used here to decide which of the possible multiple families measurementUnit belongs to
-    // is the one we're interested in. Suppose we have OZ - it could be imperial or US customary. As
-    // it happens, in all cases where a MeasurementUnit belongs to two families, the families as we
-    // currently define them are identical anyway so the distinction doesn't matter. But we do the
-    // right thing anyway just to be cautious. (It's not likely but to see why this matters, suppose
-    // we add support for the cubic inch as a volume measurement. It's the same in imperial and US
-    // customary. But if measurementUnit were CUBIC_INCH, the family would matter in deciding whether
-    // the returned MeasurementUnits are US or imperial floz/pint/gallon.)
-    val unitFamily = measurementUnit.unitFamilies.intersect(getRelevantUnitFamilies(dataSet))
-    myCheck(unitFamily.size == 1) {
-        // TODO: This message is technically incorrect, size could be 0 - tweak if this possibility remains
-        "measurementUnit ${measurementUnit.id} belongs to multiple unit families for data set " +
-                "${dataSet.id}: ${unitFamily.size}"
-    }
-    val result = MeasurementUnit.entries.filter {
-        it.quantityType == measurementUnit.quantityType &&
-                unitFamily.single() in it.unitFamilies &&
-                (!it.displayOnly || includeDisplayOnly)
-    }
-    myCheck(result.isNotEmpty()) {
-        "measurementUnit ${measurementUnit.id} belongs to no unit families for data set ${dataSet.id}"
-    }
-    // This is a linear search but it's a tiny list and we don't call this a lot.
-    myCheck(measurementUnit in result) {
-        "Original measurementUnit ${measurementUnit.id} not present in result: ${result.map { it.id }}"
-    }
-    return result
-}
 
 // The arguments are mandatory here so we're forced to think about what's correct when we call this.
 // For miscellaneous debug output we can just use string interpolation of course.
@@ -561,42 +317,6 @@ fun formatDouble(
     return numberFormat.format(value)
 }
 
-@Parcelize
-// TODO: Maybe rename this "Quantity"? (And keep QuantityType for MASS/VOLUME/etc)
-data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcelable {
-    private val quantityType: QuantityType get() = unit.quantityType
-
-    fun to(unit: MeasurementUnit): MeasuredValue {
-        myRequire(this.quantityType == unit.quantityType) {
-            "Cannot convert between different quantity types: trying to convert $this to $unit"
-        }
-        val baseValue = this.value * this.unit.toBase
-        return MeasuredValue(baseValue / unit.toBase, unit)
-    }
-
-    operator fun plus(other: MeasuredValue): MeasuredValue {
-        myRequire(this.quantityType == other.quantityType) {
-            "Cannot add values of different quantity types (this: $this, other: $other)"
-        }
-        val otherInThis = other.to(this.unit)
-        return MeasuredValue(this.value + otherInThis.value, this.unit)
-    }
-
-    fun asValue(unit: MeasurementUnit): Double = this.to(unit).value
-
-    // Based on my own experience and a possibly-trustworthy discussion with ChatGPT for an
-    // international angle, I suspect that in practice we don't want grouping separators in our
-    // measures even when they're for display only - "2272 ml" feels better than "2,272 ml", at
-    // least to me.
-    fun toDisplayString(locale: Locale): String =
-        formatDouble(
-            value,
-            minDecimals = 0,
-            maxDecimals = unit.maxDecimals,
-            useLocaleGrouping = false,
-            locale
-        ) + if (quantityType == QuantityType.ITEM) "" else " ${unit.symbol}"
-}
 
 const val DB_NAME = "main.db" // TODO: should I change this filename?
 const val DB_VERSION = 1
@@ -1229,12 +949,16 @@ class MyApplication : Application() {
 
 class Converters {
     // I don't think we actually have any QuantityType fields in the database at the moment, but it
-    // probably doesn't hurt to keep these around so it does the right thing if we add one later.
+    // probably doesn't hurt to keep these around so we do the right thing automatically if we add
+    // one later.
+
+    @Suppress("unused")
     @TypeConverter
     fun fromQuantityType(quantityType: QuantityType?): Int? {
         return quantityType?.id
     }
 
+    @Suppress("unused")
     @TypeConverter
     fun toQuantityType(value: Int?): QuantityType? {
         return value?.let { QuantityType.fromId(it) }

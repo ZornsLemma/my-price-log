@@ -6,10 +6,10 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.composetutorial.MeasurementUnit
-import com.example.composetutorial.QuantityType
+import com.example.composetutorial.domain.MeasurementUnit
+import com.example.composetutorial.domain.QuantityType
+import com.example.composetutorial.domain.getRelevantMeasurementUnits
 import com.example.composetutorial.myCheck
-import com.example.composetutorial.getRelevantMeasurementUnits
 import kotlinx.parcelize.Parcelize
 
 @Entity(

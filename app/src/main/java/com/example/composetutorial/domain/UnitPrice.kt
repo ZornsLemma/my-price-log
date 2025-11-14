@@ -1,8 +1,6 @@
 package com.example.composetutorial.domain
 
 import android.util.Log
-import com.example.composetutorial.MeasuredValue
-import com.example.composetutorial.MeasurementUnit
 import com.example.composetutorial.baseUnitForQuantityType
 import com.example.composetutorial.myRequire
 import com.example.composetutorial.roundTo
