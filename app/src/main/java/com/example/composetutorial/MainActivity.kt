@@ -1152,7 +1152,7 @@ class HomeViewModel(
                 } else {
                     val itemList = taggedItemListAndSourceList.second
                     val sourceList = taggedItemListAndSourceList.third
-                    val priceList = taggedPriceList.second
+                    var priceList = taggedPriceList.second
 
                     val dataSet = dataSetList.find { it.id == dataSetId }
                     val item = itemList.find { it.id == itemId }
@@ -1163,11 +1163,9 @@ class HomeViewModel(
                         "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
                     )
 
-                    // TODO: Possibly at this point we should be "sanitising" price list to change
-                    // user-entered "display units" from anything which isn't currently part of the
-                    // dataset to one that is. This would non-destructively fix the problem when we
-                    // come to display it and its unit family is no longer valid without hacking
-                    // around it there.
+                    if (dataSet != null) {
+                        priceList = sanitisePriceUnits(dataSet, priceList)
+                    }
 
                     // ENHANCE: I suspect in practice this analysis is lightweight enough we are
                     // fine doing it in this coroutine on the main thread, but just possibly we
@@ -1403,6 +1401,53 @@ class HomeViewModel(
 
     val asyncOperationStatus = SyncedStateEvent<AsyncOperationStatus>(AsyncOperationStatus.Idle)
 
+}
+
+// Returns a version of priceList where any prices which are expressed in units not supported by the
+// data set are replaced by a unit that is. This can happen if the user removes a unit family from a
+// data set. We don't try to patch this up in the database because then the user would immediately
+// lose the original unit and can't undo the change if they realise it was a mistake. We could in
+// theory handle this individually in other parts of the code, but that's an invitation to forget in
+// one place in the future and have the code blow up. (Allowing the "bad" unit to persist as long as
+// possible also opens up a corner case where a price was expressed in e.g. US pints, the user
+// changes the data set to imperial and the price shows up in "pints" (with no qualifier) but it is
+// a US pint and not an imperial pint and maybe this unit confusion is even allowed to persist when
+// the user edits without changing the unit from the dropdown.) By fixing up the data as we read it
+// out of the database, we avoid all this. TODO: REVIEW THIS COMMENT LATER
+// TODO: Just possibly this should be an extension on DataSet??
+fun sanitisePriceUnits(dataSet: DataSet, priceList: List<Price>): List<Price> {
+    val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
+    myCheck(relevantUnitFamilies.isNotEmpty()) { "Expected at least one relevant unit family for dataSet ${dataSet.id}" }
+    // getRelevantUnitFamilies() will in practice generate a LinkedHashSet, so first() here will be
+    // deterministic and return the first family inserted. If this were to change in future, it
+    // wouldn't be the end of the world, we'd just see some modest inconsistency in the results for
+    // what is already a corner case.
+    val replacementUnitFamily = relevantUnitFamilies.first()
+    return priceList.map { price ->
+        if (price.quantity.unit.unitFamilies.any { it in relevantUnitFamilies }) {
+            price
+        } else {
+            price.copy(quantity = price.quantity.to(MeasurementUnit.entries.first { replacementUnitFamily in it.unitFamilies && price.quantity.unit.quantityType == it.quantityType }))
+        }
+    }
+}
+
+// TODO: It's annoying to have to write near-identical code here for PriceHistory. We can possibly factor out some commonality, I just based it out for now.
+fun sanitisePriceHistoryUnits(dataSet: DataSet, priceHistoryList: List<PriceHistory>): List<PriceHistory> {
+    val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
+    myCheck(relevantUnitFamilies.isNotEmpty()) { "Expected at least one relevant unit family for dataSet ${dataSet.id}" }
+    // getRelevantUnitFamilies() will in practice generate a LinkedHashSet, so first() here will be
+    // deterministic and return the first family inserted. If this were to change in future, it
+    // wouldn't be the end of the world, we'd just see some modest inconsistency in the results for
+    // what is already a corner case.
+    val replacementUnitFamily = relevantUnitFamilies.first()
+    return priceHistoryList.map { priceHistory ->
+        if (priceHistory.userUnit.unitFamilies.any { it in relevantUnitFamilies }) {
+            priceHistory
+        } else {
+            priceHistory.copy(userUnit = MeasurementUnit.entries.first { replacementUnitFamily in it.unitFamilies && priceHistory.userUnit.quantityType == it.quantityType })
+        }
+    }
 }
 
 private const val appName = "My Price Log"
@@ -7130,7 +7175,7 @@ class ViewPriceHistoryViewModel(
         uiContent.dataSet.id,
         uiContent.item.id,
         uiContent.source.id
-    )
+    ).map { priceHistoryList -> sanitisePriceHistoryUnits(uiContent.dataSet, priceHistoryList) }
 
     // TODO: It would be good to include "the price ID changed => the price was deleted" in this
     // history. I don't believe we can know the date of the deletion, but we could show a trivial
@@ -8780,15 +8825,6 @@ Log.d("MyApp", baz.toString())
 // auto-backups, we could just possibly try to be clever and only do this if we haven't done an
 // auto-backup within the last hour or so. This limits the window of data loss while keeping backup
 // volume down.
-
-// TODO: What happens/should happen if e.g. a user's "display unit" for a save price is in imperial
-// and then they turn imperial off for the collection? Will we still show in imperial by default but
-// not allow it in the drop down? Will we force display into a unit (picking the best on a
-// significant digits basis or something) in an allowed system?
-
-// TODO: Is there a corner case where a user has a saved price in imperial oz, edits the data set
-// to switch from imperial to US customary, and then a) sees a misleading "oz" using the imperial
-// measurement (we don't convert) b) some our logic to attempt to "interpret" oz gets confused?
 
 // TODO: ErrorHighlightBoxes and their offsets and the general layout of the forms they highlight is
 // probably a bit inconsistent and could do with a review.
