@@ -232,7 +232,6 @@ import java.time.temporal.ChronoUnit
 import java.util.Currency
 import java.util.Locale
 import java.util.UUID
-import kotlin.math.abs
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -242,6 +241,8 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.composetutorial.domain.UnitPrice
+import com.example.composetutorial.domain.withFriendlyDenominator
 import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.models.toEditable
 import com.example.composetutorial.models.toEntity
@@ -2241,98 +2242,13 @@ fun formatPrice(price: Double, dataSet: DataSet, locale: Locale): String {
     }
 }
 
-data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) : Comparable<UnitPrice> {
-    override fun compareTo(other: UnitPrice): Int {
-        myRequire(denominator.quantityType == other.denominator.quantityType) {
-            "UnitPrices with denominators $denominator and ${other.denominator} are incommensurable"
-        }
-        // We could convert this to other's denominator in order to compare the two. Although it may
-        // be a bit superstitious of me, it feels safer ("rounding"/"consistency") to compare in the
-        // base unit. The extra work is negligible in practice. Similarly, we avoid the probably
-        // premature optimisation of checking to see if the two denominators are the same and just
-        // comparing the numerators directly if they are.
-        val baseUnit = baseUnitForQuantityType(denominator.quantityType)
-        val thisWithBaseUnit = withNewDenominator(baseUnit)
-        val otherWithBaseUnit = other.withNewDenominator(baseUnit)
-        return thisWithBaseUnit.numerator.compareTo(otherWithBaseUnit.numerator)
-    }
-}
-
-// TODO: Not sure if this should be a straight member function but I just want to bash on writing it
-// for now without worrying about that.
-fun UnitPrice.withNewDenominator(newDenominator: MeasurementUnit) : UnitPrice {
-    myRequire(denominator.quantityType == newDenominator.quantityType) {
-        "UnitPrice with denominator $denominator can't be converted to denominator $newDenominator"
-    }
-    return UnitPrice(numerator * newDenominator.toBase / denominator.toBase, newDenominator)
-}
-
-// TODO: Should this be an extension function on Price?
-fun getUnitPrice(
-    price: Double,
-    count: Long,
-    measure: MeasuredValue,
-    denominator: MeasurementUnit = baseUnitForQuantityType(measure.unit.quantityType)
-): UnitPrice {
-    myRequire(count > 0) { "Expected positive count" }
-    return UnitPrice(price / (count * measure.asValue(denominator)), denominator)
-}
-
-// This takes currencyDecimalPlaces not a CurrencyFormat because we only need the number of decimal
-// places and our caller will not always have a locale to get a CurrencyFormat with.
-// ENHANCE: While this function probably does a fairly good job in practice (albeit I haven't used
-// it much in anger yet), it might be nice to record the user's last-chosen unit price unit for each
-// (item, source) combination. This way, even if this function makes a poor choice, it will not
-// matter much in the long run as the user will just change the selected unit once per (item,
-// source) and that's that. We could do store this in a separate database table and write to it
-// asynchronously on a best-effort basis (as opposed to the "save is initiated and we make the user
-// wait, trapped, until it completes" saves for critical data). Based on discussions with ChatGPT
-// this is the way to go, rather than trying to put it in any form of shared preferences, as even
-// the more modern DataStore is not optimised for this. Although this would involve a database
-// upgrade to add later, it is just adding a new table which would start off empty with no data
-// migration, so it's probably not too scary.
-// TODO: Possibly this should be an extension function on UnitPrice? Maybe renamed withFriendlyDenominator()?
-fun getFriendlyUnitPrice( // TODO: createFriendlyUnitPrice() to suggest "workiness"??? "chooseFUP"?
-    unitPrice: UnitPrice,
-    preferredUnit: MeasurementUnit,
-    currencyDecimalPlaces: Int,
-    candidateDenominators: List<MeasurementUnit>
-): UnitPrice {
-    myRequire(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
-    var bestScore: Double? = null
-    var bestUnitPrice: UnitPrice? = null
-    for (candidateDenominator in candidateDenominators) {
-        val candidateUnitPrice = unitPrice.withNewDenominator(candidateDenominator)
-        // We compute a score (lower is better) for candidateUnitPrice. This is based on an ad-hoc
-        // weighted combination of factors:
-        // - We like to minimise relative error because significant figures get rounded off at
-        //   currencyDecimalPlaces.
-        // - We like to use the same unit the price is expressed in if it's practical. This is more
-        //   of an issue with non-metric, where e.g. milk might be sold in 4 pint containers and
-        //   without this preference we might express the unit price per gallon, which is OK but
-        //   not so clear in my opinion.
-        // - We like to have an integer part which is a short as possible. (Remember the non-integer
-        //   part isn't under our control; we will always have currencyDecimalPlaces of it.) But we
-        //   don't like to have "0.xx" because then we're wasting the digit before the decimal
-        //   separator which we always have to display.
-        val relativeError = abs(candidateUnitPrice.numerator.roundTo(currencyDecimalPlaces) - candidateUnitPrice.numerator) / candidateUnitPrice.numerator
-        val displayIntegerPart = String.format(Locale.US, "%.${currencyDecimalPlaces}f", candidateUnitPrice.numerator).substringBefore('.')
-        val displayIntegerLength = if (displayIntegerPart == "0") 0 else displayIntegerPart.length
-        val candidateScore = abs(displayIntegerLength - 1) + (10.0 * relativeError) - (if (candidateUnitPrice.denominator == preferredUnit) 1.1 else 0.0)
-        Log.d("MyAppFU", "$candidateDenominator ${candidateUnitPrice.numerator} $displayIntegerLength $relativeError $candidateScore")
-        if (bestScore == null || candidateScore < bestScore) {
-            bestScore = candidateScore
-            bestUnitPrice = candidateUnitPrice
-        }
-    }
-    return bestUnitPrice!!
-}
 
 fun Double.roundTo(decimalPlaces: Int): Double {
     val factor = 10.0.pow(decimalPlaces)
     return kotlin.math.round(this * factor) / factor
 }
 
+// TODO: Move into UnitPrice.kt? Make an extension fnction on  UnitPrice? Or just a member?
 fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet, locale: Locale): String {
     return "${formatPrice(
             unitPrice.numerator,
@@ -3865,8 +3781,7 @@ fun PriceComparisonCard(
                         bestValueAugmentedPrice.basePrice.quantity.unit,
                         includeDisplayOnly = true
                     )
-                    getFriendlyUnitPrice(
-                        unitPrice = bestValueAugmentedPrice.unitPrice,
+                    bestValueAugmentedPrice.unitPrice.withFriendlyDenominator(
                         preferredUnit = bestValueAugmentedPrice.basePrice.quantity.unit,
                         currencyDecimalPlaces = currencyFormat.decimalPlaces,
                         candidateDenominators = candidateDenominators
@@ -3892,7 +3807,7 @@ fun PriceComparisonCard(
                             Log.d("MyAppAA", "inside columns, unitPrice ${augmentedPrice.unitPrice}, headerUnitPriceDenominator $headerUnitPriceDenominator")
                             Text(
                                 formatPrice(
-                                    augmentedPrice.unitPrice.withNewDenominator(headerUnitPriceDenominator).numerator,
+                                    augmentedPrice.unitPrice.withDenominator(headerUnitPriceDenominator).numerator,
                                     dataSet,
                                     locale
                                 )
@@ -8551,8 +8466,7 @@ fun PackPriceAndSizeRow(
                 measure.unit,
                 includeDisplayOnly = true
             )
-            val friendlyUnitPrice = getFriendlyUnitPrice(
-                getUnitPrice(price, count, measure),
+            val friendlyUnitPrice = UnitPrice.calculate(price, count, measure).withFriendlyDenominator(
                 measure.unit,
                 getCurrencyDecimalPlaces(dataSet),
                 candidateDenominators
@@ -8567,7 +8481,7 @@ fun PackPriceAndSizeRow(
         // worse.
         Log.d("MyAppQA", "calling formatUnitPrice $price $measure $selectedUnitPriceUnit")
         val unitPriceString = formatUnitPrice(
-            getUnitPrice(
+            UnitPrice.calculate(
                 price,
                 count,
                 measure,
@@ -9097,7 +9011,7 @@ fun augmentPrice(
             AgeClass.ANCIENT
         },
         inflatedLoyaltyPrice = inflatedLoyaltyPrice,
-        unitPrice = getUnitPrice(inflatedLoyaltyPrice, price.count, price.quantity),
+        unitPrice = UnitPrice.calculate(inflatedLoyaltyPrice, price.count, price.quantity),
         priceJudgement = PriceJudgement.NONE
     )
 }
