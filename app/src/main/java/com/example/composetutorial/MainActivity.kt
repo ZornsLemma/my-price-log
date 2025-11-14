@@ -995,16 +995,6 @@ class Converters {
     }
 }
 
-// General note on database naming conventions:
-// - I've used an "_id" suffix exclusively for foreign keys. Other things (like units) which are
-//   referenced by internal code IDs don't have this suffix. (Not sure this is sensible, but it has
-//   some logic and both Perplexity and ChatGPT seemed to agree on this convention so I went with
-//   it.)
-// - I've used an "_at" stuffix to suggest that a value holds a date/time (as an Instant encoded as
-//   an integer).
-
-
-
 enum class LoyaltyType(val id: Long) {
     NONE(1),
     BONUS(2),
