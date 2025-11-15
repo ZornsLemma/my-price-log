@@ -282,6 +282,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import java.io.File
@@ -1118,29 +1119,46 @@ class HomeViewModel(
         setCurrentDataSetIdAsync(app, dataSetId)
     }
     fun setCurrentItemId(itemId: Long) {
-            val dataSetId = selectedDataSetFlow.value.valueOrNull()
+            val dataSetId = selectedDataSetIdStateFlow.value.valueOrNull()
             if (dataSetId != null) { // TODO: Not sure this is really possible?! Harmless but can we avoid?
                 setCurrentItemIdAsync(app, dataSetId, itemId)
         }
     }
     fun setCurrentSourceId(sourceId: Long?) {
-            val dataSetId = selectedDataSetFlow.value.valueOrNull()
+            val dataSetId = selectedDataSetIdStateFlow.value.valueOrNull()
             if (dataSetId != null) { // TODO: Not sure this is really possible?! Harmless but can we avoid?
                 setCurrentSourceIdAsync(app, dataSetId, sourceId)
             }
     }
 
 
-    // TODO:IF THE FOLLOWING LIVE, WE MAY BE ABLE TO FACTOR SOME COMMONALITY OUT, AND THAT MAY EVEN HELP ALL THE CASTING SHIT
+    private fun <T> Flow<T>.asLoadState(
+        // TODO: DELETE initial: LoadState<T> = LoadState.Loading
+    ): StateFlow<LoadState<T>> = this
+        .map<T, LoadState<T>> { LoadState.Loaded(it) }
+        .distinctUntilChanged()
+        .onStart { emit(LoadState.Loading) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading)
+
+    private val prefsFlow = app.userPreferencesStore.data
+        .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
     // TODO!?!?!?!
+    private val selectedDataSetIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
+        .map { it.currentDataSetId }
+        .asLoadState()
+    /* TODO DELETE?
     private val selectedDataSetFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
         LoadState.Loaded(prefs.currentDataSetId) as LoadState<Long> }
         .distinctUntilChanged()
         .onStart { emit(LoadState.Loading as LoadState<Long>) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading as LoadState<Long>)
+        */
 
-    // TODO!?!?!?!
+    // TODO!?!?!? !
+
+
+    /* TODO DELETE
     private val selectedItemIdFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
         Pair(
             prefs.currentDataSetId,
@@ -1151,8 +1169,15 @@ class HomeViewModel(
         .map { LoadState.Loaded(it.second) as LoadState<Long> }
         .onStart { emit(LoadState.Loading as LoadState<Long>) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading as LoadState<Long>)
+        */
+    private val selectedItemIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
+        .map { prefs ->
+            prefs.currentItemIdForDataSetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
+        }
+        .asLoadState()
 
     // TODO!?!?!?!
+    /* TODO DELETE?
     private val selectedSourceIdFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
         Pair(
             prefs.currentDataSetId,
@@ -1163,6 +1188,12 @@ class HomeViewModel(
         .map { LoadState.Loaded(it.second) as LoadState<Long> }
         .onStart { emit(LoadState.Loading as LoadState<Long>) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading as LoadState<Long>)
+        */
+    private val selectedSourceIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
+        .map { prefs ->
+            prefs.currentSourceIdForDataSetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
+        }
+        .asLoadState()
 
     // TODO: Rename UIContent->HomeScreenUIContent and/or scope it to this ViewModel?
     private val _uiState = MutableStateFlow(
@@ -1182,9 +1213,16 @@ class HomeViewModel(
         // This forces the delegate to initialize safely on the main thread TODO: VOODOO
         @Suppress("UNUSED_VARIABLE") val unused = app.dataStore
 
+        // ENHANCE: I suspect this tree of flows is over-complex. In part we are trying to work
+        // around problems where a getAllItems(dataSetId) or getAllSources(dataSetId) flow is not
+        // inherently tagged with its parameter, and thus if the user changes the data set ID from 1
+        // to 2 we might see the items for data set 1 with the sources for data set 2 briefly before
+        // the items for data set 2 arrive. Using SQLDelight might help avoid this complexity. It's
+        // quite possible there is over-complexity in other areas too.
+
         val dataSetFlow = repository.getAllDataSets()
 
-        val dataSetOnlyDatabaseFlow = selectedDataSetFlow.flatMapLatest { dataSetIdState ->
+        val dataSetOnlyDatabaseFlow = selectedDataSetIdStateFlow.flatMapLatest { dataSetIdState ->
             // dataSetId can be null here (e.g. during startup when we haven't yet got the
             // preference yet, and maybe also if the user deletes all the data in the database) so
             // we need to deal with it. I think it would be wrong to use filterNotNull(), because we
@@ -1212,8 +1250,8 @@ class HomeViewModel(
         }
 
         val dataSetIdAndItemIdFlow = combine(
-            selectedDataSetFlow,
-            selectedItemIdFlow,
+            selectedDataSetIdStateFlow,
+            selectedItemIdStateFlow,
             ::Pair
         )
 
@@ -1249,14 +1287,14 @@ class HomeViewModel(
             ::Triple)
 
         val allUserInputFlow = combine(
-            selectedDataSetFlow,
-            selectedItemIdFlow,
-            selectedSourceIdFlow,
+            selectedDataSetIdStateFlow,
+            selectedItemIdStateFlow,
+            selectedSourceIdStateFlow,
             ::Triple
         )
 
         val todoRenameMeFlow = combine(
-            selectedSourceIdFlow,
+            selectedSourceIdStateFlow,
             combinedDatabaseFlow,
             settingsRepository.priceAgeSettingsFlow
         ) { _, databaseResults, priceAgeSettings -> Pair(databaseResults, priceAgeSettings) }
@@ -1276,9 +1314,9 @@ class HomeViewModel(
                 // like this, accept a mixture of stale values or re-run all your queries every
                 // single time even if most of them haven't had a parameter change. Maybe I am doing
                 // something silly.
-                val dataSetIdState = selectedDataSetFlow.value
-                val itemIdState = selectedItemIdFlow.value
-                val sourceIdState = selectedSourceIdFlow.value
+                val dataSetIdState = selectedDataSetIdStateFlow.value
+                val itemIdState = selectedItemIdStateFlow.value
+                val sourceIdState = selectedSourceIdStateFlow.value
                 val dataSetId = dataSetIdState.valueOrNull()
                 val itemId = itemIdState.valueOrNull()
                 val sourceId = sourceIdState.valueOrNull()
@@ -1311,7 +1349,7 @@ class HomeViewModel(
 
                     Log.d(
                         "MyFlow",
-                        "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
+                        "completeUIStateFlow dataSetId ${selectedDataSetIdStateFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
                     )
 
                     if (dataSet != null) {
