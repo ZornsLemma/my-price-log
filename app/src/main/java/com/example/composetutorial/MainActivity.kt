@@ -272,6 +272,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import java.io.File
@@ -987,6 +988,32 @@ fun <T> savePreference(
     }
 }
 
+// TODO: ChatGPT magic
+sealed interface LoadState<out T> {
+    data object Loading : LoadState<Nothing>
+    data object Empty : LoadState<Nothing>
+    data class Loaded<T>(val value: T) : LoadState<T>
+}
+
+fun <T> LoadState<T>.valueOrNull(): T? =
+    when (this) {
+        is LoadState.Loaded -> value
+        else -> null
+    }
+
+/* TODO DELETE
+fun <T> flattenLoadState(loadState: LoadState<T>): T? {
+    return when (loadState) {
+        is LoadState.Loaded -> {
+            (loadState as LoadState.Loaded).value
+        }
+        else -> {
+            null
+        }
+    }
+}
+*/
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(
     private val repository: Repository,
@@ -1005,10 +1032,14 @@ class HomeViewModel(
     private val selectedDataSetFlow = getPreference(SELECTED_DATA_SET_ID_KEY)
     private val selectedItemIdFlow = getPreference(SELECTED_ITEM_ID_KEY)
     private val selectedSourceIdFlow = getPreference(SELECTED_SOURCE_ID_KEY)
-    private fun <T> getPreference(key: Preferences.Key<T>): StateFlow<T?> {
+    private fun <T> getPreference(key: Preferences.Key<T>): StateFlow<LoadState<T>> {
         return app.dataStore.data
-            .map { prefs -> prefs[key] }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+            .map { prefs ->
+                val value = prefs[key]
+                if (value == null) LoadState.Empty else LoadState.Loaded(value)
+            }
+            .onStart { emit(LoadState.Loading) }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading)
     }
 
     fun <T> savePreference(key: Preferences.Key<T>, value: T?) {
@@ -1039,7 +1070,7 @@ class HomeViewModel(
 
         val dataSetFlow = repository.getAllDataSets()
 
-        val dataSetOnlyDatabaseFlow = selectedDataSetFlow.flatMapLatest { dataSetId ->
+        val dataSetOnlyDatabaseFlow = selectedDataSetFlow.flatMapLatest { dataSetIdState ->
             // dataSetId can be null here (e.g. during startup when we haven't yet got the
             // preference yet, and maybe also if the user deletes all the data in the database) so
             // we need to deal with it. I think it would be wrong to use filterNotNull(), because we
@@ -1048,11 +1079,12 @@ class HomeViewModel(
             // as a result), any flow that combine()s this one would never see combine() emit. This
             // just might work out OK, but it feels dangerous. I think empty lists are perfect valid
             // results to emit in the null case.
-            Log.d("MyFlow", "dataSetOnlyDatabaseFlow dataSetId $dataSetId")
             // We are combining freshly-created DAO flows, so we cannot see "stale" data here, so
             // the dataSetId we are tagging the results with will be correct. (In practice non-empty
             // lists of results for these queries are self-tagging, but we need to handle empty
             // lists correctly too.)
+            val dataSetId = dataSetIdState.valueOrNull() // TODO DELETE FOLLOWING when (dataSetIdState) { is LoadState.Loaded -> { (dataSetIdState as LoadState.Loaded).value } else -> null }
+            Log.d("MyFlow", "dataSetOnlyDatabaseFlow dataSetId $dataSetId")
             combine(
                 flowOf(dataSetId),
                 if (dataSetId != null) repository.getAllItems(dataSetId) else flowOf(
@@ -1072,7 +1104,9 @@ class HomeViewModel(
         )
 
         val dataSetIdAndItemIdDatabaseFlow =
-            dataSetIdAndItemIdFlow.flatMapLatest { (dataSetId, itemId) ->
+            dataSetIdAndItemIdFlow.flatMapLatest { (dataSetIdState, itemIdState) ->
+                val dataSetId = dataSetIdState.valueOrNull()
+                val itemId = itemIdState.valueOrNull()
                 Log.d(
                     "MyFlow",
                     "dataSetIdAndItemIdDatabaseFlow dataSetId $dataSetId, itemId $itemId"
@@ -1128,9 +1162,12 @@ class HomeViewModel(
                 // like this, accept a mixture of stale values or re-run all your queries every
                 // single time even if most of them haven't had a parameter change. Maybe I am doing
                 // something silly.
-                val dataSetId = selectedDataSetFlow.value
-                val itemId = selectedItemIdFlow.value
-                val sourceId = selectedSourceIdFlow.value
+                val dataSetIdState = selectedDataSetFlow.value
+                val itemIdState = selectedItemIdFlow.value
+                val sourceIdState = selectedSourceIdFlow.value
+                val dataSetId = dataSetIdState.valueOrNull()
+                val itemId = itemIdState.valueOrNull()
+                val sourceId = sourceIdState.valueOrNull()
 
                 if (taggedItemListAndSourceList.first != dataSetId) {
                     Log.d(
@@ -1143,8 +1180,8 @@ class HomeViewModel(
                         "MyFlow",
                         "completeUIStateFlow discarding (dataSetId, itemId) ${taggedPriceList.first}, want ${
                             Pair(
-                                dataSetId,
-                                itemId
+                                dataSetIdState,
+                                itemIdState
                             )
                         }"
                     )
@@ -1178,10 +1215,12 @@ class HomeViewModel(
                     //delay(5000) // TODO HACK
                     flowOf(
                         HomeScreenUIContent(
+                            dataSetIdState,
                             dataSet,
                             dataSetList,
                             item,
                             itemList,
+                            sourceIdState,
                             source,
                             sourceList,
                             priceAnalysis
@@ -2403,10 +2442,12 @@ const val defaultAncientPriceThresholdDays = 180
 const val defaultAnnualInflationPercent = 5
 
 data class HomeScreenUIContent(
+    val dataSetIdState: LoadState<Long>,
     val dataSet: DataSet?,
     val dataSetList: List<DataSet>,
     val item: Item?,
     val itemList: List<Item>,
+    val sourceIdState: LoadState<Long>,
     val source: Source?,
     val sourceList: List<Source>,
     val priceAnalysis: PriceAnalysis,
@@ -2414,10 +2455,12 @@ data class HomeScreenUIContent(
     companion object {
         fun createEmpty(): HomeScreenUIContent {
             return HomeScreenUIContent(
+                dataSetIdState = LoadState.Loading,
                 dataSet = null,
                 dataSetList = emptyList(),
                 item = null,
                 itemList = emptyList(),
+                sourceIdState = LoadState.Loading,
                 source = null,
                 sourceList = emptyList(),
                 priceAnalysis = PriceAnalysis(emptyList(), null),
@@ -2659,42 +2702,52 @@ fun HomeScreen(
     // for the very first frame.
     val uiState by vm.uiState.collectAsStateWithLifecycle()
     val (loading, uiContent) = uiState
+    Log.d("MyAppBG", "uiContent.dataSetIdState ${uiContent.dataSetIdState} uiContent.sourceIdState ${uiContent.sourceIdState}")
 
-    // TODO: HomeScreenScaffold could take uiContent instead of splitting it out here - that
-    // wouldn't be unreasonable, *it* would split stuff out, but it would save boilerplate here. We
-    // could almost inline HomeScreenScaffold given how trivial the above code now is, and perhaps
-    // we should.
-    HomeScreenScaffold(
-        navController,
-        vm,
-        loading,
-        uiContent.dataSet,
-        uiContent.dataSetList,
-        onSelectedDataSetIdChange = {
-            vm.previousPrice.value = null
-            vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
-        },
-        uiContent.item,
-        uiContent.itemList,
-        onSelectedItemIdChange = {
-            vm.previousPrice.value = null
-            vm.savePreference(SELECTED_ITEM_ID_KEY, it)
-        },
-        uiContent.source,
-        uiContent.sourceList,
-        onSelectedSourceIdChange = {
-            vm.previousPrice.value = null
-            vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
-        },
-        uiContent.priceAnalysis,
-        onEditPriceClick = { onEditPriceClick(uiContent) },
-        onItemSearchClick = { onItemSearchClick(uiContent) },
-        onViewHistoryClick = { onViewHistoryClick(uiContent) },
-        onEditDataSetsClick = { onEditDataSetsClick(uiContent) },
-        onEditItemsClick = { onEditItemsClick(uiContent) },
-        onEditSourcesClick = { onEditSourcesClick(uiContent) },
-        onSettingsClick = onSettingsClick,
-    )
+    if (uiContent.dataSetIdState is LoadState.Loading) {
+        // Just leave the home screen blank until we get the first async population of the selected
+        // data set. We don't want to briefly show the scaffold with the app title before flashing
+        // over to the current collection, nor do we want to show the "no collection is selected"
+        // fallback texts.
+    } else {
+        // TODO: HomeScreenScaffold could take uiContent instead of splitting it out here - that
+        // wouldn't be unreasonable, *it* would split stuff out, but it would save boilerplate here. We
+        // could almost inline HomeScreenScaffold given how trivial the above code now is, and perhaps
+        // we should.
+        HomeScreenScaffold(
+            navController,
+            vm,
+            loading,
+            uiContent.dataSetIdState,
+            uiContent.dataSet,
+            uiContent.dataSetList,
+            onSelectedDataSetIdChange = {
+                vm.previousPrice.value = null
+                vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
+            },
+            uiContent.item,
+            uiContent.itemList,
+            onSelectedItemIdChange = {
+                vm.previousPrice.value = null
+                vm.savePreference(SELECTED_ITEM_ID_KEY, it)
+            },
+            uiContent.sourceIdState,
+            uiContent.source,
+            uiContent.sourceList,
+            onSelectedSourceIdChange = {
+                vm.previousPrice.value = null
+                vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
+            },
+            uiContent.priceAnalysis,
+            onEditPriceClick = { onEditPriceClick(uiContent) },
+            onItemSearchClick = { onItemSearchClick(uiContent) },
+            onViewHistoryClick = { onViewHistoryClick(uiContent) },
+            onEditDataSetsClick = { onEditDataSetsClick(uiContent) },
+            onEditItemsClick = { onEditItemsClick(uiContent) },
+            onEditSourcesClick = { onEditSourcesClick(uiContent) },
+            onSettingsClick = onSettingsClick,
+        )
+    }
 }
 
 // ENHANCE: Should this have a (fairly rapid) fade in and/or fade out? I am not sure. It's not a
@@ -2814,62 +2867,62 @@ fun HomeScreenNavigationDrawer(
 
     val coroutineScope = rememberCoroutineScope()
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            // We cap the drawer width at 2/3 of the screen width because although it's not MD3
-            // standard, I really don't like the default behaviour of it taking the full screen
-            // width on a portrait smartphone. If nothing else, that makes how to dismiss it feel
-            // less discoverable.
-            ModalDrawerSheet(
-                modifier = Modifier
-                    .wrapContentWidth()
-                    .widthIn(
-                        max = min(
-                            LocalConfiguration.current.screenWidthDp.dp * 2f / 3f,
-                            maxNavigationDrawerWidth
-                        )
-                    )
-            ) {
-                Column {
-                    Box(
-                        modifier = Modifier
-                            .height(oneLineListItemHeight)
-                            .padding(start = listItemHorizontalPadding),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        Text(
-                            text = "Collections",
-                            style = MaterialTheme.typography.titleSmall,
-                        )
-                    }
-                    LazyColumn {
-                        items(dataSetListSorted) { item ->
-                            val selected = dataSet?.id == item.id
-                            NavigationDrawerItem(
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp)
-                                    .height(oneLineListItemHeight),
-                                label = {
-                                    Text(
-                                        item.name,
-                                        // color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        style = MaterialTheme.typography.labelLarge
-                                    )
-                                },
-                                selected = selected,
-                                onClick = {
-                                    coroutineScope.launch { onSelectedDataSetIdChange(item.id); drawerState.close() }
-                                }
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                // We cap the drawer width at 2/3 of the screen width because although it's not MD3
+                // standard, I really don't like the default behaviour of it taking the full screen
+                // width on a portrait smartphone. If nothing else, that makes how to dismiss it feel
+                // less discoverable.
+                ModalDrawerSheet(
+                    modifier = Modifier
+                        .wrapContentWidth()
+                        .widthIn(
+                            max = min(
+                                LocalConfiguration.current.screenWidthDp.dp * 2f / 3f,
+                                maxNavigationDrawerWidth
                             )
+                        )
+                ) {
+                    Column {
+                        Box(
+                            modifier = Modifier
+                                .height(oneLineListItemHeight)
+                                .padding(start = listItemHorizontalPadding),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            Text(
+                                text = "Collections",
+                                style = MaterialTheme.typography.titleSmall,
+                            )
+                        }
+                        LazyColumn {
+                            items(dataSetListSorted) { item ->
+                                val selected = dataSet?.id == item.id
+                                NavigationDrawerItem(
+                                    modifier = Modifier
+                                        .padding(horizontal = 12.dp)
+                                        .height(oneLineListItemHeight),
+                                    label = {
+                                        Text(
+                                            item.name,
+                                            // color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    },
+                                    selected = selected,
+                                    onClick = {
+                                        coroutineScope.launch { onSelectedDataSetIdChange(item.id); drawerState.close() }
+                                    }
+                                )
+                            }
                         }
                     }
                 }
             }
+        ) {
+            content()
         }
-    ) {
-        content()
-    }
 }
 
 @Composable
@@ -2960,12 +3013,14 @@ fun HomeScreenScaffold(
     navController: NavHostController,
     vm: HomeViewModel,
     loading: Boolean,
+    dataSetIdState: LoadState<Long>,
     dataSet: DataSet?,
     dataSetList: List<DataSet>,
     onSelectedDataSetIdChange: (Long) -> Unit,
     item: Item?,
     itemList: List<Item>,
     onSelectedItemIdChange: (Long) -> Unit,
+    sourceIdState: LoadState<Long>,
     source: Source?,
     sourceList: List<Source>,
     onSelectedSourceIdChange: (Long?) -> Unit,
@@ -2997,6 +3052,7 @@ fun HomeScreenScaffold(
     val dataSetListSorted = dataSetList.rememberSortedByLocale { it.name }
 
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+    //val drawerRequested by remember { mutableStateOf(false) }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     LaunchedEffect(navBackStackEntry) {
@@ -3012,11 +3068,13 @@ fun HomeScreenScaffold(
  { innerPadding ->
                 HomeScreenContent(
                     vm,
+                    dataSetIdState,
                     dataSet,
                     dataSetList,
                     item,
                     itemList,
                     onSelectedItemIdChange,
+                    sourceIdState,
                     source,
                     sourceList,
                     onSelectedSourceIdChange,
@@ -3104,11 +3162,13 @@ fun HomeScreenStateManager(
 @Composable
 fun HomeScreenContent(
     vm: HomeViewModel,
+    dataSetIdState: LoadState<Long>,
     dataSet: DataSet?,
     dataSetList: List<DataSet>,
     item: Item?,
     itemList: List<Item>,
     onSelectedItemIdChange: (Long) -> Unit,
+    sourceIdState: LoadState<Long>,
     source: Source?,
     sourceList: List<Source>,
     onSelectedSourceIdChange: (Long?) -> Unit,
@@ -3130,9 +3190,6 @@ fun HomeScreenContent(
             .padding(innerPadding)
             .padding(screenBorder)
     ) {
-        // TODO: This is briefly visible during first startup, which is really ugly. Are we getting an
-        // async read of dataSet or something which causes it to be briefly null? Really need to fix
-        // this. I suspect there's thought needed, but just possibly we need dataSetList to be null-capable and have it null rather than empty if the query hasn't returned yet, then we can detect dataSetList null here and not do anything (maybe). Failing that (probably clunkier) we could just start off showing nothing (so home screen pops in shortly after when we do get data on first launch) and have a LaunchedEffect which will set a flag triggered display of no collection stuff if nothing has changed
         Log.d("MyAppSU", "dataSet $dataSet dataSetList $dataSetList")
         if (dataSet == null) {
             // These are corner cases, caused by the current data set being deleted or all data
