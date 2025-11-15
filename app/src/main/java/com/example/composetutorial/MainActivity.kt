@@ -43,7 +43,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.combine
-import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.datastore.preferences.core.Preferences
@@ -654,19 +653,18 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     // Set some defaults for the first run so the user isn't left with a screen with no data
     // wondering what to do.
     // TODO: NOT JUST HERE - I AM A BIT MIXED UP ON "SET/GET CURRENT X" vs "SET/GET SELECTED X" AS FAR AS TERMINOLOGY GOES - NEED TO BE CONSISTENT
-    context.dataStore.edit { prefs ->
         setCurrentDataSetId(context, dataSetId)
         setCurrentItemId(context, dataSetId, itemIdTeabags)
         setCurrentSourceId(context, dataSetId, sourceIdSuperiorStore)
         /* TODO DELETE?
+    context.dataStore.edit { prefs ->
         prefs[SELECTED_DATA_SET_ID_KEY] = dataSetId
         prefs[SELECTED_ITEM_ID_KEY] = itemIdTeabags
         prefs[SELECTED_SOURCE_ID_KEY] = sourceIdSuperiorStore
-        */
     }
+        */
 }
 
-// TODO!?!?!?! SCOPE FOR FACTORING OUT COMMONALITY?
 suspend fun setCurrentDataSetId(context: Context, dataSetId: Long) {
     updateUserPreferences(context) { builder -> builder.setCurrentDataSetId(dataSetId) }
 }
@@ -1007,37 +1005,33 @@ class SyncedStateEvent<T>(initialState: T) {
     }
 }
 
+/* TODO: DELETE
 // TODO: Some code duplication with HomeViewModel.savePreference
 fun <T> savePreference(
     dataStore: DataStore<Preferences>,
     key: Preferences.Key<T>,
     value: T?
 ) {
-    // DataStore is thread-safe and handles internal synchronization, so it's safe to write from a
-    // background thread even if other code reads or writes from the Main thread (e.g., via
-    // viewModelScope).
     CoroutineScope(Dispatchers.IO).launch {
         dataStore.edit { prefs ->
             if (value != null) prefs[key] = value else prefs.remove(key)
         }
     }
 }
+*/
 
 // TODO: SOME CODE DUPLICATION AND GENERAL SHITTINESS WITH OTHER VERSIONS OF THIS "SAVE" CODE
-fun setCurrentDataSetIdTODO(context: Context, dataSetId: Long) {
-    // TODO AS IN SAVEPREFERENCE ABOVE, I BELIEVE THE STORE IS THREAD SAFE
+fun setCurrentDataSetIdAsync(context: Context, dataSetId: Long) {
     CoroutineScope(Dispatchers.IO).launch {
         setCurrentDataSetId(context, dataSetId)
     }
 }
-fun setCurrentItemIdTODO(context: Context, dataSetId: Long, itemId: Long) {
-    // TODO AS IN SAVEPREFERENCE ABOVE, I BELIEVE THE STORE IS THREAD SAFE
+fun setCurrentItemIdAsync(context: Context, dataSetId: Long, itemId: Long) {
     CoroutineScope(Dispatchers.IO).launch {
         setCurrentItemId(context, dataSetId, itemId)
     }
 }
-fun setCurrentSourceIdTODO(context: Context, dataSetId: Long, sourceId: Long?) {
-    // TODO AS IN SAVEPREFERENCE ABOVE, I BELIEVE THE STORE IS THREAD SAFE
+fun setCurrentSourceIdAsync(context: Context, dataSetId: Long, sourceId: Long?) {
     CoroutineScope(Dispatchers.IO).launch {
         setCurrentSourceId(context, dataSetId, sourceId)
     }
@@ -1121,18 +1115,18 @@ class HomeViewModel(
 
     // TODO!??! FACTOR OUT COMMONALITY?
     fun setCurrentDataSetId(dataSetId: Long) {
-        setCurrentDataSetIdTODO(app, dataSetId)
+        setCurrentDataSetIdAsync(app, dataSetId)
     }
     fun setCurrentItemId(itemId: Long) {
             val dataSetId = newSelectedDataSetFlow.value.valueOrNull()
             if (dataSetId != null) { // TODO: Not sure this is really possible?! Harmless but can we avoid?
-                setCurrentItemIdTODO(app, dataSetId, itemId)
+                setCurrentItemIdAsync(app, dataSetId, itemId)
         }
     }
     fun setCurrentSourceId(sourceId: Long?) {
             val dataSetId = newSelectedDataSetFlow.value.valueOrNull()
             if (dataSetId != null) { // TODO: Not sure this is really possible?! Harmless but can we avoid?
-                setCurrentSourceIdTODO(app, dataSetId, sourceId)
+                setCurrentSourceIdAsync(app, dataSetId, sourceId)
             }
     }
 
@@ -7844,7 +7838,7 @@ fun AppNavigation() {
                             )
                             navController.navigate("editItem")
                         } else {
-                            setCurrentItemIdTODO(context, viewModel.uiContent.dataSet.id, it.id)
+                            setCurrentItemIdAsync(context, viewModel.uiContent.dataSet.id, it.id)
                             // TODO DELETE savePreference(dataStore, SELECTED_ITEM_ID_KEY, it.id)
                             navController.popBackStack() // return to home screen
                         }
@@ -7954,7 +7948,7 @@ fun AppNavigation() {
                         if (newSelectedDataSetId == null) {
                             navController.popBackStack()
                         } else {
-                            setCurrentDataSetIdTODO(context, newSelectedDataSetId)
+                            setCurrentDataSetIdAsync(context, newSelectedDataSetId)
                             // TODO DELETE savePreference(dataStore, SELECTED_DATA_SET_ID_KEY, newSelectedDataSetId)
                             navController.popBackStack("home", inclusive = false)
                         }
@@ -8066,7 +8060,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                             // home screen.
                             Log.d("MyAppQZ", "newSelectedItemId=$newSelectedItemId")
                             // TODO DELETE savePreference(dataStore, SELECTED_ITEM_ID_KEY, newSelectedItemId)
-                            setCurrentItemIdTODO(context, viewModel.uiContent.dataSet.id, newSelectedItemId)
+                            setCurrentItemIdAsync(context, viewModel.uiContent.dataSet.id, newSelectedItemId)
                             navController.popBackStack("home", inclusive = false)
                         }
                     })
@@ -8099,7 +8093,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                             navController.popBackStack()
                         } else {
                             // TODO DELETE savePreference(dataStore, SELECTED_SOURCE_ID_KEY, newSelectedSourceId)
-                            setCurrentSourceIdTODO(context, viewModel.uiContent.dataSet.id, newSelectedSourceId)
+                            setCurrentSourceIdAsync(context, viewModel.uiContent.dataSet.id, newSelectedSourceId)
                             navController.popBackStack("home", inclusive = false)
                         }
                     })
