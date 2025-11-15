@@ -1022,6 +1022,7 @@ fun <T> savePreference(
     // DataStore is thread-safe and handles internal synchronization, so it's safe to write from a
     // background thread even if other code reads or writes from the Main thread (e.g., via
     // viewModelScope).
+    // TODO THIS PROBABLY LEAKS COROUTINESCOPE
     CoroutineScope(Dispatchers.IO).launch {
         dataStore.edit { prefs ->
             if (value != null) prefs[key] = value else prefs.remove(key)
@@ -1032,18 +1033,21 @@ fun <T> savePreference(
 // TODO: SOME CODE DUPLICATION AND GENERAL SHITTINESS WITH OTHER VERSIONS OF THIS "SAVE" CODE
 fun setCurrentDataSetIdTODO(context: Context, dataSetId: Long) {
     // TODO AS IN SAVEPREFERENCE ABOVE, I BELIEVE THE STORE IS THREAD SAFE
+    // TODO THIS PROBABLY LEAKS COROUTINESCOPE
     CoroutineScope(Dispatchers.IO).launch {
         setCurrentDataSetId(context, dataSetId)
     }
 }
 fun setCurrentItemIdTODO(context: Context, dataSetId: Long, itemId: Long) {
     // TODO AS IN SAVEPREFERENCE ABOVE, I BELIEVE THE STORE IS THREAD SAFE
+    // TODO THIS PROBABLY LEAKS COROUTINESCOPE
     CoroutineScope(Dispatchers.IO).launch {
         setCurrentItemId(context, dataSetId, itemId)
     }
 }
 fun setCurrentSourceIdTODO(context: Context, dataSetId: Long, sourceId: Long) {
     // TODO AS IN SAVEPREFERENCE ABOVE, I BELIEVE THE STORE IS THREAD SAFE
+    // TODO THIS PROBABLY LEAKS COROUTINESCOPE
     CoroutineScope(Dispatchers.IO).launch {
         setCurrentSourceId(context, dataSetId, sourceId)
     }
