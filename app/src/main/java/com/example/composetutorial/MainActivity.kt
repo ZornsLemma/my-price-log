@@ -2867,62 +2867,68 @@ fun HomeScreenNavigationDrawer(
 
     val coroutineScope = rememberCoroutineScope()
 
-        ModalNavigationDrawer(
-            drawerState = drawerState,
-            drawerContent = {
-                // We cap the drawer width at 2/3 of the screen width because although it's not MD3
-                // standard, I really don't like the default behaviour of it taking the full screen
-                // width on a portrait smartphone. If nothing else, that makes how to dismiss it feel
-                // less discoverable.
-                ModalDrawerSheet(
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .widthIn(
-                            max = min(
-                                LocalConfiguration.current.screenWidthDp.dp * 2f / 3f,
-                                maxNavigationDrawerWidth
-                            )
+    // ENHANCE: The navigation drawer appears to flicker in very briefly on the first composition
+    // when the app is opened "cold". ChatGPT and Grok both tell me this is a known issue and offer
+    // workarounds which don't work at all. I will just live with it for now. (Not composing
+    // ModalNavigationDrawer until the first time the user clicks on the hamburger menu sort of
+    // works, but the first appearance of the drawer is then ugly/badly animated somehow, so it's
+    // probably worse than the problem it's trying to fix.)
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            // We cap the drawer width at 2/3 of the screen width because although it's not MD3
+            // standard, I really don't like the default behaviour of it taking the full screen
+            // width on a portrait smartphone. If nothing else, that makes how to dismiss it feel
+            // less discoverable.
+            ModalDrawerSheet(
+                modifier = Modifier
+                    .wrapContentWidth()
+                    .widthIn(
+                        max = min(
+                            LocalConfiguration.current.screenWidthDp.dp * 2f / 3f,
+                            maxNavigationDrawerWidth
                         )
-                ) {
-                    Column {
-                        Box(
-                            modifier = Modifier
-                                .height(oneLineListItemHeight)
-                                .padding(start = listItemHorizontalPadding),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            Text(
-                                text = "Collections",
-                                style = MaterialTheme.typography.titleSmall,
+                    )
+            ) {
+                Column {
+                    Box(
+                        modifier = Modifier
+                            .height(oneLineListItemHeight)
+                            .padding(start = listItemHorizontalPadding),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Text(
+                            text = "Collections",
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                    }
+                    LazyColumn {
+                        items(dataSetListSorted) { item ->
+                            val selected = dataSet?.id == item.id
+                            NavigationDrawerItem(
+                                modifier = Modifier
+                                    .padding(horizontal = 12.dp)
+                                    .height(oneLineListItemHeight),
+                                label = {
+                                    Text(
+                                        item.name,
+                                        // color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                },
+                                selected = selected,
+                                onClick = {
+                                    coroutineScope.launch { onSelectedDataSetIdChange(item.id); drawerState.close() }
+                                }
                             )
-                        }
-                        LazyColumn {
-                            items(dataSetListSorted) { item ->
-                                val selected = dataSet?.id == item.id
-                                NavigationDrawerItem(
-                                    modifier = Modifier
-                                        .padding(horizontal = 12.dp)
-                                        .height(oneLineListItemHeight),
-                                    label = {
-                                        Text(
-                                            item.name,
-                                            // color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                                            style = MaterialTheme.typography.labelLarge
-                                        )
-                                    },
-                                    selected = selected,
-                                    onClick = {
-                                        coroutineScope.launch { onSelectedDataSetIdChange(item.id); drawerState.close() }
-                                    }
-                                )
-                            }
                         }
                     }
                 }
             }
-        ) {
-            content()
         }
+    ) {
+        content()
+    }
 }
 
 @Composable
