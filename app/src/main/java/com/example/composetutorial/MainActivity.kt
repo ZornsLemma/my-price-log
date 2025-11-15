@@ -1076,45 +1076,6 @@ class HomeViewModel(
 
     private val app = application
 
-    // Every time getPreference() is called it returns a *new* StateFlow, which is probably not what
-    // we want. So we call it once per preference, cache the result in the ViewModel and then use
-    // that everywhere.
-    /* TODO DELETE?!
-    // TODO: I need to be careful not to forget this and call it directly.
-    private val selectedDataSetFlow = getPreference(SELECTED_DATA_SET_ID_KEY)
-    private val selectedItemIdFlow = getPreference(SELECTED_ITEM_ID_KEY)
-    private val selectedSourceIdFlow = getPreference(SELECTED_SOURCE_ID_KEY)
-    private fun <T> getPreference(key: Preferences.Key<T>): StateFlow<LoadState<T>> {
-        return app.dataStore.data
-            .map { prefs ->
-                val value = prefs[key]
-                if (value == null) LoadState.Empty else LoadState.Loaded(value)
-            }
-            .onStart { emit(LoadState.Loading) }
-            .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading)
-    }
-    */
-
-    // TODO!?!?!?!?!
-    /* TODO DELETE
-    private fun <T, R> getThing(transform: suspend (T) -> R): StateFlow<LoadState<R>>
-    {
-        val TODO =  app.userPreferencesStore.data.map(transform)
-
-    }
-*/
-
-    /* TODO DELETE?
-    fun <T> savePreference(key: Preferences.Key<T>, value: T?) {
-        viewModelScope.launch {
-            app.dataStore.edit { prefs ->
-                if (value != null) prefs[key] = value else prefs.remove(key)
-            }
-        }
-    }
-    */
-
-    // TODO!??! FACTOR OUT COMMONALITY?
     fun setCurrentDataSetId(dataSetId: Long) {
         setCurrentDataSetIdAsync(app, dataSetId)
     }
@@ -1131,10 +1092,7 @@ class HomeViewModel(
             }
     }
 
-
-    private fun <T> Flow<T>.asLoadState(
-        // TODO: DELETE initial: LoadState<T> = LoadState.Loading
-    ): StateFlow<LoadState<T>> = this
+    private fun <T> Flow<T>.asLoadState(): StateFlow<LoadState<T>> = this
         .map<T, LoadState<T>> { LoadState.Loaded(it) }
         .distinctUntilChanged()
         .onStart { emit(LoadState.Loading) }
@@ -1143,52 +1101,16 @@ class HomeViewModel(
     private val prefsFlow = app.userPreferencesStore.data
         .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
-    // TODO!?!?!?!
     private val selectedDataSetIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
         .map { it.currentDataSetId }
         .asLoadState()
-    /* TODO DELETE?
-    private val selectedDataSetFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
-        LoadState.Loaded(prefs.currentDataSetId) as LoadState<Long> }
-        .distinctUntilChanged()
-        .onStart { emit(LoadState.Loading as LoadState<Long>) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading as LoadState<Long>)
-        */
 
-    // TODO!?!?!? !
-
-
-    /* TODO DELETE
-    private val selectedItemIdFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
-        Pair(
-            prefs.currentDataSetId,
-            prefs.currentItemIdForDataSetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
-        )
-        }
-        .distinctUntilChanged()
-        .map { LoadState.Loaded(it.second) as LoadState<Long> }
-        .onStart { emit(LoadState.Loading as LoadState<Long>) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading as LoadState<Long>)
-        */
     private val selectedItemIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
         .map { prefs ->
             prefs.currentItemIdForDataSetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
         }
         .asLoadState()
 
-    // TODO!?!?!?!
-    /* TODO DELETE?
-    private val selectedSourceIdFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
-        Pair(
-            prefs.currentDataSetId,
-            prefs.currentSourceIdForDataSetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
-        )
-    }
-        .distinctUntilChanged()
-        .map { LoadState.Loaded(it.second) as LoadState<Long> }
-        .onStart { emit(LoadState.Loading as LoadState<Long>) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading as LoadState<Long>)
-        */
     private val selectedSourceIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
         .map { prefs ->
             prefs.currentSourceIdForDataSetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
