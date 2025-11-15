@@ -668,26 +668,20 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
 
 // TODO!?!?!?! SCOPE FOR FACTORING OUT COMMONALITY?
 suspend fun setCurrentDataSetId(context: Context, dataSetId: Long) {
-    context.userPreferencesStore.updateData { prefs ->
-        prefs.toBuilder()
-            .setCurrentDataSetId(dataSetId)
-            .build()
-    }
+    updateUserPreferences(context) { builder -> builder.setCurrentDataSetId(dataSetId) }
 }
+
 suspend fun setCurrentItemId(context: Context, dataSetId: Long, itemId: Long) {
-    context.userPreferencesStore.updateData { prefs ->
-        prefs.toBuilder()
-            .putCurrentItemIdForDatasetId(dataSetId, itemId)
-            .build()
-    }
+    updateUserPreferences(context) { builder -> builder.putCurrentItemIdForDataSetId(dataSetId, itemId) }
 }
 
 suspend fun setCurrentSourceId(context: Context, dataSetId: Long, sourceId: Long?) {
+    updateUserPreferences(context) { builder -> builder.putCurrentSourceIdForDataSetId(dataSetId, sourceId ?: -1L) } // TODO: _1L for null is a bit of a hack - we also don't do any special handling of -1 when we read this "pref", although in practice it probably works fine - come back to this later
+}
+
+suspend fun updateUserPreferences(context: Context, update: (UserPrefs.UserPreferences.Builder) -> Unit) {
     context.userPreferencesStore.updateData { prefs ->
-        prefs.toBuilder()
-            .putCurrentSourceIdForDatasetId(dataSetId, sourceId ?: -1L) // TODO: -1L for null is a bit of a hack - we also don't do any special handlig of -1 on the way out when we read this value - it will all probably work but should come back to this later
-            .build()
-    }
+        prefs.toBuilder().apply(update).build() }
 }
 
 
@@ -1164,7 +1158,7 @@ class HomeViewModel(
     private val newSelectedItemIdFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
         Pair(
             prefs.currentDataSetId,
-            prefs.currentItemIdForDatasetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
+            prefs.currentItemIdForDataSetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
         )
         }
         .distinctUntilChanged()
@@ -1176,7 +1170,7 @@ class HomeViewModel(
     private val newSelectedSourceIdFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
         Pair(
             prefs.currentDataSetId,
-            prefs.currentSourceIdForDatasetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
+            prefs.currentSourceIdForDataSetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
         )
     }
         .distinctUntilChanged()
