@@ -253,6 +253,7 @@ import com.example.composetutorial.domain.getRelevantUnitFamilies
 import com.example.composetutorial.domain.withFriendlyDenominator
 import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.domain.Repository
+import com.example.composetutorial.domain.format
 import com.example.composetutorial.models.toEditable
 import com.example.composetutorial.ui.components.rememberValidationInputHandle
 import com.example.composetutorial.ui.components.requestUserAttention
@@ -1392,7 +1393,7 @@ class HomeViewModel(
         viewModelScope.launch {
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
-                delay(5000) // TODO TEMP HACK
+                //delay(5000) // TODO TEMP HACK
                 repository.updateOrInsertPrice(newPrice)
                 previousPrice.value = price
                 asyncOperationStatus.update(AsyncOperationStatus.Success(null))
@@ -1407,7 +1408,7 @@ class HomeViewModel(
         viewModelScope.launch {
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
-                delay(5000) // TODO TEMP HACK
+                //delay(5000) // TODO TEMP HACK
                 repository.revertPrice(
                     priceBeforeRevert = priceBeforeRevert,
                     priceAfterRevert = priceAfterRevert
@@ -1425,7 +1426,7 @@ class HomeViewModel(
         viewModelScope.launch {
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
-                delay(5000) // TODO TEMP HACK
+                //delay(5000) // TODO TEMP HACK
                 repository.deletePriceById(price.id)
                 previousPrice.value = null
                 asyncOperationStatus.update(AsyncOperationStatus.Success(null))
@@ -1890,16 +1891,6 @@ fun formatPrice(price: Double, dataSet: DataSet, locale: Locale): String {
 fun Double.roundTo(decimalPlaces: Int): Double {
     val factor = 10.0.pow(decimalPlaces)
     return kotlin.math.round(this * factor) / factor
-}
-
-// TODO: Move into UnitPrice.kt? Make an extension fnction on  UnitPrice? Or just a member?
-fun formatUnitPrice(unitPrice: UnitPrice, dataSet: DataSet, locale: Locale): String {
-    return "${formatPrice(
-            unitPrice.numerator,
-            dataSet,
-            locale
-        )
-    }${unitPrice.denominator.perSymbol}${unitPrice.denominator.symbol}"
 }
 
 // ENHANCE: Note that selectedId is not used. I would like to use this to focus the previously
@@ -8148,15 +8139,13 @@ fun PackPriceAndSizeRow(
         // standard dps or rounding up instead of to nearest so the value isn't zero) are probably
         // worse.
         Log.d("MyAppQA", "calling formatUnitPrice $price $measure $selectedUnitPriceUnit")
-        val unitPriceString = formatUnitPrice(
+        val unitPriceString =
             UnitPrice.calculate(
                 price,
                 count,
                 measure,
                 selectedUnitPriceUnit,
-            ), dataSet,
-            LocalConfiguration.current.locales[0]
-        )
+            ).format(dataSet,LocalConfiguration.current.locales[0])
         LabeledItemWithDropdown(
             modifier = Modifier.weight(0.4f), label = "Unit price",
             dropdownContentDescription = "Select unit",

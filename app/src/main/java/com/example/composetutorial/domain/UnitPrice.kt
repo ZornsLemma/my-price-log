@@ -2,6 +2,8 @@ package com.example.composetutorial.domain
 
 import android.util.Log
 import com.example.composetutorial.baseUnitForQuantityType
+import com.example.composetutorial.formatPrice
+import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.myRequire
 import com.example.composetutorial.roundTo
 import java.util.Locale
@@ -90,3 +92,11 @@ fun UnitPrice.withFriendlyDenominator(
     }
     return bestUnitPrice!!
 }
+
+fun UnitPrice.format(dataSet: DataSet, locale: Locale) =
+    "${formatPrice(
+        numerator,
+        dataSet,
+        locale
+    )
+    }${denominator.perSymbol}${denominator.symbol}"
