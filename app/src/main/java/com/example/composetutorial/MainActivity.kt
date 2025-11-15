@@ -8454,7 +8454,6 @@ fun DataSet.createCurrencyFormat(locale: Locale): CurrencyFormat {
 fun getCurrencyDecimalPlaces(dataSet: DataSet) =
     Currency.getInstance(dataSet.currencyCode).defaultFractionDigits
 
-// TODO: Just possibly this could be used in the consistency hell stuff in home screen's flow pipeline
 data class Versioned<T>(
     val version: Long,
     val value: T
@@ -8468,6 +8467,7 @@ fun <T> Flow<T>.withVersion(): Flow<Versioned<T>> = flow {
     }
 }
 
+// TODO: SHOULD THIS BE A COMPANION OBJECT FUNCTION OR SOMETHING?
 fun <T> initialVersioned(initialValue: T): Versioned<T> =
     Versioned(version = -1L, value = initialValue)
 
@@ -8795,7 +8795,7 @@ Log.d("MyApp", baz.toString())
 // well-thought-out ones if that is not inefficient.
 
 // TODO: Should we remember current product and source (remember they *may* be null anyway) for each
-// data set?
+// data set? TODONOW
 
 // ENHANCE: Maybe I should have a settings option which completely hides or just disables all the
 // "delete" buttons. Users can turn that off if it makes them feel safer. We could possibly, if it
