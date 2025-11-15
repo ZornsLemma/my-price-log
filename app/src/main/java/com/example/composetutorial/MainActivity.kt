@@ -2,6 +2,7 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
 import androidx.datastore.core.DataStore
@@ -277,6 +278,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.merge
@@ -799,9 +801,11 @@ class MyApplication : Application() {
         super.onCreate()
 
         CoroutineScope(Dispatchers.IO).launch {
-            // TODO: ChatGPT code - may want to tweak keys or style of sharedPrefs stuff to match my other uses
-            val sharedPrefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
-            if (!sharedPrefs.getBoolean("demo_data_inserted", false)) {
+            val demoDataInsertedKey = booleanPreferencesKey("demo_data_inserted") // TODO: MOVE TO SOME MASTER LIST OF KEYS!?
+            val demoDataInserted = dataStore.data
+                .map { prefs -> prefs[demoDataInsertedKey] ?: false }
+                .first()
+            if (!demoDataInserted) {
                 val db = AppDatabase.getDatabase(this@MyApplication)
 
                 db.withTransaction {
@@ -820,7 +824,7 @@ class MyApplication : Application() {
                     populateDemoData(repository, this@MyApplication)
                 }
 
-                sharedPrefs.edit().putBoolean("demo_data_inserted", true).apply()
+                dataStore.edit() { it[demoDataInsertedKey] = true }
             }
         }
     }
