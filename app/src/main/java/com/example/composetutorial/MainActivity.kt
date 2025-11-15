@@ -1083,7 +1083,6 @@ class HomeViewModel(
     private val selectedDataSetFlow = getPreference(SELECTED_DATA_SET_ID_KEY)
     private val selectedItemIdFlow = getPreference(SELECTED_ITEM_ID_KEY)
     private val selectedSourceIdFlow = getPreference(SELECTED_SOURCE_ID_KEY)
-    */
     private fun <T> getPreference(key: Preferences.Key<T>): StateFlow<LoadState<T>> {
         return app.dataStore.data
             .map { prefs ->
@@ -1093,6 +1092,7 @@ class HomeViewModel(
             .onStart { emit(LoadState.Loading) }
             .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading)
     }
+    */
 
     // TODO!?!?!?!?!
     /* TODO DELETE
@@ -1118,13 +1118,13 @@ class HomeViewModel(
         setCurrentDataSetIdAsync(app, dataSetId)
     }
     fun setCurrentItemId(itemId: Long) {
-            val dataSetId = newSelectedDataSetFlow.value.valueOrNull()
+            val dataSetId = selectedDataSetFlow.value.valueOrNull()
             if (dataSetId != null) { // TODO: Not sure this is really possible?! Harmless but can we avoid?
                 setCurrentItemIdAsync(app, dataSetId, itemId)
         }
     }
     fun setCurrentSourceId(sourceId: Long?) {
-            val dataSetId = newSelectedDataSetFlow.value.valueOrNull()
+            val dataSetId = selectedDataSetFlow.value.valueOrNull()
             if (dataSetId != null) { // TODO: Not sure this is really possible?! Harmless but can we avoid?
                 setCurrentSourceIdAsync(app, dataSetId, sourceId)
             }
@@ -1134,22 +1134,14 @@ class HomeViewModel(
     // TODO:IF THE FOLLOWING LIVE, WE MAY BE ABLE TO FACTOR SOME COMMONALITY OUT, AND THAT MAY EVEN HELP ALL THE CASTING SHIT
 
     // TODO!?!?!?!
-    private val newSelectedDataSetFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
+    private val selectedDataSetFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
         LoadState.Loaded(prefs.currentDataSetId) as LoadState<Long> }
         .distinctUntilChanged()
         .onStart { emit(LoadState.Loading as LoadState<Long>) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading as LoadState<Long>)
 
-    /* TODO!?!?
-    private val newSelectedItemIdFlow: Flow<LoadState<Long>> =
-        combine(app.userPreferencesStore.data, newSelectedDataSetFlow) {
-            prefs, dataSetIdState ->
-
-        }
-        */
-
     // TODO!?!?!?!
-    private val newSelectedItemIdFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
+    private val selectedItemIdFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
         Pair(
             prefs.currentDataSetId,
             prefs.currentItemIdForDataSetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
@@ -1161,7 +1153,7 @@ class HomeViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading as LoadState<Long>)
 
     // TODO!?!?!?!
-    private val newSelectedSourceIdFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
+    private val selectedSourceIdFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
         Pair(
             prefs.currentDataSetId,
             prefs.currentSourceIdForDataSetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
@@ -1192,7 +1184,7 @@ class HomeViewModel(
 
         val dataSetFlow = repository.getAllDataSets()
 
-        val dataSetOnlyDatabaseFlow = newSelectedDataSetFlow.flatMapLatest { dataSetIdState ->
+        val dataSetOnlyDatabaseFlow = selectedDataSetFlow.flatMapLatest { dataSetIdState ->
             // dataSetId can be null here (e.g. during startup when we haven't yet got the
             // preference yet, and maybe also if the user deletes all the data in the database) so
             // we need to deal with it. I think it would be wrong to use filterNotNull(), because we
@@ -1220,8 +1212,8 @@ class HomeViewModel(
         }
 
         val dataSetIdAndItemIdFlow = combine(
-            newSelectedDataSetFlow,
-            newSelectedItemIdFlow,
+            selectedDataSetFlow,
+            selectedItemIdFlow,
             ::Pair
         )
 
@@ -1257,14 +1249,14 @@ class HomeViewModel(
             ::Triple)
 
         val allUserInputFlow = combine(
-            newSelectedDataSetFlow,
-            newSelectedItemIdFlow,
-            newSelectedSourceIdFlow,
+            selectedDataSetFlow,
+            selectedItemIdFlow,
+            selectedSourceIdFlow,
             ::Triple
         )
 
         val todoRenameMeFlow = combine(
-            newSelectedSourceIdFlow,
+            selectedSourceIdFlow,
             combinedDatabaseFlow,
             settingsRepository.priceAgeSettingsFlow
         ) { _, databaseResults, priceAgeSettings -> Pair(databaseResults, priceAgeSettings) }
@@ -1284,9 +1276,9 @@ class HomeViewModel(
                 // like this, accept a mixture of stale values or re-run all your queries every
                 // single time even if most of them haven't had a parameter change. Maybe I am doing
                 // something silly.
-                val dataSetIdState = newSelectedDataSetFlow.value
-                val itemIdState = newSelectedItemIdFlow.value
-                val sourceIdState = newSelectedSourceIdFlow.value
+                val dataSetIdState = selectedDataSetFlow.value
+                val itemIdState = selectedItemIdFlow.value
+                val sourceIdState = selectedSourceIdFlow.value
                 val dataSetId = dataSetIdState.valueOrNull()
                 val itemId = itemIdState.valueOrNull()
                 val sourceId = sourceIdState.valueOrNull()
@@ -1319,7 +1311,7 @@ class HomeViewModel(
 
                     Log.d(
                         "MyFlow",
-                        "completeUIStateFlow dataSetId ${newSelectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
+                        "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
                     )
 
                     if (dataSet != null) {
