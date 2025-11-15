@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+message UserPreferences {
+  // The current data set ID the user has selected.
+  int64 current_data_set_id = 1;
+
+  // The current item ID for a data set ID.
+  map<int64, int64> current_item_id_for_dataset_id = 2;
+
+  // The current source ID for a data set ID.
+  map<int64, int64> current_source_id_for_dataset_id = 3;
+}

@@ -6,6 +6,7 @@ plugins {
     id("kotlin-parcelize")
     id("com.google.devtools.ksp") version "2.0.21-1.0.28"
     id("com.diffplug.spotless") version "8.0.0"
+    id("com.google.protobuf") version "0.9.5"
 }
 
 spotless {
@@ -13,6 +14,20 @@ spotless {
         target("**/*.kt")
         // ktfmt() // Google style, no config
         ktfmt().kotlinlangStyle() // 4-space indents
+    }
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:4.27.1"  // Latest protoc
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                create("java") { option("lite") }  // Enables lite mode
+                // TODO GROK SAYS THIS BREAKS STUFF AND IT APPEARS TO BE RIGHT create("kotlin")  // Optional: Generates Kotlin extensions (cleaner code)
+            }
+        }
     }
 }
 
@@ -93,4 +108,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    // TODO: Switch following to use same style as rest
+    implementation("androidx.datastore:datastore:1.1.0")
+    implementation("androidx.datastore:datastore-core:1.1.1")
+    implementation("com.google.protobuf:protobuf-javalite:3.23.4")
 }

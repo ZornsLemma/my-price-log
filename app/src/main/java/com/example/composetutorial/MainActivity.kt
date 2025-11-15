@@ -2,6 +2,14 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import androidx.datastore.core.CorruptionException
+import androidx.datastore.core.Serializer
+import androidx.datastore.core.DataStore
+//import androidx.datastore.core.dataStore
+//import com.example.composetutorial.datastore.proto.UserPrefs
+//import com.example.composetutorial.datastore.proto.UserPrefs.DatasetSelection
+import com.google.protobuf.InvalidProtocolBufferException
+import UserPrefs
 import com.example.composetutorial.ui.components.ValidationInputHandle
 import com.example.composetutorial.domain.UnitFamily
 import com.example.composetutorial.domain.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily
@@ -38,7 +46,6 @@ import kotlinx.coroutines.flow.combine
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import java.time.Duration
 //import androidx.compose.foundation.layout.*
@@ -198,6 +205,7 @@ import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.times
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import androidx.datastore.dataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -268,6 +276,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -280,6 +289,8 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import java.text.DecimalFormatSymbols
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -642,12 +653,41 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     )
     // Set some defaults for the first run so the user isn't left with a screen with no data
     // wondering what to do.
+    // TODO: NOT JUST HERE - I AM A BIT MIXED UP ON "SET/GET CURRENT X" vs "SET/GET SELECTED X" AS FAR AS TERMINOLOGY GOES - NEED TO BE CONSISTENT
     context.dataStore.edit { prefs ->
+        setCurrentDataSetId(context, dataSetId)
+        setCurrentItemId(context, dataSetId, itemIdTeabags)
+        setCurrentSourceId(context, dataSetId, sourceIdSuperiorStore)
+        /* TODO DELETE?
         prefs[SELECTED_DATA_SET_ID_KEY] = dataSetId
         prefs[SELECTED_ITEM_ID_KEY] = itemIdTeabags
         prefs[SELECTED_SOURCE_ID_KEY] = sourceIdSuperiorStore
+        */
     }
+}
 
+// TODO!?!?!?! SCOPE FOR FACTORING OUT COMMONALITY?
+suspend fun setCurrentDataSetId(context: Context, dataSetId: Long) {
+    context.userPreferencesStore.updateData { prefs ->
+        prefs.toBuilder()
+            .setCurrentDataSetId(dataSetId)
+            .build()
+    }
+}
+suspend fun setCurrentItemId(context: Context, dataSetId: Long, itemId: Long) {
+    context.userPreferencesStore.updateData { prefs ->
+        prefs.toBuilder()
+            .putCurrentItemIdForDatasetId(dataSetId, itemId)
+            .build()
+    }
+}
+
+suspend fun setCurrentSourceId(context: Context, dataSetId: Long, sourceId: Long?) {
+    context.userPreferencesStore.updateData { prefs ->
+        prefs.toBuilder()
+            .putCurrentSourceIdForDatasetId(dataSetId, sourceId ?: -1L) // TODO: -1L for null is a bit of a hack - we also don't do any special handlig of -1 on the way out when we read this value - it will all probably work but should come back to this later
+            .build()
+    }
 }
 
 
@@ -989,6 +1029,27 @@ fun <T> savePreference(
     }
 }
 
+// TODO: SOME CODE DUPLICATION AND GENERAL SHITTINESS WITH OTHER VERSIONS OF THIS "SAVE" CODE
+fun setCurrentDataSetIdTODO(context: Context, dataSetId: Long) {
+    // TODO AS IN SAVEPREFERENCE ABOVE, I BELIEVE THE STORE IS THREAD SAFE
+    CoroutineScope(Dispatchers.IO).launch {
+        setCurrentDataSetId(context, dataSetId)
+    }
+}
+fun setCurrentItemIdTODO(context: Context, dataSetId: Long, itemId: Long) {
+    // TODO AS IN SAVEPREFERENCE ABOVE, I BELIEVE THE STORE IS THREAD SAFE
+    CoroutineScope(Dispatchers.IO).launch {
+        setCurrentItemId(context, dataSetId, itemId)
+    }
+}
+fun setCurrentSourceIdTODO(context: Context, dataSetId: Long, sourceId: Long) {
+    // TODO AS IN SAVEPREFERENCE ABOVE, I BELIEVE THE STORE IS THREAD SAFE
+    CoroutineScope(Dispatchers.IO).launch {
+        setCurrentSourceId(context, dataSetId, sourceId)
+    }
+}
+
+
 // TODO: ChatGPT magic
 sealed interface LoadState<out T> {
     data object Loading : LoadState<Nothing>
@@ -1029,10 +1090,12 @@ class HomeViewModel(
     // Every time getPreference() is called it returns a *new* StateFlow, which is probably not what
     // we want. So we call it once per preference, cache the result in the ViewModel and then use
     // that everywhere.
+    /* TODO DELETE?!
     // TODO: I need to be careful not to forget this and call it directly.
     private val selectedDataSetFlow = getPreference(SELECTED_DATA_SET_ID_KEY)
     private val selectedItemIdFlow = getPreference(SELECTED_ITEM_ID_KEY)
     private val selectedSourceIdFlow = getPreference(SELECTED_SOURCE_ID_KEY)
+    */
     private fun <T> getPreference(key: Preferences.Key<T>): StateFlow<LoadState<T>> {
         return app.dataStore.data
             .map { prefs ->
@@ -1043,6 +1106,16 @@ class HomeViewModel(
             .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading)
     }
 
+    // TODO!?!?!?!?!
+    /* TODO DELETE
+    private fun <T, R> getThing(transform: suspend (T) -> R): StateFlow<LoadState<R>>
+    {
+        val TODO =  app.userPreferencesStore.data.map(transform)
+
+    }
+*/
+
+    /* TODO DELETE?
     fun <T> savePreference(key: Preferences.Key<T>, value: T?) {
         viewModelScope.launch {
             app.dataStore.edit { prefs ->
@@ -1050,6 +1123,72 @@ class HomeViewModel(
             }
         }
     }
+    */
+
+    // TODO!??! FACTOR OUT COMMONALITY?
+    fun setCurrentDataSetId(dataSetId: Long) {
+        viewModelScope.launch {
+            setCurrentDataSetId(app, dataSetId)
+        }
+    }
+    fun setCurrentItemId(itemId: Long) {
+        viewModelScope.launch {
+            val dataSetId = newSelectedDataSetFlow.value.valueOrNull()
+            if (dataSetId != null) { // TODO: Not sure this is really possible?! Harmless but can we avoid?
+                setCurrentItemId(app, dataSetId, itemId)
+            }
+        }
+    }
+    fun setCurrentSourceId(sourceId: Long?) {
+        viewModelScope.launch {
+            val dataSetId = newSelectedDataSetFlow.value.valueOrNull()
+            if (dataSetId != null) { // TODO: Not sure this is really possible?! Harmless but can we avoid?
+                setCurrentSourceId(app, dataSetId, sourceId)
+            }
+        }
+    }
+
+
+    // TODO:IF THE FOLLOWING LIVE, WE MAY BE ABLE TO FACTOR SOME COMMONALITY OUT, AND THAT MAY EVEN HELP ALL THE CASTING SHIT
+
+    // TODO!?!?!?!
+    private val newSelectedDataSetFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
+        LoadState.Loaded(prefs.currentDataSetId) as LoadState<Long> }
+        .distinctUntilChanged()
+        .onStart { emit(LoadState.Loading as LoadState<Long>) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading as LoadState<Long>)
+
+    /* TODO!?!?
+    private val newSelectedItemIdFlow: Flow<LoadState<Long>> =
+        combine(app.userPreferencesStore.data, newSelectedDataSetFlow) {
+            prefs, dataSetIdState ->
+
+        }
+        */
+
+    // TODO!?!?!?!
+    private val newSelectedItemIdFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
+        Pair(
+            prefs.currentDataSetId,
+            prefs.currentItemIdForDatasetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
+        )
+        }
+        .distinctUntilChanged()
+        .map { LoadState.Loaded(it.second) as LoadState<Long> }
+        .onStart { emit(LoadState.Loading as LoadState<Long>) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading as LoadState<Long>)
+
+    // TODO!?!?!?!
+    private val newSelectedSourceIdFlow: StateFlow<LoadState<Long>> = app.userPreferencesStore.data.map { prefs ->
+        Pair(
+            prefs.currentDataSetId,
+            prefs.currentSourceIdForDatasetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
+        )
+    }
+        .distinctUntilChanged()
+        .map { LoadState.Loaded(it.second) as LoadState<Long> }
+        .onStart { emit(LoadState.Loading as LoadState<Long>) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading as LoadState<Long>)
 
     // TODO: Rename UIContent->HomeScreenUIContent and/or scope it to this ViewModel?
     private val _uiState = MutableStateFlow(
@@ -1071,7 +1210,7 @@ class HomeViewModel(
 
         val dataSetFlow = repository.getAllDataSets()
 
-        val dataSetOnlyDatabaseFlow = selectedDataSetFlow.flatMapLatest { dataSetIdState ->
+        val dataSetOnlyDatabaseFlow = newSelectedDataSetFlow.flatMapLatest { dataSetIdState ->
             // dataSetId can be null here (e.g. during startup when we haven't yet got the
             // preference yet, and maybe also if the user deletes all the data in the database) so
             // we need to deal with it. I think it would be wrong to use filterNotNull(), because we
@@ -1099,8 +1238,8 @@ class HomeViewModel(
         }
 
         val dataSetIdAndItemIdFlow = combine(
-            selectedDataSetFlow,
-            selectedItemIdFlow,
+            newSelectedDataSetFlow,
+            newSelectedItemIdFlow,
             ::Pair
         )
 
@@ -1136,14 +1275,14 @@ class HomeViewModel(
             ::Triple)
 
         val allUserInputFlow = combine(
-            selectedDataSetFlow,
-            selectedItemIdFlow,
-            selectedSourceIdFlow,
+            newSelectedDataSetFlow,
+            newSelectedItemIdFlow,
+            newSelectedSourceIdFlow,
             ::Triple
         )
 
         val todoRenameMeFlow = combine(
-            selectedSourceIdFlow,
+            newSelectedSourceIdFlow,
             combinedDatabaseFlow,
             settingsRepository.priceAgeSettingsFlow
         ) { _, databaseResults, priceAgeSettings -> Pair(databaseResults, priceAgeSettings) }
@@ -1163,9 +1302,9 @@ class HomeViewModel(
                 // like this, accept a mixture of stale values or re-run all your queries every
                 // single time even if most of them haven't had a parameter change. Maybe I am doing
                 // something silly.
-                val dataSetIdState = selectedDataSetFlow.value
-                val itemIdState = selectedItemIdFlow.value
-                val sourceIdState = selectedSourceIdFlow.value
+                val dataSetIdState = newSelectedDataSetFlow.value
+                val itemIdState = newSelectedItemIdFlow.value
+                val sourceIdState = newSelectedSourceIdFlow.value
                 val dataSetId = dataSetIdState.valueOrNull()
                 val itemId = itemIdState.valueOrNull()
                 val sourceId = sourceIdState.valueOrNull()
@@ -1198,7 +1337,7 @@ class HomeViewModel(
 
                     Log.d(
                         "MyFlow",
-                        "completeUIStateFlow dataSetId ${selectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
+                        "completeUIStateFlow dataSetId ${newSelectedDataSetFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
                     )
 
                     if (dataSet != null) {
@@ -2421,9 +2560,11 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
 }
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+/* TODO DELETE?
 val SELECTED_DATA_SET_ID_KEY = longPreferencesKey("selected_data_set_id")
 val SELECTED_ITEM_ID_KEY = longPreferencesKey("selected_item_id")
 val SELECTED_SOURCE_ID_KEY = longPreferencesKey("selected_source_id")
+*/
 // TODO: MOVE THE FOLLOWING!?
 val STALE_PRICE_THRESHOLD_KEY = intPreferencesKey("stale_price_threshold") // TODO: RENAME THIS AND ALL ASSOCIATED VARS TO INCLUDE "DAYS"?
 val ANCIENT_PRICE_THRESHOLD_DAYS_KEY = intPreferencesKey("ancient_price_threshold_days")
@@ -2714,20 +2855,20 @@ fun HomeScreen(
             uiContent.dataSetList,
             onSelectedDataSetIdChange = {
                 vm.previousPrice.value = null
-                vm.savePreference(SELECTED_DATA_SET_ID_KEY, it)
+                vm.setCurrentDataSetId(it)
             },
             uiContent.item,
             uiContent.itemList,
             onSelectedItemIdChange = {
                 vm.previousPrice.value = null
-                vm.savePreference(SELECTED_ITEM_ID_KEY, it)
+                vm.setCurrentItemId(it)
             },
             uiContent.sourceIdState,
             uiContent.source,
             uiContent.sourceList,
             onSelectedSourceIdChange = {
                 vm.previousPrice.value = null
-                vm.savePreference(SELECTED_SOURCE_ID_KEY, it)
+                vm.setCurrentSourceId(it)
             },
             uiContent.priceAnalysis,
             onEditPriceClick = { onEditPriceClick(uiContent) },
@@ -7689,6 +7830,7 @@ fun AppNavigation() {
                 }
             ) { viewModel ->
                 val dataStore = LocalContext.current.applicationContext.dataStore
+                val context = LocalContext.current.applicationContext
                 GeneralSelectorScreen(
                     viewModel,
                     navController,
@@ -7714,7 +7856,8 @@ fun AppNavigation() {
                             )
                             navController.navigate("editItem")
                         } else {
-                            savePreference(dataStore, SELECTED_ITEM_ID_KEY, it.id)
+                            setCurrentItemIdTODO(context, viewModel.uiContent.dataSet.id, it.id)
+                            // TODO DELETE savePreference(dataStore, SELECTED_ITEM_ID_KEY, it.id)
                             navController.popBackStack() // return to home screen
                         }
                     },
@@ -7816,13 +7959,15 @@ fun AppNavigation() {
                 }
             ) { viewModel ->
                 val dataStore = LocalContext.current.applicationContext.dataStore
+                val context = LocalContext.current.applicationContext
                 EditDataSetScreen(
                     viewModel, navController,
                     requestClose = { newSelectedDataSetId ->
                         if (newSelectedDataSetId == null) {
                             navController.popBackStack()
                         } else {
-                            savePreference(dataStore, SELECTED_DATA_SET_ID_KEY, newSelectedDataSetId)
+                            setCurrentDataSetIdTODO(context, newSelectedDataSetId)
+                            // TODO DELETE savePreference(dataStore, SELECTED_DATA_SET_ID_KEY, newSelectedDataSetId)
                             navController.popBackStack("home", inclusive = false)
                         }
                     })
@@ -7932,7 +8077,8 @@ This may be complete crap. The example of how to use it is probably as long as t
                             // The used saved the edit, so select the edited item and return to the
                             // home screen.
                             Log.d("MyAppQZ", "newSelectedItemId=$newSelectedItemId")
-                            savePreference(dataStore, SELECTED_ITEM_ID_KEY, newSelectedItemId)
+                            // TODO DELETE savePreference(dataStore, SELECTED_ITEM_ID_KEY, newSelectedItemId)
+                            setCurrentItemIdTODO(context, viewModel.uiContent.dataSet.id, newSelectedItemId)
                             navController.popBackStack("home", inclusive = false)
                         }
                     })
@@ -7957,13 +8103,15 @@ This may be complete crap. The example of how to use it is probably as long as t
                 }
             ) { viewModel ->
                 val dataStore = LocalContext.current.applicationContext.dataStore
+                val context = LocalContext.current.applicationContext
                 EditSourceScreen(
                     viewModel, navController,
                     requestClose = { newSelectedSourceId ->
                         if (newSelectedSourceId == null) {
                             navController.popBackStack()
                         } else {
-                            savePreference(dataStore, SELECTED_SOURCE_ID_KEY, newSelectedSourceId)
+                            // TODO DELETE savePreference(dataStore, SELECTED_SOURCE_ID_KEY, newSelectedSourceId)
+                            setCurrentSourceIdTODO(context, viewModel.uiContent.dataSet.id, newSelectedSourceId)
                             navController.popBackStack("home", inclusive = false)
                         }
                     })
@@ -8749,6 +8897,29 @@ fun OnAppLifecycleEvent(
         }
     }
 }
+
+// TODO: ChatGPT/Grok magic
+object UserPreferencesSerializer : Serializer<UserPrefs.UserPreferences> {
+    override val defaultValue: UserPrefs.UserPreferences = UserPrefs.UserPreferences.getDefaultInstance()
+
+    override suspend fun readFrom(input: InputStream): UserPrefs.UserPreferences {
+        try {
+            return UserPrefs.UserPreferences.parseFrom(input)
+        } catch (exception: InvalidProtocolBufferException) {
+            throw CorruptionException("Cannot read proto.", exception)
+        }
+    }
+
+    override suspend fun writeTo(t: UserPrefs.UserPreferences, output: OutputStream) {
+        t.writeTo(output)
+    }
+}
+
+// TODO: ChatGPT magic
+val Context.userPreferencesStore: DataStore<UserPrefs.UserPreferences> by dataStore(
+    fileName = "user_prefs.pb",
+    serializer = UserPreferencesSerializer
+)
 
 /* TODO TEMP TEST CODE FOR MEASUREDVALUE
 val foo = MeasuredValue(5.0, MeasurementUnit.KG)
