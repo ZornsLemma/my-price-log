@@ -252,6 +252,7 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.createSavedStateHandle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.composetutorial.debug.DebugFlags
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.QuantityType
 import com.example.composetutorial.models.RepositoryImpl
@@ -355,21 +356,13 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(context: Context): AppDatabase {
             // if the Instance is not null, return it, otherwise create a new database instance.
             return Instance ?: synchronized(this) {
-                Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME)
-                    // TODO: Disable query logging in final version of course
-                    .setQueryCallback({ sqlQuery, bindArgs ->
-                        Log.d("MyApp", "SQL Query: $sqlQuery SQL Args: $bindArgs")
-                    }, Executors.newSingleThreadExecutor())
-                    /* TODO DELETE
-                    .addCallback(object : Callback() {
-                        override fun onCreate(db: SupportSQLiteDatabase) {
-                            super.onCreate(db)
-                            CoroutineScope(Dispatchers.IO).launch { populateDemoData(context) }
+                Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME).apply {
+                        if (DebugFlags.LOG_SQL) {
+                            setQueryCallback({ sqlQuery, bindArgs ->
+                                Log.d("Database", "Query: $sqlQuery | Arguments: $bindArgs")
+                            }, Executors.newSingleThreadExecutor())
                         }
-                    })
-                    */
-                    .build()
-                    .also { Instance = it }
+                    }.build().also { Instance = it }
             }
         }
 
@@ -8477,8 +8470,7 @@ fun ErrorHighlightBox(
 
             }
             .validationInputHandleBringIntoViewRequester(
-                validationTarget,
-                offset = offset + 2 * borderWidth
+                validationTarget, offset = offset + 2 * borderWidth
             )
     ) {
         content()
