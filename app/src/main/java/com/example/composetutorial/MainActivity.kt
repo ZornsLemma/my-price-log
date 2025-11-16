@@ -806,6 +806,10 @@ class MyApplication : Application() {
         super.onCreate()
 
         AppScope.io.launch {
+            // TODO: Would it be hard to do something like "if count(*) on price == 0 then insert
+            // demo data here"? That would avoid the minor hole where we die after the transaction
+            // commits but before we set the flag, and then we'd end up with a duplicate data set
+            // next time? Not a big deal but would be nice to patch if not too hard.
             val demoDataInsertedKey = booleanPreferencesKey("demo_data_inserted") // TODO: MOVE TO SOME MASTER LIST OF KEYS!?
             val demoDataInserted = dataStore.data
                 .map { prefs -> prefs[demoDataInsertedKey] ?: false }
