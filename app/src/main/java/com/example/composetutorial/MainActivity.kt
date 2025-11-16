@@ -651,6 +651,12 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
         setSelectedSourceId(context, dataSetId, sourceIdSuperiorStore)
 }
 
+// TODO MOVE
+// We could make things work so a null sourceId represents "None", but in practice it's more trouble
+// than it's worth. (We could remove the UserPreferences map entry for the data set ID key to
+// represent a null value being associated with it.)
+val sourceIdNone = -1L
+
 suspend fun setSelectedDataSetId(context: Context, dataSetId: Long) {
     updateUserPreferences(context) { builder -> builder.setSelectedDataSetId(dataSetId) }
 }
@@ -659,8 +665,8 @@ suspend fun setSelectedItemId(context: Context, dataSetId: Long, itemId: Long) {
     updateUserPreferences(context) { builder -> builder.putSelectedItemIdForDataSetId(dataSetId, itemId) }
 }
 
-suspend fun setSelectedSourceId(context: Context, dataSetId: Long, sourceId: Long?) {
-    updateUserPreferences(context) { builder -> builder.putSelectedSourceIdForDataSetId(dataSetId, sourceId ?: -1L) } // TODO: -1L for null is a bit of a hack - we also don't do any special handling of -1 when we read this "pref", although in practice it probably works fine - come back to this later
+suspend fun setSelectedSourceId(context: Context, dataSetId: Long, sourceId: Long) {
+    updateUserPreferences(context) { builder -> builder.putSelectedSourceIdForDataSetId(dataSetId, sourceId) }
 }
 
 suspend fun updateUserPreferences(context: Context, update: (UserPrefs.UserPreferences.Builder) -> Unit) {
@@ -1029,7 +1035,7 @@ fun setSelectedItemIdAsync(context: Context, dataSetId: Long, itemId: Long) {
         setSelectedItemId(context, dataSetId, itemId)
     }
 }
-fun setSelectedSourceIdAsync(context: Context, dataSetId: Long, sourceId: Long?) {
+fun setSelectedSourceIdAsync(context: Context, dataSetId: Long, sourceId: Long) {
     AppScope.io.launch {
         setSelectedSourceId(context, dataSetId, sourceId)
     }
@@ -1068,7 +1074,7 @@ class HomeViewModel(
                 setSelectedItemIdAsync(app, dataSetId, itemId)
         }
     }
-    fun setSelectedSourceId(sourceId: Long?) {
+    fun setSelectedSourceId(sourceId: Long) {
             val dataSetId = selectedDataSetIdStateFlow.value.valueOrNull()
             if (dataSetId != null) { // TODO: Not sure this is really possible?! Harmless but can we avoid?
                 setSelectedSourceIdAsync(app, dataSetId, sourceId)
@@ -1612,18 +1618,17 @@ fun ItemSourceSelector(
         // but that is probably better than the "skeleton" menu we get with no items in.
         val locale = LocalConfiguration.current.locales[0]
         val sourceListSorted = remember(sourceList, locale) {
-            listOf(Pair(-1L, "None")) + sourceList.sortedByLocale({ it.name }, locale)
+            listOf(Pair(sourceIdNone, "None")) + sourceList.sortedByLocale({ it.name }, locale)
                 .map { Pair(it.id, it.name) }
         }
         Log.d("MyApp", "sourceListSorted $sourceListSorted")
-        // ENHANCE: Did wonder if MyExposedDropdownMenuBox should allow null IDs to avoid the need
-        // for the "-1" hack here, but I really didn't want to have to make every user of it be
-        // null-tolerant when it *won't* hand you a null itself unless you gave it one in the input
-        // item list, so this is perhaps best but I'm not too sure. I did try wrapping the null
-        // inside a simple Nullable<T> so it could "pass through" MyExposedDropdownMenuBox without
-        // altering the API and I think the idea is sound but I started to run into incomprehensible
-        // "out"/covariance stuff and it just felt too much just to fix this where -1L is an easy
-        // hack.
+        // ENHANCE: I did wonder if MyExposedDropdownMenuBox should allow null IDs in "items" to
+        // avoid the need for the sourceIdNone hack here, but I really didn't want to have to make
+        // every user of it be null-tolerant when it won't hand you a null itself unless you gave it
+        // one in the input item list. I did try wrapping the null inside a simple Nullable<T> so it
+        // could "pass through" MyExposedDropdownMenuBox without altering the API and I think the
+        // idea is sound but I started to run into incomprehensible "out"/covariance stuff and it
+        // just felt too much just to fix this where sourceIdNone is an easy hack.
         key(asyncOperationStatus) { // TODO: as above
             MyExposedDropdownMenuBox(
                 modifier = Modifier
@@ -1631,10 +1636,10 @@ fun ItemSourceSelector(
                     .fillMaxWidth(),
                 // Note that if source is null, we pass that null through to selectedId so the
                 // dropdown starts off with nothing selected and the "Store" label expands to form a
-                // large "prompt". We could turn null into -1L and have "None" shown, but it's
-                // probably nicer this way.
-                selectedId = source?.id, /* ?: -1L */
-                onItemSelected = { onSelectedSourceIdChange(if (it == -1L) null else it) },
+                // large "prompt". We could turn null into sourceIdNone and have "None" shown, but
+                // it's probably nicer this way.
+                selectedId = source?.id, /* ?: sourceIdNone */
+                onItemSelected = { onSelectedSourceIdChange(if (it == sourceIdNone) null else it) },
                 enabled = asyncOperationStatus.isNotBusy(),
                 label = { Text("Store") },
                 // It's normal to have no source selected, but if there are no sources defined at
@@ -2707,7 +2712,7 @@ fun HomeScreen(
             uiContent.sourceList,
             onSelectedSourceIdChange = {
                 vm.previousPrice.value = null
-                vm.setSelectedSourceId(it)
+                vm.setSelectedSourceId(it ?: sourceIdNone)
             },
             uiContent.priceAnalysis,
             onEditPriceClick = { onEditPriceClick(uiContent) },
