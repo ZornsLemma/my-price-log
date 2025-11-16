@@ -1363,6 +1363,7 @@ class HomeViewModel(
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 //delay(5000) // TODO TEMP HACK
+                //throw IllegalStateException("TODO FAKE CONFIRM ERROR")
                 repository.updateOrInsertPrice(newPrice)
                 previousPrice.value = price
                 asyncOperationStatus.update(AsyncOperationStatus.Success(null))
@@ -2990,7 +2991,7 @@ fun HomeScreenStateManager(
     loading: Boolean,
     asyncOperationStatus: AsyncOperationStatus
 ) {
-    var showErrorDialog by rememberSaveable { mutableStateOf(false) }
+    var showErrorDialogMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         // We use buffer() here because we want to update() while we are already collecting; we
@@ -3012,9 +3013,9 @@ fun HomeScreenStateManager(
                     vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
                 }
 
-                is AsyncOperationStatus.Error -> { // TODO: We might want to destructure the parameter here so we can save/show the error
+                is AsyncOperationStatus.Error -> {
                     vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
-                    showErrorDialog = true
+                    showErrorDialogMessage = event.message
                 }
 
                 else -> {}
@@ -3047,8 +3048,8 @@ fun HomeScreenStateManager(
     // either is true we want to show the scrim.
     ScrimWithSpinner(visible = loading || asyncOperationStatus == AsyncOperationStatus.BusyForAWhile)
 
-    if (showErrorDialog) {
-        SaveErrorAlertDialog(onDismissRequest = { showErrorDialog = false })
+    if (showErrorDialogMessage != null) {
+        AsyncOperationErrorAlertDialog(onDismissRequest = { showErrorDialogMessage = null }, message = showErrorDialogMessage!!)
     }
 }
 
@@ -3805,6 +3806,7 @@ fun runGeneralEditScreenOperation(
             vm.asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation about to call perform")
+                //throw IllegalStateException("TODO TEST")
                 val id = perform()
                 Log.d("MyAppQZ", "perform() returned id $id")
                 // delay(5000) // TODO HACK - DONE AFTER PERFORM SO IT GETS A CHANCE TO SET SAVING/DELETING FLAG TO TRUE
@@ -3835,7 +3837,7 @@ fun GeneralEditScreen(
 
     val isNotBusy = saveStatus.isNotBusy()
     var showConfirmDiscardDialog by rememberSaveable { mutableStateOf(false) }
-    var showErrorDialog by rememberSaveable { mutableStateOf(false) }
+    var showErrorDialogMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var showBusySnackbar by rememberSaveable { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
@@ -3914,7 +3916,7 @@ fun GeneralEditScreen(
                     Log.d("MyAppRGE", "collected error")
                     vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
                     Log.d("MyAppRGE", "set state to idle")
-                    showErrorDialog = true
+                    showErrorDialogMessage = event.message
                 }
 
                 else -> {}
@@ -4026,8 +4028,8 @@ fun GeneralEditScreen(
     }
 
 
-    if (showErrorDialog) {
-        SaveErrorAlertDialog(onDismissRequest = { showErrorDialog = false })
+    if (showErrorDialogMessage != null) {
+        AsyncOperationErrorAlertDialog(onDismissRequest = { showErrorDialogMessage = null }, message = showErrorDialogMessage!!)
     }
 
     LaunchedEffect(showBusySnackbar) {
@@ -4041,7 +4043,7 @@ fun GeneralEditScreen(
 }
 
 @Composable
-fun SaveErrorAlertDialog(onDismissRequest: () -> Unit) {
+fun AsyncOperationErrorAlertDialog(onDismissRequest: () -> Unit, message: String) {
     // We use an AlertDialog not a snackbar here. This is a local database save which is
     // failing so it is very unlikely to be transient. We also don't want the user
     // missing the snackbar, thinking the app is buggy ("I already saved, why didn't the
@@ -4049,12 +4051,13 @@ fun SaveErrorAlertDialog(onDismissRequest: () -> Unit) {
     // have not been saved. (If transient failure was a possibility - e.g. we needed to
     // perform network activity - there might be value in showing a snackbar, maybe with
     // a fallback to an AlertDialog if things keep failing.)
-    // TODO: Do we want to "re-use" this dialog for e.g. delete errors too? If so, how will the
-    // change of wording be addressed? We may want to rename showErrorDialog to something more
-    // suggestive depending on what kinds of error this code handles.
     AlertDialog(
-        title = { Text("Unable to save changes") },
-        text = { Text("An error occurred while saving the changes.") },
+        // The title and text are generic because a) this is not really expected to happen b) we
+        // don't want to have to pass in strings saying whether this is a save or delete or
+        // something else. The message is unlikely to be user-friendly, but if this fails the
+        // chances are there's a bug rather than a transient failure anyway.
+        title = { Text("Error") },
+        text = { Text(message) },
         onDismissRequest = onDismissRequest,
         confirmButton = {
             TextButton(onClick = { onDismissRequest() }) { Text("OK") }
