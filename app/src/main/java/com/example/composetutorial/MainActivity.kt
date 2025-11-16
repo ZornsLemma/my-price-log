@@ -3412,23 +3412,16 @@ fun PriceComparisonCard(
 
 enum class CellAlignment { Start, Center, End }
 
-// TODO: ChatGPT magic but I think I do mostly understand
-/*
-@Composable
-fun rememberSyncedTextFieldValue(modelState: String): State<TextFieldValue> {
-    val tfv = remember { mutableStateOf(TextFieldValue(modelState)) }
-    if (tfv.value.text != modelState) {
-        tfv.value = TextFieldValue(modelState)
-    }
-    return tfv
-}
-*/
-// TODO: This variant means we have to allow mutability, but can use "by" in callers
+// rememberSyncedTextFieldValue() is a thin wrapper around a straight remember (as in the "val tfv
+// =" line) which re-creates the TextFieldValue if the external string changes. (I think this is
+// harmless/correct and probably reasonably good practice in general, but I'm not sure we actually
+// have a case where the external string can change independently of our TextField.)
 @Composable
 fun rememberSyncedTextFieldValue(modelState: String): MutableState<TextFieldValue> {
     val tfv = remember { mutableStateOf(TextFieldValue(modelState)) }
 
-    // If the model changes from the outside, resync tfv
+    // If the model changes from the outside, resync tfv. We don't want to do this if it's the same,
+    // as that would lose the additional cursor and selection state preserved inside tfv.
     if (tfv.value.text != modelState) {
         tfv.value = TextFieldValue(modelState)
     }
@@ -3540,6 +3533,7 @@ fun EditPriceScreen(
 
         // TODO: Can/should I do something to scroll the screen when focus enters this and the caret
         // is half-hidden?
+        // TODO DELETE var notes by  remember { mutableStateOf(TextFieldValue(uiContent.editablePrice.value.notes)) }
         var notes by rememberSyncedTextFieldValue(uiContent.editablePrice.value.notes)
         FilteredTextField(
             modifier = Modifier.fillMaxWidth(),
@@ -5389,7 +5383,7 @@ fun createOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
 // Like TextField, but with some simple logic to allow input to be filtered and discarded via an
 // onCandidateValueChange callback. It also - although this is just a convenience and isn't
 // fundamental - automatically drives the internal TextField's trailingIcon from the isError
-// parameter if it's not explictly specified.
+// parameter if it's not explicitly specified.
 @Composable
 fun FilteredTextField(
     modifier: Modifier = Modifier,
