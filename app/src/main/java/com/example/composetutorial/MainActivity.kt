@@ -168,7 +168,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -283,7 +282,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
@@ -351,25 +349,24 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         @Volatile
-        private var Instance: AppDatabase? = null
+        private var INSTANCE: AppDatabase? = null
 
         fun getDatabase(context: Context): AppDatabase {
             // if the Instance is not null, return it, otherwise create a new database instance.
-            return Instance ?: synchronized(this) {
+            return INSTANCE ?: synchronized(this) {
                 Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME).apply {
                         if (DebugFlags.LOG_SQL) {
                             setQueryCallback({ sqlQuery, bindArgs ->
                                 Log.d("Database", "Query: $sqlQuery | Arguments: $bindArgs")
                             }, Executors.newSingleThreadExecutor())
                         }
-                    }.build().also { Instance = it }
+                    }.build().also { INSTANCE = it }
             }
         }
 
-        // TODO: ChatGPT magic
         fun clearInstance() {
-            Instance?.close()
-            Instance = null
+            INSTANCE?.close()
+            INSTANCE = null
         }
     }
 }
