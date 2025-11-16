@@ -375,14 +375,14 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     // ENHANCE: We could pick one of IMPERIAL or US_CUSTOMARY based on the current locale, but in
     // practice we just want to show we support multiple units, and it isn't as if a native US
     // customary user is going to get too confused (if they even notice) that "pint" (for example)
-    // has the wrong metric equivalent here - it's just demo data.
+    // is imperial here - it's just demo data.
     // ENHANCE: We could add some demo products which are (fake) branded products rather than
     // generic categories, as this is a legitimate thing to do where the user is brand-sensitive.
     // It probably doesn't really matter though.
     val currency = Currency.getInstance(Locale.getDefault())
-    // The demo data uses 2 decimal places so we scale it by currencyMultiplier when inserting so
-    // we have unrealistic but at least workable prices for things like JPY. The prices aren't meant
-    // to be realistic anyway.
+    // The demo data uses 2 decimal places so we scale it by currencyMultiplier when inserting so we
+    // have unrealistic but at least workable prices for currencies like JPY. The prices aren't
+    // meant to be realistic anyway.
     val currencyMultiplier = 10.0.pow(2 - currency.defaultFractionDigits)
     val dataSetId = repository.updateOrInsertDataSet(
         DataSet(
@@ -660,7 +660,7 @@ suspend fun setSelectedItemId(context: Context, dataSetId: Long, itemId: Long) {
 }
 
 suspend fun setSelectedSourceId(context: Context, dataSetId: Long, sourceId: Long?) {
-    updateUserPreferences(context) { builder -> builder.putSelectedSourceIdForDataSetId(dataSetId, sourceId ?: -1L) } // TODO: _1L for null is a bit of a hack - we also don't do any special handling of -1 when we read this "pref", although in practice it probably works fine - come back to this later
+    updateUserPreferences(context) { builder -> builder.putSelectedSourceIdForDataSetId(dataSetId, sourceId ?: -1L) } // TODO: -1L for null is a bit of a hack - we also don't do any special handling of -1 when we read this "pref", although in practice it probably works fine - come back to this later
 }
 
 suspend fun updateUserPreferences(context: Context, update: (UserPrefs.UserPreferences.Builder) -> Unit) {
