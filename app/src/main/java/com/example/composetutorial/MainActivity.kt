@@ -997,7 +997,6 @@ interface PriceHistoryDao {
     suspend fun deleteById(priceHistoryId: Long): Int
 }
 
-// TODO: ChatGPT semi-magic
 // Represents a UI state that should be both:
 // - Observable via [state] for UI rendering
 // - Emitted via [events] for triggering side-effects
@@ -1017,7 +1016,6 @@ class SyncedStateEvent<T>(initialState: T) {
     }
 }
 
-// TODO: SOME CODE DUPLICATION AND GENERAL SHITTINESS WITH OTHER VERSIONS OF THIS "SAVE" CODE - THIS COMMENT *MAY* BE OUTDATED NOW BUT NEED TO REVIEW CAREFULLY
 fun setSelectedDataSetIdAsync(context: Context, dataSetId: Long) {
     AppScope.io.launch {
         setSelectedDataSetId(context, dataSetId)
@@ -1034,10 +1032,15 @@ fun setSelectedSourceIdAsync(context: Context, dataSetId: Long, sourceId: Long) 
     }
 }
 
-// TODO: ChatGPT magic
 sealed interface LoadState<out T> {
     data object Loading : LoadState<Nothing>
+
+    // Empty isn't currently used, but it feels like it might be a good option in some future case
+    // so I'll keep it around for now. T could be a nullable type to represent this concept, but
+    // depending on the precise situation Empty+a non-nullable T might be better.
+    @Suppress("unused")
     data object Empty : LoadState<Nothing>
+
     data class Loaded<T>(val value: T) : LoadState<T>
 }
 
