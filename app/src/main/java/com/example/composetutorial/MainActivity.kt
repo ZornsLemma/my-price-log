@@ -1493,7 +1493,7 @@ fun ItemSourceSelector(
     sourceList: List<Source>,
     item: Item?,
     itemList: List<Item>,
-    onSelectedSourceIdChange: (Long?) -> Unit,
+    onSelectedSourceIdChange: (Long) -> Unit,
     onItemSearchClick: () -> Unit,
 ) {
     Column(
@@ -1574,7 +1574,7 @@ fun ItemSourceSelector(
                 // large "prompt". We could turn null into sourceIdNone and have "None" shown, but
                 // it's probably nicer this way.
                 selectedId = source?.id, /* ?: sourceIdNone */
-                onItemSelected = { onSelectedSourceIdChange(if (it == sourceIdNone) null else it) },
+                onItemSelected = { onSelectedSourceIdChange(it) },
                 enabled = asyncOperationStatus.isNotBusy(),
                 label = { Text("Store") },
                 // It's normal to have no source selected, but if there are no sources defined at
@@ -2658,7 +2658,7 @@ fun HomeScreen(
             uiContent.sourceList,
             onSelectedSourceIdChange = {
                 vm.previousPrice.value = null
-                vm.setSelectedSourceId(it ?: sourceIdNone) // TODO: Should we remove the nullability from the lambda argument and make our caller do this? might be cleaner all round
+                vm.setSelectedSourceId(it)
             },
             uiContent.priceAnalysis,
             onEditPriceClick = { onEditPriceClick(uiContent) },
@@ -2916,7 +2916,7 @@ fun HomeScreenScaffold(
     sourceIdState: LoadState<Long>,
     source: Source?,
     sourceList: List<Source>,
-    onSelectedSourceIdChange: (Long?) -> Unit,
+    onSelectedSourceIdChange: (Long) -> Unit,
     priceAnalysis: PriceAnalysis,
     onEditPriceClick: () -> Unit,
     onItemSearchClick: () -> Unit,
@@ -3064,7 +3064,7 @@ fun HomeScreenContent(
     sourceIdState: LoadState<Long>,
     source: Source?,
     sourceList: List<Source>,
-    onSelectedSourceIdChange: (Long?) -> Unit,
+    onSelectedSourceIdChange: (Long) -> Unit,
     priceAnalysis: PriceAnalysis,
     onEditPriceClick: () -> Unit,
     onItemSearchClick: () -> Unit,
