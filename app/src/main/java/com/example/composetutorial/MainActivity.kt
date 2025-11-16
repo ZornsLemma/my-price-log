@@ -3977,7 +3977,6 @@ fun GeneralEditScreen(
             )
         },
         snackbarHost = {
-            // TODO: Make sure we have generic code to show saving please wait message if back pressed during save
             SnackbarHost(hostState = snackbarHostState)
         },
     ) { innerPadding ->
