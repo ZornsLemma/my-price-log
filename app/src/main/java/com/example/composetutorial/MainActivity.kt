@@ -1410,9 +1410,9 @@ class HomeViewModel(
 //   they would not be able to set it back to pints, as that is not a valid unit for the data set).
 //   This is mostly fine, but it feels like an invitation to subtle bugs and crashes if I forget to
 //   allow for this somewhere, as well as complicating the UI code for relatively little benefit.
-//   - As an unlikely but particularly awkward case, suppose we tried to accomodate the existing
-//     unit for "as long as possible" as just described, and the user instead had changed imperial
-//     to US customary on the data set. We would be showing a price for 6 imperial pints but the
+//   - As an unlikely but particularly awkward case, suppose we tried to accommodate the existing
+//     unit for as long as possible (as just described) and the user instead had changed imperial to
+//     US customary on the data set. We would be showing a price for 6 imperial pints but the
 //     display would just say "pints" and the user would have no way to know the price was not in US
 //     customary pints. They would perhaps even be allowed to edit the price, not realising they are
 //     entering a value in imperial pints in this one case. (Note that we very deliberately do not
