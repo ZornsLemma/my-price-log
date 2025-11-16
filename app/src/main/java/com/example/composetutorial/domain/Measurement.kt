@@ -33,6 +33,12 @@ enum class UnitFamily {
     US_CUSTOMARY, // as used in US
 }
 
+// Note that MeasurementUnit symbols and full names do not attempt to avoid ambiguity with units
+// like pint and fluid ounce that differ between imperial and US customary. Using qualified names
+// like "imperial pint" would look awkward in the UI, especially on smaller screens. We disambiguate
+// by not allowing both imperial and US customary to be active for the same data set, making the
+// shorter common names unambiguous in that context.
+
 // It's tempting to call this just "Unit", but that's a keyword in Kotlin.
 enum class MeasurementUnit(
     val id: Long,
