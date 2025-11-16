@@ -1211,16 +1211,6 @@ class HomeViewModel(
             dataSetIdAndItemIdDatabaseFlow,
             ::Triple)
 
-        // TODO: Can/should we just replace this with the prefsFlow, maybe wrapped with a
-        // distinctUntilChanged()? I don't think we care in the least what the values in this flow
-        // are, just that it emits when something changes.
-        val allUserInputFlow = combine(
-            selectedDataSetIdStateFlow,
-            selectedItemIdStateFlow,
-            selectedSourceIdStateFlow,
-            ::Triple
-        )
-
         val todoRenameMeFlow = combine(
             selectedSourceIdStateFlow,
             combinedDatabaseFlow,
@@ -1313,8 +1303,8 @@ class HomeViewModel(
             // TODO: MORE GROK MAGIC
             // TODO: This *might* actually be correct. I need to look at it calmly and fresh, read
             // up on channelFlow, give it more testing. But I think there is a chance it's sound.
-            allUserInputFlow
-                .flatMapLatest { _ ->
+            prefsFlow.distinctUntilChanged() // emits when a user input changes
+                .flatMapLatest {
                     channelFlow {
                         var loadingJob: Job? = null
 
@@ -5815,7 +5805,6 @@ fun Drawable.toBitmap(width: Int, height: Int): Bitmap {
 
 // TODO: ChatGPT magic
 @Composable
-
 fun LauncherIcon(size: Dp = 120.dp) {
     val context = LocalContext.current
     val density = LocalDensity.current
