@@ -270,6 +270,7 @@ import com.example.composetutorial.ui.components.validationInputHandleFocusReque
 import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -714,10 +715,15 @@ fun <T> List<T>.rememberSortedByLocale(
 // constructors when viewModel() is called.
 object AppViewModelProvider {
     val Factory = viewModelFactory {
-        initializer {
+        initializer<HomeViewModel> {
             val app =
                 this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
             HomeViewModel(app.repository, app)
+        }
+        initializer<SettingsViewModel> {
+            val app =
+                this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+            SettingsViewModel(app)
         }
         /* TODO DELETE LATER, KEEPING AROUND FOR REF FOR OTHER VIEWS IF NEC FOR NOW
         initializer {
@@ -728,6 +734,22 @@ object AppViewModelProvider {
         }
         */
     }
+}
+
+class SettingsViewModel(
+    application: Application) : ViewModel() {
+    val settingsRepository = SettingsRepository(application.dataStore)
+}
+
+
+// Using AppScope.io signals: "This is an app-wide background task that must be allowed to complete
+// without being cancelled when the user leaves the screen, and it *will not* touch any UI or
+// short-lived objects which may have gone out of scope." This is safe and desired for things like
+// DataStore updates. Practically speaking, CoroutineScope(Dispatchers.IO).launch {} is equivalent
+// in behaviour (new scope per call, GC'd safely), but AppScope.io better documents intent and
+// avoids allocation.
+object AppScope {
+    val io = CoroutineScope(Dispatchers.IO + SupervisorJob())
 }
 
 // TODO: Lots of AI voodoo here, probably worth reading up later on how MyApplication should behave
@@ -800,7 +822,7 @@ class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        CoroutineScope(Dispatchers.IO).launch {
+        AppScope.io.launch {
             val demoDataInsertedKey = booleanPreferencesKey("demo_data_inserted") // TODO: MOVE TO SOME MASTER LIST OF KEYS!?
             val demoDataInserted = dataStore.data
                 .map { prefs -> prefs[demoDataInsertedKey] ?: false }
@@ -1025,19 +1047,19 @@ fun <T> savePreference(
 }
 */
 
-// TODO: SOME CODE DUPLICATION AND GENERAL SHITTINESS WITH OTHER VERSIONS OF THIS "SAVE" CODE
+// TODO: SOME CODE DUPLICATION AND GENERAL SHITTINESS WITH OTHER VERSIONS OF THIS "SAVE" CODE - THIS COMMENT *MAY* BE OUTDATED NOW BUT NEED TO REVIEW CAREFULLY
 fun setCurrentDataSetIdAsync(context: Context, dataSetId: Long) {
-    CoroutineScope(Dispatchers.IO).launch {
+    AppScope.io.launch {
         setCurrentDataSetId(context, dataSetId)
     }
 }
 fun setCurrentItemIdAsync(context: Context, dataSetId: Long, itemId: Long) {
-    CoroutineScope(Dispatchers.IO).launch {
+    AppScope.io.launch {
         setCurrentItemId(context, dataSetId, itemId)
     }
 }
 fun setCurrentSourceIdAsync(context: Context, dataSetId: Long, sourceId: Long?) {
-    CoroutineScope(Dispatchers.IO).launch {
+    AppScope.io.launch {
         setCurrentSourceId(context, dataSetId, sourceId)
     }
 }
@@ -2473,28 +2495,42 @@ data class PriceAgeSettings(val stalePriceThreshold: Int, val ancientPriceThresh
 
 // TODO: ChatGPT magic
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
-    /* TODO!?!?!?!?! SHOULD WE MOVE ALL OUR KEYS IN HERE? OR NONE? OR SOME?
     private object Keys {
-        val myValue = intPreferencesKey("my_value")
+        val STALE_PRICE_THRESHOLD_KEY =
+            intPreferencesKey("stale_price_threshold") // TODO: RENAME THIS AND ALL ASSOCIATED VARS TO INCLUDE "DAYS"?
+        val ANCIENT_PRICE_THRESHOLD_DAYS_KEY = intPreferencesKey("ancient_price_threshold_days")
+        val ANNUAL_INFLATION_PERCENT_KEY = intPreferencesKey("annual_inflation_percent")
     }
-    */
 
     val stalePriceThresholdFlow: Flow<Int> = dataStore.data
-        .map { prefs -> prefs[STALE_PRICE_THRESHOLD_KEY] ?: defaultStalePriceThreshold }
+        .map { prefs -> prefs[Keys.STALE_PRICE_THRESHOLD_KEY] ?: defaultStalePriceThreshold }
 
-    val ancientPriceThresholdDaysFlow: Flow<Int> = dataStore.data.map { prefs -> prefs[ANCIENT_PRICE_THRESHOLD_DAYS_KEY] ?: defaultAncientPriceThresholdDays }
+    val ancientPriceThresholdDaysFlow: Flow<Int> = dataStore.data.map { prefs -> prefs[Keys.ANCIENT_PRICE_THRESHOLD_DAYS_KEY] ?: defaultAncientPriceThresholdDays }
 
-    val annualInflationPercentFlow: Flow<Int> = dataStore.data.map { prefs -> prefs[ANNUAL_INFLATION_PERCENT_KEY] ?: defaultAnnualInflationPercent }
+    val annualInflationPercentFlow: Flow<Int> = dataStore.data.map { prefs -> prefs[Keys.ANNUAL_INFLATION_PERCENT_KEY] ?: defaultAnnualInflationPercent }
 
     val priceAgeSettingsFlow: Flow<PriceAgeSettings> = combine(stalePriceThresholdFlow, ancientPriceThresholdDaysFlow, annualInflationPercentFlow) { stalePriceThreshold, ancientPriceThresholdDays, annualInflationPercent ->
         PriceAgeSettings(stalePriceThreshold, ancientPriceThresholdDays, annualInflationPercent)
     }
 
-    /* TODO!?!?!?! MY EXISTING OTHER HACKS DON'T USE THIS BUT MAYBE THEY SHOULD!?!?!?!?!?!?!?!!
-    suspend fun setMyValue(value: Int) {
-        dataStore.edit { it[Keys.myValue] = value }
+    fun setStalePriceThresholdAsync(stalePriceThreshold: Int) {
+        setValueAsync(Keys.STALE_PRICE_THRESHOLD_KEY, stalePriceThreshold)
     }
-    */
+
+    fun setAncientPriceThresholdDaysAsync(ancientPriceThresholdDays: Int) {
+        setValueAsync(Keys.ANCIENT_PRICE_THRESHOLD_DAYS_KEY, ancientPriceThresholdDays)
+    }
+
+    fun setAnnualInflationPercentAsync(annualInflationPercent: Int) {
+        setValueAsync(Keys.ANNUAL_INFLATION_PERCENT_KEY, annualInflationPercent)
+    }
+
+    // TODO!?
+    private fun <T> setValueAsync(key: Preferences.Key<T>, value: T) {
+        AppScope.io.launch {
+            dataStore.edit { it[key] = value }
+        }
+    }
 }
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -2504,9 +2540,7 @@ val SELECTED_ITEM_ID_KEY = longPreferencesKey("selected_item_id")
 val SELECTED_SOURCE_ID_KEY = longPreferencesKey("selected_source_id")
 */
 // TODO: MOVE THE FOLLOWING!?
-val STALE_PRICE_THRESHOLD_KEY = intPreferencesKey("stale_price_threshold") // TODO: RENAME THIS AND ALL ASSOCIATED VARS TO INCLUDE "DAYS"?
-val ANCIENT_PRICE_THRESHOLD_DAYS_KEY = intPreferencesKey("ancient_price_threshold_days")
-val ANNUAL_INFLATION_PERCENT_KEY = intPreferencesKey("annual_inflation_percent")
+
 const val defaultStalePriceThreshold = 30
 const val defaultAncientPriceThresholdDays = 180
 const val defaultAnnualInflationPercent = 5
@@ -5641,16 +5675,15 @@ fun formatDoubleForEditing(value: Double, minDecimals: Int, maxDecimals: Int, lo
 
 @Composable
 fun SettingsScreen(
+    vm: SettingsViewModel,
     navController: NavHostController,
     onBackupClick: () -> Unit,
     onRestoreClick: () -> Unit,
     onAboutClick: () -> Unit
 ) {
-    val scope = rememberCoroutineScope()
-    val dataStore = LocalContext.current.dataStore
-    val stalePriceThreshold by dataStore.data.map { it[STALE_PRICE_THRESHOLD_KEY] ?: defaultStalePriceThreshold }.collectAsState(initial = defaultStalePriceThreshold)
-    val ancientPriceThresholdDays by dataStore.data.map { it[ANCIENT_PRICE_THRESHOLD_DAYS_KEY] ?: defaultAncientPriceThresholdDays }.collectAsState(initial = defaultAncientPriceThresholdDays)
-    val annualInflationPercent by dataStore.data.map { it[ANNUAL_INFLATION_PERCENT_KEY] ?: defaultAnnualInflationPercent }.collectAsState(initial = defaultAnnualInflationPercent)
+    val stalePriceThreshold by vm.settingsRepository.stalePriceThresholdFlow.collectAsStateWithLifecycle(initialValue = defaultStalePriceThreshold)
+    val ancientPriceThresholdDays by vm.settingsRepository.ancientPriceThresholdDaysFlow.collectAsStateWithLifecycle(initialValue =defaultAncientPriceThresholdDays)
+    val annualInflationPercent by vm.settingsRepository.annualInflationPercentFlow.collectAsStateWithLifecycle(initialValue = defaultAnnualInflationPercent)
     var showStalePriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var showAncientPriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var showAnnualInflationPercentDialog by rememberSaveable { mutableStateOf(false) }
@@ -5755,7 +5788,7 @@ fun SettingsScreen(
                 ),
                 onConfirm = { stalePriceThresholdString ->
                     showStalePriceThresholdDialog = false
-                    scope.launch { dataStore.edit { it[STALE_PRICE_THRESHOLD_KEY] = stalePriceThresholdString.toIntOrNull()!! } }
+                    vm.settingsRepository.setStalePriceThresholdAsync(stalePriceThresholdString.toIntOrNull()!!)
                 },
                 onDismissRequest = {
                     showStalePriceThresholdDialog = false
@@ -5789,12 +5822,8 @@ fun SettingsScreen(
                 ),
                 onConfirm = { ancientPriceThresholdDaysString ->
                     showAncientPriceThresholdDialog = false
-                    scope.launch {
-                        dataStore.edit {
-                            it[ANCIENT_PRICE_THRESHOLD_DAYS_KEY] =
-                                ancientPriceThresholdDaysString.toIntOrNull()!!
-                        }
-                    }
+                    vm.settingsRepository.setAncientPriceThresholdDaysAsync(
+                                ancientPriceThresholdDaysString.toIntOrNull()!!)
                 },
                 onDismissRequest = {
                     showAncientPriceThresholdDialog = false
@@ -5833,12 +5862,8 @@ fun SettingsScreen(
                 ),
                 onConfirm = { annualInflationPercentString ->
                     showAnnualInflationPercentDialog = false
-                    scope.launch {
-                        dataStore.edit {
-                            it[ANNUAL_INFLATION_PERCENT_KEY] =
-                                annualInflationPercentString.toIntOrNull()!!
-                        }
-                    }
+                    vm.settingsRepository.setAnnualInflationPercentAsync(
+                                annualInflationPercentString.toIntOrNull()!!)
                 },
                 onDismissRequest = {
                     showAnnualInflationPercentDialog = false
@@ -7682,8 +7707,9 @@ fun AppNavigation() {
         composable(
             "settings", enterTransition = { slideLeftTransition() }, popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
-        ) {
+        ) { backStackEntry ->
             SettingsScreen(
+                viewModel(backStackEntry, factory = AppViewModelProvider.Factory),
                 navController,
                 onBackupClick = {
                     backupLauncher.launch("price_tracker_backup.db")
