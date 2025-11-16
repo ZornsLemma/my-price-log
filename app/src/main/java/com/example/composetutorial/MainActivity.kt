@@ -1553,7 +1553,6 @@ fun ItemSourceSelector(
     sourceList: List<Source>,
     item: Item?,
     itemList: List<Item>,
-    onSelectedItemIdChange: (Long) -> Unit,
     onSelectedSourceIdChange: (Long?) -> Unit,
     onItemSearchClick: () -> Unit,
 ) {
@@ -3150,7 +3149,6 @@ fun HomeScreenContent(
                 sourceList = sourceList,
                 item = item,
                 itemList = itemList,
-                onSelectedItemIdChange = onSelectedItemIdChange,
                 onSelectedSourceIdChange = onSelectedSourceIdChange,
                 onItemSearchClick = onItemSearchClick,
             )
