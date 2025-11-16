@@ -333,7 +333,7 @@ fun formatDouble(
 }
 
 
-const val DB_NAME = "main.db" // TODO: should I change this filename?
+const val DB_NAME = "main.db"
 const val DB_VERSION = 1
 @Database(
     entities = [DataSet::class, Item::class, Source::class, PriceEntity::class, PriceHistory::class],
