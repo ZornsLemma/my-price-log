@@ -1452,11 +1452,7 @@ fun sanitisePriceUnits(dataSet: DataSet, priceList: List<Price>): List<Price> {
 fun sanitisePriceHistoryUnits(dataSet: DataSet, priceHistoryList: List<PriceHistory>): List<PriceHistory> {
     val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
     myCheck(relevantUnitFamilies.isNotEmpty()) { "Expected at least one relevant unit family for dataSet ${dataSet.id}" }
-    // getRelevantUnitFamilies() will in practice generate a LinkedHashSet, so first() here will be
-    // deterministic and return the first family inserted. If this were to change in future, it
-    // wouldn't be the end of the world, we'd just see some modest inconsistency in the results for
-    // what is already a corner case.
-    val replacementUnitFamily = relevantUnitFamilies.first()
+    val replacementUnitFamily = relevantUnitFamilies.first() // see sanitisePriceUnits() comment
     return priceHistoryList.map { priceHistory ->
         if (priceHistory.userUnit.unitFamilies.any { it in relevantUnitFamilies }) {
             priceHistory
