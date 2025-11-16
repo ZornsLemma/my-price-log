@@ -1334,7 +1334,6 @@ class HomeViewModel(
                         // Data stream
                         /* val dataJob = */ launch {
                             completeUIStateFlow.collect { data ->
-                                //lastKnownData = data
                                 loadingJob?.cancel()
                                 send(false to data)
                             }
@@ -2699,19 +2698,22 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
 
         if (showScrim) {
             val dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+            var pendingBackPressed by rememberSaveable { mutableStateOf(false) }
             Popup(
                 alignment = Alignment.Center,
                 onDismissRequest = {
                     Log.d("MyApp", "ODR")
                     // We are trying to emulate the user pressing the back button here.
-                    // navController.popBackStack() empirically doesn't work, I think because it's for
-                    // our internal back stack. The idea is that if the activity wasn't blocked by the
-                    // spinner, the user could go back to some other activity (outside our app,
-                    // probably), and we should still allow that while the spinner is up.
-                    // TODO: Do we need to debounce this? Set a flag to say we've called
-                    // onBackPressed() and don't call again if that flag is set? It probably
-                    // wouldn't hurt even if it may not actually be necessary.
-                    dispatcher?.onBackPressed()
+                    // navController.popBackStack() empirically doesn't work, I think because it's
+                    // for our internal back stack. The idea is that if the activity wasn't blocked
+                    // by the spinner, the user could go back to some other activity (outside our
+                    // app, probably), and we should still allow that while the spinner is up. I
+                    // don't know if the debounce via pendingBackPressed is really necessary, I'm
+                    // just playing it safe.
+                    if (!pendingBackPressed) {
+                        pendingBackPressed = true
+                        dispatcher?.onBackPressed()
+                    }
                 },
                 properties = PopupProperties(
                     focusable = true, // prevent touches from going through
