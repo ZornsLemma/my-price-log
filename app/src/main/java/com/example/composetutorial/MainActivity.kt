@@ -1564,7 +1564,7 @@ fun ItemSourceSelector(
         // could "pass through" MyExposedDropdownMenuBox without altering the API and I think the
         // idea is sound but I started to run into incomprehensible "out"/covariance stuff and it
         // just felt too much just to fix this where sourceIdNone is an easy hack.
-        key(asyncOperationStatus) { // TODO: as above
+        key(asyncOperationStatus) { // improves appearance, see similar key() above
             MyExposedDropdownMenuBox(
                 modifier = Modifier
                     // .padding(bottom = 8.dp)
