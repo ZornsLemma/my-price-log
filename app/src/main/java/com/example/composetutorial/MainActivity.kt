@@ -1102,7 +1102,9 @@ class HomeViewModel(
 
     private val selectedItemIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
         .map { prefs ->
-            prefs.selectedItemIdForDataSetIdMap[prefs.selectedDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
+            prefs.selectedItemIdForDataSetIdMap[prefs.selectedDataSetId] ?: 0L
+            // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER
+            // STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
         }
         .asLoadState()
 
@@ -1208,6 +1210,9 @@ class HomeViewModel(
             dataSetIdAndItemIdDatabaseFlow,
             ::Triple)
 
+        // TODO: Can/should we just replace this with the prefsFlow, maybe wrapped with a
+        // distinctUntilChanged()? I don't think we care in the least what the values in this flow
+        // are, just that it emits when something changes.
         val allUserInputFlow = combine(
             selectedDataSetIdStateFlow,
             selectedItemIdStateFlow,
@@ -1303,44 +1308,12 @@ class HomeViewModel(
                 }
             }
 
-        val TodoSomeSortOfUiStateFlow = allUserInputFlow
-            .flatMapLatest { input ->
-                channelFlow /* TODO DELETE <Pair<Boolean, HomeScreenUIContent>> */ {
-                    var loadingJob: Job? = null
-
-                    // Subscribe to data
-                    val dataJob = launch {
-                        completeUIStateFlow.collect { data ->
-                            // Cancel loading if it's pending
-                            loadingJob?.cancel()
-                            loadingJob = null
-
-                            // Emit data
-                            send(Pair(false, data))
-                        }
-                    }
-
-                    // Start loading timer
-                    loadingJob = launch {
-                        delay(spinnerDelayMillis)
-                        // Only emit loading if not already canceled
-                        if (isActive) {
-                            send(Pair(true, _uiState.value.second))
-                        }
-                    }
-
-                    // Cleanup on cancel (input change)
-                    // TODO: NOT NEEDED AFTER ALL!?!?!?! awaitCancellation()
-                }
-                // TODO!? .catch { emit(Pair(false) }
-            }
-
         viewModelScope.launch(Dispatchers.Default) {
             // TODO: MORE GROK MAGIC
             // TODO: This *might* actually be correct. I need to look at it calmly and fresh, read
             // up on channelFlow, give it more testing. But I think there is a chance it's sound.
             allUserInputFlow
-                .flatMapLatest { input ->
+                .flatMapLatest { _ ->
                     channelFlow {
                         var loadingJob: Job? = null
 
