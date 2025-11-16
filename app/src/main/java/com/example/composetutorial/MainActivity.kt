@@ -2993,8 +2993,8 @@ fun HomeScreenStateManager(
     var showErrorDialog by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        // TODO: I have thrown in a buffer() here voodoo-style based on an actual observed problem
-        // in other cases. Not sure if it's really necessary or best practice here.
+        // We use buffer() here because we want to update() while we are already collecting; we
+        // might get a deadlock otherwise.
         vm.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
                 AsyncOperationStatus.Busy -> {
@@ -3872,8 +3872,8 @@ fun GeneralEditScreen(
     }
 
     LaunchedEffect(Unit) {
-        // TODO: I have thrown in a buffer() here voodoo-style based on an actual observed problem
-        // in the case below. Come back to this later.
+        // We use buffer() here because we want to update() while we are already collecting; we
+        // might get a deadlock otherwise.
         vm.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
                 AsyncOperationStatus.Busy -> {
@@ -3892,11 +3892,9 @@ fun GeneralEditScreen(
         }
     }
 
-    // TODO: ChatGPT magic more or less
     LaunchedEffect(Unit) {
-        // TODO: We use buffer here because we want to update() in the error case while we are
-        // already collecting; we get a deadlock otherwise. I *think* this is OK, but be good to
-        // come back to it later.
+        // We use buffer here because we want to update() in the error case while we are
+        // already collecting; we get a deadlock otherwise.
         vm.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
                 AsyncOperationStatus.Idle -> {
@@ -3948,15 +3946,10 @@ fun GeneralEditScreen(
                 },
                 title = title,
                 actions = {
-                    // TODO: Just possibly instead of always calling onSave, onClick should call
-                    // isDirty first and just dismiss without saving if it returns false - but that
-                    // might be confusing and it's maybe optimising a corner case
                     TextButton(enabled = isNotBusy, onClick = {
-                        // TODO: I think the layout here is good and in fact better than it was,
-                        // but note that unlike the EditPrice stuff this is being based on, here
-                        // updateOrInsertFoo() does not (and probably cannot, since it's an
-                        // internal detail here and not exposed) be messing with updating
-                        // saveStatus.
+                        // We could check isDirty here and just dismiss without saving if there's
+                        // nothing to save, but it's probably best (given there's no history table
+                        // which would get bloated) just to save regardless.
                         vm.saveAttempted.value = true
                         runGeneralEditScreenOperation(
                             vm = vm,
