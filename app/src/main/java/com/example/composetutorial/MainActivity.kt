@@ -1065,16 +1065,26 @@ class HomeViewModel(
         setSelectedDataSetIdAsync(app, dataSetId)
     }
     fun setSelectedItemId(itemId: Long) {
-            val dataSetId = selectedDataSetIdStateFlow.value.valueOrNull()
-            if (dataSetId != null) { // TODO: Not sure this is really possible?! Harmless but can we avoid?
-                setSelectedItemIdAsync(app, dataSetId, itemId)
+        val dataSetId = selectedDataSetIdStateFlow.value.valueOrNull()
+        // We don't have the concept of a null selected data set ID (if a data set is deleted we
+        // keep the old ID "selected", as we do for sources and items, and just end up with null
+        // objects arising from our failure to find the selected ID in the database results), so
+        // valueOrNull() can only return null during initial async data loading. But if we haven't
+        // even loaded the current data set ID it shouldn't be possible for the user to see any
+        // items, let alone select one.
+        myCheck(dataSetId != null) {
+            "dataSetId is null even though we are selecting an item"
         }
+        setSelectedItemIdAsync(app, dataSetId!!, itemId)
     }
+
     fun setSelectedSourceId(sourceId: Long) {
-            val dataSetId = selectedDataSetIdStateFlow.value.valueOrNull()
-            if (dataSetId != null) { // TODO: Not sure this is really possible?! Harmless but can we avoid?
-                setSelectedSourceIdAsync(app, dataSetId, sourceId)
-            }
+        val dataSetId = selectedDataSetIdStateFlow.value.valueOrNull()
+        // See comment in setSelectedItemId() for more on this check.
+        myCheck(dataSetId != null) {
+            "dataSetId is null even though we are selecting a source"
+        }
+        setSelectedSourceIdAsync(app, dataSetId!!, sourceId)
     }
 
     private fun <T> Flow<T>.asLoadState(): StateFlow<LoadState<T>> = this
@@ -2707,7 +2717,7 @@ fun HomeScreen(
             uiContent.sourceList,
             onSelectedSourceIdChange = {
                 vm.previousPrice.value = null
-                vm.setSelectedSourceId(it ?: sourceIdNone)
+                vm.setSelectedSourceId(it ?: sourceIdNone) // TODO: Should we remove the nullability from the lambda argument and make our caller do this? might be cleaner all round
             },
             uiContent.priceAnalysis,
             onEditPriceClick = { onEditPriceClick(uiContent) },
