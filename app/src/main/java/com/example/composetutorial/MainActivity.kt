@@ -1460,7 +1460,7 @@ fun sanitisePriceUnits(dataSet: DataSet, priceList: List<Price>): List<Price> {
     // what is already a corner case.
     val replacementUnitFamily = relevantUnitFamilies.first()
     return priceList.map { price ->
-        if (price.quantity.unit.unitFamilies.any { it in relevantUnitFamilies }) {
+        if (!intersectionIsEmpty(price.quantity.unit.unitFamilies, relevantUnitFamilies)) {
             price
         } else {
             price.copy(quantity = price.quantity.to(MeasurementUnit.entries.first { replacementUnitFamily in it.unitFamilies && price.quantity.unit.quantityType == it.quantityType }))
@@ -1476,7 +1476,7 @@ fun sanitisePriceHistoryUnits(dataSet: DataSet, priceHistoryList: List<PriceHist
     myCheck(relevantUnitFamilies.isNotEmpty()) { "Expected at least one relevant unit family for dataSet ${dataSet.id}" }
     val replacementUnitFamily = relevantUnitFamilies.first() // see sanitisePriceUnits() comment
     return priceHistoryList.map { priceHistory ->
-        if (priceHistory.userUnit.unitFamilies.any { it in relevantUnitFamilies }) {
+        if (!intersectionIsEmpty(priceHistory.userUnit.unitFamilies, relevantUnitFamilies)) {
             priceHistory
         } else {
             priceHistory.copy(userUnit = MeasurementUnit.entries.first { replacementUnitFamily in it.unitFamilies && priceHistory.userUnit.quantityType == it.quantityType })
@@ -3429,8 +3429,11 @@ fun rememberSyncedTextFieldValue(modelState: String): MutableState<TextFieldValu
     return tfv
 }
 
+fun <T> intersectionIsEmpty(lhs: Set<T>, rhs: Set<T>) = !(lhs.any { it in rhs })
+
+// TODO: Move into Measurement.kt? Really not sure...
 fun areDifferentUnitFamilies(lhs: MeasurementUnit, rhs: MeasurementUnit) =
-    lhs.unitFamilies.intersect(rhs.unitFamilies).isEmpty()
+    intersectionIsEmpty(lhs.unitFamilies, rhs.unitFamilies)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
