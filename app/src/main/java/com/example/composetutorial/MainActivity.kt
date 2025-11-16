@@ -3843,9 +3843,6 @@ fun GeneralEditScreen(
 
     var saving by rememberSaveable { mutableStateOf(false) }
 
-    // TODO: We may need to make this available to the content() so it can use it for scrolling to
-    // highlight errors, or it may be that we don't need it here at all and it can be entirely in
-    // the content()
     val scrollState = rememberScrollState()
 
     // We can't use dropUnlessResumed here as we have a parameter, so pseudo-inline it.
