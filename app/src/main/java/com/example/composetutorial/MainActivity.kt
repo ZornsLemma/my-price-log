@@ -2,6 +2,7 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import androidx.compose.ui.semantics.contentDescription
 import com.example.composetutorial.ui.defaultValidationMessageDelayMillis
 import com.example.composetutorial.ui.spinnerDelayMillis
 import com.example.composetutorial.ui.fullScreenDialogHorizontalBorder
@@ -2204,9 +2205,12 @@ fun EditConfirmButtons(
 
 }
 
+// ENHANCE: I suspect this is going to need some tweaking to give even a half-decent experience with
+// a screen reader.
 @Composable
 fun <T> DataTable(
     header: List<String>,
+    headerTextModifiers: List<Modifier>? = null,
     items: List<T>,
     columns: List<@Composable (T) -> Unit>,
     highlightRow: Int? = null,
@@ -2238,7 +2242,7 @@ fun <T> DataTable(
                         .padding(8.dp)
                         .then(alignmentModifier(columnAlignments[colIndex]))
                 ) {
-                    Text(title, style = MaterialTheme.typography.titleMedium)
+                    Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.then(headerTextModifiers?.get(colIndex) ?: Modifier))
                 }
             }
         }
@@ -3271,10 +3275,6 @@ fun PriceComparisonCard(
     onClick: (Long) -> Unit,
     asyncOperationStatus: AsyncOperationStatus,
 ) {
-    // TODO: The "£/100g" (or whatever, when it's dynamically constructed) should have a
-    // contextDescription for screen readers which is "Price per 100g", so it gets read out
-    // properly. I think "Price per" is OK (better than "Pounds per", actually), because the rows
-    // themselves contain the currency symbol.
     // ENHANCE: We could make denominator user-selectable in this list header. If so it should
     // probably offer all the user's selected units of the right type, as the unit price dropdown on
     // ItemSourceInfo does.
@@ -3346,7 +3346,17 @@ fun PriceComparisonCard(
                     "${currencyFormat.prefix ?: currencyFormat.suffix ?: ""}${headerUnitPriceDenominator.perSymbol}${headerUnitPriceDenominator.symbol}",
                     ""
                 )
-
+                // We use a custom content description with the idea that a screen reader may not be
+                // able to read "£/oz" out correctly, particularly when it appears like that with no
+                // context rather than in a sentence. Using the word "Price" instead of the currency
+                // shouldn't be a problem because each individual price includes the currency
+                // symbol.
+                val headerPriceContentDescription = "Price ${if (headerUnitPriceDenominator.perSymbol.trim().isNotEmpty()) "per " else ""}${headerUnitPriceDenominator.fullName}"
+                val headerTextModifiers = listOf(
+                    Modifier,
+                    Modifier.semantics { contentDescription = headerPriceContentDescription },
+                    Modifier
+                )
                 val highlightRow =
                     priceAnalysis.augmentedPriceList.indexOfFirst { it.sourceName == source?.name }
                         .takeIf { it != -1 }
@@ -3389,6 +3399,7 @@ fun PriceComparisonCard(
                 }
                 DataTable(
                     header = header,
+                    headerTextModifiers = headerTextModifiers,
                     items = priceAnalysis.augmentedPriceList,
                     columns = columns,
                     highlightRow = highlightRow,

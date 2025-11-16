@@ -57,7 +57,7 @@ enum class MeasurementUnit(
         setOf(UnitFamily.ITEM),
         QuantityType.ITEM,
         "each",
-        "",
+        "each", // TODO: I added this as a semi-hack to support headerPriceContentDescription, may break grammar for non-screen reader
         0,
         1.0,
         false,
