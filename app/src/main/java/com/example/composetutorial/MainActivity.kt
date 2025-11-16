@@ -646,22 +646,21 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     )
     // Set some defaults for the first run so the user isn't left with a screen with no data
     // wondering what to do.
-    // TODO: NOT JUST HERE - I AM A BIT MIXED UP ON "SET/GET CURRENT X" vs "SET/GET SELECTED X" AS FAR AS TERMINOLOGY GOES - NEED TO BE CONSISTENT
-        setCurrentDataSetId(context, dataSetId)
-        setCurrentItemId(context, dataSetId, itemIdTeabags)
-        setCurrentSourceId(context, dataSetId, sourceIdSuperiorStore)
+        setSelectedDataSetId(context, dataSetId)
+        setSelectedItemId(context, dataSetId, itemIdTeabags)
+        setSelectedSourceId(context, dataSetId, sourceIdSuperiorStore)
 }
 
-suspend fun setCurrentDataSetId(context: Context, dataSetId: Long) {
-    updateUserPreferences(context) { builder -> builder.setCurrentDataSetId(dataSetId) }
+suspend fun setSelectedDataSetId(context: Context, dataSetId: Long) {
+    updateUserPreferences(context) { builder -> builder.setSelectedDataSetId(dataSetId) }
 }
 
-suspend fun setCurrentItemId(context: Context, dataSetId: Long, itemId: Long) {
-    updateUserPreferences(context) { builder -> builder.putCurrentItemIdForDataSetId(dataSetId, itemId) }
+suspend fun setSelectedItemId(context: Context, dataSetId: Long, itemId: Long) {
+    updateUserPreferences(context) { builder -> builder.putSelectedItemIdForDataSetId(dataSetId, itemId) }
 }
 
-suspend fun setCurrentSourceId(context: Context, dataSetId: Long, sourceId: Long?) {
-    updateUserPreferences(context) { builder -> builder.putCurrentSourceIdForDataSetId(dataSetId, sourceId ?: -1L) } // TODO: _1L for null is a bit of a hack - we also don't do any special handling of -1 when we read this "pref", although in practice it probably works fine - come back to this later
+suspend fun setSelectedSourceId(context: Context, dataSetId: Long, sourceId: Long?) {
+    updateUserPreferences(context) { builder -> builder.putSelectedSourceIdForDataSetId(dataSetId, sourceId ?: -1L) } // TODO: _1L for null is a bit of a hack - we also don't do any special handling of -1 when we read this "pref", although in practice it probably works fine - come back to this later
 }
 
 suspend fun updateUserPreferences(context: Context, update: (UserPrefs.UserPreferences.Builder) -> Unit) {
@@ -1020,19 +1019,19 @@ class SyncedStateEvent<T>(initialState: T) {
 }
 
 // TODO: SOME CODE DUPLICATION AND GENERAL SHITTINESS WITH OTHER VERSIONS OF THIS "SAVE" CODE - THIS COMMENT *MAY* BE OUTDATED NOW BUT NEED TO REVIEW CAREFULLY
-fun setCurrentDataSetIdAsync(context: Context, dataSetId: Long) {
+fun setSelectedDataSetIdAsync(context: Context, dataSetId: Long) {
     AppScope.io.launch {
-        setCurrentDataSetId(context, dataSetId)
+        setSelectedDataSetId(context, dataSetId)
     }
 }
-fun setCurrentItemIdAsync(context: Context, dataSetId: Long, itemId: Long) {
+fun setSelectedItemIdAsync(context: Context, dataSetId: Long, itemId: Long) {
     AppScope.io.launch {
-        setCurrentItemId(context, dataSetId, itemId)
+        setSelectedItemId(context, dataSetId, itemId)
     }
 }
-fun setCurrentSourceIdAsync(context: Context, dataSetId: Long, sourceId: Long?) {
+fun setSelectedSourceIdAsync(context: Context, dataSetId: Long, sourceId: Long?) {
     AppScope.io.launch {
-        setCurrentSourceId(context, dataSetId, sourceId)
+        setSelectedSourceId(context, dataSetId, sourceId)
     }
 }
 
@@ -1060,19 +1059,19 @@ class HomeViewModel(
 
     private val app = application
 
-    fun setCurrentDataSetId(dataSetId: Long) {
-        setCurrentDataSetIdAsync(app, dataSetId)
+    fun setSelectedDataSetId(dataSetId: Long) {
+        setSelectedDataSetIdAsync(app, dataSetId)
     }
-    fun setCurrentItemId(itemId: Long) {
+    fun setSelectedItemId(itemId: Long) {
             val dataSetId = selectedDataSetIdStateFlow.value.valueOrNull()
             if (dataSetId != null) { // TODO: Not sure this is really possible?! Harmless but can we avoid?
-                setCurrentItemIdAsync(app, dataSetId, itemId)
+                setSelectedItemIdAsync(app, dataSetId, itemId)
         }
     }
-    fun setCurrentSourceId(sourceId: Long?) {
+    fun setSelectedSourceId(sourceId: Long?) {
             val dataSetId = selectedDataSetIdStateFlow.value.valueOrNull()
             if (dataSetId != null) { // TODO: Not sure this is really possible?! Harmless but can we avoid?
-                setCurrentSourceIdAsync(app, dataSetId, sourceId)
+                setSelectedSourceIdAsync(app, dataSetId, sourceId)
             }
     }
 
@@ -1086,18 +1085,18 @@ class HomeViewModel(
         .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
     private val selectedDataSetIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
-        .map { it.currentDataSetId }
+        .map { it.selectedDataSetId }
         .asLoadState()
 
     private val selectedItemIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
         .map { prefs ->
-            prefs.currentItemIdForDataSetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
+            prefs.selectedItemIdForDataSetIdMap[prefs.selectedDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
         }
         .asLoadState()
 
     private val selectedSourceIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
         .map { prefs ->
-            prefs.currentSourceIdForDataSetIdMap[prefs.currentDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
+            prefs.selectedSourceIdForDataSetIdMap[prefs.selectedDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
         }
         .asLoadState()
 
@@ -2695,20 +2694,20 @@ fun HomeScreen(
             uiContent.dataSetList,
             onSelectedDataSetIdChange = {
                 vm.previousPrice.value = null
-                vm.setCurrentDataSetId(it)
+                vm.setSelectedDataSetId(it)
             },
             uiContent.item,
             uiContent.itemList,
             onSelectedItemIdChange = {
                 vm.previousPrice.value = null
-                vm.setCurrentItemId(it)
+                vm.setSelectedItemId(it)
             },
             uiContent.sourceIdState,
             uiContent.source,
             uiContent.sourceList,
             onSelectedSourceIdChange = {
                 vm.previousPrice.value = null
-                vm.setCurrentSourceId(it)
+                vm.setSelectedSourceId(it)
             },
             uiContent.priceAnalysis,
             onEditPriceClick = { onEditPriceClick(uiContent) },
@@ -7653,7 +7652,7 @@ fun AppNavigation() {
                             )
                             navController.navigate("editItem")
                         } else {
-                            setCurrentItemIdAsync(context, viewModel.uiContent.dataSet.id, it.id)
+                            setSelectedItemIdAsync(context, viewModel.uiContent.dataSet.id, it.id)
                             navController.popBackStack() // return to home screen
                         }
                     },
@@ -7762,7 +7761,7 @@ fun AppNavigation() {
                         if (newSelectedDataSetId == null) {
                             navController.popBackStack()
                         } else {
-                            setCurrentDataSetIdAsync(context, newSelectedDataSetId)
+                            setSelectedDataSetIdAsync(context, newSelectedDataSetId)
                             navController.popBackStack("home", inclusive = false)
                         }
                     })
@@ -7872,7 +7871,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                             // The used saved the edit, so select the edited item and return to the
                             // home screen.
                             Log.d("MyAppQZ", "newSelectedItemId=$newSelectedItemId")
-                            setCurrentItemIdAsync(context, viewModel.uiContent.dataSet.id, newSelectedItemId)
+                            setSelectedItemIdAsync(context, viewModel.uiContent.dataSet.id, newSelectedItemId)
                             navController.popBackStack("home", inclusive = false)
                         }
                     })
@@ -7904,7 +7903,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                         if (newSelectedSourceId == null) {
                             navController.popBackStack()
                         } else {
-                            setCurrentSourceIdAsync(context, viewModel.uiContent.dataSet.id, newSelectedSourceId)
+                            setSelectedSourceIdAsync(context, viewModel.uiContent.dataSet.id, newSelectedSourceId)
                             navController.popBackStack("home", inclusive = false)
                         }
                     })
@@ -8756,9 +8755,6 @@ Log.d("MyApp", baz.toString())
 
 // TODO: Eventually will need to remove misc Log.d() lines and/or replace them with permanent
 // well-thought-out ones if that is not inefficient.
-
-// TODO: Should we remember current product and source (remember they *may* be null anyway) for each
-// data set? TODONOW
 
 // ENHANCE: Maybe I should have a settings option which completely hides or just disables all the
 // "delete" buttons. Users can turn that off if it makes them feel safer. We could possibly, if it
