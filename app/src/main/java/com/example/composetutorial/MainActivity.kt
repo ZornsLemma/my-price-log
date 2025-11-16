@@ -660,13 +660,6 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
         setCurrentDataSetId(context, dataSetId)
         setCurrentItemId(context, dataSetId, itemIdTeabags)
         setCurrentSourceId(context, dataSetId, sourceIdSuperiorStore)
-        /* TODO DELETE?
-    context.dataStore.edit { prefs ->
-        prefs[SELECTED_DATA_SET_ID_KEY] = dataSetId
-        prefs[SELECTED_ITEM_ID_KEY] = itemIdTeabags
-        prefs[SELECTED_SOURCE_ID_KEY] = sourceIdSuperiorStore
-    }
-        */
 }
 
 suspend fun setCurrentDataSetId(context: Context, dataSetId: Long) {
@@ -1032,21 +1025,6 @@ class SyncedStateEvent<T>(initialState: T) {
     }
 }
 
-/* TODO: DELETE
-// TODO: Some code duplication with HomeViewModel.savePreference
-fun <T> savePreference(
-    dataStore: DataStore<Preferences>,
-    key: Preferences.Key<T>,
-    value: T?
-) {
-    CoroutineScope(Dispatchers.IO).launch {
-        dataStore.edit { prefs ->
-            if (value != null) prefs[key] = value else prefs.remove(key)
-        }
-    }
-}
-*/
-
 // TODO: SOME CODE DUPLICATION AND GENERAL SHITTINESS WITH OTHER VERSIONS OF THIS "SAVE" CODE - THIS COMMENT *MAY* BE OUTDATED NOW BUT NEED TO REVIEW CAREFULLY
 fun setCurrentDataSetIdAsync(context: Context, dataSetId: Long) {
     AppScope.io.launch {
@@ -1064,7 +1042,6 @@ fun setCurrentSourceIdAsync(context: Context, dataSetId: Long, sourceId: Long?) 
     }
 }
 
-
 // TODO: ChatGPT magic
 sealed interface LoadState<out T> {
     data object Loading : LoadState<Nothing>
@@ -1077,19 +1054,6 @@ fun <T> LoadState<T>.valueOrNull(): T? =
         is LoadState.Loaded -> value
         else -> null
     }
-
-/* TODO DELETE
-fun <T> flattenLoadState(loadState: LoadState<T>): T? {
-    return when (loadState) {
-        is LoadState.Loaded -> {
-            (loadState as LoadState.Loaded).value
-        }
-        else -> {
-            null
-        }
-    }
-}
-*/
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(
@@ -1158,8 +1122,13 @@ class HomeViewModel(
     // TODO: This is quite long and could probably be improved by factoring stuff out into helper
     // functions.
     init {
-        // This forces the delegate to initialize safely on the main thread TODO: VOODOO
-        @Suppress("UNUSED_VARIABLE") val unused = app.dataStore
+        // At some point in development, an LLM suggested I add the following comment and code:
+        //     // This forces the delegate to initialize safely on the main thread
+        //     @Suppress("UNUSED_VARIABLE") val unused = app.dataStore
+        // I am fairly sure this is not doing anything useful any more, if it ever was.
+        // preferencesDataStore should be fine to initialise on any thread.
+        // TODO: Delete this comment completely later on. I'm keeping it around for now just in case
+        // any mysterious crashes occur so I can try reinstating it.
 
         // ENHANCE: I suspect this tree of flows is over-complex. In part we are trying to work
         // around problems where a getAllItems(dataSetId) or getAllSources(dataSetId) flow is not
@@ -1362,93 +1331,6 @@ class HomeViewModel(
             }
 
         viewModelScope.launch(Dispatchers.Default) {
-            /* TODO THIS DOESN'T WORK AS IT DOESN'T TAKE ACCOUNT OF NEW WEMISSIONS TRIGGERED BY DATA NOT BY USER INPUT, BUT KEEPING IT FOR NOW FOR REF
-            // Add the "loading" flag to the UI state flow, rather than allowing arbitrarily long
-            // delays before the user sees any kind of response. Note that because we use
-            // collectLatest(), if the user changes the inputs the timeout starts again, which is
-            // what we want.
-            val todo1 = allUserInputFlow.flatMapLatest { _ ->
-                val newUIContent = completeUIStateFlow.withDelayedLoading(spinnerDelayMillis, _uiState.value.second)
-                newUIContent
-            }
-
-
-            todo1.collectLatest { todoRename ->
-                Log.d("MyAppHVM", "todo3 $todoRename")
-                Log.d("MyFoo", "newUIState")
-                _uiState.value = todoRename
-            }
-            */
-
-            // TODO: NEW TRY, MORE GROK MAGIC
-
-            /* TODO NEVER EVEN TRIED BUT PROBABLY BROKEN
-            val uiStateFlow = allUserInputFlow
-                .flatMapLatest { input ->
-                    completeUIStateFlow
-                        .map { Pair(false /* loading */, it) }
-                        .onStart {
-                            // Emit loading only after delay, and only if no data yet
-                            delay(spinnerDelayMillis)
-                            emit(Pair(true /* loading */, _uiState.value))
-                        }
-                        .conflate() // drop stale data if DB floods
-                }
-                .stateIn(
-                    scope = viewModelScope,
-                    started = SharingStarted.WhileSubscribed(5000),
-                    initialValue = null // TODO!?!?!?!?!?!?! UiState()
-                )
-                */
-
-            // TODO GROK MAGIC
-            /*
-            val uiStateFlow = allUserInputFlow
-                .flatMapLatest { input ->
-                    channelFlow {
-                        var loadingJob: Job? = null
-
-                        // Subscribe to data
-                        val dataJob = launch {
-                            completeUIStateFlow.collect { data ->
-                                // Cancel loading if it's pending
-                                loadingJob?.cancel()
-                                loadingJob = null
-
-                                // Emit data
-                                send(Pair(false, data))
-                            }
-                        }
-
-                        // Start loading timer
-                        loadingJob = launch {
-                            delay(spinnerDelayMillis)
-                            // Only emit loading if not already canceled
-                            if (isActive) {
-                                send(Pair(true, _uiState.value))
-                            }
-                        }
-
-                        // Cleanup on cancel (input change)
-                        awaitCancellation()
-                    }
-                        // TODO!? .catch { emit(Pair(false) }
-                }
-                .stateIn(
-                    scope = viewModelScope,
-                    started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 0),
-                    initialValue = Pair(false, _uiState.value) // TODO!?!?!?!?!?! UiState()
-                )
-                */
-
-            /*I TODO THIS MAYBE KINDA SORTA WORKS!?
-            TodoSomeSortOfUiStateFlow.collectLatest { todoRename ->
-                Log.d("MyAppHVM", "todo3 $todoRename")
-                Log.d("MyFoo", "newUIState")
-                _uiState.value = todoRename
-            }
-            */
-
             // TODO: MORE GROK MAGIC
             // TODO: This *might* actually be correct. I need to look at it calmly and fresh, read
             // up on channelFlow, give it more testing. But I think there is a chance it's sound.
@@ -1456,9 +1338,8 @@ class HomeViewModel(
                 .flatMapLatest { input ->
                     channelFlow {
                         var loadingJob: Job? = null
-                        //var lastKnownData = _uiState.value.second
 
-                        // === DATA STREAM ===
+                        // Data stream
                         /* val dataJob = */ launch {
                             completeUIStateFlow.collect { data ->
                                 //lastKnownData = data
@@ -1467,15 +1348,13 @@ class HomeViewModel(
                             }
                         }
 
-                        // === LOADING TIMER ===
+                        // Loading timer
                         loadingJob = launch {
                             delay(spinnerDelayMillis)
                             if (isActive) {
                                 send(true to _uiState.value.second)
                             }
                         }
-
-                        // No awaitCancellation() — not needed
                     }
                 }
                 .collectLatest { (isLoading, data) ->
@@ -2534,13 +2413,8 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
 }
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
-/* TODO DELETE?
-val SELECTED_DATA_SET_ID_KEY = longPreferencesKey("selected_data_set_id")
-val SELECTED_ITEM_ID_KEY = longPreferencesKey("selected_item_id")
-val SELECTED_SOURCE_ID_KEY = longPreferencesKey("selected_source_id")
-*/
-// TODO: MOVE THE FOLLOWING!?
 
+// TODO: MOVE THE FOLLOWING!?
 const val defaultStalePriceThreshold = 30
 const val defaultAncientPriceThresholdDays = 180
 const val defaultAnnualInflationPercent = 5
@@ -2917,41 +2791,6 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
 
 // TODO: Grok magic
 data class TimedData<T>(val data: T, val triggerTime: Long)
-
-// TODO: Grok magic
-/* TODO DELETE
-fun <T> Flow<T>.withDelayedLoading(
-    loadingDelayMillis: Long,
-    loadingValue: T
-): Flow<Pair<Boolean, T>> = flow {
-    // Emit loading = true after delay, *without canceling the original*
-    val delayedLoading = flow {
-        delay(loadingDelayMillis)
-        emit(true)
-    }
-
-    // Race: either the original flow emits first, OR loading delay triggers
-    val firstEmission = this@withDelayedLoading
-        .map { Pair(false, it) }
-        .take(1) // Only care about first real emission
-        .mergeWith(delayedLoading.map { Pair(it, loadingValue) })
-        .first()
-
-    // Emit whichever comes first
-    emit(firstEmission)
-
-    // If loading was shown, wait for actual data and emit it
-    if (firstEmission.first) {
-        val result = this@withDelayedLoading.first() // Wait for real data
-        emit(false to result)
-    }
-}
-*/
-
-/**
- * Helper to merge two flows and emit from whichever emits first
- */
-private fun <T> Flow<T>.mergeWith(other: Flow<T>): Flow<T> = merge(this, other)
 
 @Composable
 fun HomeScreenNavigationDrawer(
@@ -7821,7 +7660,6 @@ fun AppNavigation() {
                             navController.navigate("editItem")
                         } else {
                             setCurrentItemIdAsync(context, viewModel.uiContent.dataSet.id, it.id)
-                            // TODO DELETE savePreference(dataStore, SELECTED_ITEM_ID_KEY, it.id)
                             navController.popBackStack() // return to home screen
                         }
                     },
@@ -7931,7 +7769,6 @@ fun AppNavigation() {
                             navController.popBackStack()
                         } else {
                             setCurrentDataSetIdAsync(context, newSelectedDataSetId)
-                            // TODO DELETE savePreference(dataStore, SELECTED_DATA_SET_ID_KEY, newSelectedDataSetId)
                             navController.popBackStack("home", inclusive = false)
                         }
                     })
@@ -8041,7 +7878,6 @@ This may be complete crap. The example of how to use it is probably as long as t
                             // The used saved the edit, so select the edited item and return to the
                             // home screen.
                             Log.d("MyAppQZ", "newSelectedItemId=$newSelectedItemId")
-                            // TODO DELETE savePreference(dataStore, SELECTED_ITEM_ID_KEY, newSelectedItemId)
                             setCurrentItemIdAsync(context, viewModel.uiContent.dataSet.id, newSelectedItemId)
                             navController.popBackStack("home", inclusive = false)
                         }
@@ -8074,7 +7910,6 @@ This may be complete crap. The example of how to use it is probably as long as t
                         if (newSelectedSourceId == null) {
                             navController.popBackStack()
                         } else {
-                            // TODO DELETE savePreference(dataStore, SELECTED_SOURCE_ID_KEY, newSelectedSourceId)
                             setCurrentSourceIdAsync(context, viewModel.uiContent.dataSet.id, newSelectedSourceId)
                             navController.popBackStack("home", inclusive = false)
                         }
