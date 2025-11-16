@@ -5833,7 +5833,6 @@ fun LauncherIcon(size: Dp = 120.dp) {
     )
 }
 
-// TODO: ChatGPT magic
 @Composable
 fun getAppVersion(): String {
     val context = LocalContext.current
