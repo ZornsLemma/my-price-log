@@ -1446,7 +1446,9 @@ fun sanitisePriceUnits(dataSet: DataSet, priceList: List<Price>): List<Price> {
     }
 }
 
-// TODO: It's annoying to have to write near-identical code here for PriceHistory. We can possibly factor out some commonality, I just based it out for now.
+// This function is annoyingly similar to sanitisePriceUnits() but I don't see any way to factor out
+// the commonality which isn't worse than the repetition.
+// TODO: Just possibly this should be an extension on DataSet??
 fun sanitisePriceHistoryUnits(dataSet: DataSet, priceHistoryList: List<PriceHistory>): List<PriceHistory> {
     val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
     myCheck(relevantUnitFamilies.isNotEmpty()) { "Expected at least one relevant unit family for dataSet ${dataSet.id}" }
