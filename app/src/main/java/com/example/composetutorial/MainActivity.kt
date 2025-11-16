@@ -278,7 +278,6 @@ import com.example.composetutorial.ui.components.validationInputHandleBringIntoV
 import com.example.composetutorial.ui.components.validationInputHandleFocusRequester
 import com.example.composetutorial.ui.copyrightSymbol
 import com.example.composetutorial.ui.defaultErrorHighlightOffset
-import com.example.composetutorial.ui.defaultValidationMessageDelayMillis
 import com.example.composetutorial.ui.emDash
 import com.example.composetutorial.ui.listItemHorizontalPadding
 import com.example.composetutorial.ui.maxDataSetNameLength
@@ -3045,7 +3044,7 @@ fun HomeScreenStateManager(
     ScrimWithSpinner(visible = loading || asyncOperationStatus == AsyncOperationStatus.BusyForAWhile)
 
     if (showErrorDialog) {
-        SaveErrorAlertDialog(requestClose = { showErrorDialog = false })
+        SaveErrorAlertDialog(onDismissRequest = { showErrorDialog = false })
     }
 }
 
@@ -3178,7 +3177,7 @@ fun HomeScreenContent(
 
     if (showDeletePriceConfirmDialog) {
         val augmentedPrice = priceAnalysis.augmentedPriceList.single { it.basePrice.sourceId == source?.id }
-        DeletePriceConfirmDialog(vm, augmentedPrice, requestClose = { showDeletePriceConfirmDialog = false })
+        DeletePriceConfirmDialog(vm, augmentedPrice, onDismissRequest = { showDeletePriceConfirmDialog = false })
     }
 }
 
@@ -3186,21 +3185,22 @@ fun HomeScreenContent(
 fun DeletePriceConfirmDialog(
     vm: HomeViewModel,
     augmentedPrice: AugmentedPrice,
-    requestClose: () -> Unit // TODO: Rename onDismissRequest? see SaveErrorAlertDialog()
+    onDismissRequest: () -> Unit
 ) {
     AlertDialog(
         icon = null,
         title = { Text("Delete price") },
-        // TODO: When/if it works, we could possibly mention being able to recover it via the
-        // history. But it may be best to keep the message simple anyway.
+        // We could mention in the message here that you can recover the price using the history
+        // (via "Edit as new price") but it's probably best not to over-explain. We just avoid any
+        // scary messages about losing data.
         text = { Text("Are you sure you want to delete this price?") },
-        onDismissRequest = requestClose,
+        onDismissRequest = onDismissRequest,
         dismissButton = {
-            TextButton(onClick = requestClose) { Text("Cancel") }
+            TextButton(onClick = onDismissRequest) { Text("Cancel") }
         },
         confirmButton = {
             TextButton(onClick = {
-                requestClose()
+                onDismissRequest()
                 vm.deletePrice(augmentedPrice.basePrice)
             }) { Text("Delete") }
         }
@@ -4043,7 +4043,7 @@ fun GeneralEditScreen(
 
 
     if (showErrorDialog) {
-        SaveErrorAlertDialog(requestClose = { showErrorDialog = false })
+        SaveErrorAlertDialog(onDismissRequest = { showErrorDialog = false })
     }
 
     LaunchedEffect(showBusySnackbar) {
@@ -4057,7 +4057,7 @@ fun GeneralEditScreen(
 }
 
 @Composable
-fun SaveErrorAlertDialog(requestClose: () -> Unit) { // TODO: rename argument onDismissRequest?
+fun SaveErrorAlertDialog(onDismissRequest: () -> Unit) {
     // We use an AlertDialog not a snackbar here. This is a local database save which is
     // failing so it is very unlikely to be transient. We also don't want the user
     // missing the snackbar, thinking the app is buggy ("I already saved, why didn't the
@@ -4071,9 +4071,9 @@ fun SaveErrorAlertDialog(requestClose: () -> Unit) { // TODO: rename argument on
     AlertDialog(
         title = { Text("Unable to save changes") },
         text = { Text("An error occurred while saving the changes.") },
-        onDismissRequest = { requestClose() },
+        onDismissRequest = onDismissRequest,
         confirmButton = {
-            TextButton(onClick = { requestClose() }) { Text("OK") }
+            TextButton(onClick = { onDismissRequest() }) { Text("OK") }
         }
     )
 }
