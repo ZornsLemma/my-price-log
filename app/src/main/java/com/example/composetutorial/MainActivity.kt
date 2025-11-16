@@ -2735,9 +2735,6 @@ fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
     }
 }
 
-// TODO: Grok magic
-data class TimedData<T>(val data: T, val triggerTime: Long)
-
 @Composable
 fun HomeScreenNavigationDrawer(
     drawerState: DrawerState,
@@ -2928,8 +2925,6 @@ fun HomeScreenScaffold(
     onEditSourcesClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
-    // TODO: We need to disable all forms of interaction (navdrawer, dropdowns, menu, etc) while
-    // this is "busy"
     val asyncOperationStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
 
     // Unlike GeneralEditScreen(), we don't try to trap "back" and show a busy snackbar. We probably
@@ -2938,10 +2933,10 @@ fun HomeScreenScaffold(
     //   "user has put effort into this data entry" as in GeneralEditScreen.
     // - "Back" from the home screen would leave the app. It's not so clear we should even try to
     //   stop the user doing that.
-    // - The user can use the home or overview buttons/gestures to do leave the app, and we probably
+    // - The user can use the home or overview buttons/gestures to dleave the app, and we probably
     //   can't and almost certainly shouldn't trap those if we are saving. (They can also do this
-    //   during GeneralEditScreen too. It's just that there "back" has an in-app meaning and is
-    //   a particularly expected case where we can reasonably interfere.)
+    //   during GeneralEditScreen too. It's just that there "back" has an in-app meaning and is a
+    //   particularly expected case where we can reasonably interfere.)
     // - A slow save is extremely unlikely anyway.
 
     val dataSetListSorted = dataSetList.rememberSortedByLocale { it.name }
