@@ -3312,21 +3312,11 @@ fun PriceComparisonCard(
                 // ("/100g") feels unclear, as does having prices which aren't marked with a
                 // currency symbol.
 
+                // We use the unit family of the lowest unit price to pick a friendly
+                // denominator and (of course) use that same denominator for all the unit
+                // prices.
                 val bestValueAugmentedPrice = priceAnalysis.augmentedPriceList.first()
                 val headerUnitPriceDenominator = remember(bestValueAugmentedPrice) {
-                    // TODO: I am not sure we exactly want "sibling" here - we don't necessarily have a single
-                    // system to pick from, or we maybe do/should but it's not so obvious - because we are in the
-                    // context of multiple prices and they might be using a mixture of the user's available systems
-                    // - so it's not as simple as "translating" price.measure.unit
-                    // TODO: It's not so obvious which unit family we want to use here - in the context of showing the price at a
-                    // particular source in ItemSourceInfo, we have "the unit the price was entered in for that source" to implicitly
-                    // select a family, but here we are working with multiple prices which may use a mix of families (imagine milk,
-                    // where in the UK we may have pints and litres at different stores). We probably don't want to ask the user to
-                    // specify a *preferred* unit family. We could potentially have each source price vote with its unit family, but
-                    // instead - and this is probably best, but will see how I feel later - we take the unit family of the cheapest
-                    // price. (At risk of stating the obvious, but it's easy to get lost in the details here, we are showing the
-                    // unit prices sorted as a list, so they all need to use the same denominator otherwise the list is not much
-                    // use.)
                     val candidateDenominators = getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
                         dataSet,
                         bestValueAugmentedPrice.basePrice.quantity.unit,
