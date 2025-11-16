@@ -1127,7 +1127,6 @@ class HomeViewModel(
 
     val settingsRepository = SettingsRepository(app.dataStore)
 
-    private val loadingTrigger = MutableStateFlow(0L) // bump on user input // TODO GROK MAGIC
     // TODO: This is quite long and could probably be improved by factoring stuff out into helper
     // functions.
     init {
@@ -1161,7 +1160,7 @@ class HomeViewModel(
             // the dataSetId we are tagging the results with will be correct. (In practice non-empty
             // lists of results for these queries are self-tagging, but we need to handle empty
             // lists correctly too.)
-            val dataSetId = dataSetIdState.valueOrNull() // TODO DELETE FOLLOWING when (dataSetIdState) { is LoadState.Loaded -> { (dataSetIdState as LoadState.Loaded).value } else -> null }
+            val dataSetId = dataSetIdState.valueOrNull()
             Log.d("MyFlow", "dataSetOnlyDatabaseFlow dataSetId $dataSetId")
             combine(
                 flowOf(dataSetId),
