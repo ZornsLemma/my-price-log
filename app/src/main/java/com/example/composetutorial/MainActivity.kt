@@ -5627,7 +5627,7 @@ fun SettingsScreen(
                 ),
                 onConfirm = { stalePriceThresholdString ->
                     showStalePriceThresholdDialog = false
-                    vm.settingsRepository.setStalePriceThresholdAsync(stalePriceThresholdString.toIntOrNull()!!)
+                    vm.settingsRepository.setStalePriceThresholdAsync(stalePriceThresholdString.toInt())
                 },
                 onDismissRequest = {
                     showStalePriceThresholdDialog = false
@@ -5662,7 +5662,7 @@ fun SettingsScreen(
                 onConfirm = { ancientPriceThresholdDaysString ->
                     showAncientPriceThresholdDialog = false
                     vm.settingsRepository.setAncientPriceThresholdDaysAsync(
-                                ancientPriceThresholdDaysString.toIntOrNull()!!)
+                                ancientPriceThresholdDaysString.toInt())
                 },
                 onDismissRequest = {
                     showAncientPriceThresholdDialog = false
@@ -5702,7 +5702,7 @@ fun SettingsScreen(
                 onConfirm = { annualInflationPercentString ->
                     showAnnualInflationPercentDialog = false
                     vm.settingsRepository.setAnnualInflationPercentAsync(
-                                annualInflationPercentString.toIntOrNull()!!)
+                                annualInflationPercentString.toInt())
                 },
                 onDismissRequest = {
                     showAnnualInflationPercentDialog = false
