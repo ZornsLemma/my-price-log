@@ -2318,7 +2318,6 @@ fun MyDropdownMenuItem(
 
 data class PriceAgeSettings(val stalePriceThreshold: Int, val ancientPriceThresholdDays: Int, val annualInflationPercent: Int)
 
-// TODO: ChatGPT magic
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     private object Keys {
         val STALE_PRICE_THRESHOLD_KEY =
@@ -2350,7 +2349,6 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         setValueAsync(Keys.ANNUAL_INFLATION_PERCENT_KEY, annualInflationPercent)
     }
 
-    // TODO!?
     private fun <T> setValueAsync(key: Preferences.Key<T>, value: T) {
         AppScope.io.launch {
             dataStore.edit { it[key] = value }
