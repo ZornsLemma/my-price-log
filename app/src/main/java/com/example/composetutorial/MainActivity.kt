@@ -713,14 +713,6 @@ object AppViewModelProvider {
                 this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
             SettingsViewModel(app)
         }
-        /* TODO DELETE LATER, KEEPING AROUND FOR REF FOR OTHER VIEWS IF NEC FOR NOW
-        initializer {
-            val app =
-                this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
-            val savedStateHandle = createSavedStateHandle()
-            EditPriceViewModel(app.repository, savedStateHandle)
-        }
-        */
     }
 }
 
