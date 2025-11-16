@@ -2186,6 +2186,19 @@ fun EditConfirmButtons(
 
         Spacer(modifier = Modifier.width(8.dp))
 
+        // ENHANCE: Confirm and Undo are quick, but because they have a background save, the
+        // asyncOperationStatus will (correctly) cause various controls on the screen to be disabled
+        // instantly but briefly during the save, then re-enabled shortly after. This manifests (at
+        // least in the emulator) as a slightly ugly flicker. (This isn't jank in the usual sense,
+        // the UI is correctly reflecting what we've coded.) It might be best if we could make them
+        // inactive (so you can't get into a race condition by editing or changing things during the
+        // save) instantly but defer the visible greying out for (say) 50ms. I have had some
+        // confused chats with LLMs about this and it may be a reasonable thing to do. It may also
+        // be somewhat fiddly and I'm not sure what the best way to do it is, even if it is a good
+        // idea. It's possible similar behaviour can occur in other parts of the app, but in
+        // practice it's probably less obvious as on a full screen dialog we will animate away as
+        // soon as the save actually completes.
+
         // ENHANCE: A couple of possible polish opportunities here:
         // - We should maybe disable the "Confirm" button if the label is "now", although arguably
         //   this is a bit unnecessary and leads to a small visual distraction if the user is
