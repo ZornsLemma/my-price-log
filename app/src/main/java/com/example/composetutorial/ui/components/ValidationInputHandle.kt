@@ -19,7 +19,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.example.composetutorial.errorHighlightBoxVisibleTimeMillis
+import com.example.composetutorial.ui.errorHighlightBoxVisibleTimeMillis
 import kotlinx.coroutines.delay
 
 /**
