@@ -656,6 +656,10 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
 // than it's worth. (We could remove the UserPreferences map entry for the data set ID key to
 // represent a null value being associated with it.)
 val sourceIdNone = -1L
+// Null item IDs are even less of a thing outside transitional async loading delays. Using a -1 here
+// to avoid adding nullability to the selectedItemIdStateFlow is harmless and slightly reduces
+// complexity.
+val itemIdNone = -1L
 
 suspend fun setSelectedDataSetId(context: Context, dataSetId: Long) {
     updateUserPreferences(context) { builder -> builder.setSelectedDataSetId(dataSetId) }
@@ -1102,15 +1106,13 @@ class HomeViewModel(
 
     private val selectedItemIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
         .map { prefs ->
-            prefs.selectedItemIdForDataSetIdMap[prefs.selectedDataSetId] ?: 0L
-            // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER
-            // STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
+            prefs.selectedItemIdForDataSetIdMap[prefs.selectedDataSetId] ?: itemIdNone
         }
         .asLoadState()
 
     private val selectedSourceIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
         .map { prefs ->
-            prefs.selectedSourceIdForDataSetIdMap[prefs.selectedDataSetId] ?: 0L // TODO 0L IS A BIT OF HACK - WE MAY BE ABLE TO MAKE NULL WORK, BUT SINCE THE OLDER STYLE FLOWS DID NOT HAVE NULLABILITY, I WANT TO AVOID DEALING WITH THAT RIGHT NOW
+            prefs.selectedSourceIdForDataSetIdMap[prefs.selectedDataSetId] ?: sourceIdNone
         }
         .asLoadState()
 
@@ -5841,9 +5843,13 @@ fun getAppVersion(): String {
             val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             // pInfo.versionName is the human-readable version (e.g., "1.2.3")
             val versionName = pInfo.versionName
+            // minSdk is currently 30 and we don't even use versionCode, but let's keep this logic
+            // around for now. It's borderline possible we'll drop minSdk to 24 at some point.
+            @Suppress("UnusedVariable")
             val versionCode = if (android.os.Build.VERSION.SDK_INT >= 28) {
                 pInfo.longVersionCode
             } else {
+                @Suppress("DEPRECATION")
                 pInfo.versionCode.toLong()
             }
             "Version $versionName" // could add " ($versionCode)"?
