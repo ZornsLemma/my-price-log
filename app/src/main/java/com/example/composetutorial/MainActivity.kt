@@ -1390,17 +1390,44 @@ class HomeViewModel(
 
 }
 
-// Returns a version of priceList where any prices which are expressed in units not supported by the
-// data set are replaced by a unit that is. This can happen if the user removes a unit family from a
-// data set. We don't try to patch this up in the database because then the user would immediately
-// lose the original unit and can't undo the change if they realise it was a mistake. We could in
-// theory handle this individually in other parts of the code, but that's an invitation to forget in
-// one place in the future and have the code blow up. (Allowing the "bad" unit to persist as long as
-// possible also opens up a corner case where a price was expressed in e.g. US pints, the user
-// changes the data set to imperial and the price shows up in "pints" (with no qualifier) but it is
-// a US pint and not an imperial pint and maybe this unit confusion is even allowed to persist when
-// the user edits without changing the unit from the dropdown.) By fixing up the data as we read it
-// out of the database, we avoid all this. TODO: REVIEW THIS COMMENT LATER
+// Returns a version of priceList where any price measurements which are expressed in units not
+// supported by the data set are changed to use a unit that is supported. This avoids some awkward
+// corner cases.
+//
+// For example:
+// - the data set allows metric and imperial
+// - the user enters a price of £1.83 for 4 imperial pints of milk
+// - the user changes the data set to allow only metric
+//
+// At this point we could:
+// - Forcibly update the database to remove the no longer valid units on the price table, changing
+//   our milk price to £1.83 for 2273.045ml. This would be lossy, especially if the user changed the
+//   data set by accident and reverts the change later.
+// - Try to ensure that all the unit-handling parts of the application take care of this specially,
+//   rather than assuming that all units they encounter are currently valid according to the data
+//   set's definition. In this example we might continue to show the price measurement in pints,
+//   perhaps even allowing the user to edit it in pints, until they change the unit (at which point
+//   they would not be able to set it back to pints, as that is not a valid unit for the data set).
+//   This is mostly fine, but it feels like an invitation to subtle bugs and crashes if I forget to
+//   allow for this somewhere, as well as complicating the UI code for relatively little benefit.
+//   - As an unlikely but particularly awkward case, suppose we tried to accomodate the existing
+//     unit for "as long as possible" as just described, and the user instead had changed imperial
+//     to US customary on the data set. We would be showing a price for 6 imperial pints but the
+//     display would just say "pints" and the user would have no way to know the price was not in US
+//     customary pints. They would perhaps even be allowed to edit the price, not realising they are
+//     entering a value in imperial pints in this one case. (Note that we very deliberately do not
+//     attempt to qualify ambiguous units like "pints" on the main screens for readability and
+//     usability. This ambiguity is handled by not allowing both imperial and US customary for the
+//     same data set. It is only the preserved unit on the price and the change of data set units
+//     which re-introduce the ambiguity.)
+//
+// What we actually do is use this function when we read the prices out of the database, to act as
+// if we forcibly updated the database to keep things consistent but without actually making those
+// changes in the database itself. This avoids hidden bugs where "invalid" units can legitimately
+// occur in parts of the UI code, at the minor cost of forcing the user to see the prices with
+// now-invalid units in an odd but valid unit (probably ml, in our pint example). It also avoids any
+// ambiguity in interpreting the units shown to the user.
+//
 // TODO: Just possibly this should be an extension on DataSet??
 fun sanitisePriceUnits(dataSet: DataSet, priceList: List<Price>): List<Price> {
     val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
