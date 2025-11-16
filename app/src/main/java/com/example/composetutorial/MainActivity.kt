@@ -3551,10 +3551,6 @@ fun EditPriceScreen(
             enabled = saveStatus.isNotBusy(),
         )
     }
-
-    // TODO: It is probably hard, but *if* two fields have validation errors and a field with a
-    // validation error is currently focused, it would be nice to use the already-focused one as the
-    // scroll-and-highlight target, not "whichever one our internal logic considers first".
 }
 
 @Composable
@@ -4710,6 +4706,7 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
 
     val focusManager = LocalFocusManager.current
     LaunchedEffect(Unit) {
+
         validationFlow.collect { field ->
             Log.d("MyApp", "LaunchedEffect saveValidationError $field")
             when (field) {
@@ -6729,6 +6726,15 @@ class EditPriceViewModel(
     val saveValidationEvents = _saveValidationEvents.asSharedFlow()
 
     suspend fun validateForSave(): Boolean {
+        // ENHANCE: It might be too hard to be worth it, but *if* there are multiple fields with
+        // validation errors and one of those fields is already focused, it might be nice to request
+        // user attention on that focused field rather than whichever one happened to fail
+        // validation first. I suspect we'd need to query which field, if any, is focused and
+        // re-order our validation checks to test that field first. Or maybe push all our possible
+        // emit() calls here into a local list, do all the validation (no early return), then emit()
+        // the already-focused field if there is one, otherwise the first field in the list. This
+        // comment applies to all validation on all screens, not just this specific screen.
+
         if (!validationRulesOk(
                 currencyFormat.validationRules,
                 uiContent.editablePrice.value.price
