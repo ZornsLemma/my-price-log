@@ -651,7 +651,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
         setSelectedSourceId(context, dataSetId, sourceIdSuperiorStore)
 }
 
-// TODO MOVE
+// TODO MOVE - MAYBE INTO SourceModels.kt? Or is that a bit off as it's more of a UI concept?
 // We could make things work so a null sourceId represents "None", but in practice it's more trouble
 // than it's worth. (We could remove the UserPreferences map entry for the data set ID key to
 // represent a null value being associated with it.)
@@ -803,31 +803,32 @@ class MyApplication : Application() {
         super.onCreate()
 
         AppScope.io.launch {
-            // TODO: Would it be hard to do something like "if count(*) on price == 0 then insert
-            // demo data here"? That would avoid the minor hole where we die after the transaction
-            // commits but before we set the flag, and then we'd end up with a duplicate data set
-            // next time? Not a big deal but would be nice to patch if not too hard.
             val demoDataInsertedKey = booleanPreferencesKey("demo_data_inserted") // TODO: MOVE TO SOME MASTER LIST OF KEYS!?
             val demoDataInserted = dataStore.data
                 .map { prefs -> prefs[demoDataInsertedKey] ?: false }
                 .first()
             if (!demoDataInserted) {
-                val db = AppDatabase.getDatabase(this@MyApplication)
+                // To guard against the corner case where the demo data transaction succeeded but
+                // we were killed before setting demoDataInsertedKey to true, we don't actually
+                // do anything here if there are any data sets.
+                if (repository.getAllDataSets().first().isEmpty()) {
+                    val db = AppDatabase.getDatabase(this@MyApplication)
 
-                db.withTransaction {
-                    // Manually adjust the starting sequence values for various tables. This
-                    // increases the chances that foreign key bugs cause constraint violations,
-                    // rather than silently referencing the wrong record. It also makes it easier to
-                    // identify the type of ID during debugging based on its numeric range. We don't
-                    // rely on IDs being non-overlapping for correctness.
-                    //
-                    // We leave data_set's sequence alone and let it start IDs at 1.
-                    db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('source', 1000)")
-                    db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('item', 2000)")
-                    db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('price', 10000)")
-                    db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('price_history', 100000)")
+                    db.withTransaction {
+                        // Manually adjust the starting sequence values for various tables. This
+                        // increases the chances that foreign key bugs cause constraint violations,
+                        // rather than silently referencing the wrong record. It also makes it easier to
+                        // identify the type of ID during debugging based on its numeric range. We don't
+                        // rely on IDs being non-overlapping for correctness.
+                        //
+                        // We leave data_set's sequence alone and let it start IDs at 1.
+                        db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('source', 1000)")
+                        db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('item', 2000)")
+                        db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('price', 10000)")
+                        db.openHelper.writableDatabase.execSQL("INSERT INTO sqlite_sequence (name, seq) VALUES ('price_history', 100000)")
 
-                    populateDemoData(repository, this@MyApplication)
+                        populateDemoData(repository, this@MyApplication)
+                    }
                 }
 
                 dataStore.edit() { it[demoDataInsertedKey] = true }
