@@ -1628,6 +1628,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     getItemText: (T) -> String,
     getCollapsedItemText: ((T) -> String)? = null,
     getDividerBetween: ((T, T) -> Boolean)? = null,
+    addBottomSpace: Boolean = false,
 ) {
     var textFieldWidth by remember { mutableIntStateOf(0) }
     var isExpanded by remember { mutableStateOf(false) }
@@ -1647,6 +1648,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             getId = getId,
             getItemText = getItemText,
             getDividerBetween = getDividerBetween,
+            addBottomSpace = addBottomSpace,
         ) {
             val itemMap = items.associateBy { getId(it) }
             val valueString = if (selectedId == null) "" else {
@@ -1820,6 +1822,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     getId: (T) -> ID,
     getItemText: (T) -> String,
     getDividerBetween: ((T, T) -> Boolean)? = null,
+    addBottomSpace: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -1870,6 +1873,17 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
                         @Suppress("KotlinConstantConditions") onExpand(expanded)
                     }
                 )
+            }
+
+            if (addBottomSpace) {
+                // This is a workaround suggested by Grok which seems to fix a problem (at least on
+                // Android 16 in the emulator) where the last bottom item in a very long dropdown
+                // menu won't scroll onto the screen fully so cannot be selected or is at least
+                // hard to read. It may be that the irregular height caused by my horizontal divider
+                // exacerbates this, but I don't believe that's an unreasonable thing to do in
+                // itself. In practice we really shouldn't be using such long dropdowns anyway, but
+                // while we are, this is an effective workaround.
+                Spacer(Modifier.height(48.dp))
             }
         }
     }
@@ -4860,11 +4874,6 @@ fun EditDataSetScreen(
             // capable - to help the user pick something out of the gigantic list of currencies
             // instead of scrolling through a giant dropdown.
 
-            // TODO: This may expose a lurking bug in MyExposedDropdownMenuBox - the very last (I
-            // think) item in the list is *not* entirely shown. I don't know if the same thing will
-            // happen with other dropdowns which get long enough to need scrolling, but should
-            // definitely test as it matters much more there. It's ugly and annoying and concerning
-            // here too, of course. (This doesn't seem to happen on the O6!?)
             MyExposedDropdownMenuBox(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -4888,6 +4897,7 @@ fun EditDataSetScreen(
                     validationResult,
                     color = MaterialTheme.colorScheme.error,
                 ),
+                addBottomSpace = true,
             )
         }
 
