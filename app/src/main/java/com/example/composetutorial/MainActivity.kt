@@ -4209,12 +4209,11 @@ fun EditItemScreen(
 
         // TODO: Can I put these string versions inside QuantityType or won't that play well with i18n?
         val options = listOf(
-            // TODO: Don't be over-eager to have supportingText here - if we don't need it for any of them items that is fine, and we can then avoid this maybe-nonstandardness in this case at least, and revert to the standard item height of 40.dp - "Item" alone may be a fine option, or "Item or group of items" or something like that would probably be a fine option with no supporting text - think carefully about wording but don't assume we need supportingText
-            Triple(
+            Triple<QuantityType,String,String?>(
                 QuantityType.ITEM,
                 "Item",
-                "Per item or pack of items"
-            ), // TODO: POOR WORDING FOR BOTH SHORT NAME AND SUPPORTING TEXT? THINK
+                null // was "Per item or pack of items" but probably clearer without it
+            ),
             Triple(QuantityType.WEIGHT, "Weight", null),
             Triple(
                 QuantityType.VOLUME,
