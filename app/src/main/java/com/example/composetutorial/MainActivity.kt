@@ -5506,6 +5506,7 @@ fun SettingsScreen(
 
             SettingsTile(
                 title = "Annual inflation",
+                // TODO: "Prices increased by X% per year once stale" or similar? Since inflation does apply to ancient too...
                 subtitle = "Stale prices increase by $annualInflationPercent% per year",
                 onClick = {
                     showAnnualInflationPercentDialog = true
