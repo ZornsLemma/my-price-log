@@ -37,9 +37,11 @@ fun DataSet?.toEditable(locale: Locale): EditableDataSet {
             0,
             "",
             locale.currencyOrNull()?.currencyCode ?: "",
+            // TODO: Rename DataSetUnitPreferences to just UnitPreferences??
+            DataSetUnitPreferences(
             allowMetric = UnitFamily.METRIC in defaultUnitFamilies,
             allowImperial = UnitFamily.IMPERIAL in defaultUnitFamilies,
-            allowUSCustomary = UnitFamily.US_CUSTOMARY in defaultUnitFamilies,
+            allowUSCustomary = UnitFamily.US_CUSTOMARY in defaultUnitFamilies,),
             notes = ""
         )
     } else {
@@ -47,22 +49,25 @@ fun DataSet?.toEditable(locale: Locale): EditableDataSet {
             id = id,
             name = name,
             currencyCode = currencyCode,
-            allowMetric = allowMetric,
-            allowImperial = allowImperial,
-            allowUSCustomary = allowUSCustomary,
+            unitPreferences = DataSetUnitPreferences(allowMetric = allowMetric, allowImperial = allowImperial, allowUSCustomary =  allowUSCustomary),
             notes = notes
         )
     }
 }
 
 @Parcelize
+data class DataSetUnitPreferences(
+    val allowMetric: Boolean,
+    val allowImperial: Boolean,
+    val allowUSCustomary: Boolean
+) : Parcelable
+
+@Parcelize
 data class EditableDataSet(
     val id: Long,
     val name: String,
     val currencyCode: String,
-    val allowMetric: Boolean,
-    val allowImperial: Boolean,
-    val allowUSCustomary: Boolean,
+    val unitPreferences: DataSetUnitPreferences,
     val notes: String,
 ) : Parcelable
 
@@ -80,9 +85,9 @@ fun EditableDataSet.toDomain(): DataSet? {
         id = id,
         name = trimmedName,
         currencyCode = currencyCode,
-        allowMetric = allowMetric,
-        allowImperial = allowImperial,
-        allowUSCustomary = allowUSCustomary,
+        allowMetric = unitPreferences.allowMetric,
+        allowImperial = unitPreferences.allowImperial,
+        allowUSCustomary = unitPreferences.allowUSCustomary,
         notes = notes
     )
 }

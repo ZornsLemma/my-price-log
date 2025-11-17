@@ -271,6 +271,7 @@ import com.example.composetutorial.domain.withFriendlyDenominator
 import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.domain.format
+import com.example.composetutorial.models.DataSetUnitPreferences
 import com.example.composetutorial.models.toEditable
 import com.example.composetutorial.ui.bulletPoint
 import com.example.composetutorial.ui.components.rememberValidationInputHandle
@@ -4907,11 +4908,7 @@ fun EditDataSetScreen(
         // but the relevant library version is still in alpha so I'll just do it the old MD3 way for
         // now with a segmented button group.
         ValidationErrorHighlightBox(
-            value = Triple(
-                uiContent.editableDataSet.value.allowMetric,
-                uiContent.editableDataSet.value.allowImperial,
-                uiContent.editableDataSet.value.allowUSCustomary
-            ),
+            value = uiContent.editableDataSet.value.unitPreferences,
             validationRules = vm.measurementSystemValidationRules,
             validationFlow = vm.saveValidationEvents,
             validationFlowFieldId = EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM
@@ -4927,10 +4924,8 @@ fun EditDataSetScreen(
             // customary".
             val options = listOf("Metric", "Imperial", "US units")
             val checkedStates = remember {
-                mutableStateListOf(
-                    uiContent.editableDataSet.value.allowMetric,
-                    uiContent.editableDataSet.value.allowImperial,
-                    uiContent.editableDataSet.value.allowUSCustomary
+                mutableStateOf(
+                    uiContent.editableDataSet.value.unitPreferences
                 )
             }
             // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and
@@ -4942,31 +4937,35 @@ fun EditDataSetScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 options.forEachIndexed { index, label ->
+                    val oldUnitPreferences = uiContent.editableDataSet.value.unitPreferences
+                    val checked = when (index) {
+                        0 -> oldUnitPreferences.allowMetric
+                        1 -> oldUnitPreferences.allowImperial
+                        2 -> oldUnitPreferences.allowUSCustomary
+                        else -> error("Unknown unit preference index: $index")
+                    }
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(
                             index = index,
                             count = options.size
                         ),
                         onCheckedChange = {
-                            checkedStates[index] = it
-                            // Don't allow imperial and US customary to be selected together. (We use
-                            // the common but ambiguous names for the units, so this would cause UI
-                            // confusion. We don't want to be showing "pint (US)" or "pt (US)" all the
-                            // time to disambiguate.)
-                            if (index > 0 && checkedStates[index]) {
-                                checkedStates[if (index == 1) 2 else 1] = false
+                            // If imperial is selected, we force US customary to be deselected and
+                            // vice versa. This allows us to use shorter names like "pt" instead of
+                            // "pt (US)" without practical ambiguity.
+                            val newUnitPreferences = when (index) { // TODO INLINE newUnitPreferences?
+                                0 -> oldUnitPreferences.copy(allowMetric = it)
+                                1 -> oldUnitPreferences.copy(allowImperial = it, allowUSCustomary = !it && oldUnitPreferences.allowUSCustomary)
+                                2 -> oldUnitPreferences.copy(allowUSCustomary = it, allowImperial = !it && oldUnitPreferences.allowImperial)
+                                else -> error("Unknown unit preference index: $index")
                             }
                             vm.setUIContentEditableDataSet(
-                                uiContent.editableDataSet.value.copy(
-                                    allowMetric = checkedStates[0],
-                                    allowImperial = checkedStates[1],
-                                    allowUSCustomary = checkedStates[2]
-                                )
+                                uiContent.editableDataSet.value.copy(unitPreferences = newUnitPreferences)
                             )
                         },
-                        checked = checkedStates[index],
+                        checked = checked,
                         colors = SegmentedButtonDefaults.colors(),
-                        icon = { SegmentedButtonDefaults.Icon(active = checkedStates[index]) },
+                        icon = { SegmentedButtonDefaults.Icon(active = checked) },
                         enabled = true
                     ) {
                         Text(label)
@@ -7241,13 +7240,13 @@ class EditDataSetViewModel(
         // context, "measurement unit" does not work - it sounds as if the user is expected to
         // choose at least one thing like "miles" or "litres". If "measurement system" is a bit
         // technical, I hope the overall context with the caption above will make it clear.
-        ValidationRule<Triple<Boolean, Boolean, Boolean>>(
-            { it -> it.first || it.second || it.third },
+        ValidationRule<DataSetUnitPreferences>(
+            { it -> it.allowMetric || it.allowImperial || it.allowUSCustomary },
             "At least one measurement system must be selected"
         ),
         // This next rule is enforced by UI logic, but let's go belt and braces.
-        ValidationRule<Triple<Boolean, Boolean, Boolean>>(
-            { !(it.second && it.third) },
+        ValidationRule<DataSetUnitPreferences>(
+            { !(it.allowImperial && it.allowUSCustomary) },
             "Imperial and US units cannot be selected together"
         ),
     )
@@ -7276,11 +7275,7 @@ class EditDataSetViewModel(
 
         if (!validationRulesOk(
                 measurementSystemValidationRules,
-                Triple(
-                    editableDataSet.allowMetric,
-                    editableDataSet.allowImperial,
-                    editableDataSet.allowUSCustomary
-                )
+                editableDataSet.unitPreferences,
             )
         ) {
             _saveValidationEvents.emit(EditableField.MEASUREMENT_SYSTEM)
