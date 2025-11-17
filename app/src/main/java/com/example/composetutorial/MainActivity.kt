@@ -4222,12 +4222,12 @@ fun EditItemScreen(
             ),
         )
         var selectedOption = uiContent.editableItem.value.quantityType
-        // TODO: This radio group needs to be enabled iff saveStatus.isNotBusy()
 
-        // ENHANCE: If itemReferenceCount != 0L and we disallow changing "sold by" as a result, just
-        // maybe we should switch to displaying a disabled TextField or similar with a
+        // ENHANCE: When we disallow changing "sold by" because there are prices for the product,
+        // just maybe we should switch to displaying a disabled TextField or similar with a
         // supportingText instead of the radio buttons. I half suspect that might look ugly and be
         // confusingly different, but maybe it wouldn't.
+        val radioButtonsEnabled = saveStatus.isNotBusy() && isSimpleDelete
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
@@ -4254,7 +4254,7 @@ fun EditItemScreen(
                 )
                 //Spacer(modifier = Modifier.height(8.dp))
                 options.forEach { (id, name, supportingText) ->
-                    val clickableModifier = if (itemReferenceCount != 0L) Modifier else Modifier.clickable {
+                    val clickableModifier = if (!radioButtonsEnabled) Modifier else Modifier.clickable {
                         vm.setUIContentEditableItem(
                             uiContent.editableItem.value.copy(
                                 quantityType = id
@@ -4275,7 +4275,7 @@ fun EditItemScreen(
                     ) {
                         RadioButton(
                             selected = (selectedOption == id),
-                            enabled = itemReferenceCount == 0L,
+                            enabled = radioButtonsEnabled,
                             onClick = null // the enclosing Row is clickable instead
                         )
                         Column(modifier = Modifier.padding(start = 8.dp)) {
@@ -4293,7 +4293,7 @@ fun EditItemScreen(
                         }
                     }
                 }
-                if (itemReferenceCount != 0L) {
+                if (!isSimpleDelete) {
                     SupportingText(
                         "The 'Sold by' setting can’t be changed because there are prices recorded for this product.",
                         isError = false,
@@ -6981,6 +6981,7 @@ class EditItemViewModel(
         if (item == null) {
             throw IllegalStateException("performSave() called with an inconvertible EditableItem: ${uiContent.editableItem.value}")
         }
+        //delay(5000) // TODO TEMP HACK
         // updateOrInsertItem() returns -1 if it's an update or the new ID if it was an insert.
         val newId =  repository.updateOrInsertItem(item)
         Log.d("MyAppQZ", "updateOrInsertItem returned $newId")
