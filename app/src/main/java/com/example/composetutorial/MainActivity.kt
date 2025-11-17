@@ -4077,8 +4077,8 @@ fun GeneralEditAndDeleteScreen(
     onIdle: () -> Unit,
     requestClose: (Long?) -> Unit,
     deleteConfirmationDetails: Triple<Boolean, @Composable () -> Unit, @Composable () -> Unit>?,
-    requestDelete: suspend () -> Unit,
-    requestDeleteCancel: () -> Unit,
+    performDelete: suspend () -> Unit,
+    onDeleteConfirmDismissRequest: () -> Unit,
     content: @Composable (showDeleteSpinner: Boolean) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -4112,13 +4112,13 @@ fun GeneralEditAndDeleteScreen(
             icon = if (isSimpleDelete) null else { { WarningIcon(contentDescription = "Warning") } },
             title = dialogTitle,
             text = dialogText,
-            onDismissRequest = { requestDeleteCancel() },
+            onDismissRequest = { onDeleteConfirmDismissRequest() },
             dismissButton = {
-                TextButton(onClick = { requestDeleteCancel() }) { Text("Cancel") }
+                TextButton(onClick = { onDeleteConfirmDismissRequest() }) { Text("Cancel") }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    requestDeleteCancel() // TODO: is it confusing to do this? rename "request no dialog" or similar??
+                    onDeleteConfirmDismissRequest()
                     runGeneralEditScreenOperation(
                         vm = vm,
                         coroutineScope = coroutineScope,
@@ -4127,7 +4127,7 @@ fun GeneralEditAndDeleteScreen(
                             deleting = true
                             //delay(5000) // TODO HACK
                             //throw IllegalStateException("TODO")
-                            requestDelete()
+                            performDelete()
                             0 // TODO: feels like a hack - we have to return an ID, but for deletion that makes little sense - should we use null? do somethng else?
                         }
                     )
@@ -4176,8 +4176,8 @@ fun EditItemScreen(
                 { Text("Deleting this product will also delete its store prices. This action cannot be undone.") }
             }
         ),
-        requestDelete = { vm.performDelete() },
-        requestDeleteCancel = { showDeleteConfirmDialog = false },
+        performDelete = { vm.performDelete() },
+        onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
     ) { showDeleteSpinner ->
         var name by rememberSyncedTextFieldValue(uiContent.editableItem.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
@@ -4466,8 +4466,8 @@ fun EditSourceScreen(
                 { Text("Deleting this store will also delete its product prices. This action cannot be undone.") }
             }
         ),
-        requestDelete = { vm.performDelete() },
-        requestDeleteCancel = { showDeleteConfirmDialog = false },
+        performDelete = { vm.performDelete() },
+        onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
     ) { showDeleteSpinner ->
         var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
@@ -4798,8 +4798,8 @@ fun EditDataSetScreen(
                 { Text("Deleting this collection will also delete its TODOASSOCIATEDDATA. This action cannot be undone.") }
             }
         ),
-        requestDelete = { vm.performDelete() },
-        requestDeleteCancel = { showDeleteConfirmDialog = false },
+        performDelete = { vm.performDelete() },
+        onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
     ) { showDeleteSpinner ->
         var name by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
