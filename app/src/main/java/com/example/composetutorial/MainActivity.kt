@@ -180,7 +180,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -4774,6 +4773,8 @@ fun <T> ValidatedFilteredTextField(
     }
 }
 
+private enum class UnitPreferenceOption { METRIC, IMPERIAL, US_CUSTOMARY }
+// TODO: Seems quite a long function, can we factor out (even single use) chunks for readability?
 @Composable
 fun EditDataSetScreen(
     vm: EditDataSetViewModel,
@@ -4922,27 +4923,24 @@ fun EditDataSetScreen(
             // "US customary" doesn't fit (on my test "small" emulated phone) but based on a discussion
             // with ChatGPT "US units" is better for a casual user anyway, even if we could fit "US
             // customary".
-            val options = listOf("Metric", "Imperial", "US units")
-            val checkedStates = remember {
-                mutableStateOf(
-                    uiContent.editableDataSet.value.unitPreferences
-                )
-            }
-            // TODO: Following is hacky, use an enum class or something rather than hardcoding 1 and
-            // 2 as imperial/US
-
+            // TODO: Can/should I move these names into UnitPreferenceOption? enum class
+            // UnitPreferenceOption(val name: String) { METRIC("Metric"), ... }? This would make it near
+            // impossible to get them out of sync and might be cleaner. I don't know if this would
+            // cause i18n problems though (Grok says it's fine), so maybe leave trying this until
+            // later.
+            val options = listOf("Metric", "Imperial", "US units") // must match UnitPreferenceOption
             // We *don't* call Modifier.validationFocusRequester() as you can't focus a segmented
             // button, and this will force a clear focus to happen on validation errors instead.
             MultiChoiceSegmentedButtonRow(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 options.forEachIndexed { index, label ->
+                    val unit = UnitPreferenceOption.entries[index]
                     val oldUnitPreferences = uiContent.editableDataSet.value.unitPreferences
-                    val checked = when (index) {
-                        0 -> oldUnitPreferences.allowMetric
-                        1 -> oldUnitPreferences.allowImperial
-                        2 -> oldUnitPreferences.allowUSCustomary
-                        else -> error("Unknown unit preference index: $index")
+                    val checked = when (unit) {
+                        UnitPreferenceOption.METRIC -> oldUnitPreferences.allowMetric
+                        UnitPreferenceOption.IMPERIAL -> oldUnitPreferences.allowImperial
+                        UnitPreferenceOption.US_CUSTOMARY -> oldUnitPreferences.allowUSCustomary
                     }
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(
@@ -4953,11 +4951,10 @@ fun EditDataSetScreen(
                             // If imperial is selected, we force US customary to be deselected and
                             // vice versa. This allows us to use shorter names like "pt" instead of
                             // "pt (US)" without practical ambiguity.
-                            val newUnitPreferences = when (index) { // TODO INLINE newUnitPreferences?
-                                0 -> oldUnitPreferences.copy(allowMetric = it)
-                                1 -> oldUnitPreferences.copy(allowImperial = it, allowUSCustomary = !it && oldUnitPreferences.allowUSCustomary)
-                                2 -> oldUnitPreferences.copy(allowUSCustomary = it, allowImperial = !it && oldUnitPreferences.allowImperial)
-                                else -> error("Unknown unit preference index: $index")
+                            val newUnitPreferences = when (unit) { // TODO INLINE newUnitPreferences?
+                                UnitPreferenceOption.METRIC -> oldUnitPreferences.copy(allowMetric = it)
+                                UnitPreferenceOption.IMPERIAL -> oldUnitPreferences.copy(allowImperial = it, allowUSCustomary = !it && oldUnitPreferences.allowUSCustomary)
+                                UnitPreferenceOption.US_CUSTOMARY -> oldUnitPreferences.copy(allowUSCustomary = it, allowImperial = !it && oldUnitPreferences.allowImperial)
                             }
                             vm.setUIContentEditableDataSet(
                                 uiContent.editableDataSet.value.copy(unitPreferences = newUnitPreferences)
