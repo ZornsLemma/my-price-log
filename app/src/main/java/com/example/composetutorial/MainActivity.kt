@@ -4554,7 +4554,8 @@ fun EditSourceScreen(
                             validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
                             numericTextFieldModifier = Modifier
                                 .fillMaxWidth(),
-                            // TODO: I can't help feeling this looks a bit confusing when it's empty, maybe it's just lack of a "%" or something.
+                            // TODO: I can't help feeling this looks a bit confusing when it's
+                            // empty, maybe it's just lack of a "%" or something.
                             label = { Text("Loyalty scheme reward") },
                             suffix = { Text("%") },
                             onValueChange = {
@@ -4611,7 +4612,6 @@ fun EditSourceScreen(
     }
 }
 
-// TODO: This is WIP, just possibly I don't need some/all of the generic stuff when this is done
 @Composable
 fun <T> ValidatedNumericTextField(
     value: TextFieldValue,
@@ -4630,7 +4630,7 @@ fun <T> ValidatedNumericTextField(
     enabled: Boolean, // TODO: default to true or force explicit?
     numericTextFieldModifier: Modifier = Modifier,
 ) {
-    BaseValidatedTextField(
+    ValidationErrorHighlightBox(
         value.text,
         validationRules,
         validationRulesKey,
@@ -4659,16 +4659,14 @@ fun <T> ValidatedNumericTextField(
     }
 }
 
-// TODO: Rename this - it's not about TextFields and is used with various combinations of
-// composables, it is about wrapping up an ErrorHighlightBox with some validation logic.
 @Composable
-fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
-    value: U,
-    validationRules: List<ValidationRule<U>>,
+fun <T, U> ValidationErrorHighlightBox(
+    value: T,
+    validationRules: List<ValidationRule<T>>,
     validationRulesKey: Any? = null,
     allowEmpty: Boolean = false,
-    validationFlow: SharedFlow<T>,
-    validationFlowFieldId: T,
+    validationFlow: SharedFlow<U>,
+    validationFlowFieldId: U,
     errorHighlightOffset: Dp = defaultErrorHighlightOffset,
     modifier: Modifier = Modifier,
     content: @Composable (
@@ -4685,7 +4683,6 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
         validationRulesKey = validationRulesKey,
         allowEmpty = allowEmpty
     )
-
 
     ErrorHighlightBox(
         visible = validationInputHandle.errorHighlightBoxVisible.value,
@@ -4706,14 +4703,12 @@ fun <T, U> BaseValidatedTextField( // TODO: TYPE LIST IS "BACKWARDS"
 
     val focusManager = LocalFocusManager.current
     LaunchedEffect(Unit) {
-
         validationFlow.collect { field ->
             Log.d("MyApp", "LaunchedEffect saveValidationError $field")
             when (field) {
                 validationFlowFieldId -> {
                     validationInputHandle.requestUserAttention(focusManager)
                 }
-
                 else -> {}
             }
         }
@@ -4736,7 +4731,7 @@ fun <T> ValidatedTextField2(
     validationFlow: SharedFlow<T>,
     validationFlowFieldId: T
 ) {
-    BaseValidatedTextField(
+    ValidationErrorHighlightBox(
         value = value.text,
         validationRules = validationRules,
         validationRulesKey = validationRulesKey,
@@ -4831,7 +4826,7 @@ fun EditDataSetScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // TODO: Should we specify an offset of 4.dp here? Or should we perhaps just improve spacing?
-        BaseValidatedTextField(
+        ValidationErrorHighlightBox(
             value = uiContent.editableDataSet.value.currencyCode,
             validationRules = vm.currencyValidationRules,
             allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
@@ -4902,7 +4897,7 @@ fun EditDataSetScreen(
         // ENHANCE: MD3 Expressive deprecates this and says we should use a connected button group,
         // but the relevant library version is still in alpha so I'll just do it the old MD3 way for
         // now with a segmented button group.
-        BaseValidatedTextField(
+        ValidationErrorHighlightBox(
             value = Triple(
                 uiContent.editableDataSet.value.allowMetric,
                 uiContent.editableDataSet.value.allowImperial,
@@ -5027,6 +5022,7 @@ fun EditDataSetScreen(
 // foo by remember { mutableStateOf(false) }" if we wanted, this would just be a convenient way to
 // keep things together.
 // TODO: So I suppose maybe we could also put a ScrollToFocusableHandle in here too??
+// TODO: Obviously "ValidationThing" isn't a good name
 class ValidationThing(
     val interactionSource: MutableInteractionSource = MutableInteractionSource(),
     val validationResult: State<String?> // or Flow/LiveData/etc
