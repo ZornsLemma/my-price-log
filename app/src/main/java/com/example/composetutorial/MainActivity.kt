@@ -8953,3 +8953,7 @@ com.example.myapp/
 // comparisons - yes it's floating point, but it's perfectly possible the numerator and denominator
 // of the division are identical across two stores, and we want consistent ordering of sorted
 // results
+
+// TODO: Once I've pulled all the strings out to allow for translation:
+// - manually or with LLM assistance review them and see if any would benefit from regional English variations (e.g. "color" vs "colour")
+// - probably do an LLM-assisted Spanish translation as a test and release it but make sure to note somewhere it's alpha/beta quality
