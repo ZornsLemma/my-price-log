@@ -3658,24 +3658,21 @@ fun EditPriceScreenPackSize(
             // TODO: Test this with font scaling
             Text(multiplicationSign, modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp * LocalDensity.current.fontScale))
         }
-        BaseValidatedTextField(
-            value = packSizeNumber.text,
+        ValidatedNumericTextField(
+            value = packSizeNumber,
             validationRules = vm.packSizeValidationRules,
             validationRulesKey = uiContent.editablePrice.value.measurementUnit.id,
             allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
             validationFlow = vm.saveValidationEvents,
             validationFlowFieldId = EditPriceViewModel.EditableField.PACK_SIZE,
             errorHighlightOffset = 4.dp,
-            modifier = Modifier.weight(1f)
-        ) { validationResult, interactionSource, validationInputHandle ->
-                NumericTextField(
+            baseValidatedTextFieldModifier = Modifier.weight(1f),
                     // TODO: Now we have multipack support, "pack size" is arguably confusing.
                     // There's also a practical consideration that when it grows larger because the
                     // field is empty, it really doesn't fit horizontally on my small phone - so a
                     // shorter label would be good there too. Just maybe "Pack size" if we don't
                     // have multipack, "Size" if we do?!
                     label = { Text("Pack size") },
-                    value = packSizeNumber,
                     onValueChange = {
                         packSizeNumber = it
                         if (uiContent.editablePrice.value.measureValue != it.text) {
@@ -3688,16 +3685,10 @@ fun EditPriceScreenPackSize(
                         }
                     },
                     enabled = saveStatus.isNotBusy(),
-                    isError = validationResult != null,
-                    supportingText = if (validationResult == null) null else { { SupportingText(validationResult, true) } },
-                    modifier = Modifier
+                    numericTextFieldModifier = Modifier
                         // TODO DELETE? .weight(1f)
                         .fillMaxSize()
-                        .validationInputHandleFocusRequester(validationInputHandle),
-                    interactionSource = interactionSource
                 )
-        }
-
 
         if (uiContent.item.defaultUnit.quantityType != QuantityType.ITEM) {
             Spacer(modifier = Modifier.width(8.dp))
