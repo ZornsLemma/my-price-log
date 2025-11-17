@@ -4505,7 +4505,6 @@ fun EditSourceScreen(
             Triple(LoyaltyType.DISCOUNT, "Discount", "Discount on basket or money back")
         )
         var selectedOption = uiContent.editableSource.value.loyaltyType
-        // TODO: This radio group needs to be enabled iff saveStatus.isNotBusy()
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -4533,18 +4532,19 @@ fun EditSourceScreen(
                 )
                 //Spacer(modifier = Modifier.height(8.dp))
                 options.forEach { (id, name, supportingText) ->
+                    val clickableModifier = if (!saveStatus.isNotBusy()) Modifier else Modifier.clickable {
+                        vm.setUIContentEditableSource(
+                            uiContent.editableSource.value.copy(
+                                loyaltyType = id
+                            )
+                        )
+                    }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
                             //.background(Color.Blue)
-                            .clickable {
-                                vm.setUIContentEditableSource(
-                                    uiContent.editableSource.value.copy(
-                                        loyaltyType = id
-                                    )
-                                )
-                            }
+                            .then(clickableModifier)
                             .padding(horizontal = 8.dp)
                             .height(48.dp) // 40.dp is MD3 spec but we want extra space for our supporting text while still having some spacing between items
                             .semantics {
@@ -4553,6 +4553,7 @@ fun EditSourceScreen(
                     ) {
                         RadioButton(
                             selected = (selectedOption == id),
+                            enabled = saveStatus.isNotBusy(),
                             onClick = null // Row's Modifier.clickable() handles this
                         )
                         Column(modifier = Modifier.padding(start = 8.dp)) {
@@ -6903,6 +6904,7 @@ class EditSourceViewModel(
         if (source == null) {
             throw IllegalStateException("performSave() called with an inconvertible EditableSource: ${uiContent.editableSource.value}")
         }
+        //delay(5000) // TODO TEMP HACK
         // updateOrInsertSource() returns -1 if it's an update or the new ID if it was an insert.
         val newId = repository.updateOrInsertSource(source)
         return if (newId == -1L) source.id else newId
