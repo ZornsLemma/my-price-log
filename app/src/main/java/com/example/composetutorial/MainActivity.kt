@@ -3627,20 +3627,16 @@ fun EditPriceScreenPackSize(
 
     Row {
         if (vm.showPackCount) {
-            BaseValidatedTextField(
-                value = packCountNumber.text,
+            ValidatedNumericTextField(
+                value = packCountNumber,
                 validationRules = vm.packCountValidationRules,
                 // TODO DON'T THINK WE NEED THIS BUT CHECK, WIP RIGHT NOW validationRulesKey = uiContent.editablePrice.value.measurementUnit.id,
                 allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
                 validationFlow = vm.saveValidationEvents,
                 validationFlowFieldId = EditPriceViewModel.EditableField.PACK_COUNT,
                 errorHighlightOffset = 4.dp, // TODO!?
-                modifier = Modifier.weight(1f)
-            ) { validationResult, interactionSource, validationInputHandle ->
-                Row { // TODO EXPERIMENTAL
-                    NumericTextField(
+                baseValidatedTextFieldModifier = Modifier.weight(1f),
                         label = { Text("Count") },
-                        value = packCountNumber,
                         onValueChange = {
                             packCountNumber = it
                             if (uiContent.editablePrice.value.count != it.text) {
@@ -3653,14 +3649,7 @@ fun EditPriceScreenPackSize(
                             }
                         },
                         enabled = saveStatus.isNotBusy(),
-                        isError = validationResult != null,
-                        supportingText = if (validationResult == null) null else { { SupportingText(validationResult, true) } }, // TODO EXPERIMENTAL
-                        modifier = Modifier
-                            .validationInputHandleFocusRequester(validationInputHandle),
-                        interactionSource = interactionSource
                     )
-                }
-            }
             // We want the multiplication sign to be roughly centred vertically (ideally it would
             // share a baseline with the user-entered text, but that is impossible to do, at least
             // without loads of additional code) but we can't just vertically centre it, because the
