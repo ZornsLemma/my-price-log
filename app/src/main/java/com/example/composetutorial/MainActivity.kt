@@ -3566,8 +3566,8 @@ fun EditPriceScreenPrice(
     var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
     val currencyFormat = vm.currencyFormat
 
-    BaseValidatedTextField(
-        value = packPrice.text,
+    ValidatedNumericTextField(
+        value = packPrice,
         validationRules = currencyFormat.validationRules,
         // No validationRulesKey is needed as the validation rules depend only on our fixed
         // DataSet and frozen locale.
@@ -3575,13 +3575,9 @@ fun EditPriceScreenPrice(
         validationFlow = vm.saveValidationEvents,
         validationFlowFieldId = EditPriceViewModel.EditableField.PRICE,
         errorHighlightOffset = 4.dp,
-    ) { validationResult, interactionSource, validationInputHandle ->
-        NumericTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .validationInputHandleFocusRequester(validationInputHandle),
+            numericTextFieldModifier = Modifier
+                .fillMaxWidth(),
             label = { Text("Pack price") },
-            value = packPrice,
             prefix = textOrNull(currencyFormat.prefix),
             suffix = textOrNull(currencyFormat.suffix),
             textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
@@ -3595,14 +3591,7 @@ fun EditPriceScreenPrice(
                 }
             },
             enabled = saveStatus.isNotBusy(),
-            isError = validationResult != null,
-            supportingText = textOrNull(
-                validationResult,
-                color = MaterialTheme.colorScheme.error
-            ),
-            interactionSource = interactionSource,
         )
-    }
 }
 
 @Composable
