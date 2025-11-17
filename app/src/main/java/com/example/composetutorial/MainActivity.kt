@@ -6763,6 +6763,11 @@ class EditPriceViewModel(
         // editablePrice and originalPrice are the same. (We don't just try to hack originalPrice
         // because we don't want to warn the user about losing non-existent changes if they click
         // close instead of save.)
+        // TODO: Is there a corner case here where the user is viewing the most recent history
+        // record (which is essentially therefore the current price) and editing that as current? I
+        // suspect it might be good to check that doesn't fundamentally break things (crash etc),
+        // but to otherwise just disable the "edit as new" menu for the very latest record in the
+        // history
         // TODO: Double check the handling of toConfirm here. My thinking is that if editablePrice
         // has toConfirm set that constitutes a change, so by using the real value in editablePrice
         // and forcing originalPrice to have toConfirm false that does what we want there, and will
