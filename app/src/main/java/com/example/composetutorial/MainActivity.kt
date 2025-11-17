@@ -4545,40 +4545,28 @@ fun EditSourceScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     var loyaltyPercentage by rememberSyncedTextFieldValue(uiContent.editableSource.value.loyaltyPercentage)
-                    // TODO: Can/should we factor out this BaseValidatedTextField+NumericTextField combo?
                     Box(modifier = Modifier.padding(8.dp)) {
-                        BaseValidatedTextField(
-                            value = loyaltyPercentage.text,
+                        ValidatedNumericTextField(
+                            value = loyaltyPercentage,
                             validationRules = vm.loyaltyPercentageValidationRules,
                             allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
                             validationFlow = vm.saveValidationEvents,
                             validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
-                        ) { validationResult, interactionSource, validationInputHandle ->
-                            NumericTextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .validationInputHandleFocusRequester(validationInputHandle),
-                                // TODO: I can't help feeling this looks a bit confusing when it's empty, maybe it's just lack of a "%" or something.
-                                label = { Text("Loyalty scheme reward") },
-                                value = loyaltyPercentage,
-                                suffix = { Text("%") },
-                                onValueChange = {
-                                    loyaltyPercentage = it
-                                    vm.setUIContentEditableSource(
-                                        uiContent.editableSource.value.copy(
-                                            loyaltyPercentage = it.text
-                                        )
+                            numericTextFieldModifier = Modifier
+                                .fillMaxWidth(),
+                            // TODO: I can't help feeling this looks a bit confusing when it's empty, maybe it's just lack of a "%" or something.
+                            label = { Text("Loyalty scheme reward") },
+                            suffix = { Text("%") },
+                            onValueChange = {
+                                loyaltyPercentage = it
+                                vm.setUIContentEditableSource(
+                                    uiContent.editableSource.value.copy(
+                                        loyaltyPercentage = it.text
                                     )
-                                },
-                                enabled = saveStatus.isNotBusy(),
-                                isError = validationResult != null,
-                                supportingText = textOrNull(
-                                    validationResult,
-                                    color = MaterialTheme.colorScheme.error
-                                ),
-                                interactionSource = interactionSource,
-                            )
-                        }
+                                )
+                            },
+                            enabled = saveStatus.isNotBusy(),
+                        )
                     }
                 }
             }
