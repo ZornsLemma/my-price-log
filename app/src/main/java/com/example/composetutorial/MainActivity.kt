@@ -4153,7 +4153,7 @@ fun EditItemScreen(
         var name by rememberSyncedTextFieldValue(uiContent.editableItem.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
-        ValidatedTextField2(
+        ValidatedFilteredTextField(
             label = { Text("Name") },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = name,
@@ -4442,7 +4442,7 @@ fun EditSourceScreen(
         var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
-        ValidatedTextField2(
+        ValidatedFilteredTextField(
             label = { Text("Name") },
             // We use Words here because this is likely to be a store brand.
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
@@ -4715,9 +4715,8 @@ fun <T, U> ValidationErrorHighlightBox(
     }
 }
 
-// TODO: RENAME
 @Composable
-fun <T> ValidatedTextField2(
+fun <T> ValidatedFilteredTextField(
     label: @Composable() (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     value: TextFieldValue,
@@ -4805,7 +4804,7 @@ fun EditDataSetScreen(
     ) { showDeleteSpinner ->
         var name by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
-        ValidatedTextField2(
+        ValidatedFilteredTextField(
             label = { Text("Name") },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = name,
