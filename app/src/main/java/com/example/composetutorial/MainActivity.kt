@@ -3799,7 +3799,7 @@ fun runGeneralEditScreenOperation(
     vm: GeneralEditScreenViewModel,
     coroutineScope: CoroutineScope,
     isSafeToPerform: suspend () -> Boolean,
-    perform: suspend () -> Long,
+    perform: suspend () -> Long?,
 ) {
     coroutineScope.launch {
         if (isSafeToPerform()) {
@@ -4128,7 +4128,9 @@ fun GeneralEditAndDeleteScreen(
                             //delay(5000) // TODO HACK
                             //throw IllegalStateException("TODO")
                             performDelete()
-                            0 // TODO: feels like a hack - we have to return an ID, but for deletion that makes little sense - should we use null? do somethng else?
+                            // We return null since we don't want to change the selected entity on
+                            // the home screen.
+                            null
                         }
                     )
                 }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
