@@ -4921,9 +4921,10 @@ fun EditDataSetScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
             // "US customary" doesn't fit (on my test "small" emulated phone) but based on a discussion
-            // with ChatGPT "US Units" is better for a casual user anyway, even if we could fit "US
-            // Customary".
+            // with ChatGPT "US units" is better for a casual user anyway, even if we could fit "US
+            // customary".
             val options = listOf("Metric", "Imperial", "US units")
             val checkedStates = remember {
                 mutableStateListOf(
