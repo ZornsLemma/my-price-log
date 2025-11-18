@@ -5017,7 +5017,6 @@ fun EditDataSetScreen(
     }
 }
 
-// TODO: So I suppose maybe we could also put a ValidationInputHandle in here too??
 // TODO: Obviously "ValidationThing" isn't a good name
 // TODO: It's a casual discussion not directly related to this but just FWIW ChatGPT uses
 // "FieldValidation" or "ValidatedFieldState" as a name for this, maybe worth considering or riffing on.
@@ -5031,7 +5030,7 @@ fun EditDataSetScreen(
 // to clarify my mental model of Kotlin and/or Compose.
 class ValidationThing(
     val interactionSource: MutableInteractionSource = MutableInteractionSource(),
-    val validationResult: State<String?> // or Flow/LiveData/etc TODO!?!? PROB JUST AN OLD CHATGPT-ISH COMMENT
+    val validationResult: State<String?>
 )
 
 // TODO: Even ignoring that "ValidationThing" needs renaming (just maybe refactoring too, but not
