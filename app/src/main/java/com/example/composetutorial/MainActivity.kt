@@ -5018,8 +5018,6 @@ fun EditDataSetScreen(
     }
 }
 
-// TODO: Rename validationResult for brevity? And/or add a @Composable helper which returns
-// validationResult.value to simplify callers?
 // TODO: We could *maybe* include  MutableState<Boolean> in ValidationThing which is used to trigger
 // the *on-save only* highlight boxes (not "there is an error but you haven't clicked save yet"
 // case) - this might help keep things tidy and also provide somewhere I could shove a "launch {
