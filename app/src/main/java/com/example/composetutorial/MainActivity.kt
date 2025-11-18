@@ -5542,7 +5542,8 @@ fun SettingsScreen(
             SettingsDialog(
                 title = "Stale price threshold",
                 subtitle = "Stale prices (confirmed more than this many days ago) have an inflation adjustment applied when comparing across stores.",
-                label = "Days",
+                label = "Stale price threshold",
+                suffix = { Text("days") },
                 initialValue = stalePriceThreshold.toString(),
                 validationRules = listOfNotNull(
                     ValidationRule(
@@ -5574,7 +5575,8 @@ fun SettingsScreen(
             SettingsDialog(
                 title = "Ancient price threshold",
                 subtitle = "Ancient prices (confirmed more than this many days ago) are ignored when classifying prices as good/OK/bad.",
-                label = "Days",
+                label = "Ancient price threshold",
+                suffix = { Text("days") },
                 initialValue = ancientPriceThresholdDays.toString(),
                 validationRules = listOfNotNull(
                     ValidationRule(
@@ -5607,7 +5609,8 @@ fun SettingsScreen(
             SettingsDialog(
                 title = "Annual inflation",
                 subtitle = "Stale prices increase by this annual rate. This is only an estimate $emDash update prices when you can for better accuracy.",
-                label = "%", // TODO: Can/should I put a suffix on the OutlinedTextField instead?
+                label = "Annual inflation rate",
+                suffix = { Text("%") },
                 initialValue = annualInflationPercent.toString(),
                 validationRules = listOfNotNull(
                     ValidationRule(
@@ -5704,6 +5707,7 @@ fun SettingsDialog(
     validationRules: List<ValidationRule<String>>,
     onConfirm: (String) -> Unit,
     onDismissRequest: () -> Unit,
+    suffix: @Composable (() -> Unit)? = null,
 ) {
     var currentValue by rememberSaveable { mutableStateOf(initialValue) }
     var textFieldValue by remember { mutableStateOf(
@@ -5723,6 +5727,7 @@ fun SettingsDialog(
                     value = textFieldValue,
                     onValueChange = { textFieldValue = it; currentValue = it.text; error = failedValidationRuleOrNull(validationRules, it.text.trim())?.message },
                     label = { Text(label) },
+                    suffix = suffix,
                     supportingText = {
                         if (error != null) Text(
                             error!!,
