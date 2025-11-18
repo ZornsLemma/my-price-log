@@ -5311,6 +5311,10 @@ fun numericValidationRules(
             null
         },
 
+        // TODO: Move this to the first entry in the list? I don't think it makes any difference in
+        // practice, but it might feel safer/neater - if there is no sticky validation message and
+        // (not our concern here) allowEmpty is false, this is the most fundamental error possible
+        // so it should get priority.
         ValidationRule({ it.trim().isNotEmpty() }, "Required"),
 
         // This is a catch-all; in practice we expect to catch all problems before this, but we
@@ -5546,6 +5550,7 @@ fun SettingsScreen(
                 suffix = { Text("days") },
                 initialValue = stalePriceThreshold.toString(),
                 validationRules = listOfNotNull(
+                    ValidationRule({ it.trim().isNotEmpty() }, "Required"),
                     ValidationRule(
                             {
                                 val days = it.toIntOrNull()
@@ -5579,6 +5584,7 @@ fun SettingsScreen(
                 suffix = { Text("days") },
                 initialValue = ancientPriceThresholdDays.toString(),
                 validationRules = listOfNotNull(
+                    ValidationRule({ it.trim().isNotEmpty() }, "Required"),
                     ValidationRule(
                         {
                             val days = it.toIntOrNull()
@@ -5613,6 +5619,7 @@ fun SettingsScreen(
                 suffix = { Text("%") },
                 initialValue = annualInflationPercent.toString(),
                 validationRules = listOfNotNull(
+        ValidationRule({ it.trim().isNotEmpty() }, "Required"),
                     ValidationRule(
                         {
                             val inflation = it.toIntOrNull()
@@ -5691,11 +5698,12 @@ fun SettingsTile(
     )
 }
 
-// TODO: I could tweak this to be more like the full screen dialogs, in that Save is *always*
-// enabled but if you click it that then "enables" warnings about the field being empty. However, I
-// don't think we necessarily need to overdo this consistency - since there is literally a single
-// text field in play here, it's much more obvious that the reason you can't save is that it's
-// blank.
+// Our full screen edit dialogs always have "Save" enabled but show warnings if a mandatory field is
+// empty only after you've tried to save for the first time. SettingsDialogs behave differently -
+// "Save" is simply disabled when there's an error or the value is empty. I think this is fine,
+// because here there is a single text field so the user's attention is naturally focused on it,
+// unlike a full screen dialog with multiple editable fields.
+//
 // TODO: Can/should this have a small lag in updating supportingText as I think our normal full
 // screen edit dialogs did at one point (not sure if they still do)?
 @Composable
