@@ -5102,24 +5102,20 @@ fun <T> rememberValidationThing(
         // this, maybe too simplistic.
         if (isFocused) delay(delayMillis)
 
-        val reorderedValidations =
-            listOfNotNull(failedValidationRule) + validationRules
-        failedValidationRule = null
-        var shouldValidate = true// TODO: rename skipValidation or something to flip sense?
-        when (value) {
-            is String -> shouldValidate = !(allowEmpty && value.trim().isEmpty())
-            else -> {} // allowEmpty has no meaning for other types
+        // Re-evaluate failedValidationRule. We copy it to the front of the list (it's harmless if
+        // we end up with two copies of it) so that if multiple validation rules are failing, we
+        // don't flip-flop between them - once a rule is reported as failing it is "sticky" until is
+        // fixed.
+        var shouldValidate = when (value) {
+            is String -> !(allowEmpty && value.trim().isEmpty())
+            else -> true // allowEmpty has no meaning for other types
         }
-        if (shouldValidate) {
-            // TODO: Can we use validationRulesOk or validationRulesCheck here?
-            for (validationRule in reorderedValidations) {
-                if (!validationRule.validate(value)) {
-                    failedValidationRule = validationRule
-                    break
-                }
-            }
-        }
+        failedValidationRule = if (shouldValidate) validationRulesCheck(
+            listOfNotNull<ValidationRule<T>>(failedValidationRule) + validationRules,
+            value
+        ) else null
 
+        Log.d("MyAppXQ", "failedValidationRule: $failedValidationRule")
         validationResult.value = failedValidationRule?.message
     }
 
@@ -6978,6 +6974,8 @@ class EditItemViewModel(
             // initialValue here is set to an unsatisfiable validation list to avoid a theoretical
             // corner case. If we defaulted to emptyList(), the user might be able to save with an
             // invalid name before the real validation rules become available.
+            // TODO: But this is causing a brief flicker of "error state" when e.g. the edit product
+            // dialog first animates in, so it needs tweaking.
             .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(listOf(ValidationRule({ false }, ""))))
 
     enum class EditableField {
