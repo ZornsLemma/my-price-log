@@ -5027,6 +5027,16 @@ fun EditDataSetScreen(
 // keep things together.
 // TODO: So I suppose maybe we could also put a ScrollToFocusableHandle in here too??
 // TODO: Obviously "ValidationThing" isn't a good name
+// TODO: It's a casual discussion not directly related to this but just FWIW ChatGPT uses
+// "FieldValidation" or "ValidatedFieldState" as a name for this, maybe worth considering or riffing on.
+// TODO: This is not a data class and I never even thought about it but although I find the
+// distinction very confusing in practicel Compose, FWIW ChatGPT was very clear that this *should
+// not* be a data class (we might get away with it, but it would be prone to misuse if someone used
+// copy() on it and that could break things, I think). Once I refactor this and feel more
+// comfortable wit how the code works, it might be helpful to think about why (assuming ChatGPT is
+// correct, but no reason to think it's not here) this should be and maybe even must be a "class"
+// not a "data class", and perhaps have a more targeted discussion with an LLM about this, in order
+// to clarify my mental model of Kotlin and/or Compose.
 class ValidationThing(
     val interactionSource: MutableInteractionSource = MutableInteractionSource(),
     val validationResult: State<String?> // or Flow/LiveData/etc TODO!?!? PROB JUST AN OLD CHATGPT-ISH COMMENT
@@ -5036,6 +5046,15 @@ class ValidationThing(
 // necessarily), this function is probably poorly named. It is not just "remembering" a
 // validationthing, its key value is its reusable LaunchedEffect which actually carries out
 // validation "on the fly" using the supplied rules.
+// TODO: I am still re-figuring out how it works, but I think what this really is is a live
+// validation rule "applier" (poor word). You give it some validation rules and then it will live
+// validate a value (tweaking its behaviour based on focus (which it can monitor because the
+// caller attaches the interactionSource it generates to a composable)) and feeding back a validation
+// result for display.
+// TODO: Discussion (possibly incorrect, but kind of convincing) with ChatGPT suggests that as the
+// "main" purpose of this is the LaunchedEffect() not just "creating a state object the user cares
+// about as such", it should not be called rememberFoo(). FWIW ChatGPT was using
+// "ValidateFieldState" as the function name and "ValidatedFieldState" as the return value.
 @Composable
 fun <T> rememberValidationThing(
     value: T,
@@ -5048,9 +5067,12 @@ fun <T> rememberValidationThing(
     // worth having a default so cases where this isn't meaningful don't have to specify it.
     allowEmpty: Boolean = false
 ): ValidationThing {
+    // We create our own MutableInteractionSource which needs to be passed through to the TextField
+    // we want to validate, so that we can track when that TextField is/is not focused.
     val interactionSource = remember { MutableInteractionSource() }
-    val validationResult = remember { mutableStateOf<String?>(null) }
     val isFocused by interactionSource.collectIsFocusedAsState()
+
+    val validationResult = remember { mutableStateOf<String?>(null) }
     var failedValidationRule by remember(validationRulesKey) {
         mutableStateOf<ValidationRule<T>?>(
             null
@@ -5098,6 +5120,7 @@ fun <T> rememberValidationThing(
             else -> {} // allowEmpty has no meaning for other types
         }
         if (shouldValidate) {
+            // TODO: Can we use validationRulesOk or validationRulesCheck here?
             for (validationRule in reorderedValidations) {
                 if (!validationRule.validate(value)) {
                     failedValidationRule = validationRule
