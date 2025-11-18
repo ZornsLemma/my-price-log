@@ -5359,11 +5359,12 @@ fun NumericTextField(
     )
 }
 
-// TODO: This function itself is fine, but it provides an easy demonstration that if the text is
-// *already* over the limit, we can not edit it to delete anything. In practice you shouldn't get
-// into this kind of hole, but it might be worth changing the API of onCandidateValueChange so
-// it receives the old text as well, so here we could allow the new text if it's shorter than the
-// old text even if it's still too long.
+// Note that if maxLength is reduced, the generated onCandidateValueChange will disallow any edits
+// to existing values which are over the new limit (which we previously valid). We could fix this by
+// passing the old value into onCandidateValueChange and extending the condition here to "... ||
+// it.length < oldValue.length", but unless/until this is a real concern, it feels better to avoid
+// having to jump through hoops to make the old value available.
+//
 // ENHANCE: The length limit on our ValidatedTextFields is just there to keep things tidy and in
 // practice we don't expect a user to run up against it. We therefore don't show a current/max
 // character count, as it would probably be more confusing than helpful. (Imagine editing a
@@ -5510,7 +5511,8 @@ fun SettingsScreen(
 
             SettingsTile(
                 title = "Annual inflation",
-                // TODO: "Prices increased by X% per year once stale" or similar? Since inflation does apply to ancient too...
+                // Ancient prices increase in the same way too, but it's probably best to keep the
+                // subtitle simple here rather than being over-precise.
                 subtitle = "Stale prices increase by $annualInflationPercent% per year",
                 onClick = {
                     showAnnualInflationPercentDialog = true
