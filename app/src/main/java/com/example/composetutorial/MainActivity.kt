@@ -5032,6 +5032,10 @@ class ValidationThing(
     val validationResult: State<String?> // or Flow/LiveData/etc TODO!?!? PROB JUST AN OLD CHATGPT-ISH COMMENT
 )
 
+// TODO: Even ignoring that "ValidationThing" needs renaming (just maybe refactoring too, but not
+// necessarily), this function is probably poorly named. It is not just "remembering" a
+// validationthing, its key value is its reusable LaunchedEffect which actually carries out
+// validation "on the fly" using the supplied rules.
 @Composable
 fun <T> rememberValidationThing(
     value: T,
