@@ -73,7 +73,6 @@ import androidx.activity.compose.BackHandler
 import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
 import android.os.LocaleList
-import android.os.Parcelable
 import android.os.StrictMode
 import android.text.format.DateUtils
 import android.util.Log
@@ -290,7 +289,6 @@ import com.example.composetutorial.ui.menuLeftPadding
 import com.example.composetutorial.ui.menuRightPadding
 import com.example.composetutorial.ui.oneLineListItemHeight
 import com.example.composetutorial.ui.screenBorder
-import kotlinx.parcelize.Parcelize
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -5110,7 +5108,7 @@ fun <T> rememberValidationThing(
             is String -> !(allowEmpty && value.trim().isEmpty())
             else -> true // allowEmpty has no meaning for other types
         }
-        failedValidationRule = if (shouldValidate) validationRulesCheck(
+        failedValidationRule = if (shouldValidate) failedValidationRuleOrNull(
             listOfNotNull<ValidationRule<T>>(failedValidationRule) + validationRules,
             value
         ) else null
@@ -5223,23 +5221,9 @@ fun isValidTransitionalDecimal(input: String): Boolean {
     return !regex.containsMatchIn(input)
 }
 
-@Parcelize // TODO: May not be needed now - are we still using these in rememberSaveable?
-data class ValidationRule<T>(val validate: (T) -> Boolean, val message: String) : Parcelable
+data class ValidationRule<T>(val validate: (T) -> Boolean, val message: String)
 
-// TODO: Do we use this everywhere we could? Would returning failed rule or null make it
-// more reusable?
-fun <T> validationRulesOk(validationRules: List<ValidationRule<T>>, value: T): Boolean {
-    for (validationRule in validationRules) {
-        if (!validationRule.validate(value)) {
-            return false
-        }
-    }
-    return true
-}
-
-// TODO: Temporary semi-copy of validationRulesOk - I can probably convert vROk callers to use this
-// TODO: Call this "failedValidationRule"? Maybe makes null=none clearer?
-fun <T> validationRulesCheck(validationRules: List<ValidationRule<T>>, value: T): ValidationRule<T>? {
+fun <T> failedValidationRuleOrNull(validationRules: List<ValidationRule<T>>, value: T): ValidationRule<T>? {
     for (validationRule in validationRules) {
         if (!validationRule.validate(value)) {
             return validationRule
@@ -5248,6 +5232,8 @@ fun <T> validationRulesCheck(validationRules: List<ValidationRule<T>>, value: T)
     return null
 }
 
+fun <T> validationRulesOk(validationRules: List<ValidationRule<T>>, value: T) =
+    failedValidationRuleOrNull(validationRules, value) == null
 
 
 // TODO: This duplicates code in numericValidationRules(). It may be as well to move some of these
@@ -5738,7 +5724,7 @@ fun SettingsDialog(
                 Text(subtitle, modifier = Modifier.padding(bottom = 16.dp))
                 OutlinedTextField(
                     value = textFieldValue,
-                    onValueChange = { textFieldValue = it; currentValue = it.text; error = validationRulesCheck(validationRules, it.text.trim())?.message },
+                    onValueChange = { textFieldValue = it; currentValue = it.text; error = failedValidationRuleOrNull(validationRules, it.text.trim())?.message },
                     label = { Text(label) },
                     supportingText = {
                         if (error != null) Text(
