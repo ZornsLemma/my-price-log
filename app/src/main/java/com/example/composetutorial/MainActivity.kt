@@ -2616,9 +2616,9 @@ fun HomeScreen(
     onEditPriceClick: (HomeScreenUIContent) -> Unit,
     onItemSearchClick: (HomeScreenUIContent) -> Unit,
     onViewHistoryClick: (HomeScreenUIContent) -> Unit,
-    onEditDataSetsClick: (HomeScreenUIContent) -> Unit,
-    onEditItemsClick: (HomeScreenUIContent) -> Unit,
-    onEditSourcesClick: (HomeScreenUIContent) -> Unit,
+    onDataSetSelectorClick: (HomeScreenUIContent) -> Unit,
+    onItemSelectorClick: (HomeScreenUIContent) -> Unit,
+    onSourceSelectorClick: (HomeScreenUIContent) -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     // In order to minimise jank, we want the previous UI state to be available during the *very
@@ -2679,9 +2679,9 @@ fun HomeScreen(
             onEditPriceClick = { onEditPriceClick(uiContent) },
             onItemSearchClick = { onItemSearchClick(uiContent) },
             onViewHistoryClick = { onViewHistoryClick(uiContent) },
-            onEditDataSetsClick = { onEditDataSetsClick(uiContent) },
-            onEditItemsClick = { onEditItemsClick(uiContent) },
-            onEditSourcesClick = { onEditSourcesClick(uiContent) },
+            onDataSetSelectorClick = { onDataSetSelectorClick(uiContent) },
+            onItemSelectorClick = { onItemSelectorClick(uiContent) },
+            onSourceSelectorClick = { onSourceSelectorClick(uiContent) },
             onSettingsClick = onSettingsClick,
         )
     }
@@ -2838,9 +2838,9 @@ fun HomeScreenActualScaffold( // TODO: RENAME
     navController: NavHostController,
     drawerState: DrawerState,
     dataSet: DataSet?,
-    onEditDataSetsClick: () -> Unit,
-    onEditItemsClick: () -> Unit,
-    onEditSourcesClick: () -> Unit,
+    onDataSetSelectorClick: () -> Unit,
+    onItemSelectorClick: () -> Unit,
+    onSourceSelectorClick: () -> Unit,
     onSettingsClick: () -> Unit,
     asyncOperationStatus: AsyncOperationStatus,
     content: @Composable (innerPadding: PaddingValues) -> Unit
@@ -2882,21 +2882,21 @@ fun HomeScreenActualScaffold( // TODO: RENAME
                         expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
                         MyDropdownMenuItem(text = { Text("Edit collections") }, onClick = {
                             menuExpanded = false
-                            onEditDataSetsClick()
+                            onDataSetSelectorClick()
                         })
                         MyDropdownMenuItem(
                             text = { Text("Edit products") },
                             enabled = dataSet != null,
                             onClick = {
                                 menuExpanded = false
-                                onEditItemsClick()
+                                onItemSelectorClick()
                             })
                         MyDropdownMenuItem(
                             text = { Text("Edit stores") },
                             enabled = dataSet != null,
                             onClick = {
                                 menuExpanded = false
-                                onEditSourcesClick()
+                                onSourceSelectorClick()
                             })
                         MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
                             menuExpanded = false
@@ -2936,9 +2936,9 @@ fun HomeScreenScaffold(
     onEditPriceClick: () -> Unit,
     onItemSearchClick: () -> Unit,
     onViewHistoryClick: () -> Unit,
-    onEditDataSetsClick: () -> Unit,
-    onEditItemsClick: () -> Unit,
-    onEditSourcesClick: () -> Unit,
+    onDataSetSelectorClick: () -> Unit,
+    onItemSelectorClick: () -> Unit,
+    onSourceSelectorClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     val asyncOperationStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
@@ -2970,7 +2970,7 @@ fun HomeScreenScaffold(
 
     HomeScreenNavigationDrawer(drawerState, dataSet, dataSetListSorted, onSelectedDataSetIdChange) {
 
-        HomeScreenActualScaffold(navController, drawerState, dataSet, onEditDataSetsClick, onEditItemsClick, onEditSourcesClick, onSettingsClick, asyncOperationStatus)
+        HomeScreenActualScaffold(navController, drawerState, dataSet, onDataSetSelectorClick, onItemSelectorClick, onSourceSelectorClick, onSettingsClick, asyncOperationStatus)
  { innerPadding ->
                 HomeScreenContent(
                     vm,
@@ -6136,7 +6136,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-data class EditItemsScreenUIContent(
+data class ItemSelectorScreenUIContent(
     val itemList: List<Item>,
     val dataSet: DataSet
 ) {
@@ -6149,14 +6149,14 @@ data class EditItemsScreenUIContent(
         private const val ITEM_LIST_KEY = "itemList"
         private const val DATA_SET_KEY = "dataSet"
 
-        fun fromSavedState(handle: SavedStateHandle): EditItemsScreenUIContent? {
+        fun fromSavedState(handle: SavedStateHandle): ItemSelectorScreenUIContent? {
             val savedItemList: List<Item>? = handle[ITEM_LIST_KEY]
             val savedDataSet: DataSet? = handle[DATA_SET_KEY]
             if (savedItemList != null && savedDataSet != null) {
-                Log.d("MyApp", "reconstructed EditItemsScreenUIContent")
-                return EditItemsScreenUIContent(savedItemList, savedDataSet)
+                Log.d("MyApp", "reconstructed ItemSelectorScreenUIContent")
+                return ItemSelectorScreenUIContent(savedItemList, savedDataSet)
             } else {
-                Log.d("MyApp", "couldn't reconstruct EditItemsScreenUIContent")
+                Log.d("MyApp", "couldn't reconstruct ItemSelectorScreenUIContent")
                 return null
             }
         }
@@ -6164,7 +6164,7 @@ data class EditItemsScreenUIContent(
 }
 
 
-data class EditSourcesScreenUIContent(
+data class SourceSelectorScreenUIContent(
     val sourceList: List<Source>,
     val dataSet: DataSet
 ) {
@@ -6177,14 +6177,14 @@ data class EditSourcesScreenUIContent(
         private const val SOURCE_LIST_KEY = "sourceList"
         private const val DATA_SET_KEY = "dataSet"
 
-        fun fromSavedState(handle: SavedStateHandle): EditSourcesScreenUIContent? {
+        fun fromSavedState(handle: SavedStateHandle): SourceSelectorScreenUIContent? {
             val savedSourceList: List<Source>? = handle[SOURCE_LIST_KEY]
             val savedDataSet: DataSet? = handle[DATA_SET_KEY]
             if (savedSourceList != null && savedDataSet != null) {
-                Log.d("MyApp", "reconstructed EditSourcesScreenUIContent")
-                return EditSourcesScreenUIContent(savedSourceList, savedDataSet)
+                Log.d("MyApp", "reconstructed SourceSelectorScreenUIContent")
+                return SourceSelectorScreenUIContent(savedSourceList, savedDataSet)
             } else {
-                Log.d("MyApp", "couldn't reconstruct EditSourcesScreenUIContent")
+                Log.d("MyApp", "couldn't reconstruct SourceSelectorScreenUIContent")
                 return null
             }
         }
@@ -6282,29 +6282,29 @@ class SharedViewModel : ViewModel() {
     // talk about "Edit source" (singular) but "List sources" (plural) internally, even if we continue to use "Edit sources" in the UI labels.
 
     // TODO: Rename the following now they are just List<T>? not a UIContent structure? Or is the "UIContent" convention more valuable?
-    var editDataSetsScreenUIContent: List<DataSet>? = null
-    var editItemsScreenUIContent: EditItemsScreenUIContent? = null
-    var editSourcesScreenUIContent: EditSourcesScreenUIContent? = null
+    var dataSetSelectorScreenUIContent: List<DataSet>? = null
+    var itemSelectorScreenUIContent: ItemSelectorScreenUIContent? = null
+    var sourceSelectorScreenUIContent: SourceSelectorScreenUIContent? = null
 
     // TODO: The "doubling" in the next three functions is a temporary hack to show that we use the
     // initial list and then it gets replaced by the query results from the database. The map step
     // is because we use the IDs as keys on LazyColumn and if there are duplicate IDs it gets upset;
     // of course with real data there won't be duplicate IDs at all.
 
-    fun setEditDataSetsScreenContent(uiContent: HomeScreenUIContent) {
-        editDataSetsScreenUIContent =
+    fun setDataSetSelectorScreenContent(uiContent: HomeScreenUIContent) {
+        dataSetSelectorScreenUIContent =
             uiContent.dataSetList + uiContent.dataSetList.map { it -> it.copy(id = it.id * 1000) }
     }
 
-    fun setEditItemsScreenContent(uiContent: HomeScreenUIContent) {
-        editItemsScreenUIContent = EditItemsScreenUIContent(
+    fun setItemSelectorScreenContent(uiContent: HomeScreenUIContent) {
+        itemSelectorScreenUIContent = ItemSelectorScreenUIContent(
             uiContent.itemList + uiContent.itemList.map { it -> it.copy(id = it.id * 1000) },
             uiContent.dataSet!!
         )
     }
 
-    fun setEditSourcesScreenContent(uiContent: HomeScreenUIContent) {
-        editSourcesScreenUIContent = EditSourcesScreenUIContent(
+    fun setSourceSelectorScreenContent(uiContent: HomeScreenUIContent) {
+        sourceSelectorScreenUIContent = SourceSelectorScreenUIContent(
             uiContent.sourceList + uiContent.sourceList.map { it -> it.copy(id = it.id * 1000) },
             uiContent.dataSet!!
         )
@@ -6409,10 +6409,10 @@ fun areHumanEqual(lhs: String, rhs: String): Boolean {
     return squashSpaces(lhs.lowercase()) == squashSpaces(rhs.lowercase())
 }
 
-class EditItemsViewModel(
+class ItemSelectorViewModel(
     savedStateHandle: SavedStateHandle,
     getName: (Item) -> String,
-    val uiContent: EditItemsScreenUIContent,
+    val uiContent: ItemSelectorScreenUIContent,
     dataQuery: Flow<List<Item>>,
 ) : GeneralSelectorViewModel<Item>(
     savedStateHandle,
@@ -6425,10 +6425,10 @@ class EditItemsViewModel(
     }
 }
 
-class EditSourcesViewModel(
+class SourceSelectorViewModel(
     savedStateHandle: SavedStateHandle,
     getName: (Source) -> String,
-    val uiContent: EditSourcesScreenUIContent,
+    val uiContent: SourceSelectorScreenUIContent,
     dataQuery: Flow<List<Source>>,
 ) : GeneralSelectorViewModel<Source>(
     savedStateHandle,
@@ -6450,7 +6450,7 @@ open class GeneralSelectorViewModel<T>(
     // The idea here is that as we have no real state other than the results of dataQuery, we
     // optimise by having our caller provide initialList to give a good first composition during
     // normal navigation, but we can manage without it if we are reincarnated.
-    // TODO: This works and it is probably fine but note that for EditItemsViewModel we do actually
+    // TODO: This works and it is probably fine but note that for ItemSelectorViewModel we do actually
     // serialise, even though the general code doesn't require it. (We need it so we can pass a
     // DataSet through to EditItemScreen.)
 
@@ -7459,7 +7459,7 @@ fun AppNavigation() {
                     navController.navigate("editPrice")
                 },
                 onItemSearchClick = { uiContent ->
-                    sharedViewModel.setEditItemsScreenContent(uiContent)
+                    sharedViewModel.setItemSelectorScreenContent(uiContent)
                     navController.navigate("editItems/select")
                 },
                 onViewHistoryClick = { uiContent ->
@@ -7470,20 +7470,20 @@ fun AppNavigation() {
                     sharedViewModel.setViewPriceHistoryScreenContent(uiContent, locale)
                     navController.navigate(route = "viewPriceHistory")
                 },
-                onEditDataSetsClick = { uiContent ->
-                    sharedViewModel.setEditDataSetsScreenContent(
+                onDataSetSelectorClick = { uiContent ->
+                    sharedViewModel.setDataSetSelectorScreenContent(
                         uiContent
                     )
                     navController.navigate("editDataSets")
                 },
-                onEditItemsClick = { uiContent ->
-                    sharedViewModel.setEditItemsScreenContent(
+                onItemSelectorClick = { uiContent ->
+                    sharedViewModel.setItemSelectorScreenContent(
                         uiContent
                     )
                     navController.navigate("editItems/edit")
                 },
-                onEditSourcesClick = { uiContent ->
-                    sharedViewModel.setEditSourcesScreenContent(
+                onSourceSelectorClick = { uiContent ->
+                    sharedViewModel.setSourceSelectorScreenContent(
                         uiContent
                     )
                     navController.navigate("editSources/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
@@ -7525,12 +7525,12 @@ fun AppNavigation() {
         ) { backStackEntry ->
             screenWithViewModel<GeneralSelectorViewModel<DataSet>, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.editDataSetsScreenUIContent = null },
+                clearUIContent = { sharedViewModel.dataSetSelectorScreenUIContent = null },
                 buildViewModel = { app, handle ->
                     GeneralSelectorViewModel(
                         savedStateHandle = handle,
                         getName = { it -> it.name },
-                        initialList = sharedViewModel.editDataSetsScreenUIContent,
+                        initialList = sharedViewModel.dataSetSelectorScreenUIContent,
                         dataQuery = app.repository.getAllDataSets()
                     )
                 }
@@ -7567,13 +7567,13 @@ fun AppNavigation() {
             val action = backStackEntry.arguments?.getString("action")
             myRequire(action == "edit" || action == "select") { "Invalid action: $action" }
             val select = action == "select"
-            screenWithViewModel<EditItemsViewModel, Int /* TODO DUMMY */>(
+            screenWithViewModel<ItemSelectorViewModel, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.editItemsScreenUIContent = null },
+                clearUIContent = { sharedViewModel.itemSelectorScreenUIContent = null },
                 buildViewModel = { app, handle ->
-                    val uiContent = sharedViewModel.editItemsScreenUIContent
-                        ?: EditItemsScreenUIContent.fromSavedState(handle)!!
-                    EditItemsViewModel(
+                    val uiContent = sharedViewModel.itemSelectorScreenUIContent
+                        ?: ItemSelectorScreenUIContent.fromSavedState(handle)!!
+                    ItemSelectorViewModel(
                         savedStateHandle = handle,
                         getName = { it -> it.name },
                         uiContent,
@@ -7624,15 +7624,15 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
-            screenWithViewModel<EditSourcesViewModel, Int /* TODO DUMMY */>(
+            screenWithViewModel<SourceSelectorViewModel, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
                 // TODO: Could should sharedViewModel have a clearAllContent() or similar function
                 // and we just call that in clearUIContent? That way we could be sure *no* old
                 // content is lurking around.
-                clearUIContent = { sharedViewModel.editSourcesScreenUIContent = null },
+                clearUIContent = { sharedViewModel.sourceSelectorScreenUIContent = null },
                 buildViewModel = { app, handle ->
-                    val uiContent = sharedViewModel.editSourcesScreenUIContent ?: EditSourcesScreenUIContent.fromSavedState(handle)!!
-                    EditSourcesViewModel(
+                    val uiContent = sharedViewModel.sourceSelectorScreenUIContent ?: SourceSelectorScreenUIContent.fromSavedState(handle)!!
+                    SourceSelectorViewModel(
                         savedStateHandle = handle,
                         getName = { it -> it.name },
                         uiContent,
