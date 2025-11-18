@@ -5278,11 +5278,6 @@ fun numericValidationRules(
     fun attemptedParse(candidate: String): Double? =
         sanitiseCandidate(candidate).replace(decimalSeparator, '.').toDoubleOrNull()
 
-    // TODO: Now I am (working on) allowEmpty in my validation logic driven by save having been
-    // clicked, we should probably add an explicit validation rule in here saying it can't be empty
-    // or whatever wording is appropriate, rather than letting this be handled by the default
-    // "Invalid number" case at the end.
-
     return listOfNotNull(
         ValidationRule(
             { it.count { char -> char == decimalSeparator } <= maxDecimalSeparators },
@@ -5315,6 +5310,8 @@ fun numericValidationRules(
         } else {
             null
         },
+
+        ValidationRule({ it.trim().isNotEmpty() }, "Required"),
 
         // This is a catch-all; in practice we expect to catch all problems before this, but we
         // don't want to have a string which can't be converted (which would cause an error on
@@ -7166,7 +7163,7 @@ class ViewPriceHistoryViewModel(
 // assume earlier rules already filtered out some unacceptable cases anyway.)
 fun createNameValidationRules(existingNameList: List<String>): List<ValidationRule<String>> {
     return listOf(
-        ValidationRule<String>({ it.isNotEmpty() }, "Must have a name"),
+        ValidationRule<String>({ it.isNotEmpty() }, "Required"),
     ) + existingNameList.map { name ->
         ValidationRule(
             { candidateName -> !areHumanEqual(candidateName, name) },
