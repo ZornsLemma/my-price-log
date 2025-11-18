@@ -6196,10 +6196,8 @@ data class EditSourcesScreenUIContent(
 class SharedViewModel : ViewModel() {
     // This is only nullable to provide us with an easy initial value to use. In use
     // setEditPriceScreenState() should always have been called before it is used.
-    // TODO: Should we be using get/set functions or a read-only property and a set?
     var editPriceScreenUIContent: EditPriceScreenUIContent? = null
 
-    // TODO: As editPriceScreenUIContent
     var viewPriceHistoryScreenUIContent: ViewPriceHistoryScreenUIContent? = null
 
     // frozenLocale becomes part of the edit screen state - it was used to convert the doubles to
