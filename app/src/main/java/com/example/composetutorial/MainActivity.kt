@@ -5584,8 +5584,6 @@ fun SettingsScreen(
                         },
                         "Must be greater than $stalePriceThreshold (stale price threshold)"
                     ),
-                    // TODO: Just maybe drop this upper bound? Or make it something like 9999999
-                    // just for sanity? Maybe users don't want an upper bound (unlikely but possible).
                     ValidationRule(
                         {
                             val days = it.toIntOrNull()
