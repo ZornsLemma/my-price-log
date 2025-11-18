@@ -6064,12 +6064,7 @@ fun LicenseText(licenseText: String) {
     )
 }
 
-// TODO: ChatGPT magic
-private fun Context.isPhone(): Boolean {
-    val metrics = resources.configuration
-    val smallestWidthDp = metrics.smallestScreenWidthDp
-    return smallestWidthDp < 600  // Common cutoff: <600dp = phone
-}
+private fun Context.isPhone(): Boolean = resources.configuration.smallestScreenWidthDp < 600
 
 // TODO: This is a bit of a mess but probably best leave it alone until I either gain more
 // experience or do more testing with different Android versions.
