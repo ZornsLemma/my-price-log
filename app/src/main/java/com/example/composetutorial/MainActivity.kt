@@ -4705,8 +4705,7 @@ fun <T, U> ValidationErrorHighlightBox(
         modifier = modifier
     ) {
         Column(modifier = Modifier.animateContentSize()) {
-            // TODO: We could possibly pass validationThing201 directly. We could also maybe pass a
-            // Modifier.validationFocusRequester() instead of scrollToFocusableHandle.
+            // TODO: We could possibly pass validationThing201 directly.
             content(
                 validationThing201.validationResult.value,
                 validationThing201.interactionSource,
@@ -5018,7 +5017,7 @@ fun EditDataSetScreen(
     }
 }
 
-// TODO: So I suppose maybe we could also put a ScrollToFocusableHandle in here too??
+// TODO: So I suppose maybe we could also put a ValidationInputHandle in here too??
 // TODO: Obviously "ValidationThing" isn't a good name
 // TODO: It's a casual discussion not directly related to this but just FWIW ChatGPT uses
 // "FieldValidation" or "ValidatedFieldState" as a name for this, maybe worth considering or riffing on.
@@ -8391,7 +8390,7 @@ fun <T> initialVersioned(initialValue: T): Versioned<T> =
 
 @Composable
 fun ErrorHighlightBox(
-    visible: Boolean,
+    visible: Boolean, // TODO: we could default this to validationTarget.errorHighlightBoxVisible? or is it clearer to be explicit? or better to avoid risk of inconsistency?
     borderWidth: Dp = 2.dp,
     offset: Dp = defaultErrorHighlightOffset,
     modifier: Modifier = Modifier,
