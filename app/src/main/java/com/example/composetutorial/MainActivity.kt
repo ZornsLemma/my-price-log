@@ -6548,11 +6548,6 @@ fun <T> GeneralSelectorScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            // TODO: I am wondering if title and subtitle should swap roles here? Keep the data set
-            // name as the title as on the home screen? And if we go with this, *maybe* the subtitle
-            // is just "Products" (for example) not "Edit products"?? Although this approach won't
-            // work for "edit collections", so would it be inconsistent for it to have that as its
-            // title? Maybe it would be OK.
             TopAppBar(
                 title = title,
                 navigationIcon = {
@@ -6575,12 +6570,14 @@ fun <T> GeneralSelectorScreen(
             // practice the background colour of the top app bar and the screen content are the
             // same), it adds some consistency - particularly when the search field is present -
             // with the vertical spacing on other screens.
+            //
+            // We don't need Modifier.verticalScroll(rememberScrollState()) here - probably because
+            // of the LazyColumn - and in fact adding it causes a crash.
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(vertical = screenBorder)
-            // TODO: copied from Home, maybe want this but put it in when we do .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
             // ENHANCE: We could show a warning icon and/or some supporting text if nothing matches
             // the substring, rather than just showing an empty list.
