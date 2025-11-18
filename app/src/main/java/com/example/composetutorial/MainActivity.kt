@@ -5018,19 +5018,12 @@ fun EditDataSetScreen(
     }
 }
 
-// TODO: We could *maybe* include  MutableState<Boolean> in ValidationThing which is used to trigger
-// the *on-save only* highlight boxes (not "there is an error but you haven't clicked save yet"
-// case) - this might help keep things tidy and also provide somewhere I could shove a "launch {
-// =true; delay; =false }" helper which would have the MutableState handy and thus *could* modify
-// generically. We would of course still have the option to use the error highlight box with "var
-// foo by remember { mutableStateOf(false) }" if we wanted, this would just be a convenient way to
-// keep things together.
 // TODO: So I suppose maybe we could also put a ScrollToFocusableHandle in here too??
 // TODO: Obviously "ValidationThing" isn't a good name
 // TODO: It's a casual discussion not directly related to this but just FWIW ChatGPT uses
 // "FieldValidation" or "ValidatedFieldState" as a name for this, maybe worth considering or riffing on.
 // TODO: This is not a data class and I never even thought about it but although I find the
-// distinction very confusing in practicel Compose, FWIW ChatGPT was very clear that this *should
+// distinction very confusing in practical Compose, FWIW ChatGPT was very clear that this *should
 // not* be a data class (we might get away with it, but it would be prone to misuse if someone used
 // copy() on it and that could break things, I think). Once I refactor this and feel more
 // comfortable wit how the code works, it might be helpful to think about why (assuming ChatGPT is
@@ -8975,3 +8968,14 @@ com.example.myapp/
 // TODO: Once I've pulled all the strings out to allow for translation:
 // - manually or with LLM assistance review them and see if any would benefit from regional English variations (e.g. "color" vs "colour")
 // - probably do an LLM-assisted Spanish translation as a test and release it but make sure to note somewhere it's alpha/beta quality
+
+// TODO: When validating fields, we control allowEmpty based on whether a save has been attempted or
+// not. Given we do generally validate everything live, I am wondering if instead we should control
+// allowEmpty based off this *and* whether we are editing an existing item or adding a new one. I
+// think the main motivation for this exception was that when you start adding a new entry,
+// everything is blank and you don't want a sea of validation errors. But if you're editing a new
+// entry, is it any more reasonable/unreasoanble to get a validation error when you temporarily
+// blank out a field to enter something new than it is if you enter "3.25" in a field which only
+// allows 1dp? I suppose there is an argument that it's slightly difference because you're perhaps
+// (?) more likely to blank out a field to replace it in a moment than you are to temporarily edit a
+// number into an invalid state while changing it.
