@@ -5774,7 +5774,6 @@ fun SettingsDialog(
 
 }
 
-// TODO: ChatGPT magic
 fun Drawable.toBitmap(width: Int, height: Int): Bitmap {
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
@@ -5783,22 +5782,16 @@ fun Drawable.toBitmap(width: Int, height: Int): Bitmap {
     return bitmap
 }
 
-// TODO: ChatGPT magic
 @Composable
 fun LauncherIcon(size: Dp = 120.dp) {
     val context = LocalContext.current
-    val density = LocalDensity.current
-
-    // Convert Dp to pixels for toBitmap()
-    val px = with(density) { size.toPx().toInt() }
-
     val drawable = context.packageManager.getApplicationIcon(context.packageName)
-    val bitmap = drawable.toBitmap(px, px)
-
+    val sizePx = with(LocalDensity.current) { size.toPx().toInt() }
+    val bitmap = drawable.toBitmap(sizePx, sizePx)
     Image(
         bitmap = bitmap.asImageBitmap(),
-        contentDescription = "App Icon",
-        modifier = Modifier.size(size) // still use Dp for layout
+        contentDescription = "App icon",
+        modifier = Modifier.size(size)
     )
 }
 
