@@ -5988,7 +5988,6 @@ fun LegalScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
                 .padding(horizontal = fullScreenDialogHorizontalBorder)
-                //  TODO!? .padding(16.dp) - this is chatgpt, maybe redundant now i have scaffold
         ) {
             // We manually implement the vertical border so it is part of the scrollable region, not
             // something which reduces the size of the scrollable region. This feels a bit better to
@@ -5996,6 +5995,8 @@ fun LegalScreen(
             Spacer(modifier = Modifier.height(fullScreenDialogVerticalBorder))
 
             // Our license
+            // TODO: When adding i18n, do *not* do a UK eng "MIT Licen*c*e" version of this string -
+            // it's conventional and clearer to just stick with the US style use here.
             Text(
                 text = "$appName $emDash MIT License",
                 style = MaterialTheme.typography.titleMedium
