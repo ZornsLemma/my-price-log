@@ -6765,11 +6765,14 @@ class EditPriceViewModel(
         // record (which is essentially therefore the current price) and editing that as current? I
         // suspect it might be good to check that doesn't fundamentally break things (crash etc),
         // but to otherwise just disable the "edit as new" menu for the very latest record in the
-        // history
+        // history - hmm, experimenting, I think we are able to create duplicate history entries
+        // this way (so we should block it in the menu), it doesn't actively break, the view history
+        // diffing mechanism hides it in the app (not exactly bad) but you can see it in the table.
         // TODO: Double check the handling of toConfirm here. My thinking is that if editablePrice
         // has toConfirm set that constitutes a change, so by using the real value in editablePrice
         // and forcing originalPrice to have toConfirm false that does what we want there, and will
         // also pick up any other changes.
+        Log.d("MyApp", "editablePrice.value ${uiContent.editablePrice.value}
         if (!uiContent.nonLinearEdit && uiContent.editablePrice.value == uiContent.originalPrice.copy(
                 toConfirm = false
             )
