@@ -127,6 +127,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -6761,18 +6762,10 @@ class EditPriceViewModel(
         // editablePrice and originalPrice are the same. (We don't just try to hack originalPrice
         // because we don't want to warn the user about losing non-existent changes if they click
         // close instead of save.)
-        // TODO: Is there a corner case here where the user is viewing the most recent history
-        // record (which is essentially therefore the current price) and editing that as current? I
-        // suspect it might be good to check that doesn't fundamentally break things (crash etc),
-        // but to otherwise just disable the "edit as new" menu for the very latest record in the
-        // history - hmm, experimenting, I think we are able to create duplicate history entries
-        // this way (so we should block it in the menu), it doesn't actively break, the view history
-        // diffing mechanism hides it in the app (not exactly bad) but you can see it in the table.
         // TODO: Double check the handling of toConfirm here. My thinking is that if editablePrice
         // has toConfirm set that constitutes a change, so by using the real value in editablePrice
         // and forcing originalPrice to have toConfirm false that does what we want there, and will
         // also pick up any other changes.
-        Log.d("MyApp", "editablePrice.value ${uiContent.editablePrice.value}
         if (!uiContent.nonLinearEdit && uiContent.editablePrice.value == uiContent.originalPrice.copy(
                 toConfirm = false
             )
@@ -8257,7 +8250,7 @@ fun ViewPriceHistoryScreen(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(priceHistoryDeltaList) { priceHistoryDelta ->
+                itemsIndexed(priceHistoryDeltaList) { index, priceHistoryDelta ->
                     Box {
                         ItemSourceInfoHistory(
                             dataSet,
@@ -8267,10 +8260,18 @@ fun ViewPriceHistoryScreen(
                         )
 
                         OverflowMenu(modifier = Modifier.align(Alignment.TopEnd)) { requestMenuClose ->
-                                MyDropdownMenuItem(
-                                    text = { Text("Edit as new price") },
-                                    onClick = { requestMenuClose(); requestEditAsNew(priceHistoryDelta.priceHistory) }
-                                )
+                            // We don't allow "Edit as new price" on the first item - this is the
+                            // current price and should be edited via the home screen instead. If we
+                            // allow this, the user can bypass the usual check for no-op edits and
+                            // create duplicate entries in the history table. (This can be seen in
+                            // the database but is hidden by the diffing process in the history
+                            // screen.) We could special case this (by not setting the nonLinearEdit
+                            // flag when editing the first item) but it seems best just to disallow
+                            // it.
+                            MyDropdownMenuItem(
+                                text = { Text("Edit as new price") },
+                                enabled = index > 0,
+                                onClick = { requestMenuClose(); requestEditAsNew(priceHistoryDelta.priceHistory) })
                         }
                     }
                 }
