@@ -50,6 +50,12 @@ class RepositoryImpl(
         sourceId: Long
     ) = priceHistoryDao.countPriceHistory(dataSetId, itemId, sourceId)
 
+    override fun countItemsForDataSet(dataSetId: Long): Flow<Long> =
+        itemDao.countItemsForDataSet(dataSetId)
+
+    override fun countSourcesForDataSet(dataSetId: Long): Flow<Long> =
+        sourceDao.countSourcesForDataSet(dataSetId)
+
     override fun countPricesForItem(itemId: Long): Flow<Long> =
         priceDao.countPricesForItem(itemId)
 

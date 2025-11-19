@@ -19,6 +19,8 @@ interface Repository {
     fun getPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<List<PriceHistory>>
     fun countPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<Long>
 
+    fun countItemsForDataSet(dataSetId: Long): Flow<Long>
+    fun countSourcesForDataSet(dataSetId: Long): Flow<Long>
     fun countPricesForItem(itemId: Long): Flow<Long>
     fun countPricesForSource(sourceId: Long): Flow<Long>
 

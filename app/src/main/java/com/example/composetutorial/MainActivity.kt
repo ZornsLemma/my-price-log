@@ -962,6 +962,9 @@ interface ItemDao {
     @Query("SELECT * FROM item WHERE data_set_id = :dataSetId ORDER BY name DESC")
     fun getAllItems(dataSetId: Long): Flow<List<Item>>
 
+    @Query("SELECT COUNT(*) FROM item WHERE data_set_id = :dataSetId")
+    fun countItemsForDataSet(dataSetId: Long): Flow<Long>
+
     @Query("DELETE FROM item WHERE id = :itemId")
     suspend fun deleteById(itemId: Long): Int
 }
@@ -976,6 +979,9 @@ interface SourceDao {
 
     @Query("SELECT * FROM source WHERE data_set_id = :dataSetId ORDER BY name DESC")
     fun getAllSources(dataSetId: Long): Flow<List<Source>>
+
+    @Query("SELECT COUNT(*) FROM source WHERE data_set_id = :dataSetId")
+    fun countSourcesForDataSet(dataSetId: Long): Flow<Long>
 
     @Query("DELETE FROM source WHERE id = :sourceId")
     suspend fun deleteById(sourceId: Long): Int
@@ -4807,10 +4813,10 @@ fun EditDataSetScreen(
                 { Text("Delete collection and products, stores and prices?") }
             },
             if (isSimpleDelete) {
-                { Text("This collection has no associated TODODATA so deleting it will not affect anything else.") }
+                { Text("This collection has no associated products, stores or prices so deleting it will not affect anything else.") }
             } else {
                 // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
-                { Text("Deleting this collection will also delete its TODOASSOCIATEDDATA. This action cannot be undone.") }
+                { Text("Deleting this collection will also delete the products, stores and prices associated with it. This action cannot be undone.") }
             }
         ),
         performDelete = { vm.performDelete() },
@@ -7200,13 +7206,29 @@ class EditDataSetViewModel(
         uiContent.saveState(savedStateHandle)
     }
 
-    // TODO: 42 is obviously a hack. Data sets can be referenced by items, source *and* prices. In
-    // some ways being referenced by prices is "scariest", but it's also not nice if the user wipes
-    // out a dataset with items and sources associated even if they are no prices. I need to decide
-    // what I will consider here, which is all about generating warnings to the user. I could just
-    // sum the counts across all three reference types for example. I may want to count each thing
-    // separately and tweak the UI delete warnings accordingly.
-    val dataSetReferenceCountFlow = flowOf(42L)
+    private val dataSetItemReferenceCountFlow = uiContent.editableDataSet.value.id. let { dataSetId ->
+        if (dataSetId != 0L) {
+            repository.countItemsForDataSet(dataSetId)
+        } else {
+            flowOf(0L) // new data sets have no references
+        }
+    }
+
+    private val dataSetSourceReferenceCountFlow = uiContent.editableDataSet.value.id. let { dataSetId ->
+        if (dataSetId != 0L) {
+            repository.countSourcesForDataSet(dataSetId)
+        } else {
+            flowOf(0L) // new data sets have no references
+        }
+    }
+
+    // There's no need to explicitly check for prices; we want to give a warning if there are any
+    // items or sources associated with the data set even without prices, and there can't be any
+    // prices without at least one item and one source.
+    val dataSetReferenceCountFlow = combine(dataSetItemReferenceCountFlow, dataSetSourceReferenceCountFlow) {
+        (itemReferenceCount, sourceReferenceCount) ->
+        itemReferenceCount + sourceReferenceCount
+    }
         .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = null)
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
