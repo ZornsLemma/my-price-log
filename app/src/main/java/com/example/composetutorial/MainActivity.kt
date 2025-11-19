@@ -7043,7 +7043,7 @@ data class ViewPriceHistoryScreenUIContent(
 }
 
 data class PriceHistoryDelta(
-    val priceHistory: PriceHistory, // TODO: having this here feels a bit crap, maybe it's OK
+    val priceHistory: PriceHistory,
     val price: Double?,
     val count: Long?,
     val quantity: MeasuredValue?,
