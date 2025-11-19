@@ -42,7 +42,6 @@ import android.graphics.Canvas
 import android.app.Activity
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.Alignment
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
@@ -185,6 +184,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
@@ -7124,9 +7124,6 @@ class ViewPriceHistoryViewModel(
         uiContent.source.id
     ).map { priceHistoryList -> sanitisePriceHistoryUnits(uiContent.dataSet, priceHistoryList) }
 
-    // TODO: It would be good to include "the price ID changed => the price was deleted" in this
-    // history. I don't believe we can know the date of the deletion, but we could show a trivial
-    // diff card which just says "price was deleted", so we can at least see it happened.
     fun generatePriceHistoryDeltaList(
         priceHistoryList: List<PriceHistory>,
         locale: Locale,
@@ -7135,11 +7132,37 @@ class ViewPriceHistoryViewModel(
     // Remember that we are doing a "backwards delta" here - we show the very latest element in full,
     // and for older elements we show differences between them and the next newest element. This zip
         // has every member of priceHistoryList appear exactly once as oldPriceHistory.
+    // ENHANCE: If we are viewing the history of a price which has no current price, it
+    // might be nice if we showed a deleted divider right at the top of the history.
+    // This wouldn't be that hard, but we'd need to pass through the fact that there is
+        // no current price from the home screen to here.
+        // TODO: As we may need to make "there is no current price" available for other reasons, it might be easy to do this enhancement now.
+        // TODO: Once the dust settles, test this with a price being deleted then reinstated with no changes and check how it appears
+
         (listOf(null) + priceHistoryList).zip(priceHistoryList)
-            .mapNotNull { (newPriceHistory, oldPriceHistory) ->
-                if (newPriceHistory == null) oldPriceHistory.toPriceHistoryDelta(
+            .flatMap { (newPriceHistory, oldPriceHistory) ->
+                if (newPriceHistory == null) listOf(oldPriceHistory.toPriceHistoryDelta(
                     confirmedAtFormatter
-                ) else diff(newPriceHistory, oldPriceHistory, confirmedAtFormatter)
+                )) else {
+                    var subList = mutableListOf<PriceHistoryDelta?>()
+                    if (newPriceHistory.priceId != oldPriceHistory.priceId) {
+                        subList.add(null)
+                    }
+                    val delta = diff(newPriceHistory, oldPriceHistory, confirmedAtFormatter)
+                    if (delta != null) {
+                        subList.add(delta)
+                    }
+                    subList
+
+                    /* TODO OLD WRONG DELETE
+                        val delta = diff(newPriceHistory, oldPriceHistory, confirmedAtFormatter)
+                    if (newPriceHistory.priceId != oldPriceHistory.priceId) {
+                        listOf(null, delta)
+                    } else {
+                        listOf(delta)
+                    }
+                    */
+                }
             }
 
     // TODO: dataSetFlow is probably a temp hack
@@ -8258,32 +8281,51 @@ fun ViewPriceHistoryScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 itemsIndexed(priceHistoryDeltaList) { index, priceHistoryDelta ->
-                    Box {
-                        ItemSourceInfoHistory(
-                            dataSet,
-                            priceHistoryDelta,
-                            dateFormatter,
-                            timeFormatter
-                        )
+                    if (priceHistoryDelta == null) {
+                        HorizontalDividerWithText("deleted")
+                     } else {
+                        Box {
+                            ItemSourceInfoHistory(
+                                dataSet,
+                                priceHistoryDelta,
+                                dateFormatter,
+                                timeFormatter
+                            )
 
-                        OverflowMenu(modifier = Modifier.align(Alignment.TopEnd)) { requestMenuClose ->
-                            // We don't allow "Edit as new price" on the first item - this is the
-                            // current price and should be edited via the home screen instead. If we
-                            // allow this, the user can bypass the usual check for no-op edits and
-                            // create duplicate entries in the history table. (This can be seen in
-                            // the database but is hidden by the diffing process in the history
-                            // screen.) We could special case this (by not setting the nonLinearEdit
-                            // flag when editing the first item) but it seems best just to disallow
-                            // it.
-                            MyDropdownMenuItem(
-                                text = { Text("Edit as new price") },
-                                enabled = index > 0,
-                                onClick = { requestMenuClose(); requestEditAsNew(priceHistoryDelta.priceHistory) })
+                            OverflowMenu(modifier = Modifier.align(Alignment.TopEnd)) { requestMenuClose ->
+                                // We don't allow "Edit as new price" on the first item - this is the
+                                // current price and should be edited via the home screen instead. If we
+                                // allow this, the user can bypass the usual check for no-op edits and
+                                // create duplicate entries in the history table. (This can be seen in
+                                // the database but is hidden by the diffing process in the history
+                                // screen.) We could special case this (by not setting the nonLinearEdit
+                                // flag when editing the first item) but it seems best just to disallow
+                                // it.
+                                // TODO: THIS IS WRONG - *IF* THERE IS NO CURRENT PRICE, WE SHOULD ALLOW THIS
+                                MyDropdownMenuItem(
+                                    text = { Text("Edit as new price") },
+                                    enabled = index > 0,
+                                    onClick = {
+                                        requestMenuClose(); requestEditAsNew(
+                                        priceHistoryDelta.priceHistory
+                                    )
+                                    })
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun HorizontalDividerWithText(text: String) {
+    Row(modifier = Modifier.fillMaxWidth()) {
+        HorizontalDivider(modifier = Modifier.fillMaxWidth().weight(1f).align(Alignment.CenterVertically))
+        Text(text = text, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 4.dp))
+        HorizontalDivider(modifier = Modifier.fillMaxWidth().weight(1f).align(Alignment.CenterVertically))
+
     }
 }
 
@@ -8963,3 +9005,7 @@ com.example.myapp/
 // allows 1dp? I suppose there is an argument that it's slightly difference because you're perhaps
 // (?) more likely to blank out a field to replace it in a moment than you are to temporarily edit a
 // number into an invalid state while changing it.
+
+// TODO: The big title on each view history card doesn't fit on a single line (because of the
+// overflow menu?) on my small emulated phone. Maybe switch to a slightly more compact (e.g. "Wed"
+// not "Wednesday"?) format.
