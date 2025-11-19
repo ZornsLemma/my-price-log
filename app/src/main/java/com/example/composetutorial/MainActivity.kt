@@ -7136,10 +7136,12 @@ class ViewPriceHistoryViewModel(
                 // Remember that we are doing a "backwards delta" here - we show the very latest element in full,
                 // and for older elements we show differences between them and the next newest element. This zip
                 // has every member of priceHistoryList appear exactly once as oldPriceHistory.
-                // TODO: Once the dust settles, test this with a price being deleted then reinstated with no changes and check how it appears
-                // TODO: I think it's technically correct (but need to test properly) but we can end up with
+                // TODO: Once the dust settles, test this with a price being deleted then reinstated
+                // with no changes and check how it appears
+                // TODO: I think it's technically correct (but need to test properly) but we can end
+                // up with
                 // multiple adjacent deletes if the intermediate deltas are "empty". We should probably
-                // collapse multiple adjacent null down to one - it's probablyn ot worth over-faffing to try
+                // collapse multiple adjacent nulls down to one - it's probably not worth over-faffing to try
                 // to show the precise history or to force a diff card in there. Maybe it's OK as it is - it
                 // does kind of reflect reality (multiple deletes and we know - but it maybe looks odd -
                 // there were no real changes in between them because the diff cards are missing) - but I
@@ -7161,10 +7163,6 @@ class ViewPriceHistoryViewModel(
                     subList
                 }
             }
-
-    // TODO: dataSetFlow is probably a temp hack
-    val dataSetFlow = repository.getAllDataSets()
-
 }
 
 // ENHANCE: Not here specifically, I almost wonder if the lambdas should have the *option* (not
