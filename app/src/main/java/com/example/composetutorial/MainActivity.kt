@@ -4135,7 +4135,7 @@ fun EditItemScreen(
 ) {
     val uiContent = vm.uiContent
 
-    val itemReferenceCount by vm.itemReferenceCountFlow.collectAsStateWithLifecycle()
+    val itemReferenceCount by vm.itemReferenceCountFlow.collectAsStateWithLifecycle(null)
     Log.d("MyApp", "itemReferenceCount $itemReferenceCount")
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
@@ -4424,7 +4424,7 @@ fun EditSourceScreen(
 ) {
     val uiContent = vm.uiContent
 
-    val sourceReferenceCount by vm.sourceReferenceCountFlow.collectAsStateWithLifecycle()
+    val sourceReferenceCount by vm.sourceReferenceCountFlow.collectAsStateWithLifecycle(null)
     Log.d("MyApp", "sourceReferenceCount $sourceReferenceCount")
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
@@ -4787,7 +4787,7 @@ fun EditDataSetScreen(
 ) {
     val uiContent = vm.uiContent
 
-    val dataSetReferenceCount by vm.dataSetReferenceCountFlow.collectAsStateWithLifecycle()
+    val dataSetReferenceCount by vm.dataSetReferenceCountFlow.collectAsStateWithLifecycle(null)
     Log.d("MyApp", "dataSetReferenceCount $dataSetReferenceCount")
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
@@ -6832,7 +6832,7 @@ class EditSourceViewModel(
         } else {
             flowOf(0L) // new sources have no references
         }
-    }.stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = null)
+    }
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
@@ -6933,7 +6933,7 @@ class EditItemViewModel(
         } else {
             flowOf(0L) // new items have no references
         }
-    }.stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = null)
+    }
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
@@ -7210,8 +7210,7 @@ class EditDataSetViewModel(
     // There's no need to explicitly check for prices; we want to give a warning if there are any
     // items or sources associated with the data set even without prices, and there can't be any
     // prices without at least one item and one source.
-    // TODO: Do we need stateIn on this flow and on the other reference count flows? It isn't obvious to me that we do. might also be worth checking for other possibly unnecessary statein calls?
-    val dataSetReferenceCountFlow = (uiContent.editableDataSet.value.id
+    val dataSetReferenceCountFlow = uiContent.editableDataSet.value.id
         .takeIf { it != 0L }
         ?.let { dataSetId ->
             combine(
@@ -7221,8 +7220,7 @@ class EditDataSetViewModel(
                 itemReferenceCount + sourceReferenceCount
             }
         }
-    ?: flowOf(0L)) // If dataSetId is 0 (creating a new), return 0
-        .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = null)
+    ?: flowOf(0L) // If dataSetId is 0 (creating a new), return 0
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
