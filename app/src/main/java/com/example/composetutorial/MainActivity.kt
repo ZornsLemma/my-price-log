@@ -6827,6 +6827,7 @@ class EditSourceViewModel(
 
     val sourceReferenceCountFlow = uiContent.editableSource.value.id.let { sourceId ->
         if (sourceId != 0L) {
+            Log.d("MyAppQQ", "0L case occurring (probably just internally)")
             repository.countPricesForSource(sourceId)
         } else {
             flowOf(0L) // new sources have no references
@@ -7206,29 +7207,21 @@ class EditDataSetViewModel(
         uiContent.saveState(savedStateHandle)
     }
 
-    private val dataSetItemReferenceCountFlow = uiContent.editableDataSet.value.id. let { dataSetId ->
-        if (dataSetId != 0L) {
-            repository.countItemsForDataSet(dataSetId)
-        } else {
-            flowOf(0L) // new data sets have no references
-        }
-    }
-
-    private val dataSetSourceReferenceCountFlow = uiContent.editableDataSet.value.id. let { dataSetId ->
-        if (dataSetId != 0L) {
-            repository.countSourcesForDataSet(dataSetId)
-        } else {
-            flowOf(0L) // new data sets have no references
-        }
-    }
-
     // There's no need to explicitly check for prices; we want to give a warning if there are any
     // items or sources associated with the data set even without prices, and there can't be any
     // prices without at least one item and one source.
-    val dataSetReferenceCountFlow = combine(dataSetItemReferenceCountFlow, dataSetSourceReferenceCountFlow) {
-        (itemReferenceCount, sourceReferenceCount) ->
-        itemReferenceCount + sourceReferenceCount
-    }
+    // TODO: Do we need stateIn on this flow and on the other reference count flows? It isn't obvious to me that we do. might also be worth checking for other possibly unnecessary statein calls?
+    val dataSetReferenceCountFlow = (uiContent.editableDataSet.value.id
+        .takeIf { it != 0L }
+        ?.let { dataSetId ->
+            combine(
+                repository.countItemsForDataSet(dataSetId),
+                repository.countSourcesForDataSet(dataSetId)
+            ) { itemReferenceCount, sourceReferenceCount ->
+                itemReferenceCount + sourceReferenceCount
+            }
+        }
+    ?: flowOf(0L)) // If dataSetId is 0 (creating a new), return 0
         .stateIn(scope = viewModelScope, started = SharingStarted.Eagerly, initialValue = null)
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
