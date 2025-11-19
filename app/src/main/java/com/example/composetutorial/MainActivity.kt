@@ -5286,6 +5286,8 @@ fun numericValidationRules(
         sanitiseCandidate(candidate).replace(decimalSeparator, '.').toDoubleOrNull()
 
     return listOfNotNull(
+        ValidationRule({ it.trim().isNotEmpty() }, "Required"),
+
         ValidationRule(
             { it.count { char -> char == decimalSeparator } <= maxDecimalSeparators },
             // TODO: Just possibly we should not consider a single decimal separator with nothing
@@ -5317,12 +5319,6 @@ fun numericValidationRules(
         } else {
             null
         },
-
-        // TODO: Move this to the first entry in the list? I don't think it makes any difference in
-        // practice, but it might feel safer/neater - if there is no sticky validation message and
-        // (not our concern here) allowEmpty is false, this is the most fundamental error possible
-        // so it should get priority.
-        ValidationRule({ it.trim().isNotEmpty() }, "Required"),
 
         // This is a catch-all; in practice we expect to catch all problems before this, but we
         // don't want to have a string which can't be converted (which would cause an error on
@@ -6097,13 +6093,14 @@ class MainActivity : ComponentActivity() {
         // We call it here to be explicit. TODO: I am far from clear but you can pass some arguments to enableEdgeToEdge(), which may have some relevant effect on older and/or newer platforms. For now I will keep it simple but if there are nightmarish inconsistencies on older versions of Android this might be part of the puzzle.
         enableEdgeToEdge()
 
-        // TODO: ChatGPT suggestion. Correct? Do I need to make this debug-build-only somehow?
-        StrictMode.setThreadPolicy(
-            StrictMode.ThreadPolicy.Builder()
-                .detectAll()
-                .penaltyLog() // TODO .penaltyDeath() // TODO .penaltyLog()  // logs violations; you can also add .penaltyDeath() to crash on violation
-                .build()
-        )
+        if (DebugFlags.USE_STRICT_MODE) {
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                    .detectAll()
+                    .penaltyLog() // TODO .penaltyDeath() // TODO .penaltyLog()  // logs violations; you can also add .penaltyDeath() to crash on violation
+                    .build()
+            )
+        }
 
         setContent {
             val darkTheme = isSystemInDarkTheme()
@@ -9027,3 +9024,6 @@ com.example.myapp/
 // TODO: The big title on each view history card doesn't fit on a single line (because of the
 // overflow menu?) on my small emulated phone. Maybe switch to a slightly more compact (e.g. "Wed"
 // not "Wednesday"?) format.
+
+// TODO: Make sure to do some testing and check the log for strict mode violations towards end of
+// dev.
