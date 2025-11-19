@@ -4176,7 +4176,7 @@ fun EditItemScreen(
                 vm.setUIContentEditableItem(uiContent.editableItem.value.copy(name = it.text))
             },
             enabled = saveStatus.isNotBusy(),
-            validationRules = nameValidationRules.value,
+            validationRules = nameValidationRules.value ?: emptyList(),
             validationRulesKey = nameValidationRules.version,
             allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
             singleLine = true,
@@ -6935,21 +6935,20 @@ class EditItemViewModel(
         uiContent.saveEditableItemState(savedStateHandle)
     }
 
-    val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
-        repository.getAllItems(uiContent.editableItem.value.dataSetId)
-            .map { itemList ->
-                createNameValidationRules(
-                    itemList.filter { item -> item.id != uiContent.editableItem.value.id }
-                        .map { item -> item.name }
-                )
-            }
-            .withVersion()
-            // initialValue here is set to an unsatisfiable validation list to avoid a theoretical
-            // corner case. If we defaulted to emptyList(), the user might be able to save with an
-            // invalid name before the real validation rules become available.
-            // TODO: But this is causing a brief flicker of "error state" when e.g. the edit product
-            // dialog first animates in, so it needs tweaking.
-            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(listOf(ValidationRule({ false }, ""))))
+
+    // If we used emptyList() in initialVersioned(), the user might be able to save with an invalid
+    // name before the real validation rules become available. Defaulting to a temporary "always
+    // fail" rule list would stop this, but then we would see a brief validation error during the
+    // initial composition. See EditItemViewModel.validateForSave() for more on this.
+    val nameValidationRules =
+        repository.getAllItems(uiContent.editableItem.value.dataSetId).map { itemList ->
+                createNameValidationRules(itemList.filter { item -> item.id != uiContent.editableItem.value.id }
+                    .map { item -> item.name })
+            }.withVersion().stateIn(
+                viewModelScope,
+                SharingStarted.Eagerly,
+                initialVersioned(null as List<ValidationRule<String>>?)
+            )
 
     enum class EditableField {
         NAME
@@ -6960,8 +6959,16 @@ class EditItemViewModel(
 
     suspend fun validateForSave(): Boolean {
         Log.d("MyAppESS", "validateForSave")
+        // There is a brief window during initial composition when nameValidationRules.value.value
+        // can be null, because they are collected asynchronously as they depend on a database
+        // query. There is a practically impossible corner case where the user is able to click
+        // "Save" before the rules load and thus bypass validation. Disabling the "Save" button
+        // would be nice, although it would cause a small unnecessary visual glitch, but doing this
+        // is more intrusive than it's worth. So we just return false here without emitting a
+        // validation event, which in practice makes the save button silently do nothing.
+        val nameValidationRules = nameValidationRules.value.value ?: return false
         if (!validationRulesOk(
-                nameValidationRules.value.value,
+                nameValidationRules,
                 uiContent.editableItem.value.name
             )
         ) {
