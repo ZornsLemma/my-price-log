@@ -7129,16 +7129,22 @@ class ViewPriceHistoryViewModel(
         locale: Locale,
         confirmedAtFormatter: DateTimeFormatter
     ) =
-    // Remember that we are doing a "backwards delta" here - we show the very latest element in full,
-    // and for older elements we show differences between them and the next newest element. This zip
-        // has every member of priceHistoryList appear exactly once as oldPriceHistory.
-    // ENHANCE: If we are viewing the history of a price which has no current price, it
-    // might be nice if we showed a deleted divider right at the top of the history.
-    // This wouldn't be that hard, but we'd need to pass through the fact that there is
-        // no current price from the home screen to here.
-        // TODO: As we may need to make "there is no current price" available for other reasons, it might be easy to do this enhancement now.
-        // TODO: Once the dust settles, test this with a price being deleted then reinstated with no changes and check how it appears
-
+        // If there is no current price (it's been deleted), start the list with a null to represent
+        // that deletion.
+        (if (uiContent.price == null) listOf(null) else emptyList()) +
+                // Now add on the main list of deltas.
+                // Remember that we are doing a "backwards delta" here - we show the very latest element in full,
+                // and for older elements we show differences between them and the next newest element. This zip
+                // has every member of priceHistoryList appear exactly once as oldPriceHistory.
+                // TODO: Once the dust settles, test this with a price being deleted then reinstated with no changes and check how it appears
+                // TODO: I think it's technically correct (but need to test properly) but we can end up with
+                // multiple adjacent deletes if the intermediate deltas are "empty". We should probably
+                // collapse multiple adjacent null down to one - it's probablyn ot worth over-faffing to try
+                // to show the precise history or to force a diff card in there. Maybe it's OK as it is - it
+                // does kind of reflect reality (multiple deletes and we know - but it maybe looks odd -
+                // there were no real changes in between them because the diff cards are missing) - but I
+                // suspect it's more confusng than helpful and no one really cares about the history at that
+                // level of detail.
         (listOf(null) + priceHistoryList).zip(priceHistoryList)
             .flatMap { (newPriceHistory, oldPriceHistory) ->
                 if (newPriceHistory == null) listOf(oldPriceHistory.toPriceHistoryDelta(
@@ -7153,15 +7159,6 @@ class ViewPriceHistoryViewModel(
                         subList.add(delta)
                     }
                     subList
-
-                    /* TODO OLD WRONG DELETE
-                        val delta = diff(newPriceHistory, oldPriceHistory, confirmedAtFormatter)
-                    if (newPriceHistory.priceId != oldPriceHistory.priceId) {
-                        listOf(null, delta)
-                    } else {
-                        listOf(delta)
-                    }
-                    */
                 }
             }
 
@@ -8293,18 +8290,28 @@ fun ViewPriceHistoryScreen(
                             )
 
                             OverflowMenu(modifier = Modifier.align(Alignment.TopEnd)) { requestMenuClose ->
-                                // We don't allow "Edit as new price" on the first item - this is the
-                                // current price and should be edited via the home screen instead. If we
-                                // allow this, the user can bypass the usual check for no-op edits and
-                                // create duplicate entries in the history table. (This can be seen in
-                                // the database but is hidden by the diffing process in the history
-                                // screen.) We could special case this (by not setting the nonLinearEdit
-                                // flag when editing the first item) but it seems best just to disallow
-                                // it.
-                                // TODO: THIS IS WRONG - *IF* THERE IS NO CURRENT PRICE, WE SHOULD ALLOW THIS
+                                // We don't allow "Edit as new price" on the first item - this is
+                                // the current price and should be edited via the home screen
+                                // instead. If we allow this, the user can bypass the usual check
+                                // for no-op edits and create duplicate entries in the history
+                                // table. (This can be seen in the database but is hidden by the
+                                // diffing process in the history screen.) We could special case
+                                // this (by not setting the nonLinearEdit flag when editing the
+                                // first item) but it seems best just to disallow it. The exception
+                                // is if there is no current price (because it was deleted), in
+                                // which case it's reasonable to edit the latest historical price as
+                                // new.
+                                // TODO: I don't think it matters but think about it later - it may
+                                // be that now we have the first delta being a "null" if there is no
+                                // current price (this first null delta represents it having been
+                                // deleted), we may technically not need to special case the "price
+                                // == null" case here. But I think it's harmless and may be clearer
+                                // to be explicit (although arguably since it is redundant,
+                                // including it may lose clarity since we might wonder why it's
+                                // there if there's no comment about this)
                                 MyDropdownMenuItem(
                                     text = { Text("Edit as new price") },
-                                    enabled = index > 0,
+                                    enabled = viewModel.uiContent.price == null || index > 0,
                                     onClick = {
                                         requestMenuClose(); requestEditAsNew(
                                         priceHistoryDelta.priceHistory
