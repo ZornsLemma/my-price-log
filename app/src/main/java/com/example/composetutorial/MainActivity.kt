@@ -2087,7 +2087,7 @@ fun OverflowMenu(
     ) {
         Icon(
             imageVector = Icons.Default.MoreVert,
-            contentDescription = "More options"
+            contentDescription = stringResource(R.string.content_description_more_options)
         )
         DropdownMenu(
             expanded = menuExpanded, onDismissRequest = { menuExpanded = false }
@@ -2122,12 +2122,12 @@ fun SourcePriceCardMenu(
         modifier = menuModifier
     ) { requestMenuClose ->
         MyDropdownMenuItem(
-            text = { Text("View history") },
+            text = { Text(stringResource(R.string.menu_item_view_history)) },
             enabled = priceHistoryCount > 0,
             onClick = { requestMenuClose(); onViewHistoryClick() }
         )
         MyDropdownMenuItem(
-            text = { Text("Delete price") },
+            text = { Text(stringResource(R.string.menu_item_delete_price)) },
             enabled = augmentedPrice != null,
             onClick = { requestMenuClose(); onDeletePriceClick() }
         )
@@ -2143,19 +2143,19 @@ fun PriceJudgementIndicator(priceJudgement: PriceJudgement) {
             PriceJudgement.GOOD -> {
                 GoodPriceIcon()
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Good price")
+                Text(stringResource(R.string.message_good_price))
             }
 
             PriceJudgement.OK -> {
                 OkPriceIcon()
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("OK price")
+                Text(stringResource(R.string.message_ok_price))
             }
 
             PriceJudgement.BAD -> {
                 BadPriceIcon()
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Bad price")
+                Text(stringResource(R.string.message_bad_price))
             }
         }
     }
@@ -2177,7 +2177,7 @@ fun EditConfirmButtons(
             shape = MaterialTheme.shapes.small,
             enabled = asyncOperationStatus.isNotBusy(),
         ) {
-            Text("Edit")
+            Text(stringResource(R.string.button_edit))
         }
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -2229,7 +2229,7 @@ fun EditConfirmButtons(
                 // I hope the user observing the transition from "Confirm"->"Undo" will act as a
                 // hint), but at least on my small emulated phone, "Undo confirm" looks a bit ugly
                 // or (with "Good price") doesn't fit and causes the button to become multi-line.
-                Text(if (showConfirm) "Confirm" else "Undo")
+                Text(if (showConfirm) stringResource(R.string.button_confirm) else stringResource(R.string.button_undo))
             }
         }
     }
@@ -2818,7 +2818,7 @@ fun HomeScreenNavigationDrawer(
                         contentAlignment = Alignment.CenterStart
                     ) {
                         Text(
-                            text = "Collections",
+                            text = stringResource(R.string.label_data_set),
                             style = MaterialTheme.typography.titleSmall,
                         )
                     }
@@ -2875,14 +2875,14 @@ fun HomeScreenActualScaffold( // TODO: RENAME
             TopAppBar(
                 // We will almost always always have a DataSet to show the name of but we might as
                 // well show the app name if we don't.
-                title = { Text(dataSet?.name ?: "$appName") },
+                title = { Text(dataSet?.name ?: "$appName") }, // TODO LOCALIZE
                 navigationIcon = {
                     IconButton(
                         enabled = asyncOperationStatus.isNotBusy(),
                         onClick = { coroutineScope.launch { drawerState.open() } }) {
                         Icon(
                             imageVector = Icons.Default.Menu,
-                            contentDescription = "Open drawer"
+                            contentDescription = stringResource(R.string.content_description_open_drawer)
                         )
                     }
                 },
@@ -2892,31 +2892,31 @@ fun HomeScreenActualScaffold( // TODO: RENAME
                         onClick = { menuExpanded = true }) {
                         Icon(
                             Icons.Default.MoreVert,
-                            contentDescription = "Menu"
+                            contentDescription = stringResource(R.string.content_description_menu)
                         )
                     }
 
                     DropdownMenu(
                         expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        MyDropdownMenuItem(text = { Text("Edit collections") }, onClick = {
+                        MyDropdownMenuItem(text = { Text(stringResource(R.string.menu_item_edit_data_sets)) }, onClick = {
                             menuExpanded = false
                             onSelectDataSetClick()
                         })
                         MyDropdownMenuItem(
-                            text = { Text("Edit products") },
+                            text = { Text(stringResource(R.string.menu_item_edit_items)) },
                             enabled = dataSet != null,
                             onClick = {
                                 menuExpanded = false
                                 onSelectItemClick()
                             })
                         MyDropdownMenuItem(
-                            text = { Text("Edit stores") },
+                            text = { Text(stringResource(R.string.menu_item_edit_sources)) },
                             enabled = dataSet != null,
                             onClick = {
                                 menuExpanded = false
                                 onSelectSourceClick()
                             })
-                        MyDropdownMenuItem(text = { Text("Settings") }, onClick = {
+                        MyDropdownMenuItem(text = { Text(stringResource(R.string.menu_item_settings)) }, onClick = {
                             menuExpanded = false
                             onSettingsClick()
                         })
@@ -3120,9 +3120,9 @@ fun HomeScreenContent(
             // sets being deleted. It wouldn't technically hurt to show the normal screen content,
             // but it seems friendlier to explain what's going on.
             if (dataSetList.isEmpty()) {
-                Text("There are no collections. Add one using the overflow menu at the top right.")
+                Text(stringResource(R.string.message_no_data_sets))
             } else {
-                Text("No collection is selected. Use the hamburger menu at the top left to select one.")
+                Text(stringResource(R.string.message_no_data_set_selected))
             }
         } else {
             ItemSourceSelector(
@@ -3224,20 +3224,20 @@ fun DeletePriceConfirmDialog(
 ) {
     AlertDialog(
         icon = null,
-        title = { Text("Delete price") },
+        title = { Text(stringResource(R.string.title_delete_price)) },
         // We could mention in the message here that you can recover the price using the history
         // (via "Edit as new price") but it's probably best not to over-explain. We just avoid any
         // scary messages about losing data.
-        text = { Text("Are you sure you want to delete this price?") },
+        text = { Text(stringResource(R.string.message_confirm_delete_price)) },
         onDismissRequest = onDismissRequest,
         dismissButton = {
-            TextButton(onClick = onDismissRequest) { Text("Cancel") }
+            TextButton(onClick = onDismissRequest) { Text(stringResource(R.string.button_cancel)) }
         },
         confirmButton = {
             TextButton(onClick = {
                 onDismissRequest()
                 vm.deletePrice(augmentedPrice.basePrice)
-            }) { Text("Delete") }
+            }) { Text(stringResource(R.string.button_delete)) }
         }
     )
 }
@@ -3250,7 +3250,7 @@ fun DeletePriceConfirmDialog(
 fun GoodPriceIcon() {
     Icon(
         imageVector = Icons.Default.CheckCircle,
-        contentDescription = "Good value",
+        contentDescription = stringResource(R.string.content_description_good_price),
         tint = MaterialTheme.colorScheme.primary,
     )
 }
@@ -3261,7 +3261,7 @@ fun OkPriceIcon() {
         // ENHANCE: Maybe we could have a better icon for this. There is a vague hint of the UK "no
         // entry" road sign about this one which doesn't quite fit with "OK" for me.
         painter = painterResource(R.drawable.baseline_remove_circle_24),
-        contentDescription = "OK value",
+        contentDescription = stringResource(R.string.content_description_ok_price),
         tint = MaterialTheme.colorScheme.secondary,
     )
 }
@@ -3270,7 +3270,7 @@ fun OkPriceIcon() {
 fun BadPriceIcon() {
     Icon(
         painter = painterResource(R.drawable.baseline_cancel_24),
-        contentDescription = "Bad value",
+        contentDescription = stringResource(R.string.content_description_bad_price),
         tint = MaterialTheme.colorScheme.tertiary,
     )
 }
@@ -3283,7 +3283,7 @@ fun StalePriceIcon() {
         // probably would keep to no icon for fresh rather than using hourglass top, but the
         // "tri-state metaphor" would maybe be a bit more obvious to users.
         painter = painterResource(R.drawable.baseline_hourglass_top_24),
-        contentDescription = "Stale price",
+        contentDescription = stringResource(R.string.content_description_stale_price),
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }
@@ -3293,7 +3293,7 @@ fun AncientPriceIcon() {
     Icon(
         // Idea with this icon is that the "stale timer" we started has now run out.
         painter = painterResource(R.drawable.baseline_hourglass_bottom_24),
-        contentDescription = "Ancient price",
+        contentDescription = stringResource(R.string.content_description_ancient_price),
         tint = MaterialTheme.colorScheme.error,
     )
 }
@@ -3330,12 +3330,15 @@ fun PriceComparisonCard(
             )
         ) {
             CardTitle(
-                title = "Price comparison",
-                subtitle = "Adjusted for loyalty discounts and old prices"
+                title = stringResource(R.string.title_price_comparison),
+                subtitle = stringResource(R.string.subtitle_adjusted_for_discounts_and_age)
             )
 
             if (priceAnalysis.augmentedPriceList.isEmpty()) {
-                Text("There are no prices recorded for this product at any store yet.")
+                // TODO: This is very similar to message_no_price_for_item_at_source. If I want the
+                // to be different that's fine, but I should think about this and see if I
+                // can/should share the same message.
+                Text(stringResource(R.string.message_no_prices_for_item_at_source))
             } else {
                 // It may be technically incorrect to show the currency symbol both in the header
                 // ("£/100g") and on the individual unit prices, but I think that for practical
@@ -3363,7 +3366,7 @@ fun PriceComparisonCard(
                 // nature of a currency symbol in a locale matters in some other places, here it is
                 // appearing in isolation *without* a price next to it.
                 val header = listOf(
-                    "Store",
+                    stringResource(R.string.label_source),
                     "${currencyFormat.prefix ?: currencyFormat.suffix ?: ""}${headerUnitPriceDenominator.perSymbol}${headerUnitPriceDenominator.symbol}",
                     ""
                 )
@@ -3372,6 +3375,7 @@ fun PriceComparisonCard(
                 // context rather than in a sentence. Using the word "Price" instead of the currency
                 // shouldn't be a problem because each individual price includes the currency
                 // symbol.
+                // TODO LOCALIZE
                 val headerPriceContentDescription = "Price ${if (headerUnitPriceDenominator.perSymbol.trim().isNotEmpty()) "per " else ""}${headerUnitPriceDenominator.fullName}"
                 val headerTextModifiers = listOf(
                     Modifier,
@@ -3537,11 +3541,11 @@ fun EditPriceScreen(
             ) {
                 Column {
                     Text(
-                        text = "Confirm pack size and price",
+                        text = stringResource(R.string.label_confirm_pack_size_and_price),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "The above details are correct right now",
+                        text = stringResource(R.string.supporting_text_details_correct_right_now),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -3571,7 +3575,7 @@ fun EditPriceScreen(
         var notes by rememberSyncedTextFieldValue(uiContent.editablePrice.value.notes)
         FilteredTextField(
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Notes") },
+            label = { Text(stringResource(R.string.label_notes)) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = notes,
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
@@ -3607,7 +3611,7 @@ fun EditPriceScreenPrice(
         errorHighlightOffset = 4.dp,
             numericTextFieldModifier = Modifier
                 .fillMaxWidth(),
-            label = { Text("Pack price") },
+            label = { Text(stringResource(R.string.label_pack_price)) },
             prefix = textOrNull(currencyFormat.prefix),
             suffix = textOrNull(currencyFormat.suffix),
             textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
@@ -3666,7 +3670,7 @@ fun EditPriceScreenPackSize(
                 validationFlowFieldId = EditPriceViewModel.EditableField.PACK_COUNT,
                 errorHighlightOffset = 4.dp, // TODO!?
                 baseValidatedTextFieldModifier = Modifier.weight(1f),
-                        label = { Text("Count") },
+                        label = { Text(stringResource(R.string.label_count)) },
                         onValueChange = {
                             packCountNumber = it
                             if (uiContent.editablePrice.value.count != it.text) {
@@ -3702,7 +3706,7 @@ fun EditPriceScreenPackSize(
                     // field is empty, it really doesn't fit horizontally on my small phone - so a
                     // shorter label would be good there too. Just maybe "Pack size" if we don't
                     // have multipack, "Size" if we do?!
-                    label = { Text("Pack size") },
+                    label = { Text(stringResource(R.string.label_pack_size)) },
                     onValueChange = {
                         packSizeNumber = it
                         if (uiContent.editablePrice.value.measureValue != it.text) {
@@ -3746,7 +3750,7 @@ fun EditPriceScreenPackSize(
                         onChange()
                     }
                 },
-                label = { Text("Unit") },
+                label = { Text(stringResource(R.string.label_unit)) },
                 items = units,
                 // Although this could be a problem (particularly with i18n), we give the dropdown
                 // "about enough horizontal space" by calculating a hand-tuned multiplier of
@@ -3942,7 +3946,7 @@ fun GeneralEditScreen(
             TopAppBar(
                 navigationIcon = {
                     IconButton(enabled = isNotBusy, onClick = { requestDismiss() }) {
-                        Icon(Icons.Default.Close, contentDescription = "Close")
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.content_description_close))
                     }
                 },
                 title = title,
@@ -3971,7 +3975,7 @@ fun GeneralEditScreen(
                         if (saving && saveStatus == AsyncOperationStatus.BusyForAWhile) {
                             SmallCircularProgressIndicator()
                         } else {
-                            Text("Save")
+                            Text(stringResource(R.string.button_save))
                         }
                     }
                 },
@@ -4006,20 +4010,20 @@ fun GeneralEditScreen(
     }
 
     if (showConfirmDiscardDialog) {
-        // I copied the wording of this dialog directly from a screenshot in the M3 documentaion.
+        // I copied the wording of this dialog directly from a screenshot in the M3 documentation.
         AlertDialog(
-            title = { Text("Discard unsaved changes?") },
-            text = { Text("You have changes that won't be saved if you close.") },
+            title = { Text(stringResource(R.string.title_discard_unsaved_changes)) },
+            text = { Text(stringResource(R.string.messages_unsaved_changes)) },
             onDismissRequest = { showConfirmDiscardDialog = false },
             dismissButton = {
                 TextButton(onClick = {
                     showConfirmDiscardDialog = false
-                }) { Text("Keep editing") }
+                }) { Text(stringResource(R.string.button_keep_editing)) }
             },
             confirmButton = {
                 TextButton(onClick = { requestCloseDebounced(null) }) {
                     Text(
-                        "Discard"
+                        stringResource(R.string.button_discard)
                     )
                 }
             },
@@ -4031,12 +4035,14 @@ fun GeneralEditScreen(
         AsyncOperationErrorAlertDialog(onDismissRequest = { showErrorDialogMessage = null }, message = showErrorDialogMessage!!)
     }
 
-    LaunchedEffect(showBusySnackbar) {
+    val messageBusyPleaseWait = stringResource(R.string.message_busy_please_wait)
+    LaunchedEffect(showBusySnackbar, messageBusyPleaseWait) {
         if (showBusySnackbar) {
-            coroutineScope.launch {
-                snackbarHostState.showSnackbar("Busy, please wait...")
+            // TODO: This compiles without the coroutine and launchedeffect already has a suspend body - so do we not need the launch? need to test. if this works, look for other places i may have needless launch blocks.
+            //coroutineScope.launch {
+                snackbarHostState.showSnackbar(messageBusyPleaseWait)
                 showBusySnackbar = false
-            }
+            //}
         }
     }
 }
@@ -4055,7 +4061,7 @@ fun AsyncOperationErrorAlertDialog(onDismissRequest: () -> Unit, message: String
         // don't want to have to pass in strings saying whether this is a save or delete or
         // something else. The message is unlikely to be user-friendly, but if this fails the
         // chances are there's a bug rather than a transient failure anyway.
-        title = { Text("Error") },
+        title = { Text(stringResource(R.string.title_error)) },
         text = { Text(message) },
         onDismissRequest = onDismissRequest,
         confirmButton = {
@@ -9036,3 +9042,7 @@ com.example.myapp/
 // TODO: Our variable naming may be a bit inconsistent between vm and viewModel. The latter is
 // arguably confusing (but maybe normal - I haven't checked yet) since it "shadows" the viewModel()
 // function, if only conceptually.
+
+// TODO: I think I made a mistake *intending* to change "Good/OK/bad price" to "G/O/B *value*" and
+// only changed the contentDescription versions, not the on-screen versions. For the moment I've
+// reverted to price everywhere but may want to change to "value" everywhere.
