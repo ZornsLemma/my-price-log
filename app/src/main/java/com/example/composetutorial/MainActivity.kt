@@ -829,7 +829,7 @@ class MyApplication : Application() {
         super.onCreate()
 
         AppScope.io.launch {
-            val demoDataInsertedKey = booleanPreferencesKey("demo_data_inserted") // TODO: MOVE TO SOME MASTER LIST OF KEYS!?
+            val demoDataInsertedKey = booleanPreferencesKey("demo_data_inserted")
             val demoDataInserted = dataStore.data
                 .map { prefs -> prefs[demoDataInsertedKey] ?: false }
                 .first()
