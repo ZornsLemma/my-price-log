@@ -8173,6 +8173,8 @@ fun checkDatabaseRestoreCandidate(dbPath: String) {
             throw IllegalStateException("The database to restore is a newer version ($version) than this version of the app supports ($DB_VERSION).")
         }
 
+        // Sanity check this isn't a database from some other random app. We're not trying to guard
+        // against malicious inputs here, just the user accidentally picking the wrong database.
         val expectedTables = listOf("data_set", "item", "price", "price_history", "source")
         expectedTables.forEach { table ->
             val cursor = db.rawQuery(
