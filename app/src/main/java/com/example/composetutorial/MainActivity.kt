@@ -3379,8 +3379,17 @@ fun PriceComparisonCard(
                 // context rather than in a sentence. Using the word "Price" instead of the currency
                 // shouldn't be a problem because each individual price includes the currency
                 // symbol.
-                // TODO LOCALIZE
-                val headerPriceContentDescription = "Price ${if (headerUnitPriceDenominator.perSymbol.trim().isNotEmpty()) "per " else ""}${headerUnitPriceDenominator.fullName}"
+                // ENHANCE: It wouldn't surprise me in the least if the localisation here is
+                // unusable for some languages, but let's start here and address issues as they
+                // arise. We might be better off just having a localised string on each unit with
+                // the full equivalent of "Price (per) <this unit full name>".
+                val headerPriceContentDescription = if (headerUnitPriceDenominator.perSymbol.trim().isNotEmpty()) {
+                    stringResource(R.string.content_description_header_price_per, headerUnitPriceDenominator.fullName)
+                } else {
+                    stringResource(R.string.content_description_header_price_no_per, headerUnitPriceDenominator.fullName)
+                }
+                Log.d("MyAppCD", "headerPriceContentDescription: $headerPriceContentDescription")
+
                 val headerTextModifiers = listOf(
                     Modifier,
                     Modifier.semantics { contentDescription = headerPriceContentDescription },
@@ -5912,7 +5921,7 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.title_about_app_name)) }, navigationIcon = { // TODO LOCALISE
+            TopAppBar(title = { Text(stringResource(R.string.title_about_app_name)) }, navigationIcon = {
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Default.ArrowBack,
