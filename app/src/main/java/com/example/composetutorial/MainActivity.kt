@@ -8140,18 +8140,8 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
             }
         } ?: throw IOException("Failed to open input stream for URI: $sourceUri")
 
-        // Validate version on the backup file.
-        val restoredDbVersion = getDatabaseVersion(tempFile.path)
-        if (restoredDbVersion > DB_VERSION) {
-            throw IllegalStateException("The database to restore is a newer version ($restoredDbVersion) than this version of the app supports ($DB_VERSION).")
-        }
-
-        // ENHANCE: It might be nice to do a sanity check on the backup file, e.g. checking that
-        // the tables defined on it are a subset of the ones we expect or at least that one or two
-        // key tables like "price" exist. The idea is not to even try to prevent deliberately bad
-        // databases being installed - if the user wants to grief themselves that is their business
-        // - but to catch accidental restoration of other sqlite databases which aren't from this
-        // app.
+        // Validate the backup file.
+        checkDatabaseRestoreCandidate(tempFile.path)
 
         // The backup file is OK, so we'll go ahead and overwrite our internal database now.
 
@@ -8174,12 +8164,31 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
     }
 }
 
-fun getDatabaseVersion(dbPath: String): Int {
+fun checkDatabaseRestoreCandidate(dbPath: String) {
     val db = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READONLY)
-    val version = db.version
-    db.close()
-    return version
+    db.use { db ->
+
+        val version = db.version
+        if (version > DB_VERSION) {
+            throw IllegalStateException("The database to restore is a newer version ($version) than this version of the app supports ($DB_VERSION).")
+        }
+
+        val expectedTables = listOf("data_set", "item", "price", "price_history", "source")
+        expectedTables.forEach { table ->
+            val cursor = db.rawQuery(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(table)
+            )
+            cursor.use { cursor ->
+                val tableExists = cursor.use { it.moveToFirst() }
+                Log.d("MyAppRS", "tableExists $table: $tableExists")
+                if (!tableExists) {
+                    throw IllegalStateException("The database to restore was not created with this app.")
+                }
+            }
+        }
+    }
 }
+
 
 @Composable
 fun CardTitle(title: String, subtitle: String? = null) {
@@ -8343,9 +8352,15 @@ fun ViewPriceHistoryScreen(
 @Composable
 fun HorizontalDividerWithText(text: String) {
     Row(modifier = Modifier.fillMaxWidth()) {
-        HorizontalDivider(modifier = Modifier.fillMaxWidth().weight(1f).align(Alignment.CenterVertically))
+        HorizontalDivider(modifier = Modifier
+            .fillMaxWidth()
+            .weight(1f)
+            .align(Alignment.CenterVertically))
         Text(text = text, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 4.dp))
-        HorizontalDivider(modifier = Modifier.fillMaxWidth().weight(1f).align(Alignment.CenterVertically))
+        HorizontalDivider(modifier = Modifier
+            .fillMaxWidth()
+            .weight(1f)
+            .align(Alignment.CenterVertically))
 
     }
 }
