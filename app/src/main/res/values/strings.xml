@@ -1,5 +1,7 @@
 <resources>
-    <string name="app_name">ComposeTutorial</string>
+    <string name="app_name">My Price Log</string>
+    <string name="title_about_app_name">About My Price Log</string>
+    <string name="title_app_name_licence">My Price Log — MIT License</string>
     <string name="demo_groceries_data_set_name">Groceries (demo)</string>
     <string name="demo_groceries_data_set_notes">A sample collection of unrealistic grocery prices for imaginary stores. This is intended to give you something to play with when you first install the app.</string>
     <string name="demo_groceries_item_name_coffee_ground">Coffee (ground)</string>

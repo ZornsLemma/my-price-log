@@ -9,7 +9,6 @@ import com.example.composetutorial.ui.spinnerDelayMillis
 import com.example.composetutorial.ui.fullScreenDialogHorizontalBorder
 import com.example.composetutorial.ui.fullScreenDialogVerticalBorder
 import com.example.composetutorial.ui.multiplicationSign
-import com.example.composetutorial.ui.appName
 import com.example.composetutorial.ui.maxNotesLength
 import com.example.composetutorial.ui.maxNavigationDrawerWidth
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -2880,7 +2879,7 @@ fun HomeScreenActualScaffold( // TODO: RENAME
             TopAppBar(
                 // We will almost always always have a DataSet to show the name of but we might as
                 // well show the app name if we don't.
-                title = { Text(dataSet?.name ?: "$appName") }, // TODO LOCALIZE
+                title = { Text(dataSet?.name ?: stringResource(R.string.app_name)) },
                 navigationIcon = {
                     IconButton(
                         enabled = asyncOperationStatus.isNotBusy(),
@@ -5566,7 +5565,7 @@ fun SettingsScreen(
             )
 
             SettingsTile(
-                title = "About $appName", // TODO LOCALISE
+                title = stringResource(R.string.title_about_app_name),
                 subtitle = "", // empty subtitle gives consistent layout with other tiles
                 onClick = onAboutClick
             )
@@ -5913,7 +5912,7 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text("About $appName") }, navigationIcon = { // TODO LOCALISE
+            TopAppBar(title = { Text(stringResource(R.string.title_about_app_name)) }, navigationIcon = { // TODO LOCALISE
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Default.ArrowBack,
@@ -6039,7 +6038,7 @@ fun LegalScreen(
             // TODO: When adding i18n, do *not* do a UK eng "MIT Licen*c*e" version of this string -
             // it's conventional and clearer to just stick with the US style use here.
             Text(
-                text = "$appName $emDash MIT License", // TODO DON'T LOCALISE "MIT LIcense" BUT DO LOCALISE APPNAME
+                text = stringResource(R.string.title_app_name_licence),
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(4.dp))

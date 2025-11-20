@@ -4,8 +4,6 @@ import androidx.compose.ui.unit.dp
 
 // TODO: Should these be using UPPER_SNAKE_CASE names!?
 
-const val appName = "My Price Log"
-
 // Unicode characters expressed explicitly via variables to make it obvious where they are used
 // (rather than relying on us recognising visually that we have "×" rather than "x" in a string
 // literal).
