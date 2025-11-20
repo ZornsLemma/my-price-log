@@ -5596,7 +5596,10 @@ fun SettingsScreen(
                             val days = it.toIntOrNull()
                             days != null && days < ancientPriceThresholdDays
                         },
-                        UiText.Dynamic("Must be less than $ancientPriceThresholdDays (ancient price threshold)") // TODO LOCALISE
+                        UiText.Res(
+                                R.string.supporting_text_must_be_less_than_x_ancient_price_threshold,
+                                listOf(ancientPriceThresholdDays)
+                            )
                     )
                 ),
                 onConfirm = { stalePriceThresholdString ->

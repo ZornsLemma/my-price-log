@@ -176,6 +176,7 @@
     <string name="message_failed_to_open_input_stream_for_uri">Failed to open input stream for URI: %1$s</string>
     <string name="message_database_to_restore_too_new">The database to restore is a newer version (%1$d) than this version of the app supports (%2$d).</string>
     <string name="supporting_text_must_be_greater_than_x_stale_price_threshold">Must be greater than %1$d (stale price threshold)</string>
+    <string name="supporting_text_must_be_less_than_x_ancient_price_threshold">Must be less than %1$d (ancient price threshold)</string>
     <plurals name="supporting_text_prices_considered_stale_after_x_days">
         <item quantity="one">Prices considered stale after %1$d day</item>
         <item quantity="other">Prices considered stale after %1$d days</item>
