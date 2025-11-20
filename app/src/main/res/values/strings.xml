@@ -91,4 +91,26 @@
     <string name="supporting_text_may_be_sold_in_multipacks">Allow entering a count as well as a pack size</string>
     <string name="content_description_delete">Delete</string>
     <string name="button_delete_item">Delete product</string>
+    <string name="title_add_source">Add store</string>
+    <string name="title_edit_source">Edit store</string>
+    <string name="title_delete_source">Delete store?</string>
+    <string name="title_delete_source_and_prices">Delete store and prices?</string>
+    <string name="message_delete_source_no_associated_prices">This store has no associated prices so deleting it will not affect anything else.</string>
+    <string name="message_delete_source_associated_prices">Deleting this store will also delete its product prices. This action cannot be undone.</string>
+    <string name="loyalty_type_none">None</string>
+    <string name="loyalty_type_bonus">Store rewards</string>
+    <string name="loyalty_type_bonus_supporting_text">Points or credit usable only at this store</string>
+    <string name="loyalty_type_discount">Discount</string>
+    <string name="loyalty_type_discount_supporting_text">Discount on basket or money back</string>
+    <string name="title_loyalty_scheme">Loyalty scheme</string>
+    <string name="label_loyalty_scheme_reward">Loyalty scheme reward</string>
+    <string name="button_delete_store">Delete store</string>
+    <string name="title_add_data_set">Add collection</string>
+    <string name="title_edit_data_set">Edit collection</string>
+    <string name="title_delete_data_set">Delete collection?</string>
+    <string name="title_delete_data_set_and_associated_data">Delete collection and products, stores and prices?</string>
+    <string name="message_delete_data_set_no_associated_data">This collection has no associated products, stores or prices so deleting it will not affect anything else.</string>
+    <string name="message_delete_data_set_associated_data">Deleting this collection will also delete the products, stores and prices associated with it. This action cannot be undone.</string>
+    <string name="label_currency">Currency</string>
+    <string name="label_measurement_units">Measurement units</string>
 </resources>

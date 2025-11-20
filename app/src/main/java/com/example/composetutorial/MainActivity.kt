@@ -4395,7 +4395,7 @@ fun EditItemScreen(
 
         var notes by rememberSyncedTextFieldValue(uiContent.editableItem.value.notes)
         FilteredTextField(
-            label = { Text("Notes") },
+            label = { Text(stringResource(R.string.label_notes)) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = notes,
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
@@ -4446,10 +4446,16 @@ fun EditSourceScreen(
     val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = sourceReferenceCount == 0L
+    val dialogTitle = stringResource(if (isSimpleDelete) R.string.title_delete_source else R.string.title_delete_source_and_prices)
+    // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
+    val dialogSubtitle = stringResource(if (isSimpleDelete) R.string.message_delete_source_no_associated_prices else R.string.message_delete_source_associated_prices)
+
     GeneralEditAndDeleteScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
-        title = topAppBarTitle(if (vm.uiContent.editableSource.value.id == 0L) "Add store" else "Edit store", vm.uiContent.dataSet.name),
+        title = topAppBarTitle(if (vm.uiContent.editableSource.value.id == 0L) stringResource(R.string.title_add_source) else stringResource(
+            R.string.title_edit_source
+        ), vm.uiContent.dataSet.name),
         isDirty = { uiContent.editableSource.value != uiContent.originalSource },
         validateForSave = { vm.validateForSave() },
         performSave = { vm.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
@@ -4457,17 +4463,8 @@ fun EditSourceScreen(
         requestClose = requestClose,
         deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
             isSimpleDelete,
-            if (isSimpleDelete) {
-                { Text("Delete store?") }
-            } else {
-                { Text("Delete store and prices?") }
-            },
-            if (isSimpleDelete) {
-                { Text("This store has no associated prices so deleting it will not affect anything else.") }
-            } else {
-                // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
-                { Text("Deleting this store will also delete its product prices. This action cannot be undone.") }
-            }
+            { Text(dialogTitle) },
+            { Text(dialogSubtitle) },
         ),
         performDelete = { vm.performDelete() },
         onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
@@ -4476,7 +4473,7 @@ fun EditSourceScreen(
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
         ValidatedFilteredTextField(
-            label = { Text("Name") },
+            label = { Text(stringResource(R.string.label_name)) },
             // We use Words here because this is likely to be a store brand.
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
             value = name,
@@ -4498,13 +4495,16 @@ fun EditSourceScreen(
 
         // TODO: Can I put these string versions inside LoyaltyDiscountType or won't that play well with i18n?
         val options = listOf(
-            Triple(LoyaltyType.NONE, "None", null),
+            Triple(LoyaltyType.NONE, stringResource(R.string.loyalty_type_none), null),
             Triple(
                 LoyaltyType.BONUS,
-                "Store rewards",
-                "Points or credit usable only at this store"
+                stringResource(R.string.loyalty_type_bonus),
+                stringResource(R.string.loyalty_type_bonus_supporting_text)
             ),
-            Triple(LoyaltyType.DISCOUNT, "Discount", "Discount on basket or money back")
+            Triple(LoyaltyType.DISCOUNT,
+                stringResource(R.string.loyalty_type_discount),
+                stringResource(R.string.loyalty_type_discount_supporting_text)
+            )
         )
         var selectedOption = uiContent.editableSource.value.loyaltyType
 
@@ -4527,7 +4527,7 @@ fun EditSourceScreen(
                     .padding(horizontal = 8.dp, vertical = 12.dp)
             ) {
                 Text(
-                    "Loyalty scheme",
+                    stringResource(R.string.title_loyalty_scheme),
                     style = MaterialTheme.typography.titleSmall /* bodySmall */,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 8.dp)
@@ -4589,7 +4589,7 @@ fun EditSourceScreen(
                                 .fillMaxWidth(),
                             // TODO: I can't help feeling this looks a bit confusing when it's
                             // empty, maybe it's just lack of a "%" or something.
-                            label = { Text("Loyalty scheme reward") },
+                            label = { Text(stringResource(R.string.label_loyalty_scheme_reward)) },
                             suffix = { Text("%") },
                             onValueChange = {
                                 loyaltyPercentage = it
@@ -4610,7 +4610,7 @@ fun EditSourceScreen(
 
         var notes by rememberSyncedTextFieldValue(uiContent.editableSource.value.notes)
         FilteredTextField(
-            label = { Text("Notes") },
+            label = { Text(stringResource(R.string.label_notes)) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = notes,
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
@@ -4635,11 +4635,11 @@ fun EditSourceScreen(
                 } else {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = "Delete"
+                        contentDescription = stringResource(R.string.content_description_delete)
                     )
                 }
                 Spacer(Modifier.width(8.dp))
-                Text("Delete store")
+                Text(stringResource(R.string.button_delete_store))
             }
         }
     }
@@ -4808,10 +4808,16 @@ fun EditDataSetScreen(
     val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = dataSetReferenceCount == 0L
+    val dialogTitle = stringResource(if (isSimpleDelete) R.string.title_delete_data_set else R.string.title_delete_data_set_and_associated_data)
+    // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
+    val dialogSubtitle = stringResource(if (isSimpleDelete) R.string.message_delete_data_set_no_associated_data else R.string.message_delete_data_set_associated_data)
+
     GeneralEditAndDeleteScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
-        title = { Text(if (uiContent.editableDataSet.value.id == 0L) "Add collection" else "Edit collection") },
+        title = { Text(if (uiContent.editableDataSet.value.id == 0L) stringResource(R.string.title_add_data_set) else stringResource(
+            R.string.title_edit_data_set
+        )) },
         isDirty = { uiContent.editableDataSet.value != uiContent.originalDataSet },
         validateForSave = { vm.validateForSave() },
         performSave = { vm.performSave(); /* throw IllegalArgumentException("TODO2") */ },
@@ -4820,17 +4826,8 @@ fun EditDataSetScreen(
         // TODO: WORDING FOR ALL OF THIS IS PARTICULARLY BAD AND NEEDS THOUGHT
         deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
             isSimpleDelete,
-            if (isSimpleDelete) {
-                { Text("Delete collection?") }
-            } else {
-                { Text("Delete collection and products, stores and prices?") }
-            },
-            if (isSimpleDelete) {
-                { Text("This collection has no associated products, stores or prices so deleting it will not affect anything else.") }
-            } else {
-                // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
-                { Text("Deleting this collection will also delete the products, stores and prices associated with it. This action cannot be undone.") }
-            }
+            { Text(dialogTitle) },
+            { Text(dialogSubtitle) },
         ),
         performDelete = { vm.performDelete() },
         onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
@@ -4838,7 +4835,7 @@ fun EditDataSetScreen(
         var name by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.name)
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         ValidatedFilteredTextField(
-            label = { Text("Name") },
+            label = { Text(stringResource(R.string.label_name)) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = name,
             maxLength = maxDataSetNameLength,
@@ -4907,7 +4904,7 @@ fun EditDataSetScreen(
                     )
                 },
                 enabled = saveStatus.isNotBusy(),
-                label = { Text("Currency") },
+                label = { Text(stringResource(R.string.label_currency)) },
                 items = currencyList.second,
                 getId = { it.first },
                 getItemText = { it.second },
@@ -4932,7 +4929,7 @@ fun EditDataSetScreen(
             validationFlowFieldId = EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM
         ) { validationResult, interactionSource, scrollToFocusableHandle ->
             Text(
-                "Measurement units",
+                stringResource(R.string.label_measurement_units),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -5000,7 +4997,7 @@ fun EditDataSetScreen(
 
         var notes by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.notes)
         FilteredTextField(
-            label = { Text("Notes") },
+            label = { Text(stringResource(R.string.label_notes)) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = notes,
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
@@ -5025,7 +5022,7 @@ fun EditDataSetScreen(
                 } else {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = "Delete"
+                        contentDescription = stringResource(R.string.content_description_delete)
                     )
                 }
                 Spacer(Modifier.width(8.dp)) // TODO: Maybe 16.dp given spacing around measurement units?
