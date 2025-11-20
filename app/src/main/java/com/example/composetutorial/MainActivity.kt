@@ -8180,7 +8180,7 @@ fun checkDatabaseRestoreCandidate(dbPath: String) {
                 "SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(table)
             )
             cursor.use { cursor ->
-                val tableExists = cursor.use { it.moveToFirst() }
+                val tableExists = cursor.moveToFirst()
                 Log.d("MyAppRS", "tableExists $table: $tableExists")
                 if (!tableExists) {
                     throw IllegalStateException("The database to restore was not created with this app.")
