@@ -8141,8 +8141,6 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
         } ?: throw IOException("Failed to open input stream for URI: $sourceUri")
 
         // Validate version on the backup file.
-        // TODO: This really needs testing, either by faking a newer DB_VERSION at some point or
-        // when we do actually have a newer one.
         val restoredDbVersion = getDatabaseVersion(tempFile.path)
         if (restoredDbVersion > DB_VERSION) {
             throw IllegalStateException("The database to restore is a newer version ($restoredDbVersion) than this version of the app supports ($DB_VERSION).")
