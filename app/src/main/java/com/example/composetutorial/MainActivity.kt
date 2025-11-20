@@ -4704,7 +4704,6 @@ fun <T, U> ValidationErrorHighlightBox(
     )
 
     ErrorHighlightBox(
-        visible = validationInputHandle.errorHighlightBoxVisible.value,
         offset = errorHighlightOffset,
         validationTarget = validationInputHandle,
         modifier = modifier
@@ -8428,13 +8427,13 @@ fun <T> initialVersioned(initialValue: T): Versioned<T> =
 
 @Composable
 fun ErrorHighlightBox(
-    visible: Boolean, // TODO: we could default this to validationTarget.errorHighlightBoxVisible? or is it clearer to be explicit? or better to avoid risk of inconsistency?
     borderWidth: Dp = 2.dp,
     offset: Dp = defaultErrorHighlightOffset,
     modifier: Modifier = Modifier,
-    validationTarget: ValidationInputHandle,
+    validationTarget: ValidationInputHandle, // TODO: Rename validationInputHandle???
     content: @Composable () -> Unit
 ) {
+    var visible = validationTarget.errorHighlightBoxVisible.value
     var alpha = remember { Animatable(0f) }
     LaunchedEffect(visible) {
         if (visible) {
@@ -8442,7 +8441,7 @@ fun ErrorHighlightBox(
             alpha.snapTo(0f)
 
             // Pulse alpha while we're supposed to be visible.
-            while (visible) {
+            while (true) {
                 alpha.animateTo(
                     targetValue = 1f,
                     animationSpec = tween(1000, easing = LinearEasing)
