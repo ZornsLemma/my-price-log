@@ -1144,6 +1144,13 @@ class HomeViewModel(
         }
         .asLoadState()
 
+    private val _localeFlow = MutableStateFlow(Locale.getDefault())
+    val localeFlow: StateFlow<Locale> = _localeFlow
+
+    fun updateLocale(locale: Locale) {
+        _localeFlow.value = locale
+    }
+
     // TODO: Rename UIContent->HomeScreenUIContent and/or scope it to this ViewModel?
     private val _uiState = MutableStateFlow(
         Pair(
@@ -1242,15 +1249,17 @@ class HomeViewModel(
         val todoRenameMeFlow = combine(
             selectedSourceIdStateFlow,
             combinedDatabaseFlow,
-            settingsRepository.priceAgeSettingsFlow
-        ) { _, databaseResults, priceAgeSettings -> Pair(databaseResults, priceAgeSettings) }
+            settingsRepository.priceAgeSettingsFlow,
+            localeFlow
+        ) { _, databaseResults, priceAgeSettings, locale -> Triple(databaseResults, priceAgeSettings, locale) }
 
         // completeUIStateFlow delivers complete, consistent results which reflect the user's
         // selection. However, it doesn't make any guarantees as to how long it takes to emit after
         // allUserInputFlow emits.
         val completeUIStateFlow =
-            todoRenameMeFlow.flatMapLatest { (databaseResults, priceAgeSettings) ->
+            todoRenameMeFlow.flatMapLatest { (databaseResults, priceAgeSettings, locale) ->
                 Log.d("MyAppPAS", "priceAgeSettings $priceAgeSettings")
+                Log.d("MyAppLO", "locale $locale")
                 val (dataSetList, taggedItemListAndSourceList, taggedPriceList) = databaseResults
                 // We can take the current UI values here because ultimately that's all we care
                 // about; if the current flow value we're processing is older, we want to discard it
@@ -1306,7 +1315,7 @@ class HomeViewModel(
                     // fine doing it in this coroutine on the main thread, but just possibly we
                     // should shift (probably the whole database flow, but maybe just this work)
                     // onto a coroutine on a worker thread?
-                    val priceAnalysis = analysePrices(priceList, sourceList, priceAgeSettings)
+                    val priceAnalysis = analysePrices(priceList, sourceList, priceAgeSettings, locale)
 
                     Log.d("MyFlow", "derived analysedPriceList")
 
@@ -7472,8 +7481,12 @@ fun AppNavigation() {
         ) { backStackEntry ->
             Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
             val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
+            val viewModel = viewModel<HomeViewModel>(backStackEntry, factory = AppViewModelProvider.Factory)
+            LaunchedEffect(locale) {
+                viewModel.updateLocale(locale)
+            }
             HomeScreen(
-                viewModel(backStackEntry, factory = AppViewModelProvider.Factory),
+                viewModel,
                 navController,
                 onEditPriceClick = { uiContent ->
                     sharedViewModel.setEditPriceScreenContent(
@@ -8607,17 +8620,27 @@ fun analysePrices(
     priceList: List<Price>,
     sourceList: List<Source>,
     priceAgeSettings: PriceAgeSettings,
+    locale: Locale,
 ): PriceAnalysis {
     if (priceList.isEmpty()) {
         return PriceAnalysis(emptyList(), null)
     }
 
+    // It's important for our calls to quantile() below that augmentedPriceList is sorted on unit
+    // price. We use sourceName as a tie breaker just to improve visual consistency of the results
+    // when shown to the user.
     val sourceById = sourceList.associateBy { it.id }
+    val collator = Collator.getInstance(locale).apply {
+        strength = Collator.PRIMARY
+    }
     var augmentedPriceList = priceList.mapNotNull { price ->
         // I don't think we can have a Price but not the corresponding Source, but we play it safe
         // just in case.
         sourceById[price.sourceId]?.let { source -> augmentPrice(price, source, priceAgeSettings) }
-    }.sortedBy { it.unitPrice }
+    }.sortedWith(
+        compareBy<AugmentedPrice> { it.unitPrice }
+            .thenComparing({ it.sourceName }, collator)
+    )
 
     // augmentPrice() should have generated all unit prices using the base unit, but let's check
     // as otherwise recentEnoughPriceList (which discards the denominators) will be meaningless.
@@ -8968,11 +8991,6 @@ com.example.myapp/
 
 */
 
-// TODO: We maybe want some kind of tie break on alphabetical order of sourceName for AugmentedPrice
-// comparisons - yes it's floating point, but it's perfectly possible the numerator and denominator
-// of the division are identical across two stores, and we want consistent ordering of sorted
-// results
-
 // TODO: Once I've pulled all the strings out to allow for translation:
 // - manually or with LLM assistance review them and see if any would benefit from regional English variations (e.g. "color" vs "colour")
 // - probably do an LLM-assisted Spanish translation as a test and release it but make sure to note somewhere it's alpha/beta quality
@@ -8998,3 +9016,7 @@ com.example.myapp/
 // ENHANCE: It would be nice to add automated tests. At the very least, MeasuredValue could be
 // usefully tested. It would also be interesting and perhaps useful to add some unit tests for more
 // of the business logic, mocking the repository, etc.
+
+// TODO: Our variable naming may be a bit inconsistent between vm and viewModel. The latter is
+// arguably confusing (but maybe normal - I haven't checked yet) since it "shadows" the viewModel()
+// function, if only conceptually.
