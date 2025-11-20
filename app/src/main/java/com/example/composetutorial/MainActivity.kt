@@ -5530,7 +5530,7 @@ fun SettingsScreen(
                 title = stringResource(R.string.title_stale_price_threshold),
                 subtitle = pluralStringResource(
                     R.plurals.supporting_text_prices_considered_stale_after_x_days,
-                    count = stalePriceThreshold,stalePriceThreshold
+                    count = stalePriceThreshold /* TODO SHOULD THIS BE 1???? */ ,stalePriceThreshold
                 ),
                 onClick = {
                     showStalePriceThresholdDialog = true
@@ -5539,9 +5539,9 @@ fun SettingsScreen(
 
             SettingsTile(
                 title = stringResource(R.string.title_ancient_price_threshold),
-                subtitle =pluralStringResource(
+                subtitle = pluralStringResource(
                     R.plurals.supporting_text_prices_considered_ancient_after_x_days,
-                    count = ancientPriceThresholdDays, ancientPriceThresholdDays
+                    count = ancientPriceThresholdDays /* TODO SHOULD THIS BE 1???? */ , ancientPriceThresholdDays
                 ),
                 onClick = {
                     showAncientPriceThresholdDialog = true
@@ -5552,7 +5552,10 @@ fun SettingsScreen(
                 title = stringResource(R.string.title_annual_inflation),
                 // Ancient prices increase in the same way too, but it's probably best to keep the
                 // subtitle simple here rather than being over-precise.
-                subtitle = "Stale prices increase by $annualInflationPercent% per year", // TODO LOCALISE
+                subtitle = stringResource(
+                    R.string.supporting_text_stale_prices_increase_by_percent_per_year,
+                    annualInflationPercent
+                ),
                 onClick = {
                     showAnnualInflationPercentDialog = true
                 }

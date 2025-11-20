@@ -181,6 +181,7 @@
     <string name="supporting_text_must_be_less_than_x_ancient_price_threshold">Must be less than %1$d (ancient price threshold)</string>
     <string name="content_description_header_price_per">Price per %1$s</string>
     <string name="content_description_header_price_no_per">Price %1$s</string>
+    <string name="supporting_text_stale_prices_increase_by_percent_per_year">Stale prices increase by %1$d%% per year</string>
     <plurals name="supporting_text_prices_considered_stale_after_x_days">
         <item quantity="one">Prices considered stale after %1$d day</item>
         <item quantity="other">Prices considered stale after %1$d days</item>
