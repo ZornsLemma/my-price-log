@@ -2,7 +2,6 @@
 
 package com.example.composetutorial // TODO: change this!
 
-import androidx.core.content.ContextCompat
 import androidx.compose.ui.semantics.contentDescription
 import com.example.composetutorial.ui.defaultValidationMessageDelayMillis
 import com.example.composetutorial.ui.spinnerDelayMillis
@@ -82,7 +81,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -5322,11 +5320,10 @@ fun numericValidationRules(
 
         if (maxDecimals != null) {
             // TODO: We could allow extra decimal places if they are all zeros? I could see arguments either way.
-            // TODO: This message will be ungrammatical if maxDecimals == 1
             ValidationRule({
                 val parts = sanitiseCandidate(it).split(decimalSeparator)
                 parts.size != 2 || parts[1].length <= maxDecimals
-            }, UiText.Dynamic("No more than $maxDecimals decimal places allowed")) // TODO LOCALIZE
+            }, UiText.PluralsRes(R.plurals.supporting_text_no_more_than_x_decimal_places_allowed, listOf(maxDecimals))) // TODO LOCALIZE
         } else {
             null
         },
@@ -8809,13 +8806,12 @@ sealed class UiText {
     // out once I no longer need it.
     data class Dynamic(val text: String) : UiText()
     data class Res(@param:StringRes val resId: Int, val args: List<Any> = emptyList()) : UiText()
-    // TODO: I am not even sure QuantityRes is meaningful or useful but let's wait til I tried to use it
-    data class QuantityRes(@param:PluralsRes val resId: Int, val args: List<Any> = emptyList()) : UiText()
+    data class PluralsRes(@param:androidx.annotation.PluralsRes val resId: Int, val args: List<Any> = emptyList()) : UiText()
 
     fun asString(context: Context): String = when (this) {
         is Dynamic -> text
         is Res -> context.getString(resId, *args.toTypedArray())
-        is QuantityRes -> context.resources.getQuantityString(resId, args.size, *args.toTypedArray())
+        is UiText.PluralsRes -> context.resources.getQuantityString(resId, args.size, *args.toTypedArray())
     }
 
     @Composable

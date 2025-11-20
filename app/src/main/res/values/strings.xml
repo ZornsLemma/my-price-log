@@ -189,5 +189,8 @@
         <item quantity="one">Prices considered ancient after %1$d day</item>
         <item quantity="other">Prices considered ancient after %1$d days</item>
     </plurals>
-
+    <plurals name="supporting_text_no_more_than_x_decimal_places_allowed">
+        <item quantity="one">No more than %1$d decimal place allowed"</item>
+        <item quantity="other">No more than %1$d decimal places allowed</item>
+    </plurals>
 </resources>
