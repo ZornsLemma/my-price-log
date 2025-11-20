@@ -82,6 +82,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
@@ -321,6 +322,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.concurrent.Executors
+import kotlin.collections.map
 import kotlin.math.ceil
 import kotlin.math.pow
 
@@ -5105,7 +5107,8 @@ fun <T> rememberValidationThing(
     //   e.g. even if I am the only user, I won't really know how I feel about this until I've used
     //   it in anger on an actual smartphone with a touchscreen rather than typing on keyboard on
     //   PC or clicking awkwardly with the mouse on the on-screen keyboard on emulator.
-    LaunchedEffect(value, validationRulesKey, allowEmpty, isFocused) {
+    val context = LocalContext.current
+    LaunchedEffect(context, value, validationRulesKey, allowEmpty, isFocused) {
         // TODO: The delay is breaking things a bit here when e.g. we have an empty "pack size"
         // string and click save - the validation message becomes eligible for display as allowEmpty
         // is now true, but it doesn't appear straight away and so it "misses" the highlight box and
@@ -5131,7 +5134,7 @@ fun <T> rememberValidationThing(
         ) else null
 
         Log.d("MyAppXQ", "failedValidationRule: $failedValidationRule")
-        validationResult.value = failedValidationRule?.message
+        validationResult.value = failedValidationRule?.message?.asString(context)
     }
 
     return ValidationThing(interactionSource, validationResult)
@@ -5238,7 +5241,7 @@ fun isValidTransitionalDecimal(input: String): Boolean {
     return !regex.containsMatchIn(input)
 }
 
-data class ValidationRule<T>(val validate: (T) -> Boolean, val message: String)
+data class ValidationRule<T>(val validate: (T) -> Boolean, val message: UiText)
 
 fun <T> failedValidationRuleOrNull(validationRules: List<ValidationRule<T>>, value: T): ValidationRule<T>? {
     for (validationRule in validationRules) {
@@ -5297,15 +5300,13 @@ fun numericValidationRules(
 
     return listOfNotNull(
         ValidationRule({ it.trim().isNotEmpty() },
-            context.getString(R.string.supporting_text_required)),
+            UiText.Res(R.string.supporting_text_required)),
 
         ValidationRule(
             { it.count { char -> char == decimalSeparator } <= maxDecimalSeparators },
             // TODO: Just possibly we should not consider a single decimal separator with nothing
             // significant following it as violating "only whole numbers allowed".
-            if (allowDecimals) context.getString(R.string.supporting_text_only_one_decimal_point_allowed) else context.getString(
-                R.string.supporting_text_only_whole_numbers_allowed
-            )
+            if (allowDecimals) UiText.Res(R.string.supporting_text_only_one_decimal_point_allowed) else UiText.Res(R.string.supporting_text_only_whole_numbers_allowed)
         ),
 
         if (maxDecimals != null) {
@@ -5314,7 +5315,7 @@ fun numericValidationRules(
             ValidationRule({
                 val parts = sanitiseCandidate(it).split(decimalSeparator)
                 parts.size != 2 || parts[1].length <= maxDecimals
-            }, "No more than $maxDecimals decimal places allowed") // TODO LOCALIZE
+            }, UiText.Dynamic("No more than $maxDecimals decimal places allowed")) // TODO LOCALIZE
         } else {
             null
         },
@@ -5323,13 +5324,13 @@ fun numericValidationRules(
             // This message assumes you can't enter a negative value because input filtering rejects
             // '-'.
             ValidationRule({ attemptedParse(it) != 0.0 },
-                context.getString(R.string.supporting_text_must_be_greater_than_zero))
+                UiText.Res(R.string.supporting_text_must_be_greater_than_zero))
         } else {
             null
         },
 
         if (maxValue != null) {
-            ValidationRule( { (attemptedParse(it) ?: 0.0) <= maxValue }, "Must be no greater than $maxValue") // TODO LOCALISE
+            ValidationRule( { (attemptedParse(it) ?: 0.0) <= maxValue }, UiText.Dynamic("Must be no greater than $maxValue")) // TODO LOCALISE
         } else {
             null
         },
@@ -5338,7 +5339,7 @@ fun numericValidationRules(
         // don't want to have a string which can't be converted (which would cause an error on
         // trying to save) which the user hasn't been warned about.
         ValidationRule({ attemptedParse(it) != null },
-            context.getString(R.string.supporting_text_invalid_number)),
+            UiText.Res(R.string.supporting_text_invalid_number)),
     )
 }
 
@@ -5442,7 +5443,7 @@ fun FilteredTextField(
         trailingIcon = trailingIcon
             ?: if (isError) {
                 {
-                    WarningIcon(contentDescription = context.getString(R.string.content_description_error))
+                    WarningIcon(contentDescription = stringResource(R.string.content_description_error))
                 }
             } else null,
         isError = isError,
@@ -5568,20 +5569,20 @@ fun SettingsScreen(
                 suffix = { Text(stringResource(R.string.suffix_days)) },
                 initialValue = stalePriceThreshold.toString(),
                 validationRules = listOfNotNull(
-                    ValidationRule({ it.trim().isNotEmpty() }, stringResource(R.string.required)),
+                    ValidationRule({ it.trim().isNotEmpty() }, UiText.Res(R.string.supporting_text_required)),
                     ValidationRule(
                             {
                                 val days = it.toIntOrNull()
                                 days != null && days >= 1
                             },
-                        stringResource(R.string.supporting_text_must_be_positive)
+                        UiText.Res(R.string.supporting_text_must_be_positive)
                     ),
                     ValidationRule(
                         {
                             val days = it.toIntOrNull()
                             days != null && days < ancientPriceThresholdDays
                         },
-                        "Must be less than $ancientPriceThresholdDays (ancient price threshold)" // TODO LOCALISE
+                        UiText.Dynamic("Must be less than $ancientPriceThresholdDays (ancient price threshold)") // TODO LOCALISE
                     )
                 ),
                 onConfirm = { stalePriceThresholdString ->
@@ -5602,20 +5603,20 @@ fun SettingsScreen(
                 suffix = { Text(stringResource(R.string.suffix_days)) },
                 initialValue = ancientPriceThresholdDays.toString(),
                 validationRules = listOfNotNull(
-                    ValidationRule({ it.trim().isNotEmpty() }, stringResource(R.string.supporting_text_required)),
+                    ValidationRule({ it.trim().isNotEmpty() }, UiText.Res(R.string.supporting_text_required)),
                     ValidationRule(
                         {
                             val days = it.toIntOrNull()
                             days != null && days > stalePriceThreshold
                         },
-                        "Must be greater than $stalePriceThreshold (stale price threshold)" // TODO LOCALISE
+                        UiText.Dynamic("Must be greater than $stalePriceThreshold (stale price threshold)") // TODO LOCALISE
                     ),
                     ValidationRule(
                         {
                             val days = it.toIntOrNull()
                             days != null && days <= 365
                         },
-                        stringResource(R.string.supporting_text_must_be_no_greater_than_365)
+                        UiText.Res(R.string.supporting_text_must_be_no_greater_than_365)
                     ),
                 ),
                 onConfirm = { ancientPriceThresholdDaysString ->
@@ -5637,27 +5638,27 @@ fun SettingsScreen(
                 suffix = { Text("%") },
                 initialValue = annualInflationPercent.toString(),
                 validationRules = listOfNotNull(
-        ValidationRule({ it.trim().isNotEmpty() }, stringResource(R.string.supporting_text_required)),
+        ValidationRule({ it.trim().isNotEmpty() }, UiText.Res(R.string.supporting_text_required)),
                     ValidationRule(
                         {
                             val inflation = it.toIntOrNull()
                             inflation != null
                         },
-                        stringResource(R.string.supporting_text_must_be_a_whole_number),
+                        UiText.Res(R.string.supporting_text_must_be_a_whole_number),
                     ),
                     ValidationRule(
                         {
                             val inflation = it.toIntOrNull()
                             inflation != null && inflation >= 0
                         },
-                        stringResource(R.string.supporting_text_must_be_zero_or_greater)
+                        UiText.Res(R.string.supporting_text_must_be_zero_or_greater)
                     ),
                     ValidationRule(
                         {
                             val inflation = it.toIntOrNull()
                             inflation != null && inflation <= 1000
                         },
-                        stringResource(R.string.supporting_text_must_be_no_greater_than_1000)
+                        UiText.Res(R.string.supporting_text_must_be_no_greater_than_1000)
                     ),
                 ),
                 onConfirm = { annualInflationPercentString ->
@@ -5743,7 +5744,7 @@ fun SettingsDialog(
             text = currentValue,
             // Put the caret at the end of the string - this is why we need a TextFieldValue.
             selection = TextRange(currentValue.length))) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<UiText?>(null) }
     val focusRequester = remember { FocusRequester() }
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -5758,7 +5759,7 @@ fun SettingsDialog(
                     suffix = suffix,
                     supportingText = {
                         if (error != null) Text(
-                            error!!,
+                            error!!.asString(),
                             color = MaterialTheme.colorScheme.error
                         )
                     },
@@ -6871,7 +6872,8 @@ class EditSourceViewModel(
             // initialValue here is set to an unsatisfiable validation list to avoid a theoretical
             // corner case. If we defaulted to emptyList(), the user might be able to save with an
             // invalid name before the real validation rules become available.
-            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(listOf(ValidationRule({ false }, ""))))
+            // TODO: I think this is wrong, as in other cases this likely gives a transient error blip and we need the other solution
+            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(listOf(ValidationRule({ false }, UiText.Dynamic("")))))
 
     // ENHANCE: Maybe we should allow zero here? We might need to tweak some messages accordingly.
     // Zero isn't necessary as you can choose "None", but maybe it's a bit persnickety not to allow
@@ -7202,15 +7204,16 @@ class ViewPriceHistoryViewModel(
 // be brittle. (Then again, with respect to brittleness, some rules' error messages might implicitly
 // assume earlier rules already filtered out some unacceptable cases anyway.)
 fun createNameValidationRules(existingNameList: List<String>): List<ValidationRule<String>> {
-    return listOf(
-        ValidationRule<String>({ it.isNotEmpty() }, stringResource(R.string.supporting_text_required)),
-    ) + existingNameList.map { name ->
-        val validationRule = ValidationRule(
+    val TODO0 =         ValidationRule<String>({ it.isNotEmpty() }, UiText.Res(R.string.supporting_text_required))
+    val TODO1 = listOf(TODO0)
+
+    val TODO2 = existingNameList.map<String, ValidationRule<String>> { name ->
+        ValidationRule<String>(
             { candidateName -> !areHumanEqual(candidateName, name) },
-            context.getString(R.string.supporting_text_name_must_be_unique)
+            UiText.Res(R.string.supporting_text_name_must_be_unique)
         )
-        validationRule
     }
+    return TODO1 + TODO2
 }
 
 // TODO: There is a huge amount of pseudo copy and paste in all the Edit*{Screen,ViewModel} stuff.
@@ -7260,12 +7263,13 @@ class EditDataSetViewModel(
             // initialValue here is set to an unsatisfiable validation list to avoid a theoretical
             // corner case. If we defaulted to emptyList(), the user might be able to save with an
             // invalid name before the real validation rules become available.
-            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(listOf(ValidationRule({ false }, ""))))
+            // TODO: AS ELSEWHERE I SUSPECT THIS IS WRONG AND WE NEED THE SOLUTION IMPLEMENTED FOR PRODUCT?
+            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(listOf(ValidationRule({ false }, UiText.Dynamic("")))))
 
     val currencyValidationRules = listOf(
         ValidationRule<String>(
             { it.isNotEmpty() },
-            context.getString(R.string.supporting_text_currency_must_be_specified)
+            UiText.Res(R.string.supporting_text_currency_must_be_specified)
         )
     )
 
@@ -7283,12 +7287,12 @@ class EditDataSetViewModel(
         // technical, I hope the overall context with the caption above will make it clear.
         ValidationRule<DataSetUnitPreferences>(
             { it -> it.allowMetric || it.allowImperial || it.allowUSCustomary },
-            context.getString(R.string.supporting_text_at_least_one_measurement_system_must_be_selected)
+            UiText.Res(R.string.supporting_text_at_least_one_measurement_system_must_be_selected)
         ),
         // This next rule is enforced by UI logic, but let's go belt and braces.
         ValidationRule<DataSetUnitPreferences>(
             { !(it.allowImperial && it.allowUSCustomary) },
-            context.getString(R.string.supporting_text_imperial_and_us_units_cannot_be_selected_together)
+            UiText.Res(R.string.supporting_text_imperial_and_us_units_cannot_be_selected_together)
         ),
     )
 
@@ -8157,7 +8161,7 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
         } ?: throw IOException("Failed to open input stream for URI: $sourceUri") // TODO LOCALISE??
 
         // Validate the backup file.
-        checkDatabaseRestoreCandidate(tempFile.path)
+        checkDatabaseRestoreCandidate(context, tempFile.path)
 
         // The backup file is OK, so we'll go ahead and overwrite our internal database now.
 
@@ -8180,7 +8184,7 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
     }
 }
 
-fun checkDatabaseRestoreCandidate(dbPath: String) {
+fun checkDatabaseRestoreCandidate(context: Context, dbPath: String) {
     val db = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READONLY)
     db.use { db ->
         val version = db.version
@@ -8319,7 +8323,7 @@ fun ViewPriceHistoryScreen(
             ) {
                 itemsIndexed(priceHistoryDeltaList) { index, priceHistoryDelta ->
                     if (priceHistoryDelta == null) {
-                        HorizontalDividerWithText(context.getString(R.string.label_deleted))
+                        HorizontalDividerWithText(stringResource(R.string.label_deleted))
                      } else {
                         Box {
                             ItemSourceInfoHistory(
@@ -8759,6 +8763,24 @@ val Context.userPreferencesStore: DataStore<UserPrefs.UserPreferences> by dataSt
     serializer = UserPreferencesSerializer
 )
 
+// TODO: ChatGPT semi-magic
+sealed class UiText {
+    // TODO: I am not sure, but use of Dynamic in "final" code might be a sign something isn't
+    // right. It might be that it has genuine uses in complex cases where we construct a localised
+    // string via some other means, but it might be a good idea to leave it present but commented
+    // out once I no longer need it.
+    data class Dynamic(val text: String) : UiText()
+    data class Res(@param:StringRes val resId: Int, val args: List<Any> = emptyList()) : UiText()
+
+    fun asString(context: Context): String = when (this) {
+        is Dynamic -> text
+        is Res -> context.getString(resId, *args.toTypedArray())
+    }
+
+    @Composable
+    fun asString(): String = asString(LocalContext.current)
+    }
+
 // ENHANCE: I have completely ignored "unlikely" errors (like exceptions being thrown when accessing
 // the database) in most of this code - what can/should we do about this? I suspect most such errors
 // are basically unrecoverable and it's more-or-less OK if the process just dies, but I'm not sure
@@ -9054,3 +9076,8 @@ com.example.myapp/
 // TODO: I think I made a mistake *intending* to change "Good/OK/bad price" to "G/O/B *value*" and
 // only changed the contentDescription versions, not the on-screen versions. For the moment I've
 // reverted to price everywhere but may want to change to "value" everywhere.
+
+// TODO: Some and probably all of the settingsdialog things give silly error messages if you type
+// "-3a" or something. Do we need to tweak validation? Maybe have an initial "invalid number" check?
+// Can/should we be restricting to numeric input and/or hinting at using a numeric on screen
+// keyboard?
