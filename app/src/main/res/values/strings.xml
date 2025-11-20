@@ -172,4 +172,16 @@
     <string name="message_the_database_to_restore_was_not_created_with_this_app">The database to restore was not created with this app.</string>
     <string name="label_deleted">deleted</string>
     <string name="menu_item_edit_as_new_price">Edit as new price</string>
+    <string name="supporting_text_must_be_no_greater_than_x">Must be no greater than %1$d</string>
+    <string name="message_failed_to_open_input_stream_for_uri">Failed to open input stream for URI: %1$s</string>
+    <string name="message_database_to_restore_too_new">The database to restore is a newer version (%1$d) than this version of the app supports (%2$d).</string>
+    <plurals name="supporting_text_prices_considered_stale_after_x_days">
+        <item quantity="one">Prices considered stale after %1$d day</item>
+        <item quantity="other">Prices considered stale after %1$d days</item>
+    </plurals>
+    <plurals name="supporting_text_prices_considered_ancient_after_x_days">
+        <item quantity="one">Prices considered ancient after %1$d day</item>
+        <item quantity="other">Prices considered ancient after %1$d days</item>
+    </plurals>
+
 </resources>

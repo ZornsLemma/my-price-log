@@ -197,6 +197,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 //import androidx.compose.ui.semantics.SemanticsProperties.Role
 import androidx.compose.ui.semantics.Role
@@ -5330,7 +5331,9 @@ fun numericValidationRules(
         },
 
         if (maxValue != null) {
-            ValidationRule( { (attemptedParse(it) ?: 0.0) <= maxValue }, UiText.Dynamic("Must be no greater than $maxValue")) // TODO LOCALISE
+            ValidationRule( { (attemptedParse(it) ?: 0.0) <= maxValue },
+                UiText.Res(
+                    R.string.supporting_text_must_be_no_greater_than_x, listOf(maxValue)))
         } else {
             null
         },
@@ -5518,7 +5521,10 @@ fun SettingsScreen(
 
             SettingsTile(
                 title = stringResource(R.string.title_stale_price_threshold),
-                subtitle = "Prices considered stale after $stalePriceThreshold days", // TODO LOCALISE
+                subtitle = pluralStringResource(
+                    R.plurals.supporting_text_prices_considered_stale_after_x_days,
+                    count = stalePriceThreshold,stalePriceThreshold
+                ),
                 onClick = {
                     showStalePriceThresholdDialog = true
                 }
@@ -5526,7 +5532,10 @@ fun SettingsScreen(
 
             SettingsTile(
                 title = stringResource(R.string.title_ancient_price_threshold),
-                subtitle = "Prices considered ancient after $ancientPriceThresholdDays days", // TODO LOCALISE
+                subtitle =pluralStringResource(
+                    R.plurals.supporting_text_prices_considered_ancient_after_x_days,
+                    count = ancientPriceThresholdDays, ancientPriceThresholdDays
+                ),
                 onClick = {
                     showAncientPriceThresholdDialog = true
                 }
@@ -5566,6 +5575,9 @@ fun SettingsScreen(
                 title = stringResource(R.string.title_stale_price_threshold),
                 subtitle = stringResource(R.string.supporting_text_stale_price_threshold),
                 label = stringResource(R.string.title_stale_price_threshold),
+                // ENHANCE: Can we make all (not just this one) uses of suffix_days pluralise
+                // correctly based on the current value (if it can be parsed as an integer; I guess
+                // default to pluralising-as-if it is 99 or something otherwise?)?
                 suffix = { Text(stringResource(R.string.suffix_days)) },
                 initialValue = stalePriceThreshold.toString(),
                 validationRules = listOfNotNull(
@@ -8154,11 +8166,16 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
     val tempFile = File(context.cacheDir, "temp_backup.db")
     try {
         // Copy sourceUri to temp file.
+        null
         context.contentResolver.openInputStream(sourceUri)?.use { input ->
             FileOutputStream(tempFile).use { output ->
                 input.copyTo(output)
             }
-        } ?: throw IOException("Failed to open input stream for URI: $sourceUri") // TODO LOCALISE??
+        } ?: throw IOException(
+            context.getString(
+                R.string.message_failed_to_open_input_stream_for_uri,
+                sourceUri
+            ))
 
         // Validate the backup file.
         checkDatabaseRestoreCandidate(context, tempFile.path)
@@ -8189,7 +8206,12 @@ fun checkDatabaseRestoreCandidate(context: Context, dbPath: String) {
     db.use { db ->
         val version = db.version
         if (version > DB_VERSION) {
-            throw IllegalStateException("The database to restore is a newer version ($version) than this version of the app supports ($DB_VERSION).") // TODO LOCALISE
+            throw IllegalStateException(
+                context.getString(
+                    R.string.message_database_to_restore_too_new,
+                    version,
+                    DB_VERSION
+                ))
         }
 
         // Sanity check this isn't a database from some other random app. We're not trying to guard
