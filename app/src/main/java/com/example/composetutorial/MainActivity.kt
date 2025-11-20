@@ -5026,7 +5026,7 @@ fun EditDataSetScreen(
                     )
                 }
                 Spacer(Modifier.width(8.dp)) // TODO: Maybe 16.dp given spacing around measurement units?
-                Text("Delete collection")
+                Text(stringResource(R.string.button_delete_collection))
             }
         }
     }
@@ -5296,13 +5296,16 @@ fun numericValidationRules(
         sanitiseCandidate(candidate).replace(decimalSeparator, '.').toDoubleOrNull()
 
     return listOfNotNull(
-        ValidationRule({ it.trim().isNotEmpty() }, "Required"),
+        ValidationRule({ it.trim().isNotEmpty() },
+            context.getString(R.string.supporting_text_required)),
 
         ValidationRule(
             { it.count { char -> char == decimalSeparator } <= maxDecimalSeparators },
             // TODO: Just possibly we should not consider a single decimal separator with nothing
             // significant following it as violating "only whole numbers allowed".
-            if (allowDecimals) "Only one decimal point allowed" else "Only whole numbers allowed"
+            if (allowDecimals) context.getString(R.string.supporting_text_only_one_decimal_point_allowed) else context.getString(
+                R.string.supporting_text_only_whole_numbers_allowed
+            )
         ),
 
         if (maxDecimals != null) {
@@ -5311,7 +5314,7 @@ fun numericValidationRules(
             ValidationRule({
                 val parts = sanitiseCandidate(it).split(decimalSeparator)
                 parts.size != 2 || parts[1].length <= maxDecimals
-            }, "No more than $maxDecimals decimal places allowed")
+            }, "No more than $maxDecimals decimal places allowed") // TODO LOCALIZE
         } else {
             null
         },
@@ -5319,13 +5322,14 @@ fun numericValidationRules(
         if (!allowZero) {
             // This message assumes you can't enter a negative value because input filtering rejects
             // '-'.
-            ValidationRule({ attemptedParse(it) != 0.0 }, "Must be greater than zero")
+            ValidationRule({ attemptedParse(it) != 0.0 },
+                context.getString(R.string.supporting_text_must_be_greater_than_zero))
         } else {
             null
         },
 
         if (maxValue != null) {
-            ValidationRule( { (attemptedParse(it) ?: 0.0) <= maxValue }, "Must be no greater than $maxValue")
+            ValidationRule( { (attemptedParse(it) ?: 0.0) <= maxValue }, "Must be no greater than $maxValue") // TODO LOCALISE
         } else {
             null
         },
@@ -5333,7 +5337,8 @@ fun numericValidationRules(
         // This is a catch-all; in practice we expect to catch all problems before this, but we
         // don't want to have a string which can't be converted (which would cause an error on
         // trying to save) which the user hasn't been warned about.
-        ValidationRule({ attemptedParse(it) != null }, "Invalid number"),
+        ValidationRule({ attemptedParse(it) != null },
+            context.getString(R.string.supporting_text_invalid_number)),
     )
 }
 
@@ -5437,7 +5442,7 @@ fun FilteredTextField(
         trailingIcon = trailingIcon
             ?: if (isError) {
                 {
-                    WarningIcon(contentDescription = "Error")
+                    WarningIcon(contentDescription = context.getString(R.string.content_description_error))
                 }
             } else null,
         isError = isError,
@@ -5481,11 +5486,11 @@ fun SettingsScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text("Settings") }, navigationIcon = {
+            TopAppBar(title = { Text(stringResource(R.string.title_settings)) }, navigationIcon = {
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                        contentDescription = "Back"
+                        contentDescription = stringResource(R.string.content_description_back)
                     )
                 }
             })
@@ -5511,45 +5516,45 @@ fun SettingsScreen(
             // TODO: I half wonder if we should do *<=* stale/ancient threshold - currently we use < in code for stale at least - just to match this description (subtitle) which feels more natural, but maybe we can reword this.
 
             SettingsTile(
-                title = "Stale price threshold",
-                subtitle = "Prices considered stale after $stalePriceThreshold days",
+                title = stringResource(R.string.title_stale_price_threshold),
+                subtitle = "Prices considered stale after $stalePriceThreshold days", // TODO LOCALISE
                 onClick = {
                     showStalePriceThresholdDialog = true
                 }
             )
 
             SettingsTile(
-                title = "Ancient price threshold",
-                subtitle = "Prices considered ancient after $ancientPriceThresholdDays days",
+                title = stringResource(R.string.title_ancient_price_threshold),
+                subtitle = "Prices considered ancient after $ancientPriceThresholdDays days", // TODO LOCALISE
                 onClick = {
                     showAncientPriceThresholdDialog = true
                 }
             )
 
             SettingsTile(
-                title = "Annual inflation",
+                title = stringResource(R.string.title_annual_inflation),
                 // Ancient prices increase in the same way too, but it's probably best to keep the
                 // subtitle simple here rather than being over-precise.
-                subtitle = "Stale prices increase by $annualInflationPercent% per year",
+                subtitle = "Stale prices increase by $annualInflationPercent% per year", // TODO LOCALISE
                 onClick = {
                     showAnnualInflationPercentDialog = true
                 }
             )
 
             SettingsTile(
-                title = "Backup",
-                subtitle = "Back up your data to a file to keep it safe",
+                title = stringResource(R.string.title_backup),
+                subtitle = stringResource(R.string.supporting_text_back_up_your_data_to_a_file),
                 onClick = onBackupClick
             )
 
             SettingsTile(
-                title = "Restore",
-                subtitle = "Replace all data with a backup you made earlier",
+                title = stringResource(R.string.title_restore),
+                subtitle = stringResource(R.string.supporting_text_replace_all_data_with_a_backup),
                 onClick = { showRestoreConfirmDialog = true }
             )
 
             SettingsTile(
-                title = "About $appName",
+                title = "About $appName", // TODO LOCALISE
                 subtitle = "", // empty subtitle gives consistent layout with other tiles
                 onClick = onAboutClick
             )
@@ -5557,26 +5562,26 @@ fun SettingsScreen(
 
         if (showStalePriceThresholdDialog) {
             SettingsDialog(
-                title = "Stale price threshold",
-                subtitle = "Stale prices (confirmed more than this many days ago) have an inflation adjustment applied when comparing across stores.",
-                label = "Stale price threshold",
-                suffix = { Text("days") },
+                title = stringResource(R.string.title_stale_price_threshold),
+                subtitle = stringResource(R.string.supporting_text_stale_price_threshold),
+                label = stringResource(R.string.title_stale_price_threshold),
+                suffix = { Text(stringResource(R.string.suffix_days)) },
                 initialValue = stalePriceThreshold.toString(),
                 validationRules = listOfNotNull(
-                    ValidationRule({ it.trim().isNotEmpty() }, "Required"),
+                    ValidationRule({ it.trim().isNotEmpty() }, stringResource(R.string.required)),
                     ValidationRule(
                             {
                                 val days = it.toIntOrNull()
                                 days != null && days >= 1
                             },
-                    "Must be positive"
+                        stringResource(R.string.supporting_text_must_be_positive)
                     ),
                     ValidationRule(
                         {
                             val days = it.toIntOrNull()
                             days != null && days < ancientPriceThresholdDays
                         },
-                        "Must be less than $ancientPriceThresholdDays (ancient price threshold)"
+                        "Must be less than $ancientPriceThresholdDays (ancient price threshold)" // TODO LOCALISE
                     )
                 ),
                 onConfirm = { stalePriceThresholdString ->
@@ -5591,26 +5596,26 @@ fun SettingsScreen(
 
         if (showAncientPriceThresholdDialog) {
             SettingsDialog(
-                title = "Ancient price threshold",
-                subtitle = "Ancient prices (confirmed more than this many days ago) are ignored when classifying prices as good/OK/bad.",
-                label = "Ancient price threshold",
-                suffix = { Text("days") },
+                title = stringResource(R.string.title_ancient_price_threshold),
+                subtitle = stringResource(R.string.supporting_text_ancient_price_threshold),
+                label = stringResource(R.string.title_ancient_price_threshold),
+                suffix = { Text(stringResource(R.string.suffix_days)) },
                 initialValue = ancientPriceThresholdDays.toString(),
                 validationRules = listOfNotNull(
-                    ValidationRule({ it.trim().isNotEmpty() }, "Required"),
+                    ValidationRule({ it.trim().isNotEmpty() }, stringResource(R.string.supporting_text_required)),
                     ValidationRule(
                         {
                             val days = it.toIntOrNull()
                             days != null && days > stalePriceThreshold
                         },
-                        "Must be greater than $stalePriceThreshold (stale price threshold)"
+                        "Must be greater than $stalePriceThreshold (stale price threshold)" // TODO LOCALISE
                     ),
                     ValidationRule(
                         {
                             val days = it.toIntOrNull()
                             days != null && days <= 365
                         },
-                    "Must be no greater than 365"
+                        stringResource(R.string.supporting_text_must_be_no_greater_than_365)
                     ),
                 ),
                 onConfirm = { ancientPriceThresholdDaysString ->
@@ -5626,33 +5631,33 @@ fun SettingsScreen(
 
         if (showAnnualInflationPercentDialog) {
             SettingsDialog(
-                title = "Annual inflation",
-                subtitle = "Stale prices increase by this annual rate. This is only an estimate $emDash update prices when you can for better accuracy.",
-                label = "Annual inflation rate",
+                title = stringResource(R.string.title_annual_inflation),
+                subtitle = "Stale prices increase by this annual rate. This is only an estimate $emDash update prices when you can for better accuracy.", // TODO LOCALISE
+                label = stringResource(R.string.title_annual_inflation),
                 suffix = { Text("%") },
                 initialValue = annualInflationPercent.toString(),
                 validationRules = listOfNotNull(
-        ValidationRule({ it.trim().isNotEmpty() }, "Required"),
+        ValidationRule({ it.trim().isNotEmpty() }, stringResource(R.string.supporting_text_required)),
                     ValidationRule(
                         {
                             val inflation = it.toIntOrNull()
                             inflation != null
                         },
-                        "Must be a whole number"
+                        stringResource(R.string.supporting_text_must_be_a_whole_number),
                     ),
                     ValidationRule(
                         {
                             val inflation = it.toIntOrNull()
                             inflation != null && inflation >= 0
                         },
-                        "Must be zero or greater"
+                        stringResource(R.string.supporting_text_must_be_zero_or_greater)
                     ),
                     ValidationRule(
                         {
                             val inflation = it.toIntOrNull()
                             inflation != null && inflation <= 1000
                         },
-                        "Must be no greater than 1000%"
+                        stringResource(R.string.supporting_text_must_be_no_greater_than_1000)
                     ),
                 ),
                 onConfirm = { annualInflationPercentString ->
@@ -5674,15 +5679,17 @@ fun SettingsScreen(
             // restore when they meant to tap on backup - both of which would otherwise go straight
             // into a system file selection dialog.
             AlertDialog(
-                icon = { WarningIcon(contentDescription = "Warning") },
-                title = { Text("Restore from backup") },
-                text = { Text("This will replace all current app data with the data from your backup. This action is permanent and cannot be undone. Do you want to continue?") },
+                icon = { WarningIcon(contentDescription = stringResource(R.string.content_description_warning)) },
+                title = { Text(stringResource(R.string.title_restore_from_backup)) },
+                text = { Text(stringResource(R.string.message_restore_from_backup_warning)) },
                 onDismissRequest = { showRestoreConfirmDialog = false },
                 dismissButton = {
-                    TextButton(onClick = { showRestoreConfirmDialog = false }) { Text("Cancel") }
+                    TextButton(onClick = { showRestoreConfirmDialog = false }) { Text(stringResource(R.string.button_cancel)) }
                 },
                 confirmButton = {
-                    TextButton(onClick = { showRestoreConfirmDialog = false; onRestoreClick() }) { Text("Restore") }
+                    TextButton(onClick = { showRestoreConfirmDialog = false; onRestoreClick() }) { Text(
+                        stringResource(R.string.button_restore)
+                    ) }
                 }
             )
         }
@@ -5772,10 +5779,10 @@ fun SettingsDialog(
                     }
                 },
                 enabled = currentValue.trim().isNotEmpty() && error == null
-            ) { Text("Save") }
+            ) { Text(stringResource(R.string.button_save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismissRequest) { Text("Cancel") }
+            TextButton(onClick = onDismissRequest) { Text(stringResource(R.string.button_cancel)) }
         }
     )
 
@@ -5803,7 +5810,7 @@ fun LauncherIcon(size: Dp = 120.dp) {
     val bitmap = drawable.toBitmap(sizePx, sizePx)
     Image(
         bitmap = bitmap.asImageBitmap(),
-        contentDescription = "App icon",
+        contentDescription = stringResource(R.string.content_description_app_icon),
         modifier = Modifier.size(size)
     )
 }
@@ -5827,7 +5834,7 @@ fun getAppVersion(): String {
             }
             "Version $versionName" // could add " ($versionCode)"?
         } catch (e: PackageManager.NameNotFoundException) {
-            "Version unknown"
+            "Version unknown" // TODO: LOCALISE???
         }
     }
 }
@@ -5885,11 +5892,11 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text("About $appName") }, navigationIcon = {
+            TopAppBar(title = { Text("About $appName") }, navigationIcon = { // TODO LOCALISE
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                        contentDescription = "Back"
+                        contentDescription = stringResource(R.string.content_description_back)
                     )
                 }
             })
@@ -5928,18 +5935,18 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        "Resources",
+                        stringResource(R.string.title_resources),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        "Links below will open in your browser.",
+                        stringResource(R.string.message_links_below_will_open_in_your_browser),
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    ClickableLink("User manual", "https://yourappdocs.example.com", showRawUrl = true) // TODO!
+                    ClickableLink(stringResource(R.string.title_user_manual), "https://yourappdocs.example.com", showRawUrl = true) // TODO!
                     Spacer(modifier = Modifier.height(8.dp))
-                    ClickableLink("Source code on GitHub", "https://github.com/yourusername/yourapp", showRawUrl = true) // TODO!
+                    ClickableLink(stringResource(R.string.title_source_code_on_github), "https://github.com/yourusername/yourapp", showRawUrl = true) // TODO!
                 }
             }
 
@@ -5955,11 +5962,11 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
                     // readable way. The full legally compliant stuff which is not actually readable
                     // doesn't go here, it goes on LegalScreen().
                     Text(
-                        "Attributions",
+                        stringResource(R.string.title_attributions),
                         style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    BulletPoint("Material Design icons (Google, Apache 2.0)")
+                    BulletPoint(stringResource(R.string.message_material_design_icons_google_apache_2_0))
                     /* For future reference:
                     BulletPoint("ExampleLibrary (MIT) — placeholder for future third-party library")
                     */
@@ -5970,7 +5977,7 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
 
             // Button to legal screen
             FilledTonalButton(onClick = onViewLegalClick,    shape = MaterialTheme.shapes.small) {
-                Text("View full legal information")
+                Text(stringResource(R.string.button_view_full_legal_information))
             }
             Spacer(modifier = Modifier.height(fullScreenDialogVerticalBorder))
         }
@@ -5985,11 +5992,11 @@ fun LegalScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text("Legal information") }, navigationIcon = {
+            TopAppBar(title = { Text(stringResource(R.string.title_legal_information)) }, navigationIcon = {
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                        contentDescription = "Back"
+                        contentDescription = stringResource(R.string.content_description_back)
                     )
                 }
             })
@@ -6011,16 +6018,20 @@ fun LegalScreen(
             // TODO: When adding i18n, do *not* do a UK eng "MIT Licen*c*e" version of this string -
             // it's conventional and clearer to just stick with the US style use here.
             Text(
-                text = "$appName $emDash MIT License",
+                text = "$appName $emDash MIT License", // TODO DON'T LOCALISE "MIT LIcense" BUT DO LOCALISE APPNAME
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Copyright $copyrightSymbol 2025 TODOMYNAME",
+                text = "Copyright $copyrightSymbol 2025 TODOMYNAME", // TODO LOCALISE FULLY
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(modifier = Modifier.height(8.dp))
             LicenseText(
+                // We do not extract this string and allow it to be translated. It's legal text and
+                // if it does get localized we want to be careful. Leaving it hardcoded will trigger
+                // a discussion if needed instead of allowing a change to slip in casually via an
+                // otherwise innocuous strings.xml.
                 licenseText = "Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
             )
 
@@ -6568,7 +6579,7 @@ fun <T> GeneralSelectorScreen(
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.content_description_back)
                         )
                     }
                 })
@@ -6601,18 +6612,18 @@ fun <T> GeneralSelectorScreen(
                     value = searchString,
                     onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxSearchLength),
                     onValueChange = { it -> vm.searchStringFlow.value = it },
-                    label = { Text("Search") },
+                    label = { Text(stringResource(R.string.label_search)) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
+                            contentDescription = stringResource(R.string.content_description_search),
                             // tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Clear search text",
+                            contentDescription = stringResource(R.string.content_description_clear_search_text),
                             modifier = Modifier.clickable { vm.searchStringFlow.value = TextFieldValue("") },
                         )
                     },
@@ -7192,12 +7203,13 @@ class ViewPriceHistoryViewModel(
 // assume earlier rules already filtered out some unacceptable cases anyway.)
 fun createNameValidationRules(existingNameList: List<String>): List<ValidationRule<String>> {
     return listOf(
-        ValidationRule<String>({ it.isNotEmpty() }, "Required"),
+        ValidationRule<String>({ it.isNotEmpty() }, stringResource(R.string.supporting_text_required)),
     ) + existingNameList.map { name ->
-        ValidationRule(
+        val validationRule = ValidationRule(
             { candidateName -> !areHumanEqual(candidateName, name) },
-            "Name must be unique"
+            context.getString(R.string.supporting_text_name_must_be_unique)
         )
+        validationRule
     }
 }
 
@@ -7253,7 +7265,7 @@ class EditDataSetViewModel(
     val currencyValidationRules = listOf(
         ValidationRule<String>(
             { it.isNotEmpty() },
-            "Currency must be specified"
+            context.getString(R.string.supporting_text_currency_must_be_specified)
         )
     )
 
@@ -7271,12 +7283,12 @@ class EditDataSetViewModel(
         // technical, I hope the overall context with the caption above will make it clear.
         ValidationRule<DataSetUnitPreferences>(
             { it -> it.allowMetric || it.allowImperial || it.allowUSCustomary },
-            "At least one measurement system must be selected"
+            context.getString(R.string.supporting_text_at_least_one_measurement_system_must_be_selected)
         ),
         // This next rule is enforced by UI logic, but let's go belt and braces.
         ValidationRule<DataSetUnitPreferences>(
             { !(it.allowImperial && it.allowUSCustomary) },
-            "Imperial and US units cannot be selected together"
+            context.getString(R.string.supporting_text_imperial_and_us_units_cannot_be_selected_together)
         ),
     )
 
@@ -7395,7 +7407,7 @@ fun AppNavigation() {
                 try {
                     backupDatabase(context, uri)
                 } catch (e: Exception) {
-                    errorMessage = e.localizedMessage ?: "An unknown error occurred."
+                    errorMessage = e.localizedMessage ?: context.getString(R.string.message_an_unknown_error_occurred)
                 }
             }
         }
@@ -7412,7 +7424,7 @@ fun AppNavigation() {
                     // the home screen) to handle it, so we just force a restart.
                     showRestartDialog = true
                 } catch (e: Exception) {
-                    errorMessage = e.localizedMessage ?: "An unknown error occurred."
+                    errorMessage = e.localizedMessage ?: context.getString(R.string.message_an_unknown_error_occurred)
                 }
             }
         }
@@ -7539,7 +7551,7 @@ fun AppNavigation() {
                 viewModel(backStackEntry, factory = AppViewModelProvider.Factory),
                 navController,
                 onBackupClick = {
-                    backupLauncher.launch("price_tracker_backup.db")
+                    backupLauncher.launch("price_tracker_backup.db") // TODO PULL OUT AS CONSTANT AND MAKE IT STAY IN SYNC WITH APP NAME
                 },
                 onRestoreClick = {
                     restoreLauncher.launch(arrayOf("*/*"))
@@ -7581,7 +7593,7 @@ fun AppNavigation() {
                 GeneralSelectorScreen(
                     viewModel,
                     navController,
-                    title = topAppBarTitle("Edit collections", null),
+                    title = topAppBarTitle(stringResource(R.string.title_edit_data_sets), null),
                     getId = { it.id },
                     getName = { it.name },
                     onAddClick = {
@@ -7589,7 +7601,7 @@ fun AppNavigation() {
                         sharedViewModel.setEditDataSetScreenContent(null, locale)
                         navController.navigate("editDataSet")
                     },
-                    addContentDescription = "Add data set",
+                    addContentDescription = stringResource(R.string.content_description_add_data_set),
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
                         sharedViewModel.setEditDataSetScreenContent(it, locale)
@@ -7625,7 +7637,9 @@ fun AppNavigation() {
                 GeneralSelectorScreen(
                     viewModel,
                     navController,
-                    title = topAppBarTitle(if (!select) "Edit products" else "Select product", viewModel.uiContent.dataSet.name),
+                    title = topAppBarTitle(if (!select) stringResource(R.string.title_edit_items) else stringResource(
+                        R.string.title_select_item
+                    ), viewModel.uiContent.dataSet.name),
                     getId = { it.id },
                     getName = { it.name },
                     onAddClick = {
@@ -7637,7 +7651,7 @@ fun AppNavigation() {
                         sharedViewModel.setEditItemScreenContent(null, viewModel.uiContent.dataSet)
                         navController.navigate("editItem")
                     },
-                    addContentDescription = "Add item",
+                    addContentDescription = stringResource(R.string.content_description_add_item),
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
                         if (!select) {
@@ -7686,7 +7700,7 @@ fun AppNavigation() {
                 GeneralSelectorScreen(
                     viewModel,
                     navController,
-                    title = topAppBarTitle("Edit stores", dataSetName),
+                    title = topAppBarTitle(stringResource(R.string.title_edit_sources), dataSetName),
                     getId = { it.id },
                     getName = { it.name },
                     onAddClick = {
@@ -7694,7 +7708,7 @@ fun AppNavigation() {
                         sharedViewModel.setEditSourceScreenContent(null, viewModel.uiContent.dataSet, locale)
                         navController.navigate("editSource")
                     },
-                    addContentDescription = "Add source",
+                    addContentDescription = stringResource(R.string.content_description_add_source),
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
                         sharedViewModel.setEditSourceScreenContent(it, viewModel.uiContent.dataSet, locale)
@@ -7966,11 +7980,11 @@ This may be complete crap. The example of how to use it is probably as long as t
     if (errorMessage != null) {
         AlertDialog(
             onDismissRequest = { errorMessage = null },
-            title = { Text("Error") },
+            title = { Text(stringResource(R.string.title_error)) },
             text = { Text(errorMessage!!) },
             confirmButton = {
                 TextButton(onClick = { errorMessage = null }) {
-                    Text("OK")
+                    Text(stringResource(R.string.button_ok))
                 }
             }
         )
@@ -7985,8 +7999,8 @@ This may be complete crap. The example of how to use it is probably as long as t
 
         AlertDialog(
             onDismissRequest = { /* prevent dismissal */ },
-            title = { Text("App will restart") },
-            text = { Text("Applying restored data. Please wait...") },
+            title = { Text(stringResource(R.string.title_app_will_restart)) },
+            text = { Text(stringResource(R.string.message_applying_restored_data)) },
             confirmButton = {}
         )
     }
@@ -8012,7 +8026,7 @@ fun PackPriceAndSizeRow(
             .padding(bottom = 8.dp),
     ) {
         LabeledItem(
-            modifier = Modifier.weight(0.6f), label = "Shelf price"
+            modifier = Modifier.weight(0.6f), label = stringResource(R.string.label_shelf_price)
         ) {
             Text(
                 "${
@@ -8082,8 +8096,8 @@ fun PackPriceAndSizeRow(
                 selectedUnitPriceUnit,
             ).format(dataSet,LocalConfiguration.current.locales[0])
         LabeledItemWithDropdown(
-            modifier = Modifier.weight(0.4f), label = "Unit price",
-            dropdownContentDescription = "Select unit",
+            modifier = Modifier.weight(0.4f), label = stringResource(R.string.label_unit_price),
+            dropdownContentDescription = stringResource(R.string.content_description_select_unit),
             text = unitPriceString,
             enabled = asyncOperationStatus.isNotBusy(),
             items = relevantUnitList,
@@ -8140,7 +8154,7 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
             FileOutputStream(tempFile).use { output ->
                 input.copyTo(output)
             }
-        } ?: throw IOException("Failed to open input stream for URI: $sourceUri")
+        } ?: throw IOException("Failed to open input stream for URI: $sourceUri") // TODO LOCALISE??
 
         // Validate the backup file.
         checkDatabaseRestoreCandidate(tempFile.path)
@@ -8171,7 +8185,7 @@ fun checkDatabaseRestoreCandidate(dbPath: String) {
     db.use { db ->
         val version = db.version
         if (version > DB_VERSION) {
-            throw IllegalStateException("The database to restore is a newer version ($version) than this version of the app supports ($DB_VERSION).")
+            throw IllegalStateException("The database to restore is a newer version ($version) than this version of the app supports ($DB_VERSION).") // TODO LOCALISE
         }
 
         // Sanity check this isn't a database from some other random app. We're not trying to guard
@@ -8185,7 +8199,7 @@ fun checkDatabaseRestoreCandidate(dbPath: String) {
                 val tableExists = cursor.moveToFirst()
                 Log.d("MyAppRS", "tableExists $table: $tableExists")
                 if (!tableExists) {
-                    throw IllegalStateException("The database to restore was not created with this app.")
+                    throw IllegalStateException(context.getString(R.string.message_the_database_to_restore_was_not_created_with_this_app))
                 }
             }
         }
@@ -8232,7 +8246,7 @@ fun ItemSourceInfoHistory(
             if (priceHistoryDelta.confirmedAt != null) {
                 LabeledItem(
                     modifier = Modifier.padding(bottom = 8.dp),
-                    label = "Confirmed" /* "Last checked" */
+                    label = stringResource(R.string.label_confirmed)
                 ) {
                     Text(priceHistoryDelta.confirmedAt)
                 }
@@ -8240,7 +8254,7 @@ fun ItemSourceInfoHistory(
 
             if (priceHistoryDelta.notes != null) {
                     Row(modifier = Modifier.padding(bottom = 8.dp)) {
-                        LabeledItem("Notes") {
+                        LabeledItem(stringResource(R.string.label_notes)) {
                             Text(priceHistoryDelta.notes)
                         }
                     }
@@ -8277,7 +8291,7 @@ fun ViewPriceHistoryScreen(
             TopAppBar(
                 navigationIcon = {
                     IconButton(onClick = { requestClose() }) {
-                        Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = stringResource(R.string.content_description_back))
                     }
                 },
                 title = topAppBarTitle(viewModel.uiContent.item.name, viewModel.uiContent.source.name),
@@ -8305,7 +8319,7 @@ fun ViewPriceHistoryScreen(
             ) {
                 itemsIndexed(priceHistoryDeltaList) { index, priceHistoryDelta ->
                     if (priceHistoryDelta == null) {
-                        HorizontalDividerWithText("deleted")
+                        HorizontalDividerWithText(context.getString(R.string.label_deleted))
                      } else {
                         Box {
                             ItemSourceInfoHistory(
@@ -8336,7 +8350,7 @@ fun ViewPriceHistoryScreen(
                                 // including it may lose clarity since we might wonder why it's
                                 // there if there's no comment about this)
                                 MyDropdownMenuItem(
-                                    text = { Text("Edit as new price") },
+                                    text = { Text(stringResource(R.string.menu_item_edit_as_new_price)) },
                                     enabled = viewModel.uiContent.price == null || index > 0,
                                     onClick = {
                                         requestMenuClose(); requestEditAsNew(
