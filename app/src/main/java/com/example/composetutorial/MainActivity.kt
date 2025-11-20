@@ -1145,7 +1145,7 @@ class HomeViewModel(
         .asLoadState()
 
     private val _localeFlow = MutableStateFlow(Locale.getDefault())
-    val localeFlow: StateFlow<Locale> = _localeFlow
+    private val localeFlow: StateFlow<Locale> = _localeFlow
 
     fun updateLocale(locale: Locale) {
         _localeFlow.value = locale
