@@ -9080,4 +9080,5 @@ com.example.myapp/
 // TODO: Some and probably all of the settingsdialog things give silly error messages if you type
 // "-3a" or something. Do we need to tweak validation? Maybe have an initial "invalid number" check?
 // Can/should we be restricting to numeric input and/or hinting at using a numeric on screen
-// keyboard?
+// keyboard? Do we need to impose a maximum length? Should we be using (a variant of?) our existing
+// NumericTextField?
