@@ -57,6 +57,7 @@
     <string name="content_description_stale_price">Stale price</string>
     <string name="content_description_ancient_price">Ancient price</string>
     <string name="title_price_comparison">Price comparison</string>
+    <!-- TODO: "subtitle_" prefix isn't getting much use? Get rid of it? Use it in other places?! -->
     <string name="subtitle_adjusted_for_discounts_and_age">Adjusted for loyalty discounts and old prices</string>
     <string name="message_no_prices_for_item_at_source">There are no prices recorded for this product at any store yet.</string>
     <string name="label_confirm_pack_size_and_price">Confirm pack size and price</string>
@@ -182,6 +183,8 @@
     <string name="content_description_header_price_per">Price per %1$s</string>
     <string name="content_description_header_price_no_per">Price %1$s</string>
     <string name="supporting_text_stale_prices_increase_by_percent_per_year">Stale prices increase by %1$d%% per year</string>
+    <string name="supporting_text_annual_inflation">Stale prices increase by this annual rate. This is only an estimate — update prices when you can for better accuracy.</string>
+    <string name="label_version">Version %1$s</string>
     <plurals name="supporting_text_prices_considered_stale_after_x_days">
         <item quantity="one">Prices considered stale after %1$d day</item>
         <item quantity="other">Prices considered stale after %1$d days</item>

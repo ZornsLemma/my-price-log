@@ -5323,7 +5323,7 @@ fun numericValidationRules(
             ValidationRule({
                 val parts = sanitiseCandidate(it).split(decimalSeparator)
                 parts.size != 2 || parts[1].length <= maxDecimals
-            }, UiText.PluralsRes(R.plurals.supporting_text_no_more_than_x_decimal_places_allowed, maxDecimals, listOf(maxDecimals))) // TODO LOCALIZE
+            }, UiText.PluralsRes(R.plurals.supporting_text_no_more_than_x_decimal_places_allowed, maxDecimals, listOf(maxDecimals)))
         } else {
             null
         },
@@ -5661,7 +5661,7 @@ fun SettingsScreen(
         if (showAnnualInflationPercentDialog) {
             SettingsDialog(
                 title = stringResource(R.string.title_annual_inflation),
-                subtitle = "Stale prices increase by this annual rate. This is only an estimate $emDash update prices when you can for better accuracy.", // TODO LOCALISE
+                subtitle = stringResource(R.string.supporting_text_annual_inflation),
                 label = stringResource(R.string.title_annual_inflation),
                 suffix = { Text("%") },
                 initialValue = annualInflationPercent.toString(),
@@ -5861,9 +5861,9 @@ fun getAppVersion(): String {
                 @Suppress("DEPRECATION")
                 pInfo.versionCode.toLong()
             }
-            "Version $versionName" // could add " ($versionCode)"?
+            context.getString(R.string.label_version, versionName) // could add " ($versionCode)"?
         } catch (e: PackageManager.NameNotFoundException) {
-            "Version unknown" // TODO: LOCALISE???
+            "Version unknown"
         }
     }
 }
@@ -6052,7 +6052,7 @@ fun LegalScreen(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Copyright $copyrightSymbol 2025 TODOMYNAME", // TODO LOCALISE FULLY
+                text = "Copyright $copyrightSymbol 2025 TODOMYNAME",
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(modifier = Modifier.height(8.dp))
