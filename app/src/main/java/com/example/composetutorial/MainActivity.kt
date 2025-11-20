@@ -8706,15 +8706,6 @@ val Context.userPreferencesStore: DataStore<UserPrefs.UserPreferences> by dataSt
     serializer = UserPreferencesSerializer
 )
 
-/* TODO TEMP TEST CODE FOR MEASUREDVALUE
-val foo = MeasuredValue(5.0, MeasurementUnit.KG)
-val bar = MeasuredValue(2.3, MeasurementUnit.ML)
-val quux = bar.to(MeasurementUnit.FLOZ)
-Log.d("MyApp", quux.toString())
-var baz = foo + barq
-Log.d("MyApp", baz.toString())
-*/
-
 // ENHANCE: I have completely ignored "unlikely" errors (like exceptions being thrown when accessing
 // the database) in most of this code - what can/should we do about this? I suspect most such errors
 // are basically unrecoverable and it's more-or-less OK if the process just dies, but I'm not sure
