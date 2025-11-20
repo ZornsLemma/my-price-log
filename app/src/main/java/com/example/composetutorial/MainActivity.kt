@@ -8608,31 +8608,20 @@ fun quantile(sortedValues: List<Double>, q: Double): Double {
 // refactoring and maybe augmentPrice should be inlined as this is its only caller and that *might*
 // help. It also feels like we're having to pass far too much random stuff in as parameters.
 fun analysePrices(
-    dataSet: DataSet?,
+    dataSetTODO: DataSet?,
     priceList: List<Price>,
     sourceList: List<Source>,
     priceAgeSettings: PriceAgeSettings,
 ): PriceAnalysis {
-    val sourceById = sourceList.associateBy { it.id }
-    if (dataSet == null) {
-        // TODO: having to do this so explicitly feels awful - the result is fine, but the implementation feels bad
-        return PriceAnalysis(emptyList(), null)
-    }
     if (priceList.isEmpty()) {
-        // TODO: again, return value is fine but writing this here feels like a hack. this is all kind of related to
-        // how the following code is evolving and it may be I need to refactor augmentPrice() and or some of the unitprice
-        // stuff so I can just have things "flow through" more naturally even if some things aren't available. (remember
-        // we may be in a case where the home screen is basically null all the way - it's not about data not being available yet,
-        // it's about corner cases where there *is* no data.)
         return PriceAnalysis(emptyList(), null)
     }
 
+    val sourceById = sourceList.associateBy { it.id }
     var augmentedPriceList = priceList.mapNotNull { price ->
         // I don't think we can have a Price but not the corresponding Source, but we play it safe
         // just in case.
-        sourceById[price.sourceId]?.let { source ->
-                augmentPrice(price, source, priceAgeSettings)
-        }
+        sourceById[price.sourceId]?.let { source -> augmentPrice(price, source, priceAgeSettings) }
     }.sortedBy { it.unitPrice }
 
     // augmentPrice() should have generated all unit prices using the base unit, but let's check
