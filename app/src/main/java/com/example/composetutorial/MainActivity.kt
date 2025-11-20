@@ -196,6 +196,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 //import androidx.compose.ui.semantics.SemanticsProperties.Role
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -408,18 +409,18 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     val currencyMultiplier = 10.0.pow(2 - currency.defaultFractionDigits)
     val dataSetId = repository.updateOrInsertDataSet(
         DataSet(
-            name = "Groceries (demo)",
+            name = context.getString(R.string.demo_groceries_data_set_name),
             currencyCode = currency.currencyCode,
             allowMetric = true,
             allowImperial = true,
             allowUSCustomary = false,
-            notes = "A sample collection of unrealistic grocery prices for imaginary stores. This is intended to give you something to play with when you first install the app.",
+            notes = context.getString(R.string.demo_groceries_data_set_notes),
         )
     )
     val itemIdGroundCoffee = repository.updateOrInsertItem(
         Item(
             dataSetId = dataSetId,
-            name = "Coffee (ground)",
+            name = context.getString(R.string.demo_groceries_item_name_coffee_ground),
             defaultUnit = MeasurementUnit.G,
             allowMultipack = false,
             notes = ""
@@ -428,7 +429,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     val itemIdWholeMilk = repository.updateOrInsertItem(
         Item(
             dataSetId = dataSetId,
-            name = "Milk (whole)",
+            name = context.getString(R.string.demo_groceries_item_name_milk_whole),
             defaultUnit = MeasurementUnit.L,
             allowMultipack = false,
             notes = "",
@@ -437,7 +438,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     val itemIdTeabags = repository.updateOrInsertItem(
         Item(
             dataSetId = dataSetId,
-            name = "Teabags",
+            name = context.getString(R.string.demo_groceries_item_name_teabags),
             defaultUnit = MeasurementUnit.EACH,
             allowMultipack = false,
             notes = "",
@@ -446,7 +447,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     val itemIdCola = repository.updateOrInsertItem(
         Item(
             dataSetId = dataSetId,
-            name = "Cola",
+            name = context.getString(R.string.demo_groceries_item_name_cola),
             defaultUnit = MeasurementUnit.ML,
             allowMultipack = true,
             notes = ""
@@ -457,7 +458,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     val sourceIdValueMart = repository.updateOrInsertSource(
         Source(
             dataSetId = dataSetId,
-            name = "ValueMart",
+            name = context.getString(R.string.demo_groceries_source_name_valuemart),
             loyaltyType = LoyaltyType.NONE,
             loyaltyMultiplier = 1.0,
             notes = ""
@@ -466,7 +467,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     val sourceIdSuperiorStore = repository.updateOrInsertSource(
         Source(
             dataSetId = dataSetId,
-            name = "SuperiorStore",
+            name = context.getString(R.string.demo_groceries_source_name_superiorstore),
             loyaltyType = LoyaltyType.NONE,
             loyaltyMultiplier = 1.0,
             notes = ""
@@ -475,7 +476,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     val sourceIdGrandways = repository.updateOrInsertSource(
         Source(
             dataSetId = dataSetId,
-            name = "Grandways",
+            name = context.getString(R.string.demo_groceries_source_name_grandways),
             loyaltyType = LoyaltyType.NONE,
             loyaltyMultiplier = 1.0,
             notes = ""
@@ -485,10 +486,10 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     repository.updateOrInsertSource(
         Source(
             dataSetId = dataSetId,
-            name = "Newco",
+            name = context.getString(R.string.demo_groceries_source_name_newco),
             loyaltyType = LoyaltyType.NONE,
             loyaltyMultiplier = 1.0,
-            notes = "Only just opened but I hope their prices will be good."
+            notes = context.getString(R.string.demo_groceries_source_notes_newco)
         )
     )
     val now = Instant.now()
@@ -501,7 +502,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             count = 1,
             quantity = MeasuredValue(500.0, MeasurementUnit.G),
             confirmedAt = now.minus(2, ChronoUnit.MINUTES),
-            notes = "Large pack own brand",
+            notes = context.getString(R.string.demo_groceries_notes_large_pack_own_brand),
             itemDefaultUnit = MeasurementUnit.G,
             modifiedAt = now.minus(2, ChronoUnit.MINUTES)
         )
@@ -515,7 +516,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             count = 1,
             quantity = MeasuredValue(227.0, MeasurementUnit.G),
             confirmedAt = now.minus(4, ChronoUnit.DAYS),
-            notes = "Own brand",
+            notes = context.getString(R.string.demo_groceries_notes_own_brand),
             itemDefaultUnit = MeasurementUnit.G,
             modifiedAt = now.minus(4, ChronoUnit.DAYS),
         )
@@ -591,7 +592,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             count = 1,
             quantity = MeasuredValue(40.0, MeasurementUnit.EACH),
             confirmedAt = now.minus(7, ChronoUnit.DAYS),
-            notes = "Soft pack own brand",
+            notes = context.getString(R.string.demo_groceries_notes_soft_pack_own_brand),
             itemDefaultUnit = MeasurementUnit.EACH,
             modifiedAt = now.minus(7, ChronoUnit.DAYS),
         )
@@ -1527,7 +1528,7 @@ fun ItemSourceSelector(
             TextField(
                 value = item?.name ?: "",
                 onValueChange = { /* No-op, read-only */ },
-                label = { Text("Product") },
+                label = { Text(stringResource(R.string.label_item)) },
                 enabled = false, // so Modifier.clickable() works
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1536,7 +1537,7 @@ fun ItemSourceSelector(
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = "Search products",
+                        contentDescription = stringResource(R.string.content_description_search_products),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 },
@@ -1549,7 +1550,7 @@ fun ItemSourceSelector(
                 // need to tap this TextField to open the selector). So we show a supportingText
                 // only if there are no items at all.
                 supportingText = if (item != null || itemList.isNotEmpty()) null else { {
-                        Text("There are no products in this collection. Add one using the overflow menu at the top right.")
+                        Text(stringResource(R.string.supporting_text_no_items_in_data_set))
                 } }
             )
         }
@@ -1566,8 +1567,9 @@ fun ItemSourceSelector(
         // If sourceList is empty this will generate a single-item menu with just "None" in,
         // but that is probably better than the "skeleton" menu we get with no items in.
         val locale = LocalConfiguration.current.locales[0]
-        val sourceListSorted = remember(sourceList, locale) {
-            listOf(Pair(sourceIdNone, "None")) + sourceList.sortedByLocale({ it.name }, locale)
+        val sourceNameNone = stringResource(R.string.source_name_none)
+        val sourceListSorted = remember(sourceNameNone, sourceList, locale) {
+            listOf(Pair(sourceIdNone, sourceNameNone)) + sourceList.sortedByLocale({ it.name }, locale)
                 .map { Pair(it.id, it.name) }
         }
         Log.d("MyApp", "sourceListSorted $sourceListSorted")
@@ -1590,11 +1592,11 @@ fun ItemSourceSelector(
                 selectedId = source?.id, /* ?: sourceIdNone */
                 onItemSelected = { onSelectedSourceIdChange(it) },
                 enabled = asyncOperationStatus.isNotBusy(),
-                label = { Text("Store") },
+                label = { Text(stringResource(R.string.label_source)) },
                 // It's normal to have no source selected, but if there are no sources defined at
                 // all it seems best to offer the user a hint.
                 supportingText = if (sourceList.isNotEmpty()) null else { {
-                    Text("There are no stores in this collection. Add one using the overflow menu at the top right.")
+                    Text(stringResource(R.string.supporting_text_no_sources_in_data_set))
                 } },
                 items = sourceListSorted,
                 getId = { it.first },
@@ -1678,7 +1680,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Expand",
+                        contentDescription = stringResource(R.string.content_description_expand),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         // Not 100% sure about this rotation behaviour, but e.g. the screenshot of
                         // the "Text field" configuration at the bottom of
@@ -1777,7 +1779,7 @@ fun RelativeTimeText(augmentedPrice: AugmentedPrice) {
     // getRelativeTimeSpanString() returns "0 min. ago" in English for ages under 60 seconds, and
     // presumably similar in other languages, so we special-case this.
     Log.d("MyAppRTT", "$ageInSeconds $confirmedAt $now")
-    val relativeTime = if (ageInSeconds < 60) "now" else DateUtils.getRelativeTimeSpanString(
+    val relativeTime = if (ageInSeconds < 60) stringResource(R.string.relative_time_span_string_now) else DateUtils.getRelativeTimeSpanString(
         confirmedAt.toEpochMilli(),
         now.toEpochMilli(),
         DateUtils.MINUTE_IN_MILLIS,
@@ -1986,14 +1988,14 @@ fun ItemSourceInfoLive(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Box {
-            StorePriceCardBody(vm, asyncOperationStatus, dataSet, augmentedPrice, onEditPriceClick)
-            StorePriceCardMenu(vm, asyncOperationStatus, dataSet, item, source, augmentedPrice, onViewHistoryClick, onDeletePriceClick, menuModifier = Modifier.align(Alignment.TopEnd))
+            SourcePriceCardBody(vm, asyncOperationStatus, dataSet, augmentedPrice, onEditPriceClick)
+            SourcePriceCardMenu(vm, asyncOperationStatus, dataSet, item, source, augmentedPrice, onViewHistoryClick, onDeletePriceClick, menuModifier = Modifier.align(Alignment.TopEnd))
         }
     }
 }
 
 @Composable
-fun StorePriceCardBody(
+fun SourcePriceCardBody(
     vm: HomeViewModel,
     asyncOperationStatus: AsyncOperationStatus,
     dataSet: DataSet,
@@ -2018,12 +2020,12 @@ fun StorePriceCardBody(
             .animateContentSize()
             .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
     ) {
-        CardTitle("Store price")
+        CardTitle(stringResource(R.string.title_source_price))
 
         if (true) {
             if (augmentedPrice == null) {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Text("There is no price recorded for this product at this store yet.")
+                    Text(stringResource(R.string.message_no_price_for_item_at_source))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
@@ -2032,7 +2034,7 @@ fun StorePriceCardBody(
                             onClick = onEditPriceClick,
                             shape = MaterialTheme.shapes.small
                         ) {
-                            Text("Add")
+                            Text(stringResource(R.string.button_add))
                         }
                     }
                 }
@@ -2049,14 +2051,14 @@ fun StorePriceCardBody(
 
                 LabeledItem(
                     modifier = Modifier.padding(bottom = 8.dp),
-                    label = "Confirmed" /* "Last checked" */
+                    label = stringResource(R.string.label_confirmed)
                 ) {
                     RelativeTimeText(augmentedPrice)
                 }
 
                 if (price.notes.isNotEmpty()) {
                     Row(modifier = Modifier.padding(bottom = 8.dp)) {
-                        LabeledItem("Notes") {
+                        LabeledItem(stringResource(R.string.label_notes)) {
                             Text(price.notes)
                         }
                     }
@@ -2096,7 +2098,7 @@ fun OverflowMenu(
 }
 
 @Composable
-fun StorePriceCardMenu(
+fun SourcePriceCardMenu(
     vm: HomeViewModel,
     asyncOperationStatus: AsyncOperationStatus,
     dataSet: DataSet,

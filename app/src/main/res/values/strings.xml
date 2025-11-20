@@ -1,3 +1,30 @@
 <resources>
     <string name="app_name">ComposeTutorial</string>
+    <string name="demo_groceries_data_set_name">Groceries (demo)</string>
+    <string name="demo_groceries_data_set_notes">A sample collection of unrealistic grocery prices for imaginary stores. This is intended to give you something to play with when you first install the app.</string>
+    <string name="demo_groceries_item_name_coffee_ground">Coffee (ground)</string>
+    <string name="demo_groceries_item_name_milk_whole">Milk (whole)</string>
+    <string name="demo_groceries_item_name_teabags">Teabags</string>
+    <string name="demo_groceries_item_name_cola">Cola</string>
+    <string name="demo_groceries_source_name_valuemart">ValueMart</string>
+    <string name="demo_groceries_source_name_superiorstore">SuperiorStore</string>
+    <string name="demo_groceries_source_name_grandways">Grandways</string>
+    <string name="demo_groceries_source_name_newco">Newco</string>
+    <string name="demo_groceries_source_notes_newco">Only just opened but I hope their prices will be good.</string>
+    <string name="demo_groceries_notes_large_pack_own_brand">Large pack own brand</string>
+    <string name="demo_groceries_notes_own_brand">Own brand</string>
+    <string name="demo_groceries_notes_soft_pack_own_brand">Soft pack own brand</string>
+    <string name="label_item">Product</string>
+    <string name="content_description_search_products">Search products</string>
+    <string name="supporting_text_no_items_in_data_set">There are no products in this collection. Add one using the overflow menu at the top right.</string>
+    <string name="label_source">Store</string>
+    <string name="supporting_text_no_sources_in_data_set">There are no stores in this collection. Add one using the overflow menu at the top right.</string>
+    <string name="source_name_none">None</string>
+    <string name="content_description_expand">Expand</string>
+    <string name="relative_time_span_string_now">now</string>
+    <string name="title_source_price">Store price</string>
+    <string name="message_no_price_for_item_at_source">There is no price recorded for this product at this store yet.</string>
+    <string name="button_add">Add</string>
+    <string name="label_confirmed">Confirmed</string>
+    <string name="label_notes">Notes</string>
 </resources>
