@@ -5323,7 +5323,7 @@ fun numericValidationRules(
             ValidationRule({
                 val parts = sanitiseCandidate(it).split(decimalSeparator)
                 parts.size != 2 || parts[1].length <= maxDecimals
-            }, UiText.PluralsRes(R.plurals.supporting_text_no_more_than_x_decimal_places_allowed, listOf(maxDecimals))) // TODO LOCALIZE
+            }, UiText.PluralsRes(R.plurals.supporting_text_no_more_than_x_decimal_places_allowed, maxDecimals, listOf(maxDecimals))) // TODO LOCALIZE
         } else {
             null
         },
@@ -5530,7 +5530,7 @@ fun SettingsScreen(
                 title = stringResource(R.string.title_stale_price_threshold),
                 subtitle = pluralStringResource(
                     R.plurals.supporting_text_prices_considered_stale_after_x_days,
-                    count = stalePriceThreshold /* TODO SHOULD THIS BE 1???? */ ,stalePriceThreshold
+                    count = stalePriceThreshold,stalePriceThreshold
                 ),
                 onClick = {
                     showStalePriceThresholdDialog = true
@@ -5541,7 +5541,7 @@ fun SettingsScreen(
                 title = stringResource(R.string.title_ancient_price_threshold),
                 subtitle = pluralStringResource(
                     R.plurals.supporting_text_prices_considered_ancient_after_x_days,
-                    count = ancientPriceThresholdDays /* TODO SHOULD THIS BE 1???? */ , ancientPriceThresholdDays
+                    count = ancientPriceThresholdDays, ancientPriceThresholdDays
                 ),
                 onClick = {
                     showAncientPriceThresholdDialog = true
@@ -8809,12 +8809,12 @@ sealed class UiText {
     // out once I no longer need it.
     data class Dynamic(val text: String) : UiText()
     data class Res(@param:StringRes val resId: Int, val args: List<Any> = emptyList()) : UiText()
-    data class PluralsRes(@param:androidx.annotation.PluralsRes val resId: Int, val args: List<Any> = emptyList()) : UiText()
+    data class PluralsRes(@param:androidx.annotation.PluralsRes val resId: Int, val quantity: Int, val args: List<Any> = emptyList()) : UiText()
 
     fun asString(context: Context): String = when (this) {
         is Dynamic -> text
         is Res -> context.getString(resId, *args.toTypedArray())
-        is UiText.PluralsRes -> context.resources.getQuantityString(resId, args.size, *args.toTypedArray())
+        is UiText.PluralsRes -> context.resources.getQuantityString(resId, quantity, *args.toTypedArray())
     }
 
     @Composable
