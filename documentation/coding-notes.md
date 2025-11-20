@@ -28,6 +28,8 @@ Rotations are the canonical example of activities being destroyed and re-created
 
 * Don't use raw TextFields without taking explicit steps to limit the amount of text that can be entered. In practice, use one of the custom composables which wraps a TextField and adds this kind of restriction. This limit can be fairly generous but in general we don't want users maliciously or accidentally entering megabytes of text. Even a few hundred characters in some text fields might be enough to wreck the screen layout and make the app almost unrecoverable.
 
+* `^(?!.*//).*".*"` is a reasonable regular expression to find literal strings (for localisation) which aren't in comments.
+
 ## Database conventions
 
 * The primary key in a table is just called "id", not "table_id".

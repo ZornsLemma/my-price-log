@@ -4013,7 +4013,7 @@ fun GeneralEditScreen(
         // I copied the wording of this dialog directly from a screenshot in the M3 documentation.
         AlertDialog(
             title = { Text(stringResource(R.string.title_discard_unsaved_changes)) },
-            text = { Text(stringResource(R.string.messages_unsaved_changes)) },
+            text = { Text(stringResource(R.string.message_unsaved_changes)) },
             onDismissRequest = { showConfirmDiscardDialog = false },
             dismissButton = {
                 TextButton(onClick = {
@@ -4065,7 +4065,7 @@ fun AsyncOperationErrorAlertDialog(onDismissRequest: () -> Unit, message: String
         text = { Text(message) },
         onDismissRequest = onDismissRequest,
         confirmButton = {
-            TextButton(onClick = { onDismissRequest() }) { Text("OK") }
+            TextButton(onClick = { onDismissRequest() }) { Text(stringResource(R.string.button_ok)) }
         }
     )
 }
@@ -4113,13 +4113,14 @@ fun GeneralEditAndDeleteScreen(
         val dialogTitle = deleteConfirmationDetails.second
         val dialogText = deleteConfirmationDetails.third
 
+        val contentDescriptionWarning = stringResource(R.string.content_description_warning)
         AlertDialog(
-            icon = if (isSimpleDelete) null else { { WarningIcon(contentDescription = "Warning") } },
+            icon = if (isSimpleDelete) null else { { WarningIcon(contentDescription = contentDescriptionWarning) } },
             title = dialogTitle,
             text = dialogText,
             onDismissRequest = { onDeleteConfirmDismissRequest() },
             dismissButton = {
-                TextButton(onClick = { onDeleteConfirmDismissRequest() }) { Text("Cancel") }
+                TextButton(onClick = { onDeleteConfirmDismissRequest() }) { Text(stringResource(R.string.button_cancel)) }
             },
             confirmButton = {
                 TextButton(onClick = {
@@ -4138,7 +4139,7 @@ fun GeneralEditAndDeleteScreen(
                             null
                         }
                     )
-                }) { Text("Delete" /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
+                }) { Text(stringResource(R.string.button_delete) /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
             },
         )
     }
@@ -4160,10 +4161,15 @@ fun EditItemScreen(
     val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = itemReferenceCount == 0L
+    val dialogTitle = stringResource(if (isSimpleDelete) R.string.title_delete_item else R.string.title_delete_item_and_prices)
+    // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
+    val dialogSubtitle = stringResource(if (isSimpleDelete) R.string.message_delete_item_no_associated_prices else R.string.message_delete_item_associated_prices)
     GeneralEditAndDeleteScreen(
         vm = vm.generalEditScreenViewModel,
         navController = navController,
-        title = topAppBarTitle( if (vm.uiContent.editableItem.value.id == 0L) "Add product" else "Edit product", vm.uiContent.dataSet.name),
+        title = topAppBarTitle( if (vm.uiContent.editableItem.value.id == 0L) stringResource(R.string.title_add_item) else stringResource(
+            R.string.title_edit_item
+        ), vm.uiContent.dataSet.name),
         isDirty = { uiContent.editableItem.value != uiContent.originalItem },
         validateForSave = { vm.validateForSave() },
         performSave = { vm.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
@@ -4171,17 +4177,8 @@ fun EditItemScreen(
         requestClose = requestClose,
         deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
             isSimpleDelete,
-            if (isSimpleDelete) {
-                { Text("Delete product?") }
-            } else {
-                { Text("Delete product and prices?") }
-            },
-            if (isSimpleDelete) {
-                { Text("This product has no associated prices so deleting it will not affect anything else.") }
-            } else {
-                // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
-                { Text("Deleting this product will also delete its store prices. This action cannot be undone.") }
-            }
+            { Text(dialogTitle) },
+            { Text(dialogSubtitle) },
         ),
         performDelete = { vm.performDelete() },
         onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
@@ -4190,7 +4187,7 @@ fun EditItemScreen(
         val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
         ValidatedFilteredTextField(
-            label = { Text("Name") },
+            label = { Text(stringResource(R.string.label_name)) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = name,
             maxLength = maxItemNameLength,
@@ -4216,13 +4213,13 @@ fun EditItemScreen(
         val options = listOf(
             Triple<QuantityType,String,String?>(
                 QuantityType.ITEM,
-                "Item",
+                stringResource(R.string.label_sold_by_item),
                 null // was "Per item or pack of items" but probably clearer without it
             ),
-            Triple(QuantityType.WEIGHT, "Weight", null),
+            Triple(QuantityType.WEIGHT, stringResource(R.string.label_sold_by_weight), null),
             Triple(
                 QuantityType.VOLUME,
-                "Volume",
+                stringResource(R.string.label_sold_by_volume),
                 null,
             ),
         )
@@ -4252,7 +4249,7 @@ fun EditItemScreen(
                     .padding(horizontal = 8.dp, vertical = 12.dp)
             ) {
                 Text(
-                    "Sold by",
+                    stringResource(R.string.label_sold_by),
                     style = MaterialTheme.typography.titleSmall /* bodySmall */,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 8.dp)
@@ -4300,7 +4297,7 @@ fun EditItemScreen(
                 }
                 if (!isSimpleDelete) {
                     SupportingText(
-                        "The 'Sold by' setting can’t be changed because there are prices recorded for this product.",
+                        stringResource(R.string.supporting_text_sold_by_cant_be_changed),
                         isError = false,
                         modifier = Modifier.padding(start = 8.dp)
                     )
@@ -4350,8 +4347,8 @@ fun EditItemScreen(
                                 )
                             }
                         },
-                        label = { Text("Default unit") },
-                        supportingText = { Text("Used only as a default when entering a price for the first time. You can still choose another unit.") },
+                        label = { Text(stringResource(R.string.label_default_unit)) },
+                        supportingText = { Text(stringResource(R.string.supporting_text_default_unit)) },
                         items = relevantUnitList,
                         getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
                         getId = { it.id },
@@ -4372,12 +4369,12 @@ fun EditItemScreen(
         ) {
             Column {
                 Text(
-                    text = "May be sold in multipacks",
+                    text = stringResource(R.string.label_may_be_sold_in_multipacks),
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     // TODO: If I change the "pack size" terminology elsewhere, need to change this too
-                    text = "Allow entering a count as well as a pack size",
+                    text = stringResource(R.string.supporting_text_may_be_sold_in_multipacks),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -4423,11 +4420,11 @@ fun EditItemScreen(
                 } else {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = "Delete"
+                        contentDescription = stringResource(R.string.content_description_delete)
                     )
                 }
                 Spacer(Modifier.width(8.dp))
-                Text("Delete product")
+                Text(stringResource(R.string.button_delete_item))
             }
         }
     }
