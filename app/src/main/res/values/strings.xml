@@ -185,6 +185,9 @@
     <string name="supporting_text_stale_prices_increase_by_percent_per_year">Stale prices increase by %1$d%% per year</string>
     <string name="supporting_text_annual_inflation">Stale prices increase by this annual rate. This is only an estimate — update prices when you can for better accuracy.</string>
     <string name="label_version">Version %1$s</string>
+    <string name="label_metric">Metric</string>
+    <string name="label_imperial">Imperial</string>
+    <string name="label_us_units">US units</string>
     <plurals name="supporting_text_prices_considered_stale_after_x_days">
         <item quantity="one">Prices considered stale after %1$d day</item>
         <item quantity="other">Prices considered stale after %1$d days</item>

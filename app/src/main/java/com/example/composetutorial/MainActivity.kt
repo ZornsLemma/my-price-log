@@ -4953,7 +4953,9 @@ fun EditDataSetScreen(
             // impossible to get them out of sync and might be cleaner. I don't know if this would
             // cause i18n problems though (Grok says it's fine), so maybe leave trying this until
             // later.
-            val options = listOf("Metric", "Imperial", "US units") // must match UnitPreferenceOption
+            val options = listOf(stringResource(R.string.label_metric),
+                stringResource(R.string.label_imperial), stringResource(R.string.label_us_units)
+            ) // must match UnitPreferenceOption
             // We *don't* call Modifier.validationFocusRequester() as you can't focus a segmented
             // button, and this will force a clear focus to happen on validation errors instead.
             MultiChoiceSegmentedButtonRow(
