@@ -8167,7 +8167,6 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
 fun checkDatabaseRestoreCandidate(dbPath: String) {
     val db = SQLiteDatabase.openDatabase(dbPath, null, SQLiteDatabase.OPEN_READONLY)
     db.use { db ->
-
         val version = db.version
         if (version > DB_VERSION) {
             throw IllegalStateException("The database to restore is a newer version ($version) than this version of the app supports ($DB_VERSION).")
