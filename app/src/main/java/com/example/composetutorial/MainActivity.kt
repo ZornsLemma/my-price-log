@@ -8268,14 +8268,10 @@ fun ViewPriceHistoryScreen(
                 .padding(innerPadding)
                 .padding(screenBorder)
         ) {
-
-            // TODO: Do I need to specify a key for the rows?
-            // TODO: It's likely inefficient to be doing the conversions inside LazyColumn and we should really be pre-filtering the list with val displayItems = remember(priceHistoryList) { priceHistoryList.map { } } or something, but I'm just going to hack it for now
             val dateFormatter = remember(locale, zoneId) {
                 DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale)
                     .withZone(zoneId)
             }
-
 
             val timeFormatter = remember(locale, zoneId) {
                 DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
