@@ -8631,13 +8631,9 @@ fun analysePrices(
         "Not all augmentedPriceList values have identical unitPrice denominators"
     }
 
-    val recentEnoughPriceList = augmentedPriceList.mapNotNull { augmentedPrice ->
-        if (augmentedPrice.ageClass == AgeClass.ANCIENT) {
-            null
-        } else {
-            augmentedPrice.unitPrice.numerator
-        }
-    }
+    val recentEnoughPriceList = augmentedPriceList
+        .filter { it.ageClass != AgeClass.ANCIENT }
+        .map { it.unitPrice.numerator }
 
     Log.d("MyApp", "recentEnoughPriceList $recentEnoughPriceList")
     val priceClassificationThresholds = if (recentEnoughPriceList.size <= 2) {
@@ -8656,6 +8652,7 @@ fun analysePrices(
         val k = 0.1 // ENHANCE: Make this configurable in settings? May be too "advanced"...
         PriceClassificationThresholds(good = UnitPrice(lowerQuartile * (1 - k), unitPriceDenominator), bad = UnitPrice(upperQuartile * (1 + k), unitPriceDenominator))
     }
+
     augmentedPriceList = augmentedPriceList.map { augmentedPrice ->
         // We classify prices even if they aren't fresh. This seems best, they are marked as stale
         // so the user can tell, but it's not unreasonable to offer a judgement.
