@@ -1306,7 +1306,7 @@ class HomeViewModel(
                     // fine doing it in this coroutine on the main thread, but just possibly we
                     // should shift (probably the whole database flow, but maybe just this work)
                     // onto a coroutine on a worker thread?
-                    val priceAnalysis = analysePrices(dataSet, priceList, sourceList, priceAgeSettings)
+                    val priceAnalysis = analysePrices(priceList, sourceList, priceAgeSettings)
 
                     Log.d("MyFlow", "derived analysedPriceList")
 
@@ -8603,12 +8603,7 @@ fun quantile(sortedValues: List<Double>, q: Double): Double {
     return sortedValues[lowerIndex] * (1 - fractionalIndex) + sortedValues[upperIndex] * fractionalIndex
 }
 
-
-// TODO: This code feels a bit awkward somehow, maybe the unit price calculation code needs
-// refactoring and maybe augmentPrice should be inlined as this is its only caller and that *might*
-// help. It also feels like we're having to pass far too much random stuff in as parameters.
 fun analysePrices(
-    dataSetTODO: DataSet?,
     priceList: List<Price>,
     sourceList: List<Source>,
     priceAgeSettings: PriceAgeSettings,
