@@ -87,7 +87,7 @@
     <string name="label_sold_by_weight">Peso</string>
     <string name="label_sold_by_volume">Volumen</string>
     <string name="label_sold_by">Vendido por</string>
-    <string name="supporting_text_sold_by_cant_be_changed">No se puede cambiar «Se vende por» porque ya hay precios registrados para este producto.</string>
+    <string name="supporting_text_sold_by_cant_be_changed">No se puede cambiar «Vendido por» porque ya hay precios registrados para este producto.</string>
     <string name="label_default_unit">Unidad predeterminada</string>
     <string name="supporting_text_default_unit">Solo se usa como predeterminada la primera vez que añades un precio. Luego puedes elegir otra unidad.</string>
     <string name="label_may_be_sold_in_multipacks">Puede venderse en multipacks</string>
