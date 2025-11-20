@@ -8994,3 +8994,7 @@ com.example.myapp/
 
 // TODO: Make sure to do some testing and check the log for strict mode violations towards end of
 // dev.
+
+// ENHANCE: It would be nice to add automated tests. At the very least, MeasuredValue could be
+// usefully tested. It would also be interesting and perhaps useful to add some unit tests for more
+// of the business logic, mocking the repository, etc.
