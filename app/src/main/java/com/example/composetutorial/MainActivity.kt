@@ -2,6 +2,7 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.semantics.contentDescription
 import com.example.composetutorial.ui.defaultValidationMessageDelayMillis
 import com.example.composetutorial.ui.spinnerDelayMillis
@@ -82,6 +83,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -5621,7 +5623,10 @@ fun SettingsScreen(
                             val days = it.toIntOrNull()
                             days != null && days > stalePriceThreshold
                         },
-                        UiText.Dynamic("Must be greater than $stalePriceThreshold (stale price threshold)") // TODO LOCALISE
+                        UiText.Res(
+                                R.string.supporting_text_must_be_greater_than_x_stale_price_threshold,
+                                listOf(stalePriceThreshold)
+                            )
                     ),
                     ValidationRule(
                         {
@@ -8793,10 +8798,13 @@ sealed class UiText {
     // out once I no longer need it.
     data class Dynamic(val text: String) : UiText()
     data class Res(@param:StringRes val resId: Int, val args: List<Any> = emptyList()) : UiText()
+    // TODO: I am not even sure QuantityRes is meaningful or useful but let's wait til I tried to use it
+    data class QuantityRes(@param:PluralsRes val resId: Int, val args: List<Any> = emptyList()) : UiText()
 
     fun asString(context: Context): String = when (this) {
         is Dynamic -> text
         is Res -> context.getString(resId, *args.toTypedArray())
+        is QuantityRes -> context.resources.getQuantityString(resId, args.size, *args.toTypedArray())
     }
 
     @Composable
