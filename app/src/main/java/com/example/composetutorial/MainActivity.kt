@@ -6477,27 +6477,19 @@ data class GeneralSelectorScreenUIContent<T>(
 // locale - simply because it's a lot more convenient to type the former in a search box.
 // TODO: It might be good to fake up some data with these strings (copy and paste into emulator!)
 // and see if we are apparently getting this right.
-fun String.normalizedForSearch(): String {
-    return Normalizer.normalize(this, Normalizer.Form.NFD)
-        .replace("\\p{M}".toRegex(), "") // removes accents
-        .lowercase(Locale.ROOT) // ensures case insensitivity using invariant rules
-}
-
-// TODO: MAKE AN EXTENSION FUNCTION ON STRING?
-// TODO: Call this inside normalizedForSearch rather than make its callers remember to do it?
-fun squashSpaces(s: String) = s.trim().replace(Regex("\\s+"), " ")
-
-// ENHANCE: We probably *can* do a half-decent job of implementing this locale-sensitive, probably
-// something to do with collate(), but need to look into it. This is different to
-// isCaseInsensitiveSubstring() because we are dealing with the string as a whole, not substrings.
-// But for now I will hack it with this English-ish version.
-// TODO: NOW WE HAVE normalizedForSearch we should perhaps do better here - albeit perhaps using
-// collator not normalizedForSearch, the point just being we should be consistent. That said, I
-// don't know if collator is right here, given the whole turkish I think and the fact that we are
-// using normalizedForSearch in substring matches. probably chat with llm.
-fun areHumanEqual(lhs: String, rhs: String): Boolean {
-    return squashSpaces(lhs.lowercase()) == squashSpaces(rhs.lowercase())
-}
+fun String.normalizedForSearch() = Normalizer.normalize(this, Normalizer.Form.NFD)
+        // Remove diacritics
+        .replace("\\p{M}".toRegex(), "")
+        // Remove all forms of apostrophes/quotes
+        .replace("['’ʻʼʽʾˮˈˌʹʺ˝]".toRegex(), "")
+        // Replace all remaining punctuation and symbols with spaces
+        .replace("[\\p{Punct}\\p{Symbol}]".toRegex(), " ")
+        // Collapse adjacent whitespace into single spaces
+        .replace("\\s+".toRegex(), " ")
+        // Trim leading/trailing whitespace
+        .trim()
+        // Lowercase using invariant rules to ensure case insensitivity
+        .lowercase(Locale.ROOT)
 
 class SelectItemViewModel(
     savedStateHandle: SavedStateHandle,
@@ -6552,10 +6544,10 @@ open class GeneralSelectorViewModel<T>(
     @OptIn(ExperimentalCoroutinesApi::class)
     val dataFlow = combine(
         dataQuery.flatMapLatest { data -> /* TODO HACK delay(5000); */ flowOf(data) },
-        searchStringFlow.map { searchString -> squashSpaces(searchString.text).normalizedForSearch() }
+        searchStringFlow.map { searchString -> searchString.text.normalizedForSearch() }
     ) { data, normalizedQuery ->
         data.filter {
-            squashSpaces(getName(it)).normalizedForSearch().contains(normalizedQuery)
+            getName(it).normalizedForSearch().contains(normalizedQuery)
         }
     }
         .onEach { emittedList -> /* delay(5000); */ Log.d(
@@ -7267,12 +7259,16 @@ class ViewPriceHistoryViewModel(
 // be brittle. (Then again, with respect to brittleness, some rules' error messages might implicitly
 // assume earlier rules already filtered out some unacceptable cases anyway.)
 fun createNameValidationRules(existingNameList: List<String>): List<ValidationRule<String>> {
+    // We could use Collator.PRIMARY to do this comparison (probably combined with squashing spaces and trim()-ing) but it's probably better to use normalizedForSearch() here.
+    // TODO: Can/should we just return a single ValidationRule here which does an internal check
+    // against a set pregenerated from existingNameList?
     val TODO0 =         ValidationRule<String>({ it.isNotEmpty() }, UiText.Res(R.string.supporting_text_required))
     val TODO1 = listOf(TODO0)
 
-    val TODO2 = existingNameList.map<String, ValidationRule<String>> { name ->
+    val TODO2 = existingNameList.map { existingName ->
+        val normalizedExistingName = existingName.normalizedForSearch()
         ValidationRule<String>(
-            { candidateName -> !areHumanEqual(candidateName, name) },
+            { candidateName -> candidateName.normalizedForSearch() != normalizedExistingName },
             UiText.Res(R.string.supporting_text_name_must_be_unique)
         )
     }
