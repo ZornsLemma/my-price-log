@@ -9164,8 +9164,6 @@ com.example.myapp/
 
 // TODO: Searching for "te" in the Spanish demo data doesn't find "té" - should it?
 
-// TODO: It's probably fine but check "Nombre" is the correct Spanish translation for "Name" in the context here, where it is the name of a "thing" not a person
-
 // TODO: Check "Volumen" is the right translation for "volume" as in measurement of quantity, not sound volume
 
 // TODO: "each" (at least) in the measurement unit data needs translating. we probably need to pull out more stuff there too and translate that, probably via a new Grok pass.
