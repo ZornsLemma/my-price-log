@@ -34,7 +34,7 @@
     <string name="menu_item_view_history">Ver historial</string>
     <string name="menu_item_delete_price">Eliminar precio</string>
     <string name="message_good_price">Buen precio</string>
-    <string name="message_ok_price">Precio aceptable</string>
+    <string name="message_ok_price">Precio normal</string>
     <string name="message_bad_price">Precio alto</string>
     <string name="button_edit">Editar</string>
     <string name="button_confirm">Confirmar</string>
@@ -53,7 +53,7 @@
     <string name="button_cancel">Cancelar</string>
     <string name="button_delete">Eliminar</string>
     <string name="content_description_good_price">Buen precio</string>
-    <string name="content_description_ok_price">Precio aceptable</string>
+    <string name="content_description_ok_price">Precio normal</string>
     <string name="content_description_bad_price">Precio alto</string>
     <string name="content_description_stale_price">Precio desactualizado</string>
     <string name="content_description_ancient_price">Precio muy antiguo</string>
@@ -135,7 +135,7 @@
     <string name="supporting_text_stale_price_threshold">Los precios desactualizados (confirmados hace más de este número de días) se ajustan por inflación al compararlos entre tiendas.</string>
     <string name="suffix_days">días</string>
     <string name="supporting_text_must_be_positive">Debe ser positivo</string>
-    <string name="supporting_text_ancient_price_threshold">Los precios muy antiguos (confirmados hace más de este número de días) se ignoran al clasificar precios como buenos/aceptables/altos.</string>
+    <string name="supporting_text_ancient_price_threshold">Los precios muy antiguos (confirmados hace más de este número de días) se ignoran al clasificar precios como buenos, normales o altos.</string>
     <string name="supporting_text_must_be_no_greater_than_365">No debe ser mayor de 365</string>
     <string name="supporting_text_must_be_a_whole_number">Debe ser un número entero</string>
     <string name="supporting_text_must_be_zero_or_greater">Debe ser cero o mayor</string>

@@ -9124,3 +9124,5 @@ com.example.myapp/
 // Can/should we be restricting to numeric input and/or hinting at using a numeric on screen
 // keyboard? Do we need to impose a maximum length? Should we be using (a variant of?) our existing
 // NumericTextField?
+
+// TODO: Searching for "te" in the Spanish demo data doesn't find "té" - should it?
