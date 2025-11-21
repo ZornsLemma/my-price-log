@@ -6469,7 +6469,14 @@ data class GeneralSelectorScreenUIContent<T>(
 // default, even though it has some ICU stuff. Further LLM discussion suggests that using this form
 // of normalization is the usual compromise. Note that we deliberately use the root locale here, not
 // the current locale - apparently using (for example) the Turkish locale would break
-// well-established expectations for Turkish users (the "Turkish I problem").
+// well-established expectations for Turkish users (the "Turkish I problem"). I thin they key point
+// here is that for *searching* we want to use very loose rules (because users don't want to fiddle
+// around tap-and-holding keys to get the linguistically correct characters for ephemeral input),
+// not the linguistically correct ones for the locale. In the Turkish case (apparently), users want
+// to type "istanbul" and have it match "İstanbul" even though they are different according to the
+// locale - simply because it's a lot more convenient to type the former in a search box.
+// TODO: It might be good to fake up some data with these strings (copy and paste into emulator!)
+// and see if we are apparently getting this right.
 fun String.normalizedForSearch(): String {
     return Normalizer.normalize(this, Normalizer.Form.NFD)
         .replace("\\p{M}".toRegex(), "") // removes accents
