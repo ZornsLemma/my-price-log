@@ -168,7 +168,7 @@
     <string name="title_edit_sources">Edit stores</string>
     <string name="content_description_add_source">Add store</string>
     <string name="title_app_will_restart">App will restart</string>
-    <string name="message_applying_restored_data">Applying restored data. Please wait...</string>
+    <string name="message_applying_restored_data">Applying restored data. Please wait…</string>
     <string name="label_shelf_price">Shelf price</string>
     <string name="label_unit_price">Unit price</string>
     <string name="content_description_select_unit">Select unit</string>
