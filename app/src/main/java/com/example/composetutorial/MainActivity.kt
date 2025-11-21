@@ -2051,11 +2051,21 @@ fun SourcePriceCardBody(
                     asyncOperationStatus
                 )
 
-                LabeledItem(
-                    modifier = Modifier.padding(bottom = 8.dp),
-                    label = stringResource(R.string.label_confirmed)
-                ) {
-                    RelativeTimeText(augmentedPrice)
+                // TODO: Experimental - if we keep this, the padding should probably go onto the row
+                // andPriceJudgementIndicator should take a modifier rather than us wrapping it in a
+                // Box.
+                Row {
+                    LabeledItem(
+                        modifier = Modifier.weight(0.55f).padding(bottom = 8.dp),
+                        label = stringResource(R.string.label_confirmed)
+                    ) {
+                        RelativeTimeText(augmentedPrice)
+                    }
+
+                    Box(modifier = Modifier.weight(0.45f).padding(bottom = 8.dp).fillMaxSize().align(Alignment.CenterVertically)) {
+                        PriceJudgementIndicator(augmentedPrice.priceJudgement)
+                    }
+
                 }
 
                 if (price.notes.isNotEmpty()) {
@@ -2066,8 +2076,10 @@ fun SourcePriceCardBody(
                     }
                 }
 
+                // TODO: Temporarily moved PriceJudgementIndicator elsewhere. If we keep this, we
+                // might want to e.g. remove the verticalAlignment on the Row
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    PriceJudgementIndicator(augmentedPrice.priceJudgement)
+                    // PriceJudgementIndicator(augmentedPrice.priceJudgement)
                     EditConfirmButtons(vm, asyncOperationStatus, augmentedPrice, onEditPriceClick)
                 }
             }
@@ -8055,10 +8067,13 @@ fun PackPriceAndSizeRow(
     asyncOperationStatus: AsyncOperationStatus
 ) {
     // The two elements of this row share the space 60%/40%. The shelf price can get quite long for
-    // multipack items and 50%/50% starts to get right on small phones. We don't really need that
+    // multipack items and 50%/50% starts to get tight on small phones. We don't really need that
     // much space for the unit price either. This might ruin a proper 2x2 grid, but in practice at
     // least for now the row below is "Confirmed" and it theoretically has the full width of the
-    // display.
+    // display. TODO HACKED TEMPORARILY TO 55/45 TO TRY TO MOVE THE PRICE INDICATOR INTO THE
+    // BOTTOM RIGHT CELL. THIS MAY OR MAY NOT WORK OUT, IT MIGHT "FIT" FOR SPANISH AND ENGLISH
+    // BUT NOT SURE ABOUT OTHER LANGUAGES, AND ALSO NEED TO DECIDE IF I LIKE THE LOOK. IT DOES
+    // JUST ABOUT SEEM OK WITH SMALL PHONE LAYOUT AND MY DEMO PRICES THOUGH.
 
     Row(
         modifier = Modifier
@@ -8066,7 +8081,7 @@ fun PackPriceAndSizeRow(
             .padding(bottom = 8.dp),
     ) {
         LabeledItem(
-            modifier = Modifier.weight(0.6f), label = stringResource(R.string.label_shelf_price)
+            modifier = Modifier.weight(0.55f), label = stringResource(R.string.label_shelf_price)
         ) {
             // TODO: Need to localise this, it has " for " in
             Text(
@@ -8137,7 +8152,7 @@ fun PackPriceAndSizeRow(
                 selectedUnitPriceUnit,
             ).format(dataSet,LocalConfiguration.current.locales[0])
         LabeledItemWithDropdown(
-            modifier = Modifier.weight(0.4f), label = stringResource(R.string.label_unit_price),
+            modifier = Modifier.weight(0.45f), label = stringResource(R.string.label_unit_price),
             dropdownContentDescription = stringResource(R.string.content_description_select_unit),
             text = unitPriceString,
             enabled = asyncOperationStatus.isNotBusy(),
