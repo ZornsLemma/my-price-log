@@ -318,6 +318,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.text.DecimalFormatSymbols
+import java.text.Normalizer
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -6461,21 +6462,32 @@ data class GeneralSelectorScreenUIContent<T>(
     val initialList: List<T>?
 )
 
-// ENHANCE: This function does not handle non-English languages very well. As far as I can tell from
-// discussing with LLMs and doing my own web searches, we really need something like the ICU string
-// search service (https://unicode-org.github.io/icu/userguide/collation/string-search) but although
-// Android has some ICU stuff by default, it apparently doesn't have this. I am going to use this
-// basic implementation (which I believe won't handle the German sharp S correctly, just as an
-// example) for now and can revisit it later if any non-English users turn up.
-fun isCaseInsensitiveSubstring(lhs: String, rhs: String, locale: Locale) =
-    rhs.lowercase(locale).contains(lhs.lowercase(locale))
+// As far as I can tell from discussing with LLMs and doing my own web searches, we need something
+// like the ICU string search service
+// (https://unicode-org.github.io/icu/userguide/collation/string-search) to do really good substring
+// searches in different languages. This is apparently quite large and Android doesn't include it by
+// default, even though it has some ICU stuff. Further LLM discussion suggests that using this form
+// of normalization is the usual compromise. Note that we deliberately use the root locale here, not
+// the current locale - apparently using (for example) the Turkish locale would break
+// well-established expectations for Turkish users (the "Turkish I problem").
+fun String.normalizedForSearch(): String {
+    return Normalizer.normalize(this, Normalizer.Form.NFD)
+        .replace("\\p{M}".toRegex(), "") // removes accents
+        .lowercase(Locale.ROOT) // ensures case insensitivity using invariant rules
+}
 
+// TODO: MAKE AN EXTENSION FUNCTION ON STRING?
+// TODO: Call this inside normalizedForSearch rather than make its callers remember to do it?
 fun squashSpaces(s: String) = s.trim().replace(Regex("\\s+"), " ")
 
 // ENHANCE: We probably *can* do a half-decent job of implementing this locale-sensitive, probably
 // something to do with collate(), but need to look into it. This is different to
 // isCaseInsensitiveSubstring() because we are dealing with the string as a whole, not substrings.
 // But for now I will hack it with this English-ish version.
+// TODO: NOW WE HAVE normalizedForSearch we should perhaps do better here - albeit perhaps using
+// collator not normalizedForSearch, the point just being we should be consistent. That said, I
+// don't know if collator is right here, given the whole turkish I think and the fact that we are
+// using normalizedForSearch in substring matches. probably chat with llm.
 fun areHumanEqual(lhs: String, rhs: String): Boolean {
     return squashSpaces(lhs.lowercase()) == squashSpaces(rhs.lowercase())
 }
@@ -6533,14 +6545,10 @@ open class GeneralSelectorViewModel<T>(
     @OptIn(ExperimentalCoroutinesApi::class)
     val dataFlow = combine(
         dataQuery.flatMapLatest { data -> /* TODO HACK delay(5000); */ flowOf(data) },
-        searchStringFlow
-    ) { data, query ->
+        searchStringFlow.map { searchString -> squashSpaces(searchString.text).normalizedForSearch() }
+    ) { data, normalizedQuery ->
         data.filter {
-            isCaseInsensitiveSubstring(
-                query.text.trim(),
-                getName(it),
-                Locale.getDefault() /* TODO VERY TEMP HACK - WE ARE NOT SUPPOSED TO BE USING THIS FUNCTION */
-            )
+            squashSpaces(getName(it)).normalizedForSearch().contains(normalizedQuery)
         }
     }
         .onEach { emittedList -> /* delay(5000); */ Log.d(
