@@ -8068,6 +8068,7 @@ fun PackPriceAndSizeRow(
         LabeledItem(
             modifier = Modifier.weight(0.6f), label = stringResource(R.string.label_shelf_price)
         ) {
+            // TODO: Need to localise this, it has " for " in
             Text(
                 "${
                     formatPrice(
