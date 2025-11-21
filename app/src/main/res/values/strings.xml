@@ -203,6 +203,8 @@
     <string name="unit_fluid_ounce">fluid ounce</string>
     <string name="unit_pint">pint</string>
     <string name="unit_gallon">gallon</string>
+    <string name="message_price_for_quantity">%1$s for %2$s</string>
+    <string name="message_price_for_count_quantity">%1$s for %2$d×%3$s</string>
     <plurals name="supporting_text_prices_considered_stale_after_x_days">
         <item quantity="one">Prices considered stale after %1$d day</item>
         <item quantity="other">Prices considered stale after %1$d days</item>

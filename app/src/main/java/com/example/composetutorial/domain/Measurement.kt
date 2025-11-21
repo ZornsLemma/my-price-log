@@ -228,6 +228,8 @@ data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcela
     // international angle, I suspect that in practice we don't want grouping separators in our
     // measures even when they're for display only - "2272 ml" feels better than "2,272 ml", at
     // least to me.
+    // ENHANCE: This may need tweaking for localisation (especially with ITEM) but we'll see how
+    // things work out in practice.
     fun toDisplayString(locale: Locale): String =
         formatDouble(
             value,

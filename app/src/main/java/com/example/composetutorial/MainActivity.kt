@@ -8098,18 +8098,26 @@ fun PackPriceAndSizeRow(
         LabeledItem(
             modifier = Modifier.weight(0.55f), label = stringResource(R.string.label_shelf_price)
         ) {
-            // TODO: Need to localise this, it has " for " in
-            Text(
-                "${
-                    formatPrice(
-                        price,
-                        dataSet,
-                        LocalConfiguration.current.locales[0]
-                    )
-                } for ${if (count > 1) "${count}${multiplicationSign}" else ""}${
-                    measure.toDisplayString(LocalConfiguration.current.locales[0])
-                }" /*, color = MaterialTheme.colorScheme.onSurface*/
+            val formattedPrice = formatPrice(
+                price,
+                dataSet,
+                LocalConfiguration.current.locales[0]
             )
+            val formattedMeasure = measure.toDisplayString(LocalConfiguration.current.locales[0])
+            Text(
+                if (count == 1L) {
+                    stringResource(
+                        R.string.message_price_for_quantity,
+                        formattedPrice, formattedMeasure
+                    )
+                } else {
+                    stringResource(
+                        R.string.message_price_for_count_quantity,
+                        formattedPrice, count, formattedMeasure
+                    )
+                }
+            )
+
         }
 
         val relevantUnitFamilies =
