@@ -3761,6 +3761,12 @@ fun EditPriceScreenPackSize(
                         onChange()
                     }
                 },
+                // TODO: It might help things to have no label on this dropdown - it is right next
+                // to the numeric part of the quantity and it is kind of redundant, and it might
+                // help with the tight horizontal spacing. As a somewhat related problem though, the
+                // horizontal space assigned to each of the composables in this Row makes no sense
+                // at all and I cannot get anything I really want to work anyway, so it may be worth
+                // experimenting further with this aspect too.
                 label = { Text(stringResource(R.string.label_unit)) },
                 items = units,
                 // Although this could be a problem (particularly with i18n), we give the dropdown
