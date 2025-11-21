@@ -3395,10 +3395,11 @@ fun PriceComparisonCard(
                 // arise. We might be better off just having a localised string on each unit with
                 // the full equivalent of "Price (per) <this unit full name>".
                 val headerPriceContentDescription = if (headerUnitPriceDenominator.perSymbol.trim().isNotEmpty()) {
-                    stringResource(R.string.content_description_header_price_per, headerUnitPriceDenominator.fullName)
+                    stringResource(R.string.content_description_header_price_per, stringResource(headerUnitPriceDenominator.fullName))
                 } else {
-                    stringResource(R.string.content_description_header_price_no_per, headerUnitPriceDenominator.fullName)
+                    stringResource(R.string.content_description_header_price_no_per, stringResource(headerUnitPriceDenominator.fullName))
                 }
+                // TODO: TEST headerPriceContentDescription is correct once things settle down
                 Log.d("MyAppCD", "headerPriceContentDescription: $headerPriceContentDescription")
 
                 val headerTextModifiers = listOf(
@@ -3757,6 +3758,7 @@ fun EditPriceScreenPackSize(
             val fontSize = MaterialTheme.typography.bodyLarge.fontSize
             val fontSizeDp = with(LocalDensity.current) { fontSize.toDp() }
 
+            val context = LocalContext.current
             MyExposedDropdownMenuBox(
                 enabled = saveStatus.isNotBusy(),
                 selectedId = uiContent.editablePrice.value.measurementUnit.id,
@@ -3792,7 +3794,7 @@ fun EditPriceScreenPackSize(
                 modifier = Modifier.width(6 * fontSizeDp), // wrapContentWidth(), // weight(0.75f), // TODO: *May* need to make this 0.5 if we don't have a count, maybe we can find something that works in both cases
                 getId = { it.id },
                 getCollapsedItemText = { it.symbol },
-                getItemText = { "${it.fullName} (${it.symbol})" },
+                getItemText = { "${context.getString(it.fullName)} (${it.symbol})" },
                 getDividerBetween = { previousItem, item ->
                     areDifferentUnitFamilies(
                         previousItem,
@@ -4352,6 +4354,7 @@ fun EditItemScreen(
                                 includeDisplayOnly = false
                             )
                         }
+                    val context = LocalContext.current
                     MyExposedDropdownMenuBox(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -4382,7 +4385,7 @@ fun EditItemScreen(
                         items = relevantUnitList,
                         getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
                         getId = { it.id },
-                        getItemText = { "${it.fullName} (${it.symbol})" },
+                        getItemText = { "${context.getString(it.fullName)} (${it.symbol})" },
                     )
                 }
             }

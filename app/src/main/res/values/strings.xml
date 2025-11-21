@@ -188,6 +188,21 @@
     <string name="label_metric">Metric</string>
     <string name="label_imperial">Imperial</string>
     <string name="label_us_units">US units</string>
+    <string name="unit_each">each</string>
+    <string name="unit_10">10</string>
+    <string name="unit_100">100</string>
+    <string name="unit_gram">gram</string>
+    <!-- TODO: Should unit_100_gram text be 100 grammes? I have a suspicion it is only ever used in contentDescription for the table, but not sure. -->
+    <string name="unit_100_gram">100 gram</string>
+    <string name="unit_kilogram">kilogram</string>
+    <string name="unit_ounce">ounce</string>
+    <string name="unit_pound">pound</string>
+    <string name="unit_millilitre">millilitre</string>
+    <string name="unit_100_millilitre">100 millilitre</string>
+    <string name="unit_litre">litre</string>
+    <string name="unit_fluid_ounce">fluid ounce</string>
+    <string name="unit_pint">pint</string>
+    <string name="unit_gallon">gallon</string>
     <plurals name="supporting_text_prices_considered_stale_after_x_days">
         <item quantity="one">Prices considered stale after %1$d day</item>
         <item quantity="other">Prices considered stale after %1$d days</item>

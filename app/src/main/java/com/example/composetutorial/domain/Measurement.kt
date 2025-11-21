@@ -1,6 +1,8 @@
 package com.example.composetutorial.domain
 
 import android.os.Parcelable
+import androidx.annotation.StringRes
+import com.example.composetutorial.R
 import com.example.composetutorial.formatDouble
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.myCheck
@@ -45,7 +47,7 @@ enum class MeasurementUnit(
     val unitFamilies: Set<UnitFamily>,
     val quantityType: QuantityType,
     val symbol: String, // TODO: this probably needs to be translatable
-    val fullName: String, // TODO: this will need to be translatable
+    @field:StringRes val fullName: Int,
     val maxDecimals: Int,
     val toBase: Double,
     val displayOnly: Boolean,
@@ -57,28 +59,32 @@ enum class MeasurementUnit(
         setOf(UnitFamily.ITEM),
         QuantityType.ITEM,
         "each",
-        "each", // TODO: I added this as a semi-hack to support headerPriceContentDescription, may break grammar for non-screen reader
+        R.string.unit_each, // TODO: I added this as a semi-hack to support headerPriceContentDescription, may break grammar for non-screen reader
         0,
         1.0,
         false,
         perSymbol = " ",
     ),
-    EACH10(102, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10", "10", 1, 10.0, true),
-    EACH100(103, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100", "100",2, 100.0, true),
+    EACH10(102, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10",
+        R.string.unit_10, 1, 10.0, true),
+    EACH100(103, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100",
+        R.string.unit_100,2, 100.0, true),
 
     // Weight (metric)
-    G(201, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "g", "gram",0, 1.0, false),
+    G(201, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "g",
+        R.string.unit_gram,0, 1.0, false),
     G100(
         202,
         setOf(UnitFamily.METRIC),
         QuantityType.WEIGHT,
         "100 g",
-        "100 gram",
+        R.string.unit_100_gram,
         2,
         100.0,
         true
     ),
-    KG(203, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "kg", "kilogram",3, 1000.0, false),
+    KG(203, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "kg",
+        R.string.unit_kilogram,3, 1000.0, false),
 
     // Weight (imperial/US customary)
     OZ(
@@ -86,7 +92,7 @@ enum class MeasurementUnit(
         setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
         QuantityType.WEIGHT,
         "oz",
-        "ounce",
+        R.string.unit_ounce,
         3, // allow for eighths
         28.349523125,
         false
@@ -96,25 +102,27 @@ enum class MeasurementUnit(
         setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
         QuantityType.WEIGHT,
         "lb",
-        "pound",
+        R.string.unit_pound,
         3, // allow for eighths
         453.59237,
         false
     ),
 
     // Volume (metric)
-    ML(301, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml", "millilitre",0, 1.0, false),
+    ML(301, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml",
+        R.string.unit_millilitre,0, 1.0, false),
     ML100(
         302,
         setOf(UnitFamily.METRIC),
         QuantityType.VOLUME,
         "100 ml",
-        "100 millilitre",
+        R.string.unit_100_millilitre,
         2,
         100.0,
         true
     ),
-    L(303, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "L", "litre", 3, 1000.0, false),
+    L(303, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "L",
+        R.string.unit_litre, 3, 1000.0, false),
 
     // TODO: As a massive hack to help me notice problems during debugging, I have replaced the space in "fl oz" with a U or I to
     // let me see which type is in use. I don't seriously expect subtle bugs here (if we do mess up our unit family handling, we
@@ -128,7 +136,7 @@ enum class MeasurementUnit(
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
         "flIoz",
-        "fluid ounce",
+        R.string.unit_fluid_ounce,
         3, // allow for eighths
         28.4130625,
         false
@@ -138,7 +146,7 @@ enum class MeasurementUnit(
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
         "pt",
-        "pint",
+        R.string.unit_pint,
         3, // allow for eighths
         568.26125,
         false
@@ -148,7 +156,7 @@ enum class MeasurementUnit(
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
         "gal",
-        "gallon",
+        R.string.unit_gallon,
         3, // allow for eighths
         4546.09,
         false
@@ -160,7 +168,7 @@ enum class MeasurementUnit(
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
         "flUoz",
-        "fluid ounce",
+        R.string.unit_fluid_ounce,
         3, // allow for eighths
         29.5735295625,
         false
@@ -170,7 +178,7 @@ enum class MeasurementUnit(
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
         "pt",
-        "pint",
+        R.string.unit_pint,
         3, // allow for eighths
         473.176473,
         false
@@ -180,7 +188,7 @@ enum class MeasurementUnit(
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
         "gal",
-        "gallon",
+        R.string.unit_gallon,
         3, // allow for eighths
         3785.411784,
         false
