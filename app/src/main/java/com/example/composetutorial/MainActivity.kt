@@ -6462,19 +6462,20 @@ data class GeneralSelectorScreenUIContent<T>(
     val initialList: List<T>?
 )
 
-// As far as I can tell from discussing with LLMs and doing my own web searches, we need something
-// like the ICU string search service
-// (https://unicode-org.github.io/icu/userguide/collation/string-search) to do really good substring
-// searches in different languages. This is apparently quite large and Android doesn't include it by
-// default, even though it has some ICU stuff. Further LLM discussion suggests that using this form
-// of normalization is the usual compromise. Note that we deliberately use the root locale here, not
-// the current locale - apparently using (for example) the Turkish locale would break
-// well-established expectations for Turkish users (the "Turkish I problem"). I thin they key point
-// here is that for *searching* we want to use very loose rules (because users don't want to fiddle
-// around tap-and-holding keys to get the linguistically correct characters for ephemeral input),
-// not the linguistically correct ones for the locale. In the Turkish case (apparently), users want
-// to type "istanbul" and have it match "İstanbul" even though they are different according to the
-// locale - simply because it's a lot more convenient to type the former in a search box.
+// From discussion with LLMs and doing my own web searches, we need something like the ICU string
+// search service (https://unicode-org.github.io/icu/userguide/collation/string-search) to do really
+// good substring searches in different languages. This is apparently quite large and Android
+// doesn't include it by default, even though it has some ICU stuff. Further LLM discussion suggests
+// that using this form of normalization is the usual compromise.
+//
+// Note that we deliberately use the root locale here, not the current locale. Apparently using (for
+// example) the Turkish locale would break well-established expectations for Turkish users (the
+// "Turkish I problem"). I think the key point here is that for *searching* we want to use very
+// loose rules, not the linguistically correct ones for the locale, because users don't want to
+// fiddle around press-and-holding keys to get the correct characters for ephemeral input. In the
+// Turkish case users want to search for "istanbul" and have it match "İstanbul" even though they
+// are different according to the locale, simply because it's a lot more convenient to type the
+// former.
 // TODO: It might be good to fake up some data with these strings (copy and paste into emulator!)
 // and see if we are apparently getting this right.
 fun String.normalizedForSearch() = Normalizer.normalize(this, Normalizer.Form.NFD)
@@ -9157,8 +9158,6 @@ com.example.myapp/
 // Can/should we be restricting to numeric input and/or hinting at using a numeric on screen
 // keyboard? Do we need to impose a maximum length? Should we be using (a variant of?) our existing
 // NumericTextField?
-
-// TODO: Searching for "te" in the Spanish demo data doesn't find "té" - should it?
 
 // TODO: Check "Volumen" is the right translation for "volume" as in measurement of quantity, not sound volume
 
