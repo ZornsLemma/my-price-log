@@ -56,7 +56,7 @@
     <string name="content_description_ok_price">Precio normal</string>
     <string name="content_description_bad_price">Precio alto</string>
     <string name="content_description_stale_price">Precio desactualizado</string>
-    <string name="content_description_ancient_price">Precio muy antiguo</string>
+    <string name="content_description_ancient_price">Precio obsoleto</string>
     <string name="title_price_comparison">Comparación de precios</string>
     <string name="subtitle_adjusted_for_discounts_and_age">Ajustado por descuentos de fidelidad y antigüedad del precio</string>
     <string name="message_no_prices_for_item_at_source">Aún no hay precios registrados para este producto en ninguna tienda.</string>
@@ -126,7 +126,7 @@
     <string name="title_settings">Ajustes</string>
     <string name="content_description_back">Volver</string>
     <string name="title_stale_price_threshold">Límite de precio desactualizado</string>
-    <string name="title_ancient_price_threshold">Límite de precio muy antiguo</string>
+    <string name="title_ancient_price_threshold">Límite de precio obsoleto</string>
     <string name="title_annual_inflation">Inflación anual</string>
     <string name="title_backup">Copia de seguridad</string>
     <string name="supporting_text_back_up_your_data_to_a_file">Guarda tus datos en un archivo para mantenerlos seguros</string>
@@ -135,7 +135,7 @@
     <string name="supporting_text_stale_price_threshold">Los precios desactualizados (confirmados hace más de este número de días) se ajustan por inflación al compararlos entre tiendas.</string>
     <string name="suffix_days">días</string>
     <string name="supporting_text_must_be_positive">Debe ser positivo</string>
-    <string name="supporting_text_ancient_price_threshold">Los precios muy antiguos (confirmados hace más de este número de días) se ignoran al clasificar precios como buenos, normales o altos.</string>
+    <string name="supporting_text_ancient_price_threshold">Los precios obsoletos (confirmados hace más de este número de días) se ignoran al clasificar precios como buenos, normales o altos.</string>
     <string name="supporting_text_must_be_no_greater_than_365">No debe ser mayor de 365</string>
     <string name="supporting_text_must_be_a_whole_number">Debe ser un número entero</string>
     <string name="supporting_text_must_be_zero_or_greater">Debe ser cero o mayor</string>
@@ -179,7 +179,7 @@
     <string name="message_failed_to_open_input_stream_for_uri">No se pudo abrir el flujo de entrada para el URI: %1$s</string>
     <string name="message_database_to_restore_too_new">La base de datos que intentas restaurar es de una versión más nueva (%1$d) de la que esta versión de la app soporta (%2$d).</string>
     <string name="supporting_text_must_be_greater_than_x_stale_price_threshold">Debe ser mayor que %1$d (límite de precio desactualizado)</string>
-    <string name="supporting_text_must_be_less_than_x_ancient_price_threshold">Debe ser menor que %1$d (límite de precio muy antiguo)</string>
+    <string name="supporting_text_must_be_less_than_x_ancient_price_threshold">Debe ser menor que %1$d (límite de precio obsoleto)</string>
     <string name="content_description_header_price_per">Precio por %1$s</string>
     <string name="content_description_header_price_no_per">Precio %1$s</string>
     <string name="supporting_text_stale_prices_increase_by_percent_per_year">Los precios desactualizados aumentan un %1$d %% por año</string>
@@ -193,8 +193,8 @@
         <item quantity="other">Los precios se consideran desactualizados después de %1$d días</item>
     </plurals>
     <plurals name="supporting_text_prices_considered_ancient_after_x_days">
-        <item quantity="one">Los precios se consideran muy antiguos después de %1$d día</item>
-        <item quantity="other">Los precios se consideran muy antiguos después de %1$d días</item>
+        <item quantity="one">Los precios se consideran obsoletos después de %1$d día</item>
+        <item quantity="other">Los precios se consideran obsoletos después de %1$d días</item>
     </plurals>
     <plurals name="supporting_text_no_more_than_x_decimal_places_allowed">
         <item quantity="one">No se permite más de %1$d decimal</item>
