@@ -9179,4 +9179,3 @@ com.example.myapp/
 // - We need to handle word wrap on "Confirmar tamaño del paquete..." label and probably also for its supporting text
 // - The "about" dialog title overflows the top app bar to line - this is probably OK/unavoidable, but think/maybe discuss
 
-// TODO: Is "muy antiguo" overdoing it in the Spanish translation? Can we just use "antiguo" or some other single word?
