@@ -9130,10 +9130,6 @@ com.example.myapp/
 
 */
 
-// TODO: Once I've pulled all the strings out to allow for translation:
-// - manually or with LLM assistance review them and see if any would benefit from regional English variations (e.g. "color" vs "colour")
-// - probably do an LLM-assisted Spanish translation as a test and release it but make sure to note somewhere it's alpha/beta quality - before doing this ask if we can have "regional" variations (so we can have a latam region for countries to accomodate differences from spain) - if not, it may (ask) be best if the base "es" is Latam-generic and then if we do need anything specifically Spain-style we can override with es_es or however it works, thereby getting a Latam-generic for all other countries
-
 // TODO: When validating fields, we control allowEmpty based on whether a save has been attempted or
 // not. Given we do generally validate everything live, I am wondering if instead we should control
 // allowEmpty based off this *and* whether we are editing an existing item or adding a new one. I
