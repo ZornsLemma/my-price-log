@@ -83,7 +83,7 @@
     <string name="message_delete_item_no_associated_prices">Este producto no tiene precios asociados, eliminarlo no afectará nada más.</string>
     <string name="message_delete_item_associated_prices">Al eliminar este producto también se borrarán todos sus precios en tiendas. Esta acción no se puede deshacer.</string>
     <string name="label_name">Nombre</string>
-    <string name="label_sold_by_item">Unidades</string>
+    <string name="label_sold_by_item">Unidad</string>
     <string name="label_sold_by_weight">Peso</string>
     <string name="label_sold_by_volume">Volumen</string>
     <string name="label_sold_by">Vendido por</string>

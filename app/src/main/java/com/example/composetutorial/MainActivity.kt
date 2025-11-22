@@ -9170,8 +9170,6 @@ com.example.myapp/
 // keyboard? Do we need to impose a maximum length? Should we be using (a variant of?) our existing
 // NumericTextField?
 
-// TODO: Check "Volumen" is the right translation for "volume" as in measurement of quantity, not sound volume
-
 // TODO: "each" (at least) in the measurement unit data needs translating. we probably need to pull out more stuff there too and translate that, probably via a new Grok pass.
 
 // TODO: Main (not comprehensive) list of UI "glitches" shown up by Spanish translation:
