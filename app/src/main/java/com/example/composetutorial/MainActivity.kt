@@ -321,6 +321,7 @@ import java.text.DecimalFormatSymbols
 import java.text.Normalizer
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
 import java.time.format.FormatStyle
 import java.util.concurrent.Executors
 import kotlin.collections.map
@@ -8394,7 +8395,12 @@ fun ViewPriceHistoryScreen(
                 .padding(screenBorder)
         ) {
             val dateFormatter = remember(locale, zoneId) {
-                DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale)
+                // I don't know if this is the best way to do it or if it might have subtle
+                // localisation concerns, but I really do want to have the day of the week in there
+                // and FormatStyle.LONG (which is the only FormatStyle to include the day of the
+                // week) is too long. The idea here is that the day of the week might help to make
+                // it easier to connect to memories of going to the shop for recent visits.
+                DateTimeFormatterBuilder().appendPattern("EEE").appendLiteral(" ").append(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)).toFormatter(locale)
                     .withZone(zoneId)
             }
 
@@ -9140,10 +9146,6 @@ com.example.myapp/
 // allows 1dp? I suppose there is an argument that it's slightly difference because you're perhaps
 // (?) more likely to blank out a field to replace it in a moment than you are to temporarily edit a
 // number into an invalid state while changing it.
-
-// TODO: The big title on each view history card doesn't fit on a single line (because of the
-// overflow menu?) on my small emulated phone. Maybe switch to a slightly more compact (e.g. "Wed"
-// not "Wednesday"?) format.
 
 // TODO: Make sure to do some testing and check the log for strict mode violations towards end of
 // dev.
