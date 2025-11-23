@@ -3798,10 +3798,13 @@ fun EditPriceScreenPackSize(
                 // weight with the pack count and pack size fields and let the system size them all.
                 // However, since pack count and pack size need to be able to show supportingText
                 // underneath them for errors, we want to give them as much space as possible.
-                // TODO: In general I think it's good to use non-breaking spaces in unit symbols, but since the unit symbols are used in isolation here, it might be a good idea to replace() nbsp with ordinary space in the collapsed view
                 modifier = Modifier.width(6 * fontSizeDp), // wrapContentWidth(), // weight(0.75f), // TODO: *May* need to make this 0.5 if we don't have a count, maybe we can find something that works in both cases
                 getId = { it.id },
-                getCollapsedItemText = { it.symbol },
+                // It's generally a good thing that we use non-breaking spaces in unit symbols, but
+                // here the symbol is used in isolation so there is no possibility of another space
+                // allowing a natural break. So we turn the non-breaking space back into a regular
+                // space. "fl"/"oz" is better than "fl o"/"z" if we are force to wrap.
+                getCollapsedItemText = { it.symbol.replace("$nonBreakingSpace", " ") },
                 getItemText = { "${context.getString(it.fullName)} (${it.symbol})" },
                 getDividerBetween = { previousItem, item ->
                     areDifferentUnitFamilies(
