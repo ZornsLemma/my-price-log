@@ -64,7 +64,7 @@
     <string name="supporting_text_details_correct_right_now">Los datos arriba son los actuales</string>
     <string name="label_pack_price">Precio del paquete</string>
     <string name="label_count">Cantidad</string>
-    <string name="label_pack_size">Tamaño del paquete</string>
+    <string name="label_size">Tamaño</string>
     <string name="label_unit">Unidad</string>
     <string name="content_description_close">Cerrar</string>
     <string name="button_save">Guardar</string>

@@ -64,7 +64,7 @@
     <string name="supporting_text_details_correct_right_now">The above details are correct right now</string>
     <string name="label_pack_price">Pack price</string>
     <string name="label_count">Count</string>
-    <string name="label_pack_size">Pack size</string>
+    <string name="label_size">Size</string>
     <string name="label_unit">Unit</string>
     <string name="content_description_close">Close</string>
     <string name="button_save">Save</string>
