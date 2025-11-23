@@ -1817,7 +1817,8 @@ fun formatPrice(price: Double, dataSet: DataSet, locale: Locale): String {
         // getCurrencyInstance(), so they wouldn't help us at this point.
         val numberFormat = NumberFormat.getNumberInstance()
         // TODO: The "x" instead of a space in the next line is temporary, just to make it more
-        // obvious if this code is coming into play while I am developing/testing.
+        // obvious if this code is coming into play while I am developing/testing. It probably
+        // ought to be a non-breaking space, albeit this code path should never really be used.
         return "${dataSet.currencyCode}x${numberFormat.format(price)}"
     }
 }
