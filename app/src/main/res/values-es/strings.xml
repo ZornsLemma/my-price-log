@@ -202,4 +202,5 @@
     </plurals>
     <string name="message_price_for_quantity">%1$s por %2$s</string>
     <string name="message_price_for_count_quantity">%1$s por %2$d×%3$s</string>
+    <string name="unit_each_symbol">cada uno</string>
 </resources>

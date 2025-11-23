@@ -9204,3 +9204,10 @@ com.example.myapp/
 // experimentally added a non-breaking space in MeasuredValue.toDisplayString() and we'll see if
 // that's enough or if I want to make more tweaks.
 
+// TODO: I've shoved in "cada uno" as a Spanish translation for each but this may not be right, need
+// to talk to LLMs. This is so I can test if it maybe works with my string constructions etc.  It is
+// maybe a bit crap on the spacing (e.g. "$US cada undo" - albeit extreme - wraps in the comparison
+// table, and it is a smidge but borderline OK in the precio en la tienda unit price - the chevron
+// is pushed off screen!). I don't know if "cada uno" is correct or if it sometimes needs to be
+// "una." It is possible something like "c/u" is normal, but does that work with "0,25 US$/c/u" for
+// example?
