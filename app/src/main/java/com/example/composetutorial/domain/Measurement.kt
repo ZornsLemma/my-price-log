@@ -7,6 +7,7 @@ import com.example.composetutorial.formatDouble
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.myCheck
 import com.example.composetutorial.myRequire
+import com.example.composetutorial.ui.nonBreakingSpace
 import kotlinx.parcelize.Parcelize
 import java.util.Locale
 
@@ -115,7 +116,7 @@ enum class MeasurementUnit(
         302,
         setOf(UnitFamily.METRIC),
         QuantityType.VOLUME,
-        "100 ml",
+        "100 ml", // TODO: This and other space-containing symbols should perhaps use non-breaking spaces?
         R.string.unit_100_millilitre,
         2,
         100.0,
@@ -237,7 +238,7 @@ data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcela
             maxDecimals = unit.maxDecimals,
             useLocaleGrouping = false,
             locale
-        ) + if (quantityType == QuantityType.ITEM) "" else " ${unit.symbol}"
+        ) + if (quantityType == QuantityType.ITEM) "" else "$nonBreakingSpace${unit.symbol}"
 }
 
 fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {

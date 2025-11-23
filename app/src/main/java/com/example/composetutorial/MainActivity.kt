@@ -290,6 +290,7 @@ import com.example.composetutorial.ui.maxSearchLength
 import com.example.composetutorial.ui.maxSourceNameLength
 import com.example.composetutorial.ui.menuLeftPadding
 import com.example.composetutorial.ui.menuRightPadding
+import com.example.composetutorial.ui.nonBreakingSpace
 import com.example.composetutorial.ui.oneLineListItemHeight
 import com.example.composetutorial.ui.screenBorder
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -1805,6 +1806,7 @@ fun formatPrice(price: Double, dataSet: DataSet, locale: Locale): String {
         val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
             currency = Currency.getInstance(dataSet.currencyCode)
         }
+        // Note that the returned string appears to use a non-breaking space as a separator.
         return numberFormat.format(price)
     } catch (e: Exception) {
         // Generate a generic-ish "USD 1234" value as a fallback, without trying to use any
@@ -9177,10 +9179,12 @@ com.example.myapp/
 // - We need to handle word wrap on "Confirmar tamaño del paquete..." label and probably also for its supporting text
 // - The "about" dialog title overflows the top app bar to line - this is probably OK/unavoidable, but think/maybe discuss
 
-// TODO: In Spanish (but also probably in English) with USD prices in non-USD locale, my small
-// emulator is not fitting an (admittedly fake, but not insane in this context) $69,30 por 12x400ml
-// shelf price (for cola) in the space available. And there is likely no way precio por unidad is
-// fitting at all. TBH it *may* be that given this is just borderline too long I should accept it,
-// rather than switching away from the grid layout. Maybe I could use a non-breaking space e.g.
-// between the price and por/for or after to improve the layout if it does wrap. Or actually
-// probably a non-breaking space between 400 and ml would maybe be good.
+// TODO: In Spanish (but also probably in English) with USD prices in non-USD locale (hence "US$"
+// not just "$"), my small emulator is not fitting an (admittedly fake, but not insane in this
+// context) US$69,30 por 12x400ml shelf price (for cola) in the space available. And there is likely
+// no way precio por unidad is fitting at all. TBH it *may* be that given this is just borderline
+// too long I should accept it, rather than switching away from the grid layout. Maybe I could use a
+// non-breaking space e.g. between the price and por/for or after to improve the layout if it does
+// wrap. Or actually probably a non-breaking space between 400 and ml would maybe be good. OK, I have
+// experimentally added a non-breaking space in MeasuredValue.toDisplayString() and we'll see if
+// that's enough or if I want to make more tweaks.
