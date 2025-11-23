@@ -60,8 +60,8 @@
     <string name="title_price_comparison">Comparación de precios</string>
     <string name="subtitle_adjusted_for_discounts_and_age">Ajustado por descuentos de fidelidad y antigüedad del precio</string>
     <string name="message_no_prices_for_item_at_source">Aún no hay precios registrados para este producto en ninguna tienda.</string>
-    <string name="label_confirm_pack_size_and_price">Confirmar tamaño del paquete y precio</string>
-    <string name="supporting_text_details_correct_right_now">Los datos arriba son correctos en este momento</string>
+    <string name="label_confirm_pack_size_and_price">Confirmar tamaño y precio</string>
+    <string name="supporting_text_details_correct_right_now">Los datos arriba son los actuales</string>
     <string name="label_pack_price">Precio del paquete</string>
     <string name="label_count">Cantidad</string>
     <string name="label_pack_size">Tamaño del paquete</string>
