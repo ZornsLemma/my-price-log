@@ -3735,7 +3735,8 @@ fun EditPriceScreenPackSize(
                     // There's also a practical consideration that when it grows larger because the
                     // field is empty, it really doesn't fit horizontally on my small phone - so a
                     // shorter label would be good there too. Just maybe "Pack size" if we don't
-                    // have multipack, "Size" if we do?!
+                    // have multipack, "Size" if we do?! - OK, I am toying with "Size" always,
+            // particularly noting that we have "Pack price" for the total in the multipack case, but that means it is not the size of the *pack*, it is the size of the individual components of the pack, so we really don't want to write "pack" even ignoring layout/space considerations
                     label = { Text(stringResource(R.string.label_pack_size)) },
                     onValueChange = {
                         packSizeNumber = it
@@ -9177,11 +9178,8 @@ com.example.myapp/
 // TODO: "each" (at least) in the measurement unit data needs translating. we probably need to pull out more stuff there too and translate that, probably via a new Grok pass.
 
 // TODO: Main (not comprehensive) list of UI "glitches" shown up by Spanish translation:
-// - "Edit"/"Confirm" buttons on home screen do not fit with recommendation icon/text - PROBABLY FIXED
 // - "Unidad" dropdown on edit price dialog is not wide enough even with no multipack
 // - We may need to accept "tall" labels on edit price screen for multipack and just make sure all three controls share the same height - but I do already have a possible tweak to the "pack size" label in English, so consider that as part of this
-// - We need to handle word wrap on "Confirmar tamaño del paquete..." label and probably also for its supporting text - FIXED
-// - The "about" dialog title overflows the top app bar to line - this is probably OK/unavoidable, but think/maybe discuss - NOT SURE I TRUST IT, BUT CHATGPT AND GROK BOTH SAY THIS IS FINE AND BEST TO STICK WITH STANDARD WORDING
 
 // TODO: In Spanish (but also probably in English) with USD prices in non-USD locale (hence "US$"
 // not just "$"), my small emulator is not fitting an (admittedly fake, but not insane in this
