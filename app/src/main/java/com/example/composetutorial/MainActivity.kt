@@ -7,7 +7,6 @@ import com.example.composetutorial.ui.defaultValidationMessageDelayMillis
 import com.example.composetutorial.ui.spinnerDelayMillis
 import com.example.composetutorial.ui.fullScreenDialogHorizontalBorder
 import com.example.composetutorial.ui.fullScreenDialogVerticalBorder
-import com.example.composetutorial.ui.multiplicationSign
 import com.example.composetutorial.ui.maxNotesLength
 import com.example.composetutorial.ui.maxNavigationDrawerWidth
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -119,7 +118,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.widthIn
@@ -1968,7 +1966,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
 
 @Composable
 fun ItemSourceInfoLive(
-    vm: HomeViewModel,
+    viewModel: HomeViewModel,
     asyncOperationStatus: AsyncOperationStatus,
     dataSet: DataSet,
     item: Item?,
@@ -1982,7 +1980,7 @@ fun ItemSourceInfoLive(
     // TODO: Maybe this should live on the viewmodel
     OnAppLifecycleEvent { event ->
         if (event == Lifecycle.Event.ON_STOP) { // app has left the foreground
-            vm.previousPrice.value =
+            viewModel.previousPrice.value =
                 null // TODO: arguably we should do all this via a "call up to top level", but not sure it's necessary - perhaps more to the point we should be calling a function on viewmodel to do this
         }
     }
@@ -1996,15 +1994,15 @@ fun ItemSourceInfoLive(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Box {
-            SourcePriceCardBody(vm, asyncOperationStatus, dataSet, augmentedPrice, onEditPriceClick)
-            SourcePriceCardMenu(vm, asyncOperationStatus, dataSet, item, source, augmentedPrice, onViewHistoryClick, onDeletePriceClick, menuModifier = Modifier.align(Alignment.TopEnd))
+            SourcePriceCardBody(viewModel, asyncOperationStatus, dataSet, augmentedPrice, onEditPriceClick)
+            SourcePriceCardMenu(viewModel, asyncOperationStatus, dataSet, item, source, augmentedPrice, onViewHistoryClick, onDeletePriceClick, menuModifier = Modifier.align(Alignment.TopEnd))
         }
     }
 }
 
 @Composable
 fun SourcePriceCardBody(
-    vm: HomeViewModel,
+    viewModel: HomeViewModel,
     asyncOperationStatus: AsyncOperationStatus,
     dataSet: DataSet,
     augmentedPrice: AugmentedPrice?,
@@ -2085,7 +2083,7 @@ fun SourcePriceCardBody(
                 // might want to e.g. remove the verticalAlignment on the Row
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     // PriceJudgementIndicator(augmentedPrice.priceJudgement)
-                    EditConfirmButtons(vm, asyncOperationStatus, augmentedPrice, onEditPriceClick)
+                    EditConfirmButtons(viewModel, asyncOperationStatus, augmentedPrice, onEditPriceClick)
                 }
             }
         }
@@ -2118,7 +2116,7 @@ fun OverflowMenu(
 
 @Composable
 fun SourcePriceCardMenu(
-    vm: HomeViewModel,
+    viewModel: HomeViewModel,
     asyncOperationStatus: AsyncOperationStatus,
     dataSet: DataSet,
     item: Item?,
@@ -2130,7 +2128,7 @@ fun SourcePriceCardMenu(
     ) {
     val priceHistoryCount by remember(dataSet.id, item?.id, source?.id) {
         if (item != null && source != null) {
-            vm.countPriceHistory(dataSet.id, item.id, source.id)
+            viewModel.countPriceHistory(dataSet.id, item.id, source.id)
         } else {
             flowOf(0L)
         }
@@ -2182,7 +2180,7 @@ fun PriceJudgementIndicator(priceJudgement: PriceJudgement) {
 
 @Composable
 fun EditConfirmButtons(
-    vm: HomeViewModel,
+    viewModel: HomeViewModel,
     asyncOperationStatus: AsyncOperationStatus,
     augmentedPrice: AugmentedPrice,
     onEditPriceClick: () -> Unit,
@@ -2228,15 +2226,15 @@ fun EditConfirmButtons(
         // won't have changed on subsequent visits) - so it gets the position on
         // the right.
         val locale = LocalConfiguration.current.locales[0]
-        val showConfirmButton = vm.previousPrice.value == null
+        val showConfirmButton = viewModel.previousPrice.value == null
         FilledTonalButton(
             /* modifier = Modifier.width(confirmButtonWidth) ,*/
             onClick = {
                 if (showConfirmButton) {
-                    vm.confirmPrice(augmentedPrice.basePrice)
+                    viewModel.confirmPrice(augmentedPrice.basePrice)
                 } else {
-                    vm.undoConfirmPrice(
-                        augmentedPrice.basePrice, vm.previousPrice.value!!
+                    viewModel.undoConfirmPrice(
+                        augmentedPrice.basePrice, viewModel.previousPrice.value!!
                     )
                 }
             },
@@ -2648,7 +2646,7 @@ data class EditDataSetScreenUIContent(
 
 @Composable
 fun HomeScreen(
-    vm: HomeViewModel,
+    viewModel: HomeViewModel,
     navController: NavHostController,
     onEditPriceClick: (HomeScreenUIContent) -> Unit,
     onItemSearchClick: (HomeScreenUIContent) -> Unit,
@@ -2674,7 +2672,7 @@ fun HomeScreen(
     // This is addressed by having the ViewModel hold the UI state in a hot flow, so when we
     // return to this composable after having navigated elsewhere, the correct state is available
     // for the very first frame.
-    val uiState by vm.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val (loading, uiContent) = uiState
     Log.d("MyAppBG", "uiContent.dataSetIdState ${uiContent.dataSetIdState} uiContent.sourceIdState ${uiContent.sourceIdState}")
 
@@ -2690,27 +2688,27 @@ fun HomeScreen(
         // we should.
         HomeScreenScaffold(
             navController,
-            vm,
+            viewModel,
             loading,
             uiContent.dataSetIdState,
             uiContent.dataSet,
             uiContent.dataSetList,
             onSelectedDataSetIdChange = {
-                vm.previousPrice.value = null
-                vm.setSelectedDataSetId(it)
+                viewModel.previousPrice.value = null
+                viewModel.setSelectedDataSetId(it)
             },
             uiContent.item,
             uiContent.itemList,
             onSelectedItemIdChange = {
-                vm.previousPrice.value = null
-                vm.setSelectedItemId(it)
+                viewModel.previousPrice.value = null
+                viewModel.setSelectedItemId(it)
             },
             uiContent.sourceIdState,
             uiContent.source,
             uiContent.sourceList,
             onSelectedSourceIdChange = {
-                vm.previousPrice.value = null
-                vm.setSelectedSourceId(it)
+                viewModel.previousPrice.value = null
+                viewModel.setSelectedSourceId(it)
             },
             uiContent.priceAnalysis,
             onEditPriceClick = { onEditPriceClick(uiContent) },
@@ -2956,7 +2954,7 @@ fun HomeScreenActualScaffold( // TODO: RENAME
 // functions.
 fun HomeScreenScaffold(
     navController: NavHostController,
-    vm: HomeViewModel,
+    viewModel: HomeViewModel,
     loading: Boolean,
     dataSetIdState: LoadState<Long>,
     dataSet: DataSet?,
@@ -2978,7 +2976,7 @@ fun HomeScreenScaffold(
     onSelectSourceClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
-    val asyncOperationStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
+    val asyncOperationStatus by viewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     // Unlike GeneralEditScreen(), we don't try to trap "back" and show a busy snackbar. We probably
     // could but:
@@ -3001,7 +2999,7 @@ fun HomeScreenScaffold(
     LaunchedEffect(navBackStackEntry) {
         if (navBackStackEntry == null) {
             // This screen has been navigated away from.
-            vm.previousPrice.value = null
+            viewModel.previousPrice.value = null
         }
     }
 
@@ -3010,7 +3008,7 @@ fun HomeScreenScaffold(
         HomeScreenActualScaffold(navController, drawerState, dataSet, onSelectDataSetClick, onSelectItemClick, onSelectSourceClick, onSettingsClick, asyncOperationStatus)
  { innerPadding ->
                 HomeScreenContent(
-                    vm,
+                    viewModel,
                     dataSetIdState,
                     dataSet,
                     dataSetList,
@@ -3031,12 +3029,12 @@ fun HomeScreenScaffold(
         }
     }
 
-    HomeScreenStateManager(vm, loading, asyncOperationStatus)
+    HomeScreenStateManager(viewModel, loading, asyncOperationStatus)
 }
 
 @Composable
 fun HomeScreenStateManager(
-    vm: HomeViewModel,
+    viewModel: HomeViewModel,
     loading: Boolean,
     asyncOperationStatus: AsyncOperationStatus
 ) {
@@ -3045,7 +3043,7 @@ fun HomeScreenStateManager(
     LaunchedEffect(Unit) {
         // We use buffer() here because we want to update() while we are already collecting; we
         // might get a deadlock otherwise.
-        vm.asyncOperationStatus.events.buffer().collect { event ->
+        viewModel.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
                 AsyncOperationStatus.Busy -> {
                     // We expect the operation to complete quickly so we don't want the visual distraction
@@ -3053,17 +3051,17 @@ fun HomeScreenStateManager(
                     // in after a short delay if we're still here waiting.
                     delay(spinnerDelayMillis)
                     // The state might not be busy any more, so check first before updating to avoid a race condition.
-                    if (vm.asyncOperationStatus.state.value == AsyncOperationStatus.Busy) {
-                        vm.asyncOperationStatus.update(AsyncOperationStatus.BusyForAWhile)
+                    if (viewModel.asyncOperationStatus.state.value == AsyncOperationStatus.Busy) {
+                        viewModel.asyncOperationStatus.update(AsyncOperationStatus.BusyForAWhile)
                     }
                 }
 
                 is AsyncOperationStatus.Success -> {
-                    vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
+                    viewModel.asyncOperationStatus.update(AsyncOperationStatus.Idle)
                 }
 
                 is AsyncOperationStatus.Error -> {
-                    vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
+                    viewModel.asyncOperationStatus.update(AsyncOperationStatus.Idle)
                     showErrorDialogMessage = event.message
                 }
 
@@ -3104,7 +3102,7 @@ fun HomeScreenStateManager(
 
 @Composable
 fun HomeScreenContent(
-    vm: HomeViewModel,
+    viewModel: HomeViewModel,
     dataSetIdState: LoadState<Long>,
     dataSet: DataSet?,
     dataSetList: List<DataSet>,
@@ -3182,7 +3180,7 @@ fun HomeScreenContent(
                         Log.d("MyApp", "HSS dataSet $dataSet")
                         Log.d("MyApp", "HSS item $item")
                         ItemSourceInfoLive(
-                            vm = vm,
+                            viewModel = viewModel,
                             asyncOperationStatus = asyncOperationStatus,
                             dataSet = dataSet,
                             item = item,
@@ -3231,13 +3229,13 @@ fun HomeScreenContent(
 
     if (showDeletePriceConfirmDialog) {
         val augmentedPrice = priceAnalysis.augmentedPriceList.single { it.basePrice.sourceId == source?.id }
-        DeletePriceConfirmDialog(vm, augmentedPrice, onDismissRequest = { showDeletePriceConfirmDialog = false })
+        DeletePriceConfirmDialog(viewModel, augmentedPrice, onDismissRequest = { showDeletePriceConfirmDialog = false })
     }
 }
 
 @Composable
 fun DeletePriceConfirmDialog(
-    vm: HomeViewModel,
+    viewModel: HomeViewModel,
     augmentedPrice: AugmentedPrice,
     onDismissRequest: () -> Unit
 ) {
@@ -3255,7 +3253,7 @@ fun DeletePriceConfirmDialog(
         confirmButton = {
             TextButton(onClick = {
                 onDismissRequest()
-                vm.deletePrice(augmentedPrice.basePrice)
+                viewModel.deletePrice(augmentedPrice.basePrice)
             }) { Text(stringResource(R.string.button_delete)) }
         }
     )
@@ -3502,15 +3500,15 @@ fun areDifferentUnitFamilies(lhs: MeasurementUnit, rhs: MeasurementUnit) =
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditPriceScreen(
-    vm: EditPriceViewModel,
+    viewModel: EditPriceViewModel,
     navController: NavHostController,
     requestClose: (Long?) -> Unit
 ) {
-    val uiContent = vm.uiContent
+    val uiContent = viewModel.uiContent
 
 // TODO: Some of this remember stuff should maybe move into the ViewModel
 
-    val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     fun onPackSizeOrPriceChange() {
         // On the first change to the pack size or price, we set the "to confirm" switch to true, on
@@ -3523,22 +3521,22 @@ fun EditPriceScreen(
         // ENHANCE: We might want to gate this logic behind a Settings option, i.e. have an option to
         // let the confirm always stay off unless the user explicitly turns it on. That said, in my
         // own personal use, this logic seems to work well.
-        if (!vm.firstPackSizeOrPriceChangeOccurred) {
-            vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(toConfirm = true))
-            vm.firstPackSizeOrPriceChangeOccurred = true
+        if (!viewModel.firstPackSizeOrPriceChangeOccurred) {
+            viewModel.setUIContentEditablePrice(uiContent.editablePrice.value.copy(toConfirm = true))
+            viewModel.firstPackSizeOrPriceChangeOccurred = true
         }
     }
 
     GeneralEditScreen(
-        vm = vm.generalEditScreenViewModel,
+        viewModel = viewModel.generalEditScreenViewModel,
         navController = navController,
-        title = topAppBarTitle(vm.uiContent.item.name, vm.uiContent.source.name),
+        title = topAppBarTitle(viewModel.uiContent.item.name, viewModel.uiContent.source.name),
         isDirty = {
             uiContent.editablePrice.value.copy(toConfirm = false) !=
                     uiContent.originalPrice.copy(toConfirm = false)
         },
-        validateForSave = { vm.validateForSave() },
-        performSave = { vm.performSave() },
+        validateForSave = { viewModel.validateForSave() },
+        performSave = { viewModel.performSave() },
         onIdle = {},
         requestClose = requestClose,
     ) {
@@ -3549,11 +3547,11 @@ fun EditPriceScreen(
         // check for validation failures to match, as well as re-ordering the actual composables
         // here.)
 
-        EditPriceScreenPrice(vm, ::onPackSizeOrPriceChange)
+        EditPriceScreenPrice(viewModel, ::onPackSizeOrPriceChange)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        EditPriceScreenPackSize(vm, ::onPackSizeOrPriceChange)
+        EditPriceScreenPackSize(viewModel, ::onPackSizeOrPriceChange)
 
         // We don't show the switch if this is the first price for an item and source; the price is
         // confirmed, otherwise why are we entering it? Note that this is not the same as id being
@@ -3583,7 +3581,7 @@ fun EditPriceScreen(
                     enabled = saveStatus.isNotBusy(),
                     checked = uiContent.editablePrice.value.toConfirm,
                     onCheckedChange = {
-                        vm.setUIContentEditablePrice(
+                        viewModel.setUIContentEditablePrice(
                             uiContent.editablePrice.value.copy(
                                 toConfirm = it
                             )
@@ -3610,7 +3608,7 @@ fun EditPriceScreen(
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
-                vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(notes = it.text))
+                viewModel.setUIContentEditablePrice(uiContent.editablePrice.value.copy(notes = it.text))
             },
             enabled = saveStatus.isNotBusy(),
         )
@@ -3619,23 +3617,23 @@ fun EditPriceScreen(
 
 @Composable
 fun EditPriceScreenPrice(
-    vm: EditPriceViewModel,
+    viewModel: EditPriceViewModel,
     onChange: () -> Unit
 ) {
-    val uiContent = vm.uiContent
+    val uiContent = viewModel.uiContent
 
-    val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
-    val currencyFormat = vm.currencyFormat
+    val currencyFormat = viewModel.currencyFormat
 
     ValidatedNumericTextField(
         value = packPrice,
         validationRules = currencyFormat.validationRules,
         // No validationRulesKey is needed as the validation rules depend only on our fixed
         // DataSet and frozen locale.
-        allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
-        validationFlow = vm.saveValidationEvents,
+        allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
+        validationFlow = viewModel.saveValidationEvents,
         validationFlowFieldId = EditPriceViewModel.EditableField.PRICE,
         errorHighlightOffset = 4.dp,
             numericTextFieldModifier = Modifier
@@ -3650,7 +3648,7 @@ fun EditPriceScreenPrice(
             onValueChange = {
                 packPrice = it
                 if (uiContent.editablePrice.value.price != it.text) {
-                    vm.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
+                    viewModel.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
                     onChange()
                 }
             },
@@ -3660,12 +3658,12 @@ fun EditPriceScreenPrice(
 
 @Composable
 fun EditPriceScreenPackSize(
-    vm: EditPriceViewModel,
+    viewModel: EditPriceViewModel,
     onChange: () -> Unit
 ) {
-    val uiContent = vm.uiContent
+    val uiContent = viewModel.uiContent
 
-    val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val units: List<MeasurementUnit> =
         remember(uiContent.dataSet, uiContent.item.defaultUnit.quantityType) {
@@ -3690,14 +3688,14 @@ fun EditPriceScreenPackSize(
     // TODO: ALL THE WEIGHTS HERE INCLUDING THE LEVELS AT WHICH THEY ARE APPLIED ARE UP IN THE AIR AND SHOULD BE CHECKED
 
     // TODO DELETE?Column {
-        if (vm.showPackCount) {
+        if (viewModel.showPackCount) {
             //Row {//TODO(modifier = Modifier.fillMaxWidth().background(Color.Red)) {
                 ValidatedNumericTextField(
                     value = packCountNumber,
-                    validationRules = vm.packCountValidationRules,
+                    validationRules = viewModel.packCountValidationRules,
                     // TODO DON'T THINK WE NEED THIS BUT CHECK, WIP RIGHT NOW validationRulesKey = uiContent.editablePrice.value.measurementUnit.id,
-                    allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
-                    validationFlow = vm.saveValidationEvents,
+                    allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
+                    validationFlow = viewModel.saveValidationEvents,
                     validationFlowFieldId = EditPriceViewModel.EditableField.PACK_COUNT,
                     errorHighlightOffset = 4.dp, // TODO!?
                     numericTextFieldModifier = Modifier.fillMaxWidth(), //TODObaseValidatedTextFieldModifier = Modifier.weight(1f),
@@ -3706,7 +3704,7 @@ fun EditPriceScreenPackSize(
                     onValueChange = {
                         packCountNumber = it
                         if (uiContent.editablePrice.value.count != it.text) {
-                            vm.setUIContentEditablePrice(
+                            viewModel.setUIContentEditablePrice(
                                 uiContent.editablePrice.value.copy(
                                     count = it.text
                                 )
@@ -3726,10 +3724,10 @@ fun EditPriceScreenPackSize(
         Row {
             ValidatedNumericTextField(
                 value = packSizeNumber,
-                validationRules = vm.packSizeValidationRules,
+                validationRules = viewModel.packSizeValidationRules,
                 validationRulesKey = uiContent.editablePrice.value.measurementUnit.id,
-                allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
-                validationFlow = vm.saveValidationEvents,
+                allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
+                validationFlow = viewModel.saveValidationEvents,
                 validationFlowFieldId = EditPriceViewModel.EditableField.PACK_SIZE,
                 errorHighlightOffset = 4.dp,
                 baseValidatedTextFieldModifier = Modifier.weight(1f),
@@ -3737,7 +3735,7 @@ fun EditPriceScreenPackSize(
                 onValueChange = {
                     packSizeNumber = it
                     if (uiContent.editablePrice.value.measureValue != it.text) {
-                        vm.setUIContentEditablePrice(
+                        viewModel.setUIContentEditablePrice(
                             uiContent.editablePrice.value.copy(
                                 measureValue = it.text
                             )
@@ -3770,7 +3768,7 @@ fun EditPriceScreenPackSize(
                             "Expected non-null measurementUnit to be selected; got $it"
                         }
                         if (uiContent.editablePrice.value.measurementUnit != measurementUnit!!) {
-                            vm.setUIContentEditablePrice(
+                            viewModel.setUIContentEditablePrice(
                                 uiContent.editablePrice.value.copy(
                                     measurementUnit = measurementUnit
                                 )
@@ -3841,24 +3839,24 @@ class GeneralEditScreenViewModel {
 }
 
 fun runGeneralEditScreenOperation(
-    vm: GeneralEditScreenViewModel,
+    viewModel: GeneralEditScreenViewModel,
     coroutineScope: CoroutineScope,
     isSafeToPerform: suspend () -> Boolean,
     perform: suspend () -> Long?,
 ) {
     coroutineScope.launch {
         if (isSafeToPerform()) {
-            vm.asyncOperationStatus.update(AsyncOperationStatus.Busy)
+            viewModel.asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation about to call perform")
                 //throw IllegalStateException("TODO TEST")
                 val id = perform()
                 Log.d("MyAppQZ", "perform() returned id $id")
                 // delay(5000) // TODO HACK - DONE AFTER PERFORM SO IT GETS A CHANCE TO SET SAVING/DELETING FLAG TO TRUE
-                vm.asyncOperationStatus.update(AsyncOperationStatus.Success(id))
+                viewModel.asyncOperationStatus.update(AsyncOperationStatus.Success(id))
             } catch (e: Exception) {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation caught exception")
-                vm.asyncOperationStatus.update(AsyncOperationStatus.Error("runGeneralEditScreenOperation failed: ${e.toString()}"))
+                viewModel.asyncOperationStatus.update(AsyncOperationStatus.Error("runGeneralEditScreenOperation failed: ${e.toString()}"))
             }
         }
     }
@@ -3867,7 +3865,7 @@ fun runGeneralEditScreenOperation(
 // TODO: This is a very long function, can we split it up?
 @Composable
 fun GeneralEditScreen(
-    vm: GeneralEditScreenViewModel,
+    viewModel: GeneralEditScreenViewModel,
     navController: NavHostController,
     title: @Composable () -> Unit,
     isDirty: () -> Boolean,
@@ -3877,7 +3875,7 @@ fun GeneralEditScreen(
     requestClose: (Long?) -> Unit,
     content: @Composable () -> Unit
 ) {
-    val saveStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.asyncOperationStatus.collectAsStateWithLifecycle()
     Log.d("MyAppRGE", "GeneralEditScreen saveStatus=$saveStatus")
 
     val isNotBusy = saveStatus.isNotBusy()
@@ -3921,7 +3919,7 @@ fun GeneralEditScreen(
     LaunchedEffect(Unit) {
         // We use buffer() here because we want to update() while we are already collecting; we
         // might get a deadlock otherwise.
-        vm.asyncOperationStatus.events.buffer().collect { event ->
+        viewModel.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
                 AsyncOperationStatus.Busy -> {
                     // We expect the operation to complete quickly so we don't want the visual distraction
@@ -3929,8 +3927,8 @@ fun GeneralEditScreen(
                     // in after a short delay if we're still here waiting.
                     delay(spinnerDelayMillis)
                     // The state might not be busy any more, so check first before updating to avoid a race condition.
-                    if (vm.asyncOperationStatus.state.value == AsyncOperationStatus.Busy) {
-                        vm.asyncOperationStatus.update(AsyncOperationStatus.BusyForAWhile)
+                    if (viewModel.asyncOperationStatus.state.value == AsyncOperationStatus.Busy) {
+                        viewModel.asyncOperationStatus.update(AsyncOperationStatus.BusyForAWhile)
                     }
                 }
 
@@ -3942,7 +3940,7 @@ fun GeneralEditScreen(
     LaunchedEffect(Unit) {
         // We use buffer here because we want to update() in the error case while we are
         // already collecting; we get a deadlock otherwise.
-        vm.asyncOperationStatus.events.buffer().collect { event ->
+        viewModel.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
                 AsyncOperationStatus.Idle -> {
                     Log.d("MyAppRGE", "collected idle")
@@ -3959,7 +3957,7 @@ fun GeneralEditScreen(
 
                 is AsyncOperationStatus.Error -> {
                     Log.d("MyAppRGE", "collected error")
-                    vm.asyncOperationStatus.update(AsyncOperationStatus.Idle)
+                    viewModel.asyncOperationStatus.update(AsyncOperationStatus.Idle)
                     Log.d("MyAppRGE", "set state to idle")
                     showErrorDialogMessage = event.message
                 }
@@ -3997,9 +3995,9 @@ fun GeneralEditScreen(
                         // We could check isDirty here and just dismiss without saving if there's
                         // nothing to save, but it's probably best (given there's no history table
                         // which would get bloated) just to save regardless.
-                        vm.saveAttempted.value = true
+                        viewModel.saveAttempted.value = true
                         runGeneralEditScreenOperation(
-                            vm = vm,
+                            viewModel = viewModel,
                             coroutineScope = coroutineScope,
                             isSafeToPerform = validateForSave,
                             perform = {
@@ -4115,7 +4113,7 @@ fun AsyncOperationErrorAlertDialog(onDismissRequest: () -> Unit, message: String
 
 @Composable
 fun GeneralEditAndDeleteScreen(
-    vm: GeneralEditScreenViewModel,
+    viewModel: GeneralEditScreenViewModel,
     navController: NavHostController,
     title: @Composable () -> Unit,
     isDirty: () -> Boolean,
@@ -4130,10 +4128,10 @@ fun GeneralEditAndDeleteScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     var deleting by rememberSaveable { mutableStateOf(false) }
-    val saveStatus by vm.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     GeneralEditScreen(
-        vm = vm,
+        viewModel = viewModel,
         navController = navController,
         title = title,
         isDirty = isDirty,
@@ -4168,7 +4166,7 @@ fun GeneralEditAndDeleteScreen(
                 TextButton(onClick = {
                     onDeleteConfirmDismissRequest()
                     runGeneralEditScreenOperation(
-                        vm = vm,
+                        viewModel = viewModel,
                         coroutineScope = coroutineScope,
                         isSafeToPerform = { true },
                         perform = {
@@ -4189,32 +4187,32 @@ fun GeneralEditAndDeleteScreen(
 
 @Composable
 fun EditItemScreen(
-    vm: EditItemViewModel,
+    viewModel: EditItemViewModel,
     navController: NavHostController,
     requestClose: (newSelectedItemId: Long?) -> Unit
 ) {
-    val uiContent = vm.uiContent
+    val uiContent = viewModel.uiContent
 
-    val itemReferenceCount by vm.itemReferenceCountFlow.collectAsStateWithLifecycle(null)
+    val itemReferenceCount by viewModel.itemReferenceCountFlow.collectAsStateWithLifecycle(null)
     Log.d("MyApp", "itemReferenceCount $itemReferenceCount")
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
-    val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = itemReferenceCount == 0L
     val dialogTitle = stringResource(if (isSimpleDelete) R.string.title_delete_item else R.string.title_delete_item_and_prices)
     // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
     val dialogSubtitle = stringResource(if (isSimpleDelete) R.string.message_delete_item_no_associated_prices else R.string.message_delete_item_associated_prices)
     GeneralEditAndDeleteScreen(
-        vm = vm.generalEditScreenViewModel,
+        viewModel = viewModel.generalEditScreenViewModel,
         navController = navController,
-        title = topAppBarTitle( if (vm.uiContent.editableItem.value.id == 0L) stringResource(R.string.title_add_item) else stringResource(
+        title = topAppBarTitle( if (viewModel.uiContent.editableItem.value.id == 0L) stringResource(R.string.title_add_item) else stringResource(
             R.string.title_edit_item
-        ), vm.uiContent.dataSet.name),
+        ), viewModel.uiContent.dataSet.name),
         isDirty = { uiContent.editableItem.value != uiContent.originalItem },
-        validateForSave = { vm.validateForSave() },
-        performSave = { vm.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
+        validateForSave = { viewModel.validateForSave() },
+        performSave = { viewModel.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
         onIdle = {},
         requestClose = requestClose,
         deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
@@ -4222,11 +4220,11 @@ fun EditItemScreen(
             { Text(dialogTitle) },
             { Text(dialogSubtitle) },
         ),
-        performDelete = { vm.performDelete() },
+        performDelete = { viewModel.performDelete() },
         onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
     ) { showDeleteSpinner ->
         var name by rememberSyncedTextFieldValue(uiContent.editableItem.value.name)
-        val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
+        val nameValidationRules by viewModel.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
         ValidatedFilteredTextField(
             label = { Text(stringResource(R.string.label_name)) },
@@ -4235,14 +4233,14 @@ fun EditItemScreen(
             maxLength = maxItemNameLength,
             onValueChange = {
                 name = it
-                vm.setUIContentEditableItem(uiContent.editableItem.value.copy(name = it.text))
+                viewModel.setUIContentEditableItem(uiContent.editableItem.value.copy(name = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value ?: emptyList(),
             validationRulesKey = nameValidationRules.version,
-            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
             singleLine = true,
-            validationFlow = vm.saveValidationEvents,
+            validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditItemViewModel.EditableField.NAME
         )
 
@@ -4299,7 +4297,7 @@ fun EditItemScreen(
                 //Spacer(modifier = Modifier.height(8.dp))
                 options.forEach { (id, name, supportingText) ->
                     val clickableModifier = if (!radioButtonsEnabled) Modifier else Modifier.clickable {
-                        vm.setUIContentEditableItem(
+                        viewModel.setUIContentEditableItem(
                             uiContent.editableItem.value.copy(
                                 quantityType = id
                             )
@@ -4351,16 +4349,16 @@ fun EditItemScreen(
                     // TODO: RelevantUnit* here are sort of copy and paste from ItemSourceInfo and
                     // could possibly be factored out along with the code using them
                     val relevantUnitFamilies =
-                        remember(vm.uiContent.dataSet) { getRelevantUnitFamilies(vm.uiContent.dataSet) }
+                        remember(viewModel.uiContent.dataSet) { getRelevantUnitFamilies(viewModel.uiContent.dataSet) }
 
                     val relevantUnitList =
                         remember(
-                            vm.uiContent.dataSet,
-                            vm.uiContent.editableItem.value.quantityType
+                            viewModel.uiContent.dataSet,
+                            viewModel.uiContent.editableItem.value.quantityType
                         ) {
                             getRelevantMeasurementUnits(
-                                vm.uiContent.dataSet,
-                                vm.uiContent.editableItem.value.quantityType,
+                                viewModel.uiContent.dataSet,
+                                viewModel.uiContent.editableItem.value.quantityType,
                                 includeDisplayOnly = false
                             )
                         }
@@ -4383,7 +4381,7 @@ fun EditItemScreen(
                                             it[uiContent.editableItem.value.quantityType.ordinal] =
                                                 defaultUnit.id
                                         }
-                                vm.setUIContentEditableItem(
+                                viewModel.setUIContentEditableItem(
                                     uiContent.editableItem.value.copy(
                                         defaultUnitIdByQuantityTypeOrdinal = defaultUnitIdByQuantityTypeOrdinal
                                     )
@@ -4426,7 +4424,7 @@ fun EditItemScreen(
                 enabled = saveStatus.isNotBusy(),
                 checked = uiContent.editableItem.value.allowMultipack,
                 onCheckedChange = {
-                    vm.setUIContentEditableItem(
+                    viewModel.setUIContentEditableItem(
                         uiContent.editableItem.value.copy(
                             allowMultipack = it
                         )
@@ -4444,7 +4442,7 @@ fun EditItemScreen(
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
-                vm.setUIContentEditableItem(uiContent.editableItem.value.copy(notes = it.text))
+                viewModel.setUIContentEditableItem(uiContent.editableItem.value.copy(notes = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             modifier = Modifier.fillMaxWidth(),
@@ -4475,18 +4473,18 @@ fun EditItemScreen(
 
 @Composable
 fun EditSourceScreen(
-    vm: EditSourceViewModel,
+    viewModel: EditSourceViewModel,
     navController: NavHostController,
     requestClose: (Long?) -> Unit
 ) {
-    val uiContent = vm.uiContent
+    val uiContent = viewModel.uiContent
 
-    val sourceReferenceCount by vm.sourceReferenceCountFlow.collectAsStateWithLifecycle(null)
+    val sourceReferenceCount by viewModel.sourceReferenceCountFlow.collectAsStateWithLifecycle(null)
     Log.d("MyApp", "sourceReferenceCount $sourceReferenceCount")
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
-    val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = sourceReferenceCount == 0L
     val dialogTitle = stringResource(if (isSimpleDelete) R.string.title_delete_source else R.string.title_delete_source_and_prices)
@@ -4494,14 +4492,14 @@ fun EditSourceScreen(
     val dialogSubtitle = stringResource(if (isSimpleDelete) R.string.message_delete_source_no_associated_prices else R.string.message_delete_source_associated_prices)
 
     GeneralEditAndDeleteScreen(
-        vm = vm.generalEditScreenViewModel,
+        viewModel = viewModel.generalEditScreenViewModel,
         navController = navController,
-        title = topAppBarTitle(if (vm.uiContent.editableSource.value.id == 0L) stringResource(R.string.title_add_source) else stringResource(
+        title = topAppBarTitle(if (viewModel.uiContent.editableSource.value.id == 0L) stringResource(R.string.title_add_source) else stringResource(
             R.string.title_edit_source
-        ), vm.uiContent.dataSet.name),
+        ), viewModel.uiContent.dataSet.name),
         isDirty = { uiContent.editableSource.value != uiContent.originalSource },
-        validateForSave = { vm.validateForSave() },
-        performSave = { vm.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
+        validateForSave = { viewModel.validateForSave() },
+        performSave = { viewModel.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
         onIdle = {},
         requestClose = requestClose,
         deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
@@ -4509,11 +4507,11 @@ fun EditSourceScreen(
             { Text(dialogTitle) },
             { Text(dialogSubtitle) },
         ),
-        performDelete = { vm.performDelete() },
+        performDelete = { viewModel.performDelete() },
         onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
     ) { showDeleteSpinner ->
         var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
-        val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
+        val nameValidationRules by viewModel.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
         ValidatedFilteredTextField(
             label = { Text(stringResource(R.string.label_name)) },
@@ -4523,14 +4521,14 @@ fun EditSourceScreen(
             maxLength = maxSourceNameLength,
             onValueChange = {
                 name = it
-                vm.setUIContentEditableSource(uiContent.editableSource.value.copy(name = it.text))
+                viewModel.setUIContentEditableSource(uiContent.editableSource.value.copy(name = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value,
             validationRulesKey = nameValidationRules.version,
-            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
             singleLine = true,
-            validationFlow = vm.saveValidationEvents,
+            validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditSourceViewModel.EditableField.NAME
         )
 
@@ -4578,7 +4576,7 @@ fun EditSourceScreen(
                 //Spacer(modifier = Modifier.height(8.dp))
                 options.forEach { (id, name, supportingText) ->
                     val clickableModifier = if (!saveStatus.isNotBusy()) Modifier else Modifier.clickable {
-                        vm.setUIContentEditableSource(
+                        viewModel.setUIContentEditableSource(
                             uiContent.editableSource.value.copy(
                                 loyaltyType = id
                             )
@@ -4624,9 +4622,9 @@ fun EditSourceScreen(
                     Box(modifier = Modifier.padding(8.dp)) {
                         ValidatedNumericTextField(
                             value = loyaltyPercentage,
-                            validationRules = vm.loyaltyPercentageValidationRules,
-                            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
-                            validationFlow = vm.saveValidationEvents,
+                            validationRules = viewModel.loyaltyPercentageValidationRules,
+                            allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
+                            validationFlow = viewModel.saveValidationEvents,
                             validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
                             numericTextFieldModifier = Modifier
                                 .fillMaxWidth(),
@@ -4636,7 +4634,7 @@ fun EditSourceScreen(
                             suffix = { Text("%") },
                             onValueChange = {
                                 loyaltyPercentage = it
-                                vm.setUIContentEditableSource(
+                                viewModel.setUIContentEditableSource(
                                     uiContent.editableSource.value.copy(
                                         loyaltyPercentage = it.text
                                     )
@@ -4659,7 +4657,7 @@ fun EditSourceScreen(
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
-                vm.setUIContentEditableSource(uiContent.editableSource.value.copy(notes = it.text))
+                viewModel.setUIContentEditableSource(uiContent.editableSource.value.copy(notes = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             modifier = Modifier.fillMaxWidth(),
@@ -4837,18 +4835,18 @@ private enum class UnitPreferenceOption { METRIC, IMPERIAL, US_CUSTOMARY }
 // TODO: Seems quite a long function, can we factor out (even single use) chunks for readability?
 @Composable
 fun EditDataSetScreen(
-    vm: EditDataSetViewModel,
+    viewModel: EditDataSetViewModel,
     navController: NavHostController,
     requestClose: (Long?) -> Unit
 ) {
-    val uiContent = vm.uiContent
+    val uiContent = viewModel.uiContent
 
-    val dataSetReferenceCount by vm.dataSetReferenceCountFlow.collectAsStateWithLifecycle(null)
+    val dataSetReferenceCount by viewModel.dataSetReferenceCountFlow.collectAsStateWithLifecycle(null)
     Log.d("MyApp", "dataSetReferenceCount $dataSetReferenceCount")
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
-    val saveStatus by vm.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = dataSetReferenceCount == 0L
     val dialogTitle = stringResource(if (isSimpleDelete) R.string.title_delete_data_set else R.string.title_delete_data_set_and_associated_data)
@@ -4856,14 +4854,14 @@ fun EditDataSetScreen(
     val dialogSubtitle = stringResource(if (isSimpleDelete) R.string.message_delete_data_set_no_associated_data else R.string.message_delete_data_set_associated_data)
 
     GeneralEditAndDeleteScreen(
-        vm = vm.generalEditScreenViewModel,
+        viewModel = viewModel.generalEditScreenViewModel,
         navController = navController,
         title = { Text(if (uiContent.editableDataSet.value.id == 0L) stringResource(R.string.title_add_data_set) else stringResource(
             R.string.title_edit_data_set
         )) },
         isDirty = { uiContent.editableDataSet.value != uiContent.originalDataSet },
-        validateForSave = { vm.validateForSave() },
-        performSave = { vm.performSave(); /* throw IllegalArgumentException("TODO2") */ },
+        validateForSave = { viewModel.validateForSave() },
+        performSave = { viewModel.performSave(); /* throw IllegalArgumentException("TODO2") */ },
         onIdle = {},
         requestClose = requestClose,
         // TODO: WORDING FOR ALL OF THIS IS PARTICULARLY BAD AND NEEDS THOUGHT
@@ -4872,11 +4870,11 @@ fun EditDataSetScreen(
             { Text(dialogTitle) },
             { Text(dialogSubtitle) },
         ),
-        performDelete = { vm.performDelete() },
+        performDelete = { viewModel.performDelete() },
         onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
     ) { showDeleteSpinner ->
         var name by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.name)
-        val nameValidationRules by vm.nameValidationRules.collectAsStateWithLifecycle()
+        val nameValidationRules by viewModel.nameValidationRules.collectAsStateWithLifecycle()
         ValidatedFilteredTextField(
             label = { Text(stringResource(R.string.label_name)) },
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
@@ -4884,14 +4882,14 @@ fun EditDataSetScreen(
             maxLength = maxDataSetNameLength,
             onValueChange = {
                 name = it
-                vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(name = it.text))
+                viewModel.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(name = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value,
             validationRulesKey = nameValidationRules.version,
-            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
             singleLine = true,
-            validationFlow = vm.saveValidationEvents,
+            validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditDataSetViewModel.EditableField.NAME
         )
 
@@ -4900,9 +4898,9 @@ fun EditDataSetScreen(
         // TODO: Should we specify an offset of 4.dp here? Or should we perhaps just improve spacing?
         ValidationErrorHighlightBox(
             value = uiContent.editableDataSet.value.currencyCode,
-            validationRules = vm.currencyValidationRules,
-            allowEmpty = !vm.generalEditScreenViewModel.saveAttempted.value,
-            validationFlow = vm.saveValidationEvents,
+            validationRules = viewModel.currencyValidationRules,
+            allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
+            validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditDataSetViewModel.EditableField.CURRENCY_CODE
         ) { validationResult, interactionSource, validationInputHandle ->
             // TODO: According to a long comment I wrote elsewhere, we probably should be using a
@@ -4940,7 +4938,7 @@ fun EditDataSetScreen(
 
                 selectedId = if (uiContent.editableDataSet.value.currencyCode != "") uiContent.editableDataSet.value.currencyCode else null,
                 onItemSelected = {
-                    vm.setUIContentEditableDataSet(
+                    viewModel.setUIContentEditableDataSet(
                         uiContent.editableDataSet.value.copy(
                             currencyCode = it
                         )
@@ -4967,8 +4965,8 @@ fun EditDataSetScreen(
         // now with a segmented button group.
         ValidationErrorHighlightBox(
             value = uiContent.editableDataSet.value.unitPreferences,
-            validationRules = vm.measurementSystemValidationRules,
-            validationFlow = vm.saveValidationEvents,
+            validationRules = viewModel.measurementSystemValidationRules,
+            validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM
         ) { validationResult, interactionSource, scrollToFocusableHandle ->
             Text(
@@ -5015,7 +5013,7 @@ fun EditDataSetScreen(
                                 UnitPreferenceOption.IMPERIAL -> oldUnitPreferences.copy(allowImperial = it, allowUSCustomary = !it && oldUnitPreferences.allowUSCustomary)
                                 UnitPreferenceOption.US_CUSTOMARY -> oldUnitPreferences.copy(allowUSCustomary = it, allowImperial = !it && oldUnitPreferences.allowImperial)
                             }
-                            vm.setUIContentEditableDataSet(
+                            viewModel.setUIContentEditableDataSet(
                                 uiContent.editableDataSet.value.copy(unitPreferences = newUnitPreferences)
                             )
                         },
@@ -5048,7 +5046,7 @@ fun EditDataSetScreen(
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
-                vm.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(notes = it.text))
+                viewModel.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(notes = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             modifier = Modifier.fillMaxWidth(),
@@ -5514,15 +5512,15 @@ fun formatDoubleForEditing(value: Double, minDecimals: Int, maxDecimals: Int, lo
 
 @Composable
 fun SettingsScreen(
-    vm: SettingsViewModel,
+    viewModel: SettingsViewModel,
     navController: NavHostController,
     onBackupClick: () -> Unit,
     onRestoreClick: () -> Unit,
     onAboutClick: () -> Unit
 ) {
-    val stalePriceThreshold by vm.settingsRepository.stalePriceThresholdFlow.collectAsStateWithLifecycle(initialValue = defaultStalePriceThreshold)
-    val ancientPriceThresholdDays by vm.settingsRepository.ancientPriceThresholdDaysFlow.collectAsStateWithLifecycle(initialValue =defaultAncientPriceThresholdDays)
-    val annualInflationPercent by vm.settingsRepository.annualInflationPercentFlow.collectAsStateWithLifecycle(initialValue = defaultAnnualInflationPercent)
+    val stalePriceThreshold by viewModel.settingsRepository.stalePriceThresholdFlow.collectAsStateWithLifecycle(initialValue = defaultStalePriceThreshold)
+    val ancientPriceThresholdDays by viewModel.settingsRepository.ancientPriceThresholdDaysFlow.collectAsStateWithLifecycle(initialValue =defaultAncientPriceThresholdDays)
+    val annualInflationPercent by viewModel.settingsRepository.annualInflationPercentFlow.collectAsStateWithLifecycle(initialValue = defaultAnnualInflationPercent)
     var showStalePriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var showAncientPriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var showAnnualInflationPercentDialog by rememberSaveable { mutableStateOf(false) }
@@ -5646,7 +5644,7 @@ fun SettingsScreen(
                 ),
                 onConfirm = { stalePriceThresholdString ->
                     showStalePriceThresholdDialog = false
-                    vm.settingsRepository.setStalePriceThresholdAsync(stalePriceThresholdString.toInt())
+                    viewModel.settingsRepository.setStalePriceThresholdAsync(stalePriceThresholdString.toInt())
                 },
                 onDismissRequest = {
                     showStalePriceThresholdDialog = false
@@ -5683,7 +5681,7 @@ fun SettingsScreen(
                 ),
                 onConfirm = { ancientPriceThresholdDaysString ->
                     showAncientPriceThresholdDialog = false
-                    vm.settingsRepository.setAncientPriceThresholdDaysAsync(
+                    viewModel.settingsRepository.setAncientPriceThresholdDaysAsync(
                                 ancientPriceThresholdDaysString.toInt())
                 },
                 onDismissRequest = {
@@ -5725,7 +5723,7 @@ fun SettingsScreen(
                 ),
                 onConfirm = { annualInflationPercentString ->
                     showAnnualInflationPercentDialog = false
-                    vm.settingsRepository.setAnnualInflationPercentAsync(
+                    viewModel.settingsRepository.setAnnualInflationPercentAsync(
                                 annualInflationPercentString.toInt())
                 },
                 onDismissRequest = {
@@ -6606,7 +6604,7 @@ fun topAppBarTitle(title: String, subtitle: String?): @Composable (() -> Unit) =
 
 @Composable
 fun <T> GeneralSelectorScreen(
-    vm: GeneralSelectorViewModel<T>,
+    viewModel: GeneralSelectorViewModel<T>,
     navController: NavHostController,
     title: @Composable () -> Unit,
     getId: (T) -> Long,
@@ -6619,7 +6617,7 @@ fun <T> GeneralSelectorScreen(
     onItemSelected: (T) -> Unit,
     showSearch: Boolean = false,
 ) {
-    val dataList by vm.dataFlow.collectAsStateWithLifecycle()
+    val dataList by viewModel.dataFlow.collectAsStateWithLifecycle()
     Log.d("MyAppGS", "dataList $dataList")
 
     val floatingActionButton: (@Composable () -> Unit) = if (onAddClick == null) {
@@ -6679,11 +6677,11 @@ fun <T> GeneralSelectorScreen(
             // ENHANCE: We could show a warning icon and/or some supporting text if nothing matches
             // the substring, rather than just showing an empty list.
             if (showSearch) {
-                val searchString by vm.searchStringFlow.collectAsStateWithLifecycle()
+                val searchString by viewModel.searchStringFlow.collectAsStateWithLifecycle()
                 FilteredTextField(
                     value = searchString,
                     onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxSearchLength),
-                    onValueChange = { it -> vm.searchStringFlow.value = it },
+                    onValueChange = { it -> viewModel.searchStringFlow.value = it },
                     label = { Text(stringResource(R.string.label_search)) },
                     leadingIcon = {
                         Icon(
@@ -6696,7 +6694,7 @@ fun <T> GeneralSelectorScreen(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = stringResource(R.string.content_description_clear_search_text),
-                            modifier = Modifier.clickable { vm.searchStringFlow.value = TextFieldValue("") },
+                            modifier = Modifier.clickable { viewModel.searchStringFlow.value = TextFieldValue("") },
                         )
                     },
                     modifier = Modifier
@@ -7442,12 +7440,12 @@ inline fun <reified VM : ViewModel, UIContent> screenWithViewModel( // TODO: UNU
         clearUIContent()
     }
 
-    val vm: VM = viewModel(
+    val viewModel: VM = viewModel(
         viewModelStoreOwner = backStackEntry,
         factory = factory
     )
 
-    content(vm)
+    content(viewModel)
 }
 
 fun safeRestartApp(context: Context) {
@@ -9183,10 +9181,6 @@ com.example.myapp/
 // ENHANCE: It would be nice to add automated tests. At the very least, MeasuredValue could be
 // usefully tested. It would also be interesting and perhaps useful to add some unit tests for more
 // of the business logic, mocking the repository, etc.
-
-// TODO: Our variable naming may be a bit inconsistent between vm and viewModel. The latter is
-// arguably confusing (but maybe normal - I haven't checked yet) since it "shadows" the viewModel()
-// function, if only conceptually.
 
 // TODO: I think I made a mistake *intending* to change "Good/OK/bad price" to "G/O/B *value*" and
 // only changed the contentDescription versions, not the on-screen versions. For the moment I've
