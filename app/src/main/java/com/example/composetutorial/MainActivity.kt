@@ -3386,7 +3386,7 @@ fun PriceComparisonCard(
                 // appearing in isolation *without* a price next to it.
                 val header = listOf(
                     stringResource(R.string.label_source),
-                    "${currencyFormat.prefix ?: currencyFormat.suffix ?: ""}${headerUnitPriceDenominator.perSymbol}${headerUnitPriceDenominator.symbol}",
+                    "${currencyFormat.prefix ?: currencyFormat.suffix ?: ""}${headerUnitPriceDenominator.perSymbol}${stringResource(headerUnitPriceDenominator.symbol)}",
                     ""
                 )
                 // We use a custom content description with the idea that a screen reader may not be
@@ -3802,8 +3802,8 @@ fun EditPriceScreenPackSize(
                     // space. "fl"/"oz" is better than "fl o"/"z" if we are force to wrap.
                     // TODO: With the current layout we don't really have any realistic possibility
                     // of wrapping here, so we could remove this. But it isn't wrong as such.
-                    getCollapsedItemText = { it.symbol.replace("$nonBreakingSpace", " ") },
-                    getItemText = { "${context.getString(it.fullName)} (${it.symbol})" },
+                    getCollapsedItemText = { context.getString(it.symbol).replace("$nonBreakingSpace", " ") },
+                    getItemText = { "${context.getString(it.fullName)} (${context.getString(it.symbol)})" },
                     getDividerBetween = { previousItem, item ->
                         areDifferentUnitFamilies(
                             previousItem,
@@ -4395,7 +4395,7 @@ fun EditItemScreen(
                         items = relevantUnitList,
                         getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
                         getId = { it.id },
-                        getItemText = { "${context.getString(it.fullName)} (${it.symbol})" },
+                        getItemText = { "${context.getString(it.fullName)} (${context.getString(it.symbol)})" },
                     )
                 }
             }
@@ -8093,6 +8093,8 @@ fun PackPriceAndSizeRow(
     dataSet: DataSet,
     asyncOperationStatus: AsyncOperationStatus
 ) {
+    val context = LocalContext.current
+
     // The two elements of this row share the space 60%/40%. The shelf price can get quite long for
     // multipack items and 50%/50% starts to get tight on small phones. We don't really need that
     // much space for the unit price either. This might ruin a proper 2x2 grid, but in practice at
@@ -8101,6 +8103,10 @@ fun PackPriceAndSizeRow(
     // BOTTOM RIGHT CELL. THIS MAY OR MAY NOT WORK OUT, IT MIGHT "FIT" FOR SPANISH AND ENGLISH
     // BUT NOT SURE ABOUT OTHER LANGUAGES, AND ALSO NEED TO DECIDE IF I LIKE THE LOOK. IT DOES
     // JUST ABOUT SEEM OK WITH SMALL PHONE LAYOUT AND MY DEMO PRICES THOUGH.
+    // TODO: Do we need some kind of spacer or badding or border to stop the two running together
+    // too much if the text happens to be just the wrong size? Maybe that's almost better. Be
+    // careful not to break the alignment of the second row of the grid - I suspect adding rhs
+    // padding or border to the shelf price might be the safest way to do this without it affecting other parts of the layout.
 
     Row(
         modifier = Modifier
@@ -8115,7 +8121,7 @@ fun PackPriceAndSizeRow(
                 dataSet,
                 LocalConfiguration.current.locales[0]
             )
-            val formattedMeasure = measure.toDisplayString(LocalConfiguration.current.locales[0])
+            val formattedMeasure = measure.toDisplayString(context, LocalConfiguration.current.locales[0])
             Text(
                 if (count == 1L) {
                     stringResource(
@@ -8185,7 +8191,8 @@ fun PackPriceAndSizeRow(
                 count,
                 measure,
                 selectedUnitPriceUnit,
-            ).format(dataSet,LocalConfiguration.current.locales[0])
+            ).format(context, dataSet,LocalConfiguration.current.locales[0])
+        val context = LocalContext.current
         LabeledItemWithDropdown(
             modifier = Modifier.weight(0.45f), label = stringResource(R.string.label_unit_price),
             dropdownContentDescription = stringResource(R.string.content_description_select_unit),
@@ -8193,7 +8200,7 @@ fun PackPriceAndSizeRow(
             enabled = asyncOperationStatus.isNotBusy(),
             items = relevantUnitList,
             getId = { it },
-            getItemText = { "${it.perSymbol}${it.symbol}".trim() },
+            getItemText = { "${it.perSymbol}${context.getString(it.symbol)}".trim() },
             getDividerBetween = { previousItem, item -> areDifferentUnitFamilies(previousItem, item) },
             selectedId = selectedUnitPriceUnit,
             onItemSelected = { selectedUnitPriceUnit = it })

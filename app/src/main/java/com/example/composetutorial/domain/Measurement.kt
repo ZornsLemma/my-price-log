@@ -1,5 +1,6 @@
 package com.example.composetutorial.domain
 
+import android.content.Context
 import android.os.Parcelable
 import androidx.annotation.StringRes
 import com.example.composetutorial.R
@@ -47,7 +48,7 @@ enum class MeasurementUnit(
     val id: Long,
     val unitFamilies: Set<UnitFamily>,
     val quantityType: QuantityType,
-    val symbol: String, // TODO: this probably needs to be translatable
+    @field:StringRes val symbol: Int,
     @field:StringRes val fullName: Int,
     val maxDecimals: Int,
     val toBase: Double,
@@ -59,32 +60,34 @@ enum class MeasurementUnit(
         101,
         setOf(UnitFamily.ITEM),
         QuantityType.ITEM,
-        "each",
+        R.string.unit_each_symbol,
         R.string.unit_each, // TODO: I added this as a semi-hack to support headerPriceContentDescription, may break grammar for non-screen reader
         0,
         1.0,
         false,
         perSymbol = " ",
     ),
-    EACH10(102, setOf(UnitFamily.ITEM), QuantityType.ITEM, "10",
+    EACH10(102, setOf(UnitFamily.ITEM), QuantityType.ITEM, R.string.unit_10,
         R.string.unit_10, 1, 10.0, true),
-    EACH100(103, setOf(UnitFamily.ITEM), QuantityType.ITEM, "100",
+    EACH100(103, setOf(UnitFamily.ITEM), QuantityType.ITEM, R.string.unit_100,
         R.string.unit_100,2, 100.0, true),
 
     // Weight (metric)
-    G(201, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "g",
+    G(201, setOf(UnitFamily.METRIC), QuantityType.WEIGHT,
+        R.string.unit_gram_symbol,
         R.string.unit_gram,0, 1.0, false),
     G100(
         202,
         setOf(UnitFamily.METRIC),
         QuantityType.WEIGHT,
-        "100${nonBreakingSpace}g",
+        R.string.unit_100_gram_symbol,
         R.string.unit_100_gram,
         2,
         100.0,
         true
     ),
-    KG(203, setOf(UnitFamily.METRIC), QuantityType.WEIGHT, "kg",
+    KG(203, setOf(UnitFamily.METRIC), QuantityType.WEIGHT,
+        R.string.unit_kilogram_symbol,
         R.string.unit_kilogram,3, 1000.0, false),
 
     // Weight (imperial/US customary)
@@ -92,7 +95,7 @@ enum class MeasurementUnit(
         211,
         setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
         QuantityType.WEIGHT,
-        "oz",
+        R.string.unit_ounce_symbol,
         R.string.unit_ounce,
         3, // allow for eighths
         28.349523125,
@@ -102,7 +105,7 @@ enum class MeasurementUnit(
         212,
         setOf(UnitFamily.IMPERIAL, UnitFamily.US_CUSTOMARY),
         QuantityType.WEIGHT,
-        "lb",
+        R.string.unit_pound_symbol,
         R.string.unit_pound,
         3, // allow for eighths
         453.59237,
@@ -110,19 +113,21 @@ enum class MeasurementUnit(
     ),
 
     // Volume (metric)
-    ML(301, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "ml",
+    ML(301, setOf(UnitFamily.METRIC), QuantityType.VOLUME,
+        R.string.unit_millilitre_symbol,
         R.string.unit_millilitre,0, 1.0, false),
     ML100(
         302,
         setOf(UnitFamily.METRIC),
         QuantityType.VOLUME,
-        "100${nonBreakingSpace}ml",
+        R.string.unit_100_millilitre_symbol,
         R.string.unit_100_millilitre,
         2,
         100.0,
         true
     ),
-    L(303, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "L",
+    L(303, setOf(UnitFamily.METRIC), QuantityType.VOLUME,
+        R.string.unit_litre_symbol,
         R.string.unit_litre, 3, 1000.0, false),
 
     // Volume (imperial)
@@ -130,7 +135,7 @@ enum class MeasurementUnit(
         311,
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
-        "fl${nonBreakingSpace}oz",
+        R.string.unit_fluid_ounce_symbol,
         R.string.unit_fluid_ounce,
         3, // allow for eighths
         28.4130625,
@@ -140,7 +145,7 @@ enum class MeasurementUnit(
         312,
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
-        "pt",
+        R.string.unit_pint_symbol,
         R.string.unit_pint,
         3, // allow for eighths
         568.26125,
@@ -150,7 +155,7 @@ enum class MeasurementUnit(
         313,
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
-        "gal",
+        R.string.unit_gallon_symbol,
         R.string.unit_gallon,
         3, // allow for eighths
         4546.09,
@@ -162,7 +167,7 @@ enum class MeasurementUnit(
         321,
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
-        "fl${nonBreakingSpace}oz",
+        R.string.unit_fluid_ounce_symbol,
         R.string.unit_fluid_ounce,
         3, // allow for eighths
         29.5735295625,
@@ -172,7 +177,7 @@ enum class MeasurementUnit(
         322,
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
-        "pt",
+        R.string.unit_pint_symbol,
         R.string.unit_pint,
         3, // allow for eighths
         473.176473,
@@ -182,7 +187,7 @@ enum class MeasurementUnit(
         323,
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
-        "gal",
+        R.string.unit_gallon_symbol,
         R.string.unit_gallon,
         3, // allow for eighths
         3785.411784,
@@ -225,14 +230,14 @@ data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcela
     // least to me.
     // ENHANCE: This may need tweaking for localisation (especially with ITEM) but we'll see how
     // things work out in practice.
-    fun toDisplayString(locale: Locale): String =
+    fun toDisplayString(context: Context, locale: Locale): String =
         formatDouble(
             value,
             minDecimals = 0,
             maxDecimals = unit.maxDecimals,
             useLocaleGrouping = false,
             locale
-        ) + if (quantityType == QuantityType.ITEM) "" else "$nonBreakingSpace${unit.symbol}"
+        ) + if (quantityType == QuantityType.ITEM) "" else "$nonBreakingSpace${context.getString(unit.symbol)}"
 }
 
 fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {

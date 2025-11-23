@@ -1,5 +1,6 @@
 package com.example.composetutorial.domain
 
+import android.content.Context
 import android.util.Log
 import com.example.composetutorial.baseUnitForQuantityType
 import com.example.composetutorial.formatPrice
@@ -97,10 +98,10 @@ fun UnitPrice.withFriendlyDenominator(
 // The price and symbol may reasonably use non-breaking spaces to keep the value and the unit
 // together, and that may mean there are no actual spaces, so offering this as a breaking point in
 // the event we have to wrap might improve the display.
-fun UnitPrice.format(dataSet: DataSet, locale: Locale) =
+fun UnitPrice.format(context: Context, dataSet: DataSet, locale: Locale) =
     "${formatPrice(
         numerator,
         dataSet,
         locale
     )
-    }${denominator.perSymbol}${denominator.symbol}"
+    }${denominator.perSymbol}${context.getString(denominator.symbol)}"
