@@ -9181,7 +9181,7 @@ com.example.myapp/
 // - "Unidad" dropdown on edit price dialog is not wide enough even with no multipack
 // - We may need to accept "tall" labels on edit price screen for multipack and just make sure all three controls share the same height - but I do already have a possible tweak to the "pack size" label in English, so consider that as part of this
 // - We need to handle word wrap on "Confirmar tamaño del paquete..." label and probably also for its supporting text - FIXED
-// - The "about" dialog title overflows the top app bar to line - this is probably OK/unavoidable, but think/maybe discuss
+// - The "about" dialog title overflows the top app bar to line - this is probably OK/unavoidable, but think/maybe discuss - NOT SURE I TRUST IT, BUT CHATGPT AND GROK BOTH SAY THIS IS FINE AND BEST TO STICK WITH STANDARD WORDING
 
 // TODO: In Spanish (but also probably in English) with USD prices in non-USD locale (hence "US$"
 // not just "$"), my small emulator is not fitting an (admittedly fake, but not insane in this
