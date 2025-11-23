@@ -78,7 +78,7 @@ enum class MeasurementUnit(
         202,
         setOf(UnitFamily.METRIC),
         QuantityType.WEIGHT,
-        "100 g",
+        "100${nonBreakingSpace}g",
         R.string.unit_100_gram,
         2,
         100.0,
@@ -116,7 +116,7 @@ enum class MeasurementUnit(
         302,
         setOf(UnitFamily.METRIC),
         QuantityType.VOLUME,
-        "100 ml", // TODO: This and other space-containing symbols should perhaps use non-breaking spaces?
+        "100${nonBreakingSpace}ml",
         R.string.unit_100_millilitre,
         2,
         100.0,
@@ -130,7 +130,7 @@ enum class MeasurementUnit(
         311,
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
-        "fl oz",
+        "fl${nonBreakingSpace}oz",
         R.string.unit_fluid_ounce,
         3, // allow for eighths
         28.4130625,
@@ -162,7 +162,7 @@ enum class MeasurementUnit(
         321,
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
-        "fl oz",
+        "fl${nonBreakingSpace}oz",
         R.string.unit_fluid_ounce,
         3, // allow for eighths
         29.5735295625,
