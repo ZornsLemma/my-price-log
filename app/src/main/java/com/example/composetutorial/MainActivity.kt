@@ -3461,7 +3461,7 @@ fun PriceComparisonCard(
                     // price and the longest number of icons, then assign anything left over to the
                     // source name. In practice these simple fixed weights seem to be working quite
                     // well for now.
-                    columnWeights = listOf(1.7f, 1f, 0.8f),
+                    columnWeights = listOf(1.7f, 1.1f, 0.8f),
                     columnAlignments = listOf(
                         CellAlignment.Start,
                         CellAlignment.End,
