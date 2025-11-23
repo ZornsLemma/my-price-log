@@ -1642,7 +1642,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     selectedId: ID?,
     onItemSelected: (ID) -> Unit,
     enabled: Boolean = true,
-    label: @Composable () -> Unit,
+    label: @Composable (() -> Unit)? = null,
     supportingText: @Composable (() -> Unit)? = null,
     items: List<T>,
     getId: (T) -> ID,
@@ -3789,7 +3789,8 @@ fun EditPriceScreenPackSize(
                 // horizontal space assigned to each of the composables in this Row makes no sense
                 // at all and I cannot get anything I really want to work anyway, so it may be worth
                 // experimenting further with this aspect too.
-                label = { Text(stringResource(R.string.label_unit)) },
+                // TOOD: DELETE? label = { Text(stringResource(R.string.label_unit)) },
+                label = { Text("") }, // TODO!?
                 items = units,
                 // Although this could be a problem (particularly with i18n), we give the dropdown
                 // "about enough horizontal space" by calculating a hand-tuned multiplier of
