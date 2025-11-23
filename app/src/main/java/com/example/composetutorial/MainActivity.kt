@@ -119,6 +119,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.widthIn
@@ -2061,7 +2062,7 @@ fun SourcePriceCardBody(
                 // Box.
                 Row {
                     LabeledItem(
-                        modifier = Modifier.weight(0.55f).padding(bottom = 8.dp),
+                        modifier = Modifier.background(Color.Green).weight(0.55f).padding(bottom = 8.dp),
                         label = stringResource(R.string.label_confirmed)
                     ) {
                         RelativeTimeText(augmentedPrice)
@@ -8113,29 +8114,41 @@ fun PackPriceAndSizeRow(
             .fillMaxWidth()
             .padding(bottom = 8.dp),
     ) {
-        LabeledItem(
-            modifier = Modifier.weight(0.55f), label = stringResource(R.string.label_shelf_price)
-        ) {
-            val formattedPrice = formatPrice(
-                price,
-                dataSet,
-                LocalConfiguration.current.locales[0]
-            )
-            val formattedMeasure = measure.toDisplayString(context, LocalConfiguration.current.locales[0])
-            Text(
-                if (count == 1L) {
-                    stringResource(
-                        R.string.message_price_for_quantity,
-                        formattedPrice, formattedMeasure
+        // This Box(Row(LabeledItem, Spacer)) structure is to stop the LabeledItem touching the left
+        // edge of the unit price box if the text just happens to be precisely the right size, but
+        // using an "inner padding" rather than normal padding so the other row of the "2x2 grid"
+        // doesn't need to do the same thing. TODO: To be honest it might be as easy just to apply a
+        // right padding to the LabeledItem and the leftmost element of the second row.
+        Box(modifier = Modifier.weight(weight = 0.55f)) {
+            Row {
+                LabeledItem(
+                    label = stringResource(R.string.label_shelf_price),
+                    modifier = Modifier.weight(1f)
+
+                ) {
+                    val formattedPrice = formatPrice(
+                        price,
+                        dataSet,
+                        LocalConfiguration.current.locales[0]
                     )
-                } else {
-                    stringResource(
-                        R.string.message_price_for_count_quantity,
-                        formattedPrice, count, formattedMeasure
+                    val formattedMeasure =
+                        measure.toDisplayString(context, LocalConfiguration.current.locales[0])
+                    Text(
+                        if (count == 1L) {
+                            stringResource(
+                                R.string.message_price_for_quantity,
+                                formattedPrice, formattedMeasure
+                            )
+                        } else {
+                            stringResource(
+                                R.string.message_price_for_count_quantity,
+                                formattedPrice, count, formattedMeasure
+                            )
+                        }
                     )
                 }
-            )
-
+                Box(modifier = Modifier.width(4.dp))
+            }
         }
 
         val relevantUnitFamilies =
@@ -9186,8 +9199,6 @@ com.example.myapp/
 // keyboard? Do we need to impose a maximum length? Should we be using (a variant of?) our existing
 // NumericTextField?
 
-// TODO: "each" (at least) in the measurement unit data needs translating. we probably need to pull out more stuff there too and translate that, probably via a new Grok pass.
-
 // TODO: Main (not comprehensive) list of UI "glitches" shown up by Spanish translation:
 // - "Unidad" dropdown on edit price dialog is not wide enough even with no multipack PROBABLY FIXED IF I KEEP NEW LAYOUT
 // - We may need to accept "tall" labels on edit price screen for multipack and just make sure all
@@ -9202,12 +9213,14 @@ com.example.myapp/
 // non-breaking space e.g. between the price and por/for or after to improve the layout if it does
 // wrap. Or actually probably a non-breaking space between 400 and ml would maybe be good. OK, I have
 // experimentally added a non-breaking space in MeasuredValue.toDisplayString() and we'll see if
-// that's enough or if I want to make more tweaks.
+// that's enough or if I want to make more tweaks. I've also added a horizontal spacer to stop
+// this text "touching" the unit price to its right if it is just on the borderline of needing
+// to wrap.
 
-// TODO: I've shoved in "cada uno" as a Spanish translation for each but this may not be right, need
-// to talk to LLMs. This is so I can test if it maybe works with my string constructions etc.  It is
-// maybe a bit crap on the spacing (e.g. "$US cada undo" - albeit extreme - wraps in the comparison
-// table, and it is a smidge but borderline OK in the precio en la tienda unit price - the chevron
-// is pushed off screen!). I don't know if "cada uno" is correct or if it sometimes needs to be
-// "una." It is possible something like "c/u" is normal, but does that work with "0,25 US$/c/u" for
-// example?
+// TODO: I've shoved in "cada uno" as a Spanish translation for "each" but this may not be right,
+// need to talk to LLMs. This is so I can test if it maybe works with my string constructions etc.
+// It is maybe a bit crap on the spacing (e.g. "$US cada undo" - albeit extreme - wraps in the
+// comparison table, and it is a smidge but borderline OK in the precio en la tienda unit price -
+// the chevron is pushed off screen!). I don't know if "cada uno" is correct or if it sometimes
+// needs to be "una." It is possible something like "c/u" is normal, but does that work with "0,25
+// US$/c/u" for example?
