@@ -3568,7 +3568,7 @@ fun EditPriceScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = stringResource(R.string.label_confirm_pack_size_and_price),
                         color = MaterialTheme.colorScheme.onSurface
@@ -3579,6 +3579,7 @@ fun EditPriceScreen(
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
+                Spacer(modifier = Modifier.width(4.dp))
                 Switch(
                     enabled = saveStatus.isNotBusy(),
                     checked = uiContent.editablePrice.value.toConfirm,
@@ -9176,10 +9177,10 @@ com.example.myapp/
 // TODO: "each" (at least) in the measurement unit data needs translating. we probably need to pull out more stuff there too and translate that, probably via a new Grok pass.
 
 // TODO: Main (not comprehensive) list of UI "glitches" shown up by Spanish translation:
-// - "Edit"/"Confirm" buttons on home screen do not fit with recommendation icon/text
+// - "Edit"/"Confirm" buttons on home screen do not fit with recommendation icon/text - PROBABLY FIXED
 // - "Unidad" dropdown on edit price dialog is not wide enough even with no multipack
 // - We may need to accept "tall" labels on edit price screen for multipack and just make sure all three controls share the same height - but I do already have a possible tweak to the "pack size" label in English, so consider that as part of this
-// - We need to handle word wrap on "Confirmar tamaño del paquete..." label and probably also for its supporting text
+// - We need to handle word wrap on "Confirmar tamaño del paquete..." label and probably also for its supporting text - FIXED
 // - The "about" dialog title overflows the top app bar to line - this is probably OK/unavoidable, but think/maybe discuss
 
 // TODO: In Spanish (but also probably in English) with USD prices in non-USD locale (hence "US$"
@@ -9191,3 +9192,4 @@ com.example.myapp/
 // wrap. Or actually probably a non-breaking space between 400 and ml would maybe be good. OK, I have
 // experimentally added a non-breaking space in MeasuredValue.toDisplayString() and we'll see if
 // that's enough or if I want to make more tweaks.
+
