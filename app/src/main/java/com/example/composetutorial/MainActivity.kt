@@ -6163,6 +6163,8 @@ class MainActivity : ComponentActivity() {
         // ENHANCE: In the future it might be nice to add alternative layouts to work better on
         // larger devices like tablets or foldables in both landscape and portrait mode. This is
         // probably not a common use case though.
+        // TODO: Since rotations are a good way to trigger recompositions in emulator for testing,
+        // might be worth addig a debug build flag to always allow rotations.
         if (isPhone()) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
