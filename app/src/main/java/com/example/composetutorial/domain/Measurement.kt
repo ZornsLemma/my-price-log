@@ -125,18 +125,12 @@ enum class MeasurementUnit(
     L(303, setOf(UnitFamily.METRIC), QuantityType.VOLUME, "L",
         R.string.unit_litre, 3, 1000.0, false),
 
-    // TODO: As a massive hack to help me notice problems during debugging, I have replaced the space in "fl oz" with a U or I to
-    // let me see which type is in use. I don't seriously expect subtle bugs here (if we do mess up our unit family handling, we
-    // will probably end up with duplicated values in dropdowns which will be fairly obvious), but might as well keep an eye on it.
-    // I don't want to add a suffix " (US)" or whatever just for debugging as it will mean the unit sizes aren't realistic in
-    // layouts.
-
     // Volume (imperial)
     IMPERIAL_FLOZ(
         311,
         setOf(UnitFamily.IMPERIAL),
         QuantityType.VOLUME,
-        "flIoz",
+        "fl oz",
         R.string.unit_fluid_ounce,
         3, // allow for eighths
         28.4130625,
@@ -168,7 +162,7 @@ enum class MeasurementUnit(
         321,
         setOf(UnitFamily.US_CUSTOMARY),
         QuantityType.VOLUME,
-        "flUoz",
+        "fl oz",
         R.string.unit_fluid_ounce,
         3, // allow for eighths
         29.5735295625,
