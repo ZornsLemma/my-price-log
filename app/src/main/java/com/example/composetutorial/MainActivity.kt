@@ -2057,18 +2057,17 @@ fun SourcePriceCardBody(
                     asyncOperationStatus
                 )
 
-                // TODO: Experimental - if we keep this, the padding should probably go onto the row
-                // andPriceJudgementIndicator should take a modifier rather than us wrapping it in a
+                // TODO: Experimental - if we keep this, PriceJudgementIndicator should take a modifier rather than us wrapping it in a
                 // Box.
-                Row {
+                Row(modifier = Modifier.padding(bottom = 8.dp)) {
                     LabeledItem(
-                        modifier = Modifier.background(Color.Green).weight(0.55f).padding(bottom = 8.dp),
+                        modifier = Modifier.background(Color.Green).weight(0.55f),
                         label = stringResource(R.string.label_confirmed)
                     ) {
                         RelativeTimeText(augmentedPrice)
                     }
 
-                    Box(modifier = Modifier.weight(0.45f).padding(bottom = 8.dp).fillMaxSize().align(Alignment.CenterVertically)) {
+                    Box(modifier = Modifier.weight(0.45f).fillMaxSize().align(Alignment.CenterVertically)) {
                         PriceJudgementIndicator(augmentedPrice.priceJudgement)
                     }
 
