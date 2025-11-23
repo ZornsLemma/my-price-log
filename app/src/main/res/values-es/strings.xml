@@ -200,4 +200,6 @@
         <item quantity="one">No se permite más de %1$d decimal</item>
         <item quantity="other">No se permiten más de %1$d decimales</item>
     </plurals>
+    <string name="message_price_for_quantity">%1$s por %2$s</string>
+    <string name="message_price_for_count_quantity">%1$s por %2$d×%3$s</string>
 </resources>

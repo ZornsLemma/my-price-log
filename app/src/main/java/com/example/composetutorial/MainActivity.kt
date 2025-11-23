@@ -9177,3 +9177,10 @@ com.example.myapp/
 // - We need to handle word wrap on "Confirmar tamaño del paquete..." label and probably also for its supporting text
 // - The "about" dialog title overflows the top app bar to line - this is probably OK/unavoidable, but think/maybe discuss
 
+// TODO: In Spanish (but also probably in English) with USD prices in non-USD locale, my small
+// emulator is not fitting an (admittedly fake, but not insane in this context) $69,30 por 12x400ml
+// shelf price (for cola) in the space available. And there is likely no way precio por unidad is
+// fitting at all. TBH it *may* be that given this is just borderline too long I should accept it,
+// rather than switching away from the grid layout. Maybe I could use a non-breaking space e.g.
+// between the price and por/for or after to improve the layout if it does wrap. Or actually
+// probably a non-breaking space between 400 and ml would maybe be good.
