@@ -15,15 +15,19 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisallowComposableCalls
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
@@ -39,6 +43,7 @@ import com.example.composetutorial.EditSourceScreen
 import com.example.composetutorial.EditSourceScreenUIContent
 import com.example.composetutorial.GeneralSelectorScreen
 import com.example.composetutorial.GeneralSelectorViewModel
+import com.example.composetutorial.MyApplication
 import com.example.composetutorial.R
 import com.example.composetutorial.SelectItemScreenUIContent
 import com.example.composetutorial.SelectItemViewModel
@@ -53,7 +58,6 @@ import com.example.composetutorial.models.toEditable
 import com.example.composetutorial.myRequire
 import com.example.composetutorial.restoreDatabase
 import com.example.composetutorial.safeRestartApp
-import com.example.composetutorial.screenWithViewModel
 import com.example.composetutorial.setSelectedDataSetIdAsync
 import com.example.composetutorial.setSelectedItemIdAsync
 import com.example.composetutorial.setSelectedSourceIdAsync
@@ -70,6 +74,7 @@ import com.example.composetutorial.ui.screens.legal.LegalScreen
 import com.example.composetutorial.ui.screens.settings.SettingsScreen
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryScreen
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryViewModel
+import com.example.composetutorial.viewModelFactoryWithHandle
 import kotlinx.coroutines.delay
 
 @Composable
@@ -690,4 +695,29 @@ This may be complete crap. The example of how to use it is probably as long as t
             confirmButton = {}
         )
     }
+}
+
+// ENHANCE: This function was mostly written by ChatGPT. I'm loosely aware of what it does but I
+// don't pretend to understand the details at this point.
+@Composable
+private inline fun <reified VM : ViewModel, UIContent> screenWithViewModel( // TODO: UNUSED TYPE ARG!
+    backStackEntry: NavBackStackEntry,
+    noinline clearUIContent: () -> Unit,
+    noinline buildViewModel: @DisallowComposableCalls (MyApplication, SavedStateHandle) -> VM,
+    crossinline content: @Composable (VM) -> Unit
+) {
+    val factory = remember(backStackEntry) {
+        viewModelFactoryWithHandle { app, handle -> buildViewModel(app, handle) }
+    }
+
+    LaunchedEffect(Unit) {
+        clearUIContent()
+    }
+
+    val viewModel: VM = viewModel(
+        viewModelStoreOwner = backStackEntry,
+        factory = factory
+    )
+
+    content(viewModel)
 }
