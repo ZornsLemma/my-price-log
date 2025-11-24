@@ -12,7 +12,6 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.Upsert
 import androidx.room.withTransaction
-import com.example.composetutorial.Converters
 import com.example.composetutorial.debug.DebugFlags
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.myCheck

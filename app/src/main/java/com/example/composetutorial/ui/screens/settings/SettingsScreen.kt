@@ -52,7 +52,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
-import com.example.composetutorial.SettingsViewModel
 import com.example.composetutorial.UiText
 import com.example.composetutorial.ValidationRule
 import com.example.composetutorial.WarningIcon

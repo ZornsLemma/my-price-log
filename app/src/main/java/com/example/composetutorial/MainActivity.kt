@@ -343,6 +343,7 @@ import com.example.composetutorial.models.AppDatabase
 import com.example.composetutorial.models.DB_NAME
 import com.example.composetutorial.models.DB_VERSION
 import com.example.composetutorial.ui.screens.editprice.EditPriceViewModel
+import com.example.composetutorial.ui.screens.settings.SettingsViewModel
 
 
 fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> = when (locale.country.uppercase()) {
@@ -725,10 +726,6 @@ object AppViewModelProvider {
     }
 }
 
-class SettingsViewModel(
-    application: Application) : ViewModel() {
-    val settingsRepository = SettingsRepository(application.dataStore)
-}
 
 
 // Using AppScope.io signals: "This is an app-wide background task that must be allowed to complete
@@ -846,52 +843,11 @@ class MyApplication : Application() {
     }
 }
 
-class Converters {
-    // We don't have any QuantityType fields in the database at the moment, but we'll keep the
-    // converters for it around so if we add one in the future it will just work rather than ending
-    // up being stored as a string.
 
-    @Suppress("unused")
-    @TypeConverter
-    fun fromQuantityType(quantityType: QuantityType?): Int? {
-        return quantityType?.id
-    }
-
-    @Suppress("unused")
-    @TypeConverter
-    fun toQuantityType(value: Int?): QuantityType? {
-        return value?.let { QuantityType.fromId(it) }
-    }
-
-    @TypeConverter
-    fun fromMeasurementUnit(measurementUnit: MeasurementUnit?): Long? {
-        return measurementUnit?.id
-    }
-
-    @TypeConverter
-    fun toMeasurementUnit(value: Long?): MeasurementUnit? {
-        return value?.let { MeasurementUnit.fromId(it) }
-    }
-
-    @TypeConverter
-    fun fromInstant(instant: Instant?): Long? {
-        return instant?.toEpochMilli()
-    }
-
-    @TypeConverter
-    fun toInstant(value: Long?): Instant? {
-        return value?.let { Instant.ofEpochMilli(it) }
-    }
-
-    @TypeConverter
-    fun fromLoyaltyType(loyaltyType: LoyaltyType?): Long? {
-        return loyaltyType?.id
-    }
-
-    @TypeConverter
-    fun toLoyaltyType(value: Long?): LoyaltyType? {
-        return value?.let { LoyaltyType.fromValue(it) }
-    }
+fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
+    QuantityType.WEIGHT -> MeasurementUnit.G
+    QuantityType.VOLUME -> MeasurementUnit.ML
+    QuantityType.ITEM -> MeasurementUnit.EACH
 }
 
 enum class LoyaltyType(val id: Long) {
@@ -905,12 +861,6 @@ enum class LoyaltyType(val id: Long) {
         fun fromValue(loyaltyDiscountTypeId: Long): LoyaltyType? =
             loyaltyTypeById[loyaltyDiscountTypeId]
     }
-}
-
-fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
-    QuantityType.WEIGHT -> MeasurementUnit.G
-    QuantityType.VOLUME -> MeasurementUnit.ML
-    QuantityType.ITEM -> MeasurementUnit.EACH
 }
 
 // NB: We cannot rely on the database to order our results by name as it isn't locale-sensitive, so
