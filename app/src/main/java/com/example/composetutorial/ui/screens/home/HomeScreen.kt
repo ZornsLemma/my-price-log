@@ -77,8 +77,6 @@ import com.example.composetutorial.AsyncOperationErrorAlertDialog
 import com.example.composetutorial.AsyncOperationStatus
 import com.example.composetutorial.AugmentedPrice
 import com.example.composetutorial.CardTitle
-import com.example.composetutorial.CellAlignment
-import com.example.composetutorial.DataTable
 import com.example.composetutorial.EditConfirmButtons
 import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.ItemSourceSelector
@@ -101,6 +99,8 @@ import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Source
 import com.example.composetutorial.rememberSortedByLocale
+import com.example.composetutorial.ui.components.CellAlignment
+import com.example.composetutorial.ui.components.DataTable
 import com.example.composetutorial.ui.listItemHorizontalPadding
 import com.example.composetutorial.ui.maxNavigationDrawerWidth
 import com.example.composetutorial.ui.oneLineListItemHeight
