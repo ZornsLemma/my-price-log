@@ -34,7 +34,6 @@ import com.example.composetutorial.EditDataSetScreen
 import com.example.composetutorial.EditDataSetScreenUIContent
 import com.example.composetutorial.EditItemScreen
 import com.example.composetutorial.EditItemScreenUIContent
-import com.example.composetutorial.EditPriceScreen
 import com.example.composetutorial.EditPriceScreenUIContent
 import com.example.composetutorial.EditSourceScreen
 import com.example.composetutorial.EditSourceScreenUIContent
@@ -62,6 +61,7 @@ import com.example.composetutorial.topAppBarTitle
 import com.example.composetutorial.ui.screens.about.AboutScreen
 import com.example.composetutorial.ui.screens.editdataset.EditDataSetViewModel
 import com.example.composetutorial.ui.screens.edititem.EditItemViewModel
+import com.example.composetutorial.ui.screens.editprice.EditPriceScreen
 import com.example.composetutorial.ui.screens.editprice.EditPriceViewModel
 import com.example.composetutorial.ui.screens.editsource.EditSourceViewModel
 import com.example.composetutorial.ui.screens.home.HomeScreen
