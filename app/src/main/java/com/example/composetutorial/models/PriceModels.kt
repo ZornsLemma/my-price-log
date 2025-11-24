@@ -253,10 +253,8 @@ data class EditablePrice(
 fun EditablePrice.toDomain(locale: Locale): Price? {
     val priceDouble = parseStringAsDoubleOrNull(locale, price)
     // If we are adding a first price for a non-multipack item, count may be an empty string and we
-    // interpret that as 1. It's possible that at some point we will also allow count to be empty
-    // for multipack items and interpret that as 1, although currently the validation will prevent
-    // us getting this far in that case. trim() is used to help with that case, even though it's
-    // currently not strictly necessary.
+    // interpret that as 1. It's up to the validation rules whether to allow an empty string to make
+    // it this far or not.
     val countLong =
         if (count.trim().isEmpty()) 1L else parseStringAsDoubleOrNull(locale, count)?.toLong()
     val measureValueDouble = parseStringAsDoubleOrNull(locale, measureValue)

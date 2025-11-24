@@ -5329,6 +5329,7 @@ fun numericValidationRules(
     allowZero: Boolean = true,
     maxDecimals: Int? = null,
     maxValue: Int? = null,
+    required: Boolean = false,
 ): List<ValidationRule<String>> {
     val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
     val maxDecimalSeparators = if (allowDecimals) 1 else 0
@@ -5340,8 +5341,9 @@ fun numericValidationRules(
         sanitiseCandidate(candidate).replace(decimalSeparator, '.').toDoubleOrNull()
 
     return listOfNotNull(
+        if (required) {
         ValidationRule({ it.trim().isNotEmpty() },
-            UiText.Res(R.string.supporting_text_required)),
+            UiText.Res(R.string.supporting_text_required)) } else null,
 
         ValidationRule(
             { it.count { char -> char == decimalSeparator } <= maxDecimalSeparators },
@@ -5380,7 +5382,7 @@ fun numericValidationRules(
         // This is a catch-all; in practice we expect to catch all problems before this, but we
         // don't want to have a string which can't be converted (which would cause an error on
         // trying to save) which the user hasn't been warned about.
-        ValidationRule({ attemptedParse(it) != null },
+        ValidationRule({ (!required && it.trim().isEmpty()) || attemptedParse(it) != null },
             UiText.Res(R.string.supporting_text_invalid_number)),
     )
 }
@@ -6764,7 +6766,12 @@ class EditPriceViewModel(
     // uiContent.originalPrice.count can be an empty string if we are adding a first price.
     val showPackCount = uiContent.item.allowMultipack || (uiContent.originalPrice.count.toLongOrNull() ?: 1) > 1
 
-    val packCountValidationRules = if (showPackCount) numericValidationRules(uiContent.frozenLocale, allowDecimals = false, allowZero = false) else emptyList()
+    // ENHANCE: We could add a setting to control whether the pack count is allowed to be empty
+    // (meaning 1) or it must be explicitly specified. Let's hard-code this for now to avoid making
+    // the settings over-complex.
+    // TODO: I am wondering if it should still be mandatory when editing an existing price rather
+    // than adding a new one.
+    val packCountValidationRules = if (showPackCount) numericValidationRules(uiContent.frozenLocale, allowDecimals = false, allowZero = false, required = false) else emptyList()
     var packSizeValidationRules = generatePackSizeValidationRules()
     var currencyFormat = uiContent.dataSet.createCurrencyFormat(uiContent.frozenLocale)
 
@@ -9087,10 +9094,6 @@ val capitalization = when (capString) {
 // overflow menu at top right of home screen. I'd imagine the three button metric/imperial/US
 // customary selector from the dataset configuration being shown on this screen, initialised with
 // the current dataset configuration, so you can choose which units appear in the dropdowns.
-
-// TODO: Should we allow empty strings when adding/editing a "count" for a price and treat that as 1
-// in the database? And/or should we default count to 1 rather than an empty string when adding a
-// brand new price rather than editing an existing one?
 
 // ENHANCE: On an emulated Android 11 phone, there is a strange pink tinge to the app. The home
 // screen background is pinkish, but beyond LLMs burbling at me about emulator bugs, I can't see why
