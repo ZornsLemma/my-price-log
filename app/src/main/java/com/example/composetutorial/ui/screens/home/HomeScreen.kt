@@ -82,9 +82,7 @@ import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.ItemSourceSelector
 import com.example.composetutorial.LabeledItem
 import com.example.composetutorial.LoadState
-import com.example.composetutorial.MyDropdownMenuItem
 import com.example.composetutorial.OnAppLifecycleEvent
-import com.example.composetutorial.OverflowMenu
 import com.example.composetutorial.PackPriceAndSizeRow
 import com.example.composetutorial.PriceAnalysis
 import com.example.composetutorial.PriceJudgement
@@ -101,6 +99,8 @@ import com.example.composetutorial.models.Source
 import com.example.composetutorial.rememberSortedByLocale
 import com.example.composetutorial.ui.components.CellAlignment
 import com.example.composetutorial.ui.components.DataTable
+import com.example.composetutorial.ui.components.MyDropdownMenuItem
+import com.example.composetutorial.ui.components.OverflowMenu
 import com.example.composetutorial.ui.listItemHorizontalPadding
 import com.example.composetutorial.ui.maxNavigationDrawerWidth
 import com.example.composetutorial.ui.oneLineListItemHeight

@@ -50,7 +50,6 @@ import com.example.composetutorial.SelectItemViewModel
 import com.example.composetutorial.SelectSourceScreenUIContent
 import com.example.composetutorial.SelectSourceViewModel
 import com.example.composetutorial.SharedViewModel
-import com.example.composetutorial.ViewPriceHistoryScreen
 import com.example.composetutorial.ViewPriceHistoryScreenUIContent
 import com.example.composetutorial.ViewPriceHistoryViewModel
 import com.example.composetutorial.backupDatabase
@@ -70,6 +69,7 @@ import com.example.composetutorial.ui.screens.home.HomeScreen
 import com.example.composetutorial.ui.screens.home.HomeViewModel
 import com.example.composetutorial.ui.screens.legal.LegalScreen
 import com.example.composetutorial.ui.screens.settings.SettingsScreen
+import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryScreen
 import kotlinx.coroutines.delay
 
 @Composable

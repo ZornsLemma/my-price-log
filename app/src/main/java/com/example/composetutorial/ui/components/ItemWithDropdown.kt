@@ -2,11 +2,15 @@ package com.example.composetutorial.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -16,7 +20,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import com.example.composetutorial.MyDropdownMenuItem
+import com.example.composetutorial.ui.menuLeftPadding
+import com.example.composetutorial.ui.menuRightPadding
 
 // ENHANCE: Note that selectedId is not used. I would like to use this to focus the previously
 // selected item when expanding the dropdown using a D-pad, instead of defaulting to the first item.
@@ -100,3 +105,27 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
         }
     }
 }
+
+// A simple wrapper around DropdownMenuItem applying MD3 formatting.
+// ENHANCE: This isn't fully general as I don't want to add stuff that isn't going to get tested; I
+// can always expand it later.
+// TODO: There might be a case for moving this into its own file - it is used elsewhere
+@Composable
+fun MyDropdownMenuItem(
+    text: @Composable () -> Unit,
+    onClick: () -> Unit,
+    enabled: Boolean = true,
+) {
+    DropdownMenuItem(
+        text = {
+            ProvideTextStyle(MaterialTheme.typography.bodyLarge) {
+                // Default colour seems to be correct so don't fiddle with it.
+                text()
+            }
+        },
+        contentPadding = PaddingValues(start = menuLeftPadding, end = menuRightPadding),
+        enabled = enabled,
+        onClick = onClick,
+    )
+}
+
