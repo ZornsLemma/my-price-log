@@ -32,10 +32,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.composetutorial.AppViewModelProvider
 import com.example.composetutorial.EditDataSetScreen
 import com.example.composetutorial.EditDataSetScreenUIContent
-import com.example.composetutorial.EditDataSetViewModel
 import com.example.composetutorial.EditItemScreen
 import com.example.composetutorial.EditItemScreenUIContent
-import com.example.composetutorial.EditItemViewModel
 import com.example.composetutorial.EditPriceScreen
 import com.example.composetutorial.EditPriceScreenUIContent
 import com.example.composetutorial.EditPriceViewModel
@@ -51,7 +49,6 @@ import com.example.composetutorial.SelectSourceScreenUIContent
 import com.example.composetutorial.SelectSourceViewModel
 import com.example.composetutorial.SharedViewModel
 import com.example.composetutorial.ViewPriceHistoryScreenUIContent
-import com.example.composetutorial.ViewPriceHistoryViewModel
 import com.example.composetutorial.backupDatabase
 import com.example.composetutorial.dataStore
 import com.example.composetutorial.models.DataSet
@@ -65,11 +62,14 @@ import com.example.composetutorial.setSelectedItemIdAsync
 import com.example.composetutorial.setSelectedSourceIdAsync
 import com.example.composetutorial.topAppBarTitle
 import com.example.composetutorial.ui.screens.about.AboutScreen
+import com.example.composetutorial.ui.screens.editdataset.EditDataSetViewModel
+import com.example.composetutorial.ui.screens.edititem.EditItemViewModel
 import com.example.composetutorial.ui.screens.home.HomeScreen
 import com.example.composetutorial.ui.screens.home.HomeViewModel
 import com.example.composetutorial.ui.screens.legal.LegalScreen
 import com.example.composetutorial.ui.screens.settings.SettingsScreen
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryScreen
+import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryViewModel
 import kotlinx.coroutines.delay
 
 @Composable

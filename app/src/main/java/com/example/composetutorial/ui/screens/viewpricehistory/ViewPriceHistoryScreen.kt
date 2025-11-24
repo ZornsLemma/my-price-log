@@ -40,7 +40,6 @@ import androidx.navigation.NavHostController
 import com.example.composetutorial.AsyncOperationStatus
 import com.example.composetutorial.PriceHistoryDelta
 import com.example.composetutorial.R
-import com.example.composetutorial.ViewPriceHistoryViewModel
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.PriceHistory
 import com.example.composetutorial.myCheck
