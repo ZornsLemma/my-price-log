@@ -86,7 +86,7 @@
     <string name="label_name">Name</string>
     <string name="keyboard_capitalization_data_set_name">sentences</string>
     <string name="keyboard_capitalization_item_name">sentences</string>
-    <!-- We use "words" here because this is likely to be a store brand name. -->
+    <!-- We use "words" for source name because this is likely to be a store brand name. -->
     <string name="keyboard_capitalization_source_name">words</string>
     <string name="label_sold_by_item">Item</string>
     <string name="label_sold_by_weight">Weight</string>
@@ -218,9 +218,9 @@
     <string name="unit_ounce_symbol">oz</string>
     <string name="unit_pound_symbol">lb</string>
     <string name="unit_millilitre_symbol">ml</string>
-    <string name="unit_100_millilitre_symbol"><![CDATA[100 ml]]></string>
+    <string name="unit_100_millilitre_symbol">100 ml></string>
     <string name="unit_litre_symbol">L</string>
-    <string name="unit_fluid_ounce_symbol"><![CDATA[fl oz]]></string>
+    <string name="unit_fluid_ounce_symbol">fl oz></string>
     <string name="unit_pint_symbol">pt</string>
     <string name="unit_gallon_symbol">gal</string>
     <plurals name="supporting_text_prices_considered_stale_after_x_days">
