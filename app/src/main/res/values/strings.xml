@@ -218,9 +218,9 @@
     <string name="unit_ounce_symbol">oz</string>
     <string name="unit_pound_symbol">lb</string>
     <string name="unit_millilitre_symbol">ml</string>
-    <string name="unit_100_millilitre_symbol">100 ml></string>
+    <string name="unit_100_millilitre_symbol">100 ml</string>
     <string name="unit_litre_symbol">L</string>
-    <string name="unit_fluid_ounce_symbol">fl oz></string>
+    <string name="unit_fluid_ounce_symbol">fl oz</string>
     <string name="unit_pint_symbol">pt</string>
     <string name="unit_gallon_symbol">gal</string>
     <plurals name="supporting_text_prices_considered_stale_after_x_days">
