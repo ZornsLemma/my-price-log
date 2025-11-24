@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import com.example.composetutorial.LabeledItem
 
 @Composable
 fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(

@@ -8,6 +8,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -47,11 +49,14 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -79,8 +84,6 @@ import com.example.composetutorial.AsyncOperationStatus
 import com.example.composetutorial.AugmentedPrice
 import com.example.composetutorial.CardTitle
 import com.example.composetutorial.HomeScreenUIContent
-import com.example.composetutorial.ItemSourceSelector
-import com.example.composetutorial.LabeledItem
 import com.example.composetutorial.LoadState
 import com.example.composetutorial.OnAppLifecycleEvent
 import com.example.composetutorial.PackPriceAndSizeRow
@@ -96,10 +99,15 @@ import com.example.composetutorial.isNotBusy
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Source
+import com.example.composetutorial.myTextFieldColors
 import com.example.composetutorial.rememberSortedByLocale
+import com.example.composetutorial.sortedByLocale
+import com.example.composetutorial.sourceIdNone
 import com.example.composetutorial.ui.components.CellAlignment
 import com.example.composetutorial.ui.components.DataTable
+import com.example.composetutorial.ui.components.LabeledItem
 import com.example.composetutorial.ui.components.MyDropdownMenuItem
+import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
 import com.example.composetutorial.ui.components.OverflowMenu
 import com.example.composetutorial.ui.listItemHorizontalPadding
 import com.example.composetutorial.ui.maxNavigationDrawerWidth
@@ -1204,3 +1212,110 @@ private fun EditConfirmButtons(
     }
 
 }
+
+@Composable
+private fun ItemSourceSelector(
+    asyncOperationStatus: AsyncOperationStatus,
+    source: Source?,
+    sourceList: List<Source>,
+    item: Item?,
+    itemList: List<Item>,
+    onSelectedSourceIdChange: (Long) -> Unit,
+    onItemSearchClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        // Item selector
+        val clickableModifier = if (asyncOperationStatus.isNotBusy()) {
+            Modifier.clickable { onItemSearchClick() }
+        } else {
+            Modifier
+        }
+        // For reasons I don't quite understand, using key() here avoids a frame or two of delay in
+        // applying the new colors= selection when asyncOperationStatus changes. I think the basic
+        // idea (according to ChatGPT) is that this forces the whole thing to be recomposed, but it
+        // is a bit voodoo.
+        key(asyncOperationStatus) {
+            TextField(
+                value = item?.name ?: "",
+                onValueChange = { /* No-op, read-only */ },
+                label = { Text(stringResource(R.string.label_item)) },
+                enabled = false, // so Modifier.clickable() works
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(clickableModifier),
+                readOnly = true,
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = stringResource(R.string.content_description_search_products),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                // There might be an argument that this should "sometimes" get the focused colours,
+                // but since clicking on it immediately opens a full screen dialog, I think it's
+                // probably reasonable to hard-code false here.
+                colors = if (asyncOperationStatus.isNotBusy()) myTextFieldColors(false) else TextFieldDefaults.colors(),
+                // It is rare to have no item selected, but if this happens and some items are
+                // defined, the user should fairly easily figure out what's happening (they just
+                // need to tap this TextField to open the selector). So we show a supportingText
+                // only if there are no items at all.
+                supportingText = if (item != null || itemList.isNotEmpty()) null else { {
+                    Text(stringResource(R.string.supporting_text_no_items_in_data_set))
+                } }
+            )
+        }
+
+        Spacer(
+            modifier = Modifier
+                .height(
+                    16.dp
+                )
+                .fillMaxWidth()
+            //.background(color = Color.Red) // TODO DEBUG HACK
+        )
+
+        // If sourceList is empty this will generate a single-item menu with just "None" in,
+        // but that is probably better than the "skeleton" menu we get with no items in.
+        val locale = LocalConfiguration.current.locales[0]
+        val sourceNameNone = stringResource(R.string.source_name_none)
+        val sourceListSorted = remember(sourceNameNone, sourceList, locale) {
+            listOf(Pair(sourceIdNone, sourceNameNone)) + sourceList.sortedByLocale({ it.name }, locale)
+                .map { Pair(it.id, it.name) }
+        }
+        Log.d("MyApp", "sourceListSorted $sourceListSorted")
+        // ENHANCE: I did wonder if MyExposedDropdownMenuBox should allow null IDs in "items" to
+        // avoid the need for the sourceIdNone hack here, but I really didn't want to have to make
+        // every user of it be null-tolerant when it won't hand you a null itself unless you gave it
+        // one in the input item list. I did try wrapping the null inside a simple Nullable<T> so it
+        // could "pass through" MyExposedDropdownMenuBox without altering the API and I think the
+        // idea is sound but I started to run into incomprehensible "out"/covariance stuff and it
+        // just felt too much just to fix this where sourceIdNone is an easy hack.
+        key(asyncOperationStatus) { // improves appearance, see similar key() above
+            MyExposedDropdownMenuBox(
+                modifier = Modifier
+                    // .padding(bottom = 8.dp)
+                    .fillMaxWidth(),
+                // Note that if source is null, we pass that null through to selectedId so the
+                // dropdown starts off with nothing selected and the "Store" label expands to form a
+                // large "prompt". We could turn null into sourceIdNone and have "None" shown, but
+                // it's probably nicer this way.
+                selectedId = source?.id, /* ?: sourceIdNone */
+                onItemSelected = { onSelectedSourceIdChange(it) },
+                enabled = asyncOperationStatus.isNotBusy(),
+                label = { Text(stringResource(R.string.label_source)) },
+                // It's normal to have no source selected, but if there are no sources defined at
+                // all it seems best to offer the user a hint.
+                supportingText = if (sourceList.isNotEmpty()) null else { {
+                    Text(stringResource(R.string.supporting_text_no_sources_in_data_set))
+                } },
+                items = sourceListSorted,
+                getId = { it.first },
+                getItemText = { it.second },
+            )
+        }
+    }
+}
+
+

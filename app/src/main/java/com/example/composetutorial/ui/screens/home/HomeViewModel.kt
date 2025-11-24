@@ -32,7 +32,6 @@ import com.example.composetutorial.AsyncOperationStatus
 import com.example.composetutorial.AugmentedPrice
 import com.example.composetutorial.CardTitle
 import com.example.composetutorial.HomeScreenUIContent
-import com.example.composetutorial.LabeledItem
 import com.example.composetutorial.LoadState
 import com.example.composetutorial.OnAppLifecycleEvent
 import com.example.composetutorial.PackPriceAndSizeRow
