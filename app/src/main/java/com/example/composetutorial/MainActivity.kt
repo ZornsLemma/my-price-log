@@ -81,6 +81,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.AnyRes
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -8922,11 +8923,11 @@ fun keyboardCapitalization(@StringRes resId: Int): KeyboardCapitalization =
         }
     }
 
-fun resourceName(context: Context, @StringRes resId: Int): String =
+fun resourceName(context: Context, @AnyRes resId: Int): String =
  try {
     context.resources.getResourceEntryName(resId)
 } catch (e: Resources.NotFoundException) {
-    "Unknown resource"
+    "unknown resource $resId"
 }
 
 // ENHANCE: I have completely ignored "unlikely" errors (like exceptions being thrown when accessing
