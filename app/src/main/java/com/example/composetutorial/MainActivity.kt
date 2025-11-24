@@ -9220,3 +9220,7 @@ com.example.myapp/
 // the chevron is pushed off screen!). I don't know if "cada uno" is correct or if it sometimes
 // needs to be "una." It is possible something like "c/u" is normal, but does that work with "0,25
 // US$/c/u" for example?
+
+// TODO: Given the advice I received from both Grok and ChatGPT about keyboard capitalization for
+// Spanish, does this mean the existing translations of the demo data set name and products are
+// wrong and they should start with lower case letters not capitals?
