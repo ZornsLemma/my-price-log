@@ -4,6 +4,7 @@ package com.example.composetutorial.ui.screens.home
 
 import android.util.Log
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
@@ -77,19 +78,18 @@ import com.example.composetutorial.AsyncOperationErrorAlertDialog
 import com.example.composetutorial.AsyncOperationStatus
 import com.example.composetutorial.AugmentedPrice
 import com.example.composetutorial.CardTitle
-import com.example.composetutorial.EditConfirmButtons
 import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.ItemSourceSelector
 import com.example.composetutorial.LabeledItem
 import com.example.composetutorial.LoadState
 import com.example.composetutorial.MyDropdownMenuItem
 import com.example.composetutorial.OnAppLifecycleEvent
+import com.example.composetutorial.OverflowMenu
 import com.example.composetutorial.PackPriceAndSizeRow
 import com.example.composetutorial.PriceAnalysis
 import com.example.composetutorial.PriceJudgement
 import com.example.composetutorial.R
 import com.example.composetutorial.RelativeTimeText
-import com.example.composetutorial.SourcePriceCardMenu
 import com.example.composetutorial.createCurrencyFormat
 import com.example.composetutorial.domain.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily
 import com.example.composetutorial.domain.withFriendlyDenominator
@@ -108,6 +108,7 @@ import com.example.composetutorial.ui.screenBorder
 import com.example.composetutorial.ui.spinnerDelayMillis
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 @Composable
@@ -1092,3 +1093,114 @@ private fun ItemSourceInfoLive(
     }
 }
 
+@Composable
+private fun SourcePriceCardMenu(
+    viewModel: HomeViewModel,
+    asyncOperationStatus: AsyncOperationStatus,
+    dataSet: DataSet,
+    item: Item?,
+    source: Source?,
+    augmentedPrice: AugmentedPrice?,
+    onViewHistoryClick: () -> Unit,
+    onDeletePriceClick: () -> Unit,
+    menuModifier: Modifier,
+) {
+    val priceHistoryCount by remember(dataSet.id, item?.id, source?.id) {
+        if (item != null && source != null) {
+            viewModel.countPriceHistory(dataSet.id, item.id, source.id)
+        } else {
+            flowOf(0L)
+        }
+    }.collectAsStateWithLifecycle(initialValue = 0L)
+
+    OverflowMenu(
+        enabled = asyncOperationStatus.isNotBusy(),
+        modifier = menuModifier
+    ) { requestMenuClose ->
+        MyDropdownMenuItem(
+            text = { Text(stringResource(R.string.menu_item_view_history)) },
+            enabled = priceHistoryCount > 0,
+            onClick = { requestMenuClose(); onViewHistoryClick() }
+        )
+        MyDropdownMenuItem(
+            text = { Text(stringResource(R.string.menu_item_delete_price)) },
+            enabled = augmentedPrice != null,
+            onClick = { requestMenuClose(); onDeletePriceClick() }
+        )
+    }
+}
+
+@Composable
+private fun EditConfirmButtons(
+    viewModel: HomeViewModel,
+    asyncOperationStatus: AsyncOperationStatus,
+    augmentedPrice: AugmentedPrice,
+    onEditPriceClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End
+    ) {
+        FilledTonalButton(
+            onClick = onEditPriceClick,
+            shape = MaterialTheme.shapes.small,
+            enabled = asyncOperationStatus.isNotBusy(),
+        ) {
+            Text(stringResource(R.string.button_edit))
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // ENHANCE: Confirm and Undo are quick, but because they have a background save, the
+        // asyncOperationStatus will (correctly) cause various controls on the screen to be disabled
+        // instantly but briefly during the save, then re-enabled shortly after. This manifests (at
+        // least in the emulator) as a slightly ugly flicker. (This isn't jank in the usual sense,
+        // the UI is correctly reflecting what we've coded.) It might be best if we could make them
+        // inactive (so you can't get into a race condition by editing or changing things during the
+        // save) instantly but defer the visible greying out for (say) 50ms. I have had some
+        // confused chats with LLMs about this and it may be a reasonable thing to do. It may also
+        // be somewhat fiddly and I'm not sure what the best way to do it is, even if it is a good
+        // idea. It's possible similar behaviour can occur in other parts of the app, but in
+        // practice it's probably less obvious as on a full screen dialog we will animate away as
+        // soon as the save actually completes.
+
+        // ENHANCE: A couple of possible polish opportunities here:
+        // - We should maybe disable the "Confirm" button if the label is "now", although arguably
+        //   this is a bit unnecessary and leads to a small visual distraction if the user is
+        //   looking at the screen when it ticks over to 1 minute and is re-enabled.
+        // - We should maybe animate changes to the "Confirmed" text label if it changes due to a
+        //   confirm/undo click (rather than just because time passed and it ticked to the next
+        //   value). This would help make it more obvious to the user what Confirm/Undo are actually
+        //   affecting.
+
+        // The "Confirm" button is the primary button - we expect it to be the
+        // button users click on most on this card (most of the time prices
+        // won't have changed on subsequent visits) - so it gets the position on
+        // the right.
+        val locale = LocalConfiguration.current.locales[0]
+        val showConfirmButton = viewModel.previousPrice.value == null
+        FilledTonalButton(
+            /* modifier = Modifier.width(confirmButtonWidth) ,*/
+            onClick = {
+                if (showConfirmButton) {
+                    viewModel.confirmPrice(augmentedPrice.basePrice)
+                } else {
+                    viewModel.undoConfirmPrice(
+                        augmentedPrice.basePrice, viewModel.previousPrice.value!!
+                    )
+                }
+            },
+            shape = MaterialTheme.shapes.small,
+            enabled = asyncOperationStatus.isNotBusy(),
+        ) {
+            AnimatedContent(targetState = showConfirmButton) { showConfirm ->
+                // ENHANCE: "Undo" is perhaps borderline unclear as to what it is undoing (although
+                // I hope the user observing the transition from "Confirm"->"Undo" will act as a
+                // hint), but at least on my small emulated phone, "Undo confirm" looks a bit ugly
+                // or (with "Good price") doesn't fit and causes the button to become multi-line.
+                Text(if (showConfirm) stringResource(R.string.button_confirm) else stringResource(R.string.button_undo))
+            }
+        }
+    }
+
+}
