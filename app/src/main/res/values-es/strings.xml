@@ -30,6 +30,7 @@
     <string name="button_add">Añadir</string>
     <string name="label_confirmed">Confirmado</string>
     <string name="label_notes">Notas</string>
+    <string name="keyboard_capitalization_notes">sentences</string>
     <string name="content_description_more_options">Más opciones</string>
     <string name="menu_item_view_history">Ver historial</string>
     <string name="menu_item_delete_price">Eliminar precio</string>
@@ -83,6 +84,8 @@
     <string name="message_delete_item_no_associated_prices">Este producto no tiene precios asociados, eliminarlo no afectará nada más.</string>
     <string name="message_delete_item_associated_prices">Al eliminar este producto también se borrarán todos sus precios en tiendas. Esta acción no se puede deshacer.</string>
     <string name="label_name">Nombre</string>
+    <string name="keyboard_capitalization_item_name">none</string>
+    <string name="keyboard_capitalization_source_name">words</string>
     <string name="label_sold_by_item">Unidad</string>
     <string name="label_sold_by_weight">Peso</string>
     <string name="label_sold_by_volume">Volumen</string>
@@ -203,4 +206,5 @@
     <string name="message_price_for_quantity">%1$s por %2$s</string>
     <string name="message_price_for_count_quantity">%1$s por %2$d×%3$s</string>
     <string name="unit_each_symbol">cada uno</string>
+    <string name="keyboard_capitalization_data_set_name">none</string>
 </resources>
