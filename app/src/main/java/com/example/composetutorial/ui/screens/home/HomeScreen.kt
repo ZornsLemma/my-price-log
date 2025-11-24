@@ -82,11 +82,9 @@ import com.example.composetutorial.AgeClass
 import com.example.composetutorial.AsyncOperationErrorAlertDialog
 import com.example.composetutorial.AsyncOperationStatus
 import com.example.composetutorial.AugmentedPrice
-import com.example.composetutorial.CardTitle
 import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.LoadState
 import com.example.composetutorial.OnAppLifecycleEvent
-import com.example.composetutorial.PackPriceAndSizeRow
 import com.example.composetutorial.PriceAnalysis
 import com.example.composetutorial.PriceJudgement
 import com.example.composetutorial.R
@@ -103,12 +101,14 @@ import com.example.composetutorial.myTextFieldColors
 import com.example.composetutorial.rememberSortedByLocale
 import com.example.composetutorial.sortedByLocale
 import com.example.composetutorial.sourceIdNone
+import com.example.composetutorial.ui.components.CardTitle
 import com.example.composetutorial.ui.components.CellAlignment
 import com.example.composetutorial.ui.components.DataTable
 import com.example.composetutorial.ui.components.LabeledItem
 import com.example.composetutorial.ui.components.MyDropdownMenuItem
 import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
 import com.example.composetutorial.ui.components.OverflowMenu
+import com.example.composetutorial.ui.components.PackPriceAndSizeRow
 import com.example.composetutorial.ui.listItemHorizontalPadding
 import com.example.composetutorial.ui.maxNavigationDrawerWidth
 import com.example.composetutorial.ui.oneLineListItemHeight

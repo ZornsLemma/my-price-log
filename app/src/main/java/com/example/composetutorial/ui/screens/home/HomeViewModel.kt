@@ -30,11 +30,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.AsyncOperationStatus
 import com.example.composetutorial.AugmentedPrice
-import com.example.composetutorial.CardTitle
 import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.LoadState
 import com.example.composetutorial.OnAppLifecycleEvent
-import com.example.composetutorial.PackPriceAndSizeRow
 import com.example.composetutorial.PriceJudgement
 import com.example.composetutorial.R
 import com.example.composetutorial.RelativeTimeText

@@ -39,3 +39,9 @@ Rotations are the canonical example of activities being destroyed and re-created
 * The "_id" suffix on column names is exclusively used for foreign keys. Other things (like units) which are referenced by internal code IDs don't have this suffix. (I dithered about this, but Perplexity and ChatGPT both seemed to agree on this convention so I went with it.)
 
 * An "_at" suffix on a column name indicates a date/time represented as an Instant in EpochMilli integer form.
+
+# Pre-release checklist
+
+* Check all debug constants are set to their release values, unless there's a specific reason.
+
+* Run spotless autoformatter.
