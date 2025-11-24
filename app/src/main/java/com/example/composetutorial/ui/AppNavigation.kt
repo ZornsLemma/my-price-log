@@ -46,7 +46,6 @@ import com.example.composetutorial.GeneralSelectorScreen
 import com.example.composetutorial.GeneralSelectorViewModel
 import com.example.composetutorial.HomeScreen
 import com.example.composetutorial.HomeViewModel
-import com.example.composetutorial.LegalScreen
 import com.example.composetutorial.R
 import com.example.composetutorial.SelectItemScreenUIContent
 import com.example.composetutorial.SelectItemViewModel
@@ -69,6 +68,7 @@ import com.example.composetutorial.setSelectedItemIdAsync
 import com.example.composetutorial.setSelectedSourceIdAsync
 import com.example.composetutorial.topAppBarTitle
 import com.example.composetutorial.ui.screens.about.AboutScreen
+import com.example.composetutorial.ui.screens.legal.LegalScreen
 import com.example.composetutorial.ui.screens.settings.SettingsScreen
 import kotlinx.coroutines.delay
 
