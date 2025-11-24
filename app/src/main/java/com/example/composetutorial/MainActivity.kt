@@ -6768,10 +6768,10 @@ class EditPriceViewModel(
 
     // ENHANCE: We could add a setting to control whether the pack count is allowed to be empty
     // (meaning 1) or it must be explicitly specified. Let's hard-code this for now to avoid making
-    // the settings over-complex.
-    // TODO: I am wondering if it should still be mandatory when editing an existing price rather
-    // than adding a new one.
-    val packCountValidationRules = if (showPackCount) numericValidationRules(uiContent.frozenLocale, allowDecimals = false, allowZero = false, required = false) else emptyList()
+    // the settings over-complex. We allow it to be empty for a new price, but after that we require
+    // it. For an edit it starts out non-empty and if it is left empty the chances are the user was
+    // editing it and messed up, rather than deliberately trying to set it to 1 by leaving it empty.
+    val packCountValidationRules = if (showPackCount) numericValidationRules(uiContent.frozenLocale, allowDecimals = false, allowZero = false, required = uiContent.originalPrice.id != 0L) else emptyList()
     var packSizeValidationRules = generatePackSizeValidationRules()
     var currencyFormat = uiContent.dataSet.createCurrencyFormat(uiContent.frozenLocale)
 
