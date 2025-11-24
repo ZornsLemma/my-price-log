@@ -9226,4 +9226,8 @@ com.example.myapp/
 // wrong and they should start with lower case letters not capitals?
 
 // TODO: Spanish translation of message_no_data_set_selected seems to miss the *top* part out, but
-// the message_no_data_sets has it. Maybe worth querying this.
+// the message_no_data_sets has it. Maybe worth querying this. - I have had a confusing chat with
+// Grok and ChatGPT and have tweaked this. However, I am far from convinced it's right even now but we're going round in circles. Even if it is right, I MAY STILL NEED TO FIX SOME OTHER USES OF HAMBURGUESA
+// AND DESBORDE IN OTHER MENU ITEMS FOR CONSISTENCY NOW WE AREN'T USING THEM IN THESE REVISED ONES.
+
+// TODO: Is the "hamburger" and "overflow menu" terminology OK *in English*?!

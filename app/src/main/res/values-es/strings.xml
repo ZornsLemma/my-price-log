@@ -47,8 +47,8 @@
     <string name="menu_item_edit_items">Editar productos</string>
     <string name="menu_item_edit_sources">Editar tiendas</string>
     <string name="menu_item_settings">Ajustes</string>
-    <string name="message_no_data_sets">No hay colecciones. Añade una desde el menú de desborde en la parte superior derecha.</string>
-    <string name="message_no_data_set_selected">No hay ninguna colección seleccionada. Usa el menú hamburguesa de la izquierda para elegir una.</string>
+    <string name="message_no_data_sets">No hay colecciones. Añade una desde los tres puntos de la parte superior derecha.</string>
+    <string name="message_no_data_set_selected">No hay ninguna colección seleccionada. Usa el menú de la izquierda para elegir una.</string>
     <string name="title_delete_price">Eliminar precio</string>
     <string name="message_confirm_delete_price">¿Seguro que quieres eliminar este precio?</string>
     <string name="button_cancel">Cancelar</string>
