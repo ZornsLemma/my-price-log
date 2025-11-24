@@ -15,6 +15,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -35,11 +37,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.example.composetutorial.ItemSourceInfoHistory
+import com.example.composetutorial.AsyncOperationStatus
+import com.example.composetutorial.CardTitle
+import com.example.composetutorial.PackPriceAndSizeRow
+import com.example.composetutorial.PriceHistoryDelta
 import com.example.composetutorial.R
 import com.example.composetutorial.ViewPriceHistoryViewModel
+import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.PriceHistory
+import com.example.composetutorial.myCheck
 import com.example.composetutorial.topAppBarTitle
+import com.example.composetutorial.ui.components.LabeledItem
 import com.example.composetutorial.ui.components.MyDropdownMenuItem
 import com.example.composetutorial.ui.components.OverflowMenu
 import com.example.composetutorial.ui.menuLeftPadding
@@ -174,3 +182,50 @@ private fun HorizontalDividerWithText(text: String) {
     }
 }
 
+
+@Composable
+private fun ItemSourceInfoHistory(
+    dataSet: DataSet,
+    priceHistoryDelta: PriceHistoryDelta,
+    modifiedAtTitleFormatter: DateTimeFormatter,
+    modifiedAtSubtitleFormatter: DateTimeFormatter,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
+        ) {
+            CardTitle(
+                title = modifiedAtTitleFormatter.format( priceHistoryDelta.modifiedAt),
+                subtitle = modifiedAtSubtitleFormatter.format(priceHistoryDelta.modifiedAt)
+            )
+
+            if (priceHistoryDelta.price != null || priceHistoryDelta.count != null || priceHistoryDelta.quantity != null) {
+                myCheck(priceHistoryDelta.price != null && priceHistoryDelta.count != null && priceHistoryDelta.quantity != null) {
+                    "Expected price, count and quantity to all be non-null since one is"
+                }
+                PackPriceAndSizeRow(priceHistoryDelta.price!!, priceHistoryDelta.count!!, priceHistoryDelta.quantity!!, dataSet, AsyncOperationStatus.Idle)
+            }
+
+            if (priceHistoryDelta.confirmedAt != null) {
+                LabeledItem(
+                    modifier = Modifier.padding(bottom = 8.dp),
+                    label = stringResource(R.string.label_confirmed)
+                ) {
+                    Text(priceHistoryDelta.confirmedAt)
+                }
+            }
+
+            if (priceHistoryDelta.notes != null) {
+                Row(modifier = Modifier.padding(bottom = 8.dp)) {
+                    LabeledItem(stringResource(R.string.label_notes)) {
+                        Text(priceHistoryDelta.notes)
+                    }
+                }
+            }
+        }
+    }
+}

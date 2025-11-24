@@ -2,6 +2,7 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import com.example.composetutorial.ui.components.ErrorHighlightBox
 import com.example.composetutorial.ui.screens.home.HomeViewModel
 import androidx.compose.ui.semantics.contentDescription
 import com.example.composetutorial.ui.defaultValidationMessageDelayMillis
@@ -5095,52 +5096,6 @@ fun CardTitle(title: String, subtitle: String? = null) {
     Spacer(modifier = Modifier.height(8.dp))
 }
 
-@Composable
-fun ItemSourceInfoHistory(
-    dataSet: DataSet,
-    priceHistoryDelta: PriceHistoryDelta,
-    modifiedAtTitleFormatter: DateTimeFormatter,
-    modifiedAtSubtitleFormatter: DateTimeFormatter,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
-        ) {
-            CardTitle(
-                title = modifiedAtTitleFormatter.format( priceHistoryDelta.modifiedAt),
-                subtitle = modifiedAtSubtitleFormatter.format(priceHistoryDelta.modifiedAt)
-            )
-
-            if (priceHistoryDelta.price != null || priceHistoryDelta.count != null || priceHistoryDelta.quantity != null) {
-                myCheck(priceHistoryDelta.price != null && priceHistoryDelta.count != null && priceHistoryDelta.quantity != null) {
-                    "Expected price, count and quantity to all be non-null since one is"
-                }
-                PackPriceAndSizeRow(priceHistoryDelta.price!!, priceHistoryDelta.count!!, priceHistoryDelta.quantity!!, dataSet, AsyncOperationStatus.Idle)
-            }
-
-            if (priceHistoryDelta.confirmedAt != null) {
-                LabeledItem(
-                    modifier = Modifier.padding(bottom = 8.dp),
-                    label = stringResource(R.string.label_confirmed)
-                ) {
-                    Text(priceHistoryDelta.confirmedAt)
-                }
-            }
-
-            if (priceHistoryDelta.notes != null) {
-                    Row(modifier = Modifier.padding(bottom = 8.dp)) {
-                        LabeledItem(stringResource(R.string.label_notes)) {
-                            Text(priceHistoryDelta.notes)
-                        }
-                    }
-            }
-        }
-    }
-}
 
 
 // At least early in development, check() and require() would sometimes kill the app but without
@@ -5229,70 +5184,6 @@ fun <T> initialVersioned(initialValue: T): Versioned<T> =
     Versioned(version = -1L, value = initialValue)
 
 
-@Composable
-fun ErrorHighlightBox(
-    borderWidth: Dp = 2.dp,
-    offset: Dp = defaultErrorHighlightOffset,
-    modifier: Modifier = Modifier,
-    validationTarget: ValidationInputHandle, // TODO: Rename validationInputHandle???
-    content: @Composable () -> Unit
-) {
-    var visible = validationTarget.errorHighlightBoxVisible.value
-    var alpha = remember { Animatable(0f) }
-    LaunchedEffect(visible) {
-        if (visible) {
-            // Start animating from completely transparent.
-            alpha.snapTo(0f)
-
-            // Pulse alpha while we're supposed to be visible.
-            while (true) {
-                alpha.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(1000, easing = LinearEasing)
-                )
-                alpha.animateTo(
-                    // We don't animate down to 0% alpha, as it's kind of jarring having the box
-                    // completely disappear.
-                    targetValue = 0.1f,
-                    animationSpec = tween(1000, easing = LinearEasing)
-                )
-            }
-        } else {
-            // Fade out smoothly once we're no longer animating.
-            // ENHANCE: It would maybe be nice if we could always get to 1f *then* do this fade out
-            // but it's probably faffy as hell.
-            alpha.animateTo(targetValue = 0f, animationSpec = tween(500))
-        }
-    }
-
-    val borderColor = MaterialTheme.colorScheme.error
-    Box(
-        modifier = modifier
-            .drawWithContent {
-                // Draw the content (e.g., TextField or SegmentedButton)
-                // Useful for debugging: drawRect(Color.Green.copy(alpha=0.3f))
-                drawContent()
-                // Draw an outline slightly larger than the content
-                val borderWidthPx = borderWidth.toPx()
-                val offsetPx = offset.toPx()
-                drawRect(
-                    color = borderColor,
-                    alpha = alpha.value,
-                    style = Stroke(width = borderWidthPx),
-                    topLeft = Offset(-offsetPx, -offsetPx),
-                    size = size.copy(
-                        width = size.width + 2 * offsetPx, height = size.height + 2 * offsetPx
-                    )
-                )
-
-            }
-            .validationInputHandleBringIntoViewRequester(
-                validationTarget, offset = offset + 2 * borderWidth
-            )
-    ) {
-        content()
-    }
-}
 
 data class PriceAnalysis(
     val augmentedPriceList: List<AugmentedPrice>,
