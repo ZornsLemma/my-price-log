@@ -29,6 +29,7 @@
     <string name="button_add">Add</string>
     <string name="label_confirmed">Confirmed</string>
     <string name="label_notes">Notes</string>
+    <string name="keyboard_capitalization_notes">sentences</string>
     <string name="content_description_more_options">More options</string>
     <string name="menu_item_view_history">View history</string>
     <string name="menu_item_delete_price">Delete price</string>
@@ -83,6 +84,10 @@
     <string name="message_delete_item_no_associated_prices">This product has no associated prices so deleting it will not affect anything else.</string>
     <string name="message_delete_item_associated_prices">Deleting this product will also delete its store prices. This action cannot be undone.</string>
     <string name="label_name">Name</string>
+    <string name="keyboard_capitalization_data_set_name">sentences</string>
+    <string name="keyboard_capitalization_item_name">sentences</string>
+    <!-- We use "words" here because this is likely to be a store brand name. -->
+    <string name="keyboard_capitalization_source_name">words</string>
     <string name="label_sold_by_item">Item</string>
     <string name="label_sold_by_weight">Weight</string>
     <string name="label_sold_by_volume">Volume</string>

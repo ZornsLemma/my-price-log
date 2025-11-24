@@ -63,6 +63,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.database.sqlite.SQLiteDatabase
 import android.icu.text.Collator
 import android.net.Uri
@@ -3603,7 +3604,7 @@ fun EditPriceScreen(
         FilteredTextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text(stringResource(R.string.label_notes)) },
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_notes)),
             value = notes,
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
@@ -4228,7 +4229,7 @@ fun EditItemScreen(
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
         ValidatedFilteredTextField(
             label = { Text(stringResource(R.string.label_name)) },
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            keyboardOptions = KeyboardOptions(capitalization = keyboardCapitalization(R.string.keyboard_capitalization_item_name)),
             value = name,
             maxLength = maxItemNameLength,
             onValueChange = {
@@ -4437,7 +4438,7 @@ fun EditItemScreen(
         var notes by rememberSyncedTextFieldValue(uiContent.editableItem.value.notes)
         FilteredTextField(
             label = { Text(stringResource(R.string.label_notes)) },
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_notes)),
             value = notes,
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
@@ -4515,8 +4516,7 @@ fun EditSourceScreen(
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
         ValidatedFilteredTextField(
             label = { Text(stringResource(R.string.label_name)) },
-            // We use Words here because this is likely to be a store brand.
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+            keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_source_name)),
             value = name,
             maxLength = maxSourceNameLength,
             onValueChange = {
@@ -4652,7 +4652,7 @@ fun EditSourceScreen(
         var notes by rememberSyncedTextFieldValue(uiContent.editableSource.value.notes)
         FilteredTextField(
             label = { Text(stringResource(R.string.label_notes)) },
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_notes)),
             value = notes,
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
@@ -4877,7 +4877,7 @@ fun EditDataSetScreen(
         val nameValidationRules by viewModel.nameValidationRules.collectAsStateWithLifecycle()
         ValidatedFilteredTextField(
             label = { Text(stringResource(R.string.label_name)) },
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_data_set_name)),
             value = name,
             maxLength = maxDataSetNameLength,
             onValueChange = {
@@ -5041,8 +5041,8 @@ fun EditDataSetScreen(
         var notes by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.notes)
         FilteredTextField(
             label = { Text(stringResource(R.string.label_notes)) },
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
             value = notes,
+            keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_notes)),
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
@@ -8909,6 +8909,26 @@ sealed class UiText {
     fun asString(): String = asString(LocalContext.current)
     }
 
+@Composable
+fun keyboardCapitalization(@StringRes resId: Int): KeyboardCapitalization =
+    when (val str = stringResource(resId)) { // TODO: rename "str"?
+        "characters" -> KeyboardCapitalization.Characters
+        "none" -> KeyboardCapitalization.None
+        "sentences" -> KeyboardCapitalization.Sentences
+        "words" -> KeyboardCapitalization.Words
+        else -> {
+            Log.i("TODO", "Resource '${resourceName(LocalContext.current, resId)}' has unknown keyboard capitalization string '$str'")
+            KeyboardCapitalization.None
+        }
+    }
+
+fun resourceName(context: Context, @StringRes resId: Int): String =
+ try {
+    context.resources.getResourceEntryName(resId)
+} catch (e: Resources.NotFoundException) {
+    "Unknown resource"
+}
+
 // ENHANCE: I have completely ignored "unlikely" errors (like exceptions being thrown when accessing
 // the database) in most of this code - what can/should we do about this? I suspect most such errors
 // are basically unrecoverable and it's more-or-less OK if the process just dies, but I'm not sure
@@ -9027,21 +9047,6 @@ sealed class UiText {
 // ENHANCE: I don't think it's that important, but some history editing support might be nice:
 // - maybe allow the notes field to be edited in history entries ("this was a price typo")
 // - maybe allow history entries to be outright deleted (expunge mistakes completely)
-
-/* TODO: When I add translation, I should probably allow the translator to indirectly specify
-   keyboard hints - e.g. product name in English probably wants Words, but in Spanish probably None.
-   Grok sketched out:
-val capString = stringResource(R.string.grocery_capitalization)
-val capitalization = when (capString) {
-    "sentences" -> KeyboardCapitalization.Sentences
-    "words" -> KeyboardCapitalization.Words
-    else -> KeyboardCapitalization.None
-}
-        with English using res/values/strings.xml:
-        <string name="grocery_capitalization">words</string>
-        and Spanish using:
-        <string name="grocery_capitalization">none</string>
-*/
 
 // ENHANCE: I sometimes start typing the name of a product into the search box at the top of the
 // "edit products" screen, realise it's not there and want to add it. It might be worth (maybe gated
@@ -9194,12 +9199,6 @@ com.example.myapp/
 // Can/should we be restricting to numeric input and/or hinting at using a numeric on screen
 // keyboard? Do we need to impose a maximum length? Should we be using (a variant of?) our existing
 // NumericTextField?
-
-// TODO: Main (not comprehensive) list of UI "glitches" shown up by Spanish translation:
-// - "Unidad" dropdown on edit price dialog is not wide enough even with no multipack PROBABLY FIXED IF I KEEP NEW LAYOUT
-// - We may need to accept "tall" labels on edit price screen for multipack and just make sure all
-// three controls share the same height - but I do already have a possible tweak to the "pack size"
-// label in English, so consider that as part of this PROBABLY FIXED IF I KEEP NEW LAYOUT
 
 // TODO: In Spanish (but also probably in English) with USD prices in non-USD locale (hence "US$"
 // not just "$"), my small emulator is not fitting an (admittedly fake, but not insane in this
