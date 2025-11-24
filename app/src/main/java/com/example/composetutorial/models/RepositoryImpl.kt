@@ -1,22 +1,164 @@
 package com.example.composetutorial.models
 
+import android.content.Context
 import android.util.Log
+import androidx.room.Dao
+import androidx.room.Database
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import androidx.room.Upsert
 import androidx.room.withTransaction
-import com.example.composetutorial.AppDatabase
-import com.example.composetutorial.DataSetDao
-import com.example.composetutorial.ItemDao
-import com.example.composetutorial.PriceDao
-import com.example.composetutorial.PriceHistoryDao
-import com.example.composetutorial.SourceDao
+import com.example.composetutorial.Converters
+import com.example.composetutorial.debug.DebugFlags
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.myCheck
 import com.example.composetutorial.myRequire
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.util.concurrent.Executors
 
 // TODO: I should probably rename the "models" subpackage as "data" now it contains things like
 // this. I haven't done it yet to reduce git noise when I might change my mind again later.
+
+// TODO: I have a feeling I may have shoved too much in this file and some of these constants, AppDatabase and/or the @Dao stuff should be elsewhere
+
+const val DB_NAME = "main.db"
+const val DB_VERSION = 1
+@Database(
+    entities = [DataSet::class, Item::class, Source::class, PriceEntity::class, PriceHistory::class],
+    version = DB_VERSION,
+    exportSchema = false
+)
+@TypeConverters(Converters::class)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun dataSetDao(): DataSetDao
+    abstract fun productDao(): ItemDao
+    abstract fun sourceDao(): SourceDao
+    abstract fun priceDao(): PriceDao
+    abstract fun priceHistoryDao(): PriceHistoryDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
+
+        fun getDatabase(context: Context): AppDatabase {
+            // if the Instance is not null, return it, otherwise create a new database instance.
+            return INSTANCE ?: synchronized(this) {
+                Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME).apply {
+                    if (DebugFlags.LOG_SQL) {
+                        setQueryCallback({ sqlQuery, bindArgs ->
+                            Log.d("Database", "Query: $sqlQuery | Arguments: $bindArgs")
+                        }, Executors.newSingleThreadExecutor())
+                    }
+                }.build().also { INSTANCE = it }
+            }
+        }
+
+        fun clearInstance() {
+            INSTANCE?.close()
+            INSTANCE = null
+        }
+    }
+}
+
+@Dao
+interface DataSetDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(dataSet: DataSet): Long
+
+    @Upsert
+    suspend fun upsert(dataSet: DataSet): Long
+
+    @Query("SELECT * FROM data_set ORDER BY name DESC")
+    fun getAllDataSets(): Flow<List<DataSet>>
+
+    @Query("DELETE FROM data_set WHERE id = :dataSetId")
+    suspend fun deleteById(dataSetId: Long): Int
+}
+
+@Dao
+interface ItemDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(item: Item): Long
+
+    @Upsert
+    suspend fun upsert(item: Item): Long
+
+    @Query("SELECT * FROM item WHERE data_set_id = :dataSetId ORDER BY name DESC")
+    fun getAllItems(dataSetId: Long): Flow<List<Item>>
+
+    @Query("SELECT COUNT(*) FROM item WHERE data_set_id = :dataSetId")
+    fun countItemsForDataSet(dataSetId: Long): Flow<Long>
+
+    @Query("DELETE FROM item WHERE id = :itemId")
+    suspend fun deleteById(itemId: Long): Int
+}
+
+@Dao
+interface SourceDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(dataSet: Source): Long
+
+    @Upsert
+    suspend fun upsert(source: Source): Long
+
+    @Query("SELECT * FROM source WHERE data_set_id = :dataSetId ORDER BY name DESC")
+    fun getAllSources(dataSetId: Long): Flow<List<Source>>
+
+    @Query("SELECT COUNT(*) FROM source WHERE data_set_id = :dataSetId")
+    fun countSourcesForDataSet(dataSetId: Long): Flow<Long>
+
+    @Query("DELETE FROM source WHERE id = :sourceId")
+    suspend fun deleteById(sourceId: Long): Int
+}
+
+@Dao
+interface PriceDao {
+    @Upsert
+    suspend fun upsert(price: PriceEntity): Long
+
+    @Query(
+        "SELECT price.*, item.default_unit FROM price JOIN item ON price.item_id = item.id " +
+                "WHERE price.data_set_id = :dataSetId AND price.item_id = :itemId"
+    )
+    fun getPriceWithItemEntityForItem(
+        dataSetId: Long,
+        itemId: Long,
+    ): Flow<List<PriceWithItemEntity>>
+
+    @Query("SELECT COUNT(*) FROM price WHERE item_id = :itemId")
+    fun countPricesForItem(itemId: Long): Flow<Long>
+
+    @Query("SELECT COUNT(*) FROM price WHERE source_id = :sourceId")
+    fun countPricesForSource(sourceId: Long): Flow<Long>
+
+    @Query("DELETE FROM price WHERE id = :priceId")
+    suspend fun deleteById(priceId: Long): Int
+}
+
+@Dao
+interface PriceHistoryDao {
+    @Insert
+    suspend fun insert(priceHistory: PriceHistory): Long
+
+    // Note that we get price history without using the price_id. This means that if a price is
+    // deleted and subsequently a new price is added (which will allocate a new price_id), both
+    // segments of the price history will be retrieved.
+    @Query("SELECT * FROM price_history WHERE data_set_id = :dataSetId AND item_id = :itemId AND source_id = :sourceId ORDER BY modified_at DESC")
+    fun getPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<List<PriceHistory>>
+
+    @Query("SELECT COUNT(*) FROM price_history WHERE data_set_id = :dataSetId AND item_id = :itemId AND source_id = :sourceId")
+    fun countPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long): Flow<Long>
+
+    @Query("DELETE FROM price_history WHERE id = :priceHistoryId")
+    suspend fun deleteById(priceHistoryId: Long): Int
+}
+
 
 class RepositoryImpl(
     private val db: AppDatabase,
