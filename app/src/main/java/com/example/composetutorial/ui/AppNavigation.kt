@@ -42,7 +42,7 @@ import com.example.composetutorial.EditDataSetScreenUIContent
 import com.example.composetutorial.EditItemScreenUIContent
 import com.example.composetutorial.EditPriceScreenUIContent
 import com.example.composetutorial.EditSourceScreenUIContent
-import com.example.composetutorial.MyApplication
+import com.example.composetutorial.app.MyApplication
 import com.example.composetutorial.R
 import com.example.composetutorial.SelectItemScreenUIContent
 import com.example.composetutorial.ui.screens.selectitem.SelectItemViewModel

@@ -7,6 +7,7 @@ import com.example.composetutorial.R
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.common.formatDouble
+import com.example.composetutorial.common.intersectionIsEmpty
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.ui.nonBreakingSpace
 import kotlinx.parcelize.Parcelize
@@ -207,6 +208,10 @@ fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
     QuantityType.VOLUME -> MeasurementUnit.ML
     QuantityType.ITEM -> MeasurementUnit.EACH
 }
+
+fun areDifferentUnitFamilies(lhs: MeasurementUnit, rhs: MeasurementUnit) =
+    intersectionIsEmpty(lhs.unitFamilies, rhs.unitFamilies)
+
 
 @Parcelize
 // TODO: Maybe rename this "Quantity"? (And keep QuantityType for MASS/VOLUME/etc)

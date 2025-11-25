@@ -18,7 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.composetutorial.R
-import com.example.composetutorial.areDifferentUnitFamilies
+import com.example.composetutorial.domain.areDifferentUnitFamilies
 import com.example.composetutorial.domain.MeasuredValue
 import com.example.composetutorial.domain.UnitPrice
 import com.example.composetutorial.ui.common.format
