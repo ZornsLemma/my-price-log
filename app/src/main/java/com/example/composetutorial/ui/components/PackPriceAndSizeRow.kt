@@ -17,7 +17,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.example.composetutorial.AsyncOperationStatus
 import com.example.composetutorial.R
 import com.example.composetutorial.areDifferentUnitFamilies
 import com.example.composetutorial.domain.MeasuredValue
@@ -29,8 +28,9 @@ import com.example.composetutorial.domain.getRelevantUnitFamilies
 import com.example.composetutorial.domain.withFriendlyDenominator
 import com.example.composetutorial.formatPrice
 import com.example.composetutorial.getCurrencyDecimalPlaces
-import com.example.composetutorial.isNotBusy
 import com.example.composetutorial.models.DataSet
+import com.example.composetutorial.ui.common.AsyncOperationStatus
+import com.example.composetutorial.ui.common.isNotBusy
 
 @Composable
 fun PackPriceAndSizeRow(

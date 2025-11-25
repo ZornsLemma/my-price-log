@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.composetutorial.AsyncOperationStatus
 import com.example.composetutorial.AugmentedPrice
 import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.LoadState
@@ -52,6 +51,7 @@ import com.example.composetutorial.setSelectedDataSetIdAsync
 import com.example.composetutorial.setSelectedItemIdAsync
 import com.example.composetutorial.setSelectedSourceIdAsync
 import com.example.composetutorial.sourceIdNone
+import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.spinnerDelayMillis
 import com.example.composetutorial.userPreferencesStore
 import com.example.composetutorial.valueOrNull

@@ -80,7 +80,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.composetutorial.AgeClass
 import com.example.composetutorial.AsyncOperationErrorAlertDialog
-import com.example.composetutorial.AsyncOperationStatus
 import com.example.composetutorial.AugmentedPrice
 import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.LoadState
@@ -93,7 +92,6 @@ import com.example.composetutorial.createCurrencyFormat
 import com.example.composetutorial.domain.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily
 import com.example.composetutorial.domain.withFriendlyDenominator
 import com.example.composetutorial.formatPrice
-import com.example.composetutorial.isNotBusy
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Source
@@ -101,6 +99,8 @@ import com.example.composetutorial.myTextFieldColors
 import com.example.composetutorial.rememberSortedByLocale
 import com.example.composetutorial.sortedByLocale
 import com.example.composetutorial.sourceIdNone
+import com.example.composetutorial.ui.common.AsyncOperationStatus
+import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.CardTitle
 import com.example.composetutorial.ui.components.CellAlignment
 import com.example.composetutorial.ui.components.DataTable
