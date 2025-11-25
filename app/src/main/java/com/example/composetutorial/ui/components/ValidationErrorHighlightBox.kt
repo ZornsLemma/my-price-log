@@ -9,7 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
-import com.example.composetutorial.rememberValidationThing
+import com.example.composetutorial.ValidateFieldState
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.defaultErrorHighlightOffset
 import kotlinx.coroutines.flow.SharedFlow
@@ -32,7 +32,7 @@ fun <T, U> ValidationErrorHighlightBox(
 ) {
     val validationInputHandle = rememberValidationInputHandle()
 
-    val validationThing201 = rememberValidationThing(
+    val validationThing201 = ValidateFieldState(
         value = value,
         validationRules = validationRules,
         validationRulesKey = validationRulesKey,

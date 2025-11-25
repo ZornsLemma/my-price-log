@@ -9,23 +9,11 @@ import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.ui.common.LoadState
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
-import com.example.composetutorial.ui.components.FilteredTextField
-import com.example.composetutorial.ui.components.ValidationErrorHighlightBox
 import com.example.composetutorial.ui.components.generalselector.GeneralSelectorViewModel
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.models.populateDemoData
-import com.example.composetutorial.ui.screens.editdataset.EditDataSetViewModel
-import com.example.composetutorial.ui.screens.edititem.EditItemViewModel
-import com.example.composetutorial.ui.screens.editsource.EditSourceViewModel
-import com.example.composetutorial.ui.components.ErrorHighlightBox
 import com.example.composetutorial.ui.screens.home.HomeViewModel
-import androidx.compose.ui.semantics.contentDescription
 import com.example.composetutorial.ui.defaultValidationMessageDelayMillis
-import com.example.composetutorial.ui.spinnerDelayMillis
-import com.example.composetutorial.ui.fullScreenDialogHorizontalBorder
-import com.example.composetutorial.ui.fullScreenDialogVerticalBorder
-import com.example.composetutorial.ui.maxNotesLength
-import com.example.composetutorial.ui.maxNavigationDrawerWidth
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
@@ -35,330 +23,95 @@ import androidx.datastore.core.DataStore
 //import com.example.composetutorial.datastore.proto.UserPrefs.DatasetSelection
 import com.google.protobuf.InvalidProtocolBufferException
 import UserPrefs
-import com.example.composetutorial.ui.components.ValidationInputHandle
 import com.example.composetutorial.domain.UnitFamily
-import com.example.composetutorial.domain.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily
 import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.domain.MeasuredValue
 import com.example.composetutorial.models.EditableDataSet
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.EditableItem
 import com.example.composetutorial.models.Source
 import com.example.composetutorial.models.EditableSource
-import com.example.composetutorial.models.PriceEntity
 import com.example.composetutorial.models.Price
-import com.example.composetutorial.models.PriceWithItemEntity
 import com.example.composetutorial.models.PriceHistory
-import com.example.composetutorial.models.toDomain
-import androidx.compose.ui.platform.LocalUriHandler
-import android.graphics.Bitmap
-import android.graphics.drawable.Drawable
-import android.graphics.Canvas
-import android.app.Activity
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.NavigationDrawerItem
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.combine
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.datastore.preferences.core.Preferences
 import java.time.Duration
 //import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.padding
 import android.app.Application
 import android.content.Context
-import android.content.Intent
 import android.content.pm.ActivityInfo
-import android.content.pm.PackageManager
-import android.content.res.Resources
-import android.database.sqlite.SQLiteDatabase
 import android.icu.text.Collator
-import android.net.Uri
-import androidx.activity.compose.BackHandler
-import androidx.navigation.compose.rememberNavController
 import android.os.Bundle
-import android.os.LocaleList
 import android.os.StrictMode
-import android.text.format.DateUtils
 import android.util.Log
-import android.util.Log.e
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.AnyRes
-import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.example.composetutorial.ui.theme.ComposeTutorialTheme
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DrawerState
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MultiChoiceSegmentedButtonRow
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.ProvideTextStyle
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisallowComposableCalls
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 //import androidx.compose.ui.semantics.SemanticsProperties.Role
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.min
-import androidx.compose.ui.unit.times
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import androidx.datastore.dataStore
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.room.Dao
-import androidx.room.Database
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.room.TypeConverter
-import androidx.room.TypeConverters
-import androidx.room.Upsert
 import androidx.room.withTransaction
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.Currency
 import java.util.Locale
-import java.util.UUID
 import androidx.datastore.preferences.core.edit
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.dropUnlessResumed
-import androidx.lifecycle.createSavedStateHandle
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.composetutorial.debug.DebugFlags
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.QuantityType
 import com.example.composetutorial.models.RepositoryImpl
 import com.example.composetutorial.domain.UnitPrice
-import com.example.composetutorial.domain.getRelevantMeasurementUnits
 import com.example.composetutorial.domain.getRelevantUnitFamilies
-import com.example.composetutorial.domain.withFriendlyDenominator
 import com.example.composetutorial.models.EditablePrice
-import com.example.composetutorial.domain.Repository
-import com.example.composetutorial.domain.format
-import com.example.composetutorial.models.DataSetUnitPreferences
-import com.example.composetutorial.models.toEditable
 import com.example.composetutorial.ui.AppNavigation
-import com.example.composetutorial.ui.bulletPoint
-import com.example.composetutorial.ui.components.ItemWithDropdown
-import com.example.composetutorial.ui.components.LabeledItem
-import com.example.composetutorial.ui.components.LabeledItemWithDropdown
-import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
-import com.example.composetutorial.ui.components.rememberValidationInputHandle
-import com.example.composetutorial.ui.components.requestUserAttention
-import com.example.composetutorial.ui.components.validationInputHandleBringIntoViewRequester
-import com.example.composetutorial.ui.components.validationInputHandleFocusRequester
-import com.example.composetutorial.ui.copyrightSymbol
-import com.example.composetutorial.ui.defaultErrorHighlightOffset
-import com.example.composetutorial.ui.emDash
-import com.example.composetutorial.ui.listItemHorizontalPadding
-import com.example.composetutorial.ui.maxDataSetNameLength
-import com.example.composetutorial.ui.maxDecimalLength
-import com.example.composetutorial.ui.maxItemNameLength
-import com.example.composetutorial.ui.maxSearchLength
-import com.example.composetutorial.ui.maxSourceNameLength
-import com.example.composetutorial.ui.menuLeftPadding
-import com.example.composetutorial.ui.menuRightPadding
-import com.example.composetutorial.ui.nonBreakingSpace
-import com.example.composetutorial.ui.oneLineListItemHeight
-import com.example.composetutorial.ui.screenBorder
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.isActive
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.text.DecimalFormatSymbols
 import java.text.Normalizer
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeFormatterBuilder
-import java.time.format.FormatStyle
-import java.util.concurrent.Executors
 import kotlin.collections.map
 import kotlin.math.ceil
 import kotlin.math.pow
 import com.example.composetutorial.models.AppDatabase
-import com.example.composetutorial.models.DB_NAME
-import com.example.composetutorial.models.DB_VERSION
 import com.example.composetutorial.ui.common.UiText
-import com.example.composetutorial.ui.common.isNotBusy
-import com.example.composetutorial.ui.components.SmallCircularProgressIndicator
-import com.example.composetutorial.ui.components.topAppBarTitle
-import com.example.composetutorial.ui.screens.editprice.EditPriceViewModel
 import com.example.composetutorial.ui.screens.settings.SettingsViewModel
 
 
@@ -1084,9 +837,6 @@ fun runGeneralEditScreenOperation(
 
 
 
-// TODO: Obviously "ValidationThing" isn't a good name
-// TODO: It's a casual discussion not directly related to this but just FWIW ChatGPT uses
-// "FieldValidation" or "ValidatedFieldState" as a name for this, maybe worth considering or riffing on.
 // TODO: This is not a data class and I never even thought about it but although I find the
 // distinction very confusing in practical Compose, FWIW ChatGPT was very clear that this *should
 // not* be a data class (we might get away with it, but it would be prone to misuse if someone used
@@ -1095,26 +845,19 @@ fun runGeneralEditScreenOperation(
 // correct, but no reason to think it's not here) this should be and maybe even must be a "class"
 // not a "data class", and perhaps have a more targeted discussion with an LLM about this, in order
 // to clarify my mental model of Kotlin and/or Compose.
-class ValidationThing(
+class ValidatedFieldState(
     val interactionSource: MutableInteractionSource = MutableInteractionSource(),
     val validationResult: State<String?>
 )
 
-// TODO: Even ignoring that "ValidationThing" needs renaming (just maybe refactoring too, but not
-// necessarily), this function is probably poorly named. It is not just "remembering" a
-// validationthing, its key value is its reusable LaunchedEffect which actually carries out
-// validation "on the fly" using the supplied rules.
 // TODO: I am still re-figuring out how it works, but I think what this really is is a live
 // validation rule "applier" (poor word). You give it some validation rules and then it will live
 // validate a value (tweaking its behaviour based on focus (which it can monitor because the
 // caller attaches the interactionSource it generates to a composable)) and feeding back a validation
 // result for display.
-// TODO: Discussion (possibly incorrect, but kind of convincing) with ChatGPT suggests that as the
-// "main" purpose of this is the LaunchedEffect() not just "creating a state object the user cares
-// about as such", it should not be called rememberFoo(). FWIW ChatGPT was using
-// "ValidateFieldState" as the function name and "ValidatedFieldState" as the return value.
+// TODO: This isn't the best name but it's not terrible. We could maybe consider ValidateField() as the function and FieldValidation as the return type, but I suspect that's worse than what we currently have.
 @Composable
-fun <T> rememberValidationThing(
+fun <T> ValidateFieldState(
     value: T,
     validationRules: List<ValidationRule<T>>,
     validationRulesKey: Any? = null,
@@ -1124,7 +867,7 @@ fun <T> rememberValidationThing(
     // show a "name is empty" warning without waiting for a save attempt first). It is just about
     // worth having a default so cases where this isn't meaningful don't have to specify it.
     allowEmpty: Boolean = false
-): ValidationThing {
+): ValidatedFieldState {
     // We create our own MutableInteractionSource which needs to be passed through to the TextField
     // we want to validate, so that we can track when that TextField is/is not focused.
     val interactionSource = remember { MutableInteractionSource() }
@@ -1187,7 +930,7 @@ fun <T> rememberValidationThing(
         validationResult.value = failedValidationRule?.message?.asString(context)
     }
 
-    return ValidationThing(interactionSource, validationResult)
+    return ValidatedFieldState(interactionSource, validationResult)
 }
 
 
