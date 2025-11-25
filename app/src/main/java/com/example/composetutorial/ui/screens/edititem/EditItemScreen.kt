@@ -47,7 +47,7 @@ import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.QuantityType
 import com.example.composetutorial.domain.getRelevantMeasurementUnits
 import com.example.composetutorial.domain.getRelevantUnitFamilies
-import com.example.composetutorial.rememberSyncedTextFieldValue
+import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox

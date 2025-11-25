@@ -38,7 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.LoyaltyType
 import com.example.composetutorial.R
-import com.example.composetutorial.rememberSyncedTextFieldValue
+import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.components.SmallCircularProgressIndicator
