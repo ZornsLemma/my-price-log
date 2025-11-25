@@ -80,11 +80,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.composetutorial.AgeClass
-import com.example.composetutorial.AugmentedPrice
+import com.example.composetutorial.domain.AgeClass
+import com.example.composetutorial.domain.AugmentedPrice
 import com.example.composetutorial.HomeScreenUIContent
-import com.example.composetutorial.PriceAnalysis
-import com.example.composetutorial.PriceJudgement
+import com.example.composetutorial.domain.PriceAnalysis
+import com.example.composetutorial.domain.PriceJudgement
 import com.example.composetutorial.R
 import com.example.composetutorial.createCurrencyFormat
 import com.example.composetutorial.domain.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily
