@@ -120,14 +120,6 @@ import com.example.composetutorial.ui.common.setSelectedSourceId
 import com.example.composetutorial.ui.screens.settings.SettingsViewModel
 
 
-fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> = when (locale.country.uppercase()) {
-    // ChatGPT suggests it's common to have dual metric and US customary labelling in US
-    // supermarkets and that some users may want to use metric, so we enable it by default. I'll do
-    // the same for Liberia and Myanmar too for now.
-    "US", "LR", "MM" -> setOf(UnitFamily.ITEM, UnitFamily.METRIC, UnitFamily.US_CUSTOMARY)
-    "GB" -> setOf(UnitFamily.ITEM, UnitFamily.METRIC, UnitFamily.IMPERIAL)
-    else -> setOf(UnitFamily.ITEM, UnitFamily.METRIC)
-}
 
 
 

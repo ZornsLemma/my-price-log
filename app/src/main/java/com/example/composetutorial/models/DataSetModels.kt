@@ -6,7 +6,6 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.composetutorial.ui.common.currencyOrNull
 import com.example.composetutorial.domain.UnitFamily
-import com.example.composetutorial.getDefaultUnitFamilies
 import kotlinx.parcelize.Parcelize
 import java.util.Locale
 
@@ -53,6 +52,15 @@ fun DataSet?.toEditable(locale: Locale): EditableDataSet {
             notes = notes
         )
     }
+}
+
+fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> = when (locale.country.uppercase()) {
+    // ChatGPT suggests it's common to have dual metric and US customary labelling in US
+    // supermarkets and that some users may want to use metric, so we enable it by default. I'll do
+    // the same for Liberia and Myanmar too for now.
+    "US", "LR", "MM" -> setOf(UnitFamily.ITEM, UnitFamily.METRIC, UnitFamily.US_CUSTOMARY)
+    "GB" -> setOf(UnitFamily.ITEM, UnitFamily.METRIC, UnitFamily.IMPERIAL)
+    else -> setOf(UnitFamily.ITEM, UnitFamily.METRIC)
 }
 
 @Parcelize
