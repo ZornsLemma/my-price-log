@@ -52,7 +52,7 @@ import com.example.composetutorial.ui.common.LoadState
 import com.example.composetutorial.ui.common.SyncedStateEvent
 import com.example.composetutorial.ui.common.valueOrNull
 import com.example.composetutorial.ui.spinnerDelayMillis
-import com.example.composetutorial.userPreferencesStore
+import com.example.composetutorial.ui.common.userPreferencesStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job

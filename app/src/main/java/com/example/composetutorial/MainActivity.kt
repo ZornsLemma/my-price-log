@@ -114,6 +114,9 @@ import kotlin.math.ceil
 import kotlin.math.pow
 import com.example.composetutorial.models.AppDatabase
 import com.example.composetutorial.ui.common.UiText
+import com.example.composetutorial.ui.common.setSelectedDataSetId
+import com.example.composetutorial.ui.common.setSelectedItemId
+import com.example.composetutorial.ui.common.setSelectedSourceId
 import com.example.composetutorial.ui.screens.settings.SettingsViewModel
 
 
@@ -159,22 +162,7 @@ val sourceIdNone = -1L
 // complexity.
 val itemIdNone = -1L
 
-suspend fun setSelectedDataSetId(context: Context, dataSetId: Long) {
-    updateUserPreferences(context) { builder -> builder.setSelectedDataSetId(dataSetId) }
-}
 
-suspend fun setSelectedItemId(context: Context, dataSetId: Long, itemId: Long) {
-    updateUserPreferences(context) { builder -> builder.putSelectedItemIdForDataSetId(dataSetId, itemId) }
-}
-
-suspend fun setSelectedSourceId(context: Context, dataSetId: Long, sourceId: Long) {
-    updateUserPreferences(context) { builder -> builder.putSelectedSourceIdForDataSetId(dataSetId, sourceId) }
-}
-
-suspend fun updateUserPreferences(context: Context, update: (UserPrefs.UserPreferences.Builder) -> Unit) {
-    context.userPreferencesStore.updateData { prefs ->
-        prefs.toBuilder().apply(update).build() }
-}
 
 
 fun <T> List<T>.sortedByLocale(
@@ -1310,28 +1298,6 @@ fun analysePrices(
 
 
 
-// TODO: ChatGPT/Grok magic
-object UserPreferencesSerializer : Serializer<UserPrefs.UserPreferences> {
-    override val defaultValue: UserPrefs.UserPreferences = UserPrefs.UserPreferences.getDefaultInstance()
-
-    override suspend fun readFrom(input: InputStream): UserPrefs.UserPreferences {
-        try {
-            return UserPrefs.UserPreferences.parseFrom(input)
-        } catch (exception: InvalidProtocolBufferException) {
-            throw CorruptionException("Cannot read proto.", exception)
-        }
-    }
-
-    override suspend fun writeTo(t: UserPrefs.UserPreferences, output: OutputStream) {
-        t.writeTo(output)
-    }
-}
-
-// TODO: ChatGPT magic
-val Context.userPreferencesStore: DataStore<UserPrefs.UserPreferences> by dataStore(
-    fileName = "user_prefs.pb",
-    serializer = UserPreferencesSerializer
-)
 
 // TODO: ChatGPT semi-magic
 

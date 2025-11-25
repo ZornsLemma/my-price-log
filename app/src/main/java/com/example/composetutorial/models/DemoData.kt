@@ -6,9 +6,9 @@ import com.example.composetutorial.R
 import com.example.composetutorial.domain.MeasuredValue
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.Repository
-import com.example.composetutorial.setSelectedDataSetId
-import com.example.composetutorial.setSelectedItemId
-import com.example.composetutorial.setSelectedSourceId
+import com.example.composetutorial.ui.common.setSelectedDataSetId
+import com.example.composetutorial.ui.common.setSelectedItemId
+import com.example.composetutorial.ui.common.setSelectedSourceId
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.Currency
