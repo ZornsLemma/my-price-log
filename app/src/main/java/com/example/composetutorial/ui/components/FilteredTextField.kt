@@ -62,3 +62,21 @@ fun FilteredTextField(
         interactionSource = interactionSource,
     )
 }
+
+// Note that if maxLength is reduced, the generated onCandidateValueChange will disallow any edits
+// to existing values which are over the new limit (which we previously valid). We could fix this by
+// passing the old value into onCandidateValueChange and extending the condition here to "... ||
+// it.length < oldValue.length", but unless/until this is a real concern, it feels better to avoid
+// having to jump through hoops to make the old value available.
+//
+// ENHANCE: The length limit on our ValidatedTextFields is just there to keep things tidy and in
+// practice we don't expect a user to run up against it. We therefore don't show a current/max
+// character count, as it would probably be more confusing than helpful. (Imagine editing a
+// notionally decimal value in a text field with current/max character counts under it.) It's not
+// absolutely ideal that the user's input is just silently ignored if they do hit the length limit,
+// but it's not a likely case and I can't think of a nice way to show this. We could maybe show some
+// kind of transitory supportingText message (not one of the more persistent ones our validation
+// infrastructure generates), but even ignoring the implementation difficulties I am not sure that
+// would be better than just silently dropping input.
+fun createOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
+    { it.length <= maxLength }

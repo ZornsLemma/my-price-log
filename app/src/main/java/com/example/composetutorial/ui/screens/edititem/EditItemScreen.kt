@@ -42,7 +42,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
 import com.example.composetutorial.areDifferentUnitFamilies
-import com.example.composetutorial.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.QuantityType
@@ -54,6 +53,7 @@ import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
 import com.example.composetutorial.ui.components.SmallCircularProgressIndicator
 import com.example.composetutorial.ui.components.ValidatedFilteredTextField
+import com.example.composetutorial.ui.components.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.ui.components.generaledit.GeneralEditAndDeleteScreen
 import com.example.composetutorial.ui.components.keyboardCapitalization
 import com.example.composetutorial.ui.components.topAppBarTitle

@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
 import com.example.composetutorial.areDifferentUnitFamilies
-import com.example.composetutorial.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.QuantityType
@@ -39,6 +38,7 @@ import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
 import com.example.composetutorial.ui.components.ValidatedNumericTextField
+import com.example.composetutorial.ui.components.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreen
 import com.example.composetutorial.ui.components.keyboardCapitalization
 import com.example.composetutorial.ui.components.topAppBarTitle

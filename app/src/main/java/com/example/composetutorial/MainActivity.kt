@@ -1393,62 +1393,9 @@ fun numericValidationRules(
     )
 }
 
-// A simple wrapper around FilteredTextField which performs filtering for numeric input.
-@Composable
-fun NumericTextField(
-    modifier: Modifier = Modifier,
-    label: @Composable (() -> Unit)? = null,
-    value: TextFieldValue,
-    prefix: @Composable (() -> Unit)? = null,
-    suffix: @Composable (() -> Unit)? = null,
-    textStyle: TextStyle = LocalTextStyle.current,
-    onValueChange: (TextFieldValue) -> Unit,
-    enabled: Boolean = true,
-    isError: Boolean = false,
-    supportingText: @Composable (() -> Unit)? = null,
-    keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-    interactionSource: MutableInteractionSource? = null,
-) {
-    FilteredTextField(
-        label = label,
-        value = value,
-        prefix = prefix,
-        suffix = suffix,
-        textStyle = textStyle,
-        // ENHANCE: We don't (we could, but probably no point) allow arbitrary
-        // onCandidateValueChange functions to be supplied by our caller. We just hardcode this for
-        // now. We could potentially accept some options from our caller which say whether decimal
-        // point (locale sensitive) or minus signs are allowed and tweak the internally-assigned
-        // onCandidate... function here.
-        onCandidateValueChange = { isValidTransitionalDecimal(it) && it.length <= maxDecimalLength },
-        onValueChange = onValueChange,
-        enabled = enabled,
-        isError = isError,
-        modifier = modifier,
-        supportingText = supportingText,
-        keyboardOptions = keyboardOptions,
-        singleLine = true,
-        interactionSource = interactionSource,
-    )
-}
 
-// Note that if maxLength is reduced, the generated onCandidateValueChange will disallow any edits
-// to existing values which are over the new limit (which we previously valid). We could fix this by
-// passing the old value into onCandidateValueChange and extending the condition here to "... ||
-// it.length < oldValue.length", but unless/until this is a real concern, it feels better to avoid
-// having to jump through hoops to make the old value available.
-//
-// ENHANCE: The length limit on our ValidatedTextFields is just there to keep things tidy and in
-// practice we don't expect a user to run up against it. We therefore don't show a current/max
-// character count, as it would probably be more confusing than helpful. (Imagine editing a
-// notionally decimal value in a text field with current/max character counts under it.) It's not
-// absolutely ideal that the user's input is just silently ignored if they do hit the length limit,
-// but it's not a likely case and I can't think of a nice way to show this. We could maybe show some
-// kind of transitory supportingText message (not one of the more persistent ones our validation
-// infrastructure generates), but even ignoring the implementation difficulties I am not sure that
-// would be better than just silently dropping input.
-fun createOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
-    { it.length <= maxLength }
+
+
 
 
 
