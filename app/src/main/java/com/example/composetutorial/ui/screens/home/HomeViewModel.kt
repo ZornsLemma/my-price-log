@@ -42,7 +42,7 @@ import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Price
 import com.example.composetutorial.models.Source
-import com.example.composetutorial.sanitisePriceUnits
+import com.example.composetutorial.domain.sanitisePriceUnits
 import com.example.composetutorial.setSelectedDataSetIdAsync
 import com.example.composetutorial.setSelectedItemIdAsync
 import com.example.composetutorial.setSelectedSourceIdAsync

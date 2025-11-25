@@ -8,7 +8,7 @@ import com.example.composetutorial.baseUnitForQuantityType
 import com.example.composetutorial.domain.MeasuredValue
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.models.PriceHistory
-import com.example.composetutorial.sanitisePriceHistoryUnits
+import com.example.composetutorial.domain.sanitisePriceHistoryUnits
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 import java.time.format.DateTimeFormatter
