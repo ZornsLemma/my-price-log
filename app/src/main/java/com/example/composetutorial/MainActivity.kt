@@ -741,6 +741,60 @@ data class EditSourceScreenUIContent(
     }
 }
 
+/* TODO: Grok suggests this to simplify EditDataSetScreenUIContent and similar - I have not thought this through properly yet but I should at least give it some thought as if it does work it may simplify things a lot:
+
+    The real, battle-tested solutions that preserve TextField reactivity and process-death survival
+Winner for 2025: Option 3 — Two StateFlows in the ViewModel (recommended)
+Kotlin
+class EditDataSetViewModel(
+    savedStateHandle: SavedStateHandle,
+    initialDataSet: EditableDataSet
+) : ViewModel() {
+
+    // This survives process death automatically
+    private val _editable = savedStateHandle.getStateFlow(
+        key = "editable_dataset",
+        initialValue = initialDataSet.copy()  // or however you create draft
+    )
+
+    val editableDataSet: StateFlow<EditableDataSet> = _editable.asStateFlow()
+    val originalDataSet: EditableDataSet = initialDataSet
+
+    // Call this from your composables — fully reactive!
+    fun updateEditable(transform: (EditableDataSet) -> EditableDataSet) {
+        _editable.update(transform)
+    }
+
+    // Optional: auto-save every change (throttled)
+    init {
+        viewModelScope.launch {
+            _editable
+                .debounce(300)  // or drop oldest, etc.
+                .collectLatest { savedStateHandle["editable_dataset"] = it }
+        }
+    }
+}
+
+In Compose:
+val editable by viewModel.editableDataSet.collectAsState()
+
+TextField(
+    value = editable.name,
+    onValueChange = { viewModel.updateEditable { copy(name = it) } }
+)
+
+Pros:
+
+Zero boilerplate beyond the ViewModel
+Full two-way binding with TextFields
+Survives process death out of the box
+You can still have originalDataSet for cancel/dirty checking
+EditableDataSet stays a pure, parcelable data class
+
+This is what most serious production apps have converged on in 2024–2025.
+
+*/
+
 data class EditDataSetScreenUIContent(
     val editableDataSet: MutableState<EditableDataSet>,
     val originalDataSet: EditableDataSet,
