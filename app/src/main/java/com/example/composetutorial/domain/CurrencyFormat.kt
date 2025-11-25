@@ -2,7 +2,6 @@ package com.example.composetutorial.domain
 
 import android.util.Log
 import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.splitAroundDigits
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.components.numericValidationRules
 import java.text.NumberFormat
@@ -44,4 +43,23 @@ fun DataSet.createCurrencyFormat(locale: Locale): CurrencyFormat {
             maxDecimals = currencyInstance.defaultFractionDigits
         )
     )
+}
+
+// Return the non-digit prefix and suffix around a digit-containing string. Given "foo123bar4 baz56
+// quux", this returns ("foo", " quux").
+private fun splitAroundDigits(input: String): Pair<String, String> {
+    var firstDigitIndex = input.indexOfFirst { it.isDigit() }
+    if (firstDigitIndex == -1) {
+        firstDigitIndex = 0
+    }
+    val prefix = input.substring(0, firstDigitIndex)
+
+    val lastDigitIndex = input.indexOfLast { it.isDigit() }
+    val suffix = if (lastDigitIndex == -1) {
+        ""
+    } else {
+        input.substring(lastDigitIndex + 1)
+    }
+
+    return Pair(prefix, suffix)
 }

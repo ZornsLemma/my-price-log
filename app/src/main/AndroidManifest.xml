@@ -14,7 +14,7 @@
         android:theme="@style/Theme.ComposeTutorial"
         tools:targetApi="30">
         <activity
-            android:name=".MainActivity"
+            android:name=".app.MainActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="true"
             android:label="@string/app_name"
