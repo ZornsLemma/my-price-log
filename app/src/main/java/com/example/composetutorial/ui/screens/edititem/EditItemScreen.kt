@@ -1,5 +1,6 @@
 package com.example.composetutorial.ui.screens.edititem
 
+import com.example.composetutorial.ui.components.SupportingText
 import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
@@ -41,7 +42,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.FilteredTextField
 import com.example.composetutorial.R
-import com.example.composetutorial.SupportingText
 import com.example.composetutorial.areDifferentUnitFamilies
 import com.example.composetutorial.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.domain.MeasurementUnit

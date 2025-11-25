@@ -27,7 +27,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.composetutorial.R
-import com.example.composetutorial.myTextFieldColors
 import com.example.composetutorial.ui.menuLeftPadding
 
 // ENHANCE: I am not sure if we should disable the on-click ripple here when opening the menu. It's

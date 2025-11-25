@@ -2,6 +2,9 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import com.example.composetutorial.ui.common.LoadState
+import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
+
 import com.example.composetutorial.ui.components.ValidationErrorHighlightBox
 import com.example.composetutorial.ui.components.generalselector.GeneralSelectorViewModel
 import com.example.composetutorial.ui.common.AsyncOperationStatus
@@ -598,24 +601,7 @@ enum class LoyaltyType(val id: Long) {
 // sorting to the results before showing them.
 
 
-// Represents a UI state that should be both:
-// - Observable via [state] for UI rendering
-// - Emitted via [events] for triggering side-effects
-class SyncedStateEvent<T>(initialState: T) {
-    private val _state = MutableStateFlow(initialState)
-    private val _events = MutableSharedFlow<T>(extraBufferCapacity = 1)
 
-    val state: StateFlow<T> = _state
-    val events: SharedFlow<T> = _events
-
-    @Composable
-    fun collectAsStateWithLifecycle(): State<T> = _state.collectAsStateWithLifecycle()
-
-    suspend fun update(value: T) {
-        _state.value = value
-        _events.emit(value)
-    }
-}
 
 fun setSelectedDataSetIdAsync(context: Context, dataSetId: Long) {
     AppScope.io.launch {
@@ -633,23 +619,7 @@ fun setSelectedSourceIdAsync(context: Context, dataSetId: Long, sourceId: Long) 
     }
 }
 
-sealed interface LoadState<out T> {
-    data object Loading : LoadState<Nothing>
 
-    // Empty isn't currently used, but it feels like it might be a good option in some future case
-    // so I'll keep it around for now. T could be a nullable type to represent this concept, but
-    // depending on the precise situation Empty+a non-nullable T might be better.
-    @Suppress("unused")
-    data object Empty : LoadState<Nothing>
-
-    data class Loaded<T>(val value: T) : LoadState<T>
-}
-
-fun <T> LoadState<T>.valueOrNull(): T? =
-    when (this) {
-        is LoadState.Loaded -> value
-        else -> null
-    }
 
 
 // Returns a version of priceList where any price measurements which are expressed in units not
@@ -725,71 +695,10 @@ fun sanitisePriceHistoryUnits(dataSet: DataSet, priceHistoryList: List<PriceHist
 }
 
 
-// Sometimes we have to make a TextField "enabled = false" for it to be clickable, so we need
-// to override the colours to make it look like it is enabled.
-@Composable
-fun myTextFieldColors(isFocused: Boolean) = TextFieldDefaults.colors(
-    disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-    disabledLabelColor = if (isFocused)
-        MaterialTheme.colorScheme.primary
-    else
-        MaterialTheme.colorScheme.onSurfaceVariant,
-    disabledTextColor = MaterialTheme.colorScheme.onSurface,
-    // We can't make the indicator thicker when mock-focused, but we can at least change the colour.
-    disabledIndicatorColor = if (isFocused)
-        MaterialTheme.colorScheme.primary
-    else
-        MaterialTheme.colorScheme.onSurfaceVariant,
-    disabledSupportingTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-)
 
 
 
-@Composable
-fun RelativeTimeText(augmentedPrice: AugmentedPrice) {
-    val confirmedAt = augmentedPrice.basePrice.confirmedAt
-    var now by remember(confirmedAt) { mutableStateOf(Instant.now()) }
-    val ageInSeconds = Duration.between(confirmedAt, now).seconds
-    val secondsPerDay = 24 * 60 * 60
 
-    // This LaunchedEffect causes the *state variable* "now" to update periodically, forcing a
-    // recomposition so the user can see the age increasing.
-    LaunchedEffect(confirmedAt) {
-        // NB: The captured ageInSeconds will *not* update in here - this coroutine is launched once
-        // on the first composition for a specific value of "instant".
-        while (true) {
-            // ENHANCE: We could maybe sleep until "the next minute boundary" when ageInMinutes<60,
-            // so we're not executing every second for the first minute when the display only has
-            // minute resolution.
-            val ageInMinutes = Duration.between(confirmedAt, Instant.now()).toMinutes()
-            Log.d("MyAppRTT", "ageInMinutes: $ageInMinutes")
-            val delayDuration = when {
-                ageInMinutes < 1       -> 1_000L           // update every second for first minute
-                ageInMinutes < 24 * 60 -> 60_000L          // every minute for first day
-                else                   -> 60 * 60 * 1_000L // every hour after that
-            }
-            delay(delayDuration)
-            now = Instant.now()
-            Log.d("MyAppRTT", "updated now: $now")
-        }
-    }
-
-    // getRelativeTimeSpanString() returns "0 min. ago" in English for ages under 60 seconds, and
-    // presumably similar in other languages, so we special-case this.
-    Log.d("MyAppRTT", "$ageInSeconds $confirmedAt $now")
-    val relativeTime = if (ageInSeconds < 60) stringResource(R.string.relative_time_span_string_now) else DateUtils.getRelativeTimeSpanString(
-        confirmedAt.toEpochMilli(),
-        now.toEpochMilli(),
-        DateUtils.MINUTE_IN_MILLIS,
-        DateUtils.FORMAT_ABBREV_RELATIVE
-    ).toString()
-    // ENHANCE: I don't know if it's slightly weird to color this to indicate it's stale without
-    // showing a stale icon or having some supporting text. May want to revisit this in the future.
-    Text(
-        relativeTime,
-        color = if (augmentedPrice.ageClass == AgeClass.FRESH) Color.Unspecified else MaterialTheme.colorScheme.error
-    )
-}
 
 fun formatPrice(price: Double, dataSet: DataSet, locale: Locale): String {
     // At least on Android this doesn't throw for invalid three-letter currency codes but it will
@@ -1132,28 +1041,6 @@ fun areDifferentUnitFamilies(lhs: MeasurementUnit, rhs: MeasurementUnit) =
     intersectionIsEmpty(lhs.unitFamilies, rhs.unitFamilies)
 
 
-@Composable
-fun SupportingText(text: String, isError: Boolean, modifier: Modifier = Modifier) {
-    Text(
-        text = text, modifier = modifier,
-        style = MaterialTheme.typography.bodySmall,
-        color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-    )
-}
-
-// TODO: Rename? This is not actually a ViewModel, though it plays a similar role (I think).
-// TODO: Can/should this be handled via rememberSaveable inside GeneralEditScreen? I think in some
-// sense this saving-duration kind of data should be in the caller's ViewModel (via composition). In
-// practice, especially given that we "trap" the user on the edit screen that isn't so important.
-// There might be considerations around app death and resurrection and being in the caller's
-// ViewModel (if they remember to serialise us) might help us survive, but "the process of actually
-// saving" cannot be serialised so even if a save somehow takes ages and that isn't actually
-// indicative of a serious problem, will it matter that our state has been serialised to a bundle!?
-// I need to thinka bout this later when it's maybe clearer.
-class GeneralEditScreenViewModel {
-    val asyncOperationStatus = SyncedStateEvent<AsyncOperationStatus>(AsyncOperationStatus.Idle)
-    var saveAttempted: MutableState<Boolean> = mutableStateOf(false)
-}
 
 fun runGeneralEditScreenOperation(
     viewModel: GeneralEditScreenViewModel,

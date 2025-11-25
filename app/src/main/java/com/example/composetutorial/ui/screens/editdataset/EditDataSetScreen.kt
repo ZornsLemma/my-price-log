@@ -1,6 +1,7 @@
 package com.example.composetutorial.ui.screens.editdataset
 
 import com.example.composetutorial.ui.components.ValidationErrorHighlightBox
+import com.example.composetutorial.ui.components.SupportingText
 import android.util.Log
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,7 +33,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.FilteredTextField
 import com.example.composetutorial.R
-import com.example.composetutorial.SupportingText
 import com.example.composetutorial.createCurrencyList
 import com.example.composetutorial.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.keyboardCapitalization

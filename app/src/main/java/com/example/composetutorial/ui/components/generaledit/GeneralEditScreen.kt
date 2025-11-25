@@ -2,6 +2,7 @@
 
 package com.example.composetutorial.ui.components.generaledit
 
+import com.example.composetutorial.ui.common.SyncedStateEvent
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -37,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
-import com.example.composetutorial.GeneralEditScreenViewModel
 import com.example.composetutorial.R
 import com.example.composetutorial.runGeneralEditScreenOperation
 import com.example.composetutorial.ui.common.AsyncOperationStatus

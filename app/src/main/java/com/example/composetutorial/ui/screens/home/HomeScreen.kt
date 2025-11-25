@@ -2,6 +2,8 @@
 
 package com.example.composetutorial.ui.screens.home
 
+import com.example.composetutorial.ui.components.myTextFieldColors
+import android.text.format.DateUtils
 import android.util.Log
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.AnimatedContent
@@ -81,12 +83,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.composetutorial.AgeClass
 import com.example.composetutorial.AugmentedPrice
 import com.example.composetutorial.HomeScreenUIContent
-import com.example.composetutorial.LoadState
 import com.example.composetutorial.OnAppLifecycleEvent
 import com.example.composetutorial.PriceAnalysis
 import com.example.composetutorial.PriceJudgement
 import com.example.composetutorial.R
-import com.example.composetutorial.RelativeTimeText
 import com.example.composetutorial.createCurrencyFormat
 import com.example.composetutorial.domain.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily
 import com.example.composetutorial.domain.withFriendlyDenominator
@@ -94,11 +94,11 @@ import com.example.composetutorial.formatPrice
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Source
-import com.example.composetutorial.myTextFieldColors
 import com.example.composetutorial.rememberSortedByLocale
 import com.example.composetutorial.sortedByLocale
 import com.example.composetutorial.sourceIdNone
 import com.example.composetutorial.ui.common.AsyncOperationStatus
+import com.example.composetutorial.ui.common.LoadState
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.AsyncOperationErrorAlertDialog
 import com.example.composetutorial.ui.components.CardTitle
@@ -118,6 +118,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import java.time.Duration
+import java.time.Instant
 
 @Composable
 fun HomeScreen(
@@ -1318,4 +1320,48 @@ private fun ItemSourceSelector(
     }
 }
 
+@Composable
+private fun RelativeTimeText(augmentedPrice: AugmentedPrice) {
+    val confirmedAt = augmentedPrice.basePrice.confirmedAt
+    var now by remember(confirmedAt) { mutableStateOf(Instant.now()) }
+    val ageInSeconds = Duration.between(confirmedAt, now).seconds
+    val secondsPerDay = 24 * 60 * 60
 
+    // This LaunchedEffect causes the *state variable* "now" to update periodically, forcing a
+    // recomposition so the user can see the age increasing.
+    LaunchedEffect(confirmedAt) {
+        // NB: The captured ageInSeconds will *not* update in here - this coroutine is launched once
+        // on the first composition for a specific value of "instant".
+        while (true) {
+            // ENHANCE: We could maybe sleep until "the next minute boundary" when ageInMinutes<60,
+            // so we're not executing every second for the first minute when the display only has
+            // minute resolution.
+            val ageInMinutes = Duration.between(confirmedAt, Instant.now()).toMinutes()
+            Log.d("MyAppRTT", "ageInMinutes: $ageInMinutes")
+            val delayDuration = when {
+                ageInMinutes < 1       -> 1_000L           // update every second for first minute
+                ageInMinutes < 24 * 60 -> 60_000L          // every minute for first day
+                else                   -> 60 * 60 * 1_000L // every hour after that
+            }
+            delay(delayDuration)
+            now = Instant.now()
+            Log.d("MyAppRTT", "updated now: $now")
+        }
+    }
+
+    // getRelativeTimeSpanString() returns "0 min. ago" in English for ages under 60 seconds, and
+    // presumably similar in other languages, so we special-case this.
+    Log.d("MyAppRTT", "$ageInSeconds $confirmedAt $now")
+    val relativeTime = if (ageInSeconds < 60) stringResource(R.string.relative_time_span_string_now) else DateUtils.getRelativeTimeSpanString(
+        confirmedAt.toEpochMilli(),
+        now.toEpochMilli(),
+        DateUtils.MINUTE_IN_MILLIS,
+        DateUtils.FORMAT_ABBREV_RELATIVE
+    ).toString()
+    // ENHANCE: I don't know if it's slightly weird to color this to indicate it's stale without
+    // showing a stale icon or having some supporting text. May want to revisit this in the future.
+    Text(
+        relativeTime,
+        color = if (augmentedPrice.ageClass == AgeClass.FRESH) Color.Unspecified else MaterialTheme.colorScheme.error
+    )
+}

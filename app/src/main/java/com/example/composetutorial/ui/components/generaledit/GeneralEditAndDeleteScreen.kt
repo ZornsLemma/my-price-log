@@ -11,7 +11,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
-import com.example.composetutorial.GeneralEditScreenViewModel
 import com.example.composetutorial.R
 import com.example.composetutorial.WarningIcon
 import com.example.composetutorial.runGeneralEditScreenOperation

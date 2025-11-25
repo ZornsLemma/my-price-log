@@ -30,13 +30,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.AugmentedPrice
 import com.example.composetutorial.HomeScreenUIContent
-import com.example.composetutorial.LoadState
 import com.example.composetutorial.OnAppLifecycleEvent
 import com.example.composetutorial.PriceJudgement
 import com.example.composetutorial.R
-import com.example.composetutorial.RelativeTimeText
 import com.example.composetutorial.SettingsRepository
-import com.example.composetutorial.SyncedStateEvent
 import com.example.composetutorial.analysePrices
 import com.example.composetutorial.dataStore
 import com.example.composetutorial.domain.Repository
@@ -52,9 +49,11 @@ import com.example.composetutorial.setSelectedItemIdAsync
 import com.example.composetutorial.setSelectedSourceIdAsync
 import com.example.composetutorial.sourceIdNone
 import com.example.composetutorial.ui.common.AsyncOperationStatus
+import com.example.composetutorial.ui.common.LoadState
+import com.example.composetutorial.ui.common.SyncedStateEvent
+import com.example.composetutorial.ui.common.valueOrNull
 import com.example.composetutorial.ui.spinnerDelayMillis
 import com.example.composetutorial.userPreferencesStore
-import com.example.composetutorial.valueOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
