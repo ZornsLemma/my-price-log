@@ -9,7 +9,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
-import com.example.composetutorial.ValidateFieldState
+import com.example.composetutorial.ui.components.ValidateFieldState
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.defaultErrorHighlightOffset
 import kotlinx.coroutines.flow.SharedFlow
