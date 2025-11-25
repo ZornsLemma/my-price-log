@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.EditSourceScreenUIContent
 import com.example.composetutorial.LoyaltyType
-import com.example.composetutorial.UiText
 import com.example.composetutorial.ValidationRule
 import com.example.composetutorial.Versioned
 import com.example.composetutorial.createNameValidationRules
@@ -16,6 +15,7 @@ import com.example.composetutorial.models.EditableSource
 import com.example.composetutorial.models.toDomain
 import com.example.composetutorial.myCheck
 import com.example.composetutorial.numericValidationRules
+import com.example.composetutorial.ui.common.UiText
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
 import com.example.composetutorial.validationRulesOk
 import com.example.composetutorial.withVersion
