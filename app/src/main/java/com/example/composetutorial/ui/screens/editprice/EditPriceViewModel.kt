@@ -5,7 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.example.composetutorial.EditPriceScreenUIContent
 import com.example.composetutorial.ui.common.ValidationRule
-import com.example.composetutorial.createCurrencyFormat
+import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.models.toDomain

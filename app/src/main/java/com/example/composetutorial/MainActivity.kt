@@ -948,68 +948,6 @@ fun createNameValidationRules(existingNameList: List<String>): List<ValidationRu
 // knots coping with generic attempts that don't quite match reality, but later on it would be good
 // to see what can be factored out.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-data class CurrencyFormat(
-    val decimalPlaces: Int,
-    val prefix: String?,
-    val suffix: String?,
-    val validationRules: List<ValidationRule<String>>
-)
-
-// This is an extension function on DataSet rather than a top-level function taking a currency code
-// because at some point a DataSet may contain custom currency formatting which overrides whatever
-// the current locale says to do.
-fun DataSet.createCurrencyFormat(locale: Locale): CurrencyFormat {
-    val currencyInstance = Currency.getInstance(currencyCode)
-    // currencyInstance will give us the number of decimal places, but it won't give us a
-    // prefix or suffix to use - which we need for currency TextFields. So we ask it to
-    // format a sample price and take the prefix and suffix from that.
-    val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
-        currency = currencyInstance
-    }
-    val sampleFormattedCurrency = numberFormat.format(1.0)
-    Log.d(
-        "MyApp",
-        "sampleFormattedCurrency for $currencyCode is '$sampleFormattedCurrency'"
-    )
-    val (prefix, suffix) = splitAroundDigits(sampleFormattedCurrency)
-    return CurrencyFormat(
-        decimalPlaces = currencyInstance.defaultFractionDigits,
-        prefix = prefix.trim().ifBlank { null },
-        suffix = suffix.trim().ifBlank { null },
-        validationRules = numericValidationRules(
-            locale,
-            allowDecimals = currencyInstance.defaultFractionDigits > 0,
-            allowZero = false,
-            maxDecimals = currencyInstance.defaultFractionDigits
-        )
-    )
-}
-
-fun getCurrencyDecimalPlaces(dataSet: DataSet) =
-    Currency.getInstance(dataSet.currencyCode).defaultFractionDigits
-
-
-
-
-
-
-
-
-
-
 // ENHANCE: I have completely ignored "unlikely" errors (like exceptions being thrown when accessing
 // the database) in most of this code - what can/should we do about this? I suspect most such errors
 // are basically unrecoverable and it's more-or-less OK if the process just dies, but I'm not sure

@@ -86,7 +86,7 @@ import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.domain.PriceAnalysis
 import com.example.composetutorial.domain.PriceJudgement
 import com.example.composetutorial.R
-import com.example.composetutorial.createCurrencyFormat
+import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.domain.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily
 import com.example.composetutorial.domain.withFriendlyDenominator
 import com.example.composetutorial.ui.common.formatPrice

@@ -10,7 +10,7 @@ import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.SelectItemScreenUIContent
 import com.example.composetutorial.SelectSourceScreenUIContent
 import com.example.composetutorial.ViewPriceHistoryScreenUIContent
-import com.example.composetutorial.createCurrencyFormat
+import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.models.Item
