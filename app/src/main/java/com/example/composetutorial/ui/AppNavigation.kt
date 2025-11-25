@@ -365,7 +365,7 @@ fun AppNavigation() {
             }
         }
 
-        composable(
+        composable( // TODO: Should editSources path be renamed selectSources? And ditto for other edit*?
             "editSources/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
