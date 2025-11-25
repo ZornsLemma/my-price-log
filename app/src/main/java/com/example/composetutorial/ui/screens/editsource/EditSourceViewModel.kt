@@ -1,5 +1,6 @@
 package com.example.composetutorial.ui.screens.editsource
 
+import com.example.composetutorial.ui.components.numericValidationRules
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -12,7 +13,6 @@ import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.models.EditableSource
 import com.example.composetutorial.models.toDomain
-import com.example.composetutorial.numericValidationRules
 import com.example.composetutorial.ui.common.UiText
 import com.example.composetutorial.ui.common.Versioned
 import com.example.composetutorial.ui.common.initialVersioned
