@@ -121,53 +121,6 @@ import com.example.composetutorial.ui.common.setSelectedItemId
 import com.example.composetutorial.ui.common.setSelectedSourceId
 import com.example.composetutorial.ui.screens.settings.SettingsViewModel
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-// NB: We cannot rely on the database to order our results by name as it isn't locale-sensitive, so
-// we have to sort the results in memory later. We could therefore omit ORDER BY clauses completely,
-// (ENHANCE: and doing this later on would give a small performance/efficiency improvement) but
-// instead we use a deliberately wrong ORDER BY DESC to make it obvious if we are failing to apply
-// sorting to the results before showing them.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 data class HomeScreenUIContent(
     val dataSetIdState: LoadState<Long>,
     val dataSet: DataSet?,
@@ -195,8 +148,6 @@ data class HomeScreenUIContent(
         }
     }
 }
-
-
 
 // TODO: Apparently Android will cheerfully kill my app, upgrade it *and then restart it with the
 // saved state from the old app*. And of course this has to be handled, even though it utterly
@@ -443,8 +394,6 @@ data class EditDataSetScreenUIContent(
     }
 }
 
-
-
 data class SelectItemScreenUIContent(
     val itemList: List<Item>,
     val dataSet: DataSet
@@ -500,19 +449,9 @@ data class SelectSourceScreenUIContent(
     }
 }
 
-
-
-
-
-
 data class GeneralSelectorScreenUIContent<T>(
     val initialList: List<T>?
 )
-
-
-
-
-
 
 data class ViewPriceHistoryScreenUIContent(
     val dataSet: DataSet,
@@ -555,10 +494,6 @@ data class ViewPriceHistoryScreenUIContent(
         }
     }
 }
-
-
-
-
 
 // TODO: There is a huge amount of pseudo copy and paste in all the Edit*{Screen,ViewModel} stuff.
 // Probably just going to accept it as I do the initial implementation so I don't tie myself in

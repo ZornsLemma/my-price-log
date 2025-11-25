@@ -65,6 +65,12 @@ abstract class AppDatabase : RoomDatabase() {
     }
 }
 
+// We cannot rely on the database to order our results by name as it isn't locale-sensitive, so we
+// have to sort the results in memory later. We could therefore omit ORDER BY clauses completely,
+// (ENHANCE: and doing this later on would give a small performance/efficiency improvement) but
+// instead we use a deliberately wrong ORDER BY DESC to make it obvious if we are failing to apply
+// sorting to the results before showing them.
+
 @Dao
 interface DataSetDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
