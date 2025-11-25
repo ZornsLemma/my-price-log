@@ -2,6 +2,8 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import com.example.composetutorial.domain.dataStore
+import com.example.composetutorial.domain.PriceAgeSettings
 import com.example.composetutorial.ui.components.numericValidationRules
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.common.failedValidationRuleOrNull
@@ -496,52 +498,7 @@ fun Double.roundTo(decimalPlaces: Int): Double {
 
 
 
-data class PriceAgeSettings(val stalePriceThreshold: Int, val ancientPriceThresholdDays: Int, val annualInflationPercent: Int)
 
-class SettingsRepository(private val dataStore: DataStore<Preferences>) {
-    private object Keys {
-        val STALE_PRICE_THRESHOLD_KEY =
-            intPreferencesKey("stale_price_threshold") // TODO: RENAME THIS AND ALL ASSOCIATED VARS TO INCLUDE "DAYS"?
-        val ANCIENT_PRICE_THRESHOLD_DAYS_KEY = intPreferencesKey("ancient_price_threshold_days")
-        val ANNUAL_INFLATION_PERCENT_KEY = intPreferencesKey("annual_inflation_percent")
-    }
-
-    val stalePriceThresholdFlow: Flow<Int> = dataStore.data
-        .map { prefs -> prefs[Keys.STALE_PRICE_THRESHOLD_KEY] ?: defaultStalePriceThreshold }
-
-    val ancientPriceThresholdDaysFlow: Flow<Int> = dataStore.data.map { prefs -> prefs[Keys.ANCIENT_PRICE_THRESHOLD_DAYS_KEY] ?: defaultAncientPriceThresholdDays }
-
-    val annualInflationPercentFlow: Flow<Int> = dataStore.data.map { prefs -> prefs[Keys.ANNUAL_INFLATION_PERCENT_KEY] ?: defaultAnnualInflationPercent }
-
-    val priceAgeSettingsFlow: Flow<PriceAgeSettings> = combine(stalePriceThresholdFlow, ancientPriceThresholdDaysFlow, annualInflationPercentFlow) { stalePriceThreshold, ancientPriceThresholdDays, annualInflationPercent ->
-        PriceAgeSettings(stalePriceThreshold, ancientPriceThresholdDays, annualInflationPercent)
-    }
-
-    fun setStalePriceThresholdAsync(stalePriceThreshold: Int) {
-        setValueAsync(Keys.STALE_PRICE_THRESHOLD_KEY, stalePriceThreshold)
-    }
-
-    fun setAncientPriceThresholdDaysAsync(ancientPriceThresholdDays: Int) {
-        setValueAsync(Keys.ANCIENT_PRICE_THRESHOLD_DAYS_KEY, ancientPriceThresholdDays)
-    }
-
-    fun setAnnualInflationPercentAsync(annualInflationPercent: Int) {
-        setValueAsync(Keys.ANNUAL_INFLATION_PERCENT_KEY, annualInflationPercent)
-    }
-
-    private fun <T> setValueAsync(key: Preferences.Key<T>, value: T) {
-        AppScope.io.launch {
-            dataStore.edit { it[key] = value }
-        }
-    }
-}
-
-val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
-
-// TODO: MOVE THE FOLLOWING!?
-const val defaultStalePriceThreshold = 30
-const val defaultAncientPriceThresholdDays = 180
-const val defaultAnnualInflationPercent = 5
 
 data class HomeScreenUIContent(
     val dataSetIdState: LoadState<Long>,

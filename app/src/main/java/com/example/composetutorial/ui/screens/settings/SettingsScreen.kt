@@ -54,9 +54,9 @@ import androidx.navigation.NavHostController
 import com.example.composetutorial.R
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.WarningIcon
-import com.example.composetutorial.defaultAncientPriceThresholdDays
-import com.example.composetutorial.defaultAnnualInflationPercent
-import com.example.composetutorial.defaultStalePriceThreshold
+import com.example.composetutorial.domain.defaultAncientPriceThresholdDays
+import com.example.composetutorial.domain.defaultAnnualInflationPercent
+import com.example.composetutorial.domain.defaultStalePriceThreshold
 import com.example.composetutorial.ui.common.failedValidationRuleOrNull
 import com.example.composetutorial.ui.common.UiText
 import com.example.composetutorial.ui.screenBorder

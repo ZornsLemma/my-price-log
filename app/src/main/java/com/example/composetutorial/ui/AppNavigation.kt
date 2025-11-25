@@ -50,7 +50,7 @@ import com.example.composetutorial.SelectSourceScreenUIContent
 import com.example.composetutorial.SelectSourceViewModel
 import com.example.composetutorial.ViewPriceHistoryScreenUIContent
 import com.example.composetutorial.app.safeRestartApp
-import com.example.composetutorial.dataStore
+import com.example.composetutorial.domain.dataStore
 import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.backupDatabase

@@ -32,9 +32,9 @@ import com.example.composetutorial.AugmentedPrice
 import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.PriceJudgement
 import com.example.composetutorial.R
-import com.example.composetutorial.SettingsRepository
+import com.example.composetutorial.domain.SettingsRepository
 import com.example.composetutorial.analysePrices
-import com.example.composetutorial.dataStore
+import com.example.composetutorial.domain.dataStore
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.itemIdNone
