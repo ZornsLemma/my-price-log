@@ -2,6 +2,7 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import com.example.composetutorial.ui.components.generalselector.GeneralSelectorViewModel
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.models.populateDemoData
 import com.example.composetutorial.ui.screens.editdataset.EditDataSetViewModel
@@ -3274,44 +3275,6 @@ class SelectSourceViewModel(
     }
 }
 
-open class GeneralSelectorViewModel<T>(
-    private val savedStateHandle: SavedStateHandle,
-    private val getName: (T) -> String,
-    private val initialList: List<T>?,
-    private val dataQuery: Flow<List<T>>,
-) : ViewModel() {
-    // The idea here is that as we have no real state other than the results of dataQuery, we
-    // optimise by having our caller provide initialList to give a good first composition during
-    // normal navigation, but we can manage without it if we are reincarnated.
-    // TODO: This works and it is probably fine but note that for SelectItemViewModel we do actually
-    // serialise, even though the general code doesn't require it. (We need it so we can pass a
-    // DataSet through to EditItemScreen.)
-
-    // This will *not* filter uiContent.initialList, but that's OK because we know the initial
-    // filter doesn't exclude anything.
-    // ENHANCE: We could persist the search string via savedStateHandle.
-    val searchStringFlow = MutableStateFlow(TextFieldValue(""))
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val dataFlow = combine(
-        dataQuery.flatMapLatest { data -> /* TODO HACK delay(5000); */ flowOf(data) },
-        searchStringFlow.map { searchString -> searchString.text.normalizedForSearch() }
-    ) { data, normalizedQuery ->
-        data.filter {
-            getName(it).normalizedForSearch().contains(normalizedQuery)
-        }
-    }
-        .onEach { emittedList -> /* delay(5000); */ Log.d(
-            "MyAppGS",
-            "Room emitted list: ${System.identityHashCode(emittedList)}"
-        )
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = initialList ?: emptyList()
-        )
-}
 
 @Composable
 fun topAppBarTitle(title: String, subtitle: String?): @Composable (() -> Unit) =

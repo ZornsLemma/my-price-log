@@ -41,7 +41,6 @@ import com.example.composetutorial.EditItemScreenUIContent
 import com.example.composetutorial.EditPriceScreenUIContent
 import com.example.composetutorial.EditSourceScreen
 import com.example.composetutorial.EditSourceScreenUIContent
-import com.example.composetutorial.GeneralSelectorViewModel
 import com.example.composetutorial.MyApplication
 import com.example.composetutorial.R
 import com.example.composetutorial.SelectItemScreenUIContent
@@ -62,6 +61,7 @@ import com.example.composetutorial.setSelectedItemIdAsync
 import com.example.composetutorial.setSelectedSourceIdAsync
 import com.example.composetutorial.topAppBarTitle
 import com.example.composetutorial.ui.components.generalselector.GeneralSelectorScreen
+import com.example.composetutorial.ui.components.generalselector.GeneralSelectorViewModel
 import com.example.composetutorial.ui.screens.about.AboutScreen
 import com.example.composetutorial.ui.screens.editdataset.EditDataSetViewModel
 import com.example.composetutorial.ui.screens.edititem.EditItemViewModel
