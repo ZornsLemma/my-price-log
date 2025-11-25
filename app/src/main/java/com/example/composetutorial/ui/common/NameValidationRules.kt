@@ -1,7 +1,7 @@
 package com.example.composetutorial.ui.common
 
 import com.example.composetutorial.R
-import com.example.composetutorial.normalizedForSearch
+import com.example.composetutorial.ui.common.normalizedForSearch
 
 // ENHANCE: Not here specifically, I almost wonder if the lambdas should have the *option* (not
 // obligation) to modify the value for later lambdas in the chain, and the validation process
