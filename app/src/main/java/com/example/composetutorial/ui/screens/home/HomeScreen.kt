@@ -93,8 +93,8 @@ import com.example.composetutorial.formatPrice
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Source
-import com.example.composetutorial.rememberSortedByLocale
-import com.example.composetutorial.sortedByLocale
+import com.example.composetutorial.ui.common.rememberSortedByLocale
+import com.example.composetutorial.ui.common.sortedByLocale
 import com.example.composetutorial.sourceIdNone
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.LoadState

@@ -2,7 +2,7 @@ package com.example.composetutorial.ui.common
 
 import android.os.LocaleList
 import android.util.Log
-import com.example.composetutorial.sortedByLocale
+import com.example.composetutorial.ui.common.sortedByLocale
 import java.util.Currency
 import java.util.Locale
 
