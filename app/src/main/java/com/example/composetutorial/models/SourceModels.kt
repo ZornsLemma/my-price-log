@@ -8,7 +8,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.composetutorial.models.LoyaltyType
 import com.example.composetutorial.debug.myCheck
-import com.example.composetutorial.formatDoubleForEditing
+import com.example.composetutorial.common.formatDoubleForEditing
 import com.example.composetutorial.parseStringAsDoubleOrNull
 import kotlinx.parcelize.Parcelize
 import java.util.Locale
