@@ -6,8 +6,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
-import com.example.composetutorial.ValidationRule
 import com.example.composetutorial.textOrNull
+import com.example.composetutorial.ui.common.ValidationRule
 import kotlinx.coroutines.flow.SharedFlow
 
 @Composable

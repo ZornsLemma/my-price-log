@@ -5,7 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.EditItemScreenUIContent
-import com.example.composetutorial.ValidationRule
+import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.Repository
@@ -14,7 +14,7 @@ import com.example.composetutorial.models.toDomain
 import com.example.composetutorial.ui.common.initialVersioned
 import com.example.composetutorial.ui.common.withVersion
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
-import com.example.composetutorial.validationRulesOk
+import com.example.composetutorial.ui.common.validationRulesOk
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow

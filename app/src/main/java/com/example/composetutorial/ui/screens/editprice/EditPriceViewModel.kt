@@ -4,14 +4,14 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.example.composetutorial.EditPriceScreenUIContent
-import com.example.composetutorial.ValidationRule
+import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.createCurrencyFormat
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.models.toDomain
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
 import com.example.composetutorial.ui.components.numericValidationRules
-import com.example.composetutorial.validationRulesOk
+import com.example.composetutorial.ui.common.validationRulesOk
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import java.util.UUID

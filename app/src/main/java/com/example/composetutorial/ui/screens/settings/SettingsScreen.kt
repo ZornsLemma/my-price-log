@@ -52,12 +52,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
-import com.example.composetutorial.ValidationRule
+import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.WarningIcon
 import com.example.composetutorial.defaultAncientPriceThresholdDays
 import com.example.composetutorial.defaultAnnualInflationPercent
 import com.example.composetutorial.defaultStalePriceThreshold
-import com.example.composetutorial.failedValidationRuleOrNull
+import com.example.composetutorial.ui.common.failedValidationRuleOrNull
 import com.example.composetutorial.ui.common.UiText
 import com.example.composetutorial.ui.screenBorder
 import kotlinx.coroutines.delay

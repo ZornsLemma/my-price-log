@@ -3,6 +3,8 @@
 package com.example.composetutorial // TODO: change this!
 
 import com.example.composetutorial.ui.components.numericValidationRules
+import com.example.composetutorial.ui.common.ValidationRule
+import com.example.composetutorial.ui.common.failedValidationRuleOrNull
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.ui.common.LoadState
@@ -1278,30 +1280,9 @@ fun createCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Stri
     )
 }
 
-// The idea here is this does not insist the input is actually parseable as a decimal (for example,
-// we allow "24.2.3" so the user can enter a new decimal point and then go delete the old one
-// afterwards), but that it rejects obviously incorrect things. We allow digits, commas, full stops
-// and spaces - the interpretation of these is locale-dependent, but this should allow valid
-// decimals to be entered with no annoying quirks in any locale.
-fun isValidTransitionalDecimal(input: String): Boolean {
-// Regular expression to match any character that is not a digit, comma, period, or space
-    val regex = Regex("[^\\d,.\\s]")
-    return !regex.containsMatchIn(input)
-}
 
-data class ValidationRule<T>(val validate: (T) -> Boolean, val message: UiText)
 
-fun <T> failedValidationRuleOrNull(validationRules: List<ValidationRule<T>>, value: T): ValidationRule<T>? {
-    for (validationRule in validationRules) {
-        if (!validationRule.validate(value)) {
-            return validationRule
-        }
-    }
-    return null
-}
 
-fun <T> validationRulesOk(validationRules: List<ValidationRule<T>>, value: T) =
-    failedValidationRuleOrNull(validationRules, value) == null
 
 
 // TODO: This duplicates code in numericValidationRules(). It may be as well to move some of these

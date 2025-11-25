@@ -8,9 +8,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import com.example.composetutorial.R
-import com.example.composetutorial.ValidationRule
 import com.example.composetutorial.textOrNull
 import com.example.composetutorial.ui.common.UiText
+import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.defaultErrorHighlightOffset
 import kotlinx.coroutines.flow.SharedFlow
 import java.text.DecimalFormatSymbols

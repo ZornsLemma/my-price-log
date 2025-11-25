@@ -8,7 +8,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
-import com.example.composetutorial.isValidTransitionalDecimal
 import com.example.composetutorial.ui.maxDecimalLength
 
 // A simple wrapper around FilteredTextField which performs filtering for numeric input.
@@ -48,4 +47,15 @@ fun NumericTextField(
         singleLine = true,
         interactionSource = interactionSource,
     )
+}
+
+// The idea here is this does not insist the input is actually parseable as a decimal (for example,
+// we allow "24.2.3" so the user can enter a new decimal point and then go delete the old one
+// afterwards), but that it rejects obviously incorrect things. We allow digits, commas, full stops
+// and spaces - the interpretation of these is locale-dependent, but this should allow valid
+// decimals to be entered with no annoying quirks in any locale.
+fun isValidTransitionalDecimal(input: String): Boolean {
+// Regular expression to match any character that is not a digit, comma, period, or space
+    val regex = Regex("[^\\d,.\\s]")
+    return !regex.containsMatchIn(input)
 }
