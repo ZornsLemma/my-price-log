@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
-import com.example.composetutorial.createCurrencyList
+import com.example.composetutorial.ui.common.createCurrencyList
 import com.example.composetutorial.rememberSyncedTextFieldValue
 import com.example.composetutorial.textOrNull
 import com.example.composetutorial.ui.common.isNotBusy

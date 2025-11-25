@@ -4,7 +4,7 @@ import android.os.Parcelable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.example.composetutorial.currencyOrNull
+import com.example.composetutorial.ui.common.currencyOrNull
 import com.example.composetutorial.domain.UnitFamily
 import com.example.composetutorial.getDefaultUnitFamilies
 import kotlinx.parcelize.Parcelize
