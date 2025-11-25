@@ -46,13 +46,13 @@ import com.example.composetutorial.SelectSourceScreenUIContent
 import com.example.composetutorial.SelectSourceViewModel
 import com.example.composetutorial.SharedViewModel
 import com.example.composetutorial.ViewPriceHistoryScreenUIContent
-import com.example.composetutorial.backupDatabase
+import com.example.composetutorial.app.safeRestartApp
 import com.example.composetutorial.dataStore
 import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.models.DataSet
+import com.example.composetutorial.models.backupDatabase
+import com.example.composetutorial.models.restoreDatabase
 import com.example.composetutorial.models.toEditable
-import com.example.composetutorial.restoreDatabase
-import com.example.composetutorial.safeRestartApp
 import com.example.composetutorial.setSelectedDataSetIdAsync
 import com.example.composetutorial.setSelectedItemIdAsync
 import com.example.composetutorial.setSelectedSourceIdAsync
