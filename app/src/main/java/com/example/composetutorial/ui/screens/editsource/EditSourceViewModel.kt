@@ -6,7 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.EditSourceScreenUIContent
-import com.example.composetutorial.LoyaltyType
+import com.example.composetutorial.models.LoyaltyType
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.createNameValidationRules
 import com.example.composetutorial.debug.myCheck

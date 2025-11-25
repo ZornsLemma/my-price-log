@@ -201,22 +201,7 @@ fun <T> List<T>.rememberSortedByLocale(
 }
 
 
-// AppViewModelProvider.Factory allows us to control the arguments passed to our ViewModel
-// constructors when viewModel() is called.
-object AppViewModelProvider {
-    val Factory = viewModelFactory {
-        initializer<HomeViewModel> {
-            val app =
-                this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
-            HomeViewModel(app.repository, app)
-        }
-        initializer<SettingsViewModel> {
-            val app =
-                this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
-            SettingsViewModel(app)
-        }
-    }
-}
+
 
 
 
@@ -336,24 +321,9 @@ class MyApplication : Application() {
 }
 
 
-fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
-    QuantityType.WEIGHT -> MeasurementUnit.G
-    QuantityType.VOLUME -> MeasurementUnit.ML
-    QuantityType.ITEM -> MeasurementUnit.EACH
-}
 
-enum class LoyaltyType(val id: Long) {
-    NONE(1),
-    BONUS(2),
-    DISCOUNT(3);
 
-    companion object {
-        private val loyaltyTypeById = LoyaltyType.entries.associateBy { it.id }
 
-        fun fromValue(loyaltyDiscountTypeId: Long): LoyaltyType? =
-            loyaltyTypeById[loyaltyDiscountTypeId]
-    }
-}
 
 // NB: We cannot rely on the database to order our results by name as it isn't locale-sensitive, so
 // we have to sort the results in memory later. We could therefore omit ORDER BY clauses completely,

@@ -2,7 +2,7 @@ package com.example.composetutorial.domain
 
 import android.content.Context
 import android.util.Log
-import com.example.composetutorial.baseUnitForQuantityType
+import com.example.composetutorial.domain.baseUnitForQuantityType
 import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.formatPrice
 import com.example.composetutorial.models.DataSet

@@ -6,7 +6,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.composetutorial.LoyaltyType
+import com.example.composetutorial.models.LoyaltyType
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.formatDoubleForEditing
 import com.example.composetutorial.parseStringAsDoubleOrNull
@@ -127,4 +127,17 @@ fun EditableSource.toDomain(locale: Locale): Source? {
         loyaltyMultiplier = loyaltyMultiplier,
         notes = notes
     )
+}
+
+enum class LoyaltyType(val id: Long) {
+    NONE(1),
+    BONUS(2),
+    DISCOUNT(3);
+
+    companion object {
+        private val loyaltyTypeById = LoyaltyType.entries.associateBy { it.id }
+
+        fun fromValue(loyaltyDiscountTypeId: Long): LoyaltyType? =
+            loyaltyTypeById[loyaltyDiscountTypeId]
+    }
 }

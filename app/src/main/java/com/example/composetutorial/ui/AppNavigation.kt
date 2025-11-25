@@ -37,7 +37,7 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.composetutorial.AppViewModelProvider
+import com.example.composetutorial.ui.AppViewModelProvider
 import com.example.composetutorial.EditDataSetScreenUIContent
 import com.example.composetutorial.EditItemScreenUIContent
 import com.example.composetutorial.EditPriceScreenUIContent
@@ -76,6 +76,7 @@ import com.example.composetutorial.ui.screens.home.HomeScreen
 import com.example.composetutorial.ui.screens.home.HomeViewModel
 import com.example.composetutorial.ui.screens.legal.LegalScreen
 import com.example.composetutorial.ui.screens.settings.SettingsScreen
+import com.example.composetutorial.ui.screens.settings.SettingsViewModel
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryScreen
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryViewModel
 import kotlinx.coroutines.delay
@@ -739,6 +740,24 @@ private inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
                 this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication,
                 handle
             )
+        }
+    }
+}
+
+// AppViewModelProvider.Factory allows us to control the arguments passed to our ViewModel
+// constructors when viewModel() is called.
+// TODO: Can/should I get rid of this and use viewModelFactoryWithHandle for these cases?
+object AppViewModelProvider {
+    val Factory = viewModelFactory {
+        initializer<HomeViewModel> {
+            val app =
+                this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+            HomeViewModel(app.repository, app)
+        }
+        initializer<SettingsViewModel> {
+            val app =
+                this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication
+            SettingsViewModel(app)
         }
     }
 }

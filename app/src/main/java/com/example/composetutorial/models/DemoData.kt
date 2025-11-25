@@ -1,7 +1,7 @@
 package com.example.composetutorial.models
 
 import android.content.Context
-import com.example.composetutorial.LoyaltyType
+import com.example.composetutorial.models.LoyaltyType
 import com.example.composetutorial.R
 import com.example.composetutorial.domain.MeasuredValue
 import com.example.composetutorial.domain.MeasurementUnit

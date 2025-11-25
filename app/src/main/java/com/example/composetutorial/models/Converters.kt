@@ -1,7 +1,7 @@
 package com.example.composetutorial.models
 
 import androidx.room.TypeConverter
-import com.example.composetutorial.LoyaltyType
+import com.example.composetutorial.models.LoyaltyType
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.QuantityType
 import java.time.Instant

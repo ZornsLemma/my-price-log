@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.example.composetutorial.ViewPriceHistoryScreenUIContent
-import com.example.composetutorial.baseUnitForQuantityType
+import com.example.composetutorial.domain.baseUnitForQuantityType
 import com.example.composetutorial.domain.MeasuredValue
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.models.PriceHistory

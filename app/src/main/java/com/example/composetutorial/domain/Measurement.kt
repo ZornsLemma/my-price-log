@@ -201,6 +201,13 @@ enum class MeasurementUnit(
     }
 }
 
+// TODO: Make extension function on QuantityType?
+fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
+    QuantityType.WEIGHT -> MeasurementUnit.G
+    QuantityType.VOLUME -> MeasurementUnit.ML
+    QuantityType.ITEM -> MeasurementUnit.EACH
+}
+
 @Parcelize
 // TODO: Maybe rename this "Quantity"? (And keep QuantityType for MASS/VOLUME/etc)
 data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcelable {
