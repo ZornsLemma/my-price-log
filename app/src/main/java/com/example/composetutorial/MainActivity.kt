@@ -95,6 +95,7 @@ import java.util.Currency
 import java.util.Locale
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.SavedStateHandle
+import com.example.composetutorial.common.intersectionIsEmpty
 import com.example.composetutorial.debug.DebugFlags
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.PriceAnalysis
@@ -572,20 +573,13 @@ data class EditDataSetScreenUIContent(
 
 
 
-fun <T> intersectionIsEmpty(lhs: Set<T>, rhs: Set<T>) = !(lhs.any { it in rhs })
+
 
 // TODO: Move into Measurement.kt? Really not sure...
 fun areDifferentUnitFamilies(lhs: MeasurementUnit, rhs: MeasurementUnit) =
     intersectionIsEmpty(lhs.unitFamilies, rhs.unitFamilies)
 
-@Composable
-fun WarningIcon(contentDescription: String) {
-    Icon(
-        imageVector = Icons.Default.Warning,
-        contentDescription = contentDescription,
-        tint = MaterialTheme.colorScheme.error
-    )
-}
+
 
 data class SelectItemScreenUIContent(
     val itemList: List<Item>,

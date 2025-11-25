@@ -10,7 +10,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import com.example.composetutorial.R
-import com.example.composetutorial.WarningIcon
+import com.example.composetutorial.ui.components.WarningIcon
 
 // Like TextField, but with some simple logic to allow input to be filtered and discarded via an
 // onCandidateValueChange callback. It also - although this is just a convenience and isn't

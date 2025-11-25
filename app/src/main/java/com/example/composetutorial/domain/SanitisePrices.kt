@@ -1,7 +1,7 @@
 package com.example.composetutorial.domain
 
 import com.example.composetutorial.debug.myCheck
-import com.example.composetutorial.intersectionIsEmpty
+import com.example.composetutorial.common.intersectionIsEmpty
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.Price
 import com.example.composetutorial.models.PriceHistory
