@@ -35,10 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavHostController
-import com.example.composetutorial.FilteredTextField
 import com.example.composetutorial.R
 import com.example.composetutorial.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.rememberSortedByLocale
+import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.maxSearchLength
 import com.example.composetutorial.ui.screenBorder
 

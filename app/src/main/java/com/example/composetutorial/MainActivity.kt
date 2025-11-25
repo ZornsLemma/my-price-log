@@ -6,7 +6,7 @@ import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.ui.common.LoadState
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
-
+import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.components.ValidationErrorHighlightBox
 import com.example.composetutorial.ui.components.generalselector.GeneralSelectorViewModel
 import com.example.composetutorial.ui.common.AsyncOperationStatus
@@ -1451,56 +1451,7 @@ fun createOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
     { it.length <= maxLength }
 
 
-// Like TextField, but with some simple logic to allow input to be filtered and discarded via an
-// onCandidateValueChange callback. It also - although this is just a convenience and isn't
-// fundamental - automatically drives the internal TextField's trailingIcon from the isError
-// parameter if it's not explicitly specified.
-@Composable
-fun FilteredTextField(
-    modifier: Modifier = Modifier,
-    label: @Composable (() -> Unit)? = null,
-    value: TextFieldValue,
-    prefix: @Composable (() -> Unit)? = null,
-    suffix: @Composable (() -> Unit)? = null,
-    textStyle: TextStyle = LocalTextStyle.current,
-    onCandidateValueChange: ((String) -> Boolean),
-    onValueChange: (TextFieldValue) -> Unit,
-    enabled: Boolean = true,
-    isError: Boolean = false,
-    supportingText: @Composable (() -> Unit)? = null,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    singleLine: Boolean = false,
-    interactionSource: MutableInteractionSource? = null,
-    leadingIcon: @Composable (() -> Unit)? = null,
-    trailingIcon: @Composable (() -> Unit)? = null,
-    ) {
-    TextField(
-        label = label,
-        value = value,
-        prefix = prefix,
-        suffix = suffix,
-        textStyle = textStyle,
-        onValueChange = { newValue: TextFieldValue ->
-            if (onCandidateValueChange(newValue.text)) {
-                onValueChange(newValue)
-            }
-        },
-        enabled = enabled,
-        keyboardOptions = keyboardOptions,
-        modifier = modifier,
-        supportingText = supportingText,
-        leadingIcon = leadingIcon,
-        trailingIcon = trailingIcon
-            ?: if (isError) {
-                {
-                    WarningIcon(contentDescription = stringResource(R.string.content_description_error))
-                }
-            } else null,
-        isError = isError,
-        singleLine = singleLine,
-        interactionSource = interactionSource,
-    )
-}
+
 
 // Format a double to be edited by the user as a string in a TextField. Grouping is *not* used -
 // since this is for editing via a text field and the grouping characters (if any) won't
@@ -1529,41 +1480,7 @@ fun WarningIcon(contentDescription: String) {
 }
 
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun ClickableLink(text: String, url: String, showRawUrl: Boolean = true) {
-    val uriHandler = LocalUriHandler.current
 
-    Column {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                textDecoration = TextDecoration.Underline,
-                color = MaterialTheme.colorScheme.primary
-            ),
-            modifier = Modifier
-                .clickable { uriHandler.openUri(url) }
-                // This padding feels slightly visually unattractive (although it's growing on me a
-                // bit), but we want to allow some clearance so the "tappable area" to click on the
-                // links isn't too small, roughly in accordance with MD3 guidelines even if we're
-                // not following them formally here.
-                .padding(vertical = 8.dp)
-        )
-
-        if (showRawUrl) {
-            // SelectionContainer allows the user to select the link so they can copy it to their
-            // clipboard for further use.
-            SelectionContainer {
-                Text(
-                    text = url,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-            }
-        }
-    }
-}
 
 
 

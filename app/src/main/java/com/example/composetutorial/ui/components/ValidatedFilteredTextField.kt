@@ -6,7 +6,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
-import com.example.composetutorial.FilteredTextField
 import com.example.composetutorial.ValidationRule
 import com.example.composetutorial.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.textOrNull

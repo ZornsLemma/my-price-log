@@ -31,13 +31,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.example.composetutorial.FilteredTextField
 import com.example.composetutorial.R
 import com.example.composetutorial.createCurrencyList
 import com.example.composetutorial.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.rememberSyncedTextFieldValue
 import com.example.composetutorial.textOrNull
 import com.example.composetutorial.ui.common.isNotBusy
+import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
 import com.example.composetutorial.ui.components.SmallCircularProgressIndicator
 import com.example.composetutorial.ui.components.ValidatedFilteredTextField
