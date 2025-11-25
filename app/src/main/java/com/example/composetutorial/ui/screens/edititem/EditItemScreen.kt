@@ -43,7 +43,6 @@ import com.example.composetutorial.FilteredTextField
 import com.example.composetutorial.GeneralEditAndDeleteScreen
 import com.example.composetutorial.R
 import com.example.composetutorial.SupportingText
-import com.example.composetutorial.ValidatedFilteredTextField
 import com.example.composetutorial.areDifferentUnitFamilies
 import com.example.composetutorial.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.domain.MeasurementUnit
@@ -56,6 +55,7 @@ import com.example.composetutorial.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
 import com.example.composetutorial.ui.components.SmallCircularProgressIndicator
+import com.example.composetutorial.ui.components.ValidatedFilteredTextField
 import com.example.composetutorial.ui.components.topAppBarTitle
 import com.example.composetutorial.ui.maxItemNameLength
 import com.example.composetutorial.ui.maxNotesLength

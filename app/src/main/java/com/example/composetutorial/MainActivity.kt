@@ -1504,98 +1504,10 @@ fun GeneralEditAndDeleteScreen(
 
 
 
-@Composable
-fun <T> ValidatedNumericTextField(
-    value: TextFieldValue,
-    validationRules: List<ValidationRule<String>>,
-    validationRulesKey: Any? = null,
-    allowEmpty: Boolean, // TODO default to = false or force explicit?,
-    validationFlow: SharedFlow<T>,
-    validationFlowFieldId: T,
-    errorHighlightOffset: Dp = defaultErrorHighlightOffset, // TODO JUST MAYBE GET RID OF DEFAULT?
-    baseValidatedTextFieldModifier: Modifier = Modifier,
-    label: @Composable (() -> Unit)? = null,
-    prefix: @Composable (() -> Unit)? = null,
-    suffix: @Composable (() -> Unit)? = null,
-    textStyle: TextStyle = LocalTextStyle.current,
-    onValueChange: (TextFieldValue) -> Unit,
-    enabled: Boolean, // TODO: default to true or force explicit?
-    numericTextFieldModifier: Modifier = Modifier,
-) {
-    ValidationErrorHighlightBox(
-        value.text,
-        validationRules,
-        validationRulesKey,
-        allowEmpty,
-        validationFlow,
-        validationFlowFieldId,
-        errorHighlightOffset,
-        modifier = baseValidatedTextFieldModifier
-    ) { validationResult, interactionSource, validationInputHandle ->
-        NumericTextField(
-            modifier = numericTextFieldModifier.validationInputHandleFocusRequester(validationInputHandle),
-            label = label,
-            value = value,
-            prefix = prefix,
-            suffix = suffix,
-            textStyle = textStyle,
-            onValueChange = onValueChange,
-            enabled = enabled,
-            isError = validationResult != null,
-            supportingText = textOrNull(
-                validationResult,
-                color = MaterialTheme.colorScheme.error
-            ),
-            interactionSource = interactionSource,
-            )
-    }
-}
 
 
 
-@Composable
-fun <T> ValidatedFilteredTextField(
-    label: @Composable() (() -> Unit)? = null,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    value: TextFieldValue,
-    maxLength: Int,
-    onValueChange: (TextFieldValue) -> Unit,
-    enabled: Boolean,
-    validationRules: List<ValidationRule<String>>,
-    validationRulesKey: Any? = null,
-    allowEmpty: Boolean = false,
-    singleLine: Boolean = false,
-    validationFlow: SharedFlow<T>,
-    validationFlowFieldId: T
-) {
-    ValidationErrorHighlightBox(
-        value = value.text,
-        validationRules = validationRules,
-        validationRulesKey = validationRulesKey,
-        allowEmpty = allowEmpty,
-        validationFlow = validationFlow,
-        validationFlowFieldId = validationFlowFieldId,
-    ) { validationResult, interactionSource, validationInputHandle ->
-        FilteredTextField(
-            label = label,
-            value = value,
-            onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxLength),
-            onValueChange = onValueChange,
-            enabled = enabled,
-            isError = validationResult != null,
-            supportingText = textOrNull(
-                validationResult,
-                color = MaterialTheme.colorScheme.error
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .validationInputHandleFocusRequester(validationInputHandle),
-            keyboardOptions = keyboardOptions,
-            singleLine = singleLine,
-            interactionSource = interactionSource
-        )
-    }
-}
+
 
 
 // TODO: Obviously "ValidationThing" isn't a good name
@@ -3338,7 +3250,10 @@ com.example.myapp/
 
 // TODO: Given the advice I received from both Grok and ChatGPT about keyboard capitalization for
 // Spanish, does this mean the existing translations of the demo data set name and products are
-// wrong and they should start with lower case letters not capitals?
+// wrong and they should start with lower case letters not capitals? That said, even if that's true,
+// is there a competing issue where the fact these are use as screen titles (home screen, edit
+// price) creates some conflict? Should we even optionally (translator specified) allow upper-casing
+// of initial letter in titles?
 
 // TODO: Spanish translation of message_no_data_set_selected seems to miss the *top* part out, but
 // the message_no_data_sets has it. Maybe worth querying this. - I have had a confusing chat with

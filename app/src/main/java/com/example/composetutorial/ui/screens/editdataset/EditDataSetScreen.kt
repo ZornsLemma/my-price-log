@@ -34,7 +34,6 @@ import com.example.composetutorial.FilteredTextField
 import com.example.composetutorial.GeneralEditAndDeleteScreen
 import com.example.composetutorial.R
 import com.example.composetutorial.SupportingText
-import com.example.composetutorial.ValidatedFilteredTextField
 import com.example.composetutorial.createCurrencyList
 import com.example.composetutorial.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.keyboardCapitalization
@@ -43,6 +42,7 @@ import com.example.composetutorial.textOrNull
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
 import com.example.composetutorial.ui.components.SmallCircularProgressIndicator
+import com.example.composetutorial.ui.components.ValidatedFilteredTextField
 import com.example.composetutorial.ui.components.validationInputHandleFocusRequester
 import com.example.composetutorial.ui.maxDataSetNameLength
 import com.example.composetutorial.ui.maxNotesLength
