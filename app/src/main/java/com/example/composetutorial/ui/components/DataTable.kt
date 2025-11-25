@@ -19,7 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.composetutorial.myRequire
+import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.ui.oneLineListItemHeight
 
 enum class CellAlignment { Start, Center, End }

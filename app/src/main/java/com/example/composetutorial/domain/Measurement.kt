@@ -4,10 +4,10 @@ import android.content.Context
 import android.os.Parcelable
 import androidx.annotation.StringRes
 import com.example.composetutorial.R
+import com.example.composetutorial.debug.myCheck
+import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.formatDouble
 import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.myCheck
-import com.example.composetutorial.myRequire
 import com.example.composetutorial.ui.nonBreakingSpace
 import kotlinx.parcelize.Parcelize
 import java.util.Locale

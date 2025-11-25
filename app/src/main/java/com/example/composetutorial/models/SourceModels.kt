@@ -7,7 +7,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.composetutorial.LoyaltyType
-import com.example.composetutorial.myCheck
+import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.formatDoubleForEditing
 import com.example.composetutorial.parseStringAsDoubleOrNull
 import kotlinx.parcelize.Parcelize
@@ -55,7 +55,7 @@ fun Source?.toEditable(dataSetId: Long, locale: Locale): EditableSource {
         return EditableSource(0, dataSetId, "", LoyaltyType.NONE, "", "")
     } else {
         myCheck(dataSetId == dataSetId) {
-            "Expected identical dataSetIds but have dataSetId $dataSetId and dataSetid $dataSetId"
+            "Expected identical dataSetIds but have dataSetId $dataSetId and dataSetId $dataSetId"
         }
         val loyaltyPercentage = when (loyaltyType) {
             LoyaltyType.NONE -> {

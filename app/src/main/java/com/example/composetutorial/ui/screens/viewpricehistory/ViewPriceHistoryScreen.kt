@@ -38,9 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
+import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.PriceHistory
-import com.example.composetutorial.myCheck
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.components.CardTitle
 import com.example.composetutorial.ui.components.LabeledItem

@@ -9,9 +9,9 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.composetutorial.CurrencyFormat
 import com.example.composetutorial.baseUnitForQuantityType
-import com.example.composetutorial.myCheck
 import com.example.composetutorial.formatDoubleForEditing
 import com.example.composetutorial.createCurrencyFormat
+import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.MeasuredValue
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.parseStringAsDoubleOrNull

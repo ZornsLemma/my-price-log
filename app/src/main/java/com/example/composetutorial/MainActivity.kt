@@ -2,6 +2,8 @@
 
 package com.example.composetutorial // TODO: change this!
 
+import com.example.composetutorial.debug.myCheck
+import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.ui.common.LoadState
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
 
@@ -2173,33 +2175,7 @@ fun checkDatabaseRestoreCandidate(context: Context, dbPath: String) {
 
 
 
-// At least early in development, check() and require() would sometimes kill the app but without
-// leaving a clear logcat trace, making it very hard to figure out what went wrong. I am not 100%
-// sure I didn't get confused, I am struggling to reproduce this now. Talking to ChatGPT/Grok
-// suggests this really does happen but I am not entirely convinced they're right. I created these
-// replacements with more explicit logging and they did seem to help, so I guess there's no harm in
-// continuing to use them. I'm just not certain they are necessary. It's possible that having the
-// Log.e() occur *before* an exception is thrown increases the chances the log entry makes it to
-// logcat.
 
-
-inline fun myCheck(condition: Boolean, lazyMessage: () -> String) {
-    if (!condition) {
-        val msg = lazyMessage()
-        val ex = IllegalStateException(msg) // same as check()
-        Log.e("MyCheck", "FAILED CHECK: $msg", ex)
-        throw ex
-    }
-}
-
-inline fun myRequire(condition: Boolean, lazyMessage: () -> String) {
-    if (!condition) {
-        val msg = lazyMessage()
-        val ex = IllegalArgumentException(msg) // same as require()
-        Log.e("MyRequire", "FAILED REQUIRE: $msg", ex)
-        throw ex
-    }
-}
 
 data class CurrencyFormat(
     val decimalPlaces: Int,
@@ -2241,22 +2217,6 @@ fun DataSet.createCurrencyFormat(locale: Locale): CurrencyFormat {
 fun getCurrencyDecimalPlaces(dataSet: DataSet) =
     Currency.getInstance(dataSet.currencyCode).defaultFractionDigits
 
-data class Versioned<T>(
-    val version: Long,
-    val value: T
-)
-
-fun <T> Flow<T>.withVersion(): Flow<Versioned<T>> = flow {
-    var version = 0L
-    collect { value ->
-        emit(Versioned(version, value))
-        version++
-    }
-}
-
-// TODO: SHOULD THIS BE A COMPANION OBJECT FUNCTION OR SOMETHING?
-fun <T> initialVersioned(initialValue: T): Versioned<T> =
-    Versioned(version = -1L, value = initialValue)
 
 
 
@@ -2443,25 +2403,7 @@ fun analysePrices(
     return PriceAnalysis(augmentedPriceList, priceClassificationThresholds)
 }
 
-// TODO: ChatGPT code, not tried to understand yet - it may be there's an easier way, or this may be buggy for all I know, or maybe I should just use this approach and not wrap it in this composable
-@Composable
-fun OnAppLifecycleEvent(
-    onEvent: (Lifecycle.Event) -> Unit
-) {
-    val lifecycleOwner = LocalLifecycleOwner.current
 
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            onEvent(event)
-        }
-
-        lifecycleOwner.lifecycle.addObserver(observer)
-
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-}
 
 // TODO: ChatGPT/Grok magic
 object UserPreferencesSerializer : Serializer<UserPrefs.UserPreferences> {
@@ -2489,12 +2431,7 @@ val Context.userPreferencesStore: DataStore<UserPrefs.UserPreferences> by dataSt
 // TODO: ChatGPT semi-magic
 
 
-fun resourceName(context: Context, @AnyRes resId: Int): String =
- try {
-    context.resources.getResourceEntryName(resId)
-} catch (e: Resources.NotFoundException) {
-    "unknown resource $resId"
-}
+
 
 // ENHANCE: I have completely ignored "unlikely" errors (like exceptions being thrown when accessing
 // the database) in most of this code - what can/should we do about this? I suspect most such errors

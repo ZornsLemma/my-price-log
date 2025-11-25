@@ -13,9 +13,9 @@ import androidx.room.TypeConverters
 import androidx.room.Upsert
 import androidx.room.withTransaction
 import com.example.composetutorial.debug.DebugFlags
+import com.example.composetutorial.debug.myCheck
+import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.domain.Repository
-import com.example.composetutorial.myCheck
-import com.example.composetutorial.myRequire
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map

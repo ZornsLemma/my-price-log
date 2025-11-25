@@ -30,10 +30,10 @@ import com.example.composetutorial.FilteredTextField
 import com.example.composetutorial.R
 import com.example.composetutorial.areDifferentUnitFamilies
 import com.example.composetutorial.createOnCandidateValueChangeMaxLength
+import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.QuantityType
 import com.example.composetutorial.domain.getRelevantMeasurementUnits
-import com.example.composetutorial.myCheck
 import com.example.composetutorial.rememberSyncedTextFieldValue
 import com.example.composetutorial.textOrNull
 import com.example.composetutorial.ui.common.isNotBusy
