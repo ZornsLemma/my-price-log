@@ -801,29 +801,7 @@ fun areDifferentUnitFamilies(lhs: MeasurementUnit, rhs: MeasurementUnit) =
 
 
 
-fun runGeneralEditScreenOperation(
-    viewModel: GeneralEditScreenViewModel,
-    coroutineScope: CoroutineScope,
-    isSafeToPerform: suspend () -> Boolean,
-    perform: suspend () -> Long?,
-) {
-    coroutineScope.launch {
-        if (isSafeToPerform()) {
-            viewModel.asyncOperationStatus.update(AsyncOperationStatus.Busy)
-            try {
-                Log.d("MyAppRGE", "runGeneralEditScreenOperation about to call perform")
-                //throw IllegalStateException("TODO TEST")
-                val id = perform()
-                Log.d("MyAppQZ", "perform() returned id $id")
-                // delay(5000) // TODO HACK - DONE AFTER PERFORM SO IT GETS A CHANCE TO SET SAVING/DELETING FLAG TO TRUE
-                viewModel.asyncOperationStatus.update(AsyncOperationStatus.Success(id))
-            } catch (e: Exception) {
-                Log.d("MyAppRGE", "runGeneralEditScreenOperation caught exception")
-                viewModel.asyncOperationStatus.update(AsyncOperationStatus.Error("runGeneralEditScreenOperation failed: ${e.toString()}"))
-            }
-        }
-    }
-}
+
 
 
 

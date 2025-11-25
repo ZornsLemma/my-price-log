@@ -13,7 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
 import com.example.composetutorial.WarningIcon
-import com.example.composetutorial.runGeneralEditScreenOperation
+import com.example.composetutorial.ui.components.generaledit.runGeneralEditScreenOperation
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 
 @Composable

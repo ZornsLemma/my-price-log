@@ -39,7 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
-import com.example.composetutorial.runGeneralEditScreenOperation
+import com.example.composetutorial.ui.components.generaledit.runGeneralEditScreenOperation
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.AsyncOperationErrorAlertDialog
@@ -47,8 +47,10 @@ import com.example.composetutorial.ui.components.SmallCircularProgressIndicator
 import com.example.composetutorial.ui.fullScreenDialogHorizontalBorder
 import com.example.composetutorial.ui.fullScreenDialogVerticalBorder
 import com.example.composetutorial.ui.spinnerDelayMillis
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.launch
 
 // TODO: This is a very long function, can we split it up?
 @Composable
@@ -271,6 +273,30 @@ fun GeneralEditScreen(
             snackbarHostState.showSnackbar(messageBusyPleaseWait)
             showBusySnackbar = false
             //}
+        }
+    }
+}
+
+fun runGeneralEditScreenOperation(
+    viewModel: GeneralEditScreenViewModel,
+    coroutineScope: CoroutineScope,
+    isSafeToPerform: suspend () -> Boolean,
+    perform: suspend () -> Long?,
+) {
+    coroutineScope.launch {
+        if (isSafeToPerform()) {
+            viewModel.asyncOperationStatus.update(AsyncOperationStatus.Busy)
+            try {
+                Log.d("MyAppRGE", "runGeneralEditScreenOperation about to call perform")
+                //throw IllegalStateException("TODO TEST")
+                val id = perform()
+                Log.d("MyAppQZ", "perform() returned id $id")
+                // delay(5000) // TODO HACK - DONE AFTER PERFORM SO IT GETS A CHANCE TO SET SAVING/DELETING FLAG TO TRUE
+                viewModel.asyncOperationStatus.update(AsyncOperationStatus.Success(id))
+            } catch (e: Exception) {
+                Log.d("MyAppRGE", "runGeneralEditScreenOperation caught exception")
+                viewModel.asyncOperationStatus.update(AsyncOperationStatus.Error("runGeneralEditScreenOperation failed: ${e.toString()}"))
+            }
         }
     }
 }
