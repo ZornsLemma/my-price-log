@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.room.withTransaction
-import com.example.composetutorial.AppScope
+import com.example.composetutorial.app.AppScope
 import com.example.composetutorial.domain.dataStore
 import com.example.composetutorial.models.AppDatabase
 import com.example.composetutorial.models.RepositoryImpl

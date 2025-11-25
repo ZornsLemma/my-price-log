@@ -126,15 +126,7 @@ import com.example.composetutorial.ui.screens.settings.SettingsViewModel
 
 
 
-// Using AppScope.io signals: "This is an app-wide background task that must be allowed to complete
-// without being cancelled when the user leaves the screen, and it *will not* touch any UI or
-// short-lived objects which may have gone out of scope." This is safe and desired for things like
-// DataStore updates. Practically speaking, CoroutineScope(Dispatchers.IO).launch {} is equivalent
-// in behaviour (new scope per call, GC'd safely), but AppScope.io better documents intent and
-// avoids allocation.
-object AppScope {
-    val io = CoroutineScope(Dispatchers.IO + SupervisorJob())
-}
+
 
 
 
@@ -151,21 +143,7 @@ object AppScope {
 
 
 
-fun setSelectedDataSetIdAsync(context: Context, dataSetId: Long) {
-    AppScope.io.launch {
-        setSelectedDataSetId(context, dataSetId)
-    }
-}
-fun setSelectedItemIdAsync(context: Context, dataSetId: Long, itemId: Long) {
-    AppScope.io.launch {
-        setSelectedItemId(context, dataSetId, itemId)
-    }
-}
-fun setSelectedSourceIdAsync(context: Context, dataSetId: Long, sourceId: Long) {
-    AppScope.io.launch {
-        setSelectedSourceId(context, dataSetId, sourceId)
-    }
-}
+
 
 
 

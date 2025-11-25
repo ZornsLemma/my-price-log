@@ -56,9 +56,9 @@ import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.backupDatabase
 import com.example.composetutorial.models.restoreDatabase
 import com.example.composetutorial.models.toEditable
-import com.example.composetutorial.setSelectedDataSetIdAsync
-import com.example.composetutorial.setSelectedItemIdAsync
-import com.example.composetutorial.setSelectedSourceIdAsync
+import com.example.composetutorial.ui.common.setSelectedDataSetIdAsync
+import com.example.composetutorial.ui.common.setSelectedItemIdAsync
+import com.example.composetutorial.ui.common.setSelectedSourceIdAsync
 import com.example.composetutorial.ui.components.SharedViewModel
 import com.example.composetutorial.ui.components.generalselector.GeneralSelectorScreen
 import com.example.composetutorial.ui.components.generalselector.GeneralSelectorViewModel

@@ -42,9 +42,9 @@ import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Price
 import com.example.composetutorial.models.Source
 import com.example.composetutorial.domain.sanitisePriceUnits
-import com.example.composetutorial.setSelectedDataSetIdAsync
-import com.example.composetutorial.setSelectedItemIdAsync
-import com.example.composetutorial.setSelectedSourceIdAsync
+import com.example.composetutorial.ui.common.setSelectedDataSetIdAsync
+import com.example.composetutorial.ui.common.setSelectedItemIdAsync
+import com.example.composetutorial.ui.common.setSelectedSourceIdAsync
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.LoadState
 import com.example.composetutorial.ui.common.SyncedStateEvent
