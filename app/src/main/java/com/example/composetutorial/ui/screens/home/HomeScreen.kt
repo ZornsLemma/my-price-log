@@ -79,7 +79,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.composetutorial.AgeClass
-import com.example.composetutorial.AsyncOperationErrorAlertDialog
 import com.example.composetutorial.AugmentedPrice
 import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.LoadState
@@ -101,6 +100,7 @@ import com.example.composetutorial.sortedByLocale
 import com.example.composetutorial.sourceIdNone
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.isNotBusy
+import com.example.composetutorial.ui.components.AsyncOperationErrorAlertDialog
 import com.example.composetutorial.ui.components.CardTitle
 import com.example.composetutorial.ui.components.CellAlignment
 import com.example.composetutorial.ui.components.DataTable

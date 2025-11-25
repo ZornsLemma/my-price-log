@@ -1,0 +1,92 @@
+package com.example.composetutorial.ui.components.generaledit
+
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavHostController
+import com.example.composetutorial.GeneralEditScreenViewModel
+import com.example.composetutorial.R
+import com.example.composetutorial.WarningIcon
+import com.example.composetutorial.runGeneralEditScreenOperation
+import com.example.composetutorial.ui.common.AsyncOperationStatus
+
+@Composable
+fun GeneralEditAndDeleteScreen(
+    viewModel: GeneralEditScreenViewModel,
+    navController: NavHostController,
+    title: @Composable () -> Unit,
+    isDirty: () -> Boolean,
+    validateForSave: suspend () -> Boolean,
+    performSave: suspend () -> Long,
+    onIdle: () -> Unit,
+    requestClose: (Long?) -> Unit,
+    deleteConfirmationDetails: Triple<Boolean, @Composable () -> Unit, @Composable () -> Unit>?,
+    performDelete: suspend () -> Unit,
+    onDeleteConfirmDismissRequest: () -> Unit,
+    content: @Composable (showDeleteSpinner: Boolean) -> Unit,
+) {
+    val coroutineScope = rememberCoroutineScope()
+    var deleting by rememberSaveable { mutableStateOf(false) }
+    val saveStatus by viewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+
+    GeneralEditScreen(
+        viewModel = viewModel,
+        navController = navController,
+        title = title,
+        isDirty = isDirty,
+        validateForSave = validateForSave,
+        performSave = performSave,
+        onIdle = {
+            deleting = false
+            onIdle()
+        },
+        requestClose = requestClose,
+    ) {
+        content(
+            deleting && saveStatus == AsyncOperationStatus.BusyForAWhile
+        )
+    }
+
+    if (deleteConfirmationDetails != null) {
+        val isSimpleDelete = deleteConfirmationDetails.first
+        val dialogTitle = deleteConfirmationDetails.second
+        val dialogText = deleteConfirmationDetails.third
+
+        val contentDescriptionWarning = stringResource(R.string.content_description_warning)
+        AlertDialog(
+            icon = if (isSimpleDelete) null else { { WarningIcon(contentDescription = contentDescriptionWarning) } },
+            title = dialogTitle,
+            text = dialogText,
+            onDismissRequest = { onDeleteConfirmDismissRequest() },
+            dismissButton = {
+                TextButton(onClick = { onDeleteConfirmDismissRequest() }) { Text(stringResource(R.string.button_cancel)) }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onDeleteConfirmDismissRequest()
+                    runGeneralEditScreenOperation(
+                        viewModel = viewModel,
+                        coroutineScope = coroutineScope,
+                        isSafeToPerform = { true },
+                        perform = {
+                            deleting = true
+                            //delay(5000) // TODO HACK
+                            //throw IllegalStateException("TODO")
+                            performDelete()
+                            // We return null since we don't want to change the selected entity on
+                            // the home screen.
+                            null
+                        }
+                    )
+                }) { Text(stringResource(R.string.button_delete) /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
+            },
+        )
+    }
+}
