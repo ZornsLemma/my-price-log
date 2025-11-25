@@ -148,30 +148,6 @@ fun formatDouble(
     return numberFormat.format(value)
 }
 
-
-
-
-
-// TODO MOVE - MAYBE INTO SourceModels.kt? Or is that a bit off as it's more of a UI concept?
-// We could make things work so a null sourceId represents "None", but in practice it's more trouble
-// than it's worth. (We could remove the UserPreferences map entry for the data set ID key to
-// represent a null value being associated with it.)
-val sourceIdNone = -1L
-// Null item IDs are even less of a thing outside transitional async loading delays. Using a -1 here
-// to avoid adding nullability to the selectedItemIdStateFlow is harmless and slightly reduces
-// complexity.
-val itemIdNone = -1L
-
-
-
-
-
-
-
-
-
-
-
 // Using AppScope.io signals: "This is an app-wide background task that must be allowed to complete
 // without being cancelled when the user leaves the screen, and it *will not* touch any UI or
 // short-lived objects which may have gone out of scope." This is safe and desired for things like

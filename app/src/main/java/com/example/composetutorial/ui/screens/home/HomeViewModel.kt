@@ -37,7 +37,6 @@ import com.example.composetutorial.analysePrices
 import com.example.composetutorial.domain.dataStore
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.Repository
-import com.example.composetutorial.itemIdNone
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Price
@@ -46,7 +45,6 @@ import com.example.composetutorial.domain.sanitisePriceUnits
 import com.example.composetutorial.setSelectedDataSetIdAsync
 import com.example.composetutorial.setSelectedItemIdAsync
 import com.example.composetutorial.setSelectedSourceIdAsync
-import com.example.composetutorial.sourceIdNone
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.LoadState
 import com.example.composetutorial.ui.common.SyncedStateEvent
@@ -77,6 +75,15 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.Locale
+
+// We could make things work so a null sourceId represents "None", but in practice it's more trouble
+// than it's worth. (We could remove the UserPreferences map entry for the data set ID key to
+// represent a null value being associated with it.)
+const val sourceIdNone = -1L
+// Null item IDs are even less of a thing outside transitional async loading delays. Using a -1 here
+// to avoid adding nullability to the selectedItemIdStateFlow is harmless and slightly reduces
+// complexity.
+const val itemIdNone = -1L
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(
