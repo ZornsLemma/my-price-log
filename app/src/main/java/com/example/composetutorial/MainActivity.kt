@@ -2488,18 +2488,6 @@ val Context.userPreferencesStore: DataStore<UserPrefs.UserPreferences> by dataSt
 
 // TODO: ChatGPT semi-magic
 
-@Composable
-fun keyboardCapitalization(@StringRes resId: Int): KeyboardCapitalization =
-    when (val str = stringResource(resId)) { // TODO: rename "str"?
-        "characters" -> KeyboardCapitalization.Characters
-        "none" -> KeyboardCapitalization.None
-        "sentences" -> KeyboardCapitalization.Sentences
-        "words" -> KeyboardCapitalization.Words
-        else -> {
-            Log.i("TODO", "Resource '${resourceName(LocalContext.current, resId)}' has unknown keyboard capitalization string '$str'")
-            KeyboardCapitalization.None
-        }
-    }
 
 fun resourceName(context: Context, @AnyRes resId: Int): String =
  try {

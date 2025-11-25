@@ -33,7 +33,6 @@ import com.example.composetutorial.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.QuantityType
 import com.example.composetutorial.domain.getRelevantMeasurementUnits
-import com.example.composetutorial.keyboardCapitalization
 import com.example.composetutorial.myCheck
 import com.example.composetutorial.rememberSyncedTextFieldValue
 import com.example.composetutorial.textOrNull
@@ -41,6 +40,7 @@ import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
 import com.example.composetutorial.ui.components.ValidatedNumericTextField
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreen
+import com.example.composetutorial.ui.components.keyboardCapitalization
 import com.example.composetutorial.ui.components.topAppBarTitle
 import com.example.composetutorial.ui.maxNotesLength
 import com.example.composetutorial.ui.nonBreakingSpace

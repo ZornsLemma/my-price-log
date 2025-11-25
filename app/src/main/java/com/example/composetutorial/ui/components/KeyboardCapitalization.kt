@@ -1,0 +1,22 @@
+package com.example.composetutorial.ui.components
+
+import android.util.Log
+import androidx.annotation.StringRes
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import com.example.composetutorial.resourceName
+
+@Composable
+fun keyboardCapitalization(@StringRes resId: Int): KeyboardCapitalization =
+    when (val str = stringResource(resId)) { // TODO: rename "str"?
+        "characters" -> KeyboardCapitalization.Characters
+        "none" -> KeyboardCapitalization.None
+        "sentences" -> KeyboardCapitalization.Sentences
+        "words" -> KeyboardCapitalization.Words
+        else -> {
+            Log.i("TODO", "Resource '${resourceName(LocalContext.current, resId)}' has unknown keyboard capitalization string '$str'")
+            KeyboardCapitalization.None
+        }
+    }

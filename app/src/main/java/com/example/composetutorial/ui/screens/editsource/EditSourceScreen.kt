@@ -40,13 +40,13 @@ import com.example.composetutorial.FilteredTextField
 import com.example.composetutorial.LoyaltyType
 import com.example.composetutorial.R
 import com.example.composetutorial.createOnCandidateValueChangeMaxLength
-import com.example.composetutorial.keyboardCapitalization
 import com.example.composetutorial.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.SmallCircularProgressIndicator
 import com.example.composetutorial.ui.components.ValidatedFilteredTextField
 import com.example.composetutorial.ui.components.ValidatedNumericTextField
 import com.example.composetutorial.ui.components.generaledit.GeneralEditAndDeleteScreen
+import com.example.composetutorial.ui.components.keyboardCapitalization
 import com.example.composetutorial.ui.components.topAppBarTitle
 import com.example.composetutorial.ui.maxNotesLength
 import com.example.composetutorial.ui.maxSourceNameLength

@@ -48,7 +48,6 @@ import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.QuantityType
 import com.example.composetutorial.domain.getRelevantMeasurementUnits
 import com.example.composetutorial.domain.getRelevantUnitFamilies
-import com.example.composetutorial.keyboardCapitalization
 import com.example.composetutorial.myCheck
 import com.example.composetutorial.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.common.isNotBusy
@@ -56,6 +55,7 @@ import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
 import com.example.composetutorial.ui.components.SmallCircularProgressIndicator
 import com.example.composetutorial.ui.components.ValidatedFilteredTextField
 import com.example.composetutorial.ui.components.generaledit.GeneralEditAndDeleteScreen
+import com.example.composetutorial.ui.components.keyboardCapitalization
 import com.example.composetutorial.ui.components.topAppBarTitle
 import com.example.composetutorial.ui.maxItemNameLength
 import com.example.composetutorial.ui.maxNotesLength
