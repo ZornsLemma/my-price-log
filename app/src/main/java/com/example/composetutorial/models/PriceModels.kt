@@ -14,7 +14,7 @@ import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.MeasuredValue
 import com.example.composetutorial.domain.MeasurementUnit
-import com.example.composetutorial.parseStringAsDoubleOrNull
+import com.example.composetutorial.common.parseStringAsDoubleOrNull
 import kotlinx.parcelize.Parcelize
 import java.time.Instant
 import java.util.Locale

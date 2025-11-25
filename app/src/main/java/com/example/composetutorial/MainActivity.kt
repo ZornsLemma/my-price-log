@@ -578,65 +578,6 @@ fun <T> intersectionIsEmpty(lhs: Set<T>, rhs: Set<T>) = !(lhs.any { it in rhs })
 fun areDifferentUnitFamilies(lhs: MeasurementUnit, rhs: MeasurementUnit) =
     intersectionIsEmpty(lhs.unitFamilies, rhs.unitFamilies)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// TODO: This duplicates code in numericValidationRules(). It may be as well to move some of these
-// functions and associated logic onto the ViewModel, as it is already locale-aware and is notified
-// when the locale changes. That said, this isn't ideal as multiple different screens/ViewModels
-// could all want to use this code and we don't really want to duplicate it. Can/should we have
-// an object which is included by composition in all ViewModels that want it? Inheritance? Something
-// else?
-// TODO: There might be an argument for *not* allowing grouping characters in strings - not just
-// here, perhaps we even would always allow them here, but maybe more in TextFields. If a user is
-// mixing different "regions", they might get confused and type "." when the decimal separator is
-// "," or vice versa and enter junk, whereas if typing "." when it isn't the decimal separator is
-// discarded it's a little more obvious. Maybe this isn't a concern, given the device's region is
-// what (I think) matters here, not the dataSet's setting, so the user will always be using their
-// native symbols. This could be a setting of course but don't rush to make it one.
-fun parseStringAsDoubleOrNull(locale: Locale, string: String): Double? {
-    val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
-    // If input filtering allowed "-" characters through they are significant, so we don't strip
-    // them out here. This is harmless if they were never allowed through, of course.
-    val insignificantCharsRegex = "[^-0-9${Regex.escape(decimalSeparator.toString())}]".toRegex()
-    return string
-        .replace(insignificantCharsRegex, "")
-        .replace(decimalSeparator, '.')
-        .toDoubleOrNull() // not locale aware, decimal separator is always "."
-}
-
-
-
-
-
-
-
-
-
-
-
-
 @Composable
 fun WarningIcon(contentDescription: String) {
     Icon(
@@ -645,14 +586,6 @@ fun WarningIcon(contentDescription: String) {
         tint = MaterialTheme.colorScheme.error
     )
 }
-
-
-
-
-
-
-
-
 
 data class SelectItemScreenUIContent(
     val itemList: List<Item>,
