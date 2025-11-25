@@ -1565,17 +1565,7 @@ fun ClickableLink(text: String, url: String, showRawUrl: Boolean = true) {
     }
 }
 
-@Composable
-fun BulletPoint(text: String) {
-    Row(modifier = Modifier.fillMaxWidth()) {
-        Text("$bulletPoint ", style = MaterialTheme.typography.bodyMedium)
-        Text(
-            text,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
+
 
 
 
@@ -1729,23 +1719,7 @@ fun splitAroundDigits(input: String): Pair<String, String> {
     return Pair(prefix, suffix)
 }
 
-// TODO: ChatGPT magic
-inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
-    crossinline builder: (MyApplication, SavedStateHandle) -> VM
-): ViewModelProvider.Factory {
-    return viewModelFactory {
-        initializer {
-            val handle = createSavedStateHandle()
-            // As written by ChatGPT, this passed "this", a CreationExtras, as the first argument of
-            // builder. Given how we actually use this, it saves code duplication to just extract a
-            // MyApplication here and pass that instead.
-            builder(
-                this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication,
-                handle
-            )
-        }
-    }
-}
+
 
 data class GeneralSelectorScreenUIContent<T>(
     val initialList: List<T>?

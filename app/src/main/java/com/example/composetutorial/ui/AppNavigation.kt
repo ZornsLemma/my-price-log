@@ -28,7 +28,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -74,7 +78,6 @@ import com.example.composetutorial.ui.screens.legal.LegalScreen
 import com.example.composetutorial.ui.screens.settings.SettingsScreen
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryScreen
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryViewModel
-import com.example.composetutorial.viewModelFactoryWithHandle
 import kotlinx.coroutines.delay
 
 @Composable
@@ -720,4 +723,22 @@ private inline fun <reified VM : ViewModel, UIContent> screenWithViewModel( // T
     )
 
     content(viewModel)
+}
+
+// TODO: ChatGPT magic
+private inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
+    crossinline builder: (MyApplication, SavedStateHandle) -> VM
+): ViewModelProvider.Factory {
+    return viewModelFactory {
+        initializer {
+            val handle = createSavedStateHandle()
+            // As written by ChatGPT, this passed "this", a CreationExtras, as the first argument of
+            // builder. Given how we actually use this, it saves code duplication to just extract a
+            // MyApplication here and pass that instead.
+            builder(
+                this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as MyApplication,
+                handle
+            )
+        }
+    }
 }

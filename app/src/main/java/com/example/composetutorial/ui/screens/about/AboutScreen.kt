@@ -40,9 +40,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.example.composetutorial.BulletPoint
 import com.example.composetutorial.ClickableLink
 import com.example.composetutorial.R
+import com.example.composetutorial.ui.components.BulletPoint
 import com.example.composetutorial.ui.fullScreenDialogHorizontalBorder
 import com.example.composetutorial.ui.fullScreenDialogVerticalBorder
 
