@@ -44,7 +44,6 @@ import com.example.composetutorial.SelectItemScreenUIContent
 import com.example.composetutorial.SelectItemViewModel
 import com.example.composetutorial.SelectSourceScreenUIContent
 import com.example.composetutorial.SelectSourceViewModel
-import com.example.composetutorial.SharedViewModel
 import com.example.composetutorial.ViewPriceHistoryScreenUIContent
 import com.example.composetutorial.app.safeRestartApp
 import com.example.composetutorial.dataStore
@@ -56,6 +55,7 @@ import com.example.composetutorial.models.toEditable
 import com.example.composetutorial.setSelectedDataSetIdAsync
 import com.example.composetutorial.setSelectedItemIdAsync
 import com.example.composetutorial.setSelectedSourceIdAsync
+import com.example.composetutorial.ui.components.SharedViewModel
 import com.example.composetutorial.ui.components.generalselector.GeneralSelectorScreen
 import com.example.composetutorial.ui.components.generalselector.GeneralSelectorViewModel
 import com.example.composetutorial.ui.components.topAppBarTitle
