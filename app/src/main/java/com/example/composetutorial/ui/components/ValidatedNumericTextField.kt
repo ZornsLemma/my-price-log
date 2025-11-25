@@ -8,7 +8,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import com.example.composetutorial.R
-import com.example.composetutorial.textOrNull
+import com.example.composetutorial.ui.components.textOrNull
 import com.example.composetutorial.ui.common.UiText
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.defaultErrorHighlightOffset

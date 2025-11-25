@@ -571,17 +571,7 @@ data class HomeScreenUIContent(
     }
 }
 
-fun textOrNull(
-    string: String?,
-    modifier: Modifier = Modifier,
-    color: Color = Color.Unspecified
-): @Composable (() -> Unit)? {
-    if (string == null) {
-        return string
-    } else {
-        return { Text(string, modifier = modifier, color = color) }
-    }
-}
+
 
 // TODO: Apparently Android will cheerfully kill my app, upgrade it *and then restart it with the
 // saved state from the old app*. And of course this has to be handled, even though it utterly

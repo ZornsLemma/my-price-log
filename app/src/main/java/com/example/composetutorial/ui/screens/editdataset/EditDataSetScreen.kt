@@ -34,7 +34,7 @@ import androidx.navigation.NavHostController
 import com.example.composetutorial.R
 import com.example.composetutorial.ui.common.createCurrencyList
 import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
-import com.example.composetutorial.textOrNull
+import com.example.composetutorial.ui.components.textOrNull
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
