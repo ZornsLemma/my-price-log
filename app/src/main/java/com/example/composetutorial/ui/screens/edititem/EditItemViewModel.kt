@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.EditItemScreenUIContent
 import com.example.composetutorial.ui.common.ValidationRule
-import com.example.composetutorial.createNameValidationRules
+import com.example.composetutorial.ui.common.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.models.EditableItem
