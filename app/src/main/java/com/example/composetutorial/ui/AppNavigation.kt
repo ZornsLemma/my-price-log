@@ -45,9 +45,9 @@ import com.example.composetutorial.EditSourceScreenUIContent
 import com.example.composetutorial.MyApplication
 import com.example.composetutorial.R
 import com.example.composetutorial.SelectItemScreenUIContent
-import com.example.composetutorial.SelectItemViewModel
+import com.example.composetutorial.ui.screens.selectitem.SelectItemViewModel
 import com.example.composetutorial.SelectSourceScreenUIContent
-import com.example.composetutorial.SelectSourceViewModel
+import com.example.composetutorial.ui.screens.selectsource.SelectSourceViewModel
 import com.example.composetutorial.ViewPriceHistoryScreenUIContent
 import com.example.composetutorial.app.safeRestartApp
 import com.example.composetutorial.domain.dataStore

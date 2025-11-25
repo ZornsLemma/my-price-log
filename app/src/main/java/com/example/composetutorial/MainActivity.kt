@@ -839,37 +839,9 @@ fun String.normalizedForSearch() = Normalizer.normalize(this, Normalizer.Form.NF
         // Lowercase using invariant rules to ensure case insensitivity
         .lowercase(Locale.ROOT)
 
-class SelectItemViewModel(
-    savedStateHandle: SavedStateHandle,
-    getName: (Item) -> String,
-    val uiContent: SelectItemScreenUIContent,
-    dataQuery: Flow<List<Item>>,
-) : GeneralSelectorViewModel<Item>(
-    savedStateHandle,
-    getName,
-    uiContent.itemList /* TODO: rename initialList for consistency with other cases? */,
-    dataQuery
-) {
-    init {
-        uiContent.saveState(savedStateHandle)
-    }
-}
 
-class SelectSourceViewModel(
-    savedStateHandle: SavedStateHandle,
-    getName: (Source) -> String,
-    val uiContent: SelectSourceScreenUIContent,
-    dataQuery: Flow<List<Source>>,
-) : GeneralSelectorViewModel<Source>(
-    savedStateHandle,
-    getName,
-    uiContent.sourceList /* TODO: rename initialList for consistency with other cases? */,
-    dataQuery
-) {
-    init {
-        uiContent.saveState(savedStateHandle)
-    }
-}
+
+
 
 data class ViewPriceHistoryScreenUIContent(
     val dataSet: DataSet,
