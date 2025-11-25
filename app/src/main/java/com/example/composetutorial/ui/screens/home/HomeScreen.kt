@@ -89,7 +89,7 @@ import com.example.composetutorial.R
 import com.example.composetutorial.createCurrencyFormat
 import com.example.composetutorial.domain.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily
 import com.example.composetutorial.domain.withFriendlyDenominator
-import com.example.composetutorial.formatPrice
+import com.example.composetutorial.ui.common.formatPrice
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Source

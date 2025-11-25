@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.example.composetutorial.domain.baseUnitForQuantityType
 import com.example.composetutorial.debug.myRequire
-import com.example.composetutorial.formatPrice
+import com.example.composetutorial.ui.common.formatPrice
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.common.roundTo
 import java.util.Locale
@@ -93,15 +93,3 @@ fun UnitPrice.withFriendlyDenominator(
     }
     return bestUnitPrice!!
 }
-
-// TODO: Possibly we should add a zero-width space (\u200b ?) after the "perSymbol" just in case.
-// The price and symbol may reasonably use non-breaking spaces to keep the value and the unit
-// together, and that may mean there are no actual spaces, so offering this as a breaking point in
-// the event we have to wrap might improve the display.
-fun UnitPrice.format(context: Context, dataSet: DataSet, locale: Locale) =
-    "${formatPrice(
-        numerator,
-        dataSet,
-        locale
-    )
-    }${denominator.perSymbol}${context.getString(denominator.symbol)}"

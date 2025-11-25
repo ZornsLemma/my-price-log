@@ -21,12 +21,12 @@ import com.example.composetutorial.R
 import com.example.composetutorial.areDifferentUnitFamilies
 import com.example.composetutorial.domain.MeasuredValue
 import com.example.composetutorial.domain.UnitPrice
-import com.example.composetutorial.domain.format
+import com.example.composetutorial.ui.common.format
 import com.example.composetutorial.domain.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily
 import com.example.composetutorial.domain.getRelevantMeasurementUnits
 import com.example.composetutorial.domain.getRelevantUnitFamilies
 import com.example.composetutorial.domain.withFriendlyDenominator
-import com.example.composetutorial.formatPrice
+import com.example.composetutorial.ui.common.formatPrice
 import com.example.composetutorial.getCurrencyDecimalPlaces
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.ui.common.AsyncOperationStatus
