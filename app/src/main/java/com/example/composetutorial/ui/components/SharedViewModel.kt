@@ -12,6 +12,7 @@ import com.example.composetutorial.SelectSourceScreenUIContent
 import com.example.composetutorial.ViewPriceHistoryScreenUIContent
 import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.models.DataSet
+import com.example.composetutorial.models.EditableDataSet
 import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Source
@@ -136,14 +137,20 @@ class SharedViewModel : ViewModel() {
         )
     }
 
+    /* TODO DELETE
     var editDataSetScreenUIContent: EditDataSetScreenUIContent? = null
+    */
+    var editDataSetScreenUIContent: EditableDataSet? = null // TODO RENAME?
 
     fun setEditDataSetScreenContent(dataSet: DataSet?, locale: Locale) {
+        /* TODO DELETE
         val editableDataSet = dataSet.toEditable(locale)
         editDataSetScreenUIContent = EditDataSetScreenUIContent(
             editableDataSet = mutableStateOf(editableDataSet),
             originalDataSet = editableDataSet,
         )
+        */
+        editDataSetScreenUIContent = dataSet.toEditable(locale)
     }
 
     var editItemScreenUIContent: EditItemScreenUIContent? = null

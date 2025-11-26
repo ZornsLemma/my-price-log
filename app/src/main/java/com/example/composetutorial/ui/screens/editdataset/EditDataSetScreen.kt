@@ -56,6 +56,8 @@ fun EditDataSetScreen(
     requestClose: (Long?) -> Unit
 ) {
     val uiContent = viewModel.uiContent
+    val editableDataSet by uiContent.editableDataSet.collectAsStateWithLifecycle()
+    // val originalDataSet by uiContent.originalDataSet.collectAsStateWithLifecycle() // TODO: does this need to be a flow? it can't change. but we may need this to hack into the auto-savedstatehandle stuff
 
     val dataSetReferenceCount by viewModel.dataSetReferenceCountFlow.collectAsStateWithLifecycle(null)
     Log.d("MyApp", "dataSetReferenceCount $dataSetReferenceCount")
@@ -72,10 +74,10 @@ fun EditDataSetScreen(
     GeneralEditAndDeleteScreen(
         viewModel = viewModel.generalEditScreenViewModel,
         navController = navController,
-        title = { Text(if (uiContent.editableDataSet.value.id == 0L) stringResource(R.string.title_add_data_set) else stringResource(
+        title = { Text(if (editableDataSet.id == 0L) stringResource(R.string.title_add_data_set) else stringResource(
             R.string.title_edit_data_set
         )) },
-        isDirty = { uiContent.editableDataSet.value != uiContent.originalDataSet },
+        isDirty = { editableDataSet != uiContent.originalDataSet },
         validateForSave = { viewModel.validateForSave() },
         performSave = { viewModel.performSave(); /* throw IllegalArgumentException("TODO2") */ },
         onIdle = {},

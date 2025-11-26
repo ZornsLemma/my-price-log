@@ -452,8 +452,7 @@ fun AppNavigation() {
                     EditDataSetViewModel(
                         app.repository,
                         handle,
-                        sharedViewModel.editDataSetScreenUIContent
-                            ?: EditDataSetScreenUIContent.fromSavedState(handle)!!
+                        EditDataSetScreenUIContent(handle, sharedViewModel.editDataSetScreenUIContent)
                     )
                 }
             ) { viewModel ->

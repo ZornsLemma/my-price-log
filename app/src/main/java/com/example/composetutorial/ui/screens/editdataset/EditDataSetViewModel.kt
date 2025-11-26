@@ -19,11 +19,13 @@ import com.example.composetutorial.ui.common.withVersion
 import com.example.composetutorial.ui.common.initialVersioned
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
 import com.example.composetutorial.ui.common.validationRulesOk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -33,30 +35,39 @@ class EditDataSetViewModel(
     private val savedStateHandle: SavedStateHandle,
     val uiContent: EditDataSetScreenUIContent,
 ) : ViewModel() {
+    /* TODO DELETE
     init {
         uiContent.saveState(savedStateHandle)
     }
+    */
 
     // There's no need to explicitly check for prices; we want to give a warning if there are any
     // items or sources associated with the data set even without prices, and there can't be any
     // prices without at least one item and one source.
-    val dataSetReferenceCountFlow = uiContent.editableDataSet.value.id
-        .takeIf { it != 0L }
-        ?.let { dataSetId ->
-            combine(
-                repository.countItemsForDataSet(dataSetId),
-                repository.countSourcesForDataSet(dataSetId)
-            ) { itemReferenceCount, sourceReferenceCount ->
-                itemReferenceCount + sourceReferenceCount
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val dataSetReferenceCountFlow = uiContent.editableDataSet.map { it.id }
+        .flatMapLatest { dataSetId ->
+            if (dataSetId == 0L) {
+                flowOf(0L) // if dataSetId is 0 (creating a new), return 0
+            } else {
+                combine(
+                    repository.countItemsForDataSet(dataSetId),
+                    repository.countSourcesForDataSet(dataSetId)
+                ) { itemReferenceCount, sourceReferenceCount ->
+                    itemReferenceCount + sourceReferenceCount
+                }
             }
         }
-        ?: flowOf(0L) // If dataSetId is 0 (creating a new), return 0
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
+    // TODO: This function may be redundant/silly and/or the update() it calls may be silly to take a transform if this is how it's called
     fun setUIContentEditableDataSet(newEditableDataSet: EditableDataSet) {
+        uiContent.update({ newEditableDataSet })
+        /* TODO DELETE
         uiContent.editableDataSet.value = newEditableDataSet
         uiContent.saveEditableDataSetState(savedStateHandle)
+        */
     }
 
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =

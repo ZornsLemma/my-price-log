@@ -95,6 +95,7 @@ import java.util.Currency
 import java.util.Locale
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.SavedStateHandle
+import com.example.composetutorial.app.AppScope
 import com.example.composetutorial.common.intersectionIsEmpty
 import com.example.composetutorial.debug.DebugFlags
 import com.example.composetutorial.domain.MeasurementUnit
@@ -120,6 +121,11 @@ import com.example.composetutorial.ui.common.setSelectedDataSetId
 import com.example.composetutorial.ui.common.setSelectedItemId
 import com.example.composetutorial.ui.common.setSelectedSourceId
 import com.example.composetutorial.ui.screens.settings.SettingsViewModel
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 
 data class HomeScreenUIContent(
     val dataSetIdState: LoadState<Long>,
@@ -361,10 +367,52 @@ This is what most serious production apps have converged on in 2024–2025.
 
 */
 
+// TODO: ChatGPT semi magic, doesn't belong here if it lives
+fun SavedStateHandle.clearIfAppUpdated() {
+    val currentVersion = 42 /* TODO BuildConfig.VERSION_CODE */
+    val storedVersion = get<Int>("savedStateAppVersion")
+    if (storedVersion != currentVersion) {
+        // only wipe your keys, not everything
+        for (key in keys()) remove<Any>(key)
+        this["savedStateAppVersion"] = currentVersion
+        Log.w("MyApp", "SavedStateHandle cleared due to app version change")
+    }
+}
+// Every ViewModel with a handle (or perhaps my factory generating those handles?) needs to call this.
+
+// TODO QUITE POSSIBLY THIS SHOULD BE FOLDED INTO THE VIEWMODEL IF THIS APPROACH WORKS
+@OptIn(FlowPreview::class)
 data class EditDataSetScreenUIContent(
-    val editableDataSet: MutableState<EditableDataSet>,
-    val originalDataSet: EditableDataSet,
+    val savedStateHandle: SavedStateHandle,
+    val initialDataSet: EditableDataSet?,
 ) {
+    private val guaranteedInitial: EditableDataSet =
+        savedStateHandle["editableDataSetTODO"]
+            ?: initialDataSet
+            ?: error("initialDataSet is null and nothing in SavedStateHandle")
+    val originalDataSet: EditableDataSet = savedStateHandle["originalDataSetTODO"] ?: (guaranteedInitial.also { Log.d("MyAppSS", "original: $it") ; savedStateHandle["originalDataSetTODO"] = it })
+    // TODO: USE A CONSTANT FOR KEY NAME AS IT APPEARS IN MULTIPLE PLACES
+//    val _editableDataSet = savedStateHandle.getMutableStateFlow(key = "editableDataSetTODO", initialValue = initialDataSet.copy())
+    private val _editableDataSet = savedStateHandle.getMutableStateFlow("editableDataSetTODO", initialValue = guaranteedInitial)
+    // val _originalDataSet = savedStateHandle.getStateFlow("originalDataSetTODO", initialValue = initialDataSet.copy())
+
+    val editableDataSet: StateFlow<EditableDataSet> = _editableDataSet.asStateFlow()
+    // val originalDataSet: StateFlow<EditableDataSet> = _originalDataSet
+
+    fun update(transform: (EditableDataSet) -> EditableDataSet) {
+        _editableDataSet.value = transform(_editableDataSet.value)
+    }
+
+    init {
+        Log.d("MyAppSS", "read: ${editableDataSet.value}")
+        AppScope.io /* TODO HACK SHOULD BE viewModelScope */.launch {
+            _editableDataSet
+                .debounce(300L /* TODO MAGIC */)  // or drop oldest, etc.
+                .collectLatest { savedStateHandle["editableDataSetTODO"] = it; Log.d("MyAppSS", "write: $it") }
+        }
+    }
+
+    /* TODO DELETE
     fun saveState(savedStateHandle: SavedStateHandle) {
         saveEditableDataSetState(savedStateHandle)
         savedStateHandle[ORIGINAL_DATA_SET_KEY] = originalDataSet
@@ -392,6 +440,7 @@ data class EditDataSetScreenUIContent(
             }
         }
     }
+    */
 }
 
 data class SelectItemScreenUIContent(
