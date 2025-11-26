@@ -291,13 +291,13 @@ fun AppNavigation() {
                     getName = { it.name },
                     onAddClick = {
                         Log.d("MyAppGS", "Add data set")
-                        sharedViewModel.setEditDataSetScreenInitialUIContent(null, locale)
+                        sharedViewModel.setEditDataSetScreenInitialUiContent(null, locale)
                         navController.navigate("editDataSet")
                     },
                     addContentDescription = stringResource(R.string.content_description_add_data_set),
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
-                        sharedViewModel.setEditDataSetScreenInitialUIContent(it, locale)
+                        sharedViewModel.setEditDataSetScreenInitialUiContent(it, locale)
                         navController.navigate("editDataSet")
                     })
             }
@@ -341,14 +341,14 @@ fun AppNavigation() {
                         // products". It's handy to be able to directly add a missing item when
                         // searching from the home screen.
                         Log.d("MyAppGS", "Add item")
-                        sharedViewModel.setEditItemScreenContent(null, viewModel.uiContent.dataSet)
+                        sharedViewModel.setEditItemScreenInitialUiContent(null, viewModel.uiContent.dataSet)
                         navController.navigate("editItem")
                     },
                     addContentDescription = stringResource(R.string.content_description_add_item),
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
                         if (!select) {
-                            sharedViewModel.setEditItemScreenContent(
+                            sharedViewModel.setEditItemScreenInitialUiContent(
                                 it,
                                 viewModel.uiContent.dataSet
                             )
@@ -445,12 +445,12 @@ fun AppNavigation() {
         ) { backStackEntry ->
             screenWithViewModel<EditDataSetViewModel, Integer /* TODO DUMMY EditDataSetScreenUIContent */>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.editDataSetScreenInitialUIContent = null },
+                clearUIContent = { sharedViewModel.editDataSetScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     EditDataSetViewModel(
                         app.repository,
                         handle,
-                        sharedViewModel.editDataSetScreenInitialUIContent
+                        sharedViewModel.editDataSetScreenInitialUiContent
                     )
                 }
             ) { viewModel ->
@@ -545,13 +545,13 @@ This may be complete crap. The example of how to use it is probably as long as t
         ) { backStackEntry ->
             screenWithViewModel<EditItemViewModel, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.editItemScreenUIContent = null },
+                clearUIContent = { sharedViewModel.editItemScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     EditItemViewModel(
                         app.repository,
                         handle,
-                        sharedViewModel.editItemScreenUIContent?.editableItem,
-                        sharedViewModel.editItemScreenUIContent?.dataSet?.let(::EditItemScreenStaticContent)
+                        sharedViewModel.editItemScreenInitialUiContent?.editableItem,
+                        sharedViewModel.editItemScreenInitialUiContent?.dataSet?.let(::EditItemScreenStaticContent)
                     )
                 }
             ) { viewModel ->

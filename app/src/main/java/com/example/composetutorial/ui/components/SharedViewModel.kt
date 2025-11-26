@@ -136,22 +136,23 @@ class SharedViewModel : ViewModel() {
         )
     }
 
-// TODO: If this remains public and read/write, the set function is perhaps a bit redundant?
-    var editDataSetScreenInitialUIContent: EditableDataSet? = null // TODO RENAME?
+    var editDataSetScreenInitialUiContent: EditableDataSet? = null
 
-    fun setEditDataSetScreenInitialUIContent(dataSet: DataSet?, locale: Locale) {
-        editDataSetScreenInitialUIContent = dataSet.toEditable(locale)
+    fun setEditDataSetScreenInitialUiContent(dataSet: DataSet?, locale: Locale) {
+        editDataSetScreenInitialUiContent = dataSet.toEditable(locale)
     }
 
-    data class TODOWTF(
+    // TODO: Probably follow the naming model for EditItemScreen and EditDataSetScreen in all the other Edit* things?
+    data class EditItemScreenInitialUiContent(
         val editableItem: EditableItem,
         val dataSet: DataSet,
     )
-    var editItemScreenUIContent: TODOWTF? = null
 
-    fun setEditItemScreenContent(item: Item?, dataSet: DataSet) {
+    var editItemScreenInitialUiContent: EditItemScreenInitialUiContent? = null
+
+    fun setEditItemScreenInitialUiContent(item: Item?, dataSet: DataSet) {
         val editableItem = item.toEditable(dataSet)
-        editItemScreenUIContent = TODOWTF(editableItem, dataSet)
+        editItemScreenInitialUiContent = EditItemScreenInitialUiContent(editableItem, dataSet)
     }
 
     var editSourceScreenUIContent: EditSourceScreenUIContent? = null

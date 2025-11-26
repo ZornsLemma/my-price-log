@@ -25,7 +25,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.parcelize.Parcelize
 
-// TODO: MOVE
+// TODO: MOVE?
 // This class seems a bit pointless but it makes it clearer what is being retrieved from
 // PersistentUiContent.staticContent.
 @Parcelize
