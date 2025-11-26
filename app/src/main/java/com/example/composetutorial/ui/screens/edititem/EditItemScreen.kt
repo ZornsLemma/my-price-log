@@ -66,9 +66,7 @@ fun EditItemScreen(
     navController: NavHostController,
     requestClose: (newSelectedItemId: Long?) -> Unit
 ) {
-    // TODO DELETE val uiContent = viewModel.uiContent // TODO MAYBE GET RID OF UICONTENT AS A LOCAL VAL AND INSTEAD EXTRACT THE DATASET AND ORIGINALITEM AS LOCAL VALS, WOULD PROBBLY SIMPLY MUCH OF LATER CODE
     val originalItem = viewModel.uiContent.originalContent
-    // TODO: It just might be workable/useful to make editableContent private and expose some collectAsStateWithLifecycle or other necessary methods, to reduce the temptation/accident of accessing its .value directly and maybe not getting what we want, or at least writing more verbose code than necssary
     val editableItem by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
     val dataSet = viewModel.uiContent.staticContent.dataSet // TODO: If this is the only use of staticContent, we may be able to get away with getting rid of the thin wrapper EditItemScreenStaticContent
 
@@ -88,7 +86,7 @@ fun EditItemScreen(
         navController = navController,
         title = topAppBarTitle( if (viewModel.uiContent.originalContent.id == 0L) stringResource(R.string.title_add_item) else stringResource(
             R.string.title_edit_item
-        ), viewModel.uiContent.staticContent.dataSet.name),
+        ), dataSet.name),
         isDirty = { editableItem != originalItem },
         validateForSave = { viewModel.validateForSave() },
         performSave = { viewModel.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
@@ -228,15 +226,15 @@ fun EditItemScreen(
                     // TODO: RelevantUnit* here are sort of copy and paste from ItemSourceInfo and
                     // could possibly be factored out along with the code using them
                     val relevantUnitFamilies =
-                        remember(viewModel.uiContent.staticContent.dataSet) { getRelevantUnitFamilies(viewModel.uiContent.staticContent.dataSet) }
+                        remember(dataSet) { getRelevantUnitFamilies(dataSet) }
 
                     val relevantUnitList =
                         remember(
-                            viewModel.uiContent.staticContent.dataSet,
+                            dataSet,
                             editableItem.quantityType
                         ) {
                             getRelevantMeasurementUnits(
-                                viewModel.uiContent.staticContent.dataSet,
+                                dataSet,
                                 editableItem.quantityType,
                                 includeDisplayOnly = false
                             )
