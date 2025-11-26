@@ -136,19 +136,9 @@ class SharedViewModel : ViewModel() {
         )
     }
 
-    /* TODO DELETE
-    var editDataSetScreenUIContent: EditDataSetScreenUIContent? = null
-    */
     var editDataSetScreenInitialUIContent: EditableDataSet? = null // TODO RENAME?
 
     fun setEditDataSetScreenInitialUIContent(dataSet: DataSet?, locale: Locale) {
-        /* TODO DELETE
-        val editableDataSet = dataSet.toEditable(locale)
-        editDataSetScreenUIContent = EditDataSetScreenUIContent(
-            editableDataSet = mutableStateOf(editableDataSet),
-            originalDataSet = editableDataSet,
-        )
-        */
         editDataSetScreenInitialUIContent = dataSet.toEditable(locale)
     }
 

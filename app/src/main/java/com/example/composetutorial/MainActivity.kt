@@ -382,38 +382,6 @@ fun SavedStateHandle.clearIfAppUpdated() {
     }
 }
 
-/* TODO DELETE
-// TODO QUITE POSSIBLY THIS SHOULD BE FOLDED INTO THE VIEWMODEL IF THIS APPROACH WORKS
-@OptIn(FlowPreview::class)
-data class EditDataSetScreenUIContent(
-    val savedStateHandle: SavedStateHandle,
-    val initialDataSet: EditableDataSet?,
-) {
-    private val guaranteedInitial: EditableDataSet =
-        savedStateHandle["editableDataSetTODO"]
-            ?: initialDataSet
-            ?: error("initialDataSet is null and nothing in SavedStateHandle")
-    val originalDataSet: EditableDataSet = savedStateHandle["originalDataSetTODO"] ?: (guaranteedInitial.also { Log.d("MyAppSS", "original: $it") ; savedStateHandle["originalDataSetTODO"] = it })
-    // TODO: USE A CONSTANT FOR KEY NAME AS IT APPEARS IN MULTIPLE PLACES
-    private val _editableDataSet = savedStateHandle.getMutableStateFlow("editableDataSetTODO", initialValue = guaranteedInitial)
-
-    val editableDataSet: StateFlow<EditableDataSet> = _editableDataSet.asStateFlow()
-
-    fun update(editableDataSet: EditableDataSet) {
-        _editableDataSet.value = editableDataSet
-    }
-
-    init {
-        Log.d("MyAppSS", "read: ${editableDataSet.value}")
-        AppScope.io /* TODO HACK SHOULD BE viewModelScope */.launch {
-            _editableDataSet
-                .debounce(300L /* TODO MAGIC */)  // or drop oldest, etc.
-                .collectLatest { savedStateHandle["editableDataSetTODO"] = it; Log.d("MyAppSS", "write: $it") }
-        }
-    }
-}
-*/
-
 // TODO WIP EXPERIMENTAL - DOESN'T BELONG IN THIS FILE
 @OptIn(FlowPreview::class)
 class EditableUiContent<T>(
