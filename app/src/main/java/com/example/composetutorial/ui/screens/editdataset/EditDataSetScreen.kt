@@ -55,8 +55,8 @@ fun EditDataSetScreen(
     navController: NavHostController,
     requestClose: (Long?) -> Unit
 ) {
-    val uiContent = viewModel.uiContent
-    val editableDataSet by uiContent.editableContent.collectAsStateWithLifecycle()
+    val originalDataSet = viewModel.uiContent.originalContent
+    val editableDataSet by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
 
     val dataSetReferenceCount by viewModel.dataSetReferenceCountFlow.collectAsStateWithLifecycle(null)
     Log.d("MyApp", "dataSetReferenceCount $dataSetReferenceCount")
@@ -73,10 +73,10 @@ fun EditDataSetScreen(
     GeneralEditAndDeleteScreen(
         viewModel = viewModel.generalEditScreenViewModel,
         navController = navController,
-        title = { Text(if (editableDataSet.id == 0L) stringResource(R.string.title_add_data_set) else stringResource(
+        title = { Text(if (originalDataSet.id == 0L) stringResource(R.string.title_add_data_set) else stringResource(
             R.string.title_edit_data_set
         )) },
-        isDirty = { editableDataSet != uiContent.originalContent },
+        isDirty = { editableDataSet != originalDataSet },
         validateForSave = { viewModel.validateForSave() },
         performSave = { viewModel.performSave(); /* throw IllegalArgumentException("TODO2") */ },
         onIdle = {},
@@ -269,7 +269,7 @@ fun EditDataSetScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        if (editableDataSet.id != 0L) {
+        if (originalDataSet.id != 0L) {
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
                 onClick = { showDeleteConfirmDialog = true },
