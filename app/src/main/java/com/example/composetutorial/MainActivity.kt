@@ -369,20 +369,7 @@ This is what most serious production apps have converged on in 2024–2025.
 
 */
 
-// TODO: ChatGPT semi magic, doesn't belong here if it lives
-fun SavedStateHandle.clearIfAppUpdated() {
-    return // TODO TEMP HACK DUE TO BUILD VERSION CODE PROBLEM
-    val currentVersion = 42 /* TODO BuildConfig.VERSION_CODE */
-    val storedVersion = get<Int>("savedStateAppVersion") // TODO FACTOR OUT KEY NAME AS CONST
-    if (storedVersion != currentVersion) {
-        // only wipe your keys, not everything
-        for (key in keys()) remove<Any>(key)
-        this["savedStateAppVersion"] = currentVersion
-        Log.w("MyAppTODO", "SavedStateHandle cleared due to app version change")
-    }
-}
-
-// TODO WIP EXPERIMENTAL - DOESN'T BELONG IN THIS FILE
+// TODO WIP EXPERIMENTAL - DOESN'T BELONG IN THIS FILE - AND WE NEED TO REWORK OTHER SCREENS TO USE IT INSTEAD OF OLD APPROACH
 @OptIn(FlowPreview::class)
 class EditableUiContent<T>(
     val viewModel: ViewModel,
@@ -402,6 +389,8 @@ class EditableUiContent<T>(
     val editableContent: StateFlow<T> = _editableContent.asStateFlow()
 
     fun update(newEditableContent: T) {
+        // This does not update the savedStateHandle to persist the change in case of process death.
+        // That happens in the coroutine created by init.
         _editableContent.value = newEditableContent
     }
 
@@ -825,3 +814,7 @@ com.example.myapp/
 // AND DESBORDE IN OTHER MENU ITEMS FOR CONSISTENCY NOW WE AREN'T USING THEM IN THESE REVISED ONES.
 
 // TODO: Is the "hamburger" and "overflow menu" terminology OK *in English*?!
+
+// TODO: Some inconsistency between "UI" and "Ui" in some names.
+
+// TODO: Perhaps just due to current rework, but maybe some inconsistency between FooScreenInitialUIContent and FooScreenUIContent naming

@@ -37,7 +37,6 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-// TODO DELETE import com.example.composetutorial.EditDataSetScreenUIContent
 import com.example.composetutorial.EditItemScreenUIContent
 import com.example.composetutorial.EditPriceScreenUIContent
 import com.example.composetutorial.EditSourceScreenUIContent
@@ -49,7 +48,6 @@ import com.example.composetutorial.SelectSourceScreenUIContent
 import com.example.composetutorial.ui.screens.selectsource.SelectSourceViewModel
 import com.example.composetutorial.ViewPriceHistoryScreenUIContent
 import com.example.composetutorial.app.safeRestartApp
-import com.example.composetutorial.clearIfAppUpdated
 import com.example.composetutorial.domain.dataStore
 import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.models.DataSet
@@ -732,7 +730,6 @@ private inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
     return viewModelFactory {
         initializer {
             val handle = createSavedStateHandle()
-            handle.clearIfAppUpdated()
             // As written by ChatGPT, this passed "this", a CreationExtras, as the first argument of
             // builder. Given how we actually use this, it saves code duplication to just extract a
             // MyApplication here and pass that instead.

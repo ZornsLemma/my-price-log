@@ -57,7 +57,6 @@ fun EditDataSetScreen(
 ) {
     val uiContent = viewModel.uiContent
     val editableDataSet by uiContent.editableContent.collectAsStateWithLifecycle()
-    // val originalDataSet by uiContent.originalDataSet.collectAsStateWithLifecycle() // TODO: does this need to be a flow? it can't change. but we may need this to hack into the auto-savedstatehandle stuff
 
     val dataSetReferenceCount by viewModel.dataSetReferenceCountFlow.collectAsStateWithLifecycle(null)
     Log.d("MyApp", "dataSetReferenceCount $dataSetReferenceCount")

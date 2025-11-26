@@ -4,7 +4,6 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-//import com.example.composetutorial.EditDataSetScreenUIContent
 import com.example.composetutorial.EditableUiContent
 import com.example.composetutorial.R
 import com.example.composetutorial.ui.common.createNameValidationRules
@@ -36,11 +35,6 @@ class EditDataSetViewModel(
     savedStateHandle: SavedStateHandle,
     initialContent: EditableDataSet?,
 ) : ViewModel() {
-    /* TODO DELETE
-    init {
-        uiContent.saveState(savedStateHandle)
-    }
-    */
     val uiContent = EditableUiContent(this, savedStateHandle, "DataSet", initialContent) // TODO: RENAME?
 
     // There's no need to explicitly check for prices; we want to give a warning if there are any
@@ -63,20 +57,16 @@ class EditDataSetViewModel(
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
-    // TODO: This function may be redundant/silly and/or the update() it calls may be silly to take a transform if this is how it's called
+    // TODO: This function may be redundant now
     fun setUIContentEditableDataSet(newEditableDataSet: EditableDataSet) {
         uiContent.update(newEditableDataSet)
-        /* TODO DELETE
-        uiContent.editableDataSet.value = newEditableDataSet
-        uiContent.saveEditableDataSetState(savedStateHandle)
-        */
     }
 
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
         repository.getAllDataSets()
             .map { dataSetList ->
                 createNameValidationRules(
-                    dataSetList.filter { dataSet -> dataSet.id != uiContent.editableContent.value.id }
+                    dataSetList.filter { dataSet -> dataSet.id != uiContent.editableContent.value.id } // TODO: Just use originalContet? ID is fixed!
                         .map { dataSet -> dataSet.name }
                 )
             }

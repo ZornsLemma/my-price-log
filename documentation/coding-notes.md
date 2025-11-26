@@ -24,6 +24,20 @@ Using an actual full-screen activity which is navigated to and has a full-fledge
 
 Rotations are the canonical example of activities being destroyed and re-created fairly casually, but remember they are not the *only* way this happens. In particular, a light/dark theme toggle (which might happen at an arbitrary point because battery saver kicks in, for example) also does this. So although the app currently disables rotations for layout reasons, a) this might change in future b) even if it doesn't, it doesn't remove the need to handle being destroyed and re-created properly.
 
+## SavedStateHandles across app upgrades
+
+I'm told that it's possible for this to happen:
+
+* v1 of the app is in the background.
+* Android kills it.
+* The app is upgraded to v2.
+* The user returns to the app.
+* Android reincarnates the app, providing app v2 with SavedStateHandles from the app's previous v1 incarnation.
+* The relevant serialized objects from v1 are not compatible with v2.
+* Boom!
+
+As far as I can tell this is pretty difficult to handle in the general case. If the relevant serializable objects all have default values for the new fields, things will probably work without difficulty. Otherwise we're going to have a bad time. Be aware of this when changing these objects, and if providing defaults isn't possible, it may be worth attempting workarounds like forcing an app restart (which would return us to the home screen with no old saved state) after the database upgrade.
+
 ## Miscellaneous notes
 
 * Don't use raw TextFields without taking explicit steps to limit the amount of text that can be entered. In practice, use one of the custom composables which wraps a TextField and adds this kind of restriction. This limit can be fairly generous but in general we don't want users maliciously or accidentally entering megabytes of text. Even a few hundred characters in some text fields might be enough to wreck the screen layout and make the app almost unrecoverable.

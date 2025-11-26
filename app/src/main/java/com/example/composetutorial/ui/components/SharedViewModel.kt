@@ -136,6 +136,7 @@ class SharedViewModel : ViewModel() {
         )
     }
 
+// TODO: If this remains public and read/write, the set function is perhaps a bit redundant?
     var editDataSetScreenInitialUIContent: EditableDataSet? = null // TODO RENAME?
 
     fun setEditDataSetScreenInitialUIContent(dataSet: DataSet?, locale: Locale) {
