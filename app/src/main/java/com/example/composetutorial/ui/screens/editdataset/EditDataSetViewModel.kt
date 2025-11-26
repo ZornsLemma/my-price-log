@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.EditableUiContent
+import com.example.composetutorial.EmptyParcelable
 import com.example.composetutorial.R
 import com.example.composetutorial.ui.common.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
@@ -35,7 +36,9 @@ class EditDataSetViewModel(
     savedStateHandle: SavedStateHandle,
     initialEditableContent: EditableDataSet?,
 ) : ViewModel() {
-    val uiContent = EditableUiContent(this, savedStateHandle, "DataSet", initialEditableContent, Unit) // TODO: RENAME?
+    val uiContent = EditableUiContent(this, savedStateHandle, "DataSet", initialEditableContent,
+        EmptyParcelable()
+    ) // TODO: RENAME?
 
     // There's no need to explicitly check for prices; we want to give a warning if there are any
     // items or sources associated with the data set even without prices, and there can't be any

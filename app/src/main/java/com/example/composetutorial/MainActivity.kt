@@ -2,132 +2,36 @@
 
 package com.example.composetutorial // TODO: change this!
 
-import com.example.composetutorial.domain.dataStore
-import com.example.composetutorial.domain.PriceAgeSettings
-import com.example.composetutorial.ui.components.numericValidationRules
-import com.example.composetutorial.ui.common.ValidationRule
-import com.example.composetutorial.ui.common.failedValidationRuleOrNull
-import com.example.composetutorial.debug.myCheck
-import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.ui.common.LoadState
-import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
-import com.example.composetutorial.ui.components.generalselector.GeneralSelectorViewModel
-import com.example.composetutorial.ui.common.AsyncOperationStatus
-import com.example.composetutorial.models.populateDemoData
-import com.example.composetutorial.ui.screens.home.HomeViewModel
-import com.example.composetutorial.ui.defaultValidationMessageDelayMillis
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.core.CorruptionException
-import androidx.datastore.core.Serializer
-import androidx.datastore.core.DataStore
 //import androidx.datastore.core.dataStore
 //import com.example.composetutorial.datastore.proto.UserPrefs
 //import com.example.composetutorial.datastore.proto.UserPrefs.DatasetSelection
-import com.google.protobuf.InvalidProtocolBufferException
-import UserPrefs
-import com.example.composetutorial.domain.UnitFamily
 import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.models.EditableDataSet
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.EditableItem
 import com.example.composetutorial.models.Source
 import com.example.composetutorial.models.EditableSource
 import com.example.composetutorial.models.Price
-import com.example.composetutorial.models.PriceHistory
-import kotlinx.coroutines.flow.combine
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
-import androidx.datastore.preferences.core.Preferences
-import java.time.Duration
 //import androidx.compose.foundation.layout.*
-import android.app.Application
-import android.content.Context
-import android.content.pm.ActivityInfo
-import android.icu.text.Collator
-import android.os.Bundle
-import android.os.StrictMode
+import android.os.Parcelable
 import android.util.Log
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.Icon
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import com.example.composetutorial.ui.theme.ComposeTutorialTheme
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 //import androidx.compose.ui.semantics.SemanticsProperties.Role
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.datastore.dataStore
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.room.withTransaction
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.text.NumberFormat
-import java.time.Instant
-import java.util.Currency
 import java.util.Locale
-import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.composetutorial.app.AppScope
-import com.example.composetutorial.common.intersectionIsEmpty
-import com.example.composetutorial.debug.DebugFlags
-import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.PriceAnalysis
-import com.example.composetutorial.domain.QuantityType
-import com.example.composetutorial.models.RepositoryImpl
-import com.example.composetutorial.domain.UnitPrice
-import com.example.composetutorial.domain.getRelevantUnitFamilies
 import com.example.composetutorial.models.EditablePrice
-import com.example.composetutorial.ui.AppNavigation
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
-import java.io.InputStream
-import java.io.OutputStream
-import java.text.DecimalFormatSymbols
-import java.text.Normalizer
-import kotlin.collections.map
-import kotlin.math.ceil
-import kotlin.math.pow
-import com.example.composetutorial.models.AppDatabase
-import com.example.composetutorial.ui.common.UiText
-import com.example.composetutorial.ui.common.setSelectedDataSetId
-import com.example.composetutorial.ui.common.setSelectedItemId
-import com.example.composetutorial.ui.common.setSelectedSourceId
-import com.example.composetutorial.ui.screens.settings.SettingsViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.parcelize.Parcelize
 
 data class HomeScreenUIContent(
     val dataSetIdState: LoadState<Long>,
@@ -369,11 +273,14 @@ This is what most serious production apps have converged on in 2024–2025.
 
 */
 
+@Parcelize
+class EmptyParcelable : Parcelable // TODO!?
+
 // TODO WIP EXPERIMENTAL - DOESN'T BELONG IN THIS FILE - AND WE NEED TO REWORK OTHER SCREENS TO USE IT INSTEAD OF OLD APPROACH
 // TODO MAYBE RENAME THIS GIVEN HOW IT IS EVOLVING?
 // TODO: Might be good to do some fairly good permanent logging here? for both static and original/editable
 @OptIn(FlowPreview::class)
-class EditableUiContent<T, U>(
+class EditableUiContent<T : Parcelable, U : Parcelable>( // TODO: Use more descriptive type parameter?
     val viewModel: ViewModel,
     val savedStateHandle: SavedStateHandle,
     keySuffix: String,
@@ -384,43 +291,49 @@ class EditableUiContent<T, U>(
     private val editableKey = "editable$keySuffix"
     private val originalKey = "original$keySuffix"
     private val staticKey = "static$keySuffix"
-    private val guaranteedInitial: T =
-        savedStateHandle[editableKey]
-            ?: initialContent
-            ?: error("initialContent is null and nothing in SavedStateHandle for $editableKey")
-    val staticContent: U = run {
-        val savedValue: U? = savedStateHandle[staticKey]
+
+    private fun<V> getKeyWithDefaultAndUpdate(savedStateHandle: SavedStateHandle, key: String, initialValue: V?): V {
+        val savedValue: V? = savedStateHandle[key]
         if (savedValue != null) {
-            if (initialStaticContent == null) {
-                Log.d("TODOMYAPP", "Using $staticKey saved value: $savedValue")
+            if (initialValue == null) {
+                Log.d("TODOMYAPP", "Using $key saved value: $savedValue")
             } else {
-                Log.w("TODOMYAPP", "Using $staticKey saved value '$savedValue' but there is an initialStaticContent of '$initialStaticContent'")
+                // We would normally expect initialValue to be null if there is a savedValue. Log
+                // this but carry on, as it's probably fine in practice.
+                // TODO: The exception here is where we have EmptyParcelable, so this is a bit misleading - can we tweak to avoid logging in this case???
+                Log.w("TODOMYAPP", "Using $key saved value '$savedValue' but there is an initialValue of '$initialValue'")
             }
-            savedValue
+            return savedValue
         } else {
-            checkNotNull(initialStaticContent) { "initialStaticContent is null and nothing in SavedStateHandle for $staticKey" }
-            Log.d("TODOMYAPP", "Initialising $staticKey saved value: $initialStaticContent")
-            savedStateHandle[staticKey] = initialStaticContent
-            initialStaticContent
+            checkNotNull(initialValue) { "initialValue is null and nothing in SavedStateHandle for $key" }
+            Log.d("TODOMYAPP", "Initialising $key saved value: $initialValue")
+            savedStateHandle[key] = initialValue
+            return initialValue
         }
     }
-    val originalContent: T = savedStateHandle[originalKey] ?: (guaranteedInitial.also { Log.d("MyAppSS", "original: $it") ; savedStateHandle[originalKey] = it })
-    private val _editableContent = savedStateHandle.getMutableStateFlow(editableKey, initialValue = guaranteedInitial)
 
+    val staticContent: U = getKeyWithDefaultAndUpdate(savedStateHandle, staticKey, initialStaticContent)
+    val originalContent: T = getKeyWithDefaultAndUpdate(savedStateHandle, originalKey, initialContent)
+
+    private val _editableContent = run {
+        getKeyWithDefaultAndUpdate(savedStateHandle, editableKey, initialContent)
+        // initialValue is irrelevant on the next line, the previous call ensured the key exists.
+        savedStateHandle.getMutableStateFlow(editableKey, initialValue = originalContent)
+    }
     val editableContent: StateFlow<T> = _editableContent.asStateFlow()
 
     fun update(newEditableContent: T) {
-        // This does not update the savedStateHandle to persist the change in case of process death.
-        // That happens in the coroutine created by init.
+        // This will cause the editableContent to update so anything collecting it can observe the
+        // change. It does not update the savedStateHandle to persist the change in case of process
+        // death; that happens in the coroutine launched by init.
         _editableContent.value = newEditableContent
     }
 
     init {
-        Log.d("MyAppSS", "read: ${editableContent.value}")
         viewModel.viewModelScope.launch {
             _editableContent
                 .debounce(300L /* TODO MAGIC */)
-                .collectLatest { savedStateHandle[editableKey] = it; Log.d("MyAppSS", "write: $it") }
+                .collectLatest { savedStateHandle[editableKey] = it; Log.d("TODOMYAPPN", "Saving $editableKey value: $it") }
         }
     }
 }
