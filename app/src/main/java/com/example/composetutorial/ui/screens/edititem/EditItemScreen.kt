@@ -66,9 +66,11 @@ fun EditItemScreen(
     navController: NavHostController,
     requestClose: (newSelectedItemId: Long?) -> Unit
 ) {
-    val uiContent = viewModel.uiContent // TODO MAYBE GET RID OF UICONTENT AS A LOCAL VAL AND INSTEAD EXTRACT THE DATASET AND ORIGINALITEM AS LOCAL VALS, WOULD PROBBLY SIMPLY MUCH OF LATER CODE
+    // TODO DELETE val uiContent = viewModel.uiContent // TODO MAYBE GET RID OF UICONTENT AS A LOCAL VAL AND INSTEAD EXTRACT THE DATASET AND ORIGINALITEM AS LOCAL VALS, WOULD PROBBLY SIMPLY MUCH OF LATER CODE
+    val originalItem = viewModel.uiContent.originalContent
     // TODO: It just might be workable/useful to make editableContent private and expose some collectAsStateWithLifecycle or other necessary methods, to reduce the temptation/accident of accessing its .value directly and maybe not getting what we want, or at least writing more verbose code than necssary
-    val editableItem by uiContent.editableContent.collectAsStateWithLifecycle()
+    val editableItem by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
+    val dataSet = viewModel.uiContent.staticContent.dataSet // TODO: If this is the only use of staticContent, we may be able to get away with getting rid of the thin wrapper EditItemScreenStaticContent
 
     val itemReferenceCount by viewModel.itemReferenceCountFlow.collectAsStateWithLifecycle(null)
     Log.d("MyApp", "itemReferenceCount $itemReferenceCount")
@@ -87,7 +89,7 @@ fun EditItemScreen(
         title = topAppBarTitle( if (viewModel.uiContent.originalContent.id == 0L) stringResource(R.string.title_add_item) else stringResource(
             R.string.title_edit_item
         ), viewModel.uiContent.staticContent.dataSet.name),
-        isDirty = { editableItem != uiContent.originalContent },
+        isDirty = { editableItem != originalItem },
         validateForSave = { viewModel.validateForSave() },
         performSave = { viewModel.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
         onIdle = {},
@@ -327,7 +329,7 @@ fun EditItemScreen(
         )
 
         // TODO: I am perhaps being inconsitent in what I ahve changed (not just for edit item) but I am thinking where an ID is constant I should probably just use it from the originalContent not the editableone
-        if (uiContent.originalContent.id != 0L) {
+        if (originalItem.id != 0L) {
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
                 onClick = { showDeleteConfirmDialog = true },
