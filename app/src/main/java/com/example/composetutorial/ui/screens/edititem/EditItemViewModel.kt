@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.composetutorial.PersistentUiContent
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.common.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
@@ -13,6 +12,7 @@ import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.EditableItem
 import com.example.composetutorial.models.toDomain
+import com.example.composetutorial.ui.common.PersistentUiContent
 import com.example.composetutorial.ui.common.initialVersioned
 import com.example.composetutorial.ui.common.withVersion
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
