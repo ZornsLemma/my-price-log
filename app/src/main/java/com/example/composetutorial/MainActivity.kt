@@ -371,6 +371,7 @@ This is what most serious production apps have converged on in 2024–2025.
 
 // TODO WIP EXPERIMENTAL - DOESN'T BELONG IN THIS FILE - AND WE NEED TO REWORK OTHER SCREENS TO USE IT INSTEAD OF OLD APPROACH
 // TODO MAYBE RENAME THIS GIVEN HOW IT IS EVOLVING?
+// TODO: Might be good to do some fairly good permanent logging here? for both static and original/editable
 @OptIn(FlowPreview::class)
 class EditableUiContent<T, U>(
     val viewModel: ViewModel,
@@ -390,9 +391,15 @@ class EditableUiContent<T, U>(
     val staticContent: U = run {
         val savedValue: U? = savedStateHandle[staticKey]
         if (savedValue != null) {
+            if (initialStaticContent == null) {
+                Log.d("TODOMYAPP", "Using $staticKey saved value: $savedValue")
+            } else {
+                Log.w("TODOMYAPP", "Using $staticKey saved value '$savedValue' but there is an initialStaticContent of '$initialStaticContent'")
+            }
             savedValue
         } else {
             checkNotNull(initialStaticContent) { "initialStaticContent is null and nothing in SavedStateHandle for $staticKey" }
+            Log.d("TODOMYAPP", "Initialising $staticKey saved value: $initialStaticContent")
             savedStateHandle[staticKey] = initialStaticContent
             initialStaticContent
         }
