@@ -33,9 +33,9 @@ import kotlinx.coroutines.flow.stateIn
 class EditDataSetViewModel(
     private val repository: Repository,
     savedStateHandle: SavedStateHandle,
-    initialContent: EditableDataSet?,
+    initialEditableContent: EditableDataSet?,
 ) : ViewModel() {
-    val uiContent = EditableUiContent(this, savedStateHandle, "DataSet", initialContent, Unit) // TODO: RENAME?
+    val uiContent = EditableUiContent(this, savedStateHandle, "DataSet", initialEditableContent, Unit) // TODO: RENAME?
 
     // There's no need to explicitly check for prices; we want to give a warning if there are any
     // items or sources associated with the data set even without prices, and there can't be any

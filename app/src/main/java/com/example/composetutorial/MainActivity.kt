@@ -387,7 +387,16 @@ class EditableUiContent<T, U>(
         savedStateHandle[editableKey]
             ?: initialContent
             ?: error("initialContent is null and nothing in SavedStateHandle for $editableKey")
-    val staticContent: U = savedStateHandle[staticKey]  ?: initialStaticContent ?: error("staticContent is null and nothing in SavedStateHandle for $staticKey")
+    val staticContent: U = run {
+        val savedValue: U? = savedStateHandle[staticKey]
+        if (savedValue != null) {
+            savedValue
+        } else {
+            checkNotNull(initialStaticContent) { "initialStaticContent is null and nothing in SavedStateHandle for $staticKey" }
+            savedStateHandle[staticKey] = initialStaticContent
+            initialStaticContent
+        }
+    }
     val originalContent: T = savedStateHandle[originalKey] ?: (guaranteedInitial.also { Log.d("MyAppSS", "original: $it") ; savedStateHandle[originalKey] = it })
     private val _editableContent = savedStateHandle.getMutableStateFlow(editableKey, initialValue = guaranteedInitial)
 

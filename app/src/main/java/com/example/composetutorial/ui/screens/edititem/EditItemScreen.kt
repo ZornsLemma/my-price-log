@@ -66,7 +66,9 @@ fun EditItemScreen(
     navController: NavHostController,
     requestClose: (newSelectedItemId: Long?) -> Unit
 ) {
-    val uiContent = viewModel.uiContent
+    val uiContent = viewModel.uiContent // TODO MAYBE GET RID OF UICONTENT AS A LOCAL VAL AND INSTEAD EXTRACT THE DATASET AND ORIGINALITEM AS LOCAL VALS, WOULD PROBBLY SIMPLY MUCH OF LATER CODE
+    // TODO: It just might be workable/useful to make editableContent private and expose some collectAsStateWithLifecycle or other necessary methods, to reduce the temptation/accident of accessing its .value directly and maybe not getting what we want, or at least writing more verbose code than necssary
+    val editableItem by uiContent.editableContent.collectAsStateWithLifecycle()
 
     val itemReferenceCount by viewModel.itemReferenceCountFlow.collectAsStateWithLifecycle(null)
     Log.d("MyApp", "itemReferenceCount $itemReferenceCount")
@@ -82,10 +84,10 @@ fun EditItemScreen(
     GeneralEditAndDeleteScreen(
         viewModel = viewModel.generalEditScreenViewModel,
         navController = navController,
-        title = topAppBarTitle( if (viewModel.uiContent.editableItem.value.id == 0L) stringResource(R.string.title_add_item) else stringResource(
+        title = topAppBarTitle( if (viewModel.uiContent.originalContent.id == 0L) stringResource(R.string.title_add_item) else stringResource(
             R.string.title_edit_item
-        ), viewModel.uiContent.dataSet.name),
-        isDirty = { uiContent.editableItem.value != uiContent.originalItem },
+        ), viewModel.uiContent.staticContent.dataSet.name),
+        isDirty = { editableItem != uiContent.originalContent },
         validateForSave = { viewModel.validateForSave() },
         performSave = { viewModel.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
         onIdle = {},
@@ -98,7 +100,7 @@ fun EditItemScreen(
         performDelete = { viewModel.performDelete() },
         onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
     ) { showDeleteSpinner ->
-        var name by rememberSyncedTextFieldValue(uiContent.editableItem.value.name)
+        var name by rememberSyncedTextFieldValue(editableItem.name)
         val nameValidationRules by viewModel.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
         ValidatedFilteredTextField(
@@ -108,7 +110,7 @@ fun EditItemScreen(
             maxLength = maxItemNameLength,
             onValueChange = {
                 name = it
-                viewModel.setUIContentEditableItem(uiContent.editableItem.value.copy(name = it.text))
+                viewModel.setUIContentEditableItem(editableItem.copy(name = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value ?: emptyList(),
@@ -138,7 +140,7 @@ fun EditItemScreen(
                 null,
             ),
         )
-        var selectedOption = uiContent.editableItem.value.quantityType
+        var selectedOption = editableItem.quantityType
 
         // ENHANCE: When we disallow changing "sold by" because there are prices for the product,
         // just maybe we should switch to displaying a disabled TextField or similar with a
@@ -173,7 +175,7 @@ fun EditItemScreen(
                 options.forEach { (id, name, supportingText) ->
                     val clickableModifier = if (!radioButtonsEnabled) Modifier else Modifier.clickable {
                         viewModel.setUIContentEditableItem(
-                            uiContent.editableItem.value.copy(
+                            editableItem.copy(
                                 quantityType = id
                             )
                         )
@@ -224,16 +226,16 @@ fun EditItemScreen(
                     // TODO: RelevantUnit* here are sort of copy and paste from ItemSourceInfo and
                     // could possibly be factored out along with the code using them
                     val relevantUnitFamilies =
-                        remember(viewModel.uiContent.dataSet) { getRelevantUnitFamilies(viewModel.uiContent.dataSet) }
+                        remember(viewModel.uiContent.staticContent.dataSet) { getRelevantUnitFamilies(viewModel.uiContent.staticContent.dataSet) }
 
                     val relevantUnitList =
                         remember(
-                            viewModel.uiContent.dataSet,
-                            viewModel.uiContent.editableItem.value.quantityType
+                            viewModel.uiContent.staticContent.dataSet,
+                            editableItem.quantityType
                         ) {
                             getRelevantMeasurementUnits(
-                                viewModel.uiContent.dataSet,
-                                viewModel.uiContent.editableItem.value.quantityType,
+                                viewModel.uiContent.staticContent.dataSet,
+                                editableItem.quantityType,
                                 includeDisplayOnly = false
                             )
                         }
@@ -243,21 +245,22 @@ fun EditItemScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 8.dp),
                         enabled = saveStatus.isNotBusy(),
-                        selectedId = uiContent.editableItem.value.defaultUnit.id,
+                        selectedId = editableItem.defaultUnit.id,
                         onItemSelected = {
                             val defaultUnit = MeasurementUnit.fromId(it)
                             myCheck(defaultUnit != null) {
                                 "Expected non-null defaultUnit to be selected; got $it"
                             }
-                            if (uiContent.editableItem.value.defaultUnit != defaultUnit!!) {
+                            // TODO: Is it possible this ordinal crap can be got rid of now we've change how thing are parcelised/wrapped in mutablestate etc?
+                            if (editableItem.defaultUnit != defaultUnit!!) {
                                 val defaultUnitIdByQuantityTypeOrdinal =
-                                    uiContent.editableItem.value.defaultUnitIdByQuantityTypeOrdinal.toMutableList()
+                                    editableItem.defaultUnitIdByQuantityTypeOrdinal.toMutableList()
                                         .also {
-                                            it[uiContent.editableItem.value.quantityType.ordinal] =
+                                            it[editableItem.quantityType.ordinal] =
                                                 defaultUnit.id
                                         }
                                 viewModel.setUIContentEditableItem(
-                                    uiContent.editableItem.value.copy(
+                                    editableItem.copy(
                                         defaultUnitIdByQuantityTypeOrdinal = defaultUnitIdByQuantityTypeOrdinal
                                     )
                                 )
@@ -297,10 +300,10 @@ fun EditItemScreen(
             }
             Switch(
                 enabled = saveStatus.isNotBusy(),
-                checked = uiContent.editableItem.value.allowMultipack,
+                checked = editableItem.allowMultipack,
                 onCheckedChange = {
                     viewModel.setUIContentEditableItem(
-                        uiContent.editableItem.value.copy(
+                        editableItem.copy(
                             allowMultipack = it
                         )
                     )
@@ -309,7 +312,7 @@ fun EditItemScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        var notes by rememberSyncedTextFieldValue(uiContent.editableItem.value.notes)
+        var notes by rememberSyncedTextFieldValue(editableItem.notes)
         FilteredTextField(
             label = { Text(stringResource(R.string.label_notes)) },
             keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_notes)),
@@ -317,13 +320,14 @@ fun EditItemScreen(
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
-                viewModel.setUIContentEditableItem(uiContent.editableItem.value.copy(notes = it.text))
+                viewModel.setUIContentEditableItem(editableItem.copy(notes = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             modifier = Modifier.fillMaxWidth(),
         )
 
-        if (uiContent.editableItem.value.id != 0L) {
+        // TODO: I am perhaps being inconsitent in what I ahve changed (not just for edit item) but I am thinking where an ID is constant I should probably just use it from the originalContent not the editableone
+        if (uiContent.originalContent.id != 0L) {
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
                 onClick = { showDeleteConfirmDialog = true },

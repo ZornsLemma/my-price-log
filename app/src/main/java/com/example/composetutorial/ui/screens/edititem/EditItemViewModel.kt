@@ -1,14 +1,17 @@
 package com.example.composetutorial.ui.screens.edititem
 
+import android.os.Parcelable
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.EditItemScreenUIContent
+import com.example.composetutorial.EditableUiContent
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.common.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.Repository
+import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.EditableItem
 import com.example.composetutorial.models.toDomain
 import com.example.composetutorial.ui.common.initialVersioned
@@ -21,17 +24,31 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.parcelize.Parcelize
+
+// TODO: MOVE
+@Parcelize
+data class EditItemScreenStaticContent(
+    val dataSet: DataSet,
+) : Parcelable
+
+// TODO: It is just possible that with the rework, we don't need things like dataSetId in EditableItem and ditto for other EditableFoo classes
 
 class EditItemViewModel(
     private val repository: Repository,
-    private val savedStateHandle: SavedStateHandle,
-    val uiContent: EditItemScreenUIContent,
+    savedStateHandle: SavedStateHandle,
+    initialEditableContent: EditableItem?,
+    initialStaticContent: EditItemScreenStaticContent?,
 ) : ViewModel() {
-    init {
-        uiContent.saveState(savedStateHandle)
-    }
+    val uiContent = EditableUiContent(
+        this,
+        savedStateHandle,
+        "Item",
+        initialEditableContent,
+        initialStaticContent
+    )
 
-    val itemReferenceCountFlow = uiContent.editableItem.value.id.let { itemId ->
+    val itemReferenceCountFlow = uiContent.originalContent.id.let { itemId ->
         if (itemId != 0L) {
             repository.countPricesForItem(itemId)
         } else {
@@ -41,9 +58,9 @@ class EditItemViewModel(
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
+    // TODO: May want to remove this function or tweak it but let's keep it in while we refactor
     fun setUIContentEditableItem(newEditableItem: EditableItem) {
-        uiContent.editableItem.value = newEditableItem
-        uiContent.saveEditableItemState(savedStateHandle)
+        uiContent.update(newEditableItem)
     }
 
 
@@ -52,8 +69,8 @@ class EditItemViewModel(
     // fail" rule list would stop this, but then we would see a brief validation error during the
     // initial composition. See EditItemViewModel.validateForSave() for more on this.
     val nameValidationRules =
-        repository.getAllItems(uiContent.editableItem.value.dataSetId).map { itemList ->
-            createNameValidationRules(itemList.filter { item -> item.id != uiContent.editableItem.value.id }
+        repository.getAllItems(uiContent.originalContent.dataSetId).map { itemList ->
+            createNameValidationRules(itemList.filter { item -> item.id != uiContent.originalContent.id }
                 .map { item -> item.name })
         }.withVersion().stateIn(
             viewModelScope,
@@ -80,7 +97,7 @@ class EditItemViewModel(
         val nameValidationRules = nameValidationRules.value.value ?: return false
         if (!validationRulesOk(
                 nameValidationRules,
-                uiContent.editableItem.value.name
+                uiContent.editableContent.value.name
             )
         ) {
             _saveValidationEvents.emit(EditableField.NAME)
@@ -91,9 +108,9 @@ class EditItemViewModel(
     }
 
     suspend fun performSave() : Long {
-        val item = uiContent.editableItem.value.toDomain()
+        val item = uiContent.editableContent.value.toDomain()
         if (item == null) {
-            throw IllegalStateException("performSave() called with an inconvertible EditableItem: ${uiContent.editableItem.value}")
+            throw IllegalStateException("performSave() called with an inconvertible EditableItem: ${uiContent.editableContent.value}")
         }
         //delay(5000) // TODO TEMP HACK
         // updateOrInsertItem() returns -1 if it's an update or the new ID if it was an insert.
@@ -104,7 +121,7 @@ class EditItemViewModel(
 
     suspend fun performDelete() {
         Log.d("MyApp", "entered performDelete")
-        val itemId = uiContent.editableItem.value.id
+        val itemId = uiContent.editableContent.value.id
         myCheck(itemId != 0L) { "Expected to delete an actual item but have ID 0" }
         val rowsDeleted = repository.deleteItemById(itemId)
         Log.d("MyApp", "Deleted $rowsDeleted rows with itemId $itemId")

@@ -65,6 +65,7 @@ import com.example.composetutorial.ui.screens.about.AboutScreen
 import com.example.composetutorial.ui.screens.editdataset.EditDataSetScreen
 import com.example.composetutorial.ui.screens.editdataset.EditDataSetViewModel
 import com.example.composetutorial.ui.screens.edititem.EditItemScreen
+import com.example.composetutorial.ui.screens.edititem.EditItemScreenStaticContent
 import com.example.composetutorial.ui.screens.edititem.EditItemViewModel
 import com.example.composetutorial.ui.screens.editprice.EditPriceScreen
 import com.example.composetutorial.ui.screens.editprice.EditPriceViewModel
@@ -550,8 +551,8 @@ This may be complete crap. The example of how to use it is probably as long as t
                     EditItemViewModel(
                         app.repository,
                         handle,
-                        sharedViewModel.editItemScreenUIContent
-                            ?: EditItemScreenUIContent.fromSavedState(handle)!!
+                        sharedViewModel.editItemScreenUIContent?.editableItem,
+                        sharedViewModel.editItemScreenUIContent?.dataSet?.let(::EditItemScreenStaticContent)
                     )
                 }
             ) { viewModel ->
@@ -569,10 +570,10 @@ This may be complete crap. The example of how to use it is probably as long as t
                             // The user cancelled the edit, so just go back one step.
                             navController.popBackStack()
                         } else {
-                            // The used saved the edit, so select the edited item and return to the
+                            // The user saved the edit, so select the edited item and return to the
                             // home screen.
                             Log.d("MyAppQZ", "newSelectedItemId=$newSelectedItemId")
-                            setSelectedItemIdAsync(context, viewModel.uiContent.dataSet.id, newSelectedItemId)
+                            setSelectedItemIdAsync(context, viewModel.uiContent.staticContent.dataSet.id, newSelectedItemId)
                             navController.popBackStack("home", inclusive = false)
                         }
                     })

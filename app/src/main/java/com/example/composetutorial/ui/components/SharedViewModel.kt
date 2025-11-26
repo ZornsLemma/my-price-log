@@ -12,6 +12,7 @@ import com.example.composetutorial.ViewPriceHistoryScreenUIContent
 import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.EditableDataSet
+import com.example.composetutorial.models.EditableItem
 import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Source
@@ -143,15 +144,15 @@ class SharedViewModel : ViewModel() {
         editDataSetScreenInitialUIContent = dataSet.toEditable(locale)
     }
 
-    var editItemScreenUIContent: EditItemScreenUIContent? = null
+    data class TODOWTF(
+        val editableItem: EditableItem,
+        val dataSet: DataSet,
+    )
+    var editItemScreenUIContent: TODOWTF? = null
 
     fun setEditItemScreenContent(item: Item?, dataSet: DataSet) {
         val editableItem = item.toEditable(dataSet)
-        editItemScreenUIContent = EditItemScreenUIContent(
-            editableItem = mutableStateOf(editableItem),
-            originalItem = editableItem,
-            dataSet = dataSet,
-        )
+        editItemScreenUIContent = TODOWTF(editableItem, dataSet)
     }
 
     var editSourceScreenUIContent: EditSourceScreenUIContent? = null
