@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.parcelize.Parcelize
 
 // TODO: MOVE
+// This class seems a bit pointless but it makes it clearer what is being retrieved from
+// EditableUiContent.staticContent.
 @Parcelize
 data class EditItemScreenStaticContent(
     val dataSet: DataSet,
