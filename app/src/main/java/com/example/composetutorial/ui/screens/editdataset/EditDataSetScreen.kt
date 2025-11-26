@@ -56,7 +56,7 @@ fun EditDataSetScreen(
     requestClose: (Long?) -> Unit
 ) {
     val uiContent = viewModel.uiContent
-    val editableDataSet by uiContent.editableDataSet.collectAsStateWithLifecycle()
+    val editableDataSet by uiContent.editableContent.collectAsStateWithLifecycle()
     // val originalDataSet by uiContent.originalDataSet.collectAsStateWithLifecycle() // TODO: does this need to be a flow? it can't change. but we may need this to hack into the auto-savedstatehandle stuff
 
     val dataSetReferenceCount by viewModel.dataSetReferenceCountFlow.collectAsStateWithLifecycle(null)
@@ -77,7 +77,7 @@ fun EditDataSetScreen(
         title = { Text(if (editableDataSet.id == 0L) stringResource(R.string.title_add_data_set) else stringResource(
             R.string.title_edit_data_set
         )) },
-        isDirty = { editableDataSet != uiContent.originalDataSet },
+        isDirty = { editableDataSet != uiContent.originalContent },
         validateForSave = { viewModel.validateForSave() },
         performSave = { viewModel.performSave(); /* throw IllegalArgumentException("TODO2") */ },
         onIdle = {},
@@ -91,7 +91,7 @@ fun EditDataSetScreen(
         performDelete = { viewModel.performDelete() },
         onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
     ) { showDeleteSpinner ->
-        var name by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.name)
+        var name by rememberSyncedTextFieldValue(editableDataSet.name)
         val nameValidationRules by viewModel.nameValidationRules.collectAsStateWithLifecycle()
         ValidatedFilteredTextField(
             label = { Text(stringResource(R.string.label_name)) },
@@ -100,7 +100,7 @@ fun EditDataSetScreen(
             maxLength = maxDataSetNameLength,
             onValueChange = {
                 name = it
-                viewModel.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(name = it.text))
+                viewModel.setUIContentEditableDataSet(editableDataSet.copy(name = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value,
@@ -115,7 +115,7 @@ fun EditDataSetScreen(
 
         // TODO: Should we specify an offset of 4.dp here? Or should we perhaps just improve spacing?
         ValidationErrorHighlightBox(
-            value = uiContent.editableDataSet.value.currencyCode,
+            value = editableDataSet.currencyCode,
             validationRules = viewModel.currencyValidationRules,
             allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
             validationFlow = viewModel.saveValidationEvents,
@@ -154,10 +154,10 @@ fun EditDataSetScreen(
                     .fillMaxWidth()
                     .validationInputHandleFocusRequester(validationInputHandle),
 
-                selectedId = if (uiContent.editableDataSet.value.currencyCode != "") uiContent.editableDataSet.value.currencyCode else null,
+                selectedId = if (editableDataSet.currencyCode != "") editableDataSet.currencyCode else null,
                 onItemSelected = {
                     viewModel.setUIContentEditableDataSet(
-                        uiContent.editableDataSet.value.copy(
+                        editableDataSet.copy(
                             currencyCode = it
                         )
                     )
@@ -182,7 +182,7 @@ fun EditDataSetScreen(
         // but the relevant library version is still in alpha so I'll just do it the old MD3 way for
         // now with a segmented button group.
         ValidationErrorHighlightBox(
-            value = uiContent.editableDataSet.value.unitPreferences,
+            value = editableDataSet.unitPreferences,
             validationRules = viewModel.measurementSystemValidationRules,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM
@@ -211,7 +211,7 @@ fun EditDataSetScreen(
             ) {
                 options.forEachIndexed { index, label ->
                     val unit = UnitPreferenceOption.entries[index]
-                    val oldUnitPreferences = uiContent.editableDataSet.value.unitPreferences
+                    val oldUnitPreferences = editableDataSet.unitPreferences
                     val checked = when (unit) {
                         UnitPreferenceOption.METRIC -> oldUnitPreferences.allowMetric
                         UnitPreferenceOption.IMPERIAL -> oldUnitPreferences.allowImperial
@@ -232,7 +232,7 @@ fun EditDataSetScreen(
                                 UnitPreferenceOption.US_CUSTOMARY -> oldUnitPreferences.copy(allowUSCustomary = it, allowImperial = !it && oldUnitPreferences.allowImperial)
                             }
                             viewModel.setUIContentEditableDataSet(
-                                uiContent.editableDataSet.value.copy(unitPreferences = newUnitPreferences)
+                                editableDataSet.copy(unitPreferences = newUnitPreferences)
                             )
                         },
                         checked = checked,
@@ -256,7 +256,7 @@ fun EditDataSetScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        var notes by rememberSyncedTextFieldValue(uiContent.editableDataSet.value.notes)
+        var notes by rememberSyncedTextFieldValue(editableDataSet.notes)
         FilteredTextField(
             label = { Text(stringResource(R.string.label_notes)) },
             value = notes,
@@ -264,13 +264,13 @@ fun EditDataSetScreen(
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
-                viewModel.setUIContentEditableDataSet(uiContent.editableDataSet.value.copy(notes = it.text))
+                viewModel.setUIContentEditableDataSet(editableDataSet.copy(notes = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             modifier = Modifier.fillMaxWidth(),
         )
 
-        if (uiContent.editableDataSet.value.id != 0L) {
+        if (editableDataSet.id != 0L) {
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
                 onClick = { showDeleteConfirmDialog = true },

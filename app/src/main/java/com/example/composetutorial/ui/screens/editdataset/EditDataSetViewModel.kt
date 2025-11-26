@@ -4,7 +4,8 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.composetutorial.EditDataSetScreenUIContent
+//import com.example.composetutorial.EditDataSetScreenUIContent
+import com.example.composetutorial.EditableUiContent
 import com.example.composetutorial.R
 import com.example.composetutorial.ui.common.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
@@ -32,20 +33,21 @@ import kotlinx.coroutines.flow.stateIn
 
 class EditDataSetViewModel(
     private val repository: Repository,
-    private val savedStateHandle: SavedStateHandle,
-    val uiContent: EditDataSetScreenUIContent,
+    savedStateHandle: SavedStateHandle,
+    initialContent: EditableDataSet?,
 ) : ViewModel() {
     /* TODO DELETE
     init {
         uiContent.saveState(savedStateHandle)
     }
     */
+    val uiContent = EditableUiContent(this, savedStateHandle, "DataSet", initialContent) // TODO: RENAME?
 
     // There's no need to explicitly check for prices; we want to give a warning if there are any
     // items or sources associated with the data set even without prices, and there can't be any
     // prices without at least one item and one source.
     @OptIn(ExperimentalCoroutinesApi::class)
-    val dataSetReferenceCountFlow = uiContent.editableDataSet.map { it.id }
+    val dataSetReferenceCountFlow = uiContent.editableContent.map { it.id }
         .flatMapLatest { dataSetId ->
             if (dataSetId == 0L) {
                 flowOf(0L) // if dataSetId is 0 (creating a new), return 0
@@ -63,7 +65,7 @@ class EditDataSetViewModel(
 
     // TODO: This function may be redundant/silly and/or the update() it calls may be silly to take a transform if this is how it's called
     fun setUIContentEditableDataSet(newEditableDataSet: EditableDataSet) {
-        uiContent.update({ newEditableDataSet })
+        uiContent.update(newEditableDataSet)
         /* TODO DELETE
         uiContent.editableDataSet.value = newEditableDataSet
         uiContent.saveEditableDataSetState(savedStateHandle)
@@ -74,7 +76,7 @@ class EditDataSetViewModel(
         repository.getAllDataSets()
             .map { dataSetList ->
                 createNameValidationRules(
-                    dataSetList.filter { dataSet -> dataSet.id != uiContent.editableDataSet.value.id }
+                    dataSetList.filter { dataSet -> dataSet.id != uiContent.editableContent.value.id }
                         .map { dataSet -> dataSet.name }
                 )
             }
@@ -126,7 +128,7 @@ class EditDataSetViewModel(
 
     suspend fun validateForSave(): Boolean {
         Log.d("MyAppESS", "validateForSave")
-        val editableDataSet = uiContent.editableDataSet.value
+        val editableDataSet = uiContent.editableContent.value
         if (!validationRulesOk(nameValidationRules.value.value, editableDataSet.name)) {
             _saveValidationEvents.emit(EditableField.NAME)
             return false
@@ -151,9 +153,9 @@ class EditDataSetViewModel(
     }
 
     suspend fun performSave(): Long {
-        val dataSet = uiContent.editableDataSet.value.toDomain()
+        val dataSet = uiContent.editableContent.value.toDomain()
         if (dataSet == null) {
-            throw IllegalStateException("performSave() called with an inconvertible EditableDataSet: ${uiContent.editableDataSet.value}")
+            throw IllegalStateException("performSave() called with an inconvertible EditableDataSet: ${uiContent.editableContent.value}")
         }
         // updateOrInsertDataSet() returns -1 if it's an update or the new ID if it was an insert.
         val newId = repository.updateOrInsertDataSet(dataSet)
@@ -162,7 +164,7 @@ class EditDataSetViewModel(
 
     suspend fun performDelete() {
         Log.d("MyApp", "entered performDelete")
-        val dataSetId = uiContent.editableDataSet.value.id
+        val dataSetId = uiContent.editableContent.value.id
         myCheck(dataSetId != 0L) { "Expected to delete an actual data set but have ID 0" }
         val rowsDeleted = repository.deleteDataSetById(dataSetId)
         Log.d("MyApp", "Deleted $rowsDeleted rows with dataSetId $dataSetId")

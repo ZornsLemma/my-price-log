@@ -95,6 +95,8 @@ import java.util.Currency
 import java.util.Locale
 import androidx.datastore.preferences.core.edit
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.app.AppScope
 import com.example.composetutorial.common.intersectionIsEmpty
 import com.example.composetutorial.debug.DebugFlags
@@ -369,17 +371,18 @@ This is what most serious production apps have converged on in 2024–2025.
 
 // TODO: ChatGPT semi magic, doesn't belong here if it lives
 fun SavedStateHandle.clearIfAppUpdated() {
+    return // TODO TEMP HACK DUE TO BUILD VERSION CODE PROBLEM
     val currentVersion = 42 /* TODO BuildConfig.VERSION_CODE */
-    val storedVersion = get<Int>("savedStateAppVersion")
+    val storedVersion = get<Int>("savedStateAppVersion") // TODO FACTOR OUT KEY NAME AS CONST
     if (storedVersion != currentVersion) {
         // only wipe your keys, not everything
         for (key in keys()) remove<Any>(key)
         this["savedStateAppVersion"] = currentVersion
-        Log.w("MyApp", "SavedStateHandle cleared due to app version change")
+        Log.w("MyAppTODO", "SavedStateHandle cleared due to app version change")
     }
 }
-// Every ViewModel with a handle (or perhaps my factory generating those handles?) needs to call this.
 
+/* TODO DELETE
 // TODO QUITE POSSIBLY THIS SHOULD BE FOLDED INTO THE VIEWMODEL IF THIS APPROACH WORKS
 @OptIn(FlowPreview::class)
 data class EditDataSetScreenUIContent(
@@ -392,15 +395,12 @@ data class EditDataSetScreenUIContent(
             ?: error("initialDataSet is null and nothing in SavedStateHandle")
     val originalDataSet: EditableDataSet = savedStateHandle["originalDataSetTODO"] ?: (guaranteedInitial.also { Log.d("MyAppSS", "original: $it") ; savedStateHandle["originalDataSetTODO"] = it })
     // TODO: USE A CONSTANT FOR KEY NAME AS IT APPEARS IN MULTIPLE PLACES
-//    val _editableDataSet = savedStateHandle.getMutableStateFlow(key = "editableDataSetTODO", initialValue = initialDataSet.copy())
     private val _editableDataSet = savedStateHandle.getMutableStateFlow("editableDataSetTODO", initialValue = guaranteedInitial)
-    // val _originalDataSet = savedStateHandle.getStateFlow("originalDataSetTODO", initialValue = initialDataSet.copy())
 
     val editableDataSet: StateFlow<EditableDataSet> = _editableDataSet.asStateFlow()
-    // val originalDataSet: StateFlow<EditableDataSet> = _originalDataSet
 
-    fun update(transform: (EditableDataSet) -> EditableDataSet) {
-        _editableDataSet.value = transform(_editableDataSet.value)
+    fun update(editableDataSet: EditableDataSet) {
+        _editableDataSet.value = editableDataSet
     }
 
     init {
@@ -411,36 +411,40 @@ data class EditDataSetScreenUIContent(
                 .collectLatest { savedStateHandle["editableDataSetTODO"] = it; Log.d("MyAppSS", "write: $it") }
         }
     }
+}
+*/
 
-    /* TODO DELETE
-    fun saveState(savedStateHandle: SavedStateHandle) {
-        saveEditableDataSetState(savedStateHandle)
-        savedStateHandle[ORIGINAL_DATA_SET_KEY] = originalDataSet
+// TODO WIP EXPERIMENTAL - DOESN'T BELONG IN THIS FILE
+@OptIn(FlowPreview::class)
+class EditableUiContent<T>(
+    val viewModel: ViewModel,
+    val savedStateHandle: SavedStateHandle,
+    val keySuffix: String,
+    val initialContent: T?,
+) {
+    private val editableKey = "editable$keySuffix"
+    private val originalKey = "original$keySuffix"
+    private val guaranteedInitial: T =
+        savedStateHandle[editableKey]
+            ?: initialContent
+            ?: error("initialContent is null and nothing in SavedStateHandle for $editableKey")
+    val originalContent: T = savedStateHandle[originalKey] ?: (guaranteedInitial.also { Log.d("MyAppSS", "original: $it") ; savedStateHandle[originalKey] = it })
+    private val _editableContent = savedStateHandle.getMutableStateFlow(editableKey, initialValue = guaranteedInitial)
+
+    val editableContent: StateFlow<T> = _editableContent.asStateFlow()
+
+    fun update(newEditableContent: T) {
+        _editableContent.value = newEditableContent
     }
 
-    // This is a separate function to minimise the amount of work done after every user edit.
-    fun saveEditableDataSetState(savedStateHandle: SavedStateHandle) {
-        savedStateHandle[EDITABLE_DATA_SET_KEY] = editableDataSet.value
-    }
-
-    companion object {
-        private const val EDITABLE_DATA_SET_KEY = "editableDataSet"
-        private const val ORIGINAL_DATA_SET_KEY = "originalDataSet"
-
-        fun fromSavedState(savedStateHandle: SavedStateHandle): EditDataSetScreenUIContent? {
-            val savedEditableDataSet: EditableDataSet? = savedStateHandle[EDITABLE_DATA_SET_KEY]
-            val savedOriginalDataSet: EditableDataSet? = savedStateHandle[ORIGINAL_DATA_SET_KEY]
-            if (savedEditableDataSet != null && savedOriginalDataSet != null) {
-                return EditDataSetScreenUIContent(
-                    mutableStateOf(savedEditableDataSet),
-                    savedOriginalDataSet
-                )
-            } else {
-                return null
-            }
+    init {
+        Log.d("MyAppSS", "read: ${editableContent.value}")
+        viewModel.viewModelScope.launch {
+            _editableContent
+                .debounce(300L /* TODO MAGIC */)
+                .collectLatest { savedStateHandle[editableKey] = it; Log.d("MyAppSS", "write: $it") }
         }
     }
-    */
 }
 
 data class SelectItemScreenUIContent(

@@ -2,7 +2,6 @@ package com.example.composetutorial.ui.components
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.example.composetutorial.EditDataSetScreenUIContent
 import com.example.composetutorial.EditItemScreenUIContent
 import com.example.composetutorial.EditPriceScreenUIContent
 import com.example.composetutorial.EditSourceScreenUIContent
@@ -140,9 +139,9 @@ class SharedViewModel : ViewModel() {
     /* TODO DELETE
     var editDataSetScreenUIContent: EditDataSetScreenUIContent? = null
     */
-    var editDataSetScreenUIContent: EditableDataSet? = null // TODO RENAME?
+    var editDataSetScreenInitialUIContent: EditableDataSet? = null // TODO RENAME?
 
-    fun setEditDataSetScreenContent(dataSet: DataSet?, locale: Locale) {
+    fun setEditDataSetScreenInitialUIContent(dataSet: DataSet?, locale: Locale) {
         /* TODO DELETE
         val editableDataSet = dataSet.toEditable(locale)
         editDataSetScreenUIContent = EditDataSetScreenUIContent(
@@ -150,7 +149,7 @@ class SharedViewModel : ViewModel() {
             originalDataSet = editableDataSet,
         )
         */
-        editDataSetScreenUIContent = dataSet.toEditable(locale)
+        editDataSetScreenInitialUIContent = dataSet.toEditable(locale)
     }
 
     var editItemScreenUIContent: EditItemScreenUIContent? = null
