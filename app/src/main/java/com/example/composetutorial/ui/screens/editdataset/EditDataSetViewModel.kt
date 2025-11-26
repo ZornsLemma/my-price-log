@@ -35,7 +35,7 @@ class EditDataSetViewModel(
     savedStateHandle: SavedStateHandle,
     initialContent: EditableDataSet?,
 ) : ViewModel() {
-    val uiContent = EditableUiContent(this, savedStateHandle, "DataSet", initialContent) // TODO: RENAME?
+    val uiContent = EditableUiContent(this, savedStateHandle, "DataSet", initialContent, Unit) // TODO: RENAME?
 
     // There's no need to explicitly check for prices; we want to give a warning if there are any
     // items or sources associated with the data set even without prices, and there can't be any

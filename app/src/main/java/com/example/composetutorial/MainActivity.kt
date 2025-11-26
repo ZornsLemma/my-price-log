@@ -370,19 +370,24 @@ This is what most serious production apps have converged on in 2024–2025.
 */
 
 // TODO WIP EXPERIMENTAL - DOESN'T BELONG IN THIS FILE - AND WE NEED TO REWORK OTHER SCREENS TO USE IT INSTEAD OF OLD APPROACH
+// TODO MAYBE RENAME THIS GIVEN HOW IT IS EVOLVING?
 @OptIn(FlowPreview::class)
-class EditableUiContent<T>(
+class EditableUiContent<T, U>(
     val viewModel: ViewModel,
     val savedStateHandle: SavedStateHandle,
-    val keySuffix: String,
-    val initialContent: T?,
+    keySuffix: String,
+    initialContent: T?, // TODO: RENAME THIS AND ASSOCIATED VAR "...*editable*Content" TO CONTRAST WITH "STATIC"?
+    initialStaticContent: U?
+
 ) {
     private val editableKey = "editable$keySuffix"
     private val originalKey = "original$keySuffix"
+    private val staticKey = "static$keySuffix"
     private val guaranteedInitial: T =
         savedStateHandle[editableKey]
             ?: initialContent
             ?: error("initialContent is null and nothing in SavedStateHandle for $editableKey")
+    val staticContent: U = savedStateHandle[staticKey]  ?: initialStaticContent ?: error("staticContent is null and nothing in SavedStateHandle for $staticKey")
     val originalContent: T = savedStateHandle[originalKey] ?: (guaranteedInitial.also { Log.d("MyAppSS", "original: $it") ; savedStateHandle[originalKey] = it })
     private val _editableContent = savedStateHandle.getMutableStateFlow(editableKey, initialValue = guaranteedInitial)
 
