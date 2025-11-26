@@ -37,7 +37,6 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.composetutorial.EditItemScreenUIContent
 import com.example.composetutorial.EditPriceScreenUIContent
 import com.example.composetutorial.EditSourceScreenUIContent
 import com.example.composetutorial.app.MyApplication
@@ -544,7 +543,7 @@ This may be complete crap. The example of how to use it is probably as long as t
             "editItem", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<EditItemViewModel, EditItemScreenUIContent>(
+            screenWithViewModel<EditItemViewModel, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.editItemScreenUIContent = null },
                 buildViewModel = { app, handle ->

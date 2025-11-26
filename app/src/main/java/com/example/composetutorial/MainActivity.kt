@@ -134,49 +134,6 @@ data class EditPriceScreenUIContent(
     }
 }
 
-data class EditItemScreenUIContent(
-    val editableItem: MutableState<EditableItem>,
-    val originalItem: EditableItem,
-    val dataSet: DataSet,
-    // TODO: delete if not needed val frozenLocale: Locale,
-) {
-    fun saveState(savedStateHandle: SavedStateHandle) {
-        saveEditableItemState(savedStateHandle)
-        savedStateHandle[ORIGINAL_ITEM_KEY] = originalItem
-        savedStateHandle[DATA_SET_KEY] = dataSet
-        // TODO: delete if not needed savedStateHandle[LOCALE_TAG] = frozenLocale.toLanguageTag()
-    }
-
-    // This is a separate function to minimise the amount of work done after every user edit.
-    fun saveEditableItemState(savedStateHandle: SavedStateHandle) {
-        savedStateHandle[EDITABLE_ITEM_KEY] = editableItem.value
-    }
-
-    companion object {
-        private const val EDITABLE_ITEM_KEY = "editableItem"
-        private const val ORIGINAL_ITEM_KEY = "originalItem"
-        private const val DATA_SET_KEY = "dataSet"
-        // TODO: delete if not needed private const val LOCALE_TAG = "localeTag"
-
-        fun fromSavedState(savedStateHandle: SavedStateHandle): EditItemScreenUIContent? {
-            val savedEditableItem: EditableItem? = savedStateHandle[EDITABLE_ITEM_KEY]
-            val savedOriginalItem: EditableItem? = savedStateHandle[ORIGINAL_ITEM_KEY]
-            val savedDataSet: DataSet? = savedStateHandle[DATA_SET_KEY]
-            // TODO: delete val savedLocaleTag: String? = savedStateHandle[LOCALE_TAG]
-            if (savedEditableItem != null && savedOriginalItem != null && savedDataSet != null /* TODO && savedLocaleTag != null */) {
-                return EditItemScreenUIContent(
-                    mutableStateOf(savedEditableItem),
-                    savedOriginalItem,
-                    savedDataSet
-                    // TODO delete Locale.forLanguageTag(savedLocaleTag)
-                )
-            } else {
-                return null
-            }
-        }
-    }
-}
-
 data class EditSourceScreenUIContent(
     val editableSource: MutableState<EditableSource>,
     val originalSource: EditableSource,
