@@ -5,8 +5,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.composetutorial.EditItemScreenUIContent
-import com.example.composetutorial.EditableUiContent
+import com.example.composetutorial.PersistentUiContent
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.common.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
@@ -28,7 +27,7 @@ import kotlinx.parcelize.Parcelize
 
 // TODO: MOVE
 // This class seems a bit pointless but it makes it clearer what is being retrieved from
-// EditableUiContent.staticContent.
+// PersistentUiContent.staticContent.
 @Parcelize
 data class EditItemScreenStaticContent(
     val dataSet: DataSet,
@@ -42,7 +41,7 @@ class EditItemViewModel(
     initialEditableContent: EditableItem?,
     initialStaticContent: EditItemScreenStaticContent?,
 ) : ViewModel() {
-    val uiContent = EditableUiContent(
+    val uiContent = PersistentUiContent(
         this,
         savedStateHandle,
         "Item",

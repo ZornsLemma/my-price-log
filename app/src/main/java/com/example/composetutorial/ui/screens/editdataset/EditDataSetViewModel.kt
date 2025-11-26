@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.composetutorial.EditableUiContent
+import com.example.composetutorial.PersistentUiContent
 import com.example.composetutorial.EmptyParcelable
 import com.example.composetutorial.R
 import com.example.composetutorial.ui.common.createNameValidationRules
@@ -36,7 +36,7 @@ class EditDataSetViewModel(
     savedStateHandle: SavedStateHandle,
     initialEditableContent: EditableDataSet?,
 ) : ViewModel() {
-    val uiContent = EditableUiContent(this, savedStateHandle, "DataSet", initialEditableContent,
+    val uiContent = PersistentUiContent(this, savedStateHandle, "DataSet", initialEditableContent,
         EmptyParcelable()
     ) // TODO: RENAME?
 

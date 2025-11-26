@@ -280,7 +280,7 @@ class EmptyParcelable : Parcelable // TODO!?
 // TODO MAYBE RENAME THIS GIVEN HOW IT IS EVOLVING?
 // TODO: Might be good to do some fairly good permanent logging here? for both static and original/editable
 @OptIn(FlowPreview::class)
-class EditableUiContent<T : Parcelable, U : Parcelable>( // TODO: Use more descriptive type parameter?
+class PersistentUiContent<T : Parcelable, U : Parcelable>( // TODO: Use more descriptive type parameter?
     val viewModel: ViewModel,
     val savedStateHandle: SavedStateHandle,
     keySuffix: String,
