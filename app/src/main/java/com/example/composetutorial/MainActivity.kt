@@ -277,23 +277,32 @@ This is what most serious production apps have converged on in 2024–2025.
 class EmptyParcelable : Parcelable // TODO!?
 
 // TODO WIP EXPERIMENTAL - DOESN'T BELONG IN THIS FILE - AND WE NEED TO REWORK OTHER SCREENS TO USE IT INSTEAD OF OLD APPROACH
-// TODO MAYBE RENAME THIS GIVEN HOW IT IS EVOLVING?
-// TODO: Might be good to do some fairly good permanent logging here? for both static and original/editable
+/** PersistentUiContent persists:
+  * - a fixed original EditableContentType value
+  * - a modifiable value of EditContentType, initialised from the original value
+  * - a static value of StaticContentType
+  *
+  * across process death and restores them on reincarnation as transparently as possible to its
+  * client.
+  *
+  * In order to try to reduce verbosity for clients, variable and property names for
+  * EditableContentType are not qualified with an additional word like "editable" or "dynamic".
+  */
 @OptIn(FlowPreview::class)
-class PersistentUiContent<T : Parcelable, U : Parcelable>( // TODO: Use more descriptive type parameter?
+class PersistentUiContent<EditableContentType : Parcelable, StaticContentType : Parcelable>(
     val viewModel: ViewModel,
     val savedStateHandle: SavedStateHandle,
     keySuffix: String,
-    initialContent: T?, // TODO: RENAME THIS AND ASSOCIATED VAR "...*editable*Content" TO CONTRAST WITH "STATIC"?
-    initialStaticContent: U?
+    initialContent: EditableContentType?,
+    initialStaticContent: StaticContentType?
 
 ) {
     private val editableKey = "editable$keySuffix"
     private val originalKey = "original$keySuffix"
     private val staticKey = "static$keySuffix"
 
-    private fun<V> getKeyWithDefaultAndUpdate(savedStateHandle: SavedStateHandle, key: String, initialValue: V?): V {
-        val savedValue: V? = savedStateHandle[key]
+    private fun<T> getKeyWithDefaultAndUpdate(savedStateHandle: SavedStateHandle, key: String, initialValue: T?): T {
+        val savedValue: T? = savedStateHandle[key]
         if (savedValue != null) {
             if (initialValue == null) {
                 Log.d("TODOMYAPP", "Using $key saved value: $savedValue")
@@ -312,17 +321,17 @@ class PersistentUiContent<T : Parcelable, U : Parcelable>( // TODO: Use more des
         }
     }
 
-    val staticContent: U = getKeyWithDefaultAndUpdate(savedStateHandle, staticKey, initialStaticContent)
-    val originalContent: T = getKeyWithDefaultAndUpdate(savedStateHandle, originalKey, initialContent)
+    val staticContent: StaticContentType = getKeyWithDefaultAndUpdate(savedStateHandle, staticKey, initialStaticContent)
+    val originalContent: EditableContentType = getKeyWithDefaultAndUpdate(savedStateHandle, originalKey, initialContent)
 
     private val _editableContent = run {
         getKeyWithDefaultAndUpdate(savedStateHandle, editableKey, initialContent)
-        // initialValue is irrelevant on the next line, the previous call ensured the key exists.
+        // initialValue is irrelevant on the next line, as the previous call ensured the key exists.
         savedStateHandle.getMutableStateFlow(editableKey, initialValue = originalContent)
     }
-    val editableContent: StateFlow<T> = _editableContent.asStateFlow()
+    val editableContent: StateFlow<EditableContentType> = _editableContent.asStateFlow()
 
-    fun update(newEditableContent: T) {
+    fun update(newEditableContent: EditableContentType) {
         // This will cause the editableContent to update so anything collecting it can observe the
         // change. It does not update the savedStateHandle to persist the change in case of process
         // death; that happens in the coroutine launched by init.
@@ -333,7 +342,10 @@ class PersistentUiContent<T : Parcelable, U : Parcelable>( // TODO: Use more des
         viewModel.viewModelScope.launch {
             _editableContent
                 .debounce(300L /* TODO MAGIC */)
-                .collectLatest { savedStateHandle[editableKey] = it; Log.d("TODOMYAPPN", "Saving $editableKey value: $it") }
+                .collectLatest {
+                    savedStateHandle[editableKey] = it
+                    Log.d("TODOMYAPPN", "Saving $editableKey value: $it")
+                }
         }
     }
 }
