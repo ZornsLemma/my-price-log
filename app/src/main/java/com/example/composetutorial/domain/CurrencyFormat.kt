@@ -40,7 +40,8 @@ fun DataSet.createCurrencyFormat(locale: Locale): CurrencyFormat {
             locale,
             allowDecimals = currencyInstance.defaultFractionDigits > 0,
             allowZero = false,
-            maxDecimals = currencyInstance.defaultFractionDigits
+            maxDecimals = currencyInstance.defaultFractionDigits,
+            required = true,
         )
     )
 }

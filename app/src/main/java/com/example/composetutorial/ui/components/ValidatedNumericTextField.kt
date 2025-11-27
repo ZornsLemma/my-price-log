@@ -71,7 +71,7 @@ fun numericValidationRules(
     allowZero: Boolean = true,
     maxDecimals: Int? = null,
     maxValue: Int? = null,
-    required: Boolean = false, // TODO: I think this should not have a default, and e.g. adding a brand new price and saving it goes wrong because we are defaulting this to false - this is broken with the rework to new PersistentUiContent *but* the edit price screen is also broken before this commit, so don't want to mix the two fixes
+    required: Boolean = true,
 ): List<ValidationRule<String>> {
     val decimalSeparator = DecimalFormatSymbols.getInstance(locale).decimalSeparator
     val maxDecimalSeparators = if (allowDecimals) 1 else 0
