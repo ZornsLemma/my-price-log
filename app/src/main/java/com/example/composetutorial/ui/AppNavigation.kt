@@ -38,7 +38,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.composetutorial.EditPriceScreenUIContent
-import com.example.composetutorial.EditSourceScreenUIContent
 import com.example.composetutorial.app.MyApplication
 import com.example.composetutorial.R
 import com.example.composetutorial.SelectItemScreenUIContent
@@ -69,6 +68,7 @@ import com.example.composetutorial.ui.screens.edititem.EditItemViewModel
 import com.example.composetutorial.ui.screens.editprice.EditPriceScreen
 import com.example.composetutorial.ui.screens.editprice.EditPriceViewModel
 import com.example.composetutorial.ui.screens.editsource.EditSourceScreen
+import com.example.composetutorial.ui.screens.editsource.EditSourceScreenStaticContent
 import com.example.composetutorial.ui.screens.editsource.EditSourceViewModel
 import com.example.composetutorial.ui.screens.home.HomeScreen
 import com.example.composetutorial.ui.screens.home.HomeViewModel
@@ -398,13 +398,13 @@ fun AppNavigation() {
                     getName = { it.name },
                     onAddClick = {
                         Log.d("MyAppGS", "Add source")
-                        sharedViewModel.setEditSourceScreenContent(null, viewModel.uiContent.dataSet, locale)
+                        sharedViewModel.setEditSourceScreenInitialUiContent(null, viewModel.uiContent.dataSet, locale)
                         navController.navigate("editSource")
                     },
                     addContentDescription = stringResource(R.string.content_description_add_source),
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
-                        sharedViewModel.setEditSourceScreenContent(it, viewModel.uiContent.dataSet, locale)
+                        sharedViewModel.setEditSourceScreenInitialUiContent(it, viewModel.uiContent.dataSet, locale)
                         navController.navigate("editSource")
                     })
             }
@@ -584,15 +584,17 @@ This may be complete crap. The example of how to use it is probably as long as t
             "editSource", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<EditSourceViewModel, EditSourceScreenUIContent>(
+            screenWithViewModel<EditSourceViewModel, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.editSourceScreenUIContent = null },
+                clearUIContent = { sharedViewModel.editSourceScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     EditSourceViewModel(
                         app.repository,
                         handle,
-                        sharedViewModel.editSourceScreenUIContent
-                            ?: EditSourceScreenUIContent.fromSavedState(handle)!!
+                         sharedViewModel.editSourceScreenInitialUiContent?.editableSource,
+                        sharedViewModel.editSourceScreenInitialUiContent?.let {
+                            EditSourceScreenStaticContent(it.dataSet, it.frozenLocale)
+                        }
                     )
                 }
             ) { viewModel ->
@@ -604,7 +606,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                         if (newSelectedSourceId == null) {
                             navController.popBackStack()
                         } else {
-                            setSelectedSourceIdAsync(context, viewModel.uiContent.dataSet.id, newSelectedSourceId)
+                            setSelectedSourceIdAsync(context, viewModel.uiContent.staticContent.dataSet.id, newSelectedSourceId)
                             navController.popBackStack("home", inclusive = false)
                         }
                     })

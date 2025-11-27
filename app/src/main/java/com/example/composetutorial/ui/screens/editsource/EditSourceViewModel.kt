@@ -1,24 +1,28 @@
 package com.example.composetutorial.ui.screens.editsource
 
+import android.os.Parcelable
 import com.example.composetutorial.ui.components.numericValidationRules
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.composetutorial.EditSourceScreenUIContent
 import com.example.composetutorial.models.LoyaltyType
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.common.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.Repository
+import com.example.composetutorial.models.DataSet
+import com.example.composetutorial.models.EditableItem
 import com.example.composetutorial.models.EditableSource
 import com.example.composetutorial.models.toDomain
+import com.example.composetutorial.ui.common.PersistentUiContent
 import com.example.composetutorial.ui.common.UiText
 import com.example.composetutorial.ui.common.Versioned
 import com.example.composetutorial.ui.common.initialVersioned
 import com.example.composetutorial.ui.common.withVersion
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
 import com.example.composetutorial.ui.common.validationRulesOk
+import com.example.composetutorial.ui.screens.edititem.EditItemScreenStaticContent
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,17 +30,30 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.parcelize.Parcelize
+import java.util.Locale
+
+@Parcelize
+data class EditSourceScreenStaticContent(
+    val dataSet: DataSet,
+    val frozenLocale: Locale
+) : Parcelable
 
 class EditSourceViewModel(
     private val repository: Repository,
-    private val savedStateHandle: SavedStateHandle,
-    val uiContent: EditSourceScreenUIContent,
-) : ViewModel() {
-    init {
-        uiContent.saveState(savedStateHandle)
-    }
+    val savedStateHandle: SavedStateHandle,
+    initialEditableContent: EditableSource?,
+    initialStaticContent: EditSourceScreenStaticContent?,
+    ) : ViewModel() {
+    val uiContent = PersistentUiContent(
+        this,
+        savedStateHandle,
+        "Source",
+        initialEditableContent,
+        initialStaticContent
+    )
 
-    val sourceReferenceCountFlow = uiContent.editableSource.value.id.let { sourceId ->
+    val sourceReferenceCountFlow = uiContent.originalContent.id.let { sourceId ->
         if (sourceId != 0L) {
             Log.d("MyAppQQ", "0L case occurring (probably just internally)")
             repository.countPricesForSource(sourceId)
@@ -47,16 +64,17 @@ class EditSourceViewModel(
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
-    fun setUIContentEditableSource(newEditableSource: EditableSource) {
-        uiContent.editableSource.value = newEditableSource
-        uiContent.saveEditableSourceState(savedStateHandle)
+    // TODO: May want to remove this function or tweak it but let's keep it in while we refactor
+    fun setUiContentEditableSource(newEditableSource: EditableSource) {
+        uiContent.update(newEditableSource)
     }
 
+
     val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
-        repository.getAllSources(uiContent.editableSource.value.dataSetId)
+        repository.getAllSources(uiContent.originalContent.dataSetId)
             .map { sourceList ->
                 createNameValidationRules(
-                    sourceList.filter { source -> source.id != uiContent.editableSource.value.id }
+                    sourceList.filter { source -> source.id != uiContent.originalContent.id }
                         .map { source -> source.name }
                 )
             }
@@ -71,7 +89,7 @@ class EditSourceViewModel(
     // Zero isn't necessary as you can choose "None", but maybe it's a bit persnickety not to allow
     // the user just to type 0 directly with one of the other options as well.
     val loyaltyPercentageValidationRules = numericValidationRules(
-        uiContent.frozenLocale,
+        uiContent.staticContent.frozenLocale,
         allowDecimals = true,
         allowZero = false,
         maxDecimals = 2,
@@ -92,15 +110,15 @@ class EditSourceViewModel(
         Log.d("MyAppESS", "validateForSave")
         if (!validationRulesOk(
                 nameValidationRules.value.value,
-                uiContent.editableSource.value.name
+                uiContent.editableContent.value.name
             )
         ) {
             _saveValidationEvents.emit(EditableField.NAME)
             return false
         }
-        if (uiContent.editableSource.value.loyaltyType != LoyaltyType.NONE && !validationRulesOk(
+        if (uiContent.editableContent.value.loyaltyType != LoyaltyType.NONE && !validationRulesOk(
                 loyaltyPercentageValidationRules,
-                uiContent.editableSource.value.loyaltyPercentage
+                uiContent.editableContent.value.loyaltyPercentage
             )
         ) {
             _saveValidationEvents.emit(EditableField.LOYALTY_PERCENTAGE)
@@ -111,9 +129,9 @@ class EditSourceViewModel(
     }
 
     suspend fun performSave(): Long {
-        val source = uiContent.editableSource.value.toDomain(uiContent.frozenLocale)
+        val source = uiContent.editableContent.value.toDomain(uiContent.staticContent.frozenLocale)
         if (source == null) {
-            throw IllegalStateException("performSave() called with an inconvertible EditableSource: ${uiContent.editableSource.value}")
+            throw IllegalStateException("performSave() called with an inconvertible EditableSource: ${uiContent.editableContent.value}")
         }
         //delay(5000) // TODO TEMP HACK
         // updateOrInsertSource() returns -1 if it's an update or the new ID if it was an insert.
@@ -123,7 +141,7 @@ class EditSourceViewModel(
 
     suspend fun performDelete() {
         Log.d("MyApp", "entered performDelete")
-        val sourceId = uiContent.editableSource.value.id
+        val sourceId = uiContent.editableContent.value.id
         myCheck(sourceId != 0L) { "Expected to delete an actual source but have ID 0" }
         val rowsDeleted = repository.deleteSourceById(sourceId)
         Log.d("MyApp", "Deleted $rowsDeleted rows with sourceId $sourceId")

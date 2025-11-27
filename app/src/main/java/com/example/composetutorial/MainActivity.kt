@@ -134,48 +134,6 @@ data class EditPriceScreenUIContent(
     }
 }
 
-data class EditSourceScreenUIContent(
-    val editableSource: MutableState<EditableSource>,
-    val originalSource: EditableSource,
-    val dataSet: DataSet,
-    val frozenLocale: Locale,
-) {
-    fun saveState(savedStateHandle: SavedStateHandle) {
-        saveEditableSourceState(savedStateHandle)
-        savedStateHandle[ORIGINAL_SOURCE_KEY] = originalSource
-        savedStateHandle[LOCALE_TAG] = frozenLocale.toLanguageTag()
-    }
-
-    // This is a separate function to minimise the amount of work done after every user edit.
-    fun saveEditableSourceState(savedStateHandle: SavedStateHandle) {
-        savedStateHandle[EDITABLE_SOURCE_KEY] = editableSource.value
-    }
-
-    companion object {
-        private const val EDITABLE_SOURCE_KEY = "editableSource"
-        private const val ORIGINAL_SOURCE_KEY = "originalSource"
-        private const val DATA_SET_KEY = "dataSet"
-        private const val LOCALE_TAG = "localeTag"
-
-        fun fromSavedState(savedStateHandle: SavedStateHandle): EditSourceScreenUIContent? {
-            val savedEditableSource: EditableSource? = savedStateHandle[EDITABLE_SOURCE_KEY]
-            val savedOriginalSource: EditableSource? = savedStateHandle[ORIGINAL_SOURCE_KEY]
-            val savedDataSet: DataSet? = savedStateHandle[DATA_SET_KEY]
-            val savedLocaleTag: String? = savedStateHandle[LOCALE_TAG]
-            if (savedEditableSource != null && savedOriginalSource != null && savedDataSet != null && savedLocaleTag != null) {
-                return EditSourceScreenUIContent(
-                    mutableStateOf(savedEditableSource),
-                    savedOriginalSource,
-                    savedDataSet,
-                    Locale.forLanguageTag(savedLocaleTag)
-                )
-            } else {
-                return null
-            }
-        }
-    }
-}
-
 /* TODO: Grok suggests this to simplify EditDataSetScreenUIContent and similar - I have not thought this through properly yet but I should at least give it some thought as if it does work it may simplify things a lot:
 
     The real, battle-tested solutions that preserve TextField reactivity and process-death survival

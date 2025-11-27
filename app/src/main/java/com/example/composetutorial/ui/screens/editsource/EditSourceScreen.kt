@@ -57,7 +57,9 @@ fun EditSourceScreen(
     navController: NavHostController,
     requestClose: (Long?) -> Unit
 ) {
-    val uiContent = viewModel.uiContent
+    val originalSource = viewModel.uiContent.originalContent
+    val editableSource by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
+    val dataSet = viewModel.uiContent.staticContent.dataSet
 
     val sourceReferenceCount by viewModel.sourceReferenceCountFlow.collectAsStateWithLifecycle(null)
     Log.d("MyApp", "sourceReferenceCount $sourceReferenceCount")
@@ -74,10 +76,10 @@ fun EditSourceScreen(
     GeneralEditAndDeleteScreen(
         viewModel = viewModel.generalEditScreenViewModel,
         navController = navController,
-        title = topAppBarTitle(if (viewModel.uiContent.editableSource.value.id == 0L) stringResource(R.string.title_add_source) else stringResource(
+        title = topAppBarTitle(if (originalSource.id == 0L) stringResource(R.string.title_add_source) else stringResource(
             R.string.title_edit_source
-        ), viewModel.uiContent.dataSet.name),
-        isDirty = { uiContent.editableSource.value != uiContent.originalSource },
+        ), dataSet.name),
+        isDirty = { editableSource != originalSource },
         validateForSave = { viewModel.validateForSave() },
         performSave = { viewModel.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
         onIdle = {},
@@ -90,7 +92,7 @@ fun EditSourceScreen(
         performDelete = { viewModel.performDelete() },
         onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
     ) { showDeleteSpinner ->
-        var name by rememberSyncedTextFieldValue(uiContent.editableSource.value.name)
+        var name by rememberSyncedTextFieldValue(editableSource.name)
         val nameValidationRules by viewModel.nameValidationRules.collectAsStateWithLifecycle()
         Log.d("MyApp", "nameValidationRules $nameValidationRules")
         ValidatedFilteredTextField(
@@ -100,7 +102,7 @@ fun EditSourceScreen(
             maxLength = maxSourceNameLength,
             onValueChange = {
                 name = it
-                viewModel.setUIContentEditableSource(uiContent.editableSource.value.copy(name = it.text))
+                viewModel.setUiContentEditableSource(editableSource.copy(name = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value,
@@ -126,7 +128,7 @@ fun EditSourceScreen(
                 stringResource(R.string.loyalty_type_discount_supporting_text)
             )
         )
-        var selectedOption = uiContent.editableSource.value.loyaltyType
+        var selectedOption = editableSource.loyaltyType
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -155,8 +157,8 @@ fun EditSourceScreen(
                 //Spacer(modifier = Modifier.height(8.dp))
                 options.forEach { (id, name, supportingText) ->
                     val clickableModifier = if (!saveStatus.isNotBusy()) Modifier else Modifier.clickable {
-                        viewModel.setUIContentEditableSource(
-                            uiContent.editableSource.value.copy(
+                        viewModel.setUiContentEditableSource(
+                            editableSource.copy(
                                 loyaltyType = id
                             )
                         )
@@ -197,7 +199,7 @@ fun EditSourceScreen(
                 if (selectedOption != LoyaltyType.NONE) {
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    var loyaltyPercentage by rememberSyncedTextFieldValue(uiContent.editableSource.value.loyaltyPercentage)
+                    var loyaltyPercentage by rememberSyncedTextFieldValue(editableSource.loyaltyPercentage)
                     Box(modifier = Modifier.padding(8.dp)) {
                         ValidatedNumericTextField(
                             value = loyaltyPercentage,
@@ -213,8 +215,8 @@ fun EditSourceScreen(
                             suffix = { Text("%") },
                             onValueChange = {
                                 loyaltyPercentage = it
-                                viewModel.setUIContentEditableSource(
-                                    uiContent.editableSource.value.copy(
+                                viewModel.setUiContentEditableSource(
+                                    editableSource.copy(
                                         loyaltyPercentage = it.text
                                     )
                                 )
@@ -228,7 +230,7 @@ fun EditSourceScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        var notes by rememberSyncedTextFieldValue(uiContent.editableSource.value.notes)
+        var notes by rememberSyncedTextFieldValue(editableSource.notes)
         FilteredTextField(
             label = { Text(stringResource(R.string.label_notes)) },
             keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_notes)),
@@ -236,13 +238,13 @@ fun EditSourceScreen(
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
-                viewModel.setUIContentEditableSource(uiContent.editableSource.value.copy(notes = it.text))
+                viewModel.setUiContentEditableSource(editableSource.copy(notes = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             modifier = Modifier.fillMaxWidth(),
         )
 
-        if (uiContent.editableSource.value.id != 0L) {
+        if (originalSource.id != 0L) {
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
                 onClick = { showDeleteConfirmDialog = true },

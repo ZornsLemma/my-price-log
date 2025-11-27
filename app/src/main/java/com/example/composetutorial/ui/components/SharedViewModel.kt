@@ -3,7 +3,6 @@ package com.example.composetutorial.ui.components
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.example.composetutorial.EditPriceScreenUIContent
-import com.example.composetutorial.EditSourceScreenUIContent
 import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.SelectItemScreenUIContent
 import com.example.composetutorial.SelectSourceScreenUIContent
@@ -13,6 +12,7 @@ import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.EditableDataSet
 import com.example.composetutorial.models.EditableItem
 import com.example.composetutorial.models.EditablePrice
+import com.example.composetutorial.models.EditableSource
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Source
 import com.example.composetutorial.models.toEditable
@@ -155,18 +155,22 @@ class SharedViewModel : ViewModel() {
         editItemScreenInitialUiContent = EditItemScreenInitialUiContent(editableItem, dataSet)
     }
 
-    var editSourceScreenUIContent: EditSourceScreenUIContent? = null
+    data class EditSourceScreenInitialUiContent(
+        val editableSource: EditableSource,
+        val dataSet: DataSet,
+        val frozenLocale: Locale
+    )
 
-    fun setEditSourceScreenContent(
-        // TODO: name should include "FromBlah"? or maybe that's a silly convention?
+    var editSourceScreenInitialUiContent: EditSourceScreenInitialUiContent? = null
+
+    fun setEditSourceScreenInitialUiContent(
         source: Source?,
         dataSet: DataSet,
         frozenLocale: Locale
     ) {
         val editableSource = source.toEditable(dataSet.id, frozenLocale)
-        editSourceScreenUIContent = EditSourceScreenUIContent(
-            editableSource = mutableStateOf(editableSource),
-            originalSource = editableSource,
+        editSourceScreenInitialUiContent = EditSourceScreenInitialUiContent(
+            editableSource = editableSource,
             dataSet = dataSet,
             frozenLocale = frozenLocale,
         )
