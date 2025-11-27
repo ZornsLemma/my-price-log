@@ -2,7 +2,6 @@ package com.example.composetutorial.ui.components
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import com.example.composetutorial.EditPriceScreenUIContent
 import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.SelectItemScreenUIContent
 import com.example.composetutorial.SelectSourceScreenUIContent
@@ -23,18 +22,20 @@ import java.util.Locale
 // Shared ViewModel to pass data between screens
 // TODO: Some inconsistency between "UIContent" and "Content" here - think about renaming.
 class SharedViewModel : ViewModel() {
+    data class EditPriceScreenInitialUiContent(
+        val editablePrice: EditablePrice,
+        val dataSet: DataSet,
+        val item: Item,
+        val source: Source,
+        val nonLinearEdit: Boolean,
+        val frozenLocale: Locale,
+        )
+
     // This is only nullable to provide us with an easy initial value to use. In use
-    // setEditPriceScreenState() should always have been called before it is used.
-    var editPriceScreenUIContent: EditPriceScreenUIContent? = null
+    // setEditPriceScreenState() should always have been called before it is used. TODO: This comment is probably still true but perhaps a bit "feeling my way" and not really useful now?
+    var editPriceScreenInitialUiContent: EditPriceScreenInitialUiContent? = null
 
-    var viewPriceHistoryScreenUIContent: ViewPriceHistoryScreenUIContent? = null
-
-    // frozenLocale becomes part of the edit screen state - it was used to convert the doubles to
-    // strings, and we will use it to convert the strings back to doubles if the user saves. If the
-    // user changes the locale while on the edit screen, we do *not* want to reflect that change
-    // immediately because it makes parsing the strings ambiguous. (TODO: This is not heavily tested
-    // and is not all that an important case, but I am at least trying to do things right.)
-    fun setEditPriceScreenContent(
+    fun setEditPriceScreenInitialUiContent(
         uiContent: HomeScreenUIContent,
         frozenLocale: Locale
     ) {
@@ -55,9 +56,9 @@ class SharedViewModel : ViewModel() {
             sourceId = source.id,
             itemDefaultUnit = item.defaultUnit
         )
-        editPriceScreenUIContent = EditPriceScreenUIContent(
-            editablePrice = mutableStateOf(editablePrice),
-            originalPrice = editablePrice,
+
+        editPriceScreenInitialUiContent = EditPriceScreenInitialUiContent(
+            editablePrice = editablePrice,
             dataSet = dataSet,
             item = item,
             source = source,
@@ -65,6 +66,15 @@ class SharedViewModel : ViewModel() {
             frozenLocale = frozenLocale,
         )
     }
+
+
+    var viewPriceHistoryScreenUIContent: ViewPriceHistoryScreenUIContent? = null
+
+    // frozenLocale becomes part of the edit screen state - it was used to convert the doubles to
+    // strings, and we will use it to convert the strings back to doubles if the user saves. If the
+    // user changes the locale while on the edit screen, we do *not* want to reflect that change
+    // immediately because it makes parsing the strings ambiguous. (TODO: This is not heavily tested
+    // and is not all that an important case, but I am at least trying to do things right.)
 
     // TODO: It might be possible to share some code with the non-2 version or refactor but let's just
     // bash this out for now.
@@ -75,9 +85,8 @@ class SharedViewModel : ViewModel() {
         editablePrice: EditablePrice,
         frozenLocale: Locale
     ) {
-        editPriceScreenUIContent = EditPriceScreenUIContent(
-            editablePrice = mutableStateOf(editablePrice),
-            originalPrice = editablePrice,
+        editPriceScreenInitialUiContent = EditPriceScreenInitialUiContent(
+            editablePrice = editablePrice,
             dataSet = dataSet,
             item = item,
             source = source,

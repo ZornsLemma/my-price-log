@@ -186,6 +186,7 @@ fun GeneralEditScreen(
                         // nothing to save, but it's probably best (given there's no history table
                         // which would get bloated) just to save regardless.
                         viewModel.saveAttempted.value = true
+                        Log.d("MyAppSS", "set saveAttempted to true")
                         runGeneralEditScreenOperation(
                             viewModel = viewModel,
                             coroutineScope = coroutineScope,

@@ -1,5 +1,6 @@
 package com.example.composetutorial.ui.screens.editprice
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +26,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
 import com.example.composetutorial.domain.areDifferentUnitFamilies
@@ -32,6 +34,9 @@ import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.QuantityType
 import com.example.composetutorial.domain.getRelevantMeasurementUnits
+import com.example.composetutorial.models.DataSet
+import com.example.composetutorial.models.EditablePrice
+import com.example.composetutorial.models.Item
 import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.components.textOrNull
 import com.example.composetutorial.ui.common.isNotBusy
@@ -52,7 +57,13 @@ fun EditPriceScreen(
     navController: NavHostController,
     requestClose: (Long?) -> Unit
 ) {
-    val uiContent = viewModel.uiContent
+    val originalPrice = viewModel.uiContent.originalContent
+    val editablePrice by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
+    val dataSet = viewModel.uiContent.staticContent.dataSet
+    val item = viewModel.uiContent.staticContent.item
+    val source = viewModel.uiContent.staticContent.source
+    val nonLinearEdit = viewModel.uiContent.staticContent.nonLinearEdit
+    val frozenLocale = viewModel.uiContent.staticContent.frozenLocale
 
 // TODO: Some of this remember stuff should maybe move into the ViewModel
 
@@ -70,7 +81,7 @@ fun EditPriceScreen(
         // let the confirm always stay off unless the user explicitly turns it on. That said, in my
         // own personal use, this logic seems to work well.
         if (!viewModel.firstPackSizeOrPriceChangeOccurred) {
-            viewModel.setUIContentEditablePrice(uiContent.editablePrice.value.copy(toConfirm = true))
+            viewModel.setUiContentEditablePrice(editablePrice.copy(toConfirm = true))
             viewModel.firstPackSizeOrPriceChangeOccurred = true
         }
     }
@@ -78,10 +89,10 @@ fun EditPriceScreen(
     GeneralEditScreen(
         viewModel = viewModel.generalEditScreenViewModel,
         navController = navController,
-        title = topAppBarTitle(viewModel.uiContent.item.name, viewModel.uiContent.source.name),
+        title = topAppBarTitle(item.name, source.name),
         isDirty = {
-            uiContent.editablePrice.value.copy(toConfirm = false) !=
-                    uiContent.originalPrice.copy(toConfirm = false)
+            editablePrice.copy(toConfirm = false) !=
+                    originalPrice.copy(toConfirm = false)
         },
         validateForSave = { viewModel.validateForSave() },
         performSave = { viewModel.performSave() },
@@ -95,17 +106,17 @@ fun EditPriceScreen(
         // check for validation failures to match, as well as re-ordering the actual composables
         // here.)
 
-        EditPriceScreenPrice(viewModel, ::onPackSizeOrPriceChange)
+        EditPriceScreenPrice(viewModel, editablePrice, ::onPackSizeOrPriceChange)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        EditPriceScreenPackSize(viewModel, ::onPackSizeOrPriceChange)
+        EditPriceScreenPackSize(viewModel, editablePrice, dataSet, item, ::onPackSizeOrPriceChange)
 
         // We don't show the switch if this is the first price for an item and source; the price is
         // confirmed, otherwise why are we entering it? Note that this is not the same as id being
         // 0, because if we deleted the price and are re-creating it from the history, we have no
         // ID but toConfirm will be false so we can preserve the old confirmation date by default.
-        if (!uiContent.originalPrice.toConfirm) {
+        if (!originalPrice.toConfirm) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
@@ -127,17 +138,17 @@ fun EditPriceScreen(
                 Spacer(modifier = Modifier.width(4.dp))
                 Switch(
                     enabled = saveStatus.isNotBusy(),
-                    checked = uiContent.editablePrice.value.toConfirm,
+                    checked = editablePrice.toConfirm,
                     onCheckedChange = {
-                        viewModel.setUIContentEditablePrice(
-                            uiContent.editablePrice.value.copy(
+                        viewModel.setUiContentEditablePrice(
+                            editablePrice.copy(
                                 toConfirm = it
                             )
                         )
                     })
             }
         } else {
-            myCheck(uiContent.editablePrice.value.toConfirm) {
+            myCheck(editablePrice.toConfirm) {
                 "Expected toConfirm to be true as this is the first price, but it's false"
             }
         }
@@ -147,7 +158,7 @@ fun EditPriceScreen(
         // TODO: Can/should I do something to scroll the screen when focus enters this and the caret
         // is half-hidden?
         // TODO DELETE var notes by  remember { mutableStateOf(TextFieldValue(uiContent.editablePrice.value.notes)) }
-        var notes by rememberSyncedTextFieldValue(uiContent.editablePrice.value.notes)
+        var notes by rememberSyncedTextFieldValue(editablePrice.notes)
         FilteredTextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text(stringResource(R.string.label_notes)) },
@@ -156,7 +167,7 @@ fun EditPriceScreen(
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
-                viewModel.setUIContentEditablePrice(uiContent.editablePrice.value.copy(notes = it.text))
+                viewModel.setUiContentEditablePrice(editablePrice.copy(notes = it.text))
             },
             enabled = saveStatus.isNotBusy(),
         )
@@ -166,15 +177,17 @@ fun EditPriceScreen(
 @Composable
 private fun EditPriceScreenPrice(
     viewModel: EditPriceViewModel,
+    editablePrice: EditablePrice,
     onChange: () -> Unit
 ) {
     val uiContent = viewModel.uiContent
 
     val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
-    var packPrice by rememberSyncedTextFieldValue(uiContent.editablePrice.value.price)
+    var packPrice by rememberSyncedTextFieldValue(editablePrice.price)
     val currencyFormat = viewModel.currencyFormat
 
+    Log.d("MyAppSS", "saveAttempted ${viewModel.generalEditScreenViewModel.saveAttempted.value}")
     ValidatedNumericTextField(
         value = packPrice,
         validationRules = currencyFormat.validationRules,
@@ -195,8 +208,8 @@ private fun EditPriceScreenPrice(
         ) else LocalTextStyle.current,
         onValueChange = {
             packPrice = it
-            if (uiContent.editablePrice.value.price != it.text) {
-                viewModel.setUIContentEditablePrice(uiContent.editablePrice.value.copy(price = it.text))
+            if (editablePrice.price != it.text) {
+                viewModel.setUiContentEditablePrice(editablePrice.copy(price = it.text))
                 onChange()
             }
         },
@@ -207,6 +220,9 @@ private fun EditPriceScreenPrice(
 @Composable
 private fun EditPriceScreenPackSize(
     viewModel: EditPriceViewModel,
+    editablePrice: EditablePrice,
+    dataSet: DataSet,
+    item: Item,
     onChange: () -> Unit
 ) {
     val uiContent = viewModel.uiContent
@@ -214,16 +230,16 @@ private fun EditPriceScreenPackSize(
     val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val units: List<MeasurementUnit> =
-        remember(uiContent.dataSet, uiContent.item.defaultUnit.quantityType) {
+        remember(dataSet, item.defaultUnit.quantityType) {
             getRelevantMeasurementUnits(
-                uiContent.dataSet,
-                uiContent.item.defaultUnit.quantityType,
+                dataSet,
+                item.defaultUnit.quantityType,
                 includeDisplayOnly = false
             )
         }
-    var packCountNumber by rememberSyncedTextFieldValue(uiContent.editablePrice.value.count)
+    var packCountNumber by rememberSyncedTextFieldValue(editablePrice.count)
     var packSizeNumber by rememberSyncedTextFieldValue(
-        uiContent.editablePrice.value.measureValue
+        editablePrice.measureValue
     )
 
     // TODO: I wonder if this screen is actually a bit vertically (and even horizontally?) squashed
@@ -251,9 +267,9 @@ private fun EditPriceScreenPackSize(
             label = { Text(stringResource(R.string.label_count)) },
             onValueChange = {
                 packCountNumber = it
-                if (uiContent.editablePrice.value.count != it.text) {
-                    viewModel.setUIContentEditablePrice(
-                        uiContent.editablePrice.value.copy(
+                if (editablePrice.count != it.text) {
+                    viewModel.setUiContentEditablePrice(
+                        editablePrice.copy(
                             count = it.text
                         )
                     )
@@ -273,7 +289,7 @@ private fun EditPriceScreenPackSize(
         ValidatedNumericTextField(
             value = packSizeNumber,
             validationRules = viewModel.packSizeValidationRules,
-            validationRulesKey = uiContent.editablePrice.value.measurementUnit.id,
+            validationRulesKey = editablePrice.measurementUnit.id,
             allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditPriceViewModel.EditableField.PACK_SIZE,
@@ -282,9 +298,9 @@ private fun EditPriceScreenPackSize(
             label = { Text(stringResource(R.string.label_size)) },
             onValueChange = {
                 packSizeNumber = it
-                if (uiContent.editablePrice.value.measureValue != it.text) {
-                    viewModel.setUIContentEditablePrice(
-                        uiContent.editablePrice.value.copy(
+                if (editablePrice.measureValue != it.text) {
+                    viewModel.setUiContentEditablePrice(
+                        editablePrice.copy(
                             measureValue = it.text
                         )
                     )
@@ -297,7 +313,7 @@ private fun EditPriceScreenPackSize(
                 .fillMaxSize()
         )
 
-        if (uiContent.item.defaultUnit.quantityType != QuantityType.ITEM) {
+        if (item.defaultUnit.quantityType != QuantityType.ITEM) {
             Spacer(modifier = Modifier.width(8.dp))
 
             // fontSizeDp is used here so that the minimum width we request scales
@@ -309,15 +325,15 @@ private fun EditPriceScreenPackSize(
             val context = LocalContext.current
             MyExposedDropdownMenuBox(
                 enabled = saveStatus.isNotBusy(),
-                selectedId = uiContent.editablePrice.value.measurementUnit.id,
+                selectedId = editablePrice.measurementUnit.id,
                 onItemSelected = {
                     val measurementUnit = MeasurementUnit.fromId(it)
                     myCheck(measurementUnit != null) {
                         "Expected non-null measurementUnit to be selected; got $it"
                     }
-                    if (uiContent.editablePrice.value.measurementUnit != measurementUnit!!) {
-                        viewModel.setUIContentEditablePrice(
-                            uiContent.editablePrice.value.copy(
+                    if (editablePrice.measurementUnit != measurementUnit!!) {
+                        viewModel.setUiContentEditablePrice(
+                            editablePrice.copy(
                                 measurementUnit = measurementUnit
                             )
                         )

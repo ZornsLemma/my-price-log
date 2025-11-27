@@ -1,20 +1,35 @@
 package com.example.composetutorial.ui.screens.editprice
 
+import android.os.Parcelable
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import com.example.composetutorial.EditPriceScreenUIContent
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.domain.Repository
+import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.EditablePrice
+import com.example.composetutorial.models.Item
+import com.example.composetutorial.models.Source
 import com.example.composetutorial.models.toDomain
+import com.example.composetutorial.ui.common.PersistentUiContent
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
 import com.example.composetutorial.ui.components.numericValidationRules
 import com.example.composetutorial.ui.common.validationRulesOk
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.parcelize.Parcelize
+import java.util.Locale
 import java.util.UUID
+
+@Parcelize
+data class EditPriceScreenStaticContent(
+    val dataSet: DataSet,
+    val item: Item,
+    val source: Source,
+    val nonLinearEdit: Boolean,
+    val frozenLocale: Locale,
+) : Parcelable
 
 // TODO: Here, and possibly in other ViewModels, there is a tendency to be passing parameters into
 // functions which are actually just taken out of the ViewModel's own state anyway. It may well be
@@ -23,9 +38,18 @@ import java.util.UUID
 // I've had a go at writing some tests.
 class EditPriceViewModel(
     private val repository: Repository,
-    private val savedStateHandle: SavedStateHandle,
-    val uiContent: EditPriceScreenUIContent,
+    savedStateHandle: SavedStateHandle,
+    initialEditableContent: EditablePrice?,
+    initialStaticContent: EditPriceScreenStaticContent?,
 ) : ViewModel() {
+    val uiContent = PersistentUiContent(
+        this,
+        savedStateHandle,
+        "Price",
+        initialEditableContent,
+        initialStaticContent
+    )
+
     private val instanceId = UUID.randomUUID().toString() // TODO FOR DEBUG
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
@@ -33,29 +57,23 @@ class EditPriceViewModel(
     // "Count" is visible if the item explicitly allows multipacks or if (presumably because it
     // used to) we have a count > 1, which we must not hide or silently throw away. Note that
     // uiContent.originalPrice.count can be an empty string if we are adding a first price.
-    val showPackCount = uiContent.item.allowMultipack || (uiContent.originalPrice.count.toLongOrNull() ?: 1) > 1
+    val showPackCount = uiContent.staticContent.item.allowMultipack || (uiContent.originalContent.count.toLongOrNull() ?: 1) > 1
 
     // ENHANCE: We could add a setting to control whether the pack count is allowed to be empty
     // (meaning 1) or it must be explicitly specified. Let's hard-code this for now to avoid making
     // the settings over-complex. We allow it to be empty for a new price, but after that we require
     // it. For an edit it starts out non-empty and if it is left empty the chances are the user was
     // editing it and messed up, rather than deliberately trying to set it to 1 by leaving it empty.
-    val packCountValidationRules = if (showPackCount) numericValidationRules(uiContent.frozenLocale, allowDecimals = false, allowZero = false, required = uiContent.originalPrice.id != 0L) else emptyList()
+    val packCountValidationRules = if (showPackCount) numericValidationRules(uiContent.staticContent.frozenLocale, allowDecimals = false, allowZero = false, required = uiContent.originalContent.id != 0L) else emptyList()
     var packSizeValidationRules = generatePackSizeValidationRules()
-    var currencyFormat = uiContent.dataSet.createCurrencyFormat(uiContent.frozenLocale)
+    var currencyFormat = uiContent.staticContent.dataSet.createCurrencyFormat(uiContent.staticContent.frozenLocale)
 
-    init {
-        Log.d("MyApp", "EditPriceScreenViewModel $instanceId $this")
-        Log.d("MyApp", "EditPriceScreenViewModel.init($uiContent)")
-        uiContent.saveState(savedStateHandle)
-    }
-
-    fun setUIContentEditablePrice(newEditablePrice: EditablePrice) {
-        Log.d("MyApp", "EditPriceScreenViewModel.setUIContentEditablePrice($newEditablePrice)")
+    // TODO: May want to remove this function or tweak it but let's keep it in while we refactor
+    fun setUiContentEditablePrice(newEditablePrice: EditablePrice) {
+        uiContent.update(newEditablePrice)
         // TODO: We could potentially refactor so that if newEditablePrice has the same measure unit
         // as uiContent before we update it, we don't regenerate the pack size validation rules.
-        uiContent.editablePrice.value = newEditablePrice
-        uiContent.saveEditablePriceState(savedStateHandle)
+        // TODO: Possibly we could also make this a flow mapped from the editableContent flow, but that may be more trouble than it's worth - think about it when not in middle of refactor though.
         packSizeValidationRules = generatePackSizeValidationRules()
     }
 
@@ -65,14 +83,15 @@ class EditPriceViewModel(
     // anyway (e.g. numericValidationRules() also performs work) and some kind of tidying up of the
     // naming generally might be in order.
     private fun generatePackSizeValidationRules(): List<ValidationRule<String>> {
-        val maxDecimals = uiContent.editablePrice.value.measurementUnit.maxDecimals
+        val maxDecimals = uiContent.editableContent.value.measurementUnit.maxDecimals
         return numericValidationRules(
-            uiContent.frozenLocale,
+            uiContent.staticContent.frozenLocale,
             allowDecimals = maxDecimals > 0,
             allowZero = false,
             maxDecimals = maxDecimals
         )
     }
+    // TODO: Maybe change members inside PersistentUiContent to remove the somewhat duplicate "content" from the three main members?
 
     // TODO: I suspect this should *either* be moved down into a rememberSaveable inside the composable,
     // *or* it should be preserved across process death (perhaps, but not necessarily, by being moved
@@ -98,17 +117,19 @@ class EditPriceViewModel(
         // the already-focused field if there is one, otherwise the first field in the list. This
         // comment applies to all validation on all screens, not just this specific screen.
 
+        Log.d("MyAppSS", "price validation, currencyFormat ${currencyFormat}, price ${uiContent.editableContent.value.price}")
         if (!validationRulesOk(
                 currencyFormat.validationRules,
-                uiContent.editablePrice.value.price
+                uiContent.editableContent.value.price
             )
         ) {
+            Log.d("MyAppSS", "price validation failed")
             _saveValidationEvents.emit(EditableField.PRICE)
             return false
         }
         if (!validationRulesOk(
                 packCountValidationRules,
-                uiContent.editablePrice.value.count
+                uiContent.editableContent.value.count
             )
         ) {
             Log.d("MyAppPC", "Pack count failed validation")
@@ -117,7 +138,7 @@ class EditPriceViewModel(
         }
         if (!validationRulesOk(
                 packSizeValidationRules,
-                uiContent.editablePrice.value.measureValue
+                uiContent.editableContent.value.measureValue
             )
         ) {
             _saveValidationEvents.emit(EditableField.PACK_SIZE)
@@ -136,7 +157,7 @@ class EditPriceViewModel(
         // has toConfirm set that constitutes a change, so by using the real value in editablePrice
         // and forcing originalPrice to have toConfirm false that does what we want there, and will
         // also pick up any other changes.
-        if (!uiContent.nonLinearEdit && uiContent.editablePrice.value == uiContent.originalPrice.copy(
+        if (!uiContent.staticContent.nonLinearEdit && uiContent.editableContent.value == uiContent.originalContent.copy(
                 toConfirm = false
             )
         ) {
@@ -144,12 +165,12 @@ class EditPriceViewModel(
                 "MyApp",
                 "performSave() is a no-op; returning early to avoid bloating price history"
             )
-            return uiContent.editablePrice.value.id
+            return uiContent.editableContent.value.id
         }
-        val price = uiContent.editablePrice.value.toDomain(uiContent.frozenLocale)
+        val price = uiContent.editableContent.value.toDomain(uiContent.staticContent.frozenLocale)
         Log.d("MyApp", "saveEditablePrice price $price")
         if (price == null) {
-            throw IllegalStateException("saveEditablePrice() called with an inconvertible editablePrice: ${uiContent.editablePrice.value}")
+            throw IllegalStateException("saveEditablePrice() called with an inconvertible editablePrice: ${uiContent.editableContent.value}")
         }
         return repository.updateOrInsertPrice(price)
     }

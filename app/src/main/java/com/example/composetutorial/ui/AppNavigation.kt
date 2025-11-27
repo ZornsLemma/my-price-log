@@ -37,7 +37,6 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.composetutorial.EditPriceScreenUIContent
 import com.example.composetutorial.app.MyApplication
 import com.example.composetutorial.R
 import com.example.composetutorial.SelectItemScreenUIContent
@@ -66,6 +65,7 @@ import com.example.composetutorial.ui.screens.edititem.EditItemScreen
 import com.example.composetutorial.ui.screens.edititem.EditItemScreenStaticContent
 import com.example.composetutorial.ui.screens.edititem.EditItemViewModel
 import com.example.composetutorial.ui.screens.editprice.EditPriceScreen
+import com.example.composetutorial.ui.screens.editprice.EditPriceScreenStaticContent
 import com.example.composetutorial.ui.screens.editprice.EditPriceViewModel
 import com.example.composetutorial.ui.screens.editsource.EditSourceScreen
 import com.example.composetutorial.ui.screens.editsource.EditSourceScreenStaticContent
@@ -196,7 +196,7 @@ fun AppNavigation() {
                 viewModel,
                 navController,
                 onEditPriceClick = { uiContent ->
-                    sharedViewModel.setEditPriceScreenContent(
+                    sharedViewModel.setEditPriceScreenInitialUiContent(
                         uiContent,
                         locale
                     )
@@ -414,15 +414,17 @@ fun AppNavigation() {
             "editPrice", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<EditPriceViewModel, EditPriceScreenUIContent>(
+            screenWithViewModel<EditPriceViewModel, Int /* TODO DUMMY EditPriceScreenUIContent */>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.editPriceScreenUIContent = null },
+                clearUIContent = { sharedViewModel.editPriceScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     EditPriceViewModel(
                         app.repository,
                         handle,
-                        sharedViewModel.editPriceScreenUIContent
-                            ?: EditPriceScreenUIContent.fromSavedState(handle)!!
+                        sharedViewModel.editPriceScreenInitialUiContent?.editablePrice,
+                        sharedViewModel.editPriceScreenInitialUiContent?.let {
+                            EditPriceScreenStaticContent(it.dataSet, it.item, it.source, it.nonLinearEdit, it.frozenLocale)
+                        }
                     )
                 }, // TODO !! IS MAYBE A HACK - TBH COULD I JUST MAKE FROMSAVEDSTATE RETURN NON-NULL? NOT TOO KEEN
             ) { viewModel ->
