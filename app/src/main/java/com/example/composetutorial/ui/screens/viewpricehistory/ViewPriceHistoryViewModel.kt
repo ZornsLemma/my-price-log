@@ -1,34 +1,53 @@
 package com.example.composetutorial.ui.screens.viewpricehistory
 
+import android.os.Parcelable
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import com.example.composetutorial.ViewPriceHistoryScreenUIContent
 import com.example.composetutorial.domain.baseUnitForQuantityType
 import com.example.composetutorial.domain.MeasuredValue
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.models.PriceHistory
 import com.example.composetutorial.domain.sanitisePriceHistoryUnits
+import com.example.composetutorial.models.DataSet
+import com.example.composetutorial.models.Item
+import com.example.composetutorial.models.Price
+import com.example.composetutorial.models.Source
+import com.example.composetutorial.ui.common.EmptyParcelable
+import com.example.composetutorial.ui.common.PersistentUiContent
 import kotlinx.coroutines.flow.map
+import kotlinx.parcelize.Parcelize
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+// TODO: MOVE?
+@Parcelize
+data class ViewPriceHistoryScreenStaticContent(
+    val dataSet: DataSet,
+    val item: Item,
+    val source: Source,
+    val price: Price?,
+) : Parcelable
+
 class ViewPriceHistoryViewModel(
     private val repository: Repository,
-    private val savedStateHandle: SavedStateHandle,
-    val uiContent: ViewPriceHistoryScreenUIContent,
+    savedStateHandle: SavedStateHandle,
+    initialStaticContent: ViewPriceHistoryScreenStaticContent?
 ) : ViewModel() {
-    init {
-        Log.d("MyApp", "ViewPriceHistoryViewModel.init($uiContent)")
-        uiContent.saveState(savedStateHandle)
-    }
+    val uiContent = PersistentUiContent(
+        this,
+        savedStateHandle,
+        "PriceHistory",
+        EmptyParcelable(),
+        initialStaticContent
+    )
 
     val priceHistoryListFlow = repository.getPriceHistory(
-        uiContent.dataSet.id,
-        uiContent.item.id,
-        uiContent.source.id
-    ).map { priceHistoryList -> sanitisePriceHistoryUnits(uiContent.dataSet, priceHistoryList) }
+        uiContent.staticContent.dataSet.id,
+        uiContent.staticContent.item.id,
+        uiContent.staticContent.source.id
+    ).map { priceHistoryList -> sanitisePriceHistoryUnits(uiContent.staticContent.dataSet, priceHistoryList) }
 
     fun generatePriceHistoryDeltaList(
         priceHistoryList: List<PriceHistory>,
@@ -37,7 +56,7 @@ class ViewPriceHistoryViewModel(
     ) =
     // If there is no current price (it's been deleted), start the list with a null to represent
         // that deletion.
-        (if (uiContent.price == null) listOf(null) else emptyList()) +
+        (if (uiContent.staticContent.price == null) listOf(null) else emptyList()) +
                 // Now add on the main list of deltas.
                 // Remember that we are doing a "backwards delta" here - we show the very latest element in full,
                 // and for older elements we show differences between them and the next newest element. This zip

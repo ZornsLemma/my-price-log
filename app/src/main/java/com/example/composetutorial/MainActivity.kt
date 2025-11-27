@@ -175,48 +175,6 @@ data class GeneralSelectorScreenUIContent<T>(
     val initialList: List<T>?
 )
 
-data class ViewPriceHistoryScreenUIContent(
-    val dataSet: DataSet,
-    val item: Item,
-    val source: Source,
-    val price: Price?,
-) {
-    fun saveState(handle: SavedStateHandle) {
-        handle[DATA_SET_KEY] = dataSet
-        handle[ITEM_KEY] = item
-        handle[SOURCE_KEY] = source
-        handle[PRICE_KEY] = price
-    }
-
-    companion object {
-        private const val DATA_SET_KEY = "dataSet"
-        private const val ITEM_KEY = "item"
-        private const val SOURCE_KEY = "source"
-        private const val PRICE_KEY = "price"
-
-        fun fromSavedState(handle: SavedStateHandle): ViewPriceHistoryScreenUIContent? {
-            val savedDataSet: DataSet? = handle[DATA_SET_KEY]
-            val savedItem: Item? = handle[ITEM_KEY]
-            val savedSource: Source? = handle[SOURCE_KEY]
-            val savedPrice: Price? = handle[PRICE_KEY]
-            // We don't check savedPrice in the next line, because it can be null even if we have
-            // saved state. The other non-nullable keys act as our sentinels.
-            if (savedDataSet != null && savedItem != null && savedSource != null) {
-                Log.d("MyApp", "reconstructed ViewPriceHistoryScreenUIContent")
-                return ViewPriceHistoryScreenUIContent(
-                    savedDataSet,
-                    savedItem,
-                    savedSource,
-                    savedPrice
-                )
-            } else {
-                Log.d("MyApp", "couldn't reconstruct ViewPriceHistoryScreenUIContent")
-                return null
-            }
-        }
-    }
-}
-
 // TODO: There is a huge amount of pseudo copy and paste in all the Edit*{Screen,ViewModel} stuff.
 // Probably just going to accept it as I do the initial implementation so I don't tie myself in
 // knots coping with generic attempts that don't quite match reality, but later on it would be good
@@ -530,3 +488,9 @@ com.example.myapp/
 // TODO: Some inconsistency between "UI" and "Ui" in some names.
 
 // TODO: Perhaps just due to current rework, but maybe some inconsistency between FooScreenInitialUIContent and FooScreenUIContent naming
+
+// TODO: Not sure it's a problem but FWIW there may be a corner case where you change the currency
+// on a data set after prices exist and you are shown prices with more decimal places than yo can
+// enter - e.g. we have 0.76 MGA but MGA only allows 0 dp (I think - check what Android says, web
+// hints at 2 but vaguely hints otherwise as well) so if we edit an old price of 0.76 as new it
+// turns into 1. This may just be a bug I am misinterpreting, but I think this is what's happening.

@@ -63,6 +63,11 @@ fun ViewPriceHistoryScreen(
     requestClose: () -> Unit,
     requestEditAsNew: (priceHistory: PriceHistory) -> Unit
 ) {
+    val dataSet = viewModel.uiContent.staticContent.dataSet
+    val item = viewModel.uiContent.staticContent.item
+    val source = viewModel.uiContent.staticContent.source
+    val price = viewModel.uiContent.staticContent.price
+
     val locale = LocalConfiguration.current.locales[0]
     val zoneId = ZoneId.systemDefault()
     val confirmedAtFormatter = remember(locale, zoneId) {
@@ -76,8 +81,6 @@ fun ViewPriceHistoryScreen(
 
     Log.d("MyApp", "priceHistoryDeltaList $priceHistoryDeltaList")
 
-    val dataSet = viewModel.uiContent.dataSet
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -87,7 +90,7 @@ fun ViewPriceHistoryScreen(
                         Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = stringResource(R.string.content_description_back))
                     }
                 },
-                title = topAppBarTitle(viewModel.uiContent.item.name, viewModel.uiContent.source.name),
+                title = topAppBarTitle(item.name, source.name),
             )
         },
 
@@ -149,7 +152,7 @@ fun ViewPriceHistoryScreen(
                                 // there if there's no comment about this)
                                 MyDropdownMenuItem(
                                     text = { Text(stringResource(R.string.menu_item_edit_as_new_price)) },
-                                    enabled = viewModel.uiContent.price == null || index > 0,
+                                    enabled = price == null || index > 0,
                                     onClick = {
                                         requestMenuClose(); requestEditAsNew(
                                         priceHistoryDelta.priceHistory

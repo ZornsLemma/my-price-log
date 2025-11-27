@@ -1,11 +1,9 @@
 package com.example.composetutorial.ui.components
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.SelectItemScreenUIContent
 import com.example.composetutorial.SelectSourceScreenUIContent
-import com.example.composetutorial.ViewPriceHistoryScreenUIContent
 import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.EditableDataSet
@@ -13,6 +11,7 @@ import com.example.composetutorial.models.EditableItem
 import com.example.composetutorial.models.EditablePrice
 import com.example.composetutorial.models.EditableSource
 import com.example.composetutorial.models.Item
+import com.example.composetutorial.models.Price
 import com.example.composetutorial.models.Source
 import com.example.composetutorial.models.toEditable
 import java.util.Locale
@@ -68,8 +67,6 @@ class SharedViewModel : ViewModel() {
     }
 
 
-    var viewPriceHistoryScreenUIContent: ViewPriceHistoryScreenUIContent? = null
-
     // frozenLocale becomes part of the edit screen state - it was used to convert the doubles to
     // strings, and we will use it to convert the strings back to doubles if the user saves. If the
     // user changes the locale while on the edit screen, we do *not* want to reflect that change
@@ -95,10 +92,19 @@ class SharedViewModel : ViewModel() {
         )
     }
 
+    data class ViewPriceHistoryScreenInitialUiContent(
+        val dataSet: DataSet,
+        val item: Item,
+        val source: Source,
+        val price: Price?
+    )
+    var viewPriceHistoryScreenInitialUiContent: ViewPriceHistoryScreenInitialUiContent? = null
+
+
     // TODO: Some overlap with setEditPriceScreenContent()?
-    fun setViewPriceHistoryScreenContent(
+    fun setViewPriceHistoryScreenInitialUiContent(
         uiContent: HomeScreenUIContent,
-        frozenLocale: Locale
+        frozenLocale: Locale // TODO: Needed!? Do we even use this? I suspect locale should nto be frozen for a view-only screen
     ) {
         // !! is justified because uiContent was shown on the home screen and the view history option
         // was enabled, which can only happen if we have all three available.
@@ -108,7 +114,7 @@ class SharedViewModel : ViewModel() {
         val price =
             uiContent.priceAnalysis.augmentedPriceList.map { it.basePrice }.find { it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id }
 
-        viewPriceHistoryScreenUIContent = ViewPriceHistoryScreenUIContent(
+        viewPriceHistoryScreenInitialUiContent = ViewPriceHistoryScreenInitialUiContent(
             dataSet = dataSet,
             item = item,
             source = source,

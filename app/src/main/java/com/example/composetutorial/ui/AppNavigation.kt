@@ -43,7 +43,6 @@ import com.example.composetutorial.SelectItemScreenUIContent
 import com.example.composetutorial.ui.screens.selectitem.SelectItemViewModel
 import com.example.composetutorial.SelectSourceScreenUIContent
 import com.example.composetutorial.ui.screens.selectsource.SelectSourceViewModel
-import com.example.composetutorial.ViewPriceHistoryScreenUIContent
 import com.example.composetutorial.app.safeRestartApp
 import com.example.composetutorial.domain.dataStore
 import com.example.composetutorial.debug.myRequire
@@ -76,6 +75,7 @@ import com.example.composetutorial.ui.screens.legal.LegalScreen
 import com.example.composetutorial.ui.screens.settings.SettingsScreen
 import com.example.composetutorial.ui.screens.settings.SettingsViewModel
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryScreen
+import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryScreenStaticContent
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryViewModel
 import kotlinx.coroutines.delay
 
@@ -211,7 +211,7 @@ fun AppNavigation() {
                     // price gets deleted, we can still see the full history (and we can tell where
                     // deletions occurred by discontinuities in the price ID, albeit we won't know
                     // the precise time they happened).
-                    sharedViewModel.setViewPriceHistoryScreenContent(uiContent, locale)
+                    sharedViewModel.setViewPriceHistoryScreenInitialUiContent(uiContent, locale)
                     navController.navigate(route = "viewPriceHistory")
                 },
                 onSelectDataSetClick = { uiContent ->
@@ -621,15 +621,16 @@ This may be complete crap. The example of how to use it is probably as long as t
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
             val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
-            screenWithViewModel<ViewPriceHistoryViewModel, ViewPriceHistoryScreenUIContent>(
+            screenWithViewModel<ViewPriceHistoryViewModel, Int /* TODO DUMMY ViewPriceHistoryScreenUIContent */>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.viewPriceHistoryScreenUIContent = null },
+                clearUIContent = { sharedViewModel.viewPriceHistoryScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     ViewPriceHistoryViewModel(
                         app.repository,
                         handle,
-                        sharedViewModel.viewPriceHistoryScreenUIContent
-                            ?: ViewPriceHistoryScreenUIContent.fromSavedState(handle)!!
+                        sharedViewModel.viewPriceHistoryScreenInitialUiContent?.let {
+                            ViewPriceHistoryScreenStaticContent(it.dataSet, it.item, it.source, it.price)
+                        }
                     )
                 }
             ) { viewModel ->
@@ -653,17 +654,17 @@ This may be complete crap. The example of how to use it is probably as long as t
 
                         Log.d("MyApp", "TODO: requestEditAsNew $priceHistory")
                         sharedViewModel.setEditPriceScreenContent2(
-                            viewModel.uiContent.dataSet,
-                            viewModel.uiContent.item,
-                            viewModel.uiContent.source,
+                            viewModel.uiContent.staticContent.dataSet,
+                            viewModel.uiContent.staticContent.item,
+                            viewModel.uiContent.staticContent.source,
                             editablePrice = priceHistory.toEditable(
                                 // It's important we provide the current price ID, since we must
                                 // update the current existing record instead of adding a new one.
                                 // The price ID might in principle have changed since the history
                                 // record was created.
-                                priceId = viewModel.uiContent.price?.id ?: 0,
+                                priceId = viewModel.uiContent.staticContent.price?.id ?: 0,
                                 locale,
-                                viewModel.uiContent.dataSet
+                                viewModel.uiContent.staticContent.dataSet
                             ),
                             locale
                         )
