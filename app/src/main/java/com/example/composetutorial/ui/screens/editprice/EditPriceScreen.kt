@@ -81,7 +81,10 @@ fun EditPriceScreen(
         // let the confirm always stay off unless the user explicitly turns it on. That said, in my
         // own personal use, this logic seems to work well.
         if (!viewModel.firstPackSizeOrPriceChangeOccurred) {
-            viewModel.setUiContentEditablePrice(editablePrice.copy(toConfirm = true))
+            // Note that we must not use the captured editablePrice here, because this function is
+            // likely to be called after editableContent has been changed but before a
+            // recomposition has updated editablePrice and this function has been re-defined.
+            viewModel.setUiContentEditablePrice(viewModel.uiContent.editableContent.value.copy(toConfirm = true))
             viewModel.firstPackSizeOrPriceChangeOccurred = true
         }
     }
