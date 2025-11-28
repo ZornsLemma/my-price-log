@@ -1,11 +1,13 @@
 package com.example.composetutorial.ui.components.generalselector
 
+import com.example.composetutorial.app.AppScope
 import android.util.Log
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.ui.common.normalizedForSearch
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,12 +19,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 
+// TODO: Now this isn't a ViewModel it maybe ought to be renamed - probably GeneralSelectorStateHolder
 open class GeneralSelectorViewModel<T>(
     private val savedStateHandle: SavedStateHandle,
     private val getName: (T) -> String,
     private val initialList: List<T>?,
     private val dataQuery: Flow<List<T>>,
-) : ViewModel() {
+    viewModelScope: CoroutineScope,
+) /* TODO!? : ViewModel() */ {
     // The idea here is that as we have no real state other than the results of dataQuery, we
     // optimise by having our caller provide initialList to give a good first composition during
     // normal navigation, but we can manage without it if we are reincarnated.

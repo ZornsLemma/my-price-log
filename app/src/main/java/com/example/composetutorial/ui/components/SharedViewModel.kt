@@ -2,7 +2,6 @@ package com.example.composetutorial.ui.components
 
 import androidx.lifecycle.ViewModel
 import com.example.composetutorial.HomeScreenUIContent
-import com.example.composetutorial.SelectItemScreenUIContent
 import com.example.composetutorial.SelectSourceScreenUIContent
 import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.models.DataSet
@@ -122,9 +121,14 @@ class SharedViewModel : ViewModel() {
         )
     }
 
+    data class SelectItemScreenInitialUiContent(
+        val itemList: List<Item>,
+        val dataSet: DataSet
+    )
+
     // TODO: Rename the following now they are just List<T>? not a UIContent structure? Or is the "UIContent" convention more valuable?
     var selectDataSetScreenUIContent: List<DataSet>? = null
-    var selectItemScreenUIContent: SelectItemScreenUIContent? = null
+    var selectItemScreenInitialUiContent: SelectItemScreenInitialUiContent? = null
     var selectSourceScreenUIContent: SelectSourceScreenUIContent? = null
 
     // TODO: The "doubling" in the next three functions is a temporary hack to show that we use the
@@ -137,8 +141,8 @@ class SharedViewModel : ViewModel() {
             uiContent.dataSetList + uiContent.dataSetList.map { it -> it.copy(id = it.id * 1000) }
     }
 
-    fun setSelectItemScreenContent(uiContent: HomeScreenUIContent) {
-        selectItemScreenUIContent = SelectItemScreenUIContent(
+    fun setSelectItemScreenInitialUiContent(uiContent: HomeScreenUIContent) {
+        selectItemScreenInitialUiContent = SelectItemScreenInitialUiContent(
             uiContent.itemList + uiContent.itemList.map { it -> it.copy(id = it.id * 1000) },
             uiContent.dataSet!!
         )

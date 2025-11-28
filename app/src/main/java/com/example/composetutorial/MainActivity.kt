@@ -115,35 +115,6 @@ This is what most serious production apps have converged on in 2024–2025.
 
 */
 
-
-data class SelectItemScreenUIContent(
-    val itemList: List<Item>,
-    val dataSet: DataSet
-) {
-    fun saveState(handle: SavedStateHandle) {
-        handle[ITEM_LIST_KEY] = itemList
-        handle[DATA_SET_KEY] = dataSet
-    }
-
-    companion object {
-        private const val ITEM_LIST_KEY = "itemList"
-        private const val DATA_SET_KEY = "dataSet"
-
-        fun fromSavedState(handle: SavedStateHandle): SelectItemScreenUIContent? {
-            val savedItemList: List<Item>? = handle[ITEM_LIST_KEY]
-            val savedDataSet: DataSet? = handle[DATA_SET_KEY]
-            if (savedItemList != null && savedDataSet != null) {
-                Log.d("MyApp", "reconstructed SelectItemScreenUIContent")
-                return SelectItemScreenUIContent(savedItemList, savedDataSet)
-            } else {
-                Log.d("MyApp", "couldn't reconstruct SelectItemScreenUIContent")
-                return null
-            }
-        }
-    }
-}
-
-
 data class SelectSourceScreenUIContent(
     val sourceList: List<Source>,
     val dataSet: DataSet

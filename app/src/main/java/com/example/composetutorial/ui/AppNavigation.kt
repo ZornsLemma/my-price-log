@@ -39,7 +39,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.composetutorial.app.MyApplication
 import com.example.composetutorial.R
-import com.example.composetutorial.SelectItemScreenUIContent
 import com.example.composetutorial.ui.screens.selectitem.SelectItemViewModel
 import com.example.composetutorial.SelectSourceScreenUIContent
 import com.example.composetutorial.ui.screens.selectsource.SelectSourceViewModel
@@ -72,6 +71,8 @@ import com.example.composetutorial.ui.screens.editsource.EditSourceViewModel
 import com.example.composetutorial.ui.screens.home.HomeScreen
 import com.example.composetutorial.ui.screens.home.HomeViewModel
 import com.example.composetutorial.ui.screens.legal.LegalScreen
+import com.example.composetutorial.ui.screens.selectdataset.SelectDataSetViewModel
+import com.example.composetutorial.ui.screens.selectitem.SelectItemScreenStaticContent
 import com.example.composetutorial.ui.screens.settings.SettingsScreen
 import com.example.composetutorial.ui.screens.settings.SettingsViewModel
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryScreen
@@ -203,7 +204,7 @@ fun AppNavigation() {
                     navController.navigate("editPrice")
                 },
                 onItemSearchClick = { uiContent ->
-                    sharedViewModel.setSelectItemScreenContent(uiContent)
+                    sharedViewModel.setSelectItemScreenInitialUiContent(uiContent)
                     navController.navigate("editItems/select")
                 },
                 onViewHistoryClick = { uiContent ->
@@ -221,7 +222,7 @@ fun AppNavigation() {
                     navController.navigate("editDataSets")
                 },
                 onSelectItemClick = { uiContent ->
-                    sharedViewModel.setSelectItemScreenContent(
+                    sharedViewModel.setSelectItemScreenInitialUiContent(
                         uiContent
                     )
                     navController.navigate("editItems/edit")
@@ -267,11 +268,11 @@ fun AppNavigation() {
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<GeneralSelectorViewModel<DataSet>, Int /* TODO DUMMY */>(
+            screenWithViewModel<SelectDataSetViewModel, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.selectDataSetScreenUIContent = null },
                 buildViewModel = { app, handle ->
-                    GeneralSelectorViewModel(
+                    SelectDataSetViewModel(
                         savedStateHandle = handle,
                         getName = { it -> it.name },
                         initialList = sharedViewModel.selectDataSetScreenUIContent,
@@ -284,7 +285,7 @@ fun AppNavigation() {
                 // what (albeit via sharedViewModel - do we have to use that here now?) happens for the edit price screen.
                 val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
                 GeneralSelectorScreen(
-                    viewModel,
+                    viewModel.generalSelectorViewModel,
                     navController,
                     title = topAppBarTitle(stringResource(R.string.title_edit_data_sets), null),
                     getId = { it.id },
@@ -313,26 +314,27 @@ fun AppNavigation() {
             val select = action == "select"
             screenWithViewModel<SelectItemViewModel, Int /* TODO DUMMY */>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.selectItemScreenUIContent = null },
+                clearUIContent = { sharedViewModel.selectItemScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
-                    val uiContent = sharedViewModel.selectItemScreenUIContent
-                        ?: SelectItemScreenUIContent.fromSavedState(handle)!!
                     SelectItemViewModel(
+                        repository = app.repository,
                         savedStateHandle = handle,
+                        initialStaticContent = sharedViewModel.selectItemScreenInitialUiContent?.let {
+                            SelectItemScreenStaticContent(it.itemList, it.dataSet)
+                        },
                         getName = { it -> it.name },
-                        uiContent,
-                        dataQuery = app.repository.getAllItems(uiContent.dataSet.id),
+                        // TODO DELETE dataQuery = app.repository.getAllItems(uiContent.dataSet.id),
                     )
                 }
             ) { viewModel ->
                 val dataStore = LocalContext.current.applicationContext.dataStore
                 val context = LocalContext.current.applicationContext
                 GeneralSelectorScreen(
-                    viewModel,
+                    viewModel.generalSelectorViewModel,
                     navController,
                     title = topAppBarTitle(if (!select) stringResource(R.string.title_edit_items) else stringResource(
                         R.string.title_select_item
-                    ), viewModel.uiContent.dataSet.name),
+                    ), viewModel.uiContent.staticContent.dataSet.name),
                     getId = { it.id },
                     getName = { it.name },
                     onAddClick = {
@@ -341,7 +343,7 @@ fun AppNavigation() {
                         // products". It's handy to be able to directly add a missing item when
                         // searching from the home screen.
                         Log.d("MyAppGS", "Add item")
-                        sharedViewModel.setEditItemScreenInitialUiContent(null, viewModel.uiContent.dataSet)
+                        sharedViewModel.setEditItemScreenInitialUiContent(null, viewModel.uiContent.staticContent.dataSet)
                         navController.navigate("editItem")
                     },
                     addContentDescription = stringResource(R.string.content_description_add_item),
@@ -350,11 +352,11 @@ fun AppNavigation() {
                         if (!select) {
                             sharedViewModel.setEditItemScreenInitialUiContent(
                                 it,
-                                viewModel.uiContent.dataSet
+                                viewModel.uiContent.staticContent.dataSet
                             )
                             navController.navigate("editItem")
                         } else {
-                            setSelectedItemIdAsync(context, viewModel.uiContent.dataSet.id, it.id)
+                            setSelectedItemIdAsync(context, viewModel.uiContent.staticContent.dataSet.id, it.id)
                             navController.popBackStack() // return to home screen
                         }
                     },
@@ -391,7 +393,7 @@ fun AppNavigation() {
                 // what (albeit via sharedViewModel - do we have to use that here now?) happens for the edit price screen.
                 val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
                 GeneralSelectorScreen(
-                    viewModel,
+                    viewModel.generalSelectorViewModel,
                     navController,
                     title = topAppBarTitle(stringResource(R.string.title_edit_sources), dataSetName),
                     getId = { it.id },
