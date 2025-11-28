@@ -33,6 +33,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.parcelize.Parcelize
 
+// TODO: This file will be empty very soon - is that OK? I suspect it is, because we ahve the "real"
+// stuff in app/MainActivity.kt. But then delete it and move all the TODOs somewhere else, or deal
+// with all the TODOs then move the ENHANCE somewhere else and delete it.
+
+// TODO: MOVE!
 data class HomeScreenUIContent(
     val dataSetIdState: LoadState<Long>,
     val dataSet: DataSet?,
@@ -114,37 +119,6 @@ EditableDataSet stays a pure, parcelable data class
 This is what most serious production apps have converged on in 2024–2025.
 
 */
-
-data class SelectSourceScreenUIContent(
-    val sourceList: List<Source>,
-    val dataSet: DataSet
-) {
-    fun saveState(handle: SavedStateHandle) {
-        handle[SOURCE_LIST_KEY] = sourceList
-        handle[DATA_SET_KEY] = dataSet
-    }
-
-    companion object {
-        private const val SOURCE_LIST_KEY = "sourceList"
-        private const val DATA_SET_KEY = "dataSet"
-
-        fun fromSavedState(handle: SavedStateHandle): SelectSourceScreenUIContent? {
-            val savedSourceList: List<Source>? = handle[SOURCE_LIST_KEY]
-            val savedDataSet: DataSet? = handle[DATA_SET_KEY]
-            if (savedSourceList != null && savedDataSet != null) {
-                Log.d("MyApp", "reconstructed SelectSourceScreenUIContent")
-                return SelectSourceScreenUIContent(savedSourceList, savedDataSet)
-            } else {
-                Log.d("MyApp", "couldn't reconstruct SelectSourceScreenUIContent")
-                return null
-            }
-        }
-    }
-}
-
-data class GeneralSelectorScreenUIContent<T>(
-    val initialList: List<T>?
-)
 
 // TODO: There is a huge amount of pseudo copy and paste in all the Edit*{Screen,ViewModel} stuff.
 // Probably just going to accept it as I do the initial implementation so I don't tie myself in

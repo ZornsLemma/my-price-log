@@ -40,12 +40,10 @@ import androidx.navigation.compose.rememberNavController
 import com.example.composetutorial.app.MyApplication
 import com.example.composetutorial.R
 import com.example.composetutorial.ui.screens.selectitem.SelectItemViewModel
-import com.example.composetutorial.SelectSourceScreenUIContent
 import com.example.composetutorial.ui.screens.selectsource.SelectSourceViewModel
 import com.example.composetutorial.app.safeRestartApp
 import com.example.composetutorial.domain.dataStore
 import com.example.composetutorial.debug.myRequire
-import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.backupDatabase
 import com.example.composetutorial.models.restoreDatabase
 import com.example.composetutorial.models.toEditable
@@ -54,7 +52,6 @@ import com.example.composetutorial.ui.common.setSelectedItemIdAsync
 import com.example.composetutorial.ui.common.setSelectedSourceIdAsync
 import com.example.composetutorial.ui.components.SharedViewModel
 import com.example.composetutorial.ui.components.generalselector.GeneralSelectorScreen
-import com.example.composetutorial.ui.components.generalselector.GeneralSelectorViewModel
 import com.example.composetutorial.ui.components.topAppBarTitle
 import com.example.composetutorial.ui.screens.about.AboutScreen
 import com.example.composetutorial.ui.screens.editdataset.EditDataSetScreen
@@ -73,6 +70,7 @@ import com.example.composetutorial.ui.screens.home.HomeViewModel
 import com.example.composetutorial.ui.screens.legal.LegalScreen
 import com.example.composetutorial.ui.screens.selectdataset.SelectDataSetViewModel
 import com.example.composetutorial.ui.screens.selectitem.SelectItemScreenStaticContent
+import com.example.composetutorial.ui.screens.selectsource.SelectSourceScreenStaticContent
 import com.example.composetutorial.ui.screens.settings.SettingsScreen
 import com.example.composetutorial.ui.screens.settings.SettingsViewModel
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryScreen
@@ -228,7 +226,7 @@ fun AppNavigation() {
                     navController.navigate("editItems/edit")
                 },
                 onSelectSourceClick = { uiContent ->
-                    sharedViewModel.setSelectSourceScreenContent(
+                    sharedViewModel.setSelectSourceScreenInitialUiContent(
                         uiContent
                     )
                     navController.navigate("editSources/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
@@ -377,14 +375,15 @@ fun AppNavigation() {
                 // TODO: Could should sharedViewModel have a clearAllContent() or similar function
                 // and we just call that in clearUIContent? That way we could be sure *no* old
                 // content is lurking around.
-                clearUIContent = { sharedViewModel.selectSourceScreenUIContent = null },
+                clearUIContent = { sharedViewModel.selectSourceScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
-                    val uiContent = sharedViewModel.selectSourceScreenUIContent ?: SelectSourceScreenUIContent.fromSavedState(handle)!!
                     SelectSourceViewModel(
+                        repository = app.repository,
                         savedStateHandle = handle,
-                        getName = { it -> it.name },
-                        uiContent,
-                        dataQuery = app.repository.getAllSources(dataSetId)
+                        getName = { it -> it.name }, // TODO: I suspect the screens using this pattern no longer need to pass getName here - let the thing-specific viewmodel do it
+                        initialStaticContent = sharedViewModel.selectSourceScreenInitialUiContent?.let {
+                            SelectSourceScreenStaticContent(it.sourceList, it.dataSet)
+                        },
                     )
                 }
             ) { viewModel ->
@@ -400,13 +399,13 @@ fun AppNavigation() {
                     getName = { it.name },
                     onAddClick = {
                         Log.d("MyAppGS", "Add source")
-                        sharedViewModel.setEditSourceScreenInitialUiContent(null, viewModel.uiContent.dataSet, locale)
+                        sharedViewModel.setEditSourceScreenInitialUiContent(null, viewModel.uiContent.staticContent.dataSet, locale)
                         navController.navigate("editSource")
                     },
                     addContentDescription = stringResource(R.string.content_description_add_source),
                     onItemSelected = {
                         Log.d("MyAppGS", "selected $it")
-                        sharedViewModel.setEditSourceScreenInitialUiContent(it, viewModel.uiContent.dataSet, locale)
+                        sharedViewModel.setEditSourceScreenInitialUiContent(it, viewModel.uiContent.staticContent.dataSet, locale)
                         navController.navigate("editSource")
                     })
             }

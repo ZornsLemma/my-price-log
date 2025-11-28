@@ -20,28 +20,6 @@ data class SelectItemScreenStaticContent(
     val dataSet: DataSet
 ) : Parcelable
 
-/* TODO TEMP COPY
-class SelectItemViewModel(
-    savedStateHandle: SavedStateHandle,
-    initialStaticContent: SelectItemScreenStaticContent?,
-    getName: (Item) -> String,
-    dataQuery: Flow<List<Item>>,
-) : GeneralSelectorViewModel<Item>(
-    savedStateHandle, // TODO!?
-    getName,
-    uiContent.staticContent.itemList /* TODO: rename initialList for consistency with other cases? */,
-    dataQuery
-) {
-    val uiContent = PersistentUiContent(
-        this,
-        savedStateHandle,
-        "SelectItem",
-        EmptyParcelable(),
-        initialStaticContent
-    )
-}
-        */
-
 class SelectItemViewModel(
     repository: Repository,
     savedStateHandle: SavedStateHandle,

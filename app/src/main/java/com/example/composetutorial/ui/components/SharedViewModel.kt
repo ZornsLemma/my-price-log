@@ -2,7 +2,6 @@ package com.example.composetutorial.ui.components
 
 import androidx.lifecycle.ViewModel
 import com.example.composetutorial.HomeScreenUIContent
-import com.example.composetutorial.SelectSourceScreenUIContent
 import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.EditableDataSet
@@ -126,10 +125,15 @@ class SharedViewModel : ViewModel() {
         val dataSet: DataSet
     )
 
+    data class SelectSourceScreenInitialUiContent(
+        val sourceList: List<Source>,
+        val dataSet: DataSet
+    )
+
     // TODO: Rename the following now they are just List<T>? not a UIContent structure? Or is the "UIContent" convention more valuable?
     var selectDataSetScreenUIContent: List<DataSet>? = null
     var selectItemScreenInitialUiContent: SelectItemScreenInitialUiContent? = null
-    var selectSourceScreenUIContent: SelectSourceScreenUIContent? = null
+    var selectSourceScreenInitialUiContent: SelectSourceScreenInitialUiContent? = null
 
     // TODO: The "doubling" in the next three functions is a temporary hack to show that we use the
     // initial list and then it gets replaced by the query results from the database. The map step
@@ -148,8 +152,8 @@ class SharedViewModel : ViewModel() {
         )
     }
 
-    fun setSelectSourceScreenContent(uiContent: HomeScreenUIContent) {
-        selectSourceScreenUIContent = SelectSourceScreenUIContent(
+    fun setSelectSourceScreenInitialUiContent(uiContent: HomeScreenUIContent) {
+        selectSourceScreenInitialUiContent = SelectSourceScreenInitialUiContent(
             uiContent.sourceList + uiContent.sourceList.map { it -> it.copy(id = it.id * 1000) },
             uiContent.dataSet!!
         )
