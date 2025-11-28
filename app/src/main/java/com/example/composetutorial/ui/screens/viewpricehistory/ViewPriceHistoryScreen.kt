@@ -130,6 +130,11 @@ fun ViewPriceHistoryScreen(
                                 timeFormatter
                             )
 
+                            // ENHANCE: It would be good to allow deleting history entries
+                            // (irreversibly of course) from this menu. This would allow "perfect"
+                            // cleanup of accidental edits (e.g. editing a price for store X when
+                            // you wanted store Y - you could restore the pre-edit price using
+                            // edit-as-new and then delete the mistaken edit)
                             OverflowMenu(modifier = Modifier.align(Alignment.TopEnd)) { requestMenuClose ->
                                 // We don't allow "Edit as new price" on the first item - this is
                                 // the current price and should be edited via the home screen
