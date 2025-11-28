@@ -92,3 +92,326 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
+
+
+// TODO: There is a huge amount of pseudo copy and paste in all the Edit*{Screen,ViewModel} stuff.
+// Probably just going to accept it as I do the initial implementation so I don't tie myself in
+// knots coping with generic attempts that don't quite match reality, but later on it would be good
+// to see what can be factored out.
+
+// ENHANCE: I have completely ignored "unlikely" errors (like exceptions being thrown when accessing
+// the database) in most of this code - what can/should we do about this? I suspect most such errors
+// are basically unrecoverable and it's more-or-less OK if the process just dies, but I'm not sure
+// and we may be able to do better.
+
+// TODO: Move this into coding-notes.md once I'm sure I am respecting it and that it is in fact
+// appropriate etc.
+//
+// Note to self: Locale.getDefault() is initialised to the current locale when our app process
+// starts and is not automatically updated if the user changes the system locale while the app is
+// running. However, Compose's LocalConfiguration.current.locales[0] is updated live and immediately
+// reflects locale changes, triggering recompositions as needed.
+//
+// It is possible (though risky, due to race conditions with recomposition and non-composable code)
+// to update Locale.getDefault() via Locale.setDefault() to match
+// LocalConfiguration.current.locales[0], but we avoid this.
+//
+// Our strategy:
+// - For read-only screens, we react live to locale changes using
+//   LocalConfiguration.current.locales[0], passing it as needed to non-composable code.
+// - For editing screens, we "freeze" the locale from LocalConfiguration.current.locales[0] at the
+//   start of editing (when locale-sensitive string representations are generated) and use this
+//   locale for the duration of the editing session. This avoids issues like ambiguous
+//   interpretation of "," or "." as decimal/grouping separators. (As string representations of
+//   doubles may be temporarily un-parseable during editing, we cannot reliably parse them to double
+//   in the old locale and re-stringify in the new locale.)
+//
+// Editing screens without locale-sensitive data can be treated as read-only from this perspective.
+//
+// In general, we avoid Locale.getDefault() and require explicit locale parameters to functions
+// (without defaults) to ensure we always consider the source of our locale.
+
+// TODO: Eventually will need to remove misc Log.d() lines and/or replace them with permanent
+// well-thought-out ones if that is not inefficient.
+
+// ENHANCE: Maybe I should have a settings option which completely hides or just disables all the
+// "delete" buttons. Users can turn that off if it makes them feel safer. We could possibly, if it
+// isn't a UI nightmare, allow delete to be enabled for the next 10 minutes or something, then
+// automatically re-disable. My thinking here is deletes could be very destructive of valuable data
+// and in general you do not really want to delete stuff, unless you manage to add something
+// completely junky rather than just adding something with a typo and needing to edit it to fix it,
+// or cancelling the add before you finish it. We could also make the settings option tri-state,
+// with an intermediate setting (which could perhaps even be the default) where delete buttons are
+// shown/enabled (whatever I think best) for "non scary" deletes (product X is in the database *but
+// no price data is attached* etc) but hidden/disabled for "scary" deletes (price data exists which
+// would get cascade deleted).
+
+// ENHANCE: M3 recommends using a "container transform pattern" to transform FAB into a full-screen
+// dialog. Not sure if I can or should do this, but might be worth trying. (Do remember that as
+// noted elsewhere, my "full screen dialogs" are actually full screens in their own right and I
+// don't have enough hair to switch away from that, especially not just to make an animation work.
+// The animation may not depend on being a "true dialog", of course.) I do wonder - not seen
+// anything in docs - if this also suggests some kind of "expansion" animation should happen from
+// the clicked-on source/item/dataset into the full screen dialog to edit it. Currently the code is
+// doing the "standard" full screen dialog slide in from bottom animation anyway. (I had some
+// discussions with LLMs about what to do for edit not add cases, where you click on a list item to
+// open the edit dialog - from a UI design perspective, not how/ease of implementation. Using the
+// standard slide in transform over a "container transform" was favoured 2:1 here. See how I feel
+// later, and I'm far from confident I can do the FAB container transform anyway and that would
+// definitely be the thing to try first (as it *is* called out in MD3 specs).)
+
+// ENHANCE: If/when we have some kind of auto-backup or export state thing, it might be nice to hook
+// this into delete operations (perhaps just cascading ones???) and auto-backup before deleting.
+// Minor concern here if the user is doing a lot of deletions that we don't end up with lots of
+// auto-backups, we could just possibly try to be clever and only do this if we haven't done an
+// auto-backup within the last hour or so. This limits the window of data loss while keeping backup
+// volume down.
+
+// TODO: ErrorHighlightBoxes and their offsets and the general layout of the forms they highlight is
+// probably a bit inconsistent and could do with a review.
+
+// TODO: General Kotlin point which may simplify my code - unlike in say C++, you can apparently
+// "call methods" on nulls, e.g. stringvariable.orEmpty().
+
+// ENHANCE: Is it worth worrying about the case where the user is editing (say) an item, changes it
+// name completely ("Coffee" -> "Eggs"), forgets about having done that and then hits "Delete"
+// thinking they are deleting "Eggs" when they are really deleting "Coffee" (and all associated
+// data)? This is probably sufficiently implausible it's not a big deal. We could find some way to
+// show the "original" name on screen as a kind of reminder, but that might be confusing or clunky.
+// Possibly the delete confirmation dialog could show the original name and the edited name if both
+// are different, but that could be confusing if the names have just had cosmetic tweaks. Moving the
+// delete operation onto the "list" screen rather than the individual item edit dialog would help
+// with this, but I really don't want delete to be implemented on the list as it is a very rare and
+// potentially devastating operation.
+
+// TODO: May want to semi-formally document that "state" for a screen is "what's in the screen's
+// view model" (and arguably also in remembered stuff in composable etc), while "content" is what
+// gets passed in from the "caller" via the sharedviewmodel mechanism. This may help me feel better
+// and be more consistent about naming variables functions around the whole sharedviewmodel thing
+// and also the resulting structure inside the fooscreenviewmodel.
+
+// ENHANCE: We should probably implement a "recycle bin" type delete for data set/item/source - have
+// a "deleted" flag on all the tables, and when something is deleted we set that. (We would not
+// cascade-set this if we delete a data set; being unable to select the data set would effectively
+// hide the items/sources in it anyway, and no point forcing extra work to cacade set or unset on
+// delete.) Most queries would then simply have a "deleted=false" condition to ignore deleted
+// things. We can then undelete (subject to verifying names are still unique - deleted things would
+// not count towards uniqueness checks, so you could create a potential duplicate after deleting
+// something) simply by clearing the deleted flag. This is a UI faff because it means three-ish
+// screens to select things to undelete, and maybe some other facility somewhere else to purge
+// some/all things in the "recycle bin" for real. But it probably is the way to go long term.
+
+// ENHANCE: The list of prices for product across stores at bottom of home screen should probably
+// have some way of expanding in place or (more likely) opening a new screen showing a read-only
+// explanation of how the augmented price was arrived at (store level discounts, pseudo-inflation
+// penalties, etc). This screen should probably start with the raw shelf unit price in absolute
+// form, then have subsequent lines like "Inflation adjustment +$0.04" or "Loyalty discount (5%)
+// -$0.03" with a final total at the end.
+
+// Note to self: I used scaling 61% when importing app-icon-4.svg as a new image asset for the icon.
+
+// ENHANCE: It might be nice to offer an "are you sure? this is x% more/less than before" type
+// confirmation dialog when saving a price change where the (unit price? pack price? pack size?) has
+// changed by more than a threshold, to help catch typos early.
+
+// ENHANCE: I don't think it's that important, but some history editing support might be nice:
+// - maybe allow the notes field to be edited in history entries ("this was a price typo")
+// - maybe allow history entries to be outright deleted (expunge mistakes completely)
+
+// ENHANCE: I sometimes start typing the name of a product into the search box at the top of the
+// "edit products" screen, realise it's not there and want to add it. It might be worth (maybe gated
+// by a setting) copying the search string from that screen into the name field on the add product
+// screen when you click the add button in this case. This would save having to re-type it.
+
+// ENHANCE: I perhaps ought to be more aggressive at forcing focus into text fields, e.g. when
+// editing a product/source/dataset. I think there is probably an argument for *not* forcing this
+// when using the "product list" screen with a search box, because the user might want to just
+// scroll the list, but for the edit screens the user is going to want to edit something. It may be
+// the best compromise to only do this if it is a brand new something though, as if there is already
+// data, the user may not want to edit the name, which comes first and is probably what we'd force
+// focus on to. And it may in practice just be best not to force it. No idea what is "standard" or
+// "advised" by MD3 or general Android conventions, a chat with an LLM might offer some perspectives
+// even if they're not guaranteed to be correct. It might also be a good idea to have a setting
+// which controls whether we force focus onto the search control on the product selection dialog -
+// some people (including me?) might nearly always want to do a text search rather than scrolling
+// the list to browse, and in that case the experience is nicer if you can avoid needing to tap to
+// focus.
+
+// ENHANCE: It might be a good idea to have a setting which controls whether the price history view
+// elides diffs which are nothing but confirmation date changes. And/or have a tick box on the
+// screen itself to toggle this, maybe with the initial value of that tick box being set based on
+// a setting. Or maybe we'd just persist the value of that tick box to a saved preference and avoid
+// complicating the settings with it.
+
+// ENHANCE: Some sort of feature for showing best ever price for a product across all stores, or
+// probably better some variant on this where we show some (not too stats nerdy) "best price range"
+// for data over the last n days for a product. Where I'm going with this (though there may be other
+// uses) is that for products I buy rarely and on demand and am relatively price sensitive for (e.g.
+// beer), I sometimes find myself reluctant to update the current price away from a temporary good
+// offer price, because I probably won't be buying it tomorrow (so I don't "need" the correct price
+// shown, although logically that's how the app should work/be used) and I want to record the good
+// price so I know it's good when I see it again. If there was an easy way to see "best price over
+// last n days" (actually showing this for say n=30/60/90/180/365 simultaneously) might not be a bad
+// way to show the "spread" in a non-stats-nerd and useful way), I wouldn't feel ths reluctance to
+// update the price.
+
+// ENHANCE: A standalone unit (price) converter, although in some ways it would be nice (but not
+// sure Android really has this sort of thing) if it could pop up nicely "with" other screens. But
+// something where you can enter a price in one unit and have it show the unit price in any
+// specified unit, a bit like a no-db version of the "Store price" card on the home screen. Maybe
+// with the option to just do unit conversions (454g->lb) with no price. And maybe some sort of
+// semi-persistent "printing tape" and you can press a button to "print" the current conversion onto
+// it for reference, if you want to compare a few things ad-hoc without having to remember (or have
+// every single thing you type "printed" and clogging up the screen). The idea being that if you're
+// evaluating a different product variant to the one you already have at this store, you might want
+// to explore this without relying on a unit price (if any) shown on the shelf without actually
+// updating the db and finding the new price is worse. I'd envisage this being available via the
+// overflow menu at top right of home screen. I'd imagine the three button metric/imperial/US
+// customary selector from the dataset configuration being shown on this screen, initialised with
+// the current dataset configuration, so you can choose which units appear in the dropdowns.
+
+// ENHANCE: On an emulated Android 11 phone, there is a strange pink tinge to the app. The home
+// screen background is pinkish, but beyond LLMs burbling at me about emulator bugs, I can't see why
+// that's relevant - there is not supposed to be any Material You auto-theming based on this on
+// Android 11. LLMs also babble about my "default background" being translucent and/or a Material 2
+// theme being used but none of their suggestions fixed this in the emulator. I don't have a real
+// Android 11 device to test on and I have zero confidence in what the LLMs are telling me here. I
+// have reverted all the temporary changes the LLMs had me make and will wait for feedback from real
+// users (if any) before attempting to address this.
+// TODO: I'm not actually sure this isn't just my imagination, come back to it.
+
+// ENHANCE: Add a settings option which allows toggling between explicit themes, e.g. at a minimum
+// light/dark/system. It may be - really not sure - only newer Android versions with Material You
+// *have* a concept of a system theme in a way that's relevant to our app, in which case we might
+// want to hide or grey out the "system" option on these versions. Need to think this through at the
+// time and find out what's normal and what the possibilities are.
+
+// TODO: I need to carefully test things around deleting prices and adding new ones via main GUI
+// and "reverting" to old ones via history. A quick test now suggests this is working but at one
+// point I did end up with the same store appearing multiple times in the price comparison on the
+// home screen for a single item. I suspect this was caused by bugs during development but it's
+// hard to be sure. Since then I have added a unique index on (item_id, source_id) so any remaining
+// bugs here (which I am not sure exist) will probably trigger an error on database writes rather
+// than breaking in precisely this way, but I still need to test to make sure all is working OK. I
+// didn't necessarily test this all that thoroughly to start with but the most likely source of
+// breakage is the fact that when "restoring" a historical price after a deletion, there is no
+// "current" price ID to update, we are instead inserting a new price with a new ID.
+
+// ENHANCE: It is possible that using SQLDelight would simplify the database queries. In particular,
+// it may avoid the problem where Room flows are not clearly tagged with the query parameters that
+// originated them, which I think is responsible for some of my data flow complexity in
+// HomeViewModel.
+
+// TODO: At some point I should apply the spotless auto-formatting, but that will obviously
+// break diffs so I should be careful when I do it - maybe when the code is very stable and
+// shortly before release?
+
+/* TODO: Temp copy from ChatGPT for possible lightweight-ish subpackage structure
+com.example.myapp/
+│
+├── MainActivity.kt
+│
+├── ui/
+│   ├── theme/          # (standard Compose auto-generated package)
+│   ├── components/     # optional: reusable composables, dialogs, etc.
+│   ├── screens/        # optional: one file per screen if you have >1
+│
+├── data/
+│   ├── models/         # your entity + domain objects
+│   └── maybe local db or repository (if needed)
+│
+└── util/ (optional)    # small helpers, extensions, etc.
+
+but also:
+
+com.example.myapp/
+│
+├── MainActivity.kt
+│
+├── ui/
+│   ├── theme/
+│   ├── home/
+│   │   ├── HomeScreen.kt
+│   │   └── HomeViewModel.kt
+│   └── settings/
+│       ├── SettingsScreen.kt
+│       └── SettingsViewModel.kt
+│
+├── data/
+│   └── models/
+
+*/
+
+// TODO: When validating fields, we control allowEmpty based on whether a save has been attempted or
+// not. Given we do generally validate everything live, I am wondering if instead we should control
+// allowEmpty based off this *and* whether we are editing an existing item or adding a new one. I
+// think the main motivation for this exception was that when you start adding a new entry,
+// everything is blank and you don't want a sea of validation errors. But if you're editing a new
+// entry, is it any more reasonable/unreasoanble to get a validation error when you temporarily
+// blank out a field to enter something new than it is if you enter "3.25" in a field which only
+// allows 1dp? I suppose there is an argument that it's slightly difference because you're perhaps
+// (?) more likely to blank out a field to replace it in a moment than you are to temporarily edit a
+// number into an invalid state while changing it.
+
+// TODO: Make sure to do some testing and check the log for strict mode violations towards end of
+// dev.
+
+// ENHANCE: It would be nice to add automated tests. At the very least, MeasuredValue could be
+// usefully tested. It would also be interesting and perhaps useful to add some unit tests for more
+// of the business logic, mocking the repository, etc.
+
+// TODO: I think I made a mistake *intending* to change "Good/OK/bad price" to "G/O/B *value*" and
+// only changed the contentDescription versions, not the on-screen versions. For the moment I've
+// reverted to price everywhere but may want to change to "value" everywhere.
+
+// TODO: Some and probably all of the settingsdialog things give silly error messages if you type
+// "-3a" or something. Do we need to tweak validation? Maybe have an initial "invalid number" check?
+// Can/should we be restricting to numeric input and/or hinting at using a numeric on screen
+// keyboard? Do we need to impose a maximum length? Should we be using (a variant of?) our existing
+// NumericTextField?
+
+// TODO: In Spanish (but also probably in English) with USD prices in non-USD locale (hence "US$"
+// not just "$"), my small emulator is not fitting an (admittedly fake, but not insane in this
+// context) US$69,30 por 12x400ml shelf price (for cola) in the space available. And there is likely
+// no way precio por unidad is fitting at all. TBH it *may* be that given this is just borderline
+// too long I should accept it, rather than switching away from the grid layout. Maybe I could use a
+// non-breaking space e.g. between the price and por/for or after to improve the layout if it does
+// wrap. Or actually probably a non-breaking space between 400 and ml would maybe be good. OK, I have
+// experimentally added a non-breaking space in MeasuredValue.toDisplayString() and we'll see if
+// that's enough or if I want to make more tweaks. I've also added a horizontal spacer to stop
+// this text "touching" the unit price to its right if it is just on the borderline of needing
+// to wrap.
+
+// TODO: I've shoved in "cada uno" as a Spanish translation for "each" but this may not be right,
+// need to talk to LLMs. This is so I can test if it maybe works with my string constructions etc.
+// It is maybe a bit crap on the spacing (e.g. "$US cada undo" - albeit extreme - wraps in the
+// comparison table, and it is a smidge but borderline OK in the precio en la tienda unit price -
+// the chevron is pushed off screen!). I don't know if "cada uno" is correct or if it sometimes
+// needs to be "una." It is possible something like "c/u" is normal, but does that work with "0,25
+// US$/c/u" for example?
+
+// TODO: Given the advice I received from both Grok and ChatGPT about keyboard capitalization for
+// Spanish, does this mean the existing translations of the demo data set name and products are
+// wrong and they should start with lower case letters not capitals? That said, even if that's true,
+// is there a competing issue where the fact these are use as screen titles (home screen, edit
+// price) creates some conflict? Should we even optionally (translator specified) allow upper-casing
+// of initial letter in titles?
+
+// TODO: Spanish translation of message_no_data_set_selected seems to miss the *top* part out, but
+// the message_no_data_sets has it. Maybe worth querying this. - I have had a confusing chat with
+// Grok and ChatGPT and have tweaked this. However, I am far from convinced it's right even now but we're going round in circles. Even if it is right, I MAY STILL NEED TO FIX SOME OTHER USES OF HAMBURGUESA
+// AND DESBORDE IN OTHER MENU ITEMS FOR CONSISTENCY NOW WE AREN'T USING THEM IN THESE REVISED ONES.
+
+// TODO: Is the "hamburger" and "overflow menu" terminology OK *in English*?!
+
+// TODO: Some inconsistency between "UI" and "Ui" in some names.
+
+// TODO: Perhaps just due to current rework, but maybe some inconsistency between FooScreenInitialUIContent and FooScreenUIContent naming
+
+// TODO: Not sure it's a problem but FWIW there may be a corner case where you change the currency
+// on a data set after prices exist and you are shown prices with more decimal places than yo can
+// enter - e.g. we have 0.76 MGA but MGA only allows 0 dp (I think - check what Android says, web
+// hints at 2 but vaguely hints otherwise as well) so if we edit an old price of 0.76 as new it
+// turns into 1. This may just be a bug I am misinterpreting, but I think this is what's happening.

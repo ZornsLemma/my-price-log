@@ -82,7 +82,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.composetutorial.domain.AgeClass
 import com.example.composetutorial.domain.AugmentedPrice
-import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.domain.PriceAnalysis
 import com.example.composetutorial.domain.PriceJudgement
 import com.example.composetutorial.R

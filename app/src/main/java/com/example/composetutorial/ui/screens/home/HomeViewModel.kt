@@ -29,13 +29,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.domain.AugmentedPrice
-import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.domain.PriceJudgement
 import com.example.composetutorial.R
 import com.example.composetutorial.domain.SettingsRepository
 import com.example.composetutorial.domain.analysePrices
 import com.example.composetutorial.domain.dataStore
 import com.example.composetutorial.debug.myCheck
+import com.example.composetutorial.domain.PriceAnalysis
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.Item
@@ -84,6 +84,36 @@ const val sourceIdNone = -1L
 // to avoid adding nullability to the selectedItemIdStateFlow is harmless and slightly reduces
 // complexity.
 const val itemIdNone = -1L
+
+// TODO: Not at all sure this belongs here, but I sort of want to see if there's any major
+// simplification I can with this area before I think about maybe moving it if it lives.
+data class HomeScreenUIContent(
+    val dataSetIdState: LoadState<Long>,
+    val dataSet: DataSet?,
+    val dataSetList: List<DataSet>,
+    val item: Item?,
+    val itemList: List<Item>,
+    val sourceIdState: LoadState<Long>,
+    val source: Source?,
+    val sourceList: List<Source>,
+    val priceAnalysis: PriceAnalysis,
+) {
+    companion object {
+        fun createEmpty(): HomeScreenUIContent {
+            return HomeScreenUIContent(
+                dataSetIdState = LoadState.Loading,
+                dataSet = null,
+                dataSetList = emptyList(),
+                item = null,
+                itemList = emptyList(),
+                sourceIdState = LoadState.Loading,
+                source = null,
+                sourceList = emptyList(),
+                priceAnalysis = PriceAnalysis(emptyList(), null),
+            )
+        }
+    }
+}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModel(

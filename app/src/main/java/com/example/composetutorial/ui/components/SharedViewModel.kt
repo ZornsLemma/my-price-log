@@ -1,7 +1,6 @@
 package com.example.composetutorial.ui.components
 
 import androidx.lifecycle.ViewModel
-import com.example.composetutorial.HomeScreenUIContent
 import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.EditableDataSet
@@ -12,6 +11,7 @@ import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Price
 import com.example.composetutorial.models.Source
 import com.example.composetutorial.models.toEditable
+import com.example.composetutorial.ui.screens.home.HomeScreenUIContent
 import java.util.Locale
 
 // TODO: Maybe this file should be moved to be a sibling of AppNavigation.kt?
