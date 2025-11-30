@@ -40,7 +40,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     getItemText: (T) -> String,
     getDividerBetween: ((T, T) -> Boolean)? = null,
     addBottomSpace: Boolean = false,
-    content: @Composable () -> Unit,
+    content: @Composable (expanded: Boolean) -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
 
@@ -57,7 +57,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
             }
             else Modifier)
     ) {
-        content()
+        content(expanded)
 
         var previousItem: T? = null
         DropdownMenu(

@@ -52,7 +52,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
     addBottomSpace: Boolean = false,
 ) {
     var textFieldWidth by remember { mutableIntStateOf(0) }
-    var isExpanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
     Column(modifier = modifier) {
         ItemWithDropdown(
@@ -64,7 +64,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             selectedId = selectedId,
             onItemSelected = onItemSelected,
             enabled = enabled,
-            onExpand = { isExpanded = it },
+            onExpand = { expanded = it },
             items = items,
             getId = getId,
             getItemText = getItemText,
@@ -91,7 +91,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
                         // the "Text field" configuration at the bottom of
                         // https://m3.material.io/components/menus/specs seems to show this, so
                         // let's go with it.
-                        modifier = Modifier.rotate(if (isExpanded) 180f else 0f)
+                        modifier = Modifier.rotate(if (expanded) 180f else 0f)
                     )
                 },
                 modifier = Modifier
@@ -99,12 +99,12 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
                     .onGloballyPositioned { coordinates ->
                         textFieldWidth = coordinates.size.width
                     },
-                // ENHANCE: It isn't ideal to use isExpanded as a substitute for focus here, but it
+                // ENHANCE: It isn't ideal to use expanded as a substitute for focus here, but it
                 // doesn't look too bad in practice. Because we have to have the TextField disabled
                 // in order to make it clickable, it doesn't seem to actually get focus as far as
                 // onFocusChanged is concerned (even when it gets that "it's focus but it's not
                 // focus" D-pad navigation focus).
-                colors = if (enabled) myTextFieldColors(isExpanded) else TextFieldDefaults.colors()
+                colors = if (enabled) myTextFieldColors(expanded) else TextFieldDefaults.colors()
             )
         }
         // If we let TextField display supportingText itself it gets included in the bounding box

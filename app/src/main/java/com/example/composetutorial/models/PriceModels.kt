@@ -315,9 +315,10 @@ fun EditablePrice.toDomain(locale: Locale): Price? {
         Index(value = ["item_id", "source_id"], unique = false)
     ]
 )
-// TODO: Rename this? Maybe HistoricalPrice or something? I am happy to have the database table
-// called price_history but it is arguably confusing to have a class representing a point-in-time
-// historical price called PriceHistory, as the name seems to imply it is "a history" in itself.
+// I like the table name price_history but am less keen on having this class called PriceHistory,
+// which sounds like it represents the total history of a price and not a single historical version
+// of the price. However, I like the table name and don't like the idea of breaking the obvious
+// mapping between the table name and this class, so let's stick with it..
 data class PriceHistory(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
