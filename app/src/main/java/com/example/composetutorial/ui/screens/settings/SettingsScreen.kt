@@ -59,7 +59,7 @@ import com.example.composetutorial.domain.defaultAnnualInflationPercent
 import com.example.composetutorial.domain.defaultStalePriceThreshold
 import com.example.composetutorial.ui.common.failedValidationRuleOrNull
 import com.example.composetutorial.ui.common.UiText
-import com.example.composetutorial.ui.screenBorder
+import com.example.composetutorial.ui.screenVerticalBorder
 import kotlinx.coroutines.delay
 
 @Composable
@@ -98,7 +98,7 @@ fun SettingsScreen(
                 .padding(innerPadding)
                 // Padding here follows the same approach as GeneralSelectorScreen() - see the
                 // comment there.
-                .padding(vertical = screenBorder)
+                .padding(vertical = screenVerticalBorder)
                 .verticalScroll(rememberScrollState())
         ) {
             // ENHANCE: Since stale price threshold and ancient price threshold have interrelated

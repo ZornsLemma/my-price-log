@@ -43,7 +43,8 @@ const val errorHighlightBoxVisibleTimeMillis = 1000L
 // margins - maybe change this? Then again there are places where I've used edge-to-edge for lists
 // so I just don't know. For that matter, are there 16.dp margins supposed to be added to left and
 // right of the top app bar as well? Or just the body content below it?
-val screenBorder = 8.dp
+val screenHorizontalBorder = 16.dp // TODO EXPERIMENTAL WAS 8.dp
+val screenVerticalBorder = 8.dp // TODO EXPERIMENTAL
 
 // MD3 specs say there should be a 24.dp horizontal border, but this seems quite ugly. The left hand
 // edge of the dialog's body controls don't line up with the close icon and the right hand edges

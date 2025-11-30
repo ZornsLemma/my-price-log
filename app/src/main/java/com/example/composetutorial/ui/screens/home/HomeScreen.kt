@@ -111,7 +111,8 @@ import com.example.composetutorial.ui.components.PackPriceAndSizeRow
 import com.example.composetutorial.ui.listItemHorizontalPadding
 import com.example.composetutorial.ui.maxNavigationDrawerWidth
 import com.example.composetutorial.ui.oneLineListItemHeight
-import com.example.composetutorial.ui.screenBorder
+import com.example.composetutorial.ui.screenHorizontalBorder
+import com.example.composetutorial.ui.screenVerticalBorder
 import com.example.composetutorial.ui.spinnerDelayMillis
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
@@ -605,7 +606,7 @@ private fun HomeScreenContent(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(innerPadding)
-            .padding(screenBorder)
+            .padding(horizontal = screenHorizontalBorder, vertical = screenVerticalBorder)
     ) {
         Log.d("MyAppSU", "dataSet $dataSet dataSetList $dataSetList")
         if (dataSet == null) {

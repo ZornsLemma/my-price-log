@@ -40,7 +40,8 @@ import com.example.composetutorial.ui.common.rememberSortedByLocale
 import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.components.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.ui.maxSearchLength
-import com.example.composetutorial.ui.screenBorder
+import com.example.composetutorial.ui.screenVerticalBorder
+import com.example.composetutorial.ui.screenHorizontalBorder
 
 @Composable
 fun <T> GeneralSelectorScreen(
@@ -112,7 +113,7 @@ fun <T> GeneralSelectorScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(vertical = screenBorder)
+                .padding(vertical = screenVerticalBorder)
         ) {
             // ENHANCE: We could show a warning icon and/or some supporting text if nothing matches
             // the substring, rather than just showing an empty list.
@@ -139,8 +140,8 @@ fun <T> GeneralSelectorScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = screenBorder)
-                        .padding(bottom = 8.dp),
+                        .padding(horizontal = screenHorizontalBorder)
+                        .padding(bottom = 8.dp), // TODO: screenVerticalBorder?
                     singleLine = true,
                 )
             }

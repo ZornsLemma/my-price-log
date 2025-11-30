@@ -50,7 +50,8 @@ import com.example.composetutorial.ui.components.PackPriceAndSizeRow
 import com.example.composetutorial.ui.components.topAppBarTitle
 import com.example.composetutorial.ui.menuLeftPadding
 import com.example.composetutorial.ui.menuRightPadding
-import com.example.composetutorial.ui.screenBorder
+import com.example.composetutorial.ui.screenHorizontalBorder
+import com.example.composetutorial.ui.screenVerticalBorder
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
@@ -98,7 +99,7 @@ fun ViewPriceHistoryScreen(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(screenBorder)
+                .padding(horizontal = screenHorizontalBorder, vertical = screenVerticalBorder)
         ) {
             val dateFormatter = remember(locale, zoneId) {
                 // I don't know if this is the best way to do it or if it might have subtle
