@@ -213,24 +213,23 @@ fun areDifferentUnitFamilies(lhs: MeasurementUnit, rhs: MeasurementUnit) =
 
 
 @Parcelize
-// TODO: Maybe rename this "Quantity"? (And keep QuantityType for MASS/VOLUME/etc)
-data class MeasuredValue(val value: Double, val unit: MeasurementUnit) : Parcelable {
+data class Quantity(val value: Double, val unit: MeasurementUnit) : Parcelable {
     private val quantityType: QuantityType get() = unit.quantityType
 
-    fun to(unit: MeasurementUnit): MeasuredValue {
+    fun to(unit: MeasurementUnit): Quantity {
         myRequire(this.quantityType == unit.quantityType) {
             "Cannot convert between different quantity types: trying to convert $this to $unit"
         }
         val baseValue = this.value * this.unit.toBase
-        return MeasuredValue(baseValue / unit.toBase, unit)
+        return Quantity(baseValue / unit.toBase, unit)
     }
 
-    operator fun plus(other: MeasuredValue): MeasuredValue {
+    operator fun plus(other: Quantity): Quantity {
         myRequire(this.quantityType == other.quantityType) {
             "Cannot add values of different quantity types (this: $this, other: $other)"
         }
         val otherInThis = other.to(this.unit)
-        return MeasuredValue(this.value + otherInThis.value, this.unit)
+        return Quantity(this.value + otherInThis.value, this.unit)
     }
 
     fun asValue(unit: MeasurementUnit): Double = this.to(unit).value

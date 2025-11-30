@@ -11,7 +11,7 @@ import com.example.composetutorial.domain.CurrencyFormat
 import com.example.composetutorial.common.formatDoubleForEditing
 import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.debug.myCheck
-import com.example.composetutorial.domain.MeasuredValue
+import com.example.composetutorial.domain.Quantity
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.common.parseStringAsDoubleOrNull
 import com.example.composetutorial.domain.baseUnit
@@ -116,7 +116,7 @@ fun PriceWithItemEntity.toDomain(): Price {
         sourceId = priceEntity.sourceId,
         price = priceEntity.price,
         count = priceEntity.count,
-        quantity = MeasuredValue(
+        quantity = Quantity(
             priceEntity.quantityInBaseUnit,
             priceEntity.userUnit.quantityType.baseUnit()
         ).to(priceEntity.userUnit),
@@ -135,7 +135,7 @@ data class Price(
     val sourceId: Long,
     val count: Long,
     val price: Double,
-    val quantity: MeasuredValue,
+    val quantity: Quantity,
     val confirmedAt: Instant,
     val notes: String,
     val modifiedAt: Instant,
@@ -265,7 +265,7 @@ fun EditablePrice.toDomain(locale: Locale): Price? {
             sourceId = sourceId,
             price = priceDouble,
             count = countLong,
-            quantity = MeasuredValue(measureValueDouble, measurementUnit),
+            quantity = Quantity(measureValueDouble, measurementUnit),
             confirmedAt = if (toConfirm) now else confirmedAt,
             notes = notes,
             modifiedAt = now,
@@ -344,7 +344,7 @@ fun PriceHistory.toPrice(): Price {
         sourceId = sourceId,
         price = price,
         count = count,
-        quantity = MeasuredValue(quantityInBaseUnit, userUnit.quantityType.baseUnit()).to(
+        quantity = Quantity(quantityInBaseUnit, userUnit.quantityType.baseUnit()).to(
             userUnit
         ),
         confirmedAt = confirmedAt,

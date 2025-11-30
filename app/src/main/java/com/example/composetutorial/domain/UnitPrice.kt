@@ -1,10 +1,7 @@
 package com.example.composetutorial.domain
 
-import android.content.Context
 import android.util.Log
 import com.example.composetutorial.debug.myRequire
-import com.example.composetutorial.ui.common.formatPrice
-import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.common.roundTo
 import java.util.Locale
 import kotlin.math.abs
@@ -36,11 +33,11 @@ data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) : 
         fun calculate(
             price: Double,
             count: Long,
-            measure: MeasuredValue,
-            denominator: MeasurementUnit = measure.unit.quantityType.baseUnit()
+            quantity: Quantity,
+            denominator: MeasurementUnit = quantity.unit.quantityType.baseUnit()
         ): UnitPrice {
             myRequire(count > 0) { "Expected positive count" }
-            return UnitPrice(price / (count * measure.asValue(denominator)), denominator)
+            return UnitPrice(price / (count * quantity.asValue(denominator)), denominator)
         }
     }
 }

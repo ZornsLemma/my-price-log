@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.composetutorial.R
 import com.example.composetutorial.domain.areDifferentUnitFamilies
-import com.example.composetutorial.domain.MeasuredValue
+import com.example.composetutorial.domain.Quantity
 import com.example.composetutorial.domain.UnitPrice
 import com.example.composetutorial.ui.common.format
 import com.example.composetutorial.domain.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily
@@ -36,7 +36,7 @@ import java.util.Currency
 fun PackPriceAndSizeRow(
     price: Double,
     count: Long,
-    measure: MeasuredValue,
+    quantity: Quantity,
     dataSet: DataSet,
     asyncOperationStatus: AsyncOperationStatus
 ) {
@@ -78,7 +78,7 @@ fun PackPriceAndSizeRow(
                         LocalConfiguration.current.locales[0]
                     )
                     val formattedMeasure =
-                        measure.toDisplayString(context, LocalConfiguration.current.locales[0])
+                        quantity.toDisplayString(context, LocalConfiguration.current.locales[0])
                     Text(
                         if (count == 1L) {
                             stringResource(
@@ -101,14 +101,14 @@ fun PackPriceAndSizeRow(
             remember(dataSet) { getRelevantUnitFamilies(dataSet) }
 
         val relevantUnitList =
-            remember(dataSet, measure.unit.quantityType) {
+            remember(dataSet, quantity.unit.quantityType) {
                 getRelevantMeasurementUnits(
                     dataSet,
-                    measure.unit.quantityType,
+                    quantity.unit.quantityType,
                     includeDisplayOnly = true
                 )
             }
-        Log.d("MyAppQA", "measure identityHashCode=${System.identityHashCode(measure)}")
+        Log.d("MyAppQA", "measure identityHashCode=${System.identityHashCode(quantity)}")
         // NB: We are using remember() here to avoid redoing an expensive computation on every
         // recomposition. We *must not* use rememberSaveable(), because it does *not* recompute when
         // navigating back after a new item is selected in another screen, due to saved state
@@ -123,15 +123,15 @@ fun PackPriceAndSizeRow(
         // wrong quantity type as the item changes. On top of these technical complexities, I am
         // not even sure when we should preserve the user's value - if for example the price changes
         // enough that our recommended denominator changes, should we override the user's selection?
-        var selectedUnitPriceUnit by remember(dataSet, price, count, measure) {
-            Log.d("MyAppQA", "rememberSaveable $price $measure")
+        var selectedUnitPriceUnit by remember(dataSet, price, count, quantity) {
+            Log.d("MyAppQA", "rememberSaveable $price $quantity")
             val candidateDenominators = getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
                 dataSet,
-                measure.unit,
+                quantity.unit,
                 includeDisplayOnly = true
             )
-            val friendlyUnitPrice = UnitPrice.calculate(price, count, measure).withFriendlyDenominator(
-                measure.unit,
+            val friendlyUnitPrice = UnitPrice.calculate(price, count, quantity).withFriendlyDenominator(
+                quantity.unit,
                 getCurrencyDecimalPlaces(dataSet),
                 candidateDenominators
             )
@@ -143,12 +143,12 @@ fun PackPriceAndSizeRow(
         // big deal and the alternatives (e.g. adding extra decimal places beyond the currency's
         // standard dps or rounding up instead of to nearest so the value isn't zero) are probably
         // worse.
-        Log.d("MyAppQA", "calling formatUnitPrice $price $measure $selectedUnitPriceUnit")
+        Log.d("MyAppQA", "calling formatUnitPrice $price $quantity $selectedUnitPriceUnit")
         val unitPriceString =
             UnitPrice.calculate(
                 price,
                 count,
-                measure,
+                quantity,
                 selectedUnitPriceUnit,
             ).format(context, dataSet,LocalConfiguration.current.locales[0])
         val context = LocalContext.current

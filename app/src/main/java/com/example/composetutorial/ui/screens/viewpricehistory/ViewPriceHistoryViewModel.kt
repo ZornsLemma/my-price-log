@@ -4,7 +4,7 @@ import android.os.Parcelable
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import com.example.composetutorial.domain.MeasuredValue
+import com.example.composetutorial.domain.Quantity
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.domain.baseUnit
 import com.example.composetutorial.models.PriceHistory
@@ -94,7 +94,7 @@ data class PriceHistoryDelta(
     val priceHistory: PriceHistory,
     val price: Double?,
     val count: Long?,
-    val quantity: MeasuredValue?,
+    val quantity: Quantity?,
     // confirmedAt is a string so we can do "user-resolution" de-duplication
     val confirmedAt: String?,
     val notes: String?,
@@ -106,7 +106,7 @@ fun PriceHistory.toPriceHistoryDelta(confirmedAtFormatter: DateTimeFormatter): P
         priceHistory = this,
         price = price,
         count = count,
-        quantity = MeasuredValue(quantityInBaseUnit, userUnit.quantityType.baseUnit()).to(
+        quantity = Quantity(quantityInBaseUnit, userUnit.quantityType.baseUnit()).to(
             userUnit
         ),
         confirmedAt = confirmedAtFormatter.format(confirmedAt),
@@ -120,7 +120,7 @@ private fun diff(
     rhs: PriceHistory,
     confirmedAtFormatter: DateTimeFormatter
 ): PriceHistoryDelta? {
-    val rhsQuantity = MeasuredValue(
+    val rhsQuantity = Quantity(
         rhs.quantityInBaseUnit,
         rhs.userUnit.quantityType.baseUnit()
     ).to(rhs.userUnit)

@@ -358,7 +358,7 @@ com.example.myapp/
 // TODO: Make sure to do some testing and check the log for strict mode violations towards end of
 // dev.
 
-// ENHANCE: It would be nice to add automated tests. At the very least, MeasuredValue could be
+// ENHANCE: It would be nice to add automated tests. At the very least, Quantity could be
 // usefully tested. It would also be interesting and perhaps useful to add some unit tests for more
 // of the business logic, mocking the repository, etc.
 
@@ -379,7 +379,7 @@ com.example.myapp/
 // too long I should accept it, rather than switching away from the grid layout. Maybe I could use a
 // non-breaking space e.g. between the price and por/for or after to improve the layout if it does
 // wrap. Or actually probably a non-breaking space between 400 and ml would maybe be good. OK, I have
-// experimentally added a non-breaking space in MeasuredValue.toDisplayString() and we'll see if
+// experimentally added a non-breaking space in Quantity.toDisplayString() and we'll see if
 // that's enough or if I want to make more tweaks. I've also added a horizontal spacer to stop
 // this text "touching" the unit price to its right if it is just on the borderline of needing
 // to wrap.

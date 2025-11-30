@@ -1,9 +1,8 @@
 package com.example.composetutorial.models
 
 import android.content.Context
-import com.example.composetutorial.models.LoyaltyType
 import com.example.composetutorial.R
-import com.example.composetutorial.domain.MeasuredValue
+import com.example.composetutorial.domain.Quantity
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.ui.common.setSelectedDataSetId
@@ -121,7 +120,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdValueMart,
             price = 2.03 * currencyMultiplier,
             count = 1,
-            quantity = MeasuredValue(500.0, MeasurementUnit.G),
+            quantity = Quantity(500.0, MeasurementUnit.G),
             confirmedAt = now.minus(2, ChronoUnit.MINUTES),
             notes = context.getString(R.string.demo_groceries_notes_large_pack_own_brand),
             itemDefaultUnit = MeasurementUnit.G,
@@ -135,7 +134,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdSuperiorStore,
             price = 1.50 * currencyMultiplier,
             count = 1,
-            quantity = MeasuredValue(227.0, MeasurementUnit.G),
+            quantity = Quantity(227.0, MeasurementUnit.G),
             confirmedAt = now.minus(4, ChronoUnit.DAYS),
             notes = context.getString(R.string.demo_groceries_notes_own_brand),
             itemDefaultUnit = MeasurementUnit.G,
@@ -149,7 +148,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdGrandways,
             price = 1.64 * currencyMultiplier,
             count = 1,
-            quantity = MeasuredValue(350.0, MeasurementUnit.G),
+            quantity = Quantity(350.0, MeasurementUnit.G),
             confirmedAt = now.minus(9, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasurementUnit.G,
@@ -163,7 +162,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdValueMart,
             price = 1.99 * currencyMultiplier,
             count = 1,
-            quantity = MeasuredValue(
+            quantity = Quantity(
                 4.0,
                 MeasurementUnit.IMPERIAL_PINT
             ),
@@ -180,7 +179,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdSuperiorStore,
             price = 2.86 * currencyMultiplier,
             count = 1,
-            quantity = MeasuredValue(2.0, MeasurementUnit.L),
+            quantity = Quantity(2.0, MeasurementUnit.L),
             confirmedAt = now.minus(63, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasurementUnit.L,
@@ -194,7 +193,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdGrandways,
             price = 3.28 * currencyMultiplier,
             count = 1,
-            quantity = MeasuredValue(
+            quantity = Quantity(
                 6.0,
                 MeasurementUnit.IMPERIAL_PINT
             ),
@@ -211,7 +210,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdValueMart,
             price = 0.76 * currencyMultiplier,
             count = 1,
-            quantity = MeasuredValue(40.0, MeasurementUnit.EACH),
+            quantity = Quantity(40.0, MeasurementUnit.EACH),
             confirmedAt = now.minus(7, ChronoUnit.DAYS),
             notes = context.getString(R.string.demo_groceries_notes_soft_pack_own_brand),
             itemDefaultUnit = MeasurementUnit.EACH,
@@ -225,7 +224,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdSuperiorStore,
             price = 0.60 * currencyMultiplier,
             count = 1,
-            quantity = MeasuredValue(20.0, MeasurementUnit.EACH),
+            quantity = Quantity(20.0, MeasurementUnit.EACH),
             confirmedAt = now.minus(4, ChronoUnit.HOURS),
             notes = "",
             itemDefaultUnit = MeasurementUnit.EACH,
@@ -239,7 +238,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdGrandways,
             price = 1.25 * currencyMultiplier,
             count = 1,
-            quantity = MeasuredValue(50.0, MeasurementUnit.EACH),
+            quantity = Quantity(50.0, MeasurementUnit.EACH),
             confirmedAt = now.minus(12, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasurementUnit.EACH,
@@ -253,7 +252,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdValueMart,
             price = 6.30 * currencyMultiplier,
             count = 12,
-            quantity = MeasuredValue(400.0, MeasurementUnit.ML),
+            quantity = Quantity(400.0, MeasurementUnit.ML),
             confirmedAt = now.minus(6, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasurementUnit.ML,
@@ -267,7 +266,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdSuperiorStore,
             price = 2.79 * currencyMultiplier,
             count = 4,
-            quantity = MeasuredValue(330.0, MeasurementUnit.ML),
+            quantity = Quantity(330.0, MeasurementUnit.ML),
             confirmedAt = now.minus(31, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasurementUnit.ML,
@@ -281,7 +280,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdGrandways,
             price = 3.82 * currencyMultiplier,
             count = 6,
-            quantity = MeasuredValue(330.0, MeasurementUnit.ML),
+            quantity = Quantity(330.0, MeasurementUnit.ML),
             confirmedAt = now.minus(18, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasurementUnit.ML,
