@@ -30,7 +30,7 @@ import com.example.composetutorial.ui.common.formatPrice
 import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.isNotBusy
-import java.util.Currency
+import java.util.Currency.getInstance
 
 @Composable
 fun PackPriceAndSizeRow(
@@ -64,7 +64,8 @@ fun PackPriceAndSizeRow(
         // edge of the unit price box if the text just happens to be precisely the right size, but
         // using an "inner padding" rather than normal padding so the other row of the "2x2 grid"
         // doesn't need to do the same thing. TODO: To be honest it might be as easy just to apply a
-        // right padding to the LabeledItem and the leftmost element of the second row.
+        // right padding to the LabeledItem and the leftmost element of the second row. Or can we
+        // just use a row with a horizontal arrangement spacebetween?
         Box(modifier = Modifier.weight(weight = 0.55f)) {
             Row {
                 LabeledItem(
@@ -132,7 +133,7 @@ fun PackPriceAndSizeRow(
             )
             val friendlyUnitPrice = UnitPrice.calculate(price, count, quantity).withFriendlyDenominator(
                 quantity.unit,
-                getCurrencyDecimalPlaces(dataSet),
+                getInstance(dataSet.currencyCode).defaultFractionDigits,
                 candidateDenominators
             )
             Log.d("MyAppQA", "rememberSaveable returning $friendlyUnitPrice")
@@ -166,6 +167,3 @@ fun PackPriceAndSizeRow(
     }
 }
 
-// TODO: If this really is just used in one place, inline it?
-fun getCurrencyDecimalPlaces(dataSet: DataSet) =
-    Currency.getInstance(dataSet.currencyCode).defaultFractionDigits
