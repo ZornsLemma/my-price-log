@@ -3,6 +3,7 @@ package com.example.composetutorial.ui.components.generalselector
 import android.util.Log
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
+import com.example.composetutorial.debug.debugDelay
 import com.example.composetutorial.ui.common.normalizedForSearch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -37,14 +38,14 @@ open class GeneralSelectorStateHolder<T>(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val dataFlow = combine(
-        dataQuery.flatMapLatest { data -> /* TODO delay(5000); */ flowOf(data) },
+        dataQuery.flatMapLatest { data -> debugDelay(); flowOf(data) },
         searchStringFlow.map { searchString -> searchString.text.normalizedForSearch() }
     ) { data, normalizedQuery ->
         data.filter {
             getName(it).normalizedForSearch().contains(normalizedQuery)
         }
     }
-        .onEach { emittedList -> /* delay(5000); */ Log.d(
+        .onEach { emittedList -> debugDelay(); Log.d(
             "MyAppGS",
             "Room emitted list: ${System.identityHashCode(emittedList)}"
         )

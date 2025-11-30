@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.composetutorial.debug.debugDelay
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.common.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
@@ -114,7 +115,7 @@ class EditItemViewModel(
         if (item == null) {
             throw IllegalStateException("performSave() called with an inconvertible EditableItem: ${uiContent.editableContent.value}")
         }
-        //delay(5000) // TODO TEMP HACK
+        debugDelay()
         // updateOrInsertItem() returns -1 if it's an update or the new ID if it was an insert.
         val newId =  repository.updateOrInsertItem(item)
         Log.d("MyAppQZ", "updateOrInsertItem returned $newId")

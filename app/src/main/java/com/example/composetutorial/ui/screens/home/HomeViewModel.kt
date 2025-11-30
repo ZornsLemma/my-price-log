@@ -31,6 +31,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.domain.AugmentedPrice
 import com.example.composetutorial.domain.PriceJudgement
 import com.example.composetutorial.R
+import com.example.composetutorial.debug.debugDelay
 import com.example.composetutorial.domain.SettingsRepository
 import com.example.composetutorial.domain.analysePrices
 import com.example.composetutorial.domain.dataStore
@@ -352,7 +353,7 @@ class HomeViewModel(
 
                     Log.d("MyFlow", "derived analysedPriceList")
 
-                    //delay(5000) // TODO HACK
+                    debugDelay()
                     flowOf(
                         HomeScreenUIContent(
                             dataSetIdState,
@@ -409,7 +410,7 @@ class HomeViewModel(
         viewModelScope.launch {
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
-                //delay(5000) // TODO TEMP HACK
+                debugDelay()
                 //throw IllegalStateException("TODO FAKE CONFIRM ERROR")
                 repository.updateOrInsertPrice(newPrice)
                 previousPrice.value = price
@@ -425,7 +426,7 @@ class HomeViewModel(
         viewModelScope.launch {
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
-                //delay(5000) // TODO TEMP HACK
+                debugDelay()
                 repository.revertPrice(
                     priceBeforeRevert = priceBeforeRevert,
                     priceAfterRevert = priceAfterRevert
@@ -443,7 +444,7 @@ class HomeViewModel(
         viewModelScope.launch {
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
-                //delay(5000) // TODO TEMP HACK
+                debugDelay()
                 repository.deletePriceById(price.id)
                 previousPrice.value = null
                 asyncOperationStatus.update(AsyncOperationStatus.Success(null))

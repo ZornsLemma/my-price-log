@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
+import com.example.composetutorial.debug.debugDelay
 import com.example.composetutorial.ui.components.WarningIcon
 import com.example.composetutorial.ui.components.generaledit.runGeneralEditScreenOperation
 import com.example.composetutorial.ui.common.AsyncOperationStatus
@@ -76,7 +77,7 @@ fun GeneralEditAndDeleteScreen(
                         isSafeToPerform = { true },
                         perform = {
                             deleting = true
-                            //delay(5000) // TODO HACK
+                            debugDelay()
                             //throw IllegalStateException("TODO")
                             performDelete()
                             // We return null since we don't want to change the selected entity on

@@ -39,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
+import com.example.composetutorial.debug.debugDelay
 import com.example.composetutorial.ui.components.generaledit.runGeneralEditScreenOperation
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.isNotBusy
@@ -193,7 +194,7 @@ fun GeneralEditScreen(
                             isSafeToPerform = validateForSave,
                             perform = {
                                 saving = true
-                                //delay(5000) // TODO HACK
+                                debugDelay()
                                 performSave()
                             }
                         )
@@ -292,7 +293,7 @@ fun runGeneralEditScreenOperation(
                 //throw IllegalStateException("TODO TEST")
                 val id = perform()
                 Log.d("MyAppQZ", "perform() returned id $id")
-                // delay(5000) // TODO HACK - DONE AFTER PERFORM SO IT GETS A CHANCE TO SET SAVING/DELETING FLAG TO TRUE
+                debugDelay()
                 viewModel.asyncOperationStatus.update(AsyncOperationStatus.Success(id))
             } catch (e: Exception) {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation caught exception")

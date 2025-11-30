@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.composetutorial.debug.debugDelay
 import com.example.composetutorial.models.LoyaltyType
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.common.createNameValidationRules
@@ -133,7 +134,7 @@ class EditSourceViewModel(
         if (source == null) {
             throw IllegalStateException("performSave() called with an inconvertible EditableSource: ${uiContent.editableContent.value}")
         }
-        //delay(5000) // TODO TEMP HACK
+        debugDelay()
         // updateOrInsertSource() returns -1 if it's an update or the new ID if it was an insert.
         val newId = repository.updateOrInsertSource(source)
         return if (newId == -1L) source.id else newId
