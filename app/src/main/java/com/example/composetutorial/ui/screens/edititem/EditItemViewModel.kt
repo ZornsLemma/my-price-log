@@ -28,10 +28,8 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.parcelize.Parcelize
 
-// TODO: MOVE?
 // This class seems a bit pointless but it makes it clearer what is being retrieved from
 // PersistentUiContent.staticContent.
-// TODO: Can/should we use these StaticContent classes (for all Edit*, not just this one) inside the SharedViewModel instead of its custom local holder type?
 @Parcelize
 data class EditItemScreenStaticContent(
     val dataSet: DataSet,
