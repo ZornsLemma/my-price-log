@@ -34,7 +34,7 @@ open class GeneralSelectorStateHolder<T>(
     // filter doesn't exclude anything.
     // ENHANCE: We could persist the search string via savedStateHandle. If we do that, it probably
     // would require that we filter uiContent.initialList.
-    val searchStringFlow = MutableStateFlow(TextFieldValue("ol"))
+    val searchStringFlow = MutableStateFlow(TextFieldValue(""))
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val dataFlow = combine(
