@@ -107,7 +107,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
                 colors = if (enabled) myTextFieldColors(isExpanded) else TextFieldDefaults.colors()
             )
         }
-        // If we let TextField display supportingText itself, it gets included in the bounding box
+        // If we let TextField display supportingText itself it gets included in the bounding box
         // and the dropdown appears below the supportingText, whereas we want it to drop down over
         // the supportingText, "hanging off" the main TextField text box. So we jump through far too
         // many hoops to display it ourselves here.

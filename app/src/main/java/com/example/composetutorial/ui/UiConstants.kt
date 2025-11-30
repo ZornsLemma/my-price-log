@@ -56,8 +56,7 @@ val fullScreenDialogHorizontalBorder = 16.dp
 val fullScreenDialogVerticalBorder = 8.dp
 
 // MD3 says 12.dp but MyExposedDropdownMenuBox's dropdown item text doesn't line up with the parent
-// TextField text with that. TODO: We could override it for that specific case and use 12.dp for
-// other menus?
+// TextField text with that.
 val menuLeftPadding = 16.dp
 // Seems best to make the right padding symmetrical.
 val menuRightPadding = menuLeftPadding
@@ -86,5 +85,5 @@ const val maxSearchLength = 32
 // 11 is a bit arbitrary but we're just trying to avoid the user filling the TextField with hundreds
 // of characters of junk and breaking the screen layout badly. 11 is pretty generous as it allows
 // just under a million with two decimal places and a (manually entered) thousands separator, so we
-// could tighten this up a bit if desirable.
+// could tighten this up a bit if desirable. TODO: Might be worth tightening this up, partly in view of new layouts, and partly given it will be easier to relax this post-release than to tighten it
 const val maxDecimalLength = 11

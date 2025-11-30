@@ -5,7 +5,7 @@ plugins {
     //alias(libs.plugins.kotlin.parcelize)
     id("kotlin-parcelize")
     id("com.google.devtools.ksp") version "2.0.21-1.0.28"
-    id("com.diffplug.spotless") version "8.0.0"
+    id("com.diffplug.spotless") version "8.1.0"
     id("com.google.protobuf") version "0.9.5"
 }
 
@@ -19,13 +19,12 @@ spotless {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:4.27.1"  // Latest protoc
+        artifact = "com.google.protobuf:protoc:4.27.1"
     }
     generateProtoTasks {
         all().forEach { task ->
             task.builtins {
-                create("java") { option("lite") }  // Enables lite mode
-                // TODO GROK SAYS THIS BREAKS STUFF AND IT APPEARS TO BE RIGHT create("kotlin")  // Optional: Generates Kotlin extensions (cleaner code)
+                create("java") { option("lite") }
             }
         }
     }
@@ -37,7 +36,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.composetutorial"
-        // minSdk could probably be 24, but because we use VACUUM INTO for the sqlite backup we need
+        // minSdk could almost be 24 but because we use VACUUM INTO for the sqlite backup we need
         // minSdk 30 to have a sqlite version supporting it. There are rather faffy workarounds
         // which could perhaps allow lowering this later on, but for now let's just accept this.
         // I've disabled desugaring now we have minSdk 30 by commenting out the relevant lines; if
@@ -52,9 +51,6 @@ android {
 
     buildTypes {
         release {
-            // Original config was:
-            // isMinifyEnabled = false
-            // Have tweaked to next two lines:
             isMinifyEnabled = true
             isShrinkResources = true
 
@@ -87,9 +83,6 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    //implementation(libs.androidx.compose.ui) // TODO: for Dialog!?
-    //implementation(libs.androidx.compose.ui.tooling.preview) // TODO: for Dialog?!
-    //implementation(libs.androidx.compose.ui.window) // TODO: for Dialog!?
     implementation(libs.compose.foundation)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.lifecycle.livedata)

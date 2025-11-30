@@ -8,7 +8,7 @@ import com.example.composetutorial.R
 import com.example.composetutorial.ui.common.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.Repository
-import com.example.composetutorial.models.DataSetUnitPreferences
+import com.example.composetutorial.models.UnitPreferences
 import com.example.composetutorial.models.EditableDataSet
 import com.example.composetutorial.models.toDomain
 import com.example.composetutorial.ui.common.EmptyParcelable
@@ -100,12 +100,12 @@ class EditDataSetViewModel(
         // context, "measurement unit" does not work - it sounds as if the user is expected to
         // choose at least one thing like "miles" or "litres". If "measurement system" is a bit
         // technical, I hope the overall context with the caption above will make it clear.
-        ValidationRule<DataSetUnitPreferences>(
+        ValidationRule<UnitPreferences>(
             { it -> it.allowMetric || it.allowImperial || it.allowUSCustomary },
             UiText.Res(R.string.supporting_text_at_least_one_measurement_system_must_be_selected)
         ),
         // This next rule is enforced by UI logic, but let's go belt and braces.
-        ValidationRule<DataSetUnitPreferences>(
+        ValidationRule<UnitPreferences>(
             { !(it.allowImperial && it.allowUSCustomary) },
             UiText.Res(R.string.supporting_text_imperial_and_us_units_cannot_be_selected_together)
         ),

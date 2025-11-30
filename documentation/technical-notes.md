@@ -1,10 +1,8 @@
-# Coding notes
-
-TODO: Rename this? Stuff like the full screen dialog is not exactly coding, although arguably it is.
+# Technical notes
 
 ## Overview
 
-This isn't a formal coding standards document, it's just a place to put a few general notes to myself and maybe to anyone else who wants to work on the code.
+This document just contains a few miscellaneous technical notes including some fragmentary coding standards/conventions.
 
 ## Full screen dialogs
 

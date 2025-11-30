@@ -28,8 +28,6 @@ class SharedViewModel : ViewModel() {
         val frozenLocale: Locale,
         )
 
-    // This is only nullable to provide us with an easy initial value to use. In use
-    // setEditPriceScreenState() should always have been called before it is used. TODO: This comment is probably still true but perhaps a bit "feeling my way" and not really useful now?
     var editPriceScreenInitialUiContent: EditPriceScreenInitialUiContent? = null
 
     fun setEditPriceScreenInitialUiContent(

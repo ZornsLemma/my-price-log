@@ -36,8 +36,7 @@ fun DataSet?.toEditable(locale: Locale): EditableDataSet {
             0,
             "",
             locale.currencyOrNull()?.currencyCode ?: "",
-            // TODO: Rename DataSetUnitPreferences to just UnitPreferences??
-            DataSetUnitPreferences(
+            UnitPreferences(
             allowMetric = UnitFamily.METRIC in defaultUnitFamilies,
             allowImperial = UnitFamily.IMPERIAL in defaultUnitFamilies,
             allowUSCustomary = UnitFamily.US_CUSTOMARY in defaultUnitFamilies,),
@@ -48,7 +47,7 @@ fun DataSet?.toEditable(locale: Locale): EditableDataSet {
             id = id,
             name = name,
             currencyCode = currencyCode,
-            unitPreferences = DataSetUnitPreferences(allowMetric = allowMetric, allowImperial = allowImperial, allowUSCustomary =  allowUSCustomary),
+            unitPreferences = UnitPreferences(allowMetric = allowMetric, allowImperial = allowImperial, allowUSCustomary =  allowUSCustomary),
             notes = notes
         )
     }
@@ -64,7 +63,7 @@ fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> = when (locale.count
 }
 
 @Parcelize
-data class DataSetUnitPreferences(
+data class UnitPreferences(
     val allowMetric: Boolean,
     val allowImperial: Boolean,
     val allowUSCustomary: Boolean
@@ -75,7 +74,7 @@ data class EditableDataSet(
     val id: Long,
     val name: String,
     val currencyCode: String,
-    val unitPreferences: DataSetUnitPreferences,
+    val unitPreferences: UnitPreferences,
     val notes: String,
 ) : Parcelable
 
