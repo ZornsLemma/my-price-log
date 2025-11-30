@@ -49,6 +49,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        // TODO: Should the arrow here rotate 180 degrees when open, like other dropdowns?
                         // ENHANCE: This text doesn't change colour when enabled is false, TBH this
                         // probably looks OK and it might actually look ugly if it did in my specific
                         // UI, but maybe it ought to. And equally maybe the LabeledItem itself should
