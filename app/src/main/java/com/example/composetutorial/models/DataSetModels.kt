@@ -78,7 +78,6 @@ data class EditableDataSet(
     val notes: String,
 ) : Parcelable
 
-// TODO: As with Item, DataSet is both entity and domain, so naming concerns.
 fun EditableDataSet.toDomain(): DataSet? {
     val trimmedName = name.trim()
     // It could get confusing if an empty name leaked into the database (it would be

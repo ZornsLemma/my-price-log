@@ -101,10 +101,6 @@ data class EditableItem(
     // trying to reproduce this later.
 }
 
-// TODO: Item is both "entity" and "domain", so our naming is awkward here. I've semi-winged it.
-// It might be best to say toItem(), but then - although ChatGPT says it's fine, it's just the basic
-// model and not sure I trust it - it feels odd that we are using toEntity()/toEditable()/toDomain()
-// on Price, maybe we should use toActualName everywhere??
 fun EditableItem.toDomain(): Item? {
     val trimmedName = name.trim()
     // It could get confusing if an empty name leaked into the database (it would be

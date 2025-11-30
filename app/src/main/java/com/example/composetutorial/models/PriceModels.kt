@@ -146,11 +146,7 @@ data class Price(
     val itemDefaultUnit: MeasurementUnit
 ) : Parcelable
 
-// TODO: "toHistory" is new, and almost seems to me to be suggesting we should drop all the
-// toDomain()/toEditable() stuff and maybe use explicit names everywhere, but I'm far from
-// confident. Maybe it's fine, maybe there is a notional "history" variant layer, it's just that
-// in practice only prices have this.
-fun PriceEntity.toHistory(): PriceHistory {
+fun PriceEntity.toPriceHistory(): PriceHistory {
     return PriceHistory(
         priceId = id,
         dataSetId = dataSetId,

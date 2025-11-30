@@ -100,7 +100,6 @@ data class EditableSource(
     val notes: String,
 ) : Parcelable
 
-// TODO: As with Item, Source is both entity and domain level, same naming concerns.
 fun EditableSource.toDomain(locale: Locale): Source? {
     val trimmedName = name.trim()
     // It could get confusing if an empty name leaked into the database (it would be

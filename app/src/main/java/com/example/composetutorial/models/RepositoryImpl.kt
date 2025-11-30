@@ -233,7 +233,7 @@ class RepositoryImpl(
             priceId = priceDao.upsert(priceEntity)
             val priceEntityWithId =
                 if (priceEntity.id != 0L) priceEntity else priceEntity.copy(id = priceId)
-            priceHistoryDao.insert(priceEntityWithId.toHistory())
+            priceHistoryDao.insert(priceEntityWithId.toPriceHistory())
         }
         return priceId
     }
@@ -282,12 +282,12 @@ class RepositoryImpl(
             // Check that priceBeforeRevert is the same as priceHistoryToDelete after converting
             // the former from a PriceEntity to a PriceHistory and fixing up the ID.
             myCheck(
-                priceBeforeRevert.toEntity().toHistory()
+                priceBeforeRevert.toEntity().toPriceHistory()
                     .copy(id = priceHistoryToDelete.id) == priceHistoryToDelete
             ) { "Expected priceBeforeRevert and priceHistoryToDelete to match" }
             // Similarly, check priceAfterRevert matches priceHistoryToRevertTo.
             myCheck(
-                priceAfterRevert.toEntity().toHistory()
+                priceAfterRevert.toEntity().toPriceHistory()
                     .copy(id = priceHistoryToRevertTo.id)
                         == priceHistoryToRevertTo
             ) { "Expected priceAfterRevert and priceHistoryToRevertTo to match" }
