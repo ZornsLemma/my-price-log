@@ -16,7 +16,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.example.composetutorial.debug.DebugFlags
 import com.example.composetutorial.ui.AppNavigation
-import com.example.composetutorial.ui.theme.ComposeTutorialTheme
+import com.example.composetutorial.ui.theme.AppTheme
 
 private fun Context.isPhone(): Boolean = resources.configuration.smallestScreenWidthDp < 600
 
@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             val darkTheme = isSystemInDarkTheme()
 
-            ComposeTutorialTheme(darkTheme = darkTheme) {
+            AppTheme(darkTheme = darkTheme) {
                 /* TODO: DELETE?
                 val window = (this as ComponentActivity).window
 
