@@ -11,6 +11,7 @@ import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Price
 import com.example.composetutorial.models.Source
 import com.example.composetutorial.models.toEditable
+import com.example.composetutorial.ui.screens.editsource.EditSourceScreenStaticContent
 import com.example.composetutorial.ui.screens.home.HomeScreenUIContent
 import java.util.Locale
 
@@ -128,7 +129,7 @@ class SharedViewModel : ViewModel() {
         val dataSet: DataSet
     )
 
-    // TODO: Rename the following now they are just List<T>? not a UIContent structure? Or is the "UIContent" convention more valuable?
+    // TODO: Rename the following now they are just List<T>? not a UiContent structure? Or is the "UiContent" convention more valuable?
     var selectDataSetScreenUIContent: List<DataSet>? = null
     var selectItemScreenInitialUiContent: SelectItemScreenInitialUiContent? = null
     var selectSourceScreenInitialUiContent: SelectSourceScreenInitialUiContent? = null
@@ -163,7 +164,6 @@ class SharedViewModel : ViewModel() {
         editDataSetScreenInitialUiContent = dataSet.toEditable(locale)
     }
 
-    // TODO: Probably follow the naming model for EditItemScreen and EditDataSetScreen in all the other Edit* things?
     data class EditItemScreenInitialUiContent(
         val editableItem: EditableItem,
         val dataSet: DataSet,
@@ -178,8 +178,7 @@ class SharedViewModel : ViewModel() {
 
     data class EditSourceScreenInitialUiContent(
         val editableSource: EditableSource,
-        val dataSet: DataSet,
-        val frozenLocale: Locale
+        val staticContent: EditSourceScreenStaticContent,
     )
 
     var editSourceScreenInitialUiContent: EditSourceScreenInitialUiContent? = null
@@ -192,8 +191,10 @@ class SharedViewModel : ViewModel() {
         val editableSource = source.toEditable(dataSet.id, frozenLocale)
         editSourceScreenInitialUiContent = EditSourceScreenInitialUiContent(
             editableSource = editableSource,
+            EditSourceScreenStaticContent(
             dataSet = dataSet,
             frozenLocale = frozenLocale,
+            )
         )
     }
 }

@@ -595,9 +595,7 @@ This may be complete crap. The example of how to use it is probably as long as t
                         app.repository,
                         handle,
                          sharedViewModel.editSourceScreenInitialUiContent?.editableSource,
-                        sharedViewModel.editSourceScreenInitialUiContent?.let {
-                            EditSourceScreenStaticContent(it.dataSet, it.frozenLocale)
-                        }
+                        sharedViewModel.editSourceScreenInitialUiContent?.staticContent
                     )
                 }
             ) { viewModel ->

@@ -37,8 +37,6 @@ data class EditItemScreenStaticContent(
     val dataSet: DataSet,
 ) : Parcelable
 
-// TODO: It is just possible that with the rework, we don't need things like dataSetId in EditableItem and ditto for other EditableFoo classes
-
 class EditItemViewModel(
     private val repository: Repository,
     savedStateHandle: SavedStateHandle,
