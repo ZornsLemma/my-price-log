@@ -321,7 +321,6 @@ fun AppNavigation() {
                             SelectItemScreenStaticContent(it.itemList, it.dataSet)
                         },
                         getName = { it -> it.name },
-                        // TODO DELETE dataQuery = app.repository.getAllItems(uiContent.dataSet.id),
                     )
                 }
             ) { viewModel ->
@@ -427,7 +426,7 @@ fun AppNavigation() {
                             EditPriceScreenStaticContent(it.dataSet, it.item, it.source, it.nonLinearEdit, it.frozenLocale)
                         }
                     )
-                }, // TODO !! IS MAYBE A HACK - TBH COULD I JUST MAKE FROMSAVEDSTATE RETURN NON-NULL? NOT TOO KEEN
+                },
             ) { viewModel ->
                 EditPriceScreen(
                     viewModel, navController,
