@@ -101,8 +101,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    // TODO: Switch following to use same style as rest
-    implementation("androidx.datastore:datastore:1.1.0")
-    implementation("androidx.datastore:datastore-core:1.1.1")
-    implementation("com.google.protobuf:protobuf-javalite:3.23.4")
+    implementation(libs.androidx.datastore)
+    implementation(libs.androidx.datastore.core)
+    implementation(libs.google.protobuf.javalite)
 }
