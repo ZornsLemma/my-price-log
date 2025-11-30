@@ -2,12 +2,11 @@ package com.example.composetutorial.ui
 
 import androidx.compose.ui.unit.dp
 
-const val defaultDatabaseBackupName = "price_tracker_backup.db" // TODO: KEEP IN SYNC WITH APP NAME
+const val defaultDatabaseBackupName = "my_price_log_backup.db" // TODO: KEEP IN SYNC WITH APP NAME
 
 // Unicode characters expressed explicitly via variables to make it obvious where they are used
-// (rather than relying on us recognising visually that we have "×" rather than "x" in a string
+// (rather than relying on us recognising visually that we have "—" rather than "-" in a string
 // literal).
-const val multiplicationSign = "\u00d7"
 const val emDash = "\u2014"
 const val copyrightSymbol = "\u00a9"
 const val bulletPoint = "\u2022"
@@ -36,8 +35,8 @@ const val spinnerDelayMillis = 200L
 // TODO: a whole second feels insanely slow
 const val defaultValidationMessageDelayMillis = 200L
 
-// TODO: If this is too long, the user can break something different, click Save again and have to
-// wait until the first animation finishes. Let's start with 1000 and see how it goes.
+// ENHANCE: If this is too long, the user can break something different, click Save again and have
+// to wait until the first animation finishes. Let's start with 1000 and see how it goes.
 const val errorHighlightBoxVisibleTimeMillis = 1000L
 
 // TODO: https://m3.material.io/foundations/layout/applying-layout/compact says 16dp left and right
@@ -85,5 +84,5 @@ const val maxSearchLength = 32
 // 11 is a bit arbitrary but we're just trying to avoid the user filling the TextField with hundreds
 // of characters of junk and breaking the screen layout badly. 11 is pretty generous as it allows
 // just under a million with two decimal places and a (manually entered) thousands separator, so we
-// could tighten this up a bit if desirable. TODO: Might be worth tightening this up, partly in view of new layouts, and partly given it will be easier to relax this post-release than to tighten it
+// could tighten this up a bit if desirable.
 const val maxDecimalLength = 11

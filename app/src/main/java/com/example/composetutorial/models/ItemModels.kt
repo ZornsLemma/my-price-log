@@ -38,10 +38,6 @@ fun Item?.toEditable(dataSet: DataSet): EditableItem {
             dataSet, quantityType, includeDisplayOnly = false
         ).first().id
     }.toMutableList()
-    // TODO: I think this "this == null" case is reasonable here, but it may (I need to check - am
-    // in the middle of refactoring now and trying to avoid gross reworking) be inconsistent with
-    // how other "new" cases are added, and we should probably be consistent (either use this style,
-    // or a style where the caller handles new-vs-edit-existing, everywhere).
     if (this == null) {
         // It's probably reasonable to default to sold by weight, and it's nice not to have
         // the possibility of a null state.
@@ -51,7 +47,7 @@ fun Item?.toEditable(dataSet: DataSet): EditableItem {
         )
     } else {
         myCheck(dataSet.id == dataSetId) {
-            "Expected identical dataSetIds but have dataSet.id ${dataSet.id} and dataSetid ${dataSetId}"
+            "Expected identical dataSetIds but have dataSet.id ${dataSet.id} and dataSetId $dataSetId"
         }
         defaultUnitIdByQuantityTypeOrdinal[defaultUnit.quantityType.ordinal] = defaultUnit.id
         return EditableItem(
