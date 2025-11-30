@@ -2,6 +2,8 @@ package com.example.composetutorial.ui
 
 import androidx.compose.ui.unit.dp
 
+const val defaultDatabaseBackupName = "price_tracker_backup.db" // TODO: KEEP IN SYNC WITH APP NAME
+
 // Unicode characters expressed explicitly via variables to make it obvious where they are used
 // (rather than relying on us recognising visually that we have "×" rather than "x" in a string
 // literal).

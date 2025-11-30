@@ -1032,6 +1032,7 @@ private fun SourcePriceCardBody(
 
                 // TODO: Experimental - if we keep this, PriceJudgementIndicator should take a modifier rather than us wrapping it in a
                 // Box.
+                // TODO: Need to share the 0.55/0.45 constants here with the other code using them in PackPriceAndSizeRow.
                 Row(modifier = Modifier.padding(bottom = 8.dp)) {
                     LabeledItem(
                         modifier = Modifier /* TODO .background(Color.Green) */ .weight(0.55f),

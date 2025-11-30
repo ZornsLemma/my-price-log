@@ -1,5 +1,6 @@
 package com.example.composetutorial.ui
 
+import com.example.composetutorial.ui.defaultDatabaseBackupName
 import android.app.Activity
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -243,7 +244,7 @@ fun AppNavigation() {
                 viewModel(backStackEntry, factory = AppViewModelProvider.Factory),
                 navController,
                 onBackupClick = {
-                    backupLauncher.launch("price_tracker_backup.db") // TODO PULL OUT AS CONSTANT AND MAKE IT STAY IN SYNC WITH APP NAME
+                    backupLauncher.launch(defaultDatabaseBackupName)
                 },
                 onRestoreClick = {
                     restoreLauncher.launch(arrayOf("*/*"))

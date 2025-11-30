@@ -50,7 +50,7 @@ fun PackPriceAndSizeRow(
     // BOTTOM RIGHT CELL. THIS MAY OR MAY NOT WORK OUT, IT MIGHT "FIT" FOR SPANISH AND ENGLISH
     // BUT NOT SURE ABOUT OTHER LANGUAGES, AND ALSO NEED TO DECIDE IF I LIKE THE LOOK. IT DOES
     // JUST ABOUT SEEM OK WITH SMALL PHONE LAYOUT AND MY DEMO PRICES THOUGH.
-    // TODO: Do we need some kind of spacer or badding or border to stop the two running together
+    // TODO: Do we need some kind of spacer or padding or border to stop the two running together
     // too much if the text happens to be just the wrong size? Maybe that's almost better. Be
     // careful not to break the alignment of the second row of the grid - I suspect adding rhs
     // padding or border to the shelf price might be the safest way to do this without it affecting other parts of the layout.
