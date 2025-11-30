@@ -102,7 +102,7 @@ fun EditDataSetScreen(
                 viewModel.setUIContentEditableDataSet(editableDataSet.copy(name = it.text))
             },
             enabled = saveStatus.isNotBusy(),
-            validationRules = nameValidationRules.value,
+            validationRules = nameValidationRules.value ?: emptyList(),
             validationRulesKey = nameValidationRules.version,
             allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
             singleLine = true,

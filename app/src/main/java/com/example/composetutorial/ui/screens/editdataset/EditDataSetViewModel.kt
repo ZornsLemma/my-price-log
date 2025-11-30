@@ -20,6 +20,7 @@ import com.example.composetutorial.ui.common.withVersion
 import com.example.composetutorial.ui.common.initialVersioned
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
 import com.example.composetutorial.ui.common.validationRulesOk
+import com.example.composetutorial.ui.screens.editsource.nameValidationRulesFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -65,20 +66,8 @@ class EditDataSetViewModel(
         uiContent.update(newEditableDataSet)
     }
 
-    val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
-        repository.getAllDataSets()
-            .map { dataSetList ->
-                createNameValidationRules(
-                    dataSetList.filter { dataSet -> dataSet.id != uiContent.editableContent.value.id } // TODO: Just use originalContet? ID is fixed!
-                        .map { dataSet -> dataSet.name }
-                )
-            }
-            .withVersion()
-            // initialValue here is set to an unsatisfiable validation list to avoid a theoretical
-            // corner case. If we defaulted to emptyList(), the user might be able to save with an
-            // invalid name before the real validation rules become available.
-            // TODO: AS ELSEWHERE I SUSPECT THIS IS WRONG AND WE NEED THE SOLUTION IMPLEMENTED FOR PRODUCT?
-            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(listOf(ValidationRule({ false }, UiText.Dynamic("")))))
+    val nameValidationRules = nameValidationRulesFlow(repository.getAllDataSets().map { dataSetList -> dataSetList.mapNotNull { dataSet -> if (dataSet.id != uiContent.originalContent.id) dataSet.name else null } },
+        viewModelScope)
 
     val currencyValidationRules = listOf(
         ValidationRule<String>(
@@ -121,8 +110,9 @@ class EditDataSetViewModel(
 
     suspend fun validateForSave(): Boolean {
         Log.d("MyAppESS", "validateForSave")
+        val nameValidationRules = nameValidationRules.value.value ?: return false
         val editableDataSet = uiContent.editableContent.value
-        if (!validationRulesOk(nameValidationRules.value.value, editableDataSet.name)) {
+        if (!validationRulesOk(nameValidationRules, editableDataSet.name)) {
             _saveValidationEvents.emit(EditableField.NAME)
             return false
         }

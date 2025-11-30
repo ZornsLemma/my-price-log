@@ -24,15 +24,19 @@ import com.example.composetutorial.ui.common.withVersion
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
 import com.example.composetutorial.ui.common.validationRulesOk
 import com.example.composetutorial.ui.screens.edititem.EditItemScreenStaticContent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.parcelize.Parcelize
 import java.util.Locale
+import kotlin.collections.map
 
 @Parcelize
 data class EditSourceScreenStaticContent(
@@ -69,21 +73,11 @@ class EditSourceViewModel(
         uiContent.update(newEditableSource)
     }
 
-
-    val nameValidationRules: StateFlow<Versioned<List<ValidationRule<String>>>> =
-        repository.getAllSources(uiContent.originalContent.dataSetId)
-            .map { sourceList ->
-                createNameValidationRules(
-                    sourceList.filter { source -> source.id != uiContent.originalContent.id }
-                        .map { source -> source.name }
-                )
-            }
-            .withVersion()
-            // initialValue here is set to an unsatisfiable validation list to avoid a theoretical
-            // corner case. If we defaulted to emptyList(), the user might be able to save with an
-            // invalid name before the real validation rules become available.
-            // TODO: I think this is wrong, as in other cases this likely gives a transient error blip and we need the other solution
-            .stateIn(viewModelScope, SharingStarted.Eagerly, initialVersioned(listOf(ValidationRule({ false }, UiText.Dynamic("")))))
+    val nameValidationRules =
+        nameValidationRulesFlow(
+            repository.getAllSources(uiContent.originalContent.dataSetId).map { sourceList ->
+                sourceList.mapNotNull { source -> if (source.id != uiContent.originalContent.id) source.name else null } },
+            viewModelScope)
 
     // ENHANCE: Maybe we should allow zero here? We might need to tweak some messages accordingly.
     // Zero isn't necessary as you can choose "None", but maybe it's a bit persnickety not to allow
@@ -108,8 +102,9 @@ class EditSourceViewModel(
 
     suspend fun validateForSave(): Boolean {
         Log.d("MyAppESS", "validateForSave")
+        val nameValidationRules = nameValidationRules.value.value ?: return false
         if (!validationRulesOk(
-                nameValidationRules.value.value,
+                nameValidationRules,
                 uiContent.editableContent.value.name
             )
         ) {
@@ -146,4 +141,26 @@ class EditSourceViewModel(
         val rowsDeleted = repository.deleteSourceById(sourceId)
         Log.d("MyApp", "Deleted $rowsDeleted rows with sourceId $sourceId")
     }
+}
+
+// TODO: MOVE THIS IF IT LIVES - JUST HACKING IT IN HERE - also don't really like its name, we don't generall put "Flow" on the end of function names or variables, but if we take it off it becomes very clashy with the viewmodel variables it is used to initialise
+// Create a name validation rules flow which will be null initially while we wait for the database
+// results to become available. By making composables which apply the rules treat null as "no rules"
+// and the view model's validateForSave() silently return false without emitting a validation event,
+// we get practically correct behaviour and fix a theoretical corner case where the user manages to
+// click Save before the rules have loaded and thereby skips validation. Instead Save will just be a
+// no-op in this case, which isn't ideal but it won't happen in practice and it protects the
+// integrity of the database. (It might be nice to disable the Save button until the rules load, but
+// this would cause a small unnecessary visual glitch and is also more intrusive to arrange than
+// it's worth.)
+fun nameValidationRulesFlow(
+    otherNameListFlow: Flow<List<String>>,
+    viewModelScope: CoroutineScope,
+) :  StateFlow<Versioned<out List<ValidationRule<String>>?>> {
+    return otherNameListFlow.map { createNameValidationRules(it) }
+    .withVersion().stateIn(
+        viewModelScope,
+        SharingStarted.Eagerly,
+        initialVersioned(null as List<ValidationRule<String>>?)
+    )
 }
