@@ -110,7 +110,7 @@ fun EditItemScreen(
             maxLength = maxItemNameLength,
             onValueChange = {
                 name = it
-                viewModel.setUIContentEditableItem(editableItem.copy(name = it.text))
+                viewModel.setUiContentEditableItem(editableItem.copy(name = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value ?: emptyList(),
@@ -174,7 +174,7 @@ fun EditItemScreen(
                 //Spacer(modifier = Modifier.height(8.dp))
                 options.forEach { (id, name, supportingText) ->
                     val clickableModifier = if (!radioButtonsEnabled) Modifier else Modifier.clickable {
-                        viewModel.setUIContentEditableItem(
+                        viewModel.setUiContentEditableItem(
                             editableItem.copy(
                                 quantityType = id
                             )
@@ -259,7 +259,7 @@ fun EditItemScreen(
                                             it[editableItem.quantityType.ordinal] =
                                                 defaultUnit.id
                                         }
-                                viewModel.setUIContentEditableItem(
+                                viewModel.setUiContentEditableItem(
                                     editableItem.copy(
                                         defaultUnitIdByQuantityTypeOrdinal = defaultUnitIdByQuantityTypeOrdinal
                                     )
@@ -302,7 +302,7 @@ fun EditItemScreen(
                 enabled = saveStatus.isNotBusy(),
                 checked = editableItem.allowMultipack,
                 onCheckedChange = {
-                    viewModel.setUIContentEditableItem(
+                    viewModel.setUiContentEditableItem(
                         editableItem.copy(
                             allowMultipack = it
                         )
@@ -320,7 +320,7 @@ fun EditItemScreen(
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
-                viewModel.setUIContentEditableItem(editableItem.copy(notes = it.text))
+                viewModel.setUiContentEditableItem(editableItem.copy(notes = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             modifier = Modifier.fillMaxWidth(),

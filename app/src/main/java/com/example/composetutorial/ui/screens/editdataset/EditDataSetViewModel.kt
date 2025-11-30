@@ -61,7 +61,6 @@ class EditDataSetViewModel(
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
-    // TODO: This function may be redundant now
     fun setUIContentEditableDataSet(newEditableDataSet: EditableDataSet) {
         uiContent.update(newEditableDataSet)
     }

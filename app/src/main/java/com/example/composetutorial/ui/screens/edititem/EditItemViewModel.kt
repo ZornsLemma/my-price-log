@@ -61,16 +61,14 @@ class EditItemViewModel(
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
-    // TODO: May want to remove this function or tweak it but let's keep it in while we refactor
-    fun setUIContentEditableItem(newEditableItem: EditableItem) {
+    fun setUiContentEditableItem(newEditableItem: EditableItem) {
         uiContent.update(newEditableItem)
     }
-
 
     // If we used emptyList() in initialVersioned(), the user might be able to save with an invalid
     // name before the real validation rules become available. Defaulting to a temporary "always
     // fail" rule list would stop this, but then we would see a brief validation error during the
-    // initial composition. See EditItemViewModel.validateForSave() for more on this.
+    // initial composition. See validateForSave() for more on this.
     val nameValidationRules =
         repository.getAllItems(uiContent.originalContent.dataSetId).map { itemList ->
             createNameValidationRules(itemList.filter { item -> item.id != uiContent.originalContent.id }

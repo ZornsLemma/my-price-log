@@ -65,7 +65,6 @@ class EditSourceViewModel(
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
-    // TODO: May want to remove this function or tweak it but let's keep it in while we refactor
     fun setUiContentEditableSource(newEditableSource: EditableSource) {
         uiContent.update(newEditableSource)
     }

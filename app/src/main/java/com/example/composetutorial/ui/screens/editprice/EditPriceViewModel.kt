@@ -68,7 +68,6 @@ class EditPriceViewModel(
     var packSizeValidationRules = generatePackSizeValidationRules()
     var currencyFormat = uiContent.staticContent.dataSet.createCurrencyFormat(uiContent.staticContent.frozenLocale)
 
-    // TODO: May want to remove this function or tweak it but let's keep it in while we refactor
     fun setUiContentEditablePrice(newEditablePrice: EditablePrice) {
         uiContent.update(newEditablePrice)
         // TODO: We could potentially refactor so that if newEditablePrice has the same measure unit
