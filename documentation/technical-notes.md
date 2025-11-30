@@ -31,10 +31,18 @@ I'm told that it's possible for this to happen:
 * The app is upgraded to v2.
 * The user returns to the app.
 * Android reincarnates the app, providing app v2 with SavedStateHandles from the app's previous v1 incarnation.
-* The relevant serialized objects from v1 are not compatible with v2.
+* The relevant serialised objects from v1 are not compatible with v2.
 * Boom!
 
 As far as I can tell this is pretty difficult to handle in the general case. If the relevant serializable objects all have default values for the new fields, things will probably work without difficulty. Otherwise we're going to have a bad time. Be aware of this when changing these objects, and if providing defaults isn't possible, it may be worth attempting workarounds like forcing an app restart (which would return us to the home screen with no old saved state) after the database upgrade.
+
+## Constant naming and use of "const"
+
+As a novice Kotlin/Android developer I am seeing somewhat contradictory opinions here. My inclination is to follow what I think are the widely-recognised coding standards and use UPPER_SNAKE_CASE for "const" and top-level object vals, but not to use "const" where it isn't needed and therefore be allowed to use camelCase for the name. However, if I do this, Android Studio gives me suggestions that I could make things like "val spinnerDelayMillis = 200L" const - but if I follow this suggestion, I ought to rename the variable SPINNER_DELAY_MILLIS, which I don't want to do. In order to get rid of these suggestions without introducing lots of ugly annotations or being forced to use UPPER_SNAKE_CASE, I am going to use const on them anyway.
+
+I have used const and the probably-standard UPPER_SNAKE_CASE naming for what feel like C/C++-style build feature macros, such as LOG_SQL. This is by choice and not to get rid of the Android Studio suggestion.
+
+TL;DR: I hope I'm doing the Right Thing except that I have added "const" in some places I otherwise wouldn't (and which thus might trigger lint warnings) just to keep Android Studio quiet.
 
 ## Miscellaneous notes
 
