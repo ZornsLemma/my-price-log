@@ -335,7 +335,6 @@ data class PriceHistory(
 ) {
 }
 
-// TODO: As elsewhere, iffiness re the naming here
 fun PriceHistory.toPrice(): Price {
     return Price(
         id = priceId,
