@@ -3,13 +3,8 @@ package com.example.composetutorial.ui.screens.selectdataset
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.models.Item
-import com.example.composetutorial.ui.common.EmptyParcelable
-import com.example.composetutorial.ui.common.PersistentUiContent
-import com.example.composetutorial.ui.components.generalselector.GeneralSelectorViewModel
-import com.example.composetutorial.ui.screens.selectitem.SelectItemScreenStaticContent
+import com.example.composetutorial.ui.components.generalselector.GeneralSelectorStateHolder
 import kotlinx.coroutines.flow.Flow
 
 class SelectDataSetViewModel(
@@ -19,7 +14,7 @@ class SelectDataSetViewModel(
     dataQuery: Flow<List<DataSet>>,
     // TODO DELETE? dataQuery: Flow<List<Item>>,
 )  : ViewModel() {
-    val generalSelectorViewModel =  GeneralSelectorViewModel<DataSet>(
+    val generalSelectorStateHolder =  GeneralSelectorStateHolder<DataSet>(
         savedStateHandle, // TODO!?
         getName,
         initialList,

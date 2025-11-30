@@ -1,6 +1,5 @@
 package com.example.composetutorial.ui
 
-import com.example.composetutorial.ui.defaultDatabaseBackupName
 import android.app.Activity
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -284,7 +283,7 @@ fun AppNavigation() {
                 // what (albeit via sharedViewModel - do we have to use that here now?) happens for the edit price screen.
                 val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
                 GeneralSelectorScreen(
-                    viewModel.generalSelectorViewModel,
+                    viewModel.generalSelectorStateHolder,
                     navController,
                     title = topAppBarTitle(stringResource(R.string.title_edit_data_sets), null),
                     getId = { it.id },
@@ -329,7 +328,7 @@ fun AppNavigation() {
                 val dataStore = LocalContext.current.applicationContext.dataStore
                 val context = LocalContext.current.applicationContext
                 GeneralSelectorScreen(
-                    viewModel.generalSelectorViewModel,
+                    viewModel.generalSelectorStateHolder,
                     navController,
                     title = topAppBarTitle(if (!select) stringResource(R.string.title_edit_items) else stringResource(
                         R.string.title_select_item
@@ -393,7 +392,7 @@ fun AppNavigation() {
                 // what (albeit via sharedViewModel - do we have to use that here now?) happens for the edit price screen.
                 val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
                 GeneralSelectorScreen(
-                    viewModel.generalSelectorViewModel,
+                    viewModel.generalSelectorStateHolder,
                     navController,
                     title = topAppBarTitle(stringResource(R.string.title_edit_sources), dataSetName),
                     getId = { it.id },

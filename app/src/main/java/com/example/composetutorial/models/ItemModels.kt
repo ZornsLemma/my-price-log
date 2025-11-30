@@ -71,10 +71,6 @@ fun Item?.toEditable(dataSet: DataSet): EditableItem {
 @Parcelize
 data class EditableItem(
     val id: Long,
-    // TODO: although the non-editable Item has a dataSetId and that is probably a strong argument
-    // for keeping this is, I half wonder if we should just shove our full DataSet object in here.
-    // OTOH it will slightly add to the serialisation burden and we do serialise this every time
-    // anything changes.
     val dataSetId: Long,
     val name: String,
     val quantityType: QuantityType,

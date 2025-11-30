@@ -44,7 +44,7 @@ import com.example.composetutorial.ui.screenBorder
 
 @Composable
 fun <T> GeneralSelectorScreen(
-    viewModel: GeneralSelectorViewModel<T>,
+    stateHolder: GeneralSelectorStateHolder<T>,
     navController: NavHostController,
     title: @Composable () -> Unit,
     getId: (T) -> Long,
@@ -57,7 +57,7 @@ fun <T> GeneralSelectorScreen(
     onItemSelected: (T) -> Unit,
     showSearch: Boolean = false,
 ) {
-    val dataList by viewModel.dataFlow.collectAsStateWithLifecycle()
+    val dataList by stateHolder.dataFlow.collectAsStateWithLifecycle()
     Log.d("MyAppGS", "dataList $dataList")
 
     val floatingActionButton: (@Composable () -> Unit) = if (onAddClick == null) {
@@ -117,11 +117,11 @@ fun <T> GeneralSelectorScreen(
             // ENHANCE: We could show a warning icon and/or some supporting text if nothing matches
             // the substring, rather than just showing an empty list.
             if (showSearch) {
-                val searchString by viewModel.searchStringFlow.collectAsStateWithLifecycle()
+                val searchString by stateHolder.searchStringFlow.collectAsStateWithLifecycle()
                 FilteredTextField(
                     value = searchString,
                     onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxSearchLength),
-                    onValueChange = { it -> viewModel.searchStringFlow.value = it },
+                    onValueChange = { it -> stateHolder.searchStringFlow.value = it },
                     label = { Text(stringResource(R.string.label_search)) },
                     leadingIcon = {
                         Icon(
@@ -134,7 +134,7 @@ fun <T> GeneralSelectorScreen(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = stringResource(R.string.content_description_clear_search_text),
-                            modifier = Modifier.clickable { viewModel.searchStringFlow.value = TextFieldValue("") },
+                            modifier = Modifier.clickable { stateHolder.searchStringFlow.value = TextFieldValue("") },
                         )
                     },
                     modifier = Modifier

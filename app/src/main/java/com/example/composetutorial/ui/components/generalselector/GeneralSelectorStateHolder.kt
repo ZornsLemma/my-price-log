@@ -1,11 +1,8 @@
 package com.example.composetutorial.ui.components.generalselector
 
-import com.example.composetutorial.app.AppScope
 import android.util.Log
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.ui.common.normalizedForSearch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,30 +15,29 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.delay
 
-// TODO: Now this isn't a ViewModel it maybe ought to be renamed - probably GeneralSelectorStateHolder
-open class GeneralSelectorViewModel<T>(
-    private val savedStateHandle: SavedStateHandle,
+open class GeneralSelectorStateHolder<T>(
+    @Suppress("unused") private val savedStateHandle: SavedStateHandle,
     private val getName: (T) -> String,
-    private val initialList: List<T>?,
-    private val dataQuery: Flow<List<T>>,
+    initialList: List<T>?,
+    dataQuery: Flow<List<T>>,
     viewModelScope: CoroutineScope,
-) /* TODO!? : ViewModel() */ {
-    // The idea here is that as we have no real state other than the results of dataQuery, we
-    // optimise by having our caller provide initialList to give a good first composition during
-    // normal navigation, but we can manage without it if we are reincarnated.
-    // TODO: This works and it is probably fine but note that for SelectItemViewModel we do actually
-    // serialise, even though the general code doesn't require it. (We need it so we can pass a
-    // DataSet through to EditItemScreen.)
+) {
+    // We don't try to persist initialList or dataQuery's results to savedStateHandle, because
+    // if we are killed and reincarnated it's not a big deal to have a briefly empty list while
+    // dataQuery executes and we get the results asynchronously. Under normal operation the caller
+    // provides initialList so our first composition can be perfect.
 
     // This will *not* filter uiContent.initialList, but that's OK because we know the initial
     // filter doesn't exclude anything.
-    // ENHANCE: We could persist the search string via savedStateHandle.
-    val searchStringFlow = MutableStateFlow(TextFieldValue(""))
+    // ENHANCE: We could persist the search string via savedStateHandle. If we do that, it probably
+    // would require that we filter uiContent.initialList.
+    val searchStringFlow = MutableStateFlow(TextFieldValue("ol"))
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val dataFlow = combine(
-        dataQuery.flatMapLatest { data -> /* TODO HACK delay(5000); */ flowOf(data) },
+        dataQuery.flatMapLatest { data -> /* TODO delay(5000); */ flowOf(data) },
         searchStringFlow.map { searchString -> searchString.text.normalizedForSearch() }
     ) { data, normalizedQuery ->
         data.filter {

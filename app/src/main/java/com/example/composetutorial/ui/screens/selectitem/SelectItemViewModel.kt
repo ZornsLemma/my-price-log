@@ -9,8 +9,7 @@ import com.example.composetutorial.models.DataSet
 import com.example.composetutorial.models.Item
 import com.example.composetutorial.ui.common.EmptyParcelable
 import com.example.composetutorial.ui.common.PersistentUiContent
-import com.example.composetutorial.ui.components.generalselector.GeneralSelectorViewModel
-import kotlinx.coroutines.flow.Flow
+import com.example.composetutorial.ui.components.generalselector.GeneralSelectorStateHolder
 import kotlinx.parcelize.Parcelize
 
 // TODO: MOVE?
@@ -35,7 +34,7 @@ class SelectItemViewModel(
         initialStaticContent
     )
 
-    val generalSelectorViewModel =  GeneralSelectorViewModel<Item>(
+    val generalSelectorStateHolder =  GeneralSelectorStateHolder<Item>(
     savedStateHandle, // TODO!?
     getName,
     uiContent.staticContent.itemList /* TODO: rename initialList for consistency with other cases? */,
