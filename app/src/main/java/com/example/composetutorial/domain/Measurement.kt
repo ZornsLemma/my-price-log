@@ -202,8 +202,7 @@ enum class MeasurementUnit(
     }
 }
 
-// TODO: Make extension function on QuantityType?
-fun baseUnitForQuantityType(quantityType: QuantityType) = when (quantityType) {
+fun QuantityType.baseUnit() = when (this) {
     QuantityType.WEIGHT -> MeasurementUnit.G
     QuantityType.VOLUME -> MeasurementUnit.ML
     QuantityType.ITEM -> MeasurementUnit.EACH

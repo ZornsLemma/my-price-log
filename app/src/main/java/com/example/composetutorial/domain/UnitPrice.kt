@@ -2,7 +2,6 @@ package com.example.composetutorial.domain
 
 import android.content.Context
 import android.util.Log
-import com.example.composetutorial.domain.baseUnitForQuantityType
 import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.ui.common.formatPrice
 import com.example.composetutorial.models.DataSet
@@ -20,7 +19,7 @@ data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) : 
         // base unit. The extra work is negligible in practice. Similarly, we avoid the probably
         // premature optimisation of checking to see if the two denominators are the same and just
         // comparing the numerators directly if they are.
-        val baseUnit = baseUnitForQuantityType(denominator.quantityType)
+        val baseUnit = denominator.quantityType.baseUnit()
         val thisWithBaseUnit = withDenominator(baseUnit)
         val otherWithBaseUnit = other.withDenominator(baseUnit)
         return thisWithBaseUnit.numerator.compareTo(otherWithBaseUnit.numerator)
@@ -38,7 +37,7 @@ data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) : 
             price: Double,
             count: Long,
             measure: MeasuredValue,
-            denominator: MeasurementUnit = baseUnitForQuantityType(measure.unit.quantityType)
+            denominator: MeasurementUnit = measure.unit.quantityType.baseUnit()
         ): UnitPrice {
             myRequire(count > 0) { "Expected positive count" }
             return UnitPrice(price / (count * measure.asValue(denominator)), denominator)

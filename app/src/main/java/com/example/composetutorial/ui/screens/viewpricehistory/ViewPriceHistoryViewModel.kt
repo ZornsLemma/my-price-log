@@ -4,9 +4,9 @@ import android.os.Parcelable
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import com.example.composetutorial.domain.baseUnitForQuantityType
 import com.example.composetutorial.domain.MeasuredValue
 import com.example.composetutorial.domain.Repository
+import com.example.composetutorial.domain.baseUnit
 import com.example.composetutorial.models.PriceHistory
 import com.example.composetutorial.domain.sanitisePriceHistoryUnits
 import com.example.composetutorial.models.DataSet
@@ -106,7 +106,7 @@ fun PriceHistory.toPriceHistoryDelta(confirmedAtFormatter: DateTimeFormatter): P
         priceHistory = this,
         price = price,
         count = count,
-        quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(userUnit.quantityType)).to(
+        quantity = MeasuredValue(quantityInBaseUnit, userUnit.quantityType.baseUnit()).to(
             userUnit
         ),
         confirmedAt = confirmedAtFormatter.format(confirmedAt),
@@ -122,7 +122,7 @@ private fun diff(
 ): PriceHistoryDelta? {
     val rhsQuantity = MeasuredValue(
         rhs.quantityInBaseUnit,
-        baseUnitForQuantityType(rhs.userUnit.quantityType)
+        rhs.userUnit.quantityType.baseUnit()
     ).to(rhs.userUnit)
     // Note that by using confirmedAtFormatter here and PriceHistory.confirmedAt being the resulting
     // string, if two PriceHistory records have visually indistinguishable confirmedAt values we

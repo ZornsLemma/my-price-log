@@ -8,13 +8,13 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.composetutorial.domain.CurrencyFormat
-import com.example.composetutorial.domain.baseUnitForQuantityType
 import com.example.composetutorial.common.formatDoubleForEditing
 import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.MeasuredValue
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.common.parseStringAsDoubleOrNull
+import com.example.composetutorial.domain.baseUnit
 import kotlinx.parcelize.Parcelize
 import java.time.Instant
 import java.util.Locale
@@ -118,7 +118,7 @@ fun PriceWithItemEntity.toDomain(): Price {
         count = priceEntity.count,
         quantity = MeasuredValue(
             priceEntity.quantityInBaseUnit,
-            baseUnitForQuantityType(priceEntity.userUnit.quantityType)
+            priceEntity.userUnit.quantityType.baseUnit()
         ).to(priceEntity.userUnit),
         confirmedAt = priceEntity.confirmedAt,
         notes = priceEntity.notes,
@@ -176,7 +176,7 @@ fun Price.toEntity(): PriceEntity {
         sourceId = sourceId,
         price = price,
         count = count,
-        quantityInBaseUnit = quantity.asValue(baseUnitForQuantityType(itemDefaultUnit.quantityType)),
+        quantityInBaseUnit = quantity.asValue(itemDefaultUnit.quantityType.baseUnit()),
         userUnit = quantity.unit,
         confirmedAt = confirmedAt,
         notes = notes,
@@ -344,7 +344,7 @@ fun PriceHistory.toPrice(): Price {
         sourceId = sourceId,
         price = price,
         count = count,
-        quantity = MeasuredValue(quantityInBaseUnit, baseUnitForQuantityType(userUnit.quantityType)).to(
+        quantity = MeasuredValue(quantityInBaseUnit, userUnit.quantityType.baseUnit()).to(
             userUnit
         ),
         confirmedAt = confirmedAt,
@@ -358,7 +358,7 @@ fun PriceHistory.toPrice(): Price {
         // database if a historical price gets converted back into a current price, as it is not
         // present on the database's price table in the first place. It's used entirely for
         // in-memory consistency checks.
-        itemDefaultUnit = baseUnitForQuantityType(userUnit.quantityType)
+        itemDefaultUnit = userUnit.quantityType.baseUnit()
     )
 }
 
