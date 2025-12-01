@@ -32,7 +32,7 @@ fun <T, U> ValidationErrorHighlightBox(
 ) {
     val validationInputHandle = rememberValidationInputHandle()
 
-    val validationThing201 = ValidateFieldState(
+    val validatedFieldState = ValidateFieldState(
         value = value,
         validationRules = validationRules,
         validationRulesKey = validationRulesKey,
@@ -45,10 +45,9 @@ fun <T, U> ValidationErrorHighlightBox(
         modifier = modifier
     ) {
         Column(modifier = Modifier.animateContentSize()) {
-            // TODO: We could possibly pass validationThing201 directly.
             content(
-                validationThing201.validationResult.value,
-                validationThing201.interactionSource,
+                validatedFieldState.validationResult.value,
+                validatedFieldState.interactionSource,
                 validationInputHandle,
             )
         }
