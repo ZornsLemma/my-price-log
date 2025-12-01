@@ -60,10 +60,8 @@ fun LegalScreen(
             Spacer(modifier = Modifier.height(fullScreenDialogVerticalBorder))
 
             // Our license
-            // TODO: When adding i18n, do *not* do a UK eng "MIT Licen*c*e" version of this string -
-            // it's conventional and clearer to just stick with the US style use here.
             Text(
-                text = stringResource(R.string.title_app_name_licence),
+                text = stringResource(R.string.title_app_name_license),
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(4.dp))

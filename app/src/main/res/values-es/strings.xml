@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Mi Registro de Precios</string>
     <string name="title_about_app_name">Acerca de Mi Registro de Precios</string>
-    <string name="title_app_name_licence">Mi Registro de Precios — Licencia MIT</string>
+    <string name="title_app_name_license">Mi Registro de Precios — Licencia MIT</string>
     <string name="demo_groceries_data_set_name">Comestibles (demo)</string>
     <string name="demo_groceries_data_set_notes">Una colección de ejemplo con precios irreales de comestibles en tiendas imaginarias. Sirve para que tengas algo con lo que probar la app al instalarla.</string>
     <string name="demo_groceries_item_name_coffee_ground">Café (molido)</string>
