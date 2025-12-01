@@ -272,16 +272,6 @@ class MainActivity : ComponentActivity() {
 // customary selector from the dataset configuration being shown on this screen, initialised with
 // the current dataset configuration, so you can choose which units appear in the dropdowns.
 
-// ENHANCE: On an emulated Android 11 phone, there is a strange pink tinge to the app. The home
-// screen background is pinkish, but beyond LLMs burbling at me about emulator bugs, I can't see why
-// that's relevant - there is not supposed to be any Material You auto-theming based on this on
-// Android 11. LLMs also babble about my "default background" being translucent and/or a Material 2
-// theme being used but none of their suggestions fixed this in the emulator. I don't have a real
-// Android 11 device to test on and I have zero confidence in what the LLMs are telling me here. I
-// have reverted all the temporary changes the LLMs had me make and will wait for feedback from real
-// users (if any) before attempting to address this.
-// TODO: I'm not actually sure this isn't just my imagination, come back to it.
-
 // ENHANCE: Add a settings option which allows toggling between explicit themes, e.g. at a minimum
 // light/dark/system. It may be - really not sure - only newer Android versions with Material You
 // *have* a concept of a system theme in a way that's relevant to our app, in which case we might
@@ -307,42 +297,6 @@ class MainActivity : ComponentActivity() {
 // TODO: At some point I should apply the spotless auto-formatting, but that will obviously
 // break diffs so I should be careful when I do it - maybe when the code is very stable and
 // shortly before release?
-
-/* TODO: Temp copy from ChatGPT for possible lightweight-ish subpackage structure
-com.example.myapp/
-│
-├── MainActivity.kt
-│
-├── ui/
-│   ├── theme/          # (standard Compose auto-generated package)
-│   ├── components/     # optional: reusable composables, dialogs, etc.
-│   ├── screens/        # optional: one file per screen if you have >1
-│
-├── data/
-│   ├── models/         # your entity + domain objects
-│   └── maybe local db or repository (if needed)
-│
-└── util/ (optional)    # small helpers, extensions, etc.
-
-but also:
-
-com.example.myapp/
-│
-├── MainActivity.kt
-│
-├── ui/
-│   ├── theme/
-│   ├── home/
-│   │   ├── HomeScreen.kt
-│   │   └── HomeViewModel.kt
-│   └── settings/
-│       ├── SettingsScreen.kt
-│       └── SettingsViewModel.kt
-│
-├── data/
-│   └── models/
-
-*/
 
 // TODO: When validating fields, we control allowEmpty based on whether a save has been attempted or
 // not. Given we do generally validate everything live, I am wondering if instead we should control
