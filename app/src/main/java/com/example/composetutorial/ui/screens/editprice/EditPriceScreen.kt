@@ -158,9 +158,8 @@ fun EditPriceScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // TODO: Can/should I do something to scroll the screen when focus enters this and the caret
-        // is half-hidden?
-        // TODO DELETE var notes by  remember { mutableStateOf(TextFieldValue(uiContent.editablePrice.value.notes)) }
+        // ENHANCE: Can/should I do something to scroll the screen when focus enters this and the
+        // caret is half-hidden?
         var notes by rememberSyncedTextFieldValue(editablePrice.notes)
         FilteredTextField(
             modifier = Modifier.fillMaxWidth(),
