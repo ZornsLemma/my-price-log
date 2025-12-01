@@ -262,7 +262,6 @@ fun GeneralEditScreen(
         )
     }
 
-
     if (showErrorDialogMessage != null) {
         AsyncOperationErrorAlertDialog(onDismissRequest = { showErrorDialogMessage = null }, message = showErrorDialogMessage!!)
     }

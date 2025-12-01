@@ -21,7 +21,7 @@ fun <T> ValidatedNumericTextField(
     value: TextFieldValue,
     validationRules: List<ValidationRule<String>>,
     validationRulesKey: Any? = null,
-    allowEmpty: Boolean, // TODO default to = false or force explicit?,
+    allowEmpty: Boolean,
     validationFlow: SharedFlow<T>,
     validationFlowFieldId: T,
     errorHighlightOffset: Dp = defaultErrorHighlightOffset, // TODO JUST MAYBE GET RID OF DEFAULT?
@@ -31,7 +31,7 @@ fun <T> ValidatedNumericTextField(
     suffix: @Composable (() -> Unit)? = null,
     textStyle: TextStyle = LocalTextStyle.current,
     onValueChange: (TextFieldValue) -> Unit,
-    enabled: Boolean, // TODO: default to true or force explicit?
+    enabled: Boolean,
     numericTextFieldModifier: Modifier = Modifier,
 ) {
     ValidationErrorHighlightBox(
@@ -89,13 +89,12 @@ fun numericValidationRules(
 
         ValidationRule(
             { it.count { char -> char == decimalSeparator } <= maxDecimalSeparators },
-            // TODO: Just possibly we should not consider a single decimal separator with nothing
-            // significant following it as violating "only whole numbers allowed".
+            // ENHANCE: There might be an argument for allowing a single decimal separator with no
+            // trailing contents even when only whole numbers are allowed.
             if (allowDecimals) UiText.Res(R.string.supporting_text_only_one_decimal_point_allowed) else UiText.Res(R.string.supporting_text_only_whole_numbers_allowed)
         ),
 
         if (maxDecimals != null) {
-            // TODO: We could allow extra decimal places if they are all zeros? I could see arguments either way.
             ValidationRule({
                 val parts = sanitiseCandidate(it).split(decimalSeparator)
                 parts.size != 2 || parts[1].length <= maxDecimals
