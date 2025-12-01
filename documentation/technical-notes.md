@@ -60,8 +60,10 @@ TL;DR: I hope I'm doing the Right Thing except that I have added "const" in some
 
 * An "_at" suffix on a column name indicates a date/time represented as an Instant in EpochMilli integer form.
 
-# Pre-release checklist
+## Pre-release checklist
 
 * Check all debug constants are set to their release values, unless there's a specific reason.
+
+* Check for missing or out-of-date translations.
 
 * Run spotless autoformatter.
