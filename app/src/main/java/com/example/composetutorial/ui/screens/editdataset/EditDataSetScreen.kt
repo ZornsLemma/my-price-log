@@ -67,7 +67,6 @@ fun EditDataSetScreen(
 
     val isSimpleDelete = dataSetReferenceCount == 0L
     val dialogTitle = stringResource(if (isSimpleDelete) R.string.title_delete_data_set else R.string.title_delete_data_set_and_associated_data)
-    // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
     val dialogSubtitle = stringResource(if (isSimpleDelete) R.string.message_delete_data_set_no_associated_data else R.string.message_delete_data_set_associated_data)
 
     GeneralEditAndDeleteScreen(
@@ -81,7 +80,6 @@ fun EditDataSetScreen(
         performSave = { viewModel.performSave(); /* throw IllegalArgumentException("TODO2") */ },
         onIdle = {},
         requestClose = requestClose,
-        // TODO: WORDING FOR ALL OF THIS IS PARTICULARLY BAD AND NEEDS THOUGHT
         deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
             isSimpleDelete,
             { Text(dialogTitle) },
