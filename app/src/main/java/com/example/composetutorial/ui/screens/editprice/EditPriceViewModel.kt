@@ -50,8 +50,6 @@ class EditPriceViewModel(
         initialStaticContent
     )
 
-    private val instanceId = UUID.randomUUID().toString() // TODO FOR DEBUG
-
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
     // "Count" is visible if the item explicitly allows multipacks or if (presumably because it

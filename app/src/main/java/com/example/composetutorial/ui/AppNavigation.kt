@@ -266,7 +266,7 @@ fun AppNavigation() {
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<SelectDataSetViewModel, Int /* TODO DUMMY */>(
+            screenWithViewModel<SelectDataSetViewModel>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.selectDataSetScreenUIContent = null },
                 buildViewModel = { app, handle ->
@@ -310,7 +310,7 @@ fun AppNavigation() {
             val action = backStackEntry.arguments?.getString("action")
             myRequire(action == "edit" || action == "select") { "Invalid action: $action" }
             val select = action == "select"
-            screenWithViewModel<SelectItemViewModel, Int /* TODO DUMMY */>(
+            screenWithViewModel<SelectItemViewModel>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.selectItemScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -369,7 +369,7 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
-            screenWithViewModel<SelectSourceViewModel, Int /* TODO DUMMY */>(
+            screenWithViewModel<SelectSourceViewModel>(
                 backStackEntry = backStackEntry,
                 // TODO: Could should sharedViewModel have a clearAllContent() or similar function
                 // and we just call that in clearUIContent? That way we could be sure *no* old
@@ -414,7 +414,7 @@ fun AppNavigation() {
             "editPrice", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<EditPriceViewModel, Int /* TODO DUMMY EditPriceScreenUIContent */>(
+            screenWithViewModel<EditPriceViewModel>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.editPriceScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -443,7 +443,7 @@ fun AppNavigation() {
             "editDataSet", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<EditDataSetViewModel, Integer /* TODO DUMMY EditDataSetScreenUIContent */>(
+            screenWithViewModel<EditDataSetViewModel>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.editDataSetScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -543,7 +543,7 @@ This may be complete crap. The example of how to use it is probably as long as t
             "editItem", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<EditItemViewModel, Int /* TODO DUMMY */>(
+            screenWithViewModel<EditItemViewModel>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.editItemScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -584,7 +584,7 @@ This may be complete crap. The example of how to use it is probably as long as t
             "editSource", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<EditSourceViewModel, Int /* TODO DUMMY */>(
+            screenWithViewModel<EditSourceViewModel>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.editSourceScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -617,7 +617,7 @@ This may be complete crap. The example of how to use it is probably as long as t
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
             val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
-            screenWithViewModel<ViewPriceHistoryViewModel, Int /* TODO DUMMY ViewPriceHistoryScreenUIContent */>(
+            screenWithViewModel<ViewPriceHistoryViewModel>(
                 backStackEntry = backStackEntry,
                 clearUIContent = { sharedViewModel.viewPriceHistoryScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -702,7 +702,7 @@ This may be complete crap. The example of how to use it is probably as long as t
 // ENHANCE: This function was mostly written by ChatGPT. I'm loosely aware of what it does but I
 // don't pretend to understand the details at this point.
 @Composable
-private inline fun <reified VM : ViewModel, UIContent> screenWithViewModel( // TODO: UNUSED TYPE ARG!
+private inline fun <reified VM : ViewModel> screenWithViewModel(
     backStackEntry: NavBackStackEntry,
     noinline clearUIContent: () -> Unit,
     noinline buildViewModel: @DisallowComposableCalls (MyApplication, SavedStateHandle) -> VM,
