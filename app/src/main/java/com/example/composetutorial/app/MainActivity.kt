@@ -392,13 +392,6 @@ com.example.myapp/
 // needs to be "una." It is possible something like "c/u" is normal, but does that work with "0,25
 // US$/c/u" for example?
 
-// TODO: Given the advice I received from both Grok and ChatGPT about keyboard capitalization for
-// Spanish, does this mean the existing translations of the demo data set name and products are
-// wrong and they should start with lower case letters not capitals? That said, even if that's true,
-// is there a competing issue where the fact these are use as screen titles (home screen, edit
-// price) creates some conflict? Should we even optionally (translator specified) allow upper-casing
-// of initial letter in titles?
-
 // TODO: Spanish translation of message_no_data_set_selected seems to miss the *top* part out, but
 // the message_no_data_sets has it. Maybe worth querying this. - I have had a confusing chat with
 // Grok and ChatGPT and have tweaked this. However, I am far from convinced it's right even now but we're going round in circles. Even if it is right, I MAY STILL NEED TO FIX SOME OTHER USES OF HAMBURGUESA

@@ -3,12 +3,12 @@
     <string name="app_name">Mi Registro de Precios</string>
     <string name="title_about_app_name">Acerca de Mi Registro de Precios</string>
     <string name="title_app_name_license">Mi Registro de Precios — Licencia MIT</string>
-    <string name="demo_groceries_data_set_name">Comestibles (demo)</string>
+    <string name="demo_groceries_data_set_name">comestibles (demo)</string>
     <string name="demo_groceries_data_set_notes">Una colección de ejemplo con precios irreales de comestibles en tiendas imaginarias. Sirve para que tengas algo con lo que probar la app al instalarla.</string>
-    <string name="demo_groceries_item_name_coffee_ground">Café (molido)</string>
-    <string name="demo_groceries_item_name_milk_whole">Leche (entera)</string>
-    <string name="demo_groceries_item_name_teabags">Bolsas de té</string>
-    <string name="demo_groceries_item_name_cola">Cola</string>
+    <string name="demo_groceries_item_name_coffee_ground">café (molido)</string>
+    <string name="demo_groceries_item_name_milk_whole">leche (entera)</string>
+    <string name="demo_groceries_item_name_teabags">bolsas de té</string>
+    <string name="demo_groceries_item_name_cola">cola</string>
     <string name="demo_groceries_source_name_valuemart">ValueMart</string>
     <string name="demo_groceries_source_name_superiorstore">SuperiorStore</string>
     <string name="demo_groceries_source_name_grandways">Grandways</string>
