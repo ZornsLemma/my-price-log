@@ -40,7 +40,7 @@ class EditDataSetViewModel(
     val uiContent = PersistentUiContent(
         this, savedStateHandle, "DataSet", initialEditableContent,
         EmptyParcelable()
-    ) // TODO: RENAME?
+    )
 
     // There's no need to explicitly check for prices; we want to give a warning if there are any
     // items or sources associated with the data set even without prices, and there can't be any
@@ -76,11 +76,6 @@ class EditDataSetViewModel(
         )
     )
 
-    // ENHANCE: I should probably replace the Triple<3xBoolean> with a data class for readability.
-    // Maybe it should even be used in a domain-level DataSet class with the current raw database
-    // one being renamed DataSetEntity? We could potentially pass it into various functions and that
-    // might simplify the code - but check before blindly doing this, it may not be a big enough
-    // win.
     val measurementSystemValidationRules = listOf(
         // We say "measurement system" in the error message here even though the caption above the
         // segmented button is "measurement units". The former is technically correct, the latter is
