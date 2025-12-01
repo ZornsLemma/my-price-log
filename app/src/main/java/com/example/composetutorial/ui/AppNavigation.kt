@@ -272,7 +272,6 @@ fun AppNavigation() {
                 buildViewModel = { app, handle ->
                     SelectDataSetViewModel(
                         savedStateHandle = handle,
-                        getName = { it -> it.name },
                         initialList = sharedViewModel.selectDataSetScreenUIContent,
                         dataQuery = app.repository.getAllDataSets()
                     )
@@ -320,7 +319,6 @@ fun AppNavigation() {
                         initialStaticContent = sharedViewModel.selectItemScreenInitialUiContent?.let {
                             SelectItemScreenStaticContent(it.itemList, it.dataSet)
                         },
-                        getName = { it -> it.name },
                     )
                 }
             ) { viewModel ->
@@ -379,7 +377,6 @@ fun AppNavigation() {
                     SelectSourceViewModel(
                         repository = app.repository,
                         savedStateHandle = handle,
-                        getName = { it -> it.name }, // TODO: I suspect the screens using this pattern no longer need to pass getName here - let the thing-specific viewmodel do it
                         initialStaticContent = sharedViewModel.selectSourceScreenInitialUiContent?.let {
                             SelectSourceScreenStaticContent(it.sourceList, it.dataSet)
                         },

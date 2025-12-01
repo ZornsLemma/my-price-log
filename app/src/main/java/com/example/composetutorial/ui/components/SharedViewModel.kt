@@ -62,7 +62,6 @@ class SharedViewModel : ViewModel() {
         )
     }
 
-
     // frozenLocale becomes part of the edit screen state - it was used to convert the doubles to
     // strings, and we will use it to convert the strings back to doubles if the user saves. If the
     // user changes the locale while on the edit screen, we do *not* want to reflect that change

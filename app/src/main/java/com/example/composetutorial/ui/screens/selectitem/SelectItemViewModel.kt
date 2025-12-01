@@ -12,7 +12,6 @@ import com.example.composetutorial.ui.common.PersistentUiContent
 import com.example.composetutorial.ui.components.generalselector.GeneralSelectorStateHolder
 import kotlinx.parcelize.Parcelize
 
-// TODO: MOVE?
 @Parcelize
 data class SelectItemScreenStaticContent(
     val itemList: List<Item>,
@@ -23,8 +22,6 @@ class SelectItemViewModel(
     repository: Repository,
     savedStateHandle: SavedStateHandle,
     initialStaticContent: SelectItemScreenStaticContent?,
-    getName: (Item) -> String,
-    // TODO DELETE? dataQuery: Flow<List<Item>>,
 )  : ViewModel() {
     val uiContent = PersistentUiContent(
         this,
@@ -35,8 +32,8 @@ class SelectItemViewModel(
     )
 
     val generalSelectorStateHolder =  GeneralSelectorStateHolder<Item>(
-    savedStateHandle, // TODO!?
-    getName,
+    savedStateHandle,
+    getName = { it.name },
     uiContent.staticContent.itemList /* TODO: rename initialList for consistency with other cases? */,
     repository.getAllItems(uiContent.staticContent.dataSet.id),
         viewModelScope
