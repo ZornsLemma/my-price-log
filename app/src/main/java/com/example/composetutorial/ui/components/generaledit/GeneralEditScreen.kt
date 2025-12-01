@@ -270,11 +270,8 @@ fun GeneralEditScreen(
     val messageBusyPleaseWait = stringResource(R.string.message_busy_please_wait)
     LaunchedEffect(showBusySnackbar, messageBusyPleaseWait) {
         if (showBusySnackbar) {
-            // TODO: This compiles without the coroutine and launchedeffect already has a suspend body - so do we not need the launch? need to test. if this works, look for other places i may have needless launch blocks.
-            //coroutineScope.launch {
             snackbarHostState.showSnackbar(messageBusyPleaseWait)
             showBusySnackbar = false
-            //}
         }
     }
 }
