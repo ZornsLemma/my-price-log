@@ -64,7 +64,7 @@ fun Modifier.validationInputHandleBringIntoViewRequester(
 
 fun Modifier.validationInputHandleFocusRequester(handle: ValidationInputHandle): Modifier {
     handle.focusRequesterInitialised = true
-    return this.focusRequester(handle.focusRequester)
+    return focusRequester(handle.focusRequester)
 }
 
 suspend fun ValidationInputHandle.requestUserAttention(focusManager: FocusManager) {

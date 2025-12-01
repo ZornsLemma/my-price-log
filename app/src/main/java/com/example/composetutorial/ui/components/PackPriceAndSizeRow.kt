@@ -99,12 +99,11 @@ fun PackPriceAndSizeRow(
         }
 
         val relevantUnitFamilies =
-            remember(dataSet) { getRelevantUnitFamilies(dataSet) }
+            remember(dataSet) { dataSet.getRelevantUnitFamilies() }
 
         val relevantUnitList =
             remember(dataSet, quantity.unit.quantityType) {
-                getRelevantMeasurementUnits(
-                    dataSet,
+                dataSet.getRelevantMeasurementUnits(
                     quantity.unit.quantityType,
                     includeDisplayOnly = true
                 )
@@ -126,8 +125,7 @@ fun PackPriceAndSizeRow(
         // enough that our recommended denominator changes, should we override the user's selection?
         var selectedUnitPriceUnit by remember(dataSet, price, count, quantity) {
             Log.d("MyAppQA", "rememberSaveable $price $quantity")
-            val candidateDenominators = getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
-                dataSet,
+            val candidateDenominators = dataSet.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
                 quantity.unit,
                 includeDisplayOnly = true
             )

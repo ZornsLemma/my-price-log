@@ -845,8 +845,7 @@ private fun PriceComparisonCard(
                 // prices.
                 val bestValueAugmentedPrice = priceAnalysis.augmentedPriceList.first()
                 val headerUnitPriceDenominator = remember(bestValueAugmentedPrice) {
-                    val candidateDenominators = getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
-                        dataSet,
+                    val candidateDenominators = dataSet.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
                         bestValueAugmentedPrice.basePrice.quantity.unit,
                         includeDisplayOnly = true
                     )

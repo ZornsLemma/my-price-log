@@ -14,7 +14,7 @@ fun <T> List<T>.sortedByLocale(
         strength = Collator.PRIMARY
     }
 
-    return this.sortedWith { lhs, rhs ->
+    return sortedWith { lhs, rhs ->
         collator.compare(selector(lhs), selector(rhs))
     }
 }
@@ -25,6 +25,6 @@ fun <T> List<T>.rememberSortedByLocale(
 ): List<T> {
     val locale = LocalConfiguration.current.locales[0]
     return remember(this, locale) {
-        this.sortedByLocale(selector, locale)
+        sortedByLocale(selector, locale)
     }
 }

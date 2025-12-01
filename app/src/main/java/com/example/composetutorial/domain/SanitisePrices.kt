@@ -46,7 +46,7 @@ import com.example.composetutorial.models.PriceHistory
 //
 // TODO: Just possibly this should be an extension on DataSet??
 fun sanitisePriceUnits(dataSet: DataSet, priceList: List<Price>): List<Price> {
-    val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
+    val relevantUnitFamilies = dataSet.getRelevantUnitFamilies()
     myCheck(relevantUnitFamilies.isNotEmpty()) { "Expected at least one relevant unit family for dataSet ${dataSet.id}" }
     // getRelevantUnitFamilies() will in practice generate a LinkedHashSet, so first() here will be
     // deterministic and return the first family inserted. If this were to change in future, it
@@ -66,7 +66,7 @@ fun sanitisePriceUnits(dataSet: DataSet, priceList: List<Price>): List<Price> {
 // the commonality which isn't worse than the repetition.
 // TODO: Just possibly this should be an extension on DataSet??
 fun sanitisePriceHistoryUnits(dataSet: DataSet, priceHistoryList: List<PriceHistory>): List<PriceHistory> {
-    val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
+    val relevantUnitFamilies = dataSet.getRelevantUnitFamilies()
     myCheck(relevantUnitFamilies.isNotEmpty()) { "Expected at least one relevant unit family for dataSet ${dataSet.id}" }
     val replacementUnitFamily = relevantUnitFamilies.first() // see sanitisePriceUnits() comment
     return priceHistoryList.map { priceHistory ->

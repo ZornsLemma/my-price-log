@@ -34,8 +34,8 @@ data class Item(
 
 fun Item?.toEditable(dataSet: DataSet): EditableItem {
     val defaultUnitIdByQuantityTypeOrdinal = QuantityType.entries.map { quantityType ->
-        getRelevantMeasurementUnits(
-            dataSet, quantityType, includeDisplayOnly = false
+        dataSet.getRelevantMeasurementUnits(
+            quantityType, includeDisplayOnly = false
         ).first().id
     }.toMutableList()
     if (this == null) {

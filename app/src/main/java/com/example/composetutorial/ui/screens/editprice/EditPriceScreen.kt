@@ -234,8 +234,7 @@ private fun EditPriceScreenPackSize(
 
     val units: List<MeasurementUnit> =
         remember(dataSet, item.defaultUnit.quantityType) {
-            getRelevantMeasurementUnits(
-                dataSet,
+            dataSet.getRelevantMeasurementUnits(
                 item.defaultUnit.quantityType,
                 includeDisplayOnly = false
             )

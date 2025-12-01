@@ -249,15 +249,15 @@ data class Quantity(val value: Double, val unit: MeasurementUnit) : Parcelable {
         ) + if (quantityType == QuantityType.ITEM) "" else "$nonBreakingSpace${context.getString(unit.symbol)}"
 }
 
-fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> { // TODO EXTN FUN ON DATASET?
+fun DataSet.getRelevantUnitFamilies(): Set<UnitFamily> {
     val relevantUnitFamilies = setOfNotNull(
-        if (dataSet.allowMetric) UnitFamily.METRIC else null,
-        if (dataSet.allowImperial) UnitFamily.IMPERIAL else null,
-        if (dataSet.allowUSCustomary) UnitFamily.US_CUSTOMARY else null,
+        if (allowMetric) UnitFamily.METRIC else null,
+        if (allowImperial) UnitFamily.IMPERIAL else null,
+        if (allowUSCustomary) UnitFamily.US_CUSTOMARY else null,
         UnitFamily.ITEM,
     )
-    myCheck(relevantUnitFamilies.isNotEmpty()) { "Data set ID ${dataSet.id} has no unit families enabled" }
-    myCheck(!(dataSet.allowImperial && dataSet.allowUSCustomary)) { "Data set ID ${dataSet.id} has both imperial and US customary unit families enabled" }
+    myCheck(relevantUnitFamilies.isNotEmpty()) { "Data set ID $id has no unit families enabled" }
+    myCheck(!(allowImperial && allowUSCustomary)) { "Data set ID $id has both imperial and US customary unit families enabled" }
     return relevantUnitFamilies
 }
 
@@ -271,12 +271,11 @@ fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> { // TODO EXTN FU
 // wording and level of control would have to be decided, though in practice we are unlikely to add
 // new unit families so there isn't too much need for amazing amounts of flexibility - the real
 // choice is "metric first or non-metric first"?.
-fun getRelevantMeasurementUnits( // TODO EXTN FUN ON DATASET?
-    dataSet: DataSet,
+fun DataSet.getRelevantMeasurementUnits(
     quantityType: QuantityType,
     includeDisplayOnly: Boolean
 ): List<MeasurementUnit> {
-    val relevantUnitFamilies = getRelevantUnitFamilies(dataSet)
+    val relevantUnitFamilies = getRelevantUnitFamilies()
     val relevantMeasurementUnits = MeasurementUnit.entries.filter { measurementUnit ->
         measurementUnit.quantityType == quantityType &&
                 measurementUnit.unitFamilies.any { it in relevantUnitFamilies } &&
@@ -284,7 +283,7 @@ fun getRelevantMeasurementUnits( // TODO EXTN FUN ON DATASET?
     }
     myCheck(relevantMeasurementUnits.isNotEmpty()) {
         "Expected at least one relevant measure unit for QuantityType ${quantityType.name} in " +
-                "the context of data set ID ${dataSet.id} but found none"
+                "the context of data set ID $id but found none"
     }
     return relevantMeasurementUnits
 }
@@ -292,8 +291,7 @@ fun getRelevantMeasurementUnits( // TODO EXTN FUN ON DATASET?
 // Return a list of the MeasurementUnits of the same QuantityType and UnitFamily as measurementUnit. Note
 // that measurementUnit itself will be included in the results. The results are in the same order as
 // in MeasurementUnit.entries, but in practice I don't believe this matters.
-fun getMeasurementUnitsOfSameQuantityTypeAndUnitFamily( // TODO EXTN FUN ON DATASET?
-    dataSet: DataSet,
+fun DataSet.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
     measurementUnit: MeasurementUnit,
     includeDisplayOnly: Boolean
 ): List<MeasurementUnit> {
@@ -305,10 +303,10 @@ fun getMeasurementUnitsOfSameQuantityTypeAndUnitFamily( // TODO EXTN FUN ON DATA
     // we add support for the cubic inch as a volume measurement. It's the same in imperial and US
     // customary. But if measurementUnit were CUBIC_INCH, the family would matter in deciding whether
     // the returned MeasurementUnits are US or imperial floz/pint/gallon.)
-    val unitFamilies = measurementUnit.unitFamilies.intersect(getRelevantUnitFamilies(dataSet))
+    val unitFamilies = measurementUnit.unitFamilies.intersect(getRelevantUnitFamilies())
     myCheck(unitFamilies.size == 1) {
         "measurementUnit ${measurementUnit.id} should belong to one unit family for data set " +
-                "${dataSet.id}, not $unitFamilies"
+                "$id, not $unitFamilies"
     }
     val result = MeasurementUnit.entries.filter {
         it.quantityType == measurementUnit.quantityType &&
@@ -316,7 +314,7 @@ fun getMeasurementUnitsOfSameQuantityTypeAndUnitFamily( // TODO EXTN FUN ON DATA
                 (!it.displayOnly || includeDisplayOnly)
     }
     myCheck(result.isNotEmpty()) {
-        "measurementUnit ${measurementUnit.id} belongs to no unit families for data set ${dataSet.id}"
+        "measurementUnit ${measurementUnit.id} belongs to no unit families for data set $id"
     }
     // This is a linear search but it's a tiny list and we don't call this a lot.
     myCheck(measurementUnit in result) {

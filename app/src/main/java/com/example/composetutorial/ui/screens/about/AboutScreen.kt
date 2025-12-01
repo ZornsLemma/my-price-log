@@ -147,8 +147,8 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
 private fun Drawable.toBitmap(width: Int, height: Int): Bitmap {
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
-    this.setBounds(0, 0, canvas.width, canvas.height)
-    this.draw(canvas)
+    setBounds(0, 0, canvas.width, canvas.height)
+    draw(canvas)
     return bitmap
 }
 
