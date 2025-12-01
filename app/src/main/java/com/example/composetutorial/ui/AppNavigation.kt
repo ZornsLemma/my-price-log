@@ -422,9 +422,7 @@ fun AppNavigation() {
                         app.repository,
                         handle,
                         sharedViewModel.editPriceScreenInitialUiContent?.editablePrice,
-                        sharedViewModel.editPriceScreenInitialUiContent?.let {
-                            EditPriceScreenStaticContent(it.dataSet, it.item, it.source, it.nonLinearEdit, it.frozenLocale)
-                        }
+                        sharedViewModel.editPriceScreenInitialUiContent?.staticContent
                     )
                 },
             ) { viewModel ->

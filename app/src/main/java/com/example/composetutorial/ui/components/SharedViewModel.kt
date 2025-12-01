@@ -11,6 +11,7 @@ import com.example.composetutorial.models.Item
 import com.example.composetutorial.models.Price
 import com.example.composetutorial.models.Source
 import com.example.composetutorial.models.toEditable
+import com.example.composetutorial.ui.screens.editprice.EditPriceScreenStaticContent
 import com.example.composetutorial.ui.screens.editsource.EditSourceScreenStaticContent
 import com.example.composetutorial.ui.screens.home.HomeScreenUIContent
 import java.util.Locale
@@ -22,11 +23,7 @@ import java.util.Locale
 class SharedViewModel : ViewModel() {
     data class EditPriceScreenInitialUiContent(
         val editablePrice: EditablePrice,
-        val dataSet: DataSet,
-        val item: Item,
-        val source: Source,
-        val nonLinearEdit: Boolean,
-        val frozenLocale: Locale,
+        val staticContent: EditPriceScreenStaticContent,
         )
 
     var editPriceScreenInitialUiContent: EditPriceScreenInitialUiContent? = null
@@ -55,11 +52,13 @@ class SharedViewModel : ViewModel() {
 
         editPriceScreenInitialUiContent = EditPriceScreenInitialUiContent(
             editablePrice = editablePrice,
+            staticContent = EditPriceScreenStaticContent(
             dataSet = dataSet,
             item = item,
             source = source,
             nonLinearEdit = false,
             frozenLocale = frozenLocale,
+            )
         )
     }
 
@@ -81,11 +80,12 @@ class SharedViewModel : ViewModel() {
     ) {
         editPriceScreenInitialUiContent = EditPriceScreenInitialUiContent(
             editablePrice = editablePrice,
+            staticContent = EditPriceScreenStaticContent(
             dataSet = dataSet,
             item = item,
             source = source,
             nonLinearEdit = true,
-            frozenLocale = frozenLocale,
+            frozenLocale = frozenLocale,)
         )
     }
 
