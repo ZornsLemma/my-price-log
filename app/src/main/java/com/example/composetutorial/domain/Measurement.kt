@@ -31,6 +31,12 @@ enum class QuantityType(val id: Int) {
     }
 }
 
+fun QuantityType.baseUnit() = when (this) {
+    QuantityType.WEIGHT -> MeasurementUnit.G
+    QuantityType.VOLUME -> MeasurementUnit.ML
+    QuantityType.ITEM -> MeasurementUnit.EACH
+}
+
 enum class UnitFamily {
     ITEM,
     METRIC,
@@ -202,15 +208,8 @@ enum class MeasurementUnit(
     }
 }
 
-fun QuantityType.baseUnit() = when (this) {
-    QuantityType.WEIGHT -> MeasurementUnit.G
-    QuantityType.VOLUME -> MeasurementUnit.ML
-    QuantityType.ITEM -> MeasurementUnit.EACH
-}
-
 fun areDifferentUnitFamilies(lhs: MeasurementUnit, rhs: MeasurementUnit) =
     intersectionIsEmpty(lhs.unitFamilies, rhs.unitFamilies)
-
 
 @Parcelize
 data class Quantity(val value: Double, val unit: MeasurementUnit) : Parcelable {
@@ -250,7 +249,7 @@ data class Quantity(val value: Double, val unit: MeasurementUnit) : Parcelable {
         ) + if (quantityType == QuantityType.ITEM) "" else "$nonBreakingSpace${context.getString(unit.symbol)}"
 }
 
-fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {
+fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> { // TODO EXTN FUN ON DATASET?
     val relevantUnitFamilies = setOfNotNull(
         if (dataSet.allowMetric) UnitFamily.METRIC else null,
         if (dataSet.allowImperial) UnitFamily.IMPERIAL else null,
@@ -272,7 +271,7 @@ fun getRelevantUnitFamilies(dataSet: DataSet): Set<UnitFamily> {
 // wording and level of control would have to be decided, though in practice we are unlikely to add
 // new unit families so there isn't too much need for amazing amounts of flexibility - the real
 // choice is "metric first or non-metric first"?.
-fun getRelevantMeasurementUnits(
+fun getRelevantMeasurementUnits( // TODO EXTN FUN ON DATASET?
     dataSet: DataSet,
     quantityType: QuantityType,
     includeDisplayOnly: Boolean
@@ -293,7 +292,7 @@ fun getRelevantMeasurementUnits(
 // Return a list of the MeasurementUnits of the same QuantityType and UnitFamily as measurementUnit. Note
 // that measurementUnit itself will be included in the results. The results are in the same order as
 // in MeasurementUnit.entries, but in practice I don't believe this matters.
-fun getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
+fun getMeasurementUnitsOfSameQuantityTypeAndUnitFamily( // TODO EXTN FUN ON DATASET?
     dataSet: DataSet,
     measurementUnit: MeasurementUnit,
     includeDisplayOnly: Boolean
@@ -325,5 +324,3 @@ fun getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
     }
     return result
 }
-
-// TODO: Some of the top-level functions in here might be better as extension functions.
