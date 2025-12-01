@@ -195,6 +195,9 @@
     <string name="label_version">Version %1$s</string>
     <string name="label_metric">Metric</string>
     <string name="label_imperial">Imperial</string>
+    <!-- "US customary" doesn't fit (on my test "small" emulated phone) but based on a discussion
+         with ChatGPT "US units" is better for a casual user anyway, even if we could fit "US
+         customary". -->
     <string name="label_us_units">US units</string>
     <string name="unit_each">each</string>
     <string name="unit_10">10</string>

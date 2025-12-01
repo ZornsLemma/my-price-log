@@ -3,6 +3,7 @@ package com.example.composetutorial.ui.screens.editdataset
 import com.example.composetutorial.ui.components.ValidationErrorHighlightBox
 import com.example.composetutorial.ui.components.SupportingText
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -47,7 +48,7 @@ import com.example.composetutorial.ui.components.validationInputHandleFocusReque
 import com.example.composetutorial.ui.maxDataSetNameLength
 import com.example.composetutorial.ui.maxNotesLength
 
-private enum class UnitPreferenceOption { METRIC, IMPERIAL, US_CUSTOMARY }
+private enum class UnitPreferenceOption(@field:StringRes val nameResource: Int) { METRIC(R.string.label_metric), IMPERIAL(R.string.label_imperial), US_CUSTOMARY(R.string.label_us_units) }
 // TODO: Seems quite a long function, can we factor out (even single use) chunks for readability?
 @Composable
 fun EditDataSetScreen(
@@ -189,24 +190,12 @@ fun EditDataSetScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-
-            // "US customary" doesn't fit (on my test "small" emulated phone) but based on a discussion
-            // with ChatGPT "US units" is better for a casual user anyway, even if we could fit "US
-            // customary".
-            // TODO: Can/should I move these names into UnitPreferenceOption? enum class
-            // UnitPreferenceOption(val name: String) { METRIC("Metric"), ... }? This would make it near
-            // impossible to get them out of sync and might be cleaner. I don't know if this would
-            // cause i18n problems though (Grok says it's fine), so maybe leave trying this until
-            // later.
-            val options = listOf(stringResource(R.string.label_metric),
-                stringResource(R.string.label_imperial), stringResource(R.string.label_us_units)
-            ) // must match UnitPreferenceOption
             // We *don't* call Modifier.validationFocusRequester() as you can't focus a segmented
             // button, and this will force a clear focus to happen on validation errors instead.
             MultiChoiceSegmentedButtonRow(
                 modifier = Modifier.fillMaxWidth()
             ) {
-                options.forEachIndexed { index, label ->
+                UnitPreferenceOption.entries.forEachIndexed { index, label ->
                     val unit = UnitPreferenceOption.entries[index]
                     val oldUnitPreferences = editableDataSet.unitPreferences
                     val checked = when (unit) {
@@ -217,7 +206,7 @@ fun EditDataSetScreen(
                     SegmentedButton(
                         shape = SegmentedButtonDefaults.itemShape(
                             index = index,
-                            count = options.size
+                            count = UnitPreferenceOption.entries.size
                         ),
                         onCheckedChange = {
                             // If imperial is selected, we force US customary to be deselected and
@@ -237,7 +226,7 @@ fun EditDataSetScreen(
                         icon = { SegmentedButtonDefaults.Icon(active = checked) },
                         enabled = true
                     ) {
-                        Text(label)
+                        Text(stringResource(label.nameResource))
                     }
                 }
             }
