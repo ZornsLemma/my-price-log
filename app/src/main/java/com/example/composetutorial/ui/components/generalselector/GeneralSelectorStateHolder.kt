@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.delay
 
-open class GeneralSelectorStateHolder<T>(
+class GeneralSelectorStateHolder<T>(
     @Suppress("unused") private val savedStateHandle: SavedStateHandle,
     private val getName: (T) -> String,
     initialList: List<T>?,
