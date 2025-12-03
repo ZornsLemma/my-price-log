@@ -64,9 +64,7 @@ class SharedViewModel : ViewModel() {
     // immediately because it makes parsing the strings ambiguous. (TODO: This is not heavily tested
     // and is not all that an important case, but I am at least trying to do things right.)
 
-    // TODO: It might be possible to share some code with the non-2 version or refactor but let's just
-    // bash this out for now.
-    fun setEditPriceScreenContent2(
+    fun setEditPriceScreenInitialUiContent(
         dataSet: DataSet,
         item: Item,
         source: Source,

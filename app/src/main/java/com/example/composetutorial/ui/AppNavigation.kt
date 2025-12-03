@@ -201,7 +201,7 @@ fun AppNavigation() {
                 },
                 onItemSearchClick = { uiContent ->
                     sharedViewModel.setSelectItemScreenInitialUiContent(uiContent)
-                    navController.navigate("editItems/select")
+                    navController.navigate("selectItem/select")
                 },
                 onViewHistoryClick = { uiContent ->
                     // We navigate giving this ID triplet instead of the price ID here, so that if a
@@ -215,19 +215,19 @@ fun AppNavigation() {
                     sharedViewModel.setSelectDataSetScreenContent(
                         uiContent
                     )
-                    navController.navigate("editDataSets")
+                    navController.navigate("selectDataSet")
                 },
                 onSelectItemClick = { uiContent ->
                     sharedViewModel.setSelectItemScreenInitialUiContent(
                         uiContent
                     )
-                    navController.navigate("editItems/edit")
+                    navController.navigate("selectItem/edit")
                 },
                 onSelectSourceClick = { uiContent ->
                     sharedViewModel.setSelectSourceScreenInitialUiContent(
                         uiContent
                     )
-                    navController.navigate("editSources/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
+                    navController.navigate("selectSource/${uiContent.dataSet!!.id}/${uiContent.dataSet.name}")
                 },
                 onSettingsClick = { navController.navigate("settings") },
             )
@@ -260,7 +260,7 @@ fun AppNavigation() {
         }
 
         composable(
-            "editDataSets", enterTransition = { slideLeftTransition() },
+            "selectDataSet", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
@@ -300,7 +300,7 @@ fun AppNavigation() {
         }
 
         composable(
-            "editItems/{action}", enterTransition = { slideLeftTransition() },
+            "selectItem/{action}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
@@ -358,8 +358,8 @@ fun AppNavigation() {
             }
         }
 
-        composable( // TODO: Should editSources path be renamed selectSources? And ditto for other edit*?
-            "editSources/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
+        composable(
+            "selectSource/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
             popEnterTransition = { null },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
@@ -367,9 +367,6 @@ fun AppNavigation() {
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
             screenWithViewModel<SelectSourceViewModel>(
                 backStackEntry = backStackEntry,
-                // TODO: Could should sharedViewModel have a clearAllContent() or similar function
-                // and we just call that in clearUiContent? That way we could be sure *no* old
-                // content is lurking around.
                 clearUiContent = { sharedViewModel.selectSourceScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     SelectSourceViewModel(
@@ -574,7 +571,7 @@ fun AppNavigation() {
                         // either.")
 
                         Log.d("MyApp", "TODO: requestEditAsNew $priceHistory")
-                        sharedViewModel.setEditPriceScreenContent2(
+                        sharedViewModel.setEditPriceScreenInitialUiContent(
                             viewModel.uiContent.staticContent.dataSet,
                             viewModel.uiContent.staticContent.item,
                             viewModel.uiContent.staticContent.source,
