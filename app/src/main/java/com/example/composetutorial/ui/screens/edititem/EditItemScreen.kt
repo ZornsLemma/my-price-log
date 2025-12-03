@@ -79,7 +79,6 @@ fun EditItemScreen(
 
     val isSimpleDelete = itemReferenceCount == 0L
     val dialogTitle = stringResource(if (isSimpleDelete) R.string.title_delete_item else R.string.title_delete_item_and_prices)
-    // TODO: No delete can be undone, is it inconsistent to mention it in this case and not the other?
     val dialogSubtitle = stringResource(if (isSimpleDelete) R.string.message_delete_item_no_associated_prices else R.string.message_delete_item_associated_prices)
     GeneralEditAndDeleteScreen(
         viewModel = viewModel.generalEditScreenViewModel,

@@ -16,10 +16,6 @@ import com.example.composetutorial.ui.screens.editsource.EditSourceScreenStaticC
 import com.example.composetutorial.ui.screens.home.HomeScreenUiContent
 import java.util.Locale
 
-// TODO: Maybe this file should be moved to be a sibling of AppNavigation.kt?
-
-// Shared ViewModel to pass data between screens
-// TODO: Some inconsistency between "UiContent" and "Content" here - think about renaming.
 class SharedViewModel : ViewModel() {
     data class EditPriceScreenInitialUiContent(
         val editablePrice: EditablePrice,
