@@ -5,4 +5,5 @@ package com.example.composetutorial.debug
 object DebugFlags {
     const val USE_STRICT_MODE = true
     const val LOG_SQL = true
+    const val ALLOW_ROTATION_ON_PHONE = true
 }

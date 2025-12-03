@@ -3,9 +3,6 @@ package com.example.composetutorial.app
 import android.content.Context
 import android.content.Intent
 
-// TODO: Not sure if the "app" subpackage will justify itself but let's try for now.
-// TODO: Maytbe app class, nav graph, etc, should live in the "app" subpackage?
-
 fun safeRestartApp(context: Context) {
     // ChatGPT told me to do this with AlarmManager, but that didn't work and I believe it isn't
     // the recommended approach on Android 10+. Perplexity recommended the following approach, which

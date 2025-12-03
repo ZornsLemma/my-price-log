@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.example.composetutorial.debug.DebugFlags
+import com.example.composetutorial.debug.DebugFlags.ALLOW_ROTATION_ON_PHONE
 import com.example.composetutorial.ui.AppNavigation
 import com.example.composetutorial.ui.theme.AppTheme
 
@@ -30,15 +31,14 @@ class MainActivity : ComponentActivity() {
         // support tablets/ChromeOS devices better. This app is probably always going to want to run
         // in portrait on a (non-foldable) phone and I don't see any value in putting effort into
         // layouts to allow landscape to work properly on a phone. ChatGPT suggested locking to
-        // portrait only on phones and I think that's a reasonable compromise for now. I haven't
-        // tested on tablets or similar devices, but I suspect the app will work fine on larger
-        // screens in portrait or landscape, even if maybe looks a bit odd.
-        // ENHANCE: In the future it might be nice to add alternative layouts to work better on
-        // larger devices like tablets or foldables in both landscape and portrait mode. This is
-        // probably not a common use case though.
-        // TODO: Since rotations are a good way to trigger recompositions in emulator for testing,
-        // might be worth addig a debug build flag to always allow rotations.
-        if (isPhone()) {
+        // portrait only on phones and I think that's a reasonable compromise for now. (There is a
+        // debug override for this, since rotations are an easy way to trigger configuration changes
+        // in the emulator for testing.) I haven't tested on tablets or similar devices, but I
+        // suspect the app will work fine on larger screens in portrait or landscape, even if maybe
+        // looks a bit odd. ENHANCE: In the future it might be nice to add alternative layouts to
+        // work better on larger devices like tablets or foldables in both landscape and portrait
+        // mode. This is probably not a common use case though.
+        if (isPhone() && !ALLOW_ROTATION_ON_PHONE) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
 
