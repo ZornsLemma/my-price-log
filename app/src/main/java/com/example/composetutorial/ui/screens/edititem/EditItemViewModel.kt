@@ -12,7 +12,7 @@ import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.data.EditableItem
 import com.example.composetutorial.data.toDomain
 import com.example.composetutorial.ui.common.PersistentUiContent
-import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
+import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenStateHolder
 import com.example.composetutorial.ui.common.validationRulesOk
 import com.example.composetutorial.ui.screens.editsource.nameValidationRulesFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -50,7 +50,7 @@ class EditItemViewModel(
         }
     }
 
-    val generalEditScreenViewModel = GeneralEditScreenViewModel()
+    val generalEditScreenStateHolder = GeneralEditScreenStateHolder()
 
     fun setUiContentEditableItem(newEditableItem: EditableItem) {
         uiContent.update(newEditableItem)

@@ -2,7 +2,6 @@
 
 package com.example.composetutorial.ui.components.generaledit
 
-import com.example.composetutorial.ui.common.SyncedStateEvent
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -40,7 +39,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
 import com.example.composetutorial.debug.debugDelay
-import com.example.composetutorial.ui.components.generaledit.runGeneralEditScreenOperation
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.AsyncOperationErrorAlertDialog
@@ -56,7 +54,7 @@ import kotlinx.coroutines.launch
 // TODO: This is a very long function, can we split it up?
 @Composable
 fun GeneralEditScreen(
-    viewModel: GeneralEditScreenViewModel, // TODO: Should we remove "Screen" from the ViewModel class name?
+    stateHolder: GeneralEditScreenStateHolder,
     navController: NavHostController,
     title: @Composable () -> Unit,
     isDirty: () -> Boolean,
@@ -66,7 +64,7 @@ fun GeneralEditScreen(
     requestClose: (Long?) -> Unit,
     content: @Composable () -> Unit
 ) {
-    val saveStatus by viewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by stateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
     Log.d("MyAppRGE", "GeneralEditScreen saveStatus=$saveStatus")
 
     val isNotBusy = saveStatus.isNotBusy()
@@ -110,7 +108,7 @@ fun GeneralEditScreen(
     LaunchedEffect(Unit) {
         // We use buffer() here because we want to update() while we are already collecting; we
         // might get a deadlock otherwise.
-        viewModel.asyncOperationStatus.events.buffer().collect { event ->
+        stateHolder.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
                 AsyncOperationStatus.Busy -> {
                     // We expect the operation to complete quickly so we don't want the visual distraction
@@ -118,8 +116,8 @@ fun GeneralEditScreen(
                     // in after a short delay if we're still here waiting.
                     delay(spinnerDelayMillis)
                     // The state might not be busy any more, so check first before updating to avoid a race condition.
-                    if (viewModel.asyncOperationStatus.state.value == AsyncOperationStatus.Busy) {
-                        viewModel.asyncOperationStatus.update(AsyncOperationStatus.BusyForAWhile)
+                    if (stateHolder.asyncOperationStatus.state.value == AsyncOperationStatus.Busy) {
+                        stateHolder.asyncOperationStatus.update(AsyncOperationStatus.BusyForAWhile)
                     }
                 }
 
@@ -131,7 +129,7 @@ fun GeneralEditScreen(
     LaunchedEffect(Unit) {
         // We use buffer here because we want to update() in the error case while we are
         // already collecting; we get a deadlock otherwise.
-        viewModel.asyncOperationStatus.events.buffer().collect { event ->
+        stateHolder.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
                 AsyncOperationStatus.Idle -> {
                     Log.d("MyAppRGE", "collected idle")
@@ -148,7 +146,7 @@ fun GeneralEditScreen(
 
                 is AsyncOperationStatus.Error -> {
                     Log.d("MyAppRGE", "collected error")
-                    viewModel.asyncOperationStatus.update(AsyncOperationStatus.Idle)
+                    stateHolder.asyncOperationStatus.update(AsyncOperationStatus.Idle)
                     Log.d("MyAppRGE", "set state to idle")
                     showErrorDialogMessage = event.message
                 }
@@ -186,10 +184,10 @@ fun GeneralEditScreen(
                         // We could check isDirty here and just dismiss without saving if there's
                         // nothing to save, but it's probably best (given there's no history table
                         // which would get bloated) just to save regardless.
-                        viewModel.saveAttempted.value = true
+                        stateHolder.saveAttempted.value = true
                         Log.d("MyAppSS", "set saveAttempted to true")
                         runGeneralEditScreenOperation(
-                            viewModel = viewModel,
+                            stateHolder = stateHolder,
                             coroutineScope = coroutineScope,
                             isSafeToPerform = validateForSave,
                             perform = {
@@ -276,24 +274,24 @@ fun GeneralEditScreen(
 }
 
 fun runGeneralEditScreenOperation(
-    viewModel: GeneralEditScreenViewModel,
+    stateHolder: GeneralEditScreenStateHolder,
     coroutineScope: CoroutineScope,
     isSafeToPerform: suspend () -> Boolean,
     perform: suspend () -> Long?,
 ) {
     coroutineScope.launch {
         if (isSafeToPerform()) {
-            viewModel.asyncOperationStatus.update(AsyncOperationStatus.Busy)
+            stateHolder.asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation about to call perform")
                 //throw IllegalStateException("TODO TEST")
                 val id = perform()
                 Log.d("MyAppQZ", "perform() returned id $id")
                 debugDelay()
-                viewModel.asyncOperationStatus.update(AsyncOperationStatus.Success(id))
+                stateHolder.asyncOperationStatus.update(AsyncOperationStatus.Success(id))
             } catch (e: Exception) {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation caught exception")
-                viewModel.asyncOperationStatus.update(AsyncOperationStatus.Error("runGeneralEditScreenOperation failed: ${e.toString()}"))
+                stateHolder.asyncOperationStatus.update(AsyncOperationStatus.Error("runGeneralEditScreenOperation failed: ${e.toString()}"))
             }
         }
     }

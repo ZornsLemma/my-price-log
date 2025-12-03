@@ -13,7 +13,7 @@ import com.example.composetutorial.data.Item
 import com.example.composetutorial.data.Source
 import com.example.composetutorial.data.toDomain
 import com.example.composetutorial.ui.common.PersistentUiContent
-import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
+import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenStateHolder
 import com.example.composetutorial.ui.components.numericValidationRules
 import com.example.composetutorial.ui.common.validationRulesOk
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -49,7 +49,7 @@ class EditPriceViewModel(
         initialStaticContent
     )
 
-    val generalEditScreenViewModel = GeneralEditScreenViewModel()
+    val generalEditScreenStateHolder = GeneralEditScreenStateHolder()
 
     // "Count" is visible if the item explicitly allows multipacks or if (presumably because it
     // used to) we have a count > 1, which we must not hide or silently throw away. Note that

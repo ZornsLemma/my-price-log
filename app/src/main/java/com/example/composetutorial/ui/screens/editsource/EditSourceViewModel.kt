@@ -19,7 +19,7 @@ import com.example.composetutorial.ui.common.PersistentUiContent
 import com.example.composetutorial.ui.common.Versioned
 import com.example.composetutorial.ui.common.initialVersioned
 import com.example.composetutorial.ui.common.withVersion
-import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
+import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenStateHolder
 import com.example.composetutorial.ui.common.validationRulesOk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -62,7 +62,7 @@ class EditSourceViewModel(
         }
     }
 
-    val generalEditScreenViewModel = GeneralEditScreenViewModel()
+    val generalEditScreenStateHolder = GeneralEditScreenStateHolder()
 
     fun setUiContentEditableSource(newEditableSource: EditableSource) {
         uiContent.update(newEditableSource)

@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.SyncedStateEvent
 
-// TODO: Rename? This is not actually a ViewModel, though it plays a similar role (I think).
 // TODO: Can/should this be handled via rememberSaveable inside GeneralEditScreen? I think in some
 // sense this saving-duration kind of data should be in the caller's ViewModel (via composition). In
 // practice, especially given that we "trap" the user on the edit screen that isn't so important.
@@ -14,7 +13,7 @@ import com.example.composetutorial.ui.common.SyncedStateEvent
 // saving" cannot be serialised so even if a save somehow takes ages and that isn't actually
 // indicative of a serious problem, will it matter that our state has been serialised to a bundle!?
 // I need to thinka bout this later when it's maybe clearer.
-class GeneralEditScreenViewModel {
+class GeneralEditScreenStateHolder {
     val asyncOperationStatus = SyncedStateEvent<AsyncOperationStatus>(AsyncOperationStatus.Idle)
     var saveAttempted: MutableState<Boolean> = mutableStateOf(false)
 }

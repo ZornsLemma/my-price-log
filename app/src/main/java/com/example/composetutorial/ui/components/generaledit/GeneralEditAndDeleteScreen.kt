@@ -14,12 +14,11 @@ import androidx.navigation.NavHostController
 import com.example.composetutorial.R
 import com.example.composetutorial.debug.debugDelay
 import com.example.composetutorial.ui.components.WarningIcon
-import com.example.composetutorial.ui.components.generaledit.runGeneralEditScreenOperation
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 
 @Composable
 fun GeneralEditAndDeleteScreen(
-    viewModel: GeneralEditScreenViewModel,
+    stateHolder: GeneralEditScreenStateHolder,
     navController: NavHostController,
     title: @Composable () -> Unit,
     isDirty: () -> Boolean,
@@ -34,10 +33,10 @@ fun GeneralEditAndDeleteScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     var deleting by rememberSaveable { mutableStateOf(false) }
-    val saveStatus by viewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by stateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
 
     GeneralEditScreen(
-        viewModel = viewModel,
+        stateHolder = stateHolder,
         navController = navController,
         title = title,
         isDirty = isDirty,
@@ -72,7 +71,7 @@ fun GeneralEditAndDeleteScreen(
                 TextButton(onClick = {
                     onDeleteConfirmDismissRequest()
                     runGeneralEditScreenOperation(
-                        viewModel = viewModel,
+                        stateHolder = stateHolder,
                         coroutineScope = coroutineScope,
                         isSafeToPerform = { true },
                         perform = {

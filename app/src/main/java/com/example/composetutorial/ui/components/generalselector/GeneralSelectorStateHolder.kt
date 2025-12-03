@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.delay
 
+// TODO: Rename GeneralSelector*Screen*StateHolder?
 class GeneralSelectorStateHolder<T>(
     @Suppress("unused") private val savedStateHandle: SavedStateHandle,
     private val getName: (T) -> String,

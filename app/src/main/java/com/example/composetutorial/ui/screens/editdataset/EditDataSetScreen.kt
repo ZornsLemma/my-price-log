@@ -64,14 +64,14 @@ fun EditDataSetScreen(
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
-    val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = dataSetReferenceCount == 0L
     val dialogTitle = stringResource(if (isSimpleDelete) R.string.title_delete_data_set else R.string.title_delete_data_set_and_associated_data)
     val dialogSubtitle = stringResource(if (isSimpleDelete) R.string.message_delete_data_set_no_associated_data else R.string.message_delete_data_set_associated_data)
 
     GeneralEditAndDeleteScreen(
-        viewModel = viewModel.generalEditScreenViewModel,
+        stateHolder = viewModel.generalEditScreenStateHolder,
         navController = navController,
         title = { Text(if (originalDataSet.id == 0L) stringResource(R.string.title_add_data_set) else stringResource(
             R.string.title_edit_data_set
@@ -103,7 +103,7 @@ fun EditDataSetScreen(
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value ?: emptyList(),
             validationRulesKey = nameValidationRules.version,
-            allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
             singleLine = true,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditDataSetViewModel.EditableField.NAME
@@ -115,7 +115,7 @@ fun EditDataSetScreen(
         ValidationErrorHighlightBox(
             value = editableDataSet.currencyCode,
             validationRules = viewModel.currencyValidationRules,
-            allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditDataSetViewModel.EditableField.CURRENCY_CODE
         ) { validationResult, interactionSource, validationInputHandle ->

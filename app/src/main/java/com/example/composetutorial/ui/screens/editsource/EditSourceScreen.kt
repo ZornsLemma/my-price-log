@@ -66,14 +66,14 @@ fun EditSourceScreen(
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
-    val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = sourceReferenceCount == 0L
     val dialogTitle = stringResource(if (isSimpleDelete) R.string.title_delete_source else R.string.title_delete_source_and_prices)
     val dialogSubtitle = stringResource(if (isSimpleDelete) R.string.message_delete_source_no_associated_prices else R.string.message_delete_source_associated_prices)
 
     GeneralEditAndDeleteScreen(
-        viewModel = viewModel.generalEditScreenViewModel,
+        stateHolder = viewModel.generalEditScreenStateHolder,
         navController = navController,
         title = topAppBarTitle(if (originalSource.id == 0L) stringResource(R.string.title_add_source) else stringResource(
             R.string.title_edit_source
@@ -106,7 +106,7 @@ fun EditSourceScreen(
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value ?: emptyList(),
             validationRulesKey = nameValidationRules.version,
-            allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
             singleLine = true,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditSourceViewModel.EditableField.NAME
@@ -203,7 +203,7 @@ fun EditSourceScreen(
                         ValidatedNumericTextField(
                             value = loyaltyPercentage,
                             validationRules = viewModel.loyaltyPercentageValidationRules,
-                            allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
+                            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
                             validationFlow = viewModel.saveValidationEvents,
                             validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
                             numericTextFieldModifier = Modifier

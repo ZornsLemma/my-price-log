@@ -75,13 +75,13 @@ fun EditItemScreen(
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
-    val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = itemReferenceCount == 0L
     val dialogTitle = stringResource(if (isSimpleDelete) R.string.title_delete_item else R.string.title_delete_item_and_prices)
     val dialogSubtitle = stringResource(if (isSimpleDelete) R.string.message_delete_item_no_associated_prices else R.string.message_delete_item_associated_prices)
     GeneralEditAndDeleteScreen(
-        viewModel = viewModel.generalEditScreenViewModel,
+        stateHolder = viewModel.generalEditScreenStateHolder,
         navController = navController,
         title = topAppBarTitle( if (viewModel.uiContent.originalContent.id == 0L) stringResource(R.string.title_add_item) else stringResource(
             R.string.title_edit_item
@@ -114,7 +114,7 @@ fun EditItemScreen(
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value ?: emptyList(),
             validationRulesKey = nameValidationRules.version,
-            allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
             singleLine = true,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditItemViewModel.EditableField.NAME

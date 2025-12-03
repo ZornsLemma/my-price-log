@@ -67,7 +67,7 @@ fun EditPriceScreen(
 
 // TODO: Some of this remember stuff should maybe move into the ViewModel
 
-    val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
 
     fun onPackSizeOrPriceChange() {
         // On the first change to the pack size or price, we set the "to confirm" switch to true, on
@@ -90,7 +90,7 @@ fun EditPriceScreen(
     }
 
     GeneralEditScreen(
-        viewModel = viewModel.generalEditScreenViewModel,
+        stateHolder = viewModel.generalEditScreenStateHolder,
         navController = navController,
         title = topAppBarTitle(item.name, source.name),
         isDirty = {
@@ -184,18 +184,18 @@ private fun EditPriceScreenPrice(
 ) {
     val uiContent = viewModel.uiContent
 
-    val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
 
     var packPrice by rememberSyncedTextFieldValue(editablePrice.price)
     val currencyFormat = viewModel.currencyFormat
 
-    Log.d("MyAppSS", "saveAttempted ${viewModel.generalEditScreenViewModel.saveAttempted.value}")
+    Log.d("MyAppSS", "saveAttempted ${viewModel.generalEditScreenStateHolder.saveAttempted.value}")
     ValidatedNumericTextField(
         value = packPrice,
         validationRules = currencyFormat.validationRules,
         // No validationRulesKey is needed as the validation rules depend only on our fixed
         // DataSet and frozen locale.
-        allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
+        allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
         validationFlow = viewModel.saveValidationEvents,
         validationFlowFieldId = EditPriceViewModel.EditableField.PRICE,
         errorHighlightOffset = 4.dp,
@@ -229,7 +229,7 @@ private fun EditPriceScreenPackSize(
 ) {
     val uiContent = viewModel.uiContent
 
-    val saveStatus by viewModel.generalEditScreenViewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val units: List<MeasurementUnit> =
         remember(dataSet, item.defaultUnit.quantityType) {
@@ -259,7 +259,7 @@ private fun EditPriceScreenPackSize(
             value = packCountNumber,
             validationRules = viewModel.packCountValidationRules,
             // TODO DON'T THINK WE NEED THIS BUT CHECK, WIP RIGHT NOW validationRulesKey = uiContent.editablePrice.value.measurementUnit.id,
-            allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditPriceViewModel.EditableField.PACK_COUNT,
             errorHighlightOffset = 4.dp, // TODO!?
@@ -291,7 +291,7 @@ private fun EditPriceScreenPackSize(
             value = packSizeNumber,
             validationRules = viewModel.packSizeValidationRules,
             validationRulesKey = editablePrice.measurementUnit.id,
-            allowEmpty = !viewModel.generalEditScreenViewModel.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditPriceViewModel.EditableField.PACK_SIZE,
             errorHighlightOffset = 4.dp,
