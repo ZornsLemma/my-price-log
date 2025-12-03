@@ -89,9 +89,9 @@ class EditPriceViewModel(
     }
     // TODO: Maybe change members inside PersistentUiContent to remove the somewhat duplicate "content" from the three main members?
 
-    // TODO: I suspect this should *either* be moved down into a rememberSaveable inside the composable,
-    // *or* it should be preserved across process death (perhaps, but not necessarily, by being moved
-    // into EditPriceScreenUiContent).
+    // TODO: I suspect this should *either* be moved down into a rememberSaveable inside the
+    // composable, *or* it should be preserved across process death (perhaps, but not necessarily,
+    // by being moved into uiContent).
     var firstPackSizeOrPriceChangeOccurred: Boolean = false
 
     enum class EditableField {

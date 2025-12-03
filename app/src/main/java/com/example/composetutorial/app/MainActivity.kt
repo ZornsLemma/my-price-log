@@ -316,27 +316,11 @@ class MainActivity : ComponentActivity() {
 // usefully tested. It would also be interesting and perhaps useful to add some unit tests for more
 // of the business logic, mocking the repository, etc.
 
-// TODO: I think I made a mistake *intending* to change "Good/OK/bad price" to "G/O/B *value*" and
-// only changed the contentDescription versions, not the on-screen versions. For the moment I've
-// reverted to price everywhere but may want to change to "value" everywhere.
-
 // TODO: Some and probably all of the settingsdialog things give silly error messages if you type
 // "-3a" or something. Do we need to tweak validation? Maybe have an initial "invalid number" check?
 // Can/should we be restricting to numeric input and/or hinting at using a numeric on screen
 // keyboard? Do we need to impose a maximum length? Should we be using (a variant of?) our existing
 // NumericTextField?
-
-// TODO: In Spanish (but also probably in English) with USD prices in non-USD locale (hence "US$"
-// not just "$"), my small emulator is not fitting an (admittedly fake, but not insane in this
-// context) US$69,30 por 12x400ml shelf price (for cola) in the space available. And there is likely
-// no way precio por unidad is fitting at all. TBH it *may* be that given this is just borderline
-// too long I should accept it, rather than switching away from the grid layout. Maybe I could use a
-// non-breaking space e.g. between the price and por/for or after to improve the layout if it does
-// wrap. Or actually probably a non-breaking space between 400 and ml would maybe be good. OK, I have
-// experimentally added a non-breaking space in Quantity.toDisplayString() and we'll see if
-// that's enough or if I want to make more tweaks. I've also added a horizontal spacer to stop
-// this text "touching" the unit price to its right if it is just on the borderline of needing
-// to wrap.
 
 // TODO: I've shoved in "cada uno" as a Spanish translation for "each" but this may not be right,
 // need to talk to LLMs. This is so I can test if it maybe works with my string constructions etc.
@@ -352,11 +336,6 @@ class MainActivity : ComponentActivity() {
 // AND DESBORDE IN OTHER MENU ITEMS FOR CONSISTENCY NOW WE AREN'T USING THEM IN THESE REVISED ONES.
 
 // TODO: Is the "hamburger" and "overflow menu" terminology OK *in English*?!
-
-// TODO: Some inconsistency between "UI" and "Ui" in some names.
-
-// TODO: Perhaps just due to current rework, but maybe some inconsistency between
-// FooScreenInitialUiContent and FooScreenUiContent naming
 
 // TODO: Not sure it's a problem but FWIW there may be a corner case where you change the currency
 // on a data set after prices exist and you are shown prices with more decimal places than yo can

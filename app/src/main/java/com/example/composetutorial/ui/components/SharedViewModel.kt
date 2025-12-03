@@ -128,31 +128,34 @@ class SharedViewModel : ViewModel() {
         val dataSet: DataSet
     )
 
-    // TODO: Rename the following now they are just List<T>? not a UiContent structure? Or is the "UiContent" convention more valuable?
-    var selectDataSetScreenUiContent: List<DataSet>? = null
+    var selectDataSetScreenInitialUiContent: List<DataSet>? = null
     var selectItemScreenInitialUiContent: SelectItemScreenInitialUiContent? = null
     var selectSourceScreenInitialUiContent: SelectSourceScreenInitialUiContent? = null
 
-    // TODO: The "doubling" in the next three functions is a temporary hack to show that we use the
-    // initial list and then it gets replaced by the query results from the database. The map step
-    // is because we use the IDs as keys on LazyColumn and if there are duplicate IDs it gets upset;
-    // of course with real data there won't be duplicate IDs at all.
+    // If it's helpful for debugging, one way to make it possible to see that the initial list is
+    // used for the follow select screen is to add a tweaked copy of the list to itself. This gives
+    // a doubled-up list initially which is then replaced when the database query returns. For
+    // example:
+    //     selectDataSetScreenInitialUiContent =
+    //         uiContent.dataSetList +
+    //         uiContent.dataSetList.map { it -> it.copy(id = it.id * 1000) }
+    // (The ID change is needed because we use the ID as a LazyColumn key.)
 
     fun setSelectDataSetScreenContent(uiContent: HomeScreenUiContent) {
-        selectDataSetScreenUiContent =
-            uiContent.dataSetList + uiContent.dataSetList.map { it -> it.copy(id = it.id * 1000) }
+        selectDataSetScreenInitialUiContent =
+            uiContent.dataSetList
     }
 
     fun setSelectItemScreenInitialUiContent(uiContent: HomeScreenUiContent) {
         selectItemScreenInitialUiContent = SelectItemScreenInitialUiContent(
-            uiContent.itemList + uiContent.itemList.map { it -> it.copy(id = it.id * 1000) },
+            uiContent.itemList,
             uiContent.dataSet!!
         )
     }
 
     fun setSelectSourceScreenInitialUiContent(uiContent: HomeScreenUiContent) {
         selectSourceScreenInitialUiContent = SelectSourceScreenInitialUiContent(
-            uiContent.sourceList + uiContent.sourceList.map { it -> it.copy(id = it.id * 1000) },
+            uiContent.sourceList,
             uiContent.dataSet!!
         )
     }

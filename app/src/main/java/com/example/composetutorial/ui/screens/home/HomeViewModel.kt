@@ -263,10 +263,10 @@ class HomeViewModel(
             localeFlow
         ) { _, databaseResults, priceAgeSettings, locale -> Triple(databaseResults, priceAgeSettings, locale) }
 
-        // completeUIStateFlow delivers complete, consistent results which reflect the user's
+        // completeUiStateFlow delivers complete, consistent results which reflect the user's
         // selection. However, it doesn't make any guarantees as to how long it takes to emit after
         // allUserInputFlow emits.
-        val completeUIStateFlow =
+        val completeUiStateFlow =
             todoRenameMeFlow.flatMapLatest { (databaseResults, priceAgeSettings, locale) ->
                 Log.d("MyAppPAS", "priceAgeSettings $priceAgeSettings")
                 Log.d("MyAppLO", "locale $locale")
@@ -289,13 +289,13 @@ class HomeViewModel(
                 if (taggedItemListAndSourceList.first != dataSetId) {
                     Log.d(
                         "MyFlow",
-                        "completeUIStateFlow discarding dataSetId ${taggedItemListAndSourceList.first}, want $dataSetId"
+                        "completeUiStateFlow discarding dataSetId ${taggedItemListAndSourceList.first}, want $dataSetId"
                     )
                     emptyFlow()
                 } else if (taggedPriceList.first != Pair(dataSetId, itemId)) {
                     Log.d(
                         "MyFlow",
-                        "completeUIStateFlow discarding (dataSetId, itemId) ${taggedPriceList.first}, want ${
+                        "completeUiStateFlow discarding (dataSetId, itemId) ${taggedPriceList.first}, want ${
                             Pair(
                                 dataSetIdState,
                                 itemIdState
@@ -314,7 +314,7 @@ class HomeViewModel(
 
                     Log.d(
                         "MyFlow",
-                        "completeUIStateFlow dataSetId ${selectedDataSetIdStateFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
+                        "completeUiStateFlow dataSetId ${selectedDataSetIdStateFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
                     )
 
                     if (dataSet != null) {
@@ -357,7 +357,7 @@ class HomeViewModel(
 
                         // Data stream
                         /* val dataJob = */ launch {
-                        completeUIStateFlow.collect { data ->
+                        completeUiStateFlow.collect { data ->
                             loadingJob?.cancel()
                             send(false to data)
                         }

@@ -266,11 +266,11 @@ fun AppNavigation() {
         ) { backStackEntry ->
             screenWithViewModel<SelectDataSetViewModel>(
                 backStackEntry = backStackEntry,
-                clearUiContent = { sharedViewModel.selectDataSetScreenUiContent = null },
+                clearUiContent = { sharedViewModel.selectDataSetScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     SelectDataSetViewModel(
                         savedStateHandle = handle,
-                        initialList = sharedViewModel.selectDataSetScreenUiContent,
+                        initialList = sharedViewModel.selectDataSetScreenInitialUiContent,
                         dataQuery = app.repository.getAllDataSets()
                     )
                 }
