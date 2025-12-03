@@ -29,12 +29,6 @@ class ValidatedFieldState(
     val validationResult: State<String?>
 )
 
-// TODO: I am still re-figuring out how it works, but I think what this really is is a live
-// validation rule "applier" (poor word). You give it some validation rules and then it will live
-// validate a value (tweaking its behaviour based on focus (which it can monitor because the
-// caller attaches the interactionSource it generates to a composable)) and feeding back a validation
-// result for display.
-// TODO: This isn't the best name but it's not terrible. We could maybe consider ValidateField() as the function and FieldValidation as the return type, but I suspect that's worse than what we currently have.
 @Composable
 fun <T> ValidateFieldState(
     value: T,
