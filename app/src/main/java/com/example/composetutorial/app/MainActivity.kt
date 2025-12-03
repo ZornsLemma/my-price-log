@@ -355,7 +355,8 @@ class MainActivity : ComponentActivity() {
 
 // TODO: Some inconsistency between "UI" and "Ui" in some names.
 
-// TODO: Perhaps just due to current rework, but maybe some inconsistency between FooScreenInitialUIContent and FooScreenUIContent naming
+// TODO: Perhaps just due to current rework, but maybe some inconsistency between
+// FooScreenInitialUiContent and FooScreenUiContent naming
 
 // TODO: Not sure it's a problem but FWIW there may be a corner case where you change the currency
 // on a data set after prices exist and you are shown prices with more decimal places than yo can

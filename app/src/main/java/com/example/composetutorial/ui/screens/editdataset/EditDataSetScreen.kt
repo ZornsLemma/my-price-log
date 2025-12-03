@@ -98,7 +98,7 @@ fun EditDataSetScreen(
             maxLength = maxDataSetNameLength,
             onValueChange = {
                 name = it
-                viewModel.setUIContentEditableDataSet(editableDataSet.copy(name = it.text))
+                viewModel.setUiContentEditableDataSet(editableDataSet.copy(name = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value ?: emptyList(),
@@ -154,7 +154,7 @@ fun EditDataSetScreen(
 
                 selectedId = if (editableDataSet.currencyCode != "") editableDataSet.currencyCode else null,
                 onItemSelected = {
-                    viewModel.setUIContentEditableDataSet(
+                    viewModel.setUiContentEditableDataSet(
                         editableDataSet.copy(
                             currencyCode = it
                         )
@@ -217,7 +217,7 @@ fun EditDataSetScreen(
                                 UnitPreferenceOption.IMPERIAL -> oldUnitPreferences.copy(allowImperial = it, allowUSCustomary = !it && oldUnitPreferences.allowUSCustomary)
                                 UnitPreferenceOption.US_CUSTOMARY -> oldUnitPreferences.copy(allowUSCustomary = it, allowImperial = !it && oldUnitPreferences.allowImperial)
                             }
-                            viewModel.setUIContentEditableDataSet(
+                            viewModel.setUiContentEditableDataSet(
                                 editableDataSet.copy(unitPreferences = newUnitPreferences)
                             )
                         },
@@ -250,7 +250,7 @@ fun EditDataSetScreen(
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
-                viewModel.setUIContentEditableDataSet(editableDataSet.copy(notes = it.text))
+                viewModel.setUiContentEditableDataSet(editableDataSet.copy(notes = it.text))
             },
             enabled = saveStatus.isNotBusy(),
             modifier = Modifier.fillMaxWidth(),

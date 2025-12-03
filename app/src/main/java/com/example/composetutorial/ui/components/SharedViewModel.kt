@@ -13,13 +13,13 @@ import com.example.composetutorial.data.Source
 import com.example.composetutorial.data.toEditable
 import com.example.composetutorial.ui.screens.editprice.EditPriceScreenStaticContent
 import com.example.composetutorial.ui.screens.editsource.EditSourceScreenStaticContent
-import com.example.composetutorial.ui.screens.home.HomeScreenUIContent
+import com.example.composetutorial.ui.screens.home.HomeScreenUiContent
 import java.util.Locale
 
 // TODO: Maybe this file should be moved to be a sibling of AppNavigation.kt?
 
 // Shared ViewModel to pass data between screens
-// TODO: Some inconsistency between "UIContent" and "Content" here - think about renaming.
+// TODO: Some inconsistency between "UiContent" and "Content" here - think about renaming.
 class SharedViewModel : ViewModel() {
     data class EditPriceScreenInitialUiContent(
         val editablePrice: EditablePrice,
@@ -29,7 +29,7 @@ class SharedViewModel : ViewModel() {
     var editPriceScreenInitialUiContent: EditPriceScreenInitialUiContent? = null
 
     fun setEditPriceScreenInitialUiContent(
-        uiContent: HomeScreenUIContent,
+        uiContent: HomeScreenUiContent,
         frozenLocale: Locale
     ) {
         // !! is justified because uiContent was shown on the home screen and the edit price button
@@ -99,7 +99,7 @@ class SharedViewModel : ViewModel() {
 
     // TODO: Some overlap with setEditPriceScreenContent()?
     fun setViewPriceHistoryScreenInitialUiContent(
-        uiContent: HomeScreenUIContent,
+        uiContent: HomeScreenUiContent,
         frozenLocale: Locale // TODO: Needed!? Do we even use this? I suspect locale should nto be frozen for a view-only screen
     ) {
         // !! is justified because uiContent was shown on the home screen and the view history option
@@ -129,7 +129,7 @@ class SharedViewModel : ViewModel() {
     )
 
     // TODO: Rename the following now they are just List<T>? not a UiContent structure? Or is the "UiContent" convention more valuable?
-    var selectDataSetScreenUIContent: List<DataSet>? = null
+    var selectDataSetScreenUiContent: List<DataSet>? = null
     var selectItemScreenInitialUiContent: SelectItemScreenInitialUiContent? = null
     var selectSourceScreenInitialUiContent: SelectSourceScreenInitialUiContent? = null
 
@@ -138,19 +138,19 @@ class SharedViewModel : ViewModel() {
     // is because we use the IDs as keys on LazyColumn and if there are duplicate IDs it gets upset;
     // of course with real data there won't be duplicate IDs at all.
 
-    fun setSelectDataSetScreenContent(uiContent: HomeScreenUIContent) {
-        selectDataSetScreenUIContent =
+    fun setSelectDataSetScreenContent(uiContent: HomeScreenUiContent) {
+        selectDataSetScreenUiContent =
             uiContent.dataSetList + uiContent.dataSetList.map { it -> it.copy(id = it.id * 1000) }
     }
 
-    fun setSelectItemScreenInitialUiContent(uiContent: HomeScreenUIContent) {
+    fun setSelectItemScreenInitialUiContent(uiContent: HomeScreenUiContent) {
         selectItemScreenInitialUiContent = SelectItemScreenInitialUiContent(
             uiContent.itemList + uiContent.itemList.map { it -> it.copy(id = it.id * 1000) },
             uiContent.dataSet!!
         )
     }
 
-    fun setSelectSourceScreenInitialUiContent(uiContent: HomeScreenUIContent) {
+    fun setSelectSourceScreenInitialUiContent(uiContent: HomeScreenUiContent) {
         selectSourceScreenInitialUiContent = SelectSourceScreenInitialUiContent(
             uiContent.sourceList + uiContent.sourceList.map { it -> it.copy(id = it.id * 1000) },
             uiContent.dataSet!!

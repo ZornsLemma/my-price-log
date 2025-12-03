@@ -55,7 +55,7 @@ class EditDataSetViewModel(
 
     val generalEditScreenViewModel = GeneralEditScreenViewModel()
 
-    fun setUIContentEditableDataSet(newEditableDataSet: EditableDataSet) {
+    fun setUiContentEditableDataSet(newEditableDataSet: EditableDataSet) {
         uiContent.update(newEditableDataSet)
     }
 

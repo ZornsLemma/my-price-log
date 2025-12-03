@@ -124,12 +124,12 @@ import java.time.Instant
 fun HomeScreen(
     viewModel: HomeViewModel,
     navController: NavHostController,
-    onEditPriceClick: (HomeScreenUIContent) -> Unit,
-    onItemSearchClick: (HomeScreenUIContent) -> Unit,
-    onViewHistoryClick: (HomeScreenUIContent) -> Unit,
-    onSelectDataSetClick: (HomeScreenUIContent) -> Unit,
-    onSelectItemClick: (HomeScreenUIContent) -> Unit,
-    onSelectSourceClick: (HomeScreenUIContent) -> Unit,
+    onEditPriceClick: (HomeScreenUiContent) -> Unit,
+    onItemSearchClick: (HomeScreenUiContent) -> Unit,
+    onViewHistoryClick: (HomeScreenUiContent) -> Unit,
+    onSelectDataSetClick: (HomeScreenUiContent) -> Unit,
+    onSelectItemClick: (HomeScreenUiContent) -> Unit,
+    onSelectSourceClick: (HomeScreenUiContent) -> Unit,
     onSettingsClick: () -> Unit,
 ) {
     // In order to minimise jank, we want the previous UI state to be available during the *very

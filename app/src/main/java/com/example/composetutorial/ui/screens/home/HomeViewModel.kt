@@ -64,7 +64,7 @@ const val itemIdNone = -1L
 
 // TODO: Not at all sure this belongs here, but I sort of want to see if there's any major
 // simplification I can with this area before I think about maybe moving it if it lives.
-data class HomeScreenUIContent(
+data class HomeScreenUiContent(
     val dataSetIdState: LoadState<Long>,
     val dataSet: DataSet?,
     val dataSetList: List<DataSet>,
@@ -76,8 +76,8 @@ data class HomeScreenUIContent(
     val priceAnalysis: PriceAnalysis,
 ) {
     companion object {
-        fun createEmpty(): HomeScreenUIContent {
-            return HomeScreenUIContent(
+        fun createEmpty(): HomeScreenUiContent {
+            return HomeScreenUiContent(
                 dataSetIdState = LoadState.Loading,
                 dataSet = null,
                 dataSetList = emptyList(),
@@ -161,11 +161,11 @@ class HomeViewModel(
         _localeFlow.value = locale
     }
 
-    // TODO: Rename UIContent->HomeScreenUIContent and/or scope it to this ViewModel?
+    // TODO: Rename UiContent->HomeScreenUiContent and/or scope it to this ViewModel?
     private val _uiState = MutableStateFlow(
         Pair(
             false,
-            HomeScreenUIContent.createEmpty()
+            HomeScreenUiContent.createEmpty()
         )
     )
     val uiState = _uiState.asStateFlow()
@@ -331,7 +331,7 @@ class HomeViewModel(
 
                     debugDelay()
                     flowOf(
-                        HomeScreenUIContent(
+                        HomeScreenUiContent(
                             dataSetIdState,
                             dataSet,
                             dataSetList,

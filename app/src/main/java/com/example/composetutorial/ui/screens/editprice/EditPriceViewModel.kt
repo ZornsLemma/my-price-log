@@ -91,7 +91,7 @@ class EditPriceViewModel(
 
     // TODO: I suspect this should *either* be moved down into a rememberSaveable inside the composable,
     // *or* it should be preserved across process death (perhaps, but not necessarily, by being moved
-    // into EditPriceScreenUIContent).
+    // into EditPriceScreenUiContent).
     var firstPackSizeOrPriceChangeOccurred: Boolean = false
 
     enum class EditableField {

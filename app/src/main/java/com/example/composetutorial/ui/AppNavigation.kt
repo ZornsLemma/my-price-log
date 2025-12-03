@@ -266,11 +266,11 @@ fun AppNavigation() {
         ) { backStackEntry ->
             screenWithViewModel<SelectDataSetViewModel>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.selectDataSetScreenUIContent = null },
+                clearUiContent = { sharedViewModel.selectDataSetScreenUiContent = null },
                 buildViewModel = { app, handle ->
                     SelectDataSetViewModel(
                         savedStateHandle = handle,
-                        initialList = sharedViewModel.selectDataSetScreenUIContent,
+                        initialList = sharedViewModel.selectDataSetScreenUiContent,
                         dataQuery = app.repository.getAllDataSets()
                     )
                 }
@@ -309,7 +309,7 @@ fun AppNavigation() {
             val select = action == "select"
             screenWithViewModel<SelectItemViewModel>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.selectItemScreenInitialUiContent = null },
+                clearUiContent = { sharedViewModel.selectItemScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     SelectItemViewModel(
                         repository = app.repository,
@@ -368,9 +368,9 @@ fun AppNavigation() {
             screenWithViewModel<SelectSourceViewModel>(
                 backStackEntry = backStackEntry,
                 // TODO: Could should sharedViewModel have a clearAllContent() or similar function
-                // and we just call that in clearUIContent? That way we could be sure *no* old
+                // and we just call that in clearUiContent? That way we could be sure *no* old
                 // content is lurking around.
-                clearUIContent = { sharedViewModel.selectSourceScreenInitialUiContent = null },
+                clearUiContent = { sharedViewModel.selectSourceScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     SelectSourceViewModel(
                         repository = app.repository,
@@ -411,7 +411,7 @@ fun AppNavigation() {
         ) { backStackEntry ->
             screenWithViewModel<EditPriceViewModel>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.editPriceScreenInitialUiContent = null },
+                clearUiContent = { sharedViewModel.editPriceScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     EditPriceViewModel(
                         app.repository,
@@ -440,7 +440,7 @@ fun AppNavigation() {
         ) { backStackEntry ->
             screenWithViewModel<EditDataSetViewModel>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.editDataSetScreenInitialUiContent = null },
+                clearUiContent = { sharedViewModel.editDataSetScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     EditDataSetViewModel(
                         app.repository,
@@ -470,7 +470,7 @@ fun AppNavigation() {
         ) { backStackEntry ->
             screenWithViewModel<EditItemViewModel>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.editItemScreenInitialUiContent = null },
+                clearUiContent = { sharedViewModel.editItemScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     EditItemViewModel(
                         app.repository,
@@ -511,7 +511,7 @@ fun AppNavigation() {
         ) { backStackEntry ->
             screenWithViewModel<EditSourceViewModel>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.editSourceScreenInitialUiContent = null },
+                clearUiContent = { sharedViewModel.editSourceScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     EditSourceViewModel(
                         app.repository,
@@ -544,7 +544,7 @@ fun AppNavigation() {
             val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
             screenWithViewModel<ViewPriceHistoryViewModel>(
                 backStackEntry = backStackEntry,
-                clearUIContent = { sharedViewModel.viewPriceHistoryScreenInitialUiContent = null },
+                clearUiContent = { sharedViewModel.viewPriceHistoryScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
                     ViewPriceHistoryViewModel(
                         app.repository,
@@ -629,7 +629,7 @@ fun AppNavigation() {
 @Composable
 private inline fun <reified VM : ViewModel> screenWithViewModel(
     backStackEntry: NavBackStackEntry,
-    noinline clearUIContent: () -> Unit,
+    noinline clearUiContent: () -> Unit,
     noinline buildViewModel: @DisallowComposableCalls (MyApplication, SavedStateHandle) -> VM,
     crossinline content: @Composable (VM) -> Unit
 ) {
@@ -638,7 +638,7 @@ private inline fun <reified VM : ViewModel> screenWithViewModel(
     }
 
     LaunchedEffect(Unit) {
-        clearUIContent()
+        clearUiContent()
     }
 
     val viewModel: VM = viewModel(
