@@ -27,7 +27,7 @@ import com.example.composetutorial.domain.getRelevantMeasurementUnits
 import com.example.composetutorial.domain.getRelevantUnitFamilies
 import com.example.composetutorial.domain.withFriendlyDenominator
 import com.example.composetutorial.ui.common.formatPrice
-import com.example.composetutorial.models.DataSet
+import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.isNotBusy
 import java.util.Currency.getInstance

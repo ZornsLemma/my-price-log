@@ -5,8 +5,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.domain.Repository
-import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.models.Item
+import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.data.Item
 import com.example.composetutorial.ui.common.EmptyParcelable
 import com.example.composetutorial.ui.common.PersistentUiContent
 import com.example.composetutorial.ui.components.generalselector.GeneralSelectorStateHolder

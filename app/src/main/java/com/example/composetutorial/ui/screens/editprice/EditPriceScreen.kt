@@ -34,9 +34,9 @@ import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.QuantityType
 import com.example.composetutorial.domain.getRelevantMeasurementUnits
-import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.models.EditablePrice
-import com.example.composetutorial.models.Item
+import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.data.EditablePrice
+import com.example.composetutorial.data.Item
 import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.components.textOrNull
 import com.example.composetutorial.ui.common.isNotBusy

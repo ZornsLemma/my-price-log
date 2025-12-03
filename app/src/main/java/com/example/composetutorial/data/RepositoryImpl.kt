@@ -1,4 +1,4 @@
-package com.example.composetutorial.models
+package com.example.composetutorial.data
 
 import android.content.Context
 import android.util.Log
@@ -20,9 +20,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.Executors
-
-// TODO: I should probably rename the "models" subpackage as "data" now it contains things like
-// this. I haven't done it yet to reduce git noise when I might change my mind again later.
 
 // TODO: I have a feeling I may have shoved too much in this file and some of these constants, AppDatabase and/or the @Dao stuff should be elsewhere
 

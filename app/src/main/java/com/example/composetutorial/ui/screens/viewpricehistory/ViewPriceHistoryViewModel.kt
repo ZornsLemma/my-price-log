@@ -7,12 +7,12 @@ import androidx.lifecycle.ViewModel
 import com.example.composetutorial.domain.Quantity
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.domain.baseUnit
-import com.example.composetutorial.models.PriceHistory
+import com.example.composetutorial.data.PriceHistory
 import com.example.composetutorial.domain.sanitisePriceHistoryUnits
-import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.models.Item
-import com.example.composetutorial.models.Price
-import com.example.composetutorial.models.Source
+import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.data.Item
+import com.example.composetutorial.data.Price
+import com.example.composetutorial.data.Source
 import com.example.composetutorial.ui.common.EmptyParcelable
 import com.example.composetutorial.ui.common.PersistentUiContent
 import kotlinx.coroutines.flow.map

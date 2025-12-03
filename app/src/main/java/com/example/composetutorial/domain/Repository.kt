@@ -1,10 +1,10 @@
 package com.example.composetutorial.domain
 
-import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.models.Item
-import com.example.composetutorial.models.Price
-import com.example.composetutorial.models.PriceHistory
-import com.example.composetutorial.models.Source
+import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.data.Item
+import com.example.composetutorial.data.Price
+import com.example.composetutorial.data.PriceHistory
+import com.example.composetutorial.data.Source
 import kotlinx.coroutines.flow.Flow
 
 // ENHANCE: Although this interface seems a bit pointless at the moment, it is here to help with

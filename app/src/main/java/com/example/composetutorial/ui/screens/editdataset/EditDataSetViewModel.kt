@@ -5,32 +5,25 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.R
-import com.example.composetutorial.ui.common.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.Repository
-import com.example.composetutorial.models.UnitPreferences
-import com.example.composetutorial.models.EditableDataSet
-import com.example.composetutorial.models.toDomain
+import com.example.composetutorial.data.UnitPreferences
+import com.example.composetutorial.data.EditableDataSet
+import com.example.composetutorial.data.toDomain
 import com.example.composetutorial.ui.common.EmptyParcelable
 import com.example.composetutorial.ui.common.PersistentUiContent
 import com.example.composetutorial.ui.common.UiText
 import com.example.composetutorial.ui.common.ValidationRule
-import com.example.composetutorial.ui.common.Versioned
-import com.example.composetutorial.ui.common.withVersion
-import com.example.composetutorial.ui.common.initialVersioned
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
 import com.example.composetutorial.ui.common.validationRulesOk
 import com.example.composetutorial.ui.screens.editsource.nameValidationRulesFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 
 class EditDataSetViewModel(
     private val repository: Repository,

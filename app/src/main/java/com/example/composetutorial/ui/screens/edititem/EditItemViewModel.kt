@@ -6,26 +6,19 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.debug.debugDelay
-import com.example.composetutorial.ui.common.ValidationRule
-import com.example.composetutorial.ui.common.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.Repository
-import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.models.EditableItem
-import com.example.composetutorial.models.toDomain
+import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.data.EditableItem
+import com.example.composetutorial.data.toDomain
 import com.example.composetutorial.ui.common.PersistentUiContent
-import com.example.composetutorial.ui.common.initialVersioned
-import com.example.composetutorial.ui.common.withVersion
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
 import com.example.composetutorial.ui.common.validationRulesOk
 import com.example.composetutorial.ui.screens.editsource.nameValidationRulesFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.parcelize.Parcelize
 
 // This class seems a bit pointless but it makes it clearer what is being retrieved from

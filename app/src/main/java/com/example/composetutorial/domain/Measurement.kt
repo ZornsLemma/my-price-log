@@ -8,7 +8,7 @@ import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.common.formatDouble
 import com.example.composetutorial.common.intersectionIsEmpty
-import com.example.composetutorial.models.DataSet
+import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.ui.nonBreakingSpace
 import kotlinx.parcelize.Parcelize
 import java.util.Locale

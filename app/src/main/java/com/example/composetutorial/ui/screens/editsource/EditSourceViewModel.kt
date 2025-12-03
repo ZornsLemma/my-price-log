@@ -7,17 +7,15 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.debug.debugDelay
-import com.example.composetutorial.models.LoyaltyType
+import com.example.composetutorial.data.LoyaltyType
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.common.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.Repository
-import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.models.EditableItem
-import com.example.composetutorial.models.EditableSource
-import com.example.composetutorial.models.toDomain
+import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.data.EditableSource
+import com.example.composetutorial.data.toDomain
 import com.example.composetutorial.ui.common.PersistentUiContent
-import com.example.composetutorial.ui.common.UiText
 import com.example.composetutorial.ui.common.Versioned
 import com.example.composetutorial.ui.common.initialVersioned
 import com.example.composetutorial.ui.common.withVersion
@@ -31,11 +29,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.parcelize.Parcelize
 import java.util.Locale
-import kotlin.collections.map
 
 @Parcelize
 data class EditSourceScreenStaticContent(

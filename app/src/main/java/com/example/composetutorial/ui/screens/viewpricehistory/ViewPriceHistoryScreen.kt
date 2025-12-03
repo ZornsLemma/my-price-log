@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,13 +16,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -39,8 +36,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
 import com.example.composetutorial.debug.myCheck
-import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.models.PriceHistory
+import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.data.PriceHistory
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.components.CardTitle
 import com.example.composetutorial.ui.components.LabeledItem
@@ -48,8 +45,6 @@ import com.example.composetutorial.ui.components.MyDropdownMenuItem
 import com.example.composetutorial.ui.components.OverflowMenu
 import com.example.composetutorial.ui.components.PackPriceAndSizeRow
 import com.example.composetutorial.ui.components.topAppBarTitle
-import com.example.composetutorial.ui.menuLeftPadding
-import com.example.composetutorial.ui.menuRightPadding
 import com.example.composetutorial.ui.screenHorizontalBorder
 import com.example.composetutorial.ui.screenVerticalBorder
 import java.time.ZoneId

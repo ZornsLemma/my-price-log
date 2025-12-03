@@ -4,8 +4,8 @@ import android.icu.text.Collator
 import android.util.Log
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.debug.myRequire
-import com.example.composetutorial.models.Price
-import com.example.composetutorial.models.Source
+import com.example.composetutorial.data.Price
+import com.example.composetutorial.data.Source
 import java.time.Duration
 import java.time.Instant
 import java.util.Locale

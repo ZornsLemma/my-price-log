@@ -2,7 +2,7 @@ package com.example.composetutorial.ui.common
 
 import android.content.Context
 import com.example.composetutorial.domain.UnitPrice
-import com.example.composetutorial.models.DataSet
+import com.example.composetutorial.data.DataSet
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale

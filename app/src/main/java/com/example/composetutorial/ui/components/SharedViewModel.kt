@@ -2,15 +2,15 @@ package com.example.composetutorial.ui.components
 
 import androidx.lifecycle.ViewModel
 import com.example.composetutorial.domain.createCurrencyFormat
-import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.models.EditableDataSet
-import com.example.composetutorial.models.EditableItem
-import com.example.composetutorial.models.EditablePrice
-import com.example.composetutorial.models.EditableSource
-import com.example.composetutorial.models.Item
-import com.example.composetutorial.models.Price
-import com.example.composetutorial.models.Source
-import com.example.composetutorial.models.toEditable
+import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.data.EditableDataSet
+import com.example.composetutorial.data.EditableItem
+import com.example.composetutorial.data.EditablePrice
+import com.example.composetutorial.data.EditableSource
+import com.example.composetutorial.data.Item
+import com.example.composetutorial.data.Price
+import com.example.composetutorial.data.Source
+import com.example.composetutorial.data.toEditable
 import com.example.composetutorial.ui.screens.editprice.EditPriceScreenStaticContent
 import com.example.composetutorial.ui.screens.editsource.EditSourceScreenStaticContent
 import com.example.composetutorial.ui.screens.home.HomeScreenUIContent

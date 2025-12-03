@@ -1,4 +1,4 @@
-package com.example.composetutorial.models
+package com.example.composetutorial.data
 
 import android.os.Parcelable
 import androidx.room.ColumnInfo
@@ -6,7 +6,6 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.composetutorial.models.LoyaltyType
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.common.formatDoubleForEditing
 import com.example.composetutorial.common.parseStringAsDoubleOrNull

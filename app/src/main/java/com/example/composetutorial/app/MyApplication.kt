@@ -4,11 +4,10 @@ import android.app.Application
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.room.withTransaction
-import com.example.composetutorial.app.AppScope
 import com.example.composetutorial.domain.dataStore
-import com.example.composetutorial.models.AppDatabase
-import com.example.composetutorial.models.RepositoryImpl
-import com.example.composetutorial.models.populateDemoData
+import com.example.composetutorial.data.AppDatabase
+import com.example.composetutorial.data.RepositoryImpl
+import com.example.composetutorial.data.populateDemoData
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch

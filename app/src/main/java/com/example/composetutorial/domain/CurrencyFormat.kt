@@ -1,7 +1,7 @@
 package com.example.composetutorial.domain
 
 import android.util.Log
-import com.example.composetutorial.models.DataSet
+import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.components.numericValidationRules
 import java.text.NumberFormat

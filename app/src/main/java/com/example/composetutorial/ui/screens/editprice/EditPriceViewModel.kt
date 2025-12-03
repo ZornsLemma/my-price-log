@@ -7,11 +7,11 @@ import androidx.lifecycle.ViewModel
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.domain.Repository
-import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.models.EditablePrice
-import com.example.composetutorial.models.Item
-import com.example.composetutorial.models.Source
-import com.example.composetutorial.models.toDomain
+import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.data.EditablePrice
+import com.example.composetutorial.data.Item
+import com.example.composetutorial.data.Source
+import com.example.composetutorial.data.toDomain
 import com.example.composetutorial.ui.common.PersistentUiContent
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenViewModel
 import com.example.composetutorial.ui.components.numericValidationRules
@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.parcelize.Parcelize
 import java.util.Locale
-import java.util.UUID
 
 @Parcelize
 data class EditPriceScreenStaticContent(

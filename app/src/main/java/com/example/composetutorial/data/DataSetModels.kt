@@ -1,4 +1,4 @@
-package com.example.composetutorial.models
+package com.example.composetutorial.data
 
 import android.os.Parcelable
 import androidx.room.ColumnInfo

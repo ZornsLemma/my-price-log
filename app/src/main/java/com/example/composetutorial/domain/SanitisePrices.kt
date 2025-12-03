@@ -2,9 +2,9 @@ package com.example.composetutorial.domain
 
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.common.intersectionIsEmpty
-import com.example.composetutorial.models.DataSet
-import com.example.composetutorial.models.Price
-import com.example.composetutorial.models.PriceHistory
+import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.data.Price
+import com.example.composetutorial.data.PriceHistory
 
 // Returns a version of priceList where any price measurements which are expressed in units not
 // supported by the data set are changed to use a unit that is supported. This avoids some awkward
