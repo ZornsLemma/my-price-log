@@ -17,7 +17,6 @@ import com.example.composetutorial.data.EditableSource
 import com.example.composetutorial.data.toDomain
 import com.example.composetutorial.ui.common.PersistentUiContent
 import com.example.composetutorial.ui.common.Versioned
-import com.example.composetutorial.ui.common.initialVersioned
 import com.example.composetutorial.ui.common.withVersion
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenStateHolder
 import com.example.composetutorial.ui.common.validationRulesOk
@@ -156,6 +155,6 @@ fun nameValidationRulesFlow(
     .withVersion().stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
-        initialVersioned(null as List<ValidationRule<String>>?)
+        Versioned.initial(null as List<ValidationRule<String>>?)
     )
 }
