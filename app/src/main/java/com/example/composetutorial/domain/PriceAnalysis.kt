@@ -28,7 +28,39 @@ data class AugmentedPrice(
     val inflatedLoyaltyPrice: Double,
     val unitPrice: UnitPrice,
     val priceJudgement: PriceJudgement,
-)
+) {
+    companion object {
+        fun fromPrice(
+            price: Price,
+            source: Source,
+            priceAgeSettings: PriceAgeSettings
+        ): AugmentedPrice {
+            val loyaltyPrice = price.price * source.loyaltyMultiplier
+            // We use an integer ageDays as there's little value in working to sub-day resolution and it
+            // will make the calculation a bit more repeatable/easy to follow for humans. If we add a screen
+            // showing how the calculation was done, ageDays will not be constantly increasing slightly
+            // every time it's shown.
+            val ageDays = Duration.between(price.confirmedAt, Instant.now()).toDays()
+            val inflatedLoyaltyPrice = inflationAdjustedPrice(loyaltyPrice, ageDays, priceAgeSettings)
+            return AugmentedPrice(
+                basePrice = price,
+                sourceName = source.name,
+                loyaltyPrice = loyaltyPrice,
+                ageDays = ageDays,
+                ageClass = if (ageDays < priceAgeSettings.stalePriceThreshold) {
+                    AgeClass.FRESH
+                } else if (ageDays < priceAgeSettings.ancientPriceThresholdDays) {
+                    AgeClass.STALE
+                } else {
+                    AgeClass.ANCIENT
+                },
+                inflatedLoyaltyPrice = inflatedLoyaltyPrice,
+                unitPrice = UnitPrice.calculate(inflatedLoyaltyPrice, price.count, price.quantity),
+                priceJudgement = PriceJudgement.NONE
+            )
+        }
+    }
+}
 
 private fun inflationAdjustedPrice(price: Double, ageDays: Long, priceAgeSettings: PriceAgeSettings): Double {
     if (ageDays < priceAgeSettings.stalePriceThreshold) {
@@ -70,36 +102,6 @@ private fun judgePrice(
     }
 }
 
-// TODO: Should this be a companion function/constructor on AugmentedPrice or something like that? Or an extension function on Price?
-private fun augmentPrice(
-    price: Price,
-    source: Source,
-    priceAgeSettings: PriceAgeSettings
-): AugmentedPrice {
-    val loyaltyPrice = price.price * source.loyaltyMultiplier
-    // We use an integer ageDays as there's little value in working to sub-day resolution and it
-    // will make the calculation a bit more repeatable/easy to follow for humans. If we add a screen
-    // showing how the calculation was done, ageDays will not be constantly increasing slightly
-    // every time it's shown.
-    val ageDays = Duration.between(price.confirmedAt, Instant.now()).toDays()
-    val inflatedLoyaltyPrice = inflationAdjustedPrice(loyaltyPrice, ageDays, priceAgeSettings)
-    return AugmentedPrice(
-        basePrice = price,
-        sourceName = source.name,
-        loyaltyPrice = loyaltyPrice,
-        ageDays = ageDays,
-        ageClass = if (ageDays < priceAgeSettings.stalePriceThreshold) {
-            AgeClass.FRESH
-        } else if (ageDays < priceAgeSettings.ancientPriceThresholdDays) {
-            AgeClass.STALE
-        } else {
-            AgeClass.ANCIENT
-        },
-        inflatedLoyaltyPrice = inflatedLoyaltyPrice,
-        unitPrice = UnitPrice.calculate(inflatedLoyaltyPrice, price.count, price.quantity),
-        priceJudgement = PriceJudgement.NONE
-    )
-}
 
 data class PriceClassificationThresholds(
     val good: UnitPrice,
@@ -147,13 +149,13 @@ fun analysePrices(
     var augmentedPriceList = priceList.mapNotNull { price ->
         // I don't think we can have a Price but not the corresponding Source, but we play it safe
         // just in case.
-        sourceById[price.sourceId]?.let { source -> augmentPrice(price, source, priceAgeSettings) }
+        sourceById[price.sourceId]?.let { source -> AugmentedPrice.fromPrice(price, source, priceAgeSettings) }
     }.sortedWith(
         compareBy<AugmentedPrice> { it.unitPrice }
             .thenComparing({ it.sourceName }, collator)
     )
 
-    // augmentPrice() should have generated all unit prices using the base unit, but let's check
+    // fromPrice() should have generated all unit prices using the base unit, but let's check
     // as otherwise recentEnoughPriceList (which discards the denominators) will be meaningless.
     val unitPriceDenominator = augmentedPriceList.first().unitPrice.denominator
     myCheck(augmentedPriceList.all { it.unitPrice.denominator == unitPriceDenominator }) {
