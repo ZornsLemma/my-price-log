@@ -86,22 +86,19 @@ enum class PriceJudgement {
     BAD
 }
 
-// TODO: Should this be a member of PriceJudgement?? Or AugmentedPrice?
-private fun judgePrice(
-    augmentedPrice: AugmentedPrice,
+private fun AugmentedPrice.judge(
     priceClassificationThresholds: PriceClassificationThresholds?
 ): PriceJudgement {
     if (priceClassificationThresholds == null) {
         return PriceJudgement.NONE
-    } else if (augmentedPrice.unitPrice < priceClassificationThresholds.good) {
+    } else if (unitPrice < priceClassificationThresholds.good) {
         return PriceJudgement.GOOD
-    } else if (augmentedPrice.unitPrice <= priceClassificationThresholds.bad) {
+    } else if (unitPrice <= priceClassificationThresholds.bad) {
         return PriceJudgement.OK
     } else {
         return PriceJudgement.BAD
     }
 }
-
 
 data class PriceClassificationThresholds(
     val good: UnitPrice,
@@ -189,10 +186,7 @@ fun analysePrices(
         // so the user can tell, but it's not unreasonable to offer a judgement.
         // ENHANCE: Possibly we should not offer a judgement on ancient prices?
         augmentedPrice.copy(
-            priceJudgement = judgePrice(
-                augmentedPrice,
-                priceClassificationThresholds
-            )
+            priceJudgement = augmentedPrice.judge(priceClassificationThresholds)
         )
 
     }
