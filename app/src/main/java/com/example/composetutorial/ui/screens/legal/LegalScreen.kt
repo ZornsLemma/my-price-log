@@ -4,6 +4,7 @@ package com.example.composetutorial.ui.screens.legal
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -52,6 +53,7 @@ fun LegalScreen(
             modifier = modifier
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
                 .padding(horizontal = fullScreenDialogHorizontalBorder)
         ) {
             // We manually implement the vertical border so it is part of the scrollable region, not

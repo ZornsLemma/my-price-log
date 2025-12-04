@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -96,6 +97,7 @@ fun SettingsScreen(
                 //.background(MaterialTheme.colorScheme.primary) // TODO: debug hack
                 .fillMaxSize()
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
                 // Padding here follows the same approach as GeneralSelectorScreen() - see the
                 // comment there.
                 .padding(vertical = screenVerticalBorder)
