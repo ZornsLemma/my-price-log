@@ -92,6 +92,9 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
                 )
             }
 
+            /* TODO: I can re-enable this workaround but at least on one of my emulated phones it
+               no longer appears to be necessary. If I can't find a test phone where it is still
+               necessary, get rid of it.
             if (addBottomSpace) {
                 // This is a workaround suggested by Grok which seems to fix a problem (at least on
                 // Android 16 in the emulator) where the last bottom item in a very long dropdown
@@ -102,6 +105,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
                 // while we are, this is an effective workaround.
                 Spacer(Modifier.height(48.dp))
             }
+            */
         }
     }
 }
