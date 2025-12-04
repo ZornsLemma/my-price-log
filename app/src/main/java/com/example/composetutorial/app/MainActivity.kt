@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
             StrictMode.setThreadPolicy(
                 StrictMode.ThreadPolicy.Builder()
                     .detectAll()
-                    .penaltyLog() // TODO .penaltyDeath() // TODO .penaltyLog()  // logs violations; you can also add .penaltyDeath() to crash on violation
+                    .penaltyLog()
                     .build()
             )
         }
