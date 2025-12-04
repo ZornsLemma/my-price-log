@@ -29,6 +29,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -202,6 +203,8 @@ fun EditSourceScreen(
                     Box(modifier = Modifier.padding(8.dp)) {
                         ValidatedNumericTextField(
                             value = loyaltyPercentage,
+                            // TODO: We ought to be using a frozenLocale here, but right now we don't have one so doing this as a hack.
+                            locale = LocalConfiguration.current.locales[0],
                             validationRules = viewModel.loyaltyPercentageValidationRules,
                             allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
                             validationFlow = viewModel.saveValidationEvents,

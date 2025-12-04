@@ -19,6 +19,7 @@ import java.util.Locale
 @Composable
 fun <T> ValidatedNumericTextField(
     value: TextFieldValue,
+    locale: Locale,
     validationRules: List<ValidationRule<String>>,
     validationRulesKey: Any? = null,
     allowEmpty: Boolean,
@@ -48,6 +49,7 @@ fun <T> ValidatedNumericTextField(
             modifier = numericTextFieldModifier.validationInputHandleFocusRequester(validationInputHandle),
             label = label,
             value = value,
+            locale = locale,
             prefix = prefix,
             suffix = suffix,
             textStyle = textStyle,

@@ -192,6 +192,7 @@ private fun EditPriceScreenPrice(
     Log.d("MyAppSS", "saveAttempted ${viewModel.generalEditScreenStateHolder.saveAttempted.value}")
     ValidatedNumericTextField(
         value = packPrice,
+        locale = uiContent.staticContent.frozenLocale,
         validationRules = currencyFormat.validationRules,
         // No validationRulesKey is needed as the validation rules depend only on our fixed
         // DataSet and frozen locale.
@@ -257,6 +258,7 @@ private fun EditPriceScreenPackSize(
         //Row {//TODO(modifier = Modifier.fillMaxWidth().background(Color.Red)) {
         ValidatedNumericTextField(
             value = packCountNumber,
+            locale = uiContent.staticContent.frozenLocale,
             validationRules = viewModel.packCountValidationRules,
             // TODO DON'T THINK WE NEED THIS BUT CHECK, WIP RIGHT NOW validationRulesKey = uiContent.editablePrice.value.measurementUnit.id,
             allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
@@ -289,6 +291,7 @@ private fun EditPriceScreenPackSize(
     Row {
         ValidatedNumericTextField(
             value = packSizeNumber,
+            locale = uiContent.staticContent.frozenLocale,
             validationRules = viewModel.packSizeValidationRules,
             validationRulesKey = editablePrice.measurementUnit.id,
             allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
