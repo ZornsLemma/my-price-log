@@ -80,12 +80,10 @@ import kotlinx.coroutines.delay
 fun AppNavigation() {
     val navController = rememberNavController()
     val sharedViewModel: SharedViewModel =
-        viewModel(LocalContext.current as ComponentActivity) // TODO: perplexity voodoo
+        viewModel(LocalContext.current as ComponentActivity)
 
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var showRestartDialog by rememberSaveable { mutableStateOf(false) }
-
-    // TODO: ChatGPT magic
 
     val context = LocalContext.current
     val activity = context as? Activity
@@ -130,7 +128,7 @@ fun AppNavigation() {
         val tweenDurationMillisExit = 250
 
         // ENHANCE: It might be good to look at adding a fade to some of these animations - maybe a
-        // fade added to "top" screen and perhaps a fade added to the "bottom" screen as well. I
+        // fade added to the "top" screen and perhaps a fade added to the "bottom" screen as well. I
         // don't think it's a huge deal and it is "correct", but the border on the incoming screen
         // can - if you're really looking at the transition with paranoid eyes - give an impression
         // of the outgoing non-background content "flickering away" before being replaced by new
@@ -501,7 +499,6 @@ fun AppNavigation() {
             }
         }
 
-
         composable(
             "editSource", enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
@@ -646,7 +643,8 @@ private inline fun <reified VM : ViewModel> screenWithViewModel(
     content(viewModel)
 }
 
-// TODO: ChatGPT magic
+// ENHANCE: This function was mostly written by ChatGPT. I'm loosely aware of what it does but I
+// don't pretend to understand the details at this point.
 private inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
     crossinline builder: (MyApplication, SavedStateHandle) -> VM
 ): ViewModelProvider.Factory {
@@ -666,7 +664,6 @@ private inline fun <reified VM : ViewModel> viewModelFactoryWithHandle(
 
 // AppViewModelProvider.Factory allows us to control the arguments passed to our ViewModel
 // constructors when viewModel() is called.
-// TODO: Can/should I get rid of this and use viewModelFactoryWithHandle for these cases?
 object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer<HomeViewModel> {

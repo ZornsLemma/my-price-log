@@ -12,34 +12,32 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-// TODO: MOVE THE FOLLOWING!?
-const val defaultStalePriceThreshold = 30
+const val defaultStalePriceThresholdDays = 30
 const val defaultAncientPriceThresholdDays = 180
 const val defaultAnnualInflationPercent = 5
 
-data class PriceAgeSettings(val stalePriceThreshold: Int, val ancientPriceThresholdDays: Int, val annualInflationPercent: Int)
+data class PriceAgeSettings(val stalePriceThresholdDays: Int, val ancientPriceThresholdDays: Int, val annualInflationPercent: Int)
 
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     private object Keys {
-        val STALE_PRICE_THRESHOLD_KEY =
-            intPreferencesKey("stale_price_threshold") // TODO: RENAME THIS AND ALL ASSOCIATED VARS TO INCLUDE "DAYS"?
+        val STALE_PRICE_THRESHOLD_DAYS_KEY = intPreferencesKey("stale_price_threshold_days")
         val ANCIENT_PRICE_THRESHOLD_DAYS_KEY = intPreferencesKey("ancient_price_threshold_days")
         val ANNUAL_INFLATION_PERCENT_KEY = intPreferencesKey("annual_inflation_percent")
     }
 
-    val stalePriceThresholdFlow: Flow<Int> = dataStore.data
-        .map { prefs -> prefs[Keys.STALE_PRICE_THRESHOLD_KEY] ?: defaultStalePriceThreshold }
+    val stalePriceThresholdDaysFlow: Flow<Int> = dataStore.data
+        .map { prefs -> prefs[Keys.STALE_PRICE_THRESHOLD_DAYS_KEY] ?: defaultStalePriceThresholdDays }
 
     val ancientPriceThresholdDaysFlow: Flow<Int> = dataStore.data.map { prefs -> prefs[Keys.ANCIENT_PRICE_THRESHOLD_DAYS_KEY] ?: defaultAncientPriceThresholdDays }
 
     val annualInflationPercentFlow: Flow<Int> = dataStore.data.map { prefs -> prefs[Keys.ANNUAL_INFLATION_PERCENT_KEY] ?: defaultAnnualInflationPercent }
 
-    val priceAgeSettingsFlow: Flow<PriceAgeSettings> = combine(stalePriceThresholdFlow, ancientPriceThresholdDaysFlow, annualInflationPercentFlow) { stalePriceThreshold, ancientPriceThresholdDays, annualInflationPercent ->
-        PriceAgeSettings(stalePriceThreshold, ancientPriceThresholdDays, annualInflationPercent)
+    val priceAgeSettingsFlow: Flow<PriceAgeSettings> = combine(stalePriceThresholdDaysFlow, ancientPriceThresholdDaysFlow, annualInflationPercentFlow) { stalePriceThresholdDays, ancientPriceThresholdDays, annualInflationPercent ->
+        PriceAgeSettings(stalePriceThresholdDays, ancientPriceThresholdDays, annualInflationPercent)
     }
 
     fun setStalePriceThresholdAsync(stalePriceThreshold: Int) {
-        setValueAsync(Keys.STALE_PRICE_THRESHOLD_KEY, stalePriceThreshold)
+        setValueAsync(Keys.STALE_PRICE_THRESHOLD_DAYS_KEY, stalePriceThreshold)
     }
 
     fun setAncientPriceThresholdDaysAsync(ancientPriceThresholdDays: Int) {

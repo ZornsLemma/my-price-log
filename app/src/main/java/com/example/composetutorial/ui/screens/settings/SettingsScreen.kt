@@ -2,18 +2,12 @@
 
 package com.example.composetutorial.ui.screens.settings
 
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.drawable.Drawable
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -40,15 +34,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -57,7 +47,7 @@ import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.components.WarningIcon
 import com.example.composetutorial.domain.defaultAncientPriceThresholdDays
 import com.example.composetutorial.domain.defaultAnnualInflationPercent
-import com.example.composetutorial.domain.defaultStalePriceThreshold
+import com.example.composetutorial.domain.defaultStalePriceThresholdDays
 import com.example.composetutorial.ui.common.failedValidationRuleOrNull
 import com.example.composetutorial.ui.common.UiText
 import com.example.composetutorial.ui.screenVerticalBorder
@@ -71,7 +61,7 @@ fun SettingsScreen(
     onRestoreClick: () -> Unit,
     onAboutClick: () -> Unit
 ) {
-    val stalePriceThreshold by viewModel.settingsRepository.stalePriceThresholdFlow.collectAsStateWithLifecycle(initialValue = defaultStalePriceThreshold)
+    val stalePriceThresholdDays by viewModel.settingsRepository.stalePriceThresholdDaysFlow.collectAsStateWithLifecycle(initialValue = defaultStalePriceThresholdDays)
     val ancientPriceThresholdDays by viewModel.settingsRepository.ancientPriceThresholdDaysFlow.collectAsStateWithLifecycle(initialValue =defaultAncientPriceThresholdDays)
     val annualInflationPercent by viewModel.settingsRepository.annualInflationPercentFlow.collectAsStateWithLifecycle(initialValue = defaultAnnualInflationPercent)
     var showStalePriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
@@ -116,7 +106,7 @@ fun SettingsScreen(
                 title = stringResource(R.string.title_stale_price_threshold),
                 subtitle = pluralStringResource(
                     R.plurals.supporting_text_prices_considered_stale_after_x_days,
-                    count = stalePriceThreshold,stalePriceThreshold
+                    count = stalePriceThresholdDays,stalePriceThresholdDays
                 ),
                 onClick = {
                     showStalePriceThresholdDialog = true
@@ -175,7 +165,7 @@ fun SettingsScreen(
                 // correctly based on the current value (if it can be parsed as an integer; I guess
                 // default to pluralising-as-if it is 99 or something otherwise?)?
                 suffix = { Text(stringResource(R.string.suffix_days)) },
-                initialValue = stalePriceThreshold.toString(),
+                initialValue = stalePriceThresholdDays.toString(),
                 validationRules = listOfNotNull(
                     ValidationRule({ it.trim().isNotEmpty() }, UiText.Res(R.string.supporting_text_required)),
                     ValidationRule(
@@ -196,9 +186,9 @@ fun SettingsScreen(
                         )
                     )
                 ),
-                onConfirm = { stalePriceThresholdString ->
+                onConfirm = { stalePriceThresholdDaysString ->
                     showStalePriceThresholdDialog = false
-                    viewModel.settingsRepository.setStalePriceThresholdAsync(stalePriceThresholdString.toInt())
+                    viewModel.settingsRepository.setStalePriceThresholdAsync(stalePriceThresholdDaysString.toInt())
                 },
                 onDismissRequest = {
                     showStalePriceThresholdDialog = false
@@ -218,11 +208,11 @@ fun SettingsScreen(
                     ValidationRule(
                         {
                             val days = it.toIntOrNull()
-                            days != null && days > stalePriceThreshold
+                            days != null && days > stalePriceThresholdDays
                         },
                         UiText.Res(
                             R.string.supporting_text_must_be_greater_than_x_stale_price_threshold,
-                            listOf(stalePriceThreshold)
+                            listOf(stalePriceThresholdDays)
                         )
                     ),
                     ValidationRule(
