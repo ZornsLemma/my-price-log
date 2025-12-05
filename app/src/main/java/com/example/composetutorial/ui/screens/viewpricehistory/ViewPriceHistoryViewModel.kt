@@ -125,9 +125,9 @@ private fun diff(
         rhs.userUnit.quantityType.baseUnit()
     ).to(rhs.userUnit)
     // Note that by using confirmedAtFormatter here and PriceHistory.confirmedAt being the resulting
-    // string, if two PriceHistory records have visually indistinguishable confirmedAt values we
-    // won't show them, and if there are no other differences we will hide the extra record
-    // entirely.
+    // string, if two PriceHistory records have visually indistinguishable confirmedAt values that
+    // counts as the value not having changed, and if there are no other differences we will hide
+    // the extra record entirely.
     val lhsConfirmedAt = confirmedAtFormatter.format(lhs.confirmedAt)
     val rhsConfirmedAt = confirmedAtFormatter.format(rhs.confirmedAt)
     Log.d("MyApp", "lhsConfirmedAt $lhsConfirmedAt rhsConfirmedAt $rhsConfirmedAt")
