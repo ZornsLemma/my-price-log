@@ -145,14 +145,6 @@ fun ViewPriceHistoryScreen(
                                 // is if there is no current price (because it was deleted), in
                                 // which case it's reasonable to edit the latest historical price as
                                 // new.
-                                // TODO: I don't think it matters but think about it later - it may
-                                // be that now we have the first delta being a "null" if there is no
-                                // current price (this first null delta represents it having been
-                                // deleted), we may technically not need to special case the "price
-                                // == null" case here. But I think it's harmless and may be clearer
-                                // to be explicit (although arguably since it is redundant,
-                                // including it may lose clarity since we might wonder why it's
-                                // there if there's no comment about this)
                                 MyDropdownMenuItem(
                                     text = { Text(stringResource(R.string.menu_item_edit_as_new_price)) },
                                     enabled = price == null || index > 0,
