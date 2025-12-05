@@ -114,7 +114,6 @@ fun PriceHistory.toPriceHistoryDelta(confirmedAtFormatter: DateTimeFormatter): P
         modifiedAt = modifiedAt
     )
 
-// TODO: Where does this belong and what naming and calling convention should it have?!?!?!
 private fun diff(
     lhs: PriceHistory,
     rhs: PriceHistory,
