@@ -84,7 +84,6 @@ fun SettingsScreen(
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                //.background(MaterialTheme.colorScheme.primary) // TODO: debug hack
                 .fillMaxSize()
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
@@ -99,8 +98,6 @@ fun SettingsScreen(
             // cancel out and go change the other first. This is probably not a huge deal in
             // practice. Editing these should not be an everyday activity so even if it is a bit
             // fiddly it doesn't matter that much.
-
-            // TODO: I half wonder if we should do *<=* stale/ancient threshold - currently we use < in code for stale at least - just to match this description (subtitle) which feels more natural, but maybe we can reword this.
 
             SettingsTile(
                 title = stringResource(R.string.title_stale_price_threshold),

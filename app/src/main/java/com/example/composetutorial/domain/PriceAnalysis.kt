@@ -47,9 +47,10 @@ data class AugmentedPrice(
                 sourceName = source.name,
                 loyaltyPrice = loyaltyPrice,
                 ageDays = ageDays,
-                ageClass = if (ageDays < priceAgeSettings.stalePriceThresholdDays) {
+                // We use the word "after" in the Settings descriptions of these thresholds, so we use <= here.
+                ageClass = if (ageDays <= priceAgeSettings.stalePriceThresholdDays) {
                     AgeClass.FRESH
-                } else if (ageDays < priceAgeSettings.ancientPriceThresholdDays) {
+                } else if (ageDays <= priceAgeSettings.ancientPriceThresholdDays) {
                     AgeClass.STALE
                 } else {
                     AgeClass.ANCIENT
@@ -63,7 +64,8 @@ data class AugmentedPrice(
 }
 
 private fun inflationAdjustedPrice(price: Double, ageDays: Long, priceAgeSettings: PriceAgeSettings): Double {
-    if (ageDays < priceAgeSettings.stalePriceThresholdDays) {
+    // We use the word "after" in the Settings descriptions of these thresholds, so we use <= here.
+    if (ageDays <= priceAgeSettings.stalePriceThresholdDays) {
         return price
     } else {
         // Note that inflation starts to apply only from stalePriceThresholdDays; the exponent here is
