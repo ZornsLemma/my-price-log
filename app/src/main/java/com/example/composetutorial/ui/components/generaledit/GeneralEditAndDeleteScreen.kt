@@ -13,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
 import com.example.composetutorial.debug.debugDelay
+import com.example.composetutorial.debug.debugThrow
 import com.example.composetutorial.ui.components.WarningIcon
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 
@@ -77,14 +78,14 @@ fun GeneralEditAndDeleteScreen(
                         perform = {
                             deleting = true
                             debugDelay()
-                            //throw IllegalStateException("TODO")
+                            debugThrow()
                             performDelete()
                             // We return null since we don't want to change the selected entity on
                             // the home screen.
                             null
                         }
                     )
-                }) { Text(stringResource(R.string.button_delete) /* TODO? Would only want to do this for cascading deletes, but even so I'm not sure I like it , color = MaterialTheme.colorScheme.error */) }
+                }) { Text(stringResource(R.string.button_delete)) }
             },
         )
     }

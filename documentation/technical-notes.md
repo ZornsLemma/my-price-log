@@ -4,9 +4,9 @@
 
 This document just contains a few miscellaneous technical notes including some fragmentary coding standards/conventions.
 
-## Full screen dialogs
+## Full-screen dialogs
 
-I must have written this out in comments or git commit messages or questions to LLMs multiple times but for the record (and writing a few days after I finally "solved" it, so my memory might be imperfect) as of right now the best way to implement this seems to be to fake it, having the full-screen dialog actually be a full screen composable accessed through the regular app navigation structure. The level of actual trickery to make this work is relatively small - really just that the enter/exit transition needs to be a dialog-like vertical slide, not a sibling-like horizontal slide. The full-screen dialog ought to have a dialog-style top bar with a close button and a "confirm" button and the back button/gesture needs overriding to behave like the close button, but those would probably be necessary however it's implemented.
+I must have written this out in comments or git commit messages or questions to LLMs multiple times but for the record (and writing a few days after I finally "solved" it, so my memory might be imperfect) as of right now the best way to implement this seems to be to fake it, having the full-screen dialog actually be a full-screen composable accessed through the regular app navigation structure. The level of actual trickery to make this work is relatively small - really just that the enter/exit transition needs to be a dialog-like vertical slide, not a sibling-like horizontal slide. The full-screen dialog ought to have a dialog-style top bar with a close button and a "confirm" button and the back button/gesture needs overriding to behave like the close button, but those would probably be necessary however it's implemented.
 
 The other suggestions I received from LLMs and tried very very hard to implement were:
 
@@ -17,6 +17,14 @@ Popup: This does (I think) "guarantee" that the stuff on the popup is "on top", 
 Box with high Z-order: This visually ensures our fake dialog's stuff is "on top", but (as with Popup) in ways I don't fully understand, you need to stop touch input sometimes going to the screen underneath and without the separate context (?) created by Popup, the touch input hacks become less reliable. I never actually saw a problem caused by touch input going to the lower screen, but that's not to say it could never happen. (The other miscellaneous Dialog-emulating hacks required by Popup are also required here.)
 
 Using an actual full-screen activity which is navigated to and has a full-fledged non-dialog status avoids nearly all of this. Because it *is* a full-fledged screen, there's no "hidden" stuff which could somehow steal touch input or whatever, focus navigation of the contents "just works", the on-screen keyboard "just works" (once you make the appropriate tweaks to AndroidManifest.xml required to make this work anywhere).
+
+Grok suggested that I should wrap a Box with:
+    Modifier.semantics {
+        role = Role.Dialog // Marks this as a dialog for TalkBack
+        contentDescription = "Full-screen dialog for [task, e.g., entering details]" // Optional: describe purpose
+        liveRegion = LiveRegionMode.Polite // Announce when dialog opens
+    }
+around the Scaffold on my fake full-screen dialogs for the benefit of screen reader users, but I got conflicting advice when I attempted to follow this up so I haven't implemented anything like this yet. Even if this is a good idea, I'd rather not introduce a Box if I could just put this modifier directly on the Scaffold instead.
 
 ## Configuration changes
 

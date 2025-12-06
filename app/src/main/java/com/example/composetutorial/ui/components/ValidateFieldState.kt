@@ -54,8 +54,6 @@ fun <T> ValidateFieldState(
     }
 
     val context = LocalContext.current
-    // TODO DELETE var oldAllowEmpty by remember { mutableStateOf(allowEmpty) }
-    // TODO DELETEvar oldValidationRulesKey by remember { mutableStateOf(validationRulesKey) }
     var oldValue by remember { mutableStateOf(value) }
     LaunchedEffect(context, value, validationRulesKey, allowEmpty, isFocused) {
         // We apply a delay when this field is focused and the actual value has changed (which means
@@ -73,9 +71,6 @@ fun <T> ValidateFieldState(
         // distracting the user with changing messages. For the moment I think the best compromise
         // is just to keep delayMillis relatively low and not try to be over-clever.
         if (isFocused && value != oldValue) delay(delayMillis)
-        // TODO DELETE if (isFocused && oldAllowEmpty == allowEmpty && oldValidationRulesKey == validationRulesKey) delay(delayMillis)
-        // TODO DELETE oldAllowEmpty = allowEmpty
-        // TODO DELETE oldValidationRulesKey = validationRulesKey
 
         // Re-evaluate failedValidationRule. We copy it to the front of the list (it's harmless if
         // we end up with two copies of it) so that if multiple validation rules are failing, we

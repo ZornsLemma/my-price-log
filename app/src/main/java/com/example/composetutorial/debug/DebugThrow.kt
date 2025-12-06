@@ -1,0 +1,13 @@
+package com.example.composetutorial.debug
+
+import android.util.Log
+import kotlinx.coroutines.delay
+
+// debugThrow() calls left in the source code act as markers for places where it is useful to throw
+// an exception to simulate a failure. With null arguments they should optimise down to nothing.
+// During debugging we can supply a non-null argument and remove it when we're finished.
+inline fun debugThrow(message: String? = null) {
+    if (message != null) {
+        throw IllegalStateException(message)
+    }
+}

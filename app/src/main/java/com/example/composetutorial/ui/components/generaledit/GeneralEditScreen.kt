@@ -157,19 +157,6 @@ fun GeneralEditScreen(
         }
     }
 
-// TODO: Grok suggests wrapping a Box with:
-//Modifier.semantics {
-//    role = Role.Dialog // Marks this as a dialog for TalkBack
-//    contentDescription = "Full-screen dialog for [task, e.g., entering details]" // Optional: describe purpose
-//    liveRegion = LiveRegionMode.Polite // Announce when dialog opens
-//} *around* the Scaffold. I am not entirely sure about flagging this as a dialog anyway - I sort of get the MD3 "full screen dialog" concept, but it feels very technical and not something a user (accessibility-using or not) is likely to be actively aware of. I suppose there is some argument that it clues the user in to expect (as there is) a close icon and a "confirm" type icon in the top bar.
-// I suspect I shouldn't provide a contentDescription unless/until I do this for other screens, and at the moment I am trying not to be actively accessibility-hostile but not go out of my way to add stuff that may not be helpful. If the app is released it will be open source and I'm happy to take advice/patches if someone actually is using this.
-// I would rather attach the modifier to the Scaffold if I can, but I don't know if that will work correctly. Maybe it
-// doesn't work with a Box either, I haven't tested that. (Perplexity.ai says this semantics modifier won't truly flag it
-// as a dialog, but the link it gives doesn't actually say that. It doesn't have a better option, short of actually
-// using Dialog, which I know to my cost is utterly impractical or I'd already be using it. Perplexity does say I can
-// attach the modifier to the Scaffold no problem. Perplexity also suggests the liveRegion thing is not necessary or appropriate here - it (I haven't tried to read up on this myself) is sort of related to visual things like scrims, and for a full screen dialog it's not appropriate.
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -218,7 +205,7 @@ fun GeneralEditScreen(
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .background(/* Color.Cyan TODO TEMP FOR DEBUG, SHOULD BE */ MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
+                .background(MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
                 .fillMaxSize()
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
