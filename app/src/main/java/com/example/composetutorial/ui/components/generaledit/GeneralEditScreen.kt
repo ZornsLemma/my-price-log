@@ -40,6 +40,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
 import com.example.composetutorial.debug.debugDelay
+import com.example.composetutorial.debug.debugThrow
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.AsyncOperationErrorAlertDialog
@@ -273,7 +274,7 @@ fun runGeneralEditScreenOperation(
             stateHolder.asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 Log.d("MyAppRGE", "runGeneralEditScreenOperation about to call perform")
-                //throw IllegalStateException("TODO TEST")
+                debugThrow()
                 val id = perform()
                 Log.d("MyAppQZ", "perform() returned id $id")
                 debugDelay()
