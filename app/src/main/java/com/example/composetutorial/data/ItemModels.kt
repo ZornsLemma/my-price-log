@@ -33,29 +33,30 @@ data class Item(
 ) : Parcelable
 
 fun Item?.toEditable(dataSet: DataSet): EditableItem {
-    val defaultUnitIdByQuantityTypeOrdinal = QuantityType.entries.map { quantityType ->
-        dataSet.getRelevantMeasurementUnits(
-            quantityType, includeDisplayOnly = false
-        ).first().id
-    }.toMutableList()
+    val defaultUnitByQuantityType =
+        QuantityType.entries.associateWithTo(mutableMapOf()) { quantityType ->
+            dataSet.getRelevantMeasurementUnits(
+                quantityType, includeDisplayOnly = false
+            ).first()
+        }
     if (this == null) {
         // It's probably reasonable to default to sold by weight, and it's nice not to have
         // the possibility of a null state.
         return EditableItem(
             0, dataSet.id, "", QuantityType.WEIGHT,
-            defaultUnitIdByQuantityTypeOrdinal, false, ""
+            defaultUnitByQuantityType, false, ""
         )
     } else {
         myCheck(dataSet.id == dataSetId) {
             "Expected identical dataSetIds but have dataSet.id ${dataSet.id} and dataSetId $dataSetId"
         }
-        defaultUnitIdByQuantityTypeOrdinal[defaultUnit.quantityType.ordinal] = defaultUnit.id
+        defaultUnitByQuantityType[defaultUnit.quantityType] = defaultUnit
         return EditableItem(
             id,
             dataSet.id,
             name,
             defaultUnit.quantityType,
-            defaultUnitIdByQuantityTypeOrdinal,
+            defaultUnitByQuantityType,
             allowMultipack,
             notes
         )
@@ -74,14 +75,13 @@ data class EditableItem(
     val dataSetId: Long,
     val name: String,
     val quantityType: QuantityType,
-    val defaultUnitIdByQuantityTypeOrdinal: List<Long>,
+    val defaultUnitByQuantityType: Map<QuantityType, MeasurementUnit>,
     val allowMultipack: Boolean,
     val notes: String,
 ) : Parcelable {
     val defaultUnit: MeasurementUnit
-        get() = MeasurementUnit.fromId(
-            defaultUnitIdByQuantityTypeOrdinal[quantityType.ordinal]
-        )!!
+        get() =
+            defaultUnitByQuantityType[quantityType]!!
 
     // TODO: I have had some intermittent crashes when on the "Edit product" screen and I put it in
     // background, adb kill it and then return to it via the overview menu. The error in logcat is

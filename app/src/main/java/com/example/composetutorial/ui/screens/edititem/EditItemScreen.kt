@@ -248,17 +248,16 @@ fun EditItemScreen(
                             myCheck(defaultUnit != null) {
                                 "Expected non-null defaultUnit to be selected; got $it"
                             }
-                            // TODO: Is it possible this ordinal crap can be got rid of now we've change how thing are parcelised/wrapped in mutablestate etc?
                             if (editableItem.defaultUnit != defaultUnit!!) {
-                                val defaultUnitIdByQuantityTypeOrdinal =
-                                    editableItem.defaultUnitIdByQuantityTypeOrdinal.toMutableList()
+                                val defaultUnitByQuantityType =
+                                    editableItem.defaultUnitByQuantityType.toMutableMap()
                                         .also {
-                                            it[editableItem.quantityType.ordinal] =
-                                                defaultUnit.id
+                                            it[editableItem.quantityType] =
+                                                defaultUnit
                                         }
                                 viewModel.setUiContentEditableItem(
                                     editableItem.copy(
-                                        defaultUnitIdByQuantityTypeOrdinal = defaultUnitIdByQuantityTypeOrdinal
+                                        defaultUnitByQuantityType = defaultUnitByQuantityType
                                     )
                                 )
                             }
