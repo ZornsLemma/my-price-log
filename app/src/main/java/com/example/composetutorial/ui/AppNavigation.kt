@@ -182,7 +182,7 @@ fun AppNavigation() {
             popEnterTransition = { EnterTransition.None },
         ) { backStackEntry ->
             Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
-            val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
+            val locale = LocalConfiguration.current.locales[0]
             val viewModel = viewModel<HomeViewModel>(backStackEntry, factory = AppViewModelProvider.Factory)
             LaunchedEffect(locale) {
                 viewModel.updateLocale(locale)
@@ -273,10 +273,7 @@ fun AppNavigation() {
                     )
                 }
             ) { viewModel ->
-                // TODO: Is this locale wrong? Will this *pick up* changes to the locale, defeating the
-                // whole point of having a frozen locale? Do we need to be setting this in the navhost screen which *calls* us? That's
-                // what (albeit via sharedViewModel - do we have to use that here now?) happens for the edit price screen.
-                val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
+                val locale = LocalConfiguration.current.locales[0]
                 GeneralSelectorScreen(
                     viewModel.generalSelectorStateHolder,
                     navController,
@@ -376,10 +373,7 @@ fun AppNavigation() {
                     )
                 }
             ) { viewModel ->
-                // TODO: Is this locale wrong? Will this *pick up* changes to the locale, defeating the
-                // whole point of having a frozen locale? Do we need to be setting this in the navhost screen which *calls* us? That's
-                // what (albeit via sharedViewModel - do we have to use that here now?) happens for the edit price screen.
-                val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
+                val locale = LocalConfiguration.current.locales[0]
                 GeneralSelectorScreen(
                     viewModel.generalSelectorStateHolder,
                     navController,
@@ -535,7 +529,7 @@ fun AppNavigation() {
             enterTransition = { slideLeftTransition() },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
-            val locale by rememberUpdatedState(LocalConfiguration.current.locales[0])
+            val locale = LocalConfiguration.current.locales[0]
             screenWithViewModel<ViewPriceHistoryViewModel>(
                 backStackEntry = backStackEntry,
                 clearUiContent = { sharedViewModel.viewPriceHistoryScreenInitialUiContent = null },
