@@ -198,9 +198,8 @@ private fun EditPriceScreenPrice(
         errorHighlightOffset = 4.dp,
         numericTextFieldModifier = Modifier
             .fillMaxWidth(),
-        // TODO: Should this really be "Shelf price" given that's what we show it as on the home
-        // screen? We should be consistent, as it *is* the same value?
-        label = { Text(stringResource(R.string.label_pack_price)) },
+        // We use the same label text here as on the home screen, since it's the same value.
+        label = { Text(stringResource(R.string.label_shelf_price)) },
         prefix = textOrNull(currencyFormat.prefix),
         suffix = textOrNull(currencyFormat.suffix),
         textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(

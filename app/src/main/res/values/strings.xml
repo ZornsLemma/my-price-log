@@ -66,6 +66,7 @@
     <string name="message_no_prices_for_item_at_source">There are no prices recorded for this product at any store yet.</string>
     <string name="label_confirm_pack_size_and_price">Confirm pack size and price</string>
     <string name="supporting_text_details_correct_right_now">The above details are correct right now</string>
+    <!-- TODO: Can probably delete label_pack_price -->
     <string name="label_pack_price">Pack price</string>
     <string name="label_count">Count</string>
     <string name="label_size">Size</string>
