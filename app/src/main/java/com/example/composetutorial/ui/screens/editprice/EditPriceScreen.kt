@@ -308,12 +308,6 @@ private fun EditPriceScreenPackSize(
         if (item.defaultUnit.quantityType != QuantityType.ITEM) {
             Spacer(modifier = Modifier.width(8.dp))
 
-            // fontSizeDp is used here so that the minimum width we request scales
-            // correctly (TODO: we hope - not tested) when the user changes the system font
-            // size.
-            val fontSize = MaterialTheme.typography.bodyLarge.fontSize
-            val fontSizeDp = with(LocalDensity.current) { fontSize.toDp() }
-
             val context = LocalContext.current
             MyExposedDropdownMenuBox(
                 enabled = saveStatus.isNotBusy(),
