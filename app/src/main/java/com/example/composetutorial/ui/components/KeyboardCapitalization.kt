@@ -10,6 +10,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 
+const val TAG = "KeyboardCapitalization"
+
 @Composable
 fun keyboardCapitalization(@StringRes resId: Int): KeyboardCapitalization =
     when (val str = stringResource(resId)) { // TODO: rename "str"?
@@ -18,7 +20,7 @@ fun keyboardCapitalization(@StringRes resId: Int): KeyboardCapitalization =
         "sentences" -> KeyboardCapitalization.Sentences
         "words" -> KeyboardCapitalization.Words
         else -> {
-            Log.i("TODO", "Resource '${resourceName(LocalContext.current, resId)}' has unknown keyboard capitalization string '$str'")
+            Log.w(TAG, "Resource '${resourceName(LocalContext.current, resId)}' has unknown keyboard capitalization string '$str'")
             KeyboardCapitalization.None
         }
     }
