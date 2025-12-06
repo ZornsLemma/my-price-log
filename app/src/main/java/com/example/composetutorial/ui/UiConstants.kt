@@ -38,6 +38,8 @@ const val defaultValidationMessageDelayMillis = 200L
 // to wait until the first animation finishes. Let's start with 1000 and see how it goes.
 const val errorHighlightBoxVisibleTimeMillis = 1000L
 
+const val inputPersistenceDebounceTimeMillis = 300L
+
 // https://m3.material.io/foundations/layout/applying-layout/compact says 16dp left and right
 // margins, so let's try to follow this. That said, I've used edge-to-edge lists in some places and
 // I also don't use this for the top app bar and I don't know if that's expected.

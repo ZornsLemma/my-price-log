@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.composetutorial.ui.inputPersistenceDebounceTimeMillis
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -90,10 +91,10 @@ class PersistentUiContent<EditableContentType : Parcelable, StaticContentType : 
     init {
         viewModel.viewModelScope.launch {
             _editableContent
-                .debounce(300L /* TODO MAGIC */)
+                .debounce(inputPersistenceDebounceTimeMillis)
                 .collectLatest {
                     savedStateHandle[editableKey] = it
-                    Log.d("TODOMYAPPN", "Saving $editableKey value: $it")
+                    Log.d(TAG, "Saving $editableKey value: $it")
                 }
         }
     }

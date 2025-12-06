@@ -560,7 +560,6 @@ fun AppNavigation() {
                         // price? Oh, I rolled back to a historical price which didn't have them
                         // either.")
 
-                        Log.d("MyApp", "TODO: requestEditAsNew $priceHistory")
                         sharedViewModel.setEditPriceScreenInitialUiContent(
                             viewModel.uiContent.staticContent.dataSet,
                             viewModel.uiContent.staticContent.item,
