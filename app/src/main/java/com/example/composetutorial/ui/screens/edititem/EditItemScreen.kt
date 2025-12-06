@@ -125,7 +125,6 @@ fun EditItemScreen(
         // TODO: Probably can/should factor out a lot of this radio button stuff which I have just
         // copied and pasted from EditSourceScreen for now.
 
-        // TODO: Can I put these string versions inside QuantityType or won't that play well with i18n?
         // ENHANCE: supportingText is always null, remove it?
         val options = listOf(
             Pair<QuantityType,String?>(
