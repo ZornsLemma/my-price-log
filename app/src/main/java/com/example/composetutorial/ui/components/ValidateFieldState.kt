@@ -53,38 +53,29 @@ fun <T> ValidateFieldState(
         )
     }
 
-    // TODO: This does not have the "change validation text immediately if there is already some and
-    // the text changes" behaviour of my existing implementation - think about it, we probably *do*
-    // want that. Likewise we probably want something here so there's no delay if the input has just
-    // become valid. Do think about both of these though.
-    // TODO: So what do we *want*?
-    // - if validationRulesKey or allowEmpty changes (which is almost a form of validationRulesKey
-    //   changing, just tracked separately), we should probably update immediately - these do not
-    //   happen during "casual" editing (certainly not *of the field being validated*)
-    // - if value changes that is going to be the user typing. We should evaluate immediately and
-    //   if everything is OK, immediately update (to nothing). If something is wrong and a different
-    //   something was wrong we should immediately update. Maybe. If the user is typing maybe we
-    //   should minimise distractions and flicker and not change anything at all until they stop. but
-    //   it does feel like there's an argument for not having an out of date error sticking around
-    //   for 500ms or whatever after they finish typing.
-    // - maybe simply waiting (say) 200ms after user input before we do anything and then doing it is
-    //   the way to go. And just maybe have a setting option to switch between "slow" and "fast"
-    //   validation or something like that. it may be best not to try being overly-clever up front,
-    //   e.g. even if I am the only user, I won't really know how I feel about this until I've used
-    //   it in anger on an actual smartphone with a touchscreen rather than typing on keyboard on
-    //   PC or clicking awkwardly with the mouse on the on-screen keyboard on emulator.
     val context = LocalContext.current
+    // TODO DELETE var oldAllowEmpty by remember { mutableStateOf(allowEmpty) }
+    // TODO DELETEvar oldValidationRulesKey by remember { mutableStateOf(validationRulesKey) }
+    var oldValue by remember { mutableStateOf(value) }
     LaunchedEffect(context, value, validationRulesKey, allowEmpty, isFocused) {
-        // TODO: The delay is breaking things a bit here when e.g. we have an empty "pack size"
-        // string and click save - the validation message becomes eligible for display as allowEmpty
-        // is now true, but it doesn't appear straight away and so it "misses" the highlight box and
-        // it generally looks bad and a bit confusing. (This is less of a visual issue now I've
-        // dropped the delay from 1000ms to 200ms, but it's probably best to address it properly.
-        // Maybe put the delay back to 1000ms temporarily when working on this.) I suspect the fix
-        // is to have a remembered oldValue, say "if (value != oldValue)" here instead of
-        // controlling based on isFocused, and the obviously set oldValue = value after. Not tested
-        // this, maybe too simplistic.
-        if (isFocused) delay(delayMillis)
+        // We apply a delay when this field is focused and the actual value has changed (which means
+        // the user is editing it). The idea is to reduce visual distraction as the user is typing,
+        // but update immediately e.g. if allowEmpty changes because the user clicks Save. (To see
+        // the need for this, try adding a brand new price and clicking Save
+        // without filling any fields in. With the "value != oldValue" check removed, the two
+        // validation failures appear at different times.)
+        // ENHANCE: We might not actually need isFocused here, although it may come in handy for
+        // other tweaks in this function so it's probably worth keeping the variable around anyway.
+        // ENHANCE: It's possible this algorithm should be fancier, but it's hard to be sure. We
+        // could do things like remove a validation error which has been fixed by user input
+        // immediately without a delay (perhaps depending on whether a different validation error
+        // then comes into play). There is a trade-off between showing outdated information vs
+        // distracting the user with changing messages. For the moment I think the best compromise
+        // is just to keep delayMillis relatively low and not try to be over-clever.
+        if (isFocused && value != oldValue) delay(delayMillis)
+        // TODO DELETE if (isFocused && oldAllowEmpty == allowEmpty && oldValidationRulesKey == validationRulesKey) delay(delayMillis)
+        // TODO DELETE oldAllowEmpty = allowEmpty
+        // TODO DELETE oldValidationRulesKey = validationRulesKey
 
         // Re-evaluate failedValidationRule. We copy it to the front of the list (it's harmless if
         // we end up with two copies of it) so that if multiple validation rules are failing, we

@@ -32,7 +32,6 @@ const val spinnerDelayMillis = 200L
 // This value is a trade-off between showing the user validation failures ASAP and not annoying them
 // by showing transient validation failures while they are in the middle of actively editing. This
 // feels reasonable-ish and we can always tweak it later.
-// TODO: a whole second feels insanely slow
 const val defaultValidationMessageDelayMillis = 200L
 
 // ENHANCE: If this is too long, the user can break something different, click Save again and have
