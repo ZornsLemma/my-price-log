@@ -127,7 +127,6 @@ fun EditDataSetScreen(
             // a permanent note here too.
             val currentLocalConfiguration = LocalConfiguration.current
             val currencyList = remember(currentLocalConfiguration.locales) {
-                // TODO: Test this updates if we change locales on the fly?
                 createCurrencyList(currentLocalConfiguration.locales)
             }
 
@@ -212,7 +211,7 @@ fun EditDataSetScreen(
                             // If imperial is selected, we force US customary to be deselected and
                             // vice versa. This allows us to use shorter names like "pt" instead of
                             // "pt (US)" without practical ambiguity.
-                            val newUnitPreferences = when (unit) { // TODO INLINE newUnitPreferences?
+                            val newUnitPreferences = when (unit) {
                                 UnitPreferenceOption.METRIC -> oldUnitPreferences.copy(allowMetric = it)
                                 UnitPreferenceOption.IMPERIAL -> oldUnitPreferences.copy(allowImperial = it, allowUSCustomary = !it && oldUnitPreferences.allowUSCustomary)
                                 UnitPreferenceOption.US_CUSTOMARY -> oldUnitPreferences.copy(allowUSCustomary = it, allowImperial = !it && oldUnitPreferences.allowImperial)
