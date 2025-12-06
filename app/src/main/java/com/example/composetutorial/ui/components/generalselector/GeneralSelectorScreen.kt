@@ -44,6 +44,11 @@ import com.example.composetutorial.ui.maxSearchLength
 import com.example.composetutorial.ui.screenVerticalBorder
 import com.example.composetutorial.ui.screenHorizontalBorder
 
+// ENHANCE: Unlike other re-usable composables in this app, here we pass the actual T to
+// onItemSelected instead of an ID. I believe the original reason for this was an LLM suggestion
+// that doing so would avoid race conditions, although I don't think this is likely to be a concern
+// in practice for this app. This is a bit inconsistent, so maybe I should change consistently to
+// one or the other.
 @Composable
 fun <T> GeneralSelectorScreen(
     stateHolder: GeneralSelectorStateHolder<T>,
@@ -53,9 +58,6 @@ fun <T> GeneralSelectorScreen(
     getName: (T) -> String,
     onAddClick: (() -> Unit)? = null,
     addContentDescription: String,
-    // TODO: We pass the actual T to onItemSelected to try to avoid race conditions, I am not
-    // completely sure about this but let's see how it goes. Do I need to do this in any other
-    // contexts as well?
     onItemSelected: (T) -> Unit,
     showSearch: Boolean = false,
 ) {
