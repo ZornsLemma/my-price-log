@@ -20,7 +20,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
@@ -275,7 +274,7 @@ fun AppNavigation() {
             ) { viewModel ->
                 val locale = LocalConfiguration.current.locales[0]
                 GeneralSelectorScreen(
-                    viewModel.generalSelectorStateHolder,
+                    viewModel.generalSelectorScreenStateHolder,
                     navController,
                     title = topAppBarTitle(stringResource(R.string.title_edit_data_sets), null),
                     getId = { it.id },
@@ -318,7 +317,7 @@ fun AppNavigation() {
                 val dataStore = LocalContext.current.applicationContext.dataStore
                 val context = LocalContext.current.applicationContext
                 GeneralSelectorScreen(
-                    viewModel.generalSelectorStateHolder,
+                    viewModel.generalSelectorScreenStateHolder,
                     navController,
                     title = topAppBarTitle(if (!select) stringResource(R.string.title_edit_items) else stringResource(
                         R.string.title_select_item
@@ -375,7 +374,7 @@ fun AppNavigation() {
             ) { viewModel ->
                 val locale = LocalConfiguration.current.locales[0]
                 GeneralSelectorScreen(
-                    viewModel.generalSelectorStateHolder,
+                    viewModel.generalSelectorScreenStateHolder,
                     navController,
                     title = topAppBarTitle(stringResource(R.string.title_edit_sources), dataSetName),
                     getId = { it.id },

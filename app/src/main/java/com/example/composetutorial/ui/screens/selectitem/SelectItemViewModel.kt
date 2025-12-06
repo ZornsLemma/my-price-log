@@ -9,7 +9,7 @@ import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.data.Item
 import com.example.composetutorial.ui.common.EmptyParcelable
 import com.example.composetutorial.ui.common.PersistentUiContent
-import com.example.composetutorial.ui.components.generalselector.GeneralSelectorStateHolder
+import com.example.composetutorial.ui.components.generalselector.GeneralSelectorScreenStateHolder
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -31,7 +31,7 @@ class SelectItemViewModel(
         initialStaticContent
     )
 
-    val generalSelectorStateHolder =  GeneralSelectorStateHolder<Item>(
+    val generalSelectorScreenStateHolder =  GeneralSelectorScreenStateHolder<Item>(
     savedStateHandle,
     getName = { it.name },
     uiContent.staticContent.itemList /* TODO: rename initialList for consistency with other cases? */,

@@ -51,7 +51,7 @@ import com.example.composetutorial.ui.screenHorizontalBorder
 // one or the other.
 @Composable
 fun <T> GeneralSelectorScreen(
-    stateHolder: GeneralSelectorStateHolder<T>,
+    stateHolder: GeneralSelectorScreenStateHolder<T>,
     navController: NavHostController,
     title: @Composable () -> Unit,
     getId: (T) -> Long,
@@ -161,7 +161,7 @@ fun <T> GeneralSelectorScreen(
                         items = dataListSorted,
                         key = { item -> getId(item) }
                     ) { item ->
-                        GeneralSelectorListItem(
+                        GeneralSelectorScreenListItem(
                             id = getId(item),
                             name = getName(item),
                             onItemSelected = dropUnlessResumed { onItemSelected(item) },
@@ -182,7 +182,7 @@ fun <T> GeneralSelectorScreen(
 // rather than simplifying the code. But inlining causes problems with dropUnlessResumed and the
 // possible workarounds feel worse than just keeping this function.
 @Composable
-private fun GeneralSelectorListItem(id: Long, name: String, onItemSelected: () -> Unit) {
+private fun GeneralSelectorScreenListItem(id: Long, name: String, onItemSelected: () -> Unit) {
     ListItem(
         headlineContent = { Text(name) },
         modifier = Modifier.clickable { onItemSelected() },
