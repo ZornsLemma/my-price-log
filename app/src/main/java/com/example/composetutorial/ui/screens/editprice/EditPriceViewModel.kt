@@ -143,18 +143,13 @@ class EditPriceViewModel(
     }
 
     suspend fun performSave() : Long {
-        // nonLinearEdit indicates that we are editing an old historical value as a candidate for
+        // nonLinearEdit indicates that we are editing an old historical record as a candidate for
         // updating the current record, so if the user clicks save it *is* a change even if
         // editablePrice and originalPrice are the same. (We don't just try to hack originalPrice
         // because we don't want to warn the user about losing non-existent changes if they click
         // close instead of save.)
-        // TODO: Double check the handling of toConfirm here. My thinking is that if editablePrice
-        // has toConfirm set that constitutes a change, so by using the real value in editablePrice
-        // and forcing originalPrice to have toConfirm false that does what we want there, and will
-        // also pick up any other changes.
-        if (!uiContent.staticContent.nonLinearEdit && uiContent.editableContent.value == uiContent.originalContent.copy(
-                toConfirm = false
-            )
+        if (!uiContent.staticContent.nonLinearEdit &&
+            uiContent.editableContent.value == uiContent.originalContent
         ) {
             Log.d(
                 "MyApp",
