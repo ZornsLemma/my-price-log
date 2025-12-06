@@ -21,8 +21,6 @@ import com.example.composetutorial.ui.theme.AppTheme
 
 private fun Context.isPhone(): Boolean = resources.configuration.smallestScreenWidthDp < 600
 
-// TODO: This is a bit of a mess but probably best leave it alone until I either gain more
-// experience or do more testing with different Android versions.
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +41,7 @@ class MainActivity : ComponentActivity() {
         }
 
         // Target SDK >=35 directly enables edge-to-edge (see e.g. https://stackoverflow.com/questions/79018063/trying-to-understand-edge-to-edge-in-android). We don't particularly want this, but we can work with it so we don't try to fight it.
-        // We call it here to be explicit. TODO: I am far from clear but you can pass some arguments to enableEdgeToEdge(), which may have some relevant effect on older and/or newer platforms. For now I will keep it simple but if there are nightmarish inconsistencies on older versions of Android this might be part of the puzzle.
+        // We call it here to be explicit.
         enableEdgeToEdge()
 
         if (DebugFlags.USE_STRICT_MODE) {
@@ -67,11 +65,6 @@ class MainActivity : ComponentActivity() {
 
 
 
-
-// TODO: There is a huge amount of pseudo copy and paste in all the Edit*{Screen,ViewModel} stuff.
-// Probably just going to accept it as I do the initial implementation so I don't tie myself in
-// knots coping with generic attempts that don't quite match reality, but later on it would be good
-// to see what can be factored out.
 
 // ENHANCE: I have completely ignored "unlikely" errors (like exceptions being thrown when accessing
 // the database) in most of this code - what can/should we do about this? I suspect most such errors

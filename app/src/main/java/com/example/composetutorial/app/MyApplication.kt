@@ -12,8 +12,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-// TODO: Lots of AI voodoo here, probably worth reading up later on how MyApplication should behave
-// and what it maybe ought to be doing.
 class MyApplication : Application() {
     val repository: RepositoryImpl by lazy {
         val db = AppDatabase.getDatabase(this)
@@ -26,58 +24,6 @@ class MyApplication : Application() {
             db.priceHistoryDao()
         )
     }
-
-    // TODO: ChatGPT magic, needs checking. May also be worth investigating ACRA/Cockroach/SimpleCrashReport open source libraries.
-    // I am fairly sure this specific code is utterly useless anyway. Oddly enough it appears to *hide* a failing check() and
-    // commenting it out again restores the crash, but when this code is in place I *don't* seem to get the GlobalExceptionHandler
-    // logcat entry. So it seems doubly useless, in that it *hides* crashes somehow!? Really confused.
-    /*
-    override fun onCreate() {
-        super.onCreate()
-
-        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            Log.e("GlobalExceptionHandler", "Uncaught exception", throwable)
-
-            val exceptionMessage = throwable.message ?: "No details"
-            val stackTrace = throwable.stackTrace.joinToString("\n").take(500) // limit length
-
-            Handler(Looper.getMainLooper()).post {
-                val message = "The app crashed:\n$exceptionMessage\n\n" +
-                        "Stack trace:\n$stackTrace\n\n" +
-                        "Please take a screenshot or copy this info."
-
-                // You need a way to get current activity or fallback context
-                /* TODO: I need to define CurrentActivityHolder myself!? Seems complex and I'll just hack this for now and check those libraries out later
-                val activity = CurrentActivityHolder.currentActivity
-                if (activity != null) {
-                    AlertDialog.Builder(activity)
-                        .setTitle("Unexpected error")
-                        .setMessage(message)
-                        .setPositiveButton("OK") { _, _ ->
-                            android.os.Process.killProcess(android.os.Process.myPid())
-                            exitProcess(1)
-                        }
-                        .setCancelable(false)
-                        .show()
-                } else { */
-                    // fallback: just kill app
-                    android.os.Process.killProcess(android.os.Process.myPid())
-                    exitProcess(1)
-                /* }*/
-            }
-        }
-    }
-    */
-    /*
-    // TODO: Simpler ChatGPT magic
-    override fun onCreate() {
-        super.onCreate()
-
-        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            Log.e("UncaughtException", "Uncaught exception in thread ${thread.name}", throwable)
-        }
-    }
-    */
 
     override fun onCreate() {
         super.onCreate()
