@@ -198,7 +198,8 @@ private fun EditPriceScreenPrice(
         errorHighlightOffset = 4.dp,
         numericTextFieldModifier = Modifier
             .fillMaxWidth(),
-        // TODO: Should this really be "Shelf price" given that's what we show it as on the home screen? We should be consistent, as it *is* the same value?
+        // TODO: Should this really be "Shelf price" given that's what we show it as on the home
+        // screen? We should be consistent, as it *is* the same value?
         label = { Text(stringResource(R.string.label_pack_price)) },
         prefix = textOrNull(currencyFormat.prefix),
         suffix = textOrNull(currencyFormat.suffix),
@@ -252,7 +253,6 @@ private fun EditPriceScreenPackSize(
             value = packCountNumber,
             locale = uiContent.staticContent.frozenLocale,
             validationRules = viewModel.packCountValidationRules,
-            // TODO DON'T THINK WE NEED THIS BUT CHECK, WIP RIGHT NOW validationRulesKey = uiContent.editablePrice.value.measurementUnit.id,
             allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditPriceViewModel.EditableField.PACK_COUNT,
