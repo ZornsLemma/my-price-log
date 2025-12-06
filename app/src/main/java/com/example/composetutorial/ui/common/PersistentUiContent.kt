@@ -13,10 +13,11 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 
+const val TAG = "PersistentUiContent"
+
 @Parcelize
 class EmptyParcelable : Parcelable // TODO!?
 
-// TODO WIP EXPERIMENTAL - AND WE NEED TO REWORK OTHER SCREENS TO USE IT INSTEAD OF OLD APPROACH
 /** PersistentUiContent persists:
  * - a fixed original EditableContentType value
  * - a modifiable value of EditContentType, initialised from the original value
@@ -45,17 +46,22 @@ class PersistentUiContent<EditableContentType : Parcelable, StaticContentType : 
         val savedValue: T? = savedStateHandle[key]
         if (savedValue != null) {
             if (initialValue == null) {
-                Log.d("TODOMYAPP", "Using $key saved value: $savedValue")
+                Log.d(TAG, "Using $key saved value: $savedValue")
             } else {
                 // We would normally expect initialValue to be null if there is a savedValue. Log
-                // this but carry on, as it's probably fine in practice.
-                // TODO: The exception here is where we have EmptyParcelable, so this is a bit misleading - can we tweak to avoid logging in this case???
-                Log.w("TODOMYAPP", "Using $key saved value '$savedValue' but there is an initialValue of '$initialValue'")
+                // this but carry on, as it's probably fine in practice. It's also expected when we
+                // have EmptyParcelable, where that is always present as initialValue.
+                if (initialValue !is EmptyParcelable) {
+                    Log.w(
+                        TAG,
+                        "Using $key saved value '$savedValue' but there is an initialValue of '$initialValue'"
+                    )
+                }
             }
             return savedValue
         } else {
             checkNotNull(initialValue) { "initialValue is null and nothing in SavedStateHandle for $key" }
-            Log.d("TODOMYAPP", "Initialising $key saved value: $initialValue")
+            Log.d(TAG, "Initialising $key saved value: $initialValue")
             savedStateHandle[key] = initialValue
             return initialValue
         }

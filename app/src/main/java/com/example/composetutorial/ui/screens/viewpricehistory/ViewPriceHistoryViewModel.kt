@@ -21,7 +21,6 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-// TODO: MOVE?
 @Parcelize
 data class ViewPriceHistoryScreenStaticContent(
     val dataSet: DataSet,
