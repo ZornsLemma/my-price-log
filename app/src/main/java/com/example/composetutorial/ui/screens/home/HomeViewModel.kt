@@ -18,6 +18,7 @@ import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.data.Item
 import com.example.composetutorial.data.Price
 import com.example.composetutorial.data.Source
+import com.example.composetutorial.debug.debugThrow
 import com.example.composetutorial.domain.sanitisePriceUnits
 import com.example.composetutorial.ui.common.setSelectedDataSetIdAsync
 import com.example.composetutorial.ui.common.setSelectedItemIdAsync
@@ -175,14 +176,6 @@ class HomeViewModel(
     // TODO: This is quite long and could probably be improved by factoring stuff out into helper
     // functions.
     init {
-        // At some point in development, an LLM suggested I add the following comment and code:
-        //     // This forces the delegate to initialize safely on the main thread
-        //     @Suppress("UNUSED_VARIABLE") val unused = app.dataStore
-        // I am fairly sure this is not doing anything useful any more, if it ever was.
-        // preferencesDataStore should be fine to initialise on any thread.
-        // TODO: Delete this comment completely later on. I'm keeping it around for now just in case
-        // any mysterious crashes occur so I can try reinstating it.
-
         // ENHANCE: I suspect this tree of flows is over-complex. In part we are trying to work
         // around problems where a getAllItems(dataSetId) or getAllSources(dataSetId) flow is not
         // inherently tagged with its parameter, and thus if the user changes the data set ID from 1
@@ -387,7 +380,7 @@ class HomeViewModel(
             asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
                 debugDelay()
-                //throw IllegalStateException("TODO FAKE CONFIRM ERROR")
+                debugThrow()
                 repository.updateOrInsertPrice(newPrice)
                 previousPrice.value = price
                 asyncOperationStatus.update(AsyncOperationStatus.Success(null))

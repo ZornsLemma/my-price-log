@@ -601,8 +601,6 @@ private fun HomeScreenContent(
 
     Column(
         modifier = Modifier
-            // .background(MaterialTheme.colorScheme.secondary) // TODO debug hack
-            .background(MaterialTheme.colorScheme.background) // TODO?
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(innerPadding)
@@ -1036,7 +1034,7 @@ private fun SourcePriceCardBody(
                 // TODO: Need to share the 0.55/0.45 constants here with the other code using them in PackPriceAndSizeRow.
                 Row(modifier = Modifier.padding(bottom = 8.dp)) {
                     LabeledItem(
-                        modifier = Modifier /* TODO .background(Color.Green) */ .weight(0.55f),
+                        modifier = Modifier.weight(0.55f),
                         label = stringResource(R.string.label_confirmed)
                     ) {
                         RelativeTimeText(augmentedPrice)
@@ -1081,7 +1079,19 @@ private fun ItemSourceInfoLive(
     onViewHistoryClick: () -> Unit,
     onDeletePriceClick: () -> Unit,
 ) {
-    // TODO: Maybe this should live on the viewmodel
+    /* TODO: Maybe this should live on the viewmodel - quick go with ChatpGPt suggests
+    class MyViewModel : ViewModel(), LifecycleObserver {
+
+    val previousPrice = mutableStateOf<Float?>(null)
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+    fun onAppStop() {
+        previousPrice.value = null
+    }
+}
+
+and if that actually works, this might be cleaner and mroe logical
+    */
     OnAppLifecycleEvent { event ->
         if (event == Lifecycle.Event.ON_STOP) { // app has left the foreground
             viewModel.previousPrice.value =
@@ -1276,7 +1286,6 @@ private fun ItemSourceSelector(
                     16.dp
                 )
                 .fillMaxWidth()
-            //.background(color = Color.Red) // TODO DEBUG HACK
         )
 
         // If sourceList is empty this will generate a single-item menu with just "None" in,

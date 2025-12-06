@@ -3,13 +3,15 @@ package com.example.composetutorial.debug
 import android.util.Log
 import kotlinx.coroutines.delay
 
+const val TAG = "DebugDelay"
+
 // debugDelay() calls left in the source code act as markers for places where it is
 // useful to add an artificial delay to simulate slow actions. With no/0L arguments
 // they should optimise down to nothing. During debugging we can supply a non-0 argument
 // and remove it when we're finished.
 suspend inline fun debugDelay(timeMillis: Long = 0L) {
     if (timeMillis != 0L) {
-        Log.w("TODOMYAPP", "debugDelay($timeMillis)")
+        Log.w(TAG, "debugDelay($timeMillis)")
         delay(timeMillis)
     }
 }

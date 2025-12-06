@@ -113,7 +113,6 @@ fun <T> GeneralSelectorScreen(
             // We don't need Modifier.verticalScroll(rememberScrollState()) here - probably because
             // of the LazyColumn - and in fact adding it causes a crash.
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize()
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding)
