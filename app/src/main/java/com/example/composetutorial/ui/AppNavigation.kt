@@ -206,7 +206,7 @@ fun AppNavigation() {
                     // price gets deleted, we can still see the full history (and we can tell where
                     // deletions occurred by discontinuities in the price ID, albeit we won't know
                     // the precise time they happened).
-                    sharedViewModel.setViewPriceHistoryScreenInitialUiContent(uiContent, locale)
+                    sharedViewModel.setViewPriceHistoryScreenInitialUiContent(uiContent)
                     navController.navigate(route = "viewPriceHistory")
                 },
                 onSelectDataSetClick = { uiContent ->

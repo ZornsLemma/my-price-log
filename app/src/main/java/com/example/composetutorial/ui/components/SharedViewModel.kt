@@ -91,10 +91,8 @@ class SharedViewModel : ViewModel() {
     var viewPriceHistoryScreenInitialUiContent: ViewPriceHistoryScreenInitialUiContent? = null
 
 
-    // TODO: Some overlap with setEditPriceScreenContent()?
     fun setViewPriceHistoryScreenInitialUiContent(
         uiContent: HomeScreenUiContent,
-        frozenLocale: Locale // TODO: Needed!? Do we even use this? I suspect locale should nto be frozen for a view-only screen
     ) {
         // !! is justified because uiContent was shown on the home screen and the view history option
         // was enabled, which can only happen if we have all three available.

@@ -15,8 +15,11 @@ import kotlinx.parcelize.Parcelize
 
 const val TAG = "PersistentUiContent"
 
+// EmptyParcelable is used as a type parameter for PersistentUiContent where we don't want both
+// editable content and static content. In practice this seems to save a lot of complexity compared
+// to making these type parameters nullable.
 @Parcelize
-class EmptyParcelable : Parcelable // TODO!?
+class EmptyParcelable : Parcelable
 
 /** PersistentUiContent persists:
  * - a fixed original EditableContentType value
