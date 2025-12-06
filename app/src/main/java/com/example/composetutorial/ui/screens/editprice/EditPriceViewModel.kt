@@ -2,8 +2,11 @@ package com.example.composetutorial.ui.screens.editprice
 
 import android.os.Parcelable
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
+import androidx.lifecycle.viewmodel.compose.saveable
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.domain.Repository
@@ -89,10 +92,8 @@ class EditPriceViewModel(
     }
     // TODO: Maybe change members inside PersistentUiContent to remove the somewhat duplicate "content" from the three main members?
 
-    // TODO: I suspect this should *either* be moved down into a rememberSaveable inside the
-    // composable, *or* it should be preserved across process death (perhaps, but not necessarily,
-    // by being moved into uiContent).
-    var firstPackSizeOrPriceChangeOccurred: Boolean = false
+    @OptIn(SavedStateHandleSaveableApi::class)
+    var firstPackSizeOrPriceChangeOccurred by savedStateHandle.saveable { mutableStateOf(false) }
 
     enum class EditableField {
         PRICE,
