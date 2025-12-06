@@ -53,7 +53,7 @@ class EditDataSetViewModel(
             }
         }
 
-    val generalEditScreenStateHolder = GeneralEditScreenStateHolder()
+    val generalEditScreenStateHolder = GeneralEditScreenStateHolder(savedStateHandle)
 
     fun setUiContentEditableDataSet(newEditableDataSet: EditableDataSet) {
         uiContent.update(newEditableDataSet)

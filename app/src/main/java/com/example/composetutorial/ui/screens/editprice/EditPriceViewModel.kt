@@ -49,7 +49,7 @@ class EditPriceViewModel(
         initialStaticContent
     )
 
-    val generalEditScreenStateHolder = GeneralEditScreenStateHolder()
+    val generalEditScreenStateHolder = GeneralEditScreenStateHolder(savedStateHandle)
 
     // "Count" is visible if the item explicitly allows multipacks or if (presumably because it
     // used to) we have a count > 1, which we must not hide or silently throw away. Note that

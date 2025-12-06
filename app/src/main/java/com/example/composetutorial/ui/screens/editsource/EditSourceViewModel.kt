@@ -61,7 +61,7 @@ class EditSourceViewModel(
         }
     }
 
-    val generalEditScreenStateHolder = GeneralEditScreenStateHolder()
+    val generalEditScreenStateHolder = GeneralEditScreenStateHolder(savedStateHandle)
 
     fun setUiContentEditableSource(newEditableSource: EditableSource) {
         uiContent.update(newEditableSource)

@@ -103,7 +103,7 @@ fun EditDataSetScreen(
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value ?: emptyList(),
             validationRulesKey = nameValidationRules.version,
-            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
             singleLine = true,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditDataSetViewModel.EditableField.NAME
@@ -115,7 +115,7 @@ fun EditDataSetScreen(
         ValidationErrorHighlightBox(
             value = editableDataSet.currencyCode,
             validationRules = viewModel.currencyValidationRules,
-            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditDataSetViewModel.EditableField.CURRENCY_CODE
         ) { validationResult, interactionSource, validationInputHandle ->

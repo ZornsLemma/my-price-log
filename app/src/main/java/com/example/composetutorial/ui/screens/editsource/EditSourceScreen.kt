@@ -107,7 +107,7 @@ fun EditSourceScreen(
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value ?: emptyList(),
             validationRulesKey = nameValidationRules.version,
-            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
             singleLine = true,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditSourceViewModel.EditableField.NAME
@@ -206,7 +206,7 @@ fun EditSourceScreen(
                             // TODO: We ought to be using a frozenLocale here, but right now we don't have one so doing this as a hack.
                             locale = LocalConfiguration.current.locales[0],
                             validationRules = viewModel.loyaltyPercentageValidationRules,
-                            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
+                            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
                             validationFlow = viewModel.saveValidationEvents,
                             validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
                             numericTextFieldModifier = Modifier

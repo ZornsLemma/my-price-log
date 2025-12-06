@@ -173,7 +173,7 @@ fun GeneralEditScreen(
                         // We could check isDirty here and just dismiss without saving if there's
                         // nothing to save, but it's probably best (given there's no history table
                         // which would get bloated) just to save regardless.
-                        stateHolder.saveAttempted.value = true
+                        stateHolder.saveAttempted = true
                         Log.d("MyAppSS", "set saveAttempted to true")
                         runGeneralEditScreenOperation(
                             stateHolder = stateHolder,

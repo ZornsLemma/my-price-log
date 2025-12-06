@@ -189,14 +189,14 @@ private fun EditPriceScreenPrice(
     var packPrice by rememberSyncedTextFieldValue(editablePrice.price)
     val currencyFormat = viewModel.currencyFormat
 
-    Log.d("MyAppSS", "saveAttempted ${viewModel.generalEditScreenStateHolder.saveAttempted.value}")
+    Log.d("MyAppSS", "saveAttempted ${viewModel.generalEditScreenStateHolder.saveAttempted}")
     ValidatedNumericTextField(
         value = packPrice,
         locale = uiContent.staticContent.frozenLocale,
         validationRules = currencyFormat.validationRules,
         // No validationRulesKey is needed as the validation rules depend only on our fixed
         // DataSet and frozen locale.
-        allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
+        allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
         validationFlow = viewModel.saveValidationEvents,
         validationFlowFieldId = EditPriceViewModel.EditableField.PRICE,
         errorHighlightOffset = 4.dp,
@@ -261,7 +261,7 @@ private fun EditPriceScreenPackSize(
             locale = uiContent.staticContent.frozenLocale,
             validationRules = viewModel.packCountValidationRules,
             // TODO DON'T THINK WE NEED THIS BUT CHECK, WIP RIGHT NOW validationRulesKey = uiContent.editablePrice.value.measurementUnit.id,
-            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditPriceViewModel.EditableField.PACK_COUNT,
             errorHighlightOffset = 4.dp, // TODO!?
@@ -294,7 +294,7 @@ private fun EditPriceScreenPackSize(
             locale = uiContent.staticContent.frozenLocale,
             validationRules = viewModel.packSizeValidationRules,
             validationRulesKey = editablePrice.measurementUnit.id,
-            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditPriceViewModel.EditableField.PACK_SIZE,
             errorHighlightOffset = 4.dp,

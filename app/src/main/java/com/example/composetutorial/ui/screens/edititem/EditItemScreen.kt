@@ -114,7 +114,7 @@ fun EditItemScreen(
             enabled = saveStatus.isNotBusy(),
             validationRules = nameValidationRules.value ?: emptyList(),
             validationRulesKey = nameValidationRules.version,
-            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted.value,
+            allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
             singleLine = true,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditItemViewModel.EditableField.NAME

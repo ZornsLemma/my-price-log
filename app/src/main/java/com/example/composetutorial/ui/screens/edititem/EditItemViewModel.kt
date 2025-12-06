@@ -50,7 +50,7 @@ class EditItemViewModel(
         }
     }
 
-    val generalEditScreenStateHolder = GeneralEditScreenStateHolder()
+    val generalEditScreenStateHolder = GeneralEditScreenStateHolder(savedStateHandle)
 
     fun setUiContentEditableItem(newEditableItem: EditableItem) {
         uiContent.update(newEditableItem)
