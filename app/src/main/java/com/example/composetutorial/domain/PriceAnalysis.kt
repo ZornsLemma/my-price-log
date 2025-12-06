@@ -12,8 +12,6 @@ import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.pow
 
-// TODO: It's just possible some of the top-level functions in here should be wrapped up inside a class, but not sure.
-
 data class PriceAnalysis(
     val augmentedPriceList: List<AugmentedPrice>,
     val priceClassificationThresholds: PriceClassificationThresholds?

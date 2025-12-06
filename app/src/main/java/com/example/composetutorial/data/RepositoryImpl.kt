@@ -21,8 +21,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.Executors
 
-// TODO: I have a feeling I may have shoved too much in this file and some of these constants, AppDatabase and/or the @Dao stuff should be elsewhere
-
 const val DB_NAME = "main.db"
 const val DB_VERSION = 1
 @Database(

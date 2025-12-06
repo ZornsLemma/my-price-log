@@ -318,7 +318,7 @@ class HomeViewModel(
                     )
 
                     if (dataSet != null) {
-                        priceList = sanitisePriceUnits(dataSet, priceList)
+                        priceList = dataSet.sanitisePriceUnits(priceList)
                     }
 
                     // ENHANCE: I suspect in practice this analysis is lightweight enough we are

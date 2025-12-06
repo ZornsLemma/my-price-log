@@ -43,11 +43,9 @@ import com.example.composetutorial.data.PriceHistory
 // occur in parts of the UI code, at the minor cost of forcing the user to see the prices with
 // now-invalid units in an odd but valid unit (probably ml, in our pint example). It also avoids any
 // ambiguity in interpreting the units shown to the user.
-//
-// TODO: Just possibly this should be an extension on DataSet??
-fun sanitisePriceUnits(dataSet: DataSet, priceList: List<Price>): List<Price> {
-    val relevantUnitFamilies = dataSet.getRelevantUnitFamilies()
-    myCheck(relevantUnitFamilies.isNotEmpty()) { "Expected at least one relevant unit family for dataSet ${dataSet.id}" }
+fun DataSet.sanitisePriceUnits(priceList: List<Price>): List<Price> {
+    val relevantUnitFamilies = getRelevantUnitFamilies()
+    myCheck(relevantUnitFamilies.isNotEmpty()) { "Expected at least one relevant unit family for dataSet $id" }
     // getRelevantUnitFamilies() will in practice generate a LinkedHashSet, so first() here will be
     // deterministic and return the first family inserted. If this were to change in future, it
     // wouldn't be the end of the world, we'd just see some modest inconsistency in the results for
@@ -64,10 +62,9 @@ fun sanitisePriceUnits(dataSet: DataSet, priceList: List<Price>): List<Price> {
 
 // This function is annoyingly similar to sanitisePriceUnits() but I don't see any way to factor out
 // the commonality which isn't worse than the repetition.
-// TODO: Just possibly this should be an extension on DataSet??
-fun sanitisePriceHistoryUnits(dataSet: DataSet, priceHistoryList: List<PriceHistory>): List<PriceHistory> {
-    val relevantUnitFamilies = dataSet.getRelevantUnitFamilies()
-    myCheck(relevantUnitFamilies.isNotEmpty()) { "Expected at least one relevant unit family for dataSet ${dataSet.id}" }
+fun DataSet.sanitisePriceHistoryUnits(priceHistoryList: List<PriceHistory>): List<PriceHistory> {
+    val relevantUnitFamilies = getRelevantUnitFamilies()
+    myCheck(relevantUnitFamilies.isNotEmpty()) { "Expected at least one relevant unit family for dataSet $id" }
     val replacementUnitFamily = relevantUnitFamilies.first() // see sanitisePriceUnits() comment
     return priceHistoryList.map { priceHistory ->
         if (!intersectionIsEmpty(priceHistory.userUnit.unitFamilies, relevantUnitFamilies)) {

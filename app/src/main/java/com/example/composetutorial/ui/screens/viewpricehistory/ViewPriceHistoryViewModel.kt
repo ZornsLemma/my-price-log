@@ -46,7 +46,7 @@ class ViewPriceHistoryViewModel(
         uiContent.staticContent.dataSet.id,
         uiContent.staticContent.item.id,
         uiContent.staticContent.source.id
-    ).map { priceHistoryList -> sanitisePriceHistoryUnits(uiContent.staticContent.dataSet, priceHistoryList) }
+    ).map { priceHistoryList -> uiContent.staticContent.dataSet.sanitisePriceHistoryUnits(priceHistoryList) }
 
     fun generatePriceHistoryDeltaList(
         priceHistoryList: List<PriceHistory>,
