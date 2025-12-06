@@ -307,3 +307,17 @@ class MainActivity : ComponentActivity() {
 // enter - e.g. we have 0.76 MGA but MGA only allows 0 dp (I think - check what Android says, web
 // hints at 2 but vaguely hints otherwise as well) so if we edit an old price of 0.76 as new it
 // turns into 1. This may just be a bug I am misinterpreting, but I think this is what's happening.
+
+// ENHANCE: It may be a good idea to handle onQuotaExceeded() and show a notification in this case.
+// This is part of the "Auto Backup for Apps" framework, which will be present on full "Google
+// Android" phones and possibly some other versions of Android with ties to cloud backup. If the
+// user has enabled this (system level, not part of this app as such) and the data gets too large to
+// backup successfully, onQuotaExceeded() will be called and since the user may be relying on it, it
+// would be good to provide a notification of some kind that their data is not being backed up even
+// though they might expect it to be. Based on a quick discussion with ChatGPT there is some modest
+// fiddliness in terms of showing notifications, but hooking code in here should not require
+// creating any dependency on Google Play Services or similar - we can have our code called if the
+// Android OS implements this feature and otherwise it will just never be called. I think we mainly
+// need to implement a certain class and mention it in AndroidManifest.xml, but do check. FWIW the
+// limit on Google Drive is currently 25MB per app and my personal live database is about 110K, so
+// in reality it is pretty unlikely this is ever going to be a problem in the first place.
