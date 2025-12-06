@@ -65,23 +65,21 @@ class EditPriceViewModel(
     // it. For an edit it starts out non-empty and if it is left empty the chances are the user was
     // editing it and messed up, rather than deliberately trying to set it to 1 by leaving it empty.
     val packCountValidationRules = if (showPackCount) numericValidationRules(uiContent.staticContent.frozenLocale, allowDecimals = false, allowZero = false, required = uiContent.originalContent.id != 0L) else emptyList()
-    var packSizeValidationRules = generatePackSizeValidationRules()
+    var packSizeValidationRules = packSizeValidationRules()
     var currencyFormat = uiContent.staticContent.dataSet.createCurrencyFormat(uiContent.staticContent.frozenLocale)
 
     fun setUiContentEditablePrice(newEditablePrice: EditablePrice) {
         uiContent.update(newEditablePrice)
-        // TODO: We could potentially refactor so that if newEditablePrice has the same measure unit
-        // as uiContent before we update it, we don't regenerate the pack size validation rules.
-        // TODO: Possibly we could also make this a flow mapped from the editableContent flow, but that may be more trouble than it's worth - think about it when not in middle of refactor though.
-        packSizeValidationRules = generatePackSizeValidationRules()
+        // ENHANCE: We could potentially refactor so that if newEditablePrice has the same measure
+        // unit as uiContent before we update it, we don't regenerate the pack size validation
+        // rules.
+        // ENHANCE: Possibly we could make this a flow mapped from the editableContent flow, but
+        // that may be more trouble than it's worth - think about it when not in middle of refactor
+        // though.
+        packSizeValidationRules = packSizeValidationRules()
     }
 
-    // TODO: This is called "generate" not "get" in part to show it performs work and isn't just
-    // returning a cached value, but also to avoid a Kotlin/JVM clash with the
-    // packSizeValidationRules property. I think I am generally a bit inconsistent in naming here
-    // anyway (e.g. numericValidationRules() also performs work) and some kind of tidying up of the
-    // naming generally might be in order.
-    private fun generatePackSizeValidationRules(): List<ValidationRule<String>> {
+    private fun packSizeValidationRules(): List<ValidationRule<String>> {
         val maxDecimals = uiContent.editableContent.value.measurementUnit.maxDecimals
         return numericValidationRules(
             uiContent.staticContent.frozenLocale,
