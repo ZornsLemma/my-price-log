@@ -62,10 +62,6 @@ fun EditPriceScreen(
     val dataSet = viewModel.uiContent.staticContent.dataSet
     val item = viewModel.uiContent.staticContent.item
     val source = viewModel.uiContent.staticContent.source
-    val nonLinearEdit = viewModel.uiContent.staticContent.nonLinearEdit
-    val frozenLocale = viewModel.uiContent.staticContent.frozenLocale
-
-// TODO: Some of this remember stuff should maybe move into the ViewModel
 
     val saveStatus by viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
 

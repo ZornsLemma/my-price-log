@@ -68,7 +68,7 @@ fun EditItemScreen(
 ) {
     val originalItem = viewModel.uiContent.originalContent
     val editableItem by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
-    val dataSet = viewModel.uiContent.staticContent.dataSet // TODO: If this is the only use of staticContent, we may be able to get away with getting rid of the thin wrapper EditItemScreenStaticContent
+    val dataSet = viewModel.uiContent.staticContent.dataSet
 
     val itemReferenceCount by viewModel.itemReferenceCountFlow.collectAsStateWithLifecycle(null)
     Log.d("MyApp", "itemReferenceCount $itemReferenceCount")
@@ -322,7 +322,6 @@ fun EditItemScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        // TODO: I am perhaps being inconsitent in what I ahve changed (not just for edit item) but I am thinking where an ID is constant I should probably just use it from the originalContent not the editableone
         if (originalItem.id != 0L) {
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedButton(
