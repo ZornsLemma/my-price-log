@@ -126,20 +126,19 @@ fun EditItemScreen(
         // copied and pasted from EditSourceScreen for now.
 
         // TODO: Can I put these string versions inside QuantityType or won't that play well with i18n?
+        // ENHANCE: supportingText is always null, remove it?
         val options = listOf(
-            Triple<QuantityType,String,String?>(
+            Pair<QuantityType,String?>(
                 QuantityType.ITEM,
-                stringResource(R.string.label_sold_by_item),
-                null // was "Per item or pack of items" but probably clearer without it
+                null
             ),
-            Triple(QuantityType.WEIGHT, stringResource(R.string.label_sold_by_weight), null),
-            Triple(
+            Pair(QuantityType.WEIGHT, null),
+            Pair(
                 QuantityType.VOLUME,
-                stringResource(R.string.label_sold_by_volume),
                 null,
             ),
         )
-        var selectedOption = editableItem.quantityType
+        val selectedOption = editableItem.quantityType
 
         // ENHANCE: When we disallow changing "sold by" because there are prices for the product,
         // just maybe we should switch to displaying a disabled TextField or similar with a
@@ -171,7 +170,8 @@ fun EditItemScreen(
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
                 //Spacer(modifier = Modifier.height(8.dp))
-                options.forEach { (id, name, supportingText) ->
+                // TODO: Rename "id"->quantityType?
+                options.forEach { (id, supportingText) ->
                     val clickableModifier = if (!radioButtonsEnabled) Modifier else Modifier.clickable {
                         viewModel.setUiContentEditableItem(
                             editableItem.copy(
@@ -198,7 +198,7 @@ fun EditItemScreen(
                         )
                         Column(modifier = Modifier.padding(start = 8.dp)) {
                             Text(
-                                text = name
+                                text = stringResource(id.nameResource)
                             )
                             Log.d("MyApp", "supportingText $supportingText")
                             if (supportingText != null) {

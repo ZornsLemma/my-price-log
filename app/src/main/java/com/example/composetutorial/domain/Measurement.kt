@@ -17,10 +17,10 @@ import java.util.Locale
 // weight or volume. This is fundamental as we make no effort to convert between them using some
 // sort of density estimate or whatever. Actual units (kg, oz, etc) of the same quantity type can
 // be varied much more freely.
-enum class QuantityType(val id: Int) {
-    ITEM(1),
-    WEIGHT(2), // technically mass but everyone says "price per weight"
-    VOLUME(3);
+enum class QuantityType(val id: Int, @field:StringRes val nameResource: Int) {
+    ITEM(1, R.string.label_sold_by_item),
+    WEIGHT(2, R.string.label_sold_by_weight), // technically mass but everyone says "price per weight"
+    VOLUME(3, R.string.label_sold_by_volume);
 
     companion object {
         // This is unused but it supports Converters.toQuantityType(), which we want to keep around.
