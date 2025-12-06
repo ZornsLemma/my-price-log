@@ -6,9 +6,6 @@ import com.example.composetutorial.ui.common.sortedByLocale
 import java.util.Currency
 import java.util.Locale
 
-// TODO: Maybe this should just move into EditDataSetScreen.kt, but it's also probably relatively
-// clean to have it here even if it only has one client.
-
 fun Locale.currencyOrNull(): Currency? {
     try {
         return Currency.getInstance(this)

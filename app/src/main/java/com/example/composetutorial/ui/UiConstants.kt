@@ -38,12 +38,11 @@ const val defaultValidationMessageDelayMillis = 200L
 // to wait until the first animation finishes. Let's start with 1000 and see how it goes.
 const val errorHighlightBoxVisibleTimeMillis = 1000L
 
-// TODO: https://m3.material.io/foundations/layout/applying-layout/compact says 16dp left and right
-// margins - maybe change this? Then again there are places where I've used edge-to-edge for lists
-// so I just don't know. For that matter, are there 16.dp margins supposed to be added to left and
-// right of the top app bar as well? Or just the body content below it?
-val screenHorizontalBorder = 16.dp // TODO EXPERIMENTAL WAS 8.dp
-val screenVerticalBorder = 8.dp // TODO EXPERIMENTAL
+// https://m3.material.io/foundations/layout/applying-layout/compact says 16dp left and right
+// margins, so let's try to follow this. That said, I've used edge-to-edge lists in some places and
+// I also don't use this for the top app bar and I don't know if that's expected.
+val screenHorizontalBorder = 16.dp
+val screenVerticalBorder = 8.dp
 
 // MD3 specs say there should be a 24.dp horizontal border, but this seems quite ugly. The left hand
 // edge of the dialog's body controls don't line up with the close icon and the right hand edges

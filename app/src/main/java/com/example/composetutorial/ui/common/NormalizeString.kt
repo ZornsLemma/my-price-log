@@ -3,8 +3,6 @@ package com.example.composetutorial.ui.common
 import java.text.Normalizer
 import java.util.Locale
 
-// TODO: Not here, but since I've used z spelling here and am generally following US-ish Android/Compose standards, should I rename "sanitise*" functions?
-
 // From discussion with LLMs and doing my own web searches, we need something like the ICU string
 // search service (https://unicode-org.github.io/icu/userguide/collation/string-search) to do really
 // good substring searches in different languages. This is apparently quite large and Android
@@ -19,15 +17,13 @@ import java.util.Locale
 // Turkish case users want to search for "istanbul" and have it match "İstanbul" even though they
 // are different according to the locale, simply because it's a lot more convenient to type the
 // former.
-// TODO: It might be good to fake up some data with these strings (copy and paste into emulator!)
-// and see if we are apparently getting this right.
 fun String.normalizedForSearch() = Normalizer.normalize(this, Normalizer.Form.NFD)
     // Remove diacritics
     .replace("\\p{M}".toRegex(), "")
     // Remove all forms of apostrophes/quotes
     .replace("['’ʻʼʽʾˮˈˌʹʺ˝]".toRegex(), "")
-    // Replace all remaining punctuation and symbols with spaces
-    .replace("[\\p{Punct}\\p{Symbol}]".toRegex(), " ")
+    // Replace all remaining punctuation with spaces. ENHANCE: LLM suggestion was to include \\p{Symbol} but it's apparently not supported in Java/Kotlin, so I've removed it without replacing it with anything.
+    .replace("[\\p{Punct}]".toRegex(), " ")
     // Collapse adjacent whitespace into single spaces
     .replace("\\s+".toRegex(), " ")
     // Trim leading/trailing whitespace
