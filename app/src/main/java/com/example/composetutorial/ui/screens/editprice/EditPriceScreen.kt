@@ -247,11 +247,7 @@ private fun EditPriceScreenPackSize(
     // 6.dp here again - and check what other bits of the code use for their error offsets - before
     // automatically increasing the spacing.)
 
-    // TODO: ALL THE WEIGHTS HERE INCLUDING THE LEVELS AT WHICH THEY ARE APPLIED ARE UP IN THE AIR AND SHOULD BE CHECKED
-
-    // TODO DELETE?Column {
     if (viewModel.showPackCount) {
-        //Row {//TODO(modifier = Modifier.fillMaxWidth().background(Color.Red)) {
         ValidatedNumericTextField(
             value = packCountNumber,
             locale = uiContent.staticContent.frozenLocale,
@@ -261,7 +257,7 @@ private fun EditPriceScreenPackSize(
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditPriceViewModel.EditableField.PACK_COUNT,
             errorHighlightOffset = 4.dp, // TODO!?
-            numericTextFieldModifier = Modifier.fillMaxWidth(), //TODObaseValidatedTextFieldModifier = Modifier.weight(1f),
+            numericTextFieldModifier = Modifier.fillMaxWidth(),
             // TODO: Now this has an entire row to itself we could use a really explicit label like "Multipack count" or "Multipack quantity" if it would help - but it's probably as well not to, and don't forget ideally we are being consistent with the use of plain "count" on the supportingtext shown in the item definition for the multipack toggle
             label = { Text(stringResource(R.string.label_count)) },
             onValueChange = {
@@ -277,9 +273,6 @@ private fun EditPriceScreenPackSize(
             },
             enabled = saveStatus.isNotBusy(),
         )
-        //}
-
-        //TODODELETE}
 
         Spacer(modifier = Modifier.height(16.dp))
     }
@@ -309,7 +302,6 @@ private fun EditPriceScreenPackSize(
             },
             enabled = saveStatus.isNotBusy(),
             numericTextFieldModifier = Modifier
-                // TODO DELETE? .weight(1f)
                 .fillMaxSize()
         )
 
@@ -340,30 +332,15 @@ private fun EditPriceScreenPackSize(
                         onChange()
                     }
                 },
-                // TODO: It might help things to have no label on this dropdown - it is right next
-                // to the numeric part of the quantity and it is kind of redundant, and it might
-                // help with the tight horizontal spacing. As a somewhat related problem though, the
-                // horizontal space assigned to each of the composables in this Row makes no sense
-                // at all and I cannot get anything I really want to work anyway, so it may be worth
-                // experimenting further with this aspect too. (Outdated TODO with new layout)
                 label = { Text(stringResource(R.string.label_unit)) },
-                //label = { Text("") }, // TODO!?
                 items = units,
-                // Although this could be a problem (particularly with i18n), we give the dropdown
-                // "about enough horizontal space" by calculating a hand-tuned multiplier of
-                // fontSizeDp. (I cannot get it to size itself to its non-dropdown width and use
-                // wrapContentWidth(), which would otherwise be ideal.) We could just give it equal
-                // weight with the pack count and pack size fields and let the system size them all.
-                // However, since pack count and pack size need to be able to show supportingText
-                // underneath them for errors, we want to give them as much space as possible. TODO COMMENT NOW OUT OF DATE
-                modifier = Modifier.weight(1f), // Modifier.width(6 * fontSizeDp), // wrapContentWidth(), // weight(0.75f), // TODO: *May* need to make this 0.5 if we don't have a count, maybe we can find something that works in both cases
+                modifier = Modifier.weight(1f),
                 getId = { it.id },
                 // It's generally a good thing that we use non-breaking spaces in unit symbols, but
                 // here the symbol is used in isolation so there is no possibility of another space
                 // allowing a natural break. So we turn the non-breaking space back into a regular
-                // space. "fl"/"oz" is better than "fl o"/"z" if we are force to wrap.
-                // TODO: With the current layout we don't really have any realistic possibility
-                // of wrapping here, so we could remove this. But it isn't wrong as such.
+                // space. "fl"/"oz" is better than "fl o"/"z" if we are forced to wrap, although I
+                // suspect we are very unlikely to need to.
                 getCollapsedItemText = { context.getString(it.symbol).replace("$nonBreakingSpace", " ") },
                 getItemText = { "${context.getString(it.fullName)} (${context.getString(it.symbol)})" },
                 getDividerBetween = { previousItem, item ->
@@ -376,5 +353,4 @@ private fun EditPriceScreenPackSize(
         }
 
     }
-    //TODODELETE}
 }
