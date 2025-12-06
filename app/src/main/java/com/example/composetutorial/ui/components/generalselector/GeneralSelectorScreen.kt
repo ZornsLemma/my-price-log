@@ -143,7 +143,7 @@ fun <T> GeneralSelectorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = screenHorizontalBorder)
-                        .padding(bottom = 8.dp), // TODO: screenVerticalBorder?
+                        .padding(bottom = 8.dp),
                     singleLine = true,
                 )
             }
@@ -151,7 +151,6 @@ fun <T> GeneralSelectorScreen(
             val dataListSorted = dataList.rememberSortedByLocale { getName(it) }
             Box(
                 modifier = Modifier
-                    //.background(Color.Green /* TODO! */)
                     .fillMaxWidth()
             ) {
                 dataList.forEach { println("Item: $it, ID: ${getId(it)}") }
