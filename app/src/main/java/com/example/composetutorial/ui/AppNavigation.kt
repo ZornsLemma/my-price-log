@@ -180,7 +180,6 @@ fun AppNavigation() {
             exitTransition = { ExitTransition.None },
             popEnterTransition = { EnterTransition.None },
         ) { backStackEntry ->
-            Log.d("MyApp", "backStackEntry.id ${backStackEntry.id}")
             val locale = LocalConfiguration.current.locales[0]
             val viewModel = viewModel<HomeViewModel>(backStackEntry, factory = AppViewModelProvider.Factory)
             LaunchedEffect(locale) {
@@ -280,13 +279,11 @@ fun AppNavigation() {
                     getId = { it.id },
                     getName = { it.name },
                     onAddClick = {
-                        Log.d("MyAppGS", "Add data set")
                         sharedViewModel.setEditDataSetScreenInitialUiContent(null, locale)
                         navController.navigate("editDataSet")
                     },
                     addContentDescription = stringResource(R.string.content_description_add_data_set),
                     onItemSelected = {
-                        Log.d("MyAppGS", "selected $it")
                         sharedViewModel.setEditDataSetScreenInitialUiContent(it, locale)
                         navController.navigate("editDataSet")
                     })
@@ -329,13 +326,11 @@ fun AppNavigation() {
                         // used to select an item directly from the home screen or via "Edit
                         // products". It's handy to be able to directly add a missing item when
                         // searching from the home screen.
-                        Log.d("MyAppGS", "Add item")
                         sharedViewModel.setEditItemScreenInitialUiContent(null, viewModel.uiContent.staticContent.dataSet)
                         navController.navigate("editItem")
                     },
                     addContentDescription = stringResource(R.string.content_description_add_item),
                     onItemSelected = {
-                        Log.d("MyAppGS", "selected $it")
                         if (!select) {
                             sharedViewModel.setEditItemScreenInitialUiContent(
                                 it,
@@ -380,13 +375,11 @@ fun AppNavigation() {
                     getId = { it.id },
                     getName = { it.name },
                     onAddClick = {
-                        Log.d("MyAppGS", "Add source")
                         sharedViewModel.setEditSourceScreenInitialUiContent(null, viewModel.uiContent.staticContent.dataSet, locale)
                         navController.navigate("editSource")
                     },
                     addContentDescription = stringResource(R.string.content_description_add_source),
                     onItemSelected = {
-                        Log.d("MyAppGS", "selected $it")
                         sharedViewModel.setEditSourceScreenInitialUiContent(it, viewModel.uiContent.staticContent.dataSet, locale)
                         navController.navigate("editSource")
                     })
@@ -484,7 +477,6 @@ fun AppNavigation() {
                         } else {
                             // The user saved the edit, so select the edited item and return to the
                             // home screen.
-                            Log.d("MyAppQZ", "newSelectedItemId=$newSelectedItemId")
                             setSelectedItemIdAsync(context, viewModel.uiContent.staticContent.dataSet.id, newSelectedItemId)
                             navController.popBackStack("home", inclusive = false)
                         }
@@ -596,7 +588,6 @@ fun AppNavigation() {
 
     if (showRestartDialog) {
         LaunchedEffect(Unit) {
-            Log.d("MyAppFFS", "activity $activity")
             delay(1500)
             safeRestartApp(activity!!)
         }

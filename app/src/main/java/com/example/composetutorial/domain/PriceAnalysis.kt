@@ -163,7 +163,6 @@ fun analysePrices(
         .filter { it.ageClass != AgeClass.ANCIENT }
         .map { it.unitPrice.numerator }
 
-    Log.d("MyApp", "recentEnoughPriceList $recentEnoughPriceList")
     val priceClassificationThresholds = if (recentEnoughPriceList.size <= 2) {
         null
     } else {

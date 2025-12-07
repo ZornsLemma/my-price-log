@@ -108,7 +108,6 @@ fun PackPriceAndSizeRow(
                     includeDisplayOnly = true
                 )
             }
-        Log.d("MyAppQA", "measure identityHashCode=${System.identityHashCode(quantity)}")
         // NB: We are using remember() here to avoid redoing an expensive computation on every
         // recomposition. We *must not* use rememberSaveable(), because it does *not* recompute when
         // navigating back after a new item is selected in another screen, due to saved state
@@ -124,7 +123,6 @@ fun PackPriceAndSizeRow(
         // not even sure when we should preserve the user's value - if for example the price changes
         // enough that our recommended denominator changes, should we override the user's selection?
         var selectedUnitPriceUnit by remember(dataSet, price, count, quantity) {
-            Log.d("MyAppQA", "rememberSaveable $price $quantity")
             val candidateDenominators = dataSet.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
                 quantity.unit,
                 includeDisplayOnly = true
@@ -134,7 +132,6 @@ fun PackPriceAndSizeRow(
                 getInstance(dataSet.currencyCode).defaultFractionDigits,
                 candidateDenominators
             )
-            Log.d("MyAppQA", "rememberSaveable returning $friendlyUnitPrice")
             mutableStateOf(friendlyUnitPrice.denominator)
         }
         // If the user chooses a "bad" unit price denominator, we might end up with the unit price
@@ -142,7 +139,6 @@ fun PackPriceAndSizeRow(
         // big deal and the alternatives (e.g. adding extra decimal places beyond the currency's
         // standard dps or rounding up instead of to nearest so the value isn't zero) are probably
         // worse.
-        Log.d("MyAppQA", "calling formatUnitPrice $price $quantity $selectedUnitPriceUnit")
         val unitPriceString =
             UnitPrice.calculate(
                 price,

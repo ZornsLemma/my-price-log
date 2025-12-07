@@ -54,7 +54,6 @@ fun createCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Stri
         val currencyCode = currency.currencyCode
         val displayName = currency.getDisplayName(locales[0])
         if (displayName.contains(currencyCode)) {
-            Log.d("MyApp", "not adding $currencyCode for $displayName")
             return Pair(currency.currencyCode, displayName)
         } else {
             return Pair(currency.currencyCode, "$displayName ($currencyCode)")

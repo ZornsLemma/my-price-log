@@ -81,7 +81,6 @@ fun UnitPrice.withFriendlyDenominator(
         val displayIntegerPart = String.format(Locale.US, "%.${currencyDecimalPlaces}f", candidateUnitPrice.numerator).substringBefore('.')
         val displayIntegerLength = if (displayIntegerPart == "0") 0 else displayIntegerPart.length
         val candidateScore = abs(displayIntegerLength - 1) + (10.0 * relativeError) - (if (candidateUnitPrice.denominator == preferredUnit) 1.1 else 0.0)
-        Log.d("MyAppFU", "$candidateDenominator ${candidateUnitPrice.numerator} $displayIntegerLength $relativeError $candidateScore")
         if (candidateScore < bestScore) {
             bestScore = candidateScore
             bestUnitPrice = candidateUnitPrice
