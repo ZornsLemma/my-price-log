@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 
-const val TAG = "PersistentUiContent"
+private const val TAG = "PersistentUiContent"
 
 // EmptyParcelable is used as a type parameter for PersistentUiContent where we don't want both
 // editable content and static content. In practice this seems to save a lot of complexity compared

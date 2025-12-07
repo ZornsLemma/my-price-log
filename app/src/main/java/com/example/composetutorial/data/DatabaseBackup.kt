@@ -10,6 +10,8 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 
+private const val TAG = "DatabaseBackup"
+
 fun backupDatabase(context: Context, targetUri: Uri) {
     val db = AppDatabase.getDatabase(context)
     // The next line is voodoo which Grok suggested "might" be necessary and ChatGPT seemed to
@@ -108,7 +110,7 @@ private fun checkDatabaseRestoreCandidate(context: Context, dbPath: String) {
             )
             cursor.use { cursor ->
                 val tableExists = cursor.moveToFirst()
-                Log.d("MyAppRS", "tableExists $table: $tableExists")
+                Log.d(TAG, "tableExists $table: $tableExists")
                 if (!tableExists) {
                     throw IllegalStateException(context.getString(R.string.message_the_database_to_restore_was_not_created_with_this_app))
                 }

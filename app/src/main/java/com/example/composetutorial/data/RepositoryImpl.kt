@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.util.concurrent.Executors
 
+private const val TAG = "RepositoryImpl"
+
 const val DB_NAME = "main.db"
 const val DB_VERSION = 1
 @Database(
@@ -236,8 +238,8 @@ class RepositoryImpl(
     override suspend fun revertPrice(priceBeforeRevert: Price, priceAfterRevert: Price) {
         // We don't include details in all the messages below, so let's log the inputs here once,
         // which in conjunction with the database should be enough to investigate problems.
-        Log.d("MyApp", "priceBeforeRevert: $priceBeforeRevert")
-        Log.d("MyApp", "priceAfterRevert: $priceAfterRevert")
+        Log.d(TAG, "priceBeforeRevert: $priceBeforeRevert")
+        Log.d(TAG, "priceAfterRevert: $priceAfterRevert")
 
         // Check priceBeforeRevert and priceAfterRevert relate to the same price. It might be
         // arguably OK for "id" not to match between priceBeforeRevert and priceAfterRevert, but in

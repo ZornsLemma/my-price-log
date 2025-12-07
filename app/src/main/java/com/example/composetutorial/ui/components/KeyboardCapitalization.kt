@@ -10,7 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 
-const val TAG = "KeyboardCapitalization"
+private const val TAG = "KeyboardCapitalization"
 
 @Composable
 fun keyboardCapitalization(@StringRes resId: Int): KeyboardCapitalization =
