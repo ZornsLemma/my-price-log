@@ -71,7 +71,6 @@ fun EditItemScreen(
     val dataSet = viewModel.uiContent.staticContent.dataSet
 
     val itemReferenceCount by viewModel.itemReferenceCountFlow.collectAsStateWithLifecycle(null)
-    Log.d("MyApp", "itemReferenceCount $itemReferenceCount")
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -101,7 +100,6 @@ fun EditItemScreen(
     ) { showDeleteSpinner ->
         var name by rememberSyncedTextFieldValue(editableItem.name)
         val nameValidationRules by viewModel.nameValidationRules.collectAsStateWithLifecycle()
-        Log.d("MyApp", "nameValidationRules $nameValidationRules")
         ValidatedFilteredTextField(
             label = { Text(stringResource(R.string.label_name)) },
             keyboardOptions = KeyboardOptions(capitalization = keyboardCapitalization(R.string.keyboard_capitalization_item_name)),
@@ -199,7 +197,6 @@ fun EditItemScreen(
                             Text(
                                 text = stringResource(id.nameResource)
                             )
-                            Log.d("MyApp", "supportingText $supportingText")
                             if (supportingText != null) {
                                 Text(
                                     text = supportingText,

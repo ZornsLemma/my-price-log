@@ -63,7 +63,6 @@ fun EditSourceScreen(
     val dataSet = viewModel.uiContent.staticContent.dataSet
 
     val sourceReferenceCount by viewModel.sourceReferenceCountFlow.collectAsStateWithLifecycle(null)
-    Log.d("MyApp", "sourceReferenceCount $sourceReferenceCount")
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
@@ -94,7 +93,6 @@ fun EditSourceScreen(
     ) { showDeleteSpinner ->
         var name by rememberSyncedTextFieldValue(editableSource.name)
         val nameValidationRules by viewModel.nameValidationRules.collectAsStateWithLifecycle()
-        Log.d("MyApp", "nameValidationRules $nameValidationRules")
         ValidatedFilteredTextField(
             label = { Text(stringResource(R.string.label_name)) },
             keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_source_name)),
@@ -184,7 +182,6 @@ fun EditSourceScreen(
                             Text(
                                 text = name
                             )
-                            Log.d("MyApp", "supportingText $supportingText")
                             if (supportingText != null) {
                                 Text(
                                     text = supportingText,

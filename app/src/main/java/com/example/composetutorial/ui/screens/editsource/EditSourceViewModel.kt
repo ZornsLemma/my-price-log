@@ -54,7 +54,6 @@ class EditSourceViewModel(
 
     val sourceReferenceCountFlow = uiContent.originalContent.id.let { sourceId ->
         if (sourceId != 0L) {
-            Log.d("MyAppQQ", "0L case occurring (probably just internally)")
             repository.countPricesForSource(sourceId)
         } else {
             flowOf(0L) // new sources have no references
@@ -95,7 +94,6 @@ class EditSourceViewModel(
     val saveValidationEvents = _saveValidationEvents.asSharedFlow()
 
     suspend fun validateForSave(): Boolean {
-        Log.d("MyAppESS", "validateForSave")
         val nameValidationRules = nameValidationRules.value.value ?: return false
         if (!validationRulesOk(
                 nameValidationRules,
@@ -113,7 +111,6 @@ class EditSourceViewModel(
             _saveValidationEvents.emit(EditableField.LOYALTY_PERCENTAGE)
             return false
         }
-        Log.d("MyAppESS", "validateForSave passed")
         return true
     }
 
@@ -129,11 +126,9 @@ class EditSourceViewModel(
     }
 
     suspend fun performDelete() {
-        Log.d("MyApp", "entered performDelete")
         val sourceId = uiContent.editableContent.value.id
         myCheck(sourceId != 0L) { "Expected to delete an actual source but have ID 0" }
         val rowsDeleted = repository.deleteSourceById(sourceId)
-        Log.d("MyApp", "Deleted $rowsDeleted rows with sourceId $sourceId")
     }
 }
 

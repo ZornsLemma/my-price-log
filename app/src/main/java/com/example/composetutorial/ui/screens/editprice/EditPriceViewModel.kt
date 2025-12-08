@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.parcelize.Parcelize
 import java.util.Locale
 
+private const val TAG = "EditPriceViewModel"
+
 @Parcelize
 data class EditPriceScreenStaticContent(
     val dataSet: DataSet,
@@ -112,13 +114,11 @@ class EditPriceViewModel(
         // the already-focused field if there is one, otherwise the first field in the list. This
         // comment applies to all validation on all screens, not just this specific screen.
 
-        Log.d("MyAppSS", "price validation, currencyFormat ${currencyFormat}, price ${uiContent.editableContent.value.price}")
         if (!validationRulesOk(
                 currencyFormat.validationRules,
                 uiContent.editableContent.value.price
             )
         ) {
-            Log.d("MyAppSS", "price validation failed")
             _saveValidationEvents.emit(EditableField.PRICE)
             return false
         }
@@ -127,7 +127,6 @@ class EditPriceViewModel(
                 uiContent.editableContent.value.count
             )
         ) {
-            Log.d("MyAppPC", "Pack count failed validation")
             _saveValidationEvents.emit(EditableField.PACK_COUNT)
             return false
         }
@@ -152,13 +151,12 @@ class EditPriceViewModel(
             uiContent.editableContent.value == uiContent.originalContent
         ) {
             Log.d(
-                "MyApp",
+                TAG,
                 "performSave() is a no-op; returning early to avoid bloating price history"
             )
             return uiContent.editableContent.value.id
         }
         val price = uiContent.editableContent.value.toDomain(uiContent.staticContent.frozenLocale)
-        Log.d("MyApp", "saveEditablePrice price $price")
         if (price == null) {
             throw IllegalStateException("saveEditablePrice() called with an inconvertible editablePrice: ${uiContent.editableContent.value}")
         }

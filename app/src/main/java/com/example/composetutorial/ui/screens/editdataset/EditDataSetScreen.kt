@@ -60,7 +60,6 @@ fun EditDataSetScreen(
     val editableDataSet by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
 
     val dataSetReferenceCount by viewModel.dataSetReferenceCountFlow.collectAsStateWithLifecycle(null)
-    Log.d("MyApp", "dataSetReferenceCount $dataSetReferenceCount")
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 

@@ -69,7 +69,6 @@ class EditItemViewModel(
     val saveValidationEvents = _saveValidationEvents.asSharedFlow()
 
     suspend fun validateForSave(): Boolean {
-        Log.d("MyAppESS", "validateForSave")
         val nameValidationRules = nameValidationRules.value.value ?: return false
         if (!validationRulesOk(
                 nameValidationRules,
@@ -79,7 +78,6 @@ class EditItemViewModel(
             _saveValidationEvents.emit(EditableField.NAME)
             return false
         }
-        Log.d("MyAppESS", "validateForSave passed")
         return true
     }
 
@@ -91,15 +89,12 @@ class EditItemViewModel(
         debugDelay()
         // updateOrInsertItem() returns -1 if it's an update or the new ID if it was an insert.
         val newId =  repository.updateOrInsertItem(item)
-        Log.d("MyAppQZ", "updateOrInsertItem returned $newId")
         return if (newId == -1L) item.id else newId
     }
 
     suspend fun performDelete() {
-        Log.d("MyApp", "entered performDelete")
         val itemId = uiContent.editableContent.value.id
         myCheck(itemId != 0L) { "Expected to delete an actual item but have ID 0" }
         val rowsDeleted = repository.deleteItemById(itemId)
-        Log.d("MyApp", "Deleted $rowsDeleted rows with itemId $itemId")
     }
 }

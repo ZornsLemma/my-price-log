@@ -151,7 +151,6 @@ fun HomeScreen(
     // for the very first frame.
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val (loading, uiContent) = uiState
-    Log.d("MyAppBG", "uiContent.dataSetIdState ${uiContent.dataSetIdState} uiContent.sourceIdState ${uiContent.sourceIdState}")
 
     if (uiContent.dataSetIdState is LoadState.Loading) {
         // Just leave the home screen blank until we get the first async population of the selected
@@ -230,7 +229,6 @@ private fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
             Popup(
                 alignment = Alignment.Center,
                 onDismissRequest = {
-                    Log.d("MyApp", "ODR")
                     // We are trying to emulate the user pressing the back button here.
                     // navController.popBackStack() empirically doesn't work, I think because it's
                     // for our internal back stack. The idea is that if the activity wasn't blocked
@@ -607,7 +605,6 @@ private fun HomeScreenContent(
             .consumeWindowInsets(innerPadding)
             .padding(horizontal = screenHorizontalBorder, vertical = screenVerticalBorder)
     ) {
-        Log.d("MyAppSU", "dataSet $dataSet dataSetList $dataSetList")
         if (dataSet == null) {
             // These are corner cases, caused by the current data set being deleted or all data
             // sets being deleted. It wouldn't technically hurt to show the normal screen content,
@@ -653,8 +650,6 @@ private fun HomeScreenContent(
                     // exit = TODO?
                 ) {
                     Column {
-                        Log.d("MyApp", "HSS dataSet $dataSet")
-                        Log.d("MyApp", "HSS item $item")
                         ItemSourceInfoLive(
                             viewModel = viewModel,
                             asyncOperationStatus = asyncOperationStatus,
@@ -892,7 +887,6 @@ private fun PriceComparisonCard(
                     listOf<@Composable (AugmentedPrice) -> Unit>(
                         { augmentedPrice -> Text(augmentedPrice.sourceName) },
                         { augmentedPrice ->
-                            Log.d("MyAppAA", "inside columns, unitPrice ${augmentedPrice.unitPrice}, headerUnitPriceDenominator $headerUnitPriceDenominator")
                             Text(
                                 formatPrice(
                                     augmentedPrice.unitPrice.withDenominator(headerUnitPriceDenominator).numerator,
@@ -1296,7 +1290,6 @@ private fun ItemSourceSelector(
             listOf(Pair(sourceIdNone, sourceNameNone)) + sourceList.sortedByLocale({ it.name }, locale)
                 .map { Pair(it.id, it.name) }
         }
-        Log.d("MyApp", "sourceListSorted $sourceListSorted")
         // ENHANCE: I did wonder if MyExposedDropdownMenuBox should allow null IDs in "items" to
         // avoid the need for the sourceIdNone hack here, but I really didn't want to have to make
         // every user of it be null-tolerant when it won't hand you a null itself unless you gave it
@@ -1347,7 +1340,6 @@ private fun RelativeTimeText(augmentedPrice: AugmentedPrice) {
             // so we're not executing every second for the first minute when the display only has
             // minute resolution.
             val ageInMinutes = Duration.between(confirmedAt, Instant.now()).toMinutes()
-            Log.d("MyAppRTT", "ageInMinutes: $ageInMinutes")
             val delayDuration = when {
                 ageInMinutes < 1       -> 1_000L           // update every second for first minute
                 ageInMinutes < 24 * 60 -> 60_000L          // every minute for first day
@@ -1355,7 +1347,6 @@ private fun RelativeTimeText(augmentedPrice: AugmentedPrice) {
             }
             delay(delayDuration)
             now = Instant.now()
-            Log.d("MyAppRTT", "updated now: $now")
         }
     }
 

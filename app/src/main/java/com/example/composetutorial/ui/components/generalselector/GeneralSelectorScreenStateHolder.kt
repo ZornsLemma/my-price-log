@@ -44,10 +44,7 @@ class GeneralSelectorScreenStateHolder<T>(
             getName(it).normalizedForSearch().contains(normalizedQuery)
         }
     }
-        .onEach { emittedList -> debugDelay(); Log.d(
-            "MyAppGS",
-            "Room emitted list: ${System.identityHashCode(emittedList)}"
-        )
+        .onEach { emittedList -> debugDelay()
         }
         .stateIn(
             scope = viewModelScope,

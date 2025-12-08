@@ -97,7 +97,6 @@ class EditDataSetViewModel(
     val saveValidationEvents = _saveValidationEvents.asSharedFlow()
 
     suspend fun validateForSave(): Boolean {
-        Log.d("MyAppESS", "validateForSave")
         val nameValidationRules = nameValidationRules.value.value ?: return false
         val editableDataSet = uiContent.editableContent.value
         if (!validationRulesOk(nameValidationRules, editableDataSet.name)) {
@@ -119,7 +118,6 @@ class EditDataSetViewModel(
             return false
         }
 
-        Log.d("MyAppESS", "validateForSave passed")
         return true
     }
 
@@ -134,10 +132,8 @@ class EditDataSetViewModel(
     }
 
     suspend fun performDelete() {
-        Log.d("MyApp", "entered performDelete")
         val dataSetId = uiContent.editableContent.value.id
         myCheck(dataSetId != 0L) { "Expected to delete an actual data set but have ID 0" }
         val rowsDeleted = repository.deleteDataSetById(dataSetId)
-        Log.d("MyApp", "Deleted $rowsDeleted rows with dataSetId $dataSetId")
     }
 }

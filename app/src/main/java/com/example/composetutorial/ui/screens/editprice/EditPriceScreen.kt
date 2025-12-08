@@ -185,7 +185,6 @@ private fun EditPriceScreenPrice(
     var packPrice by rememberSyncedTextFieldValue(editablePrice.price)
     val currencyFormat = viewModel.currencyFormat
 
-    Log.d("MyAppSS", "saveAttempted ${viewModel.generalEditScreenStateHolder.saveAttempted}")
     ValidatedNumericTextField(
         value = packPrice,
         locale = uiContent.staticContent.frozenLocale,
