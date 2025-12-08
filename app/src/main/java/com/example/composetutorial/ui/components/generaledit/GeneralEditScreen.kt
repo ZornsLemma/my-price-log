@@ -67,8 +67,6 @@ fun GeneralEditScreen(
     content: @Composable () -> Unit
 ) {
     val saveStatus by stateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
-    Log.d("MyAppRGE", "GeneralEditScreen saveStatus=$saveStatus")
-
     val isNotBusy = saveStatus.isNotBusy()
     var showConfirmDiscardDialog by rememberSaveable { mutableStateOf(false) }
     var showErrorDialogMessage by rememberSaveable { mutableStateOf<String?>(null) }
@@ -134,22 +132,16 @@ fun GeneralEditScreen(
         stateHolder.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
                 AsyncOperationStatus.Idle -> {
-                    Log.d("MyAppRGE", "collected idle")
                     saving = false
-                    Log.d("MyAppRGE", "set saving to false")
                     onIdle()
-                    Log.d("MyAppRGE", "called onIdle")
                 }
 
                 is AsyncOperationStatus.Success -> {
-                    Log.d("MyAppRGE", "collected success")
                     requestCloseDebounced(event.id)
                 }
 
                 is AsyncOperationStatus.Error -> {
-                    Log.d("MyAppRGE", "collected error")
                     stateHolder.asyncOperationStatus.update(AsyncOperationStatus.Idle)
-                    Log.d("MyAppRGE", "set state to idle")
                     showErrorDialogMessage = event.message
                 }
 
@@ -174,7 +166,6 @@ fun GeneralEditScreen(
                         // nothing to save, but it's probably best (given there's no history table
                         // which would get bloated) just to save regardless.
                         stateHolder.saveAttempted = true
-                        Log.d("MyAppSS", "set saveAttempted to true")
                         runGeneralEditScreenOperation(
                             stateHolder = stateHolder,
                             coroutineScope = coroutineScope,
@@ -273,14 +264,11 @@ fun runGeneralEditScreenOperation(
         if (isSafeToPerform()) {
             stateHolder.asyncOperationStatus.update(AsyncOperationStatus.Busy)
             try {
-                Log.d("MyAppRGE", "runGeneralEditScreenOperation about to call perform")
                 debugThrow()
                 val id = perform()
-                Log.d("MyAppQZ", "perform() returned id $id")
                 debugDelay()
                 stateHolder.asyncOperationStatus.update(AsyncOperationStatus.Success(id))
             } catch (e: Exception) {
-                Log.d("MyAppRGE", "runGeneralEditScreenOperation caught exception")
                 stateHolder.asyncOperationStatus.update(AsyncOperationStatus.Error("runGeneralEditScreenOperation failed: ${e.toString()}"))
             }
         }

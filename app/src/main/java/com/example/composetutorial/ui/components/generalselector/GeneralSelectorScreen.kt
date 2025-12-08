@@ -62,7 +62,6 @@ fun <T> GeneralSelectorScreen(
     showSearch: Boolean = false,
 ) {
     val dataList by stateHolder.dataFlow.collectAsStateWithLifecycle()
-    Log.d("MyAppGS", "dataList $dataList")
 
     val floatingActionButton: (@Composable () -> Unit) = if (onAddClick == null) {
         {}

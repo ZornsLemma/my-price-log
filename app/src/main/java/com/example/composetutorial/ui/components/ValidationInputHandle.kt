@@ -68,8 +68,6 @@ fun Modifier.validationInputHandleFocusRequester(handle: ValidationInputHandle):
 }
 
 suspend fun ValidationInputHandle.requestUserAttention(focusManager: FocusManager) {
-    Log.d("MyAppScroll", "$bringIntoViewOffset $bringIntoViewHeight")
-
     if (!focusRequesterInitialised) {
         // If we didn't (couldn't meaningfully) initialise the focusRequester, that means the target
         // can't be focused. We therefore content ourselves with removing the focus from anything
@@ -78,7 +76,6 @@ suspend fun ValidationInputHandle.requestUserAttention(focusManager: FocusManage
         // ENHANCE: I half wonder if we should be using Modifier.focusTarget() to make it possible
         // to focus things like segmented buttons. However, this seems to work and I haven't
         // experimented with alternatives.
-        Log.d("MyApp", "clearFocus")
         focusManager.clearFocus()
     }
 
@@ -95,7 +92,6 @@ suspend fun ValidationInputHandle.requestUserAttention(focusManager: FocusManage
         // I am a bit unsure as to why, but it seems to work much better to do requestFocus()
         // *after* bringIntoView(). The precise behaviour depends on whether the control already has
         // the focus and maybe whether there is a keyboard on screen already and what type it is.
-        Log.d("MyApp", "requestFocus")
         // ENHANCE: It's possible (speculative) that doing a clearFocus() before requestFocus()
         // would help with some corner cases.
         focusRequester.requestFocus()
