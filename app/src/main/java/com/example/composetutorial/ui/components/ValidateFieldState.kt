@@ -16,6 +16,8 @@ import com.example.composetutorial.ui.common.failedValidationRuleOrNull
 import com.example.composetutorial.ui.defaultValidationMessageDelayMillis
 import kotlinx.coroutines.delay
 
+private const val TAG = "ValidateFieldState"
+
 // TODO: This is not a data class and I never even thought about it but although I find the
 // distinction very confusing in practical Compose, FWIW ChatGPT was very clear that this *should
 // not* be a data class (we might get away with it, but it would be prone to misuse if someone used
@@ -85,7 +87,7 @@ fun <T> ValidateFieldState(
             value
         ) else null
 
-        Log.d("MyAppXQ", "failedValidationRule: $failedValidationRule")
+        Log.d(TAG, "failedValidationRule: $failedValidationRule")
         validationResult.value = failedValidationRule?.message?.asString(context)
     }
 

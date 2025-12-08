@@ -14,6 +14,8 @@ import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.defaultErrorHighlightOffset
 import kotlinx.coroutines.flow.SharedFlow
 
+private const val TAG = "ValidationErrorHighlightBox"
+
 @Composable
 fun <T, U> ValidationErrorHighlightBox(
     value: T,
@@ -56,7 +58,7 @@ fun <T, U> ValidationErrorHighlightBox(
     val focusManager = LocalFocusManager.current
     LaunchedEffect(Unit) {
         validationFlow.collect { field ->
-            Log.d("MyApp", "LaunchedEffect saveValidationError $field")
+            Log.d(TAG, "LaunchedEffect collected error: $field")
             when (field) {
                 validationFlowFieldId -> {
                     validationInputHandle.requestUserAttention(focusManager)
