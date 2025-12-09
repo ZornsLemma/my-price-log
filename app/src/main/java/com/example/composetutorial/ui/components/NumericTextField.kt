@@ -26,10 +26,7 @@ fun NumericTextField(
     enabled: Boolean = true,
     isError: Boolean = false,
     supportingText: @Composable (() -> Unit)? = null,
-    // TODO: Should I get rid of this default? It may be that some callers should be using
-    // KeyboardType.Number, and it feels best to make the caller actively decide rather than maybe
-    // just forgetting about this aspect.
-    keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+    keyboardOptions: KeyboardOptions,
     interactionSource: MutableInteractionSource? = null,
 ) {
     FilteredTextField(

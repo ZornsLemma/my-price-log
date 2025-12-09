@@ -1,5 +1,6 @@
 package com.example.composetutorial.ui.screens.editprice
 
+import androidx.compose.ui.text.input.KeyboardType
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -212,6 +213,7 @@ private fun EditPriceScreenPrice(
             }
         },
         enabled = saveStatus.isNotBusy(),
+        keyboardOptions = KeyboardOptions(keyboardType = if (currencyFormat.decimalPlaces == 0) KeyboardType.Number else KeyboardType.Decimal),
     )
 }
 
@@ -270,6 +272,7 @@ private fun EditPriceScreenPackSize(
                 }
             },
             enabled = saveStatus.isNotBusy(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -300,7 +303,8 @@ private fun EditPriceScreenPackSize(
             },
             enabled = saveStatus.isNotBusy(),
             numericTextFieldModifier = Modifier
-                .fillMaxSize()
+                .fillMaxSize(),
+            keyboardOptions = KeyboardOptions(keyboardType = if (uiContent.editableContent.value.measurementUnit.maxDecimals == 0) KeyboardType.Number else KeyboardType.Decimal),
         )
 
         if (item.defaultUnit.quantityType != QuantityType.ITEM) {

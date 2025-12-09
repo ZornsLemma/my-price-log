@@ -1,5 +1,6 @@
 package com.example.composetutorial.ui.components
 
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -34,6 +35,7 @@ fun <T> ValidatedNumericTextField(
     onValueChange: (TextFieldValue) -> Unit,
     enabled: Boolean,
     numericTextFieldModifier: Modifier = Modifier,
+    keyboardOptions: KeyboardOptions,
 ) {
     ValidationErrorHighlightBox(
         value.text,
@@ -60,6 +62,7 @@ fun <T> ValidatedNumericTextField(
                 validationResult,
                 color = MaterialTheme.colorScheme.error
             ),
+            keyboardOptions = keyboardOptions,
             interactionSource = interactionSource,
         )
     }
@@ -67,6 +70,8 @@ fun <T> ValidatedNumericTextField(
 
 // This assumes input filtering has already excluded characters other than digits, space, comma and
 // full stop.
+// ENHANCE: It might be nice if the returned value had a keyboardType or a "maxDecimals" value
+// embedded in it, to avoid duplicating logic when deciding on keyboardType for text fields.
 fun numericValidationRules(
     locale: Locale,
     allowDecimals: Boolean = true,
