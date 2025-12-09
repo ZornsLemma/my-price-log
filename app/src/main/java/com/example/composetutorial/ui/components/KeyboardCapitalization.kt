@@ -14,13 +14,13 @@ private const val TAG = "KeyboardCapitalization"
 
 @Composable
 fun keyboardCapitalization(@StringRes resId: Int): KeyboardCapitalization =
-    when (val str = stringResource(resId)) { // TODO: rename "str"?
+    when (val option = stringResource(resId)) {
         "characters" -> KeyboardCapitalization.Characters
         "none" -> KeyboardCapitalization.None
         "sentences" -> KeyboardCapitalization.Sentences
         "words" -> KeyboardCapitalization.Words
         else -> {
-            Log.w(TAG, "Resource '${resourceName(LocalContext.current, resId)}' has unknown keyboard capitalization string '$str'")
+            Log.w(TAG, "Resource '${resourceName(LocalContext.current, resId)}' has unknown keyboard capitalization option '$option'")
             KeyboardCapitalization.None
         }
     }
