@@ -11,6 +11,7 @@ const val emDash = "\u2014"
 const val copyrightSymbol = "\u00a9"
 const val bulletPoint = "\u2022"
 const val nonBreakingSpace = "\u00a0"
+const val zeroWidthSpace = "\u200b"
 
 // Since all our data is local, we generally expect to be able to respond promptly to user requests.
 // Things like the dropdown they touched closing or the button they touched animating provide

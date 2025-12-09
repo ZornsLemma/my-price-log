@@ -3,6 +3,7 @@ package com.example.composetutorial.ui.common
 import android.content.Context
 import com.example.composetutorial.domain.UnitPrice
 import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.ui.zeroWidthSpace
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
@@ -32,14 +33,13 @@ fun formatPrice(price: Double, dataSet: DataSet, locale: Locale): String {
     }
 }
 
-// TODO: Possibly we should add a zero-width space (\u200b ?) after the "perSymbol" just in case.
-// The price and symbol may reasonably use non-breaking spaces to keep the value and the unit
-// together, and that may mean there are no actual spaces, so offering this as a breaking point in
-// the event we have to wrap might improve the display.
+// In practice it probably won't be necessary and may not help, but we put a zero-width space in
+// here after perSymbol to hint at a good place to wrap if necessary. The price and symbol may have
+// spaces in but they are likely (and with good reason) non-breaking spaces.
 fun UnitPrice.format(context: Context, dataSet: DataSet, locale: Locale) =
     "${formatPrice(
         numerator,
         dataSet,
         locale
     )
-    }${denominator.perSymbol}${context.getString(denominator.symbol)}"
+    }${denominator.perSymbol}${zeroWidthSpace}${context.getString(denominator.symbol)}"
