@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 import java.io.InputStream
 import java.io.OutputStream
 
-// TODO: ChatGPT/Grok magic
 object UserPreferencesSerializer : Serializer<UserPrefs.UserPreferences> {
     override val defaultValue: UserPrefs.UserPreferences = UserPrefs.UserPreferences.getDefaultInstance()
 
@@ -29,7 +28,6 @@ object UserPreferencesSerializer : Serializer<UserPrefs.UserPreferences> {
     }
 }
 
-// TODO: ChatGPT magic
 val Context.userPreferencesStore: DataStore<UserPrefs.UserPreferences> by dataStore(
     fileName = "user_prefs.pb",
     serializer = UserPreferencesSerializer

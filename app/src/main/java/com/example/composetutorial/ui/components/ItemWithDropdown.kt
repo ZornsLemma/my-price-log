@@ -110,26 +110,3 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     }
 }
 
-// A simple wrapper around DropdownMenuItem applying MD3 formatting.
-// ENHANCE: This isn't fully general as I don't want to add stuff that isn't going to get tested; I
-// can always expand it later.
-// TODO: There might be a case for moving this into its own file - it is used elsewhere
-@Composable
-fun MyDropdownMenuItem(
-    text: @Composable () -> Unit,
-    onClick: () -> Unit,
-    enabled: Boolean = true,
-) {
-    DropdownMenuItem(
-        text = {
-            ProvideTextStyle(MaterialTheme.typography.bodyLarge) {
-                // Default colour seems to be correct so don't fiddle with it.
-                text()
-            }
-        },
-        contentPadding = PaddingValues(start = menuLeftPadding, end = menuRightPadding),
-        enabled = enabled,
-        onClick = onClick,
-    )
-}
-

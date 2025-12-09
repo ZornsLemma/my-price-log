@@ -22,10 +22,10 @@ fun ErrorHighlightBox(
     borderWidth: Dp = 2.dp,
     offset: Dp = defaultErrorHighlightOffset,
     modifier: Modifier = Modifier,
-    validationTarget: ValidationInputHandle, // TODO: Rename validationInputHandle???
+    validationInputHandle: ValidationInputHandle,
     content: @Composable () -> Unit
 ) {
-    var visible = validationTarget.errorHighlightBoxVisible.value
+    var visible = validationInputHandle.errorHighlightBoxVisible.value
     var alpha = remember { Animatable(0f) }
     LaunchedEffect(visible) {
         if (visible) {
@@ -75,7 +75,7 @@ fun ErrorHighlightBox(
 
             }
             .validationInputHandleBringIntoViewRequester(
-                validationTarget, offset = offset + 2 * borderWidth
+                validationInputHandle, offset = offset + 2 * borderWidth
             )
     ) {
         content()

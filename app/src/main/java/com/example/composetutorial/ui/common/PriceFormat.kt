@@ -3,6 +3,7 @@ package com.example.composetutorial.ui.common
 import android.content.Context
 import com.example.composetutorial.domain.UnitPrice
 import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.ui.nonBreakingSpace
 import com.example.composetutorial.ui.zeroWidthSpace
 import java.text.NumberFormat
 import java.util.Currency
@@ -26,10 +27,7 @@ fun formatPrice(price: Double, dataSet: DataSet, locale: Locale): String {
         // even if we did, we'd probably already be using those in preference to
         // getCurrencyInstance(), so they wouldn't help us at this point.
         val numberFormat = NumberFormat.getNumberInstance()
-        // TODO: The "x" instead of a space in the next line is temporary, just to make it more
-        // obvious if this code is coming into play while I am developing/testing. It probably
-        // ought to be a non-breaking space, albeit this code path should never really be used.
-        return "${dataSet.currencyCode}x${numberFormat.format(price)}"
+        return "${dataSet.currencyCode}${nonBreakingSpace}${numberFormat.format(price)}"
     }
 }
 

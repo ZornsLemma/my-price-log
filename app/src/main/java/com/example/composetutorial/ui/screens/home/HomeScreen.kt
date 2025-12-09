@@ -942,6 +942,7 @@ private fun PriceComparisonCard(
 }
 
 
+// TODO: I am not sure we don't need to further tweak the layout, I am seeing "Precio normal" wrapping on a small test phone without any other weirdness (straight euro symbols, no weird numbers, no counts)
 @Composable
 private fun PriceJudgementIndicator(priceJudgement: PriceJudgement) {
     Row {
