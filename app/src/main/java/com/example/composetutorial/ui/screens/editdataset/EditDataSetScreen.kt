@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
+import com.example.composetutorial.debug.debugThrow
 import com.example.composetutorial.ui.common.createCurrencyList
 import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.components.textOrNull
@@ -77,7 +78,7 @@ fun EditDataSetScreen(
         )) },
         isDirty = { editableDataSet != originalDataSet },
         validateForSave = { viewModel.validateForSave() },
-        performSave = { viewModel.performSave(); /* throw IllegalArgumentException("TODO2") */ },
+        performSave = { viewModel.performSave(); debugThrow() },
         onIdle = {},
         requestClose = requestClose,
         deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(

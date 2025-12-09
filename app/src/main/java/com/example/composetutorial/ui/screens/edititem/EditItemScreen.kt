@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
+import com.example.composetutorial.debug.debugThrow
 import com.example.composetutorial.domain.areDifferentUnitFamilies
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.MeasurementUnit
@@ -87,7 +88,7 @@ fun EditItemScreen(
         ), dataSet.name),
         isDirty = { editableItem != originalItem },
         validateForSave = { viewModel.validateForSave() },
-        performSave = { viewModel.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
+        performSave = { viewModel.performSave(); debugThrow() },
         onIdle = {},
         requestClose = requestClose,
         deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
@@ -166,13 +167,11 @@ fun EditItemScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
-                //Spacer(modifier = Modifier.height(8.dp))
-                // TODO: Rename "id"->quantityType?
-                options.forEach { (id, supportingText) ->
+                options.forEach { (quantityType, supportingText) ->
                     val clickableModifier = if (!radioButtonsEnabled) Modifier else Modifier.clickable {
                         viewModel.setUiContentEditableItem(
                             editableItem.copy(
-                                quantityType = id
+                                quantityType = quantityType
                             )
                         )
                     }
@@ -189,13 +188,13 @@ fun EditItemScreen(
                             }, // for TalkBack / screen readers, since this is clickable not the RadioButton
                     ) {
                         RadioButton(
-                            selected = (selectedOption == id),
+                            selected = (selectedOption == quantityType),
                             enabled = radioButtonsEnabled,
                             onClick = null // the enclosing Row is clickable instead
                         )
                         Column(modifier = Modifier.padding(start = 8.dp)) {
                             Text(
-                                text = stringResource(id.nameResource)
+                                text = stringResource(quantityType.nameResource)
                             )
                             if (supportingText != null) {
                                 Text(
@@ -285,7 +284,6 @@ fun EditItemScreen(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    // TODO: If I change the "pack size" terminology elsewhere, need to change this too
                     text = stringResource(R.string.supporting_text_may_be_sold_in_multipacks),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall

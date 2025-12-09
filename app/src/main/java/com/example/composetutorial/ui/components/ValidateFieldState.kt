@@ -18,14 +18,6 @@ import kotlinx.coroutines.delay
 
 private const val TAG = "ValidateFieldState"
 
-// TODO: This is not a data class and I never even thought about it but although I find the
-// distinction very confusing in practical Compose, FWIW ChatGPT was very clear that this *should
-// not* be a data class (we might get away with it, but it would be prone to misuse if someone used
-// copy() on it and that could break things, I think). Once I refactor this and feel more
-// comfortable wit how the code works, it might be helpful to think about why (assuming ChatGPT is
-// correct, but no reason to think it's not here) this should be and maybe even must be a "class"
-// not a "data class", and perhaps have a more targeted discussion with an LLM about this, in order
-// to clarify my mental model of Kotlin and/or Compose.
 class ValidatedFieldState(
     val interactionSource: MutableInteractionSource = MutableInteractionSource(),
     val validationResult: State<String?>

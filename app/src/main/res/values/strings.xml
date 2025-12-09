@@ -100,7 +100,7 @@
     <string name="label_default_unit">Default unit</string>
     <string name="supporting_text_default_unit">Used only as a default when entering a price for the first time. You can still choose another unit.</string>
     <string name="label_may_be_sold_in_multipacks">May be sold in multipacks</string>
-    <string name="supporting_text_may_be_sold_in_multipacks">Allow entering a count as well as a pack size</string>
+    <string name="supporting_text_may_be_sold_in_multipacks">Allow entering a count as well as a size</string>
     <string name="content_description_delete">Delete</string>
     <string name="button_delete_item">Delete product</string>
     <string name="title_add_source">Add store</string>
