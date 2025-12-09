@@ -114,19 +114,6 @@ fun EditSourceScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // TODO: Can I put these string versions inside LoyaltyDiscountType or won't that play well with i18n?
-        val options = listOf(
-            Triple(LoyaltyType.NONE, stringResource(R.string.loyalty_type_none), null),
-            Triple(
-                LoyaltyType.BONUS,
-                stringResource(R.string.loyalty_type_bonus),
-                stringResource(R.string.loyalty_type_bonus_supporting_text)
-            ),
-            Triple(LoyaltyType.DISCOUNT,
-                stringResource(R.string.loyalty_type_discount),
-                stringResource(R.string.loyalty_type_discount_supporting_text)
-            )
-        )
         var selectedOption = editableSource.loyaltyType
 
         Card(
@@ -154,11 +141,11 @@ fun EditSourceScreen(
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
                 //Spacer(modifier = Modifier.height(8.dp))
-                options.forEach { (id, name, supportingText) ->
+                LoyaltyType.entries.forEach { loyaltyType ->
                     val clickableModifier = if (!saveStatus.isNotBusy()) Modifier else Modifier.clickable {
                         viewModel.setUiContentEditableSource(
                             editableSource.copy(
-                                loyaltyType = id
+                                loyaltyType = loyaltyType
                             )
                         )
                     }
@@ -175,17 +162,17 @@ fun EditSourceScreen(
                             }, // for TalkBack / screen readers, since this is clickable not the RadioButton
                     ) {
                         RadioButton(
-                            selected = (selectedOption == id),
+                            selected = (selectedOption == loyaltyType),
                             enabled = saveStatus.isNotBusy(),
                             onClick = null // Row's Modifier.clickable() handles this
                         )
                         Column(modifier = Modifier.padding(start = 8.dp)) {
                             Text(
-                                text = name
+                                text = stringResource(loyaltyType.nameResource)
                             )
-                            if (supportingText != null) {
+                            if (loyaltyType.supportingTextResource != null) {
                                 Text(
-                                    text = supportingText,
+                                    text = stringResource(loyaltyType.supportingTextResource),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )

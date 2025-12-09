@@ -78,7 +78,7 @@ fun EditDataSetScreen(
         )) },
         isDirty = { editableDataSet != originalDataSet },
         validateForSave = { viewModel.validateForSave() },
-        performSave = { viewModel.performSave(); debugThrow() },
+        performSave = { viewModel.performSave(); },
         onIdle = {},
         requestClose = requestClose,
         deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(

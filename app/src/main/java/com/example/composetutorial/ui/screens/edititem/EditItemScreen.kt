@@ -88,7 +88,7 @@ fun EditItemScreen(
         ), dataSet.name),
         isDirty = { editableItem != originalItem },
         validateForSave = { viewModel.validateForSave() },
-        performSave = { viewModel.performSave(); debugThrow() },
+        performSave = { viewModel.performSave() },
         onIdle = {},
         requestClose = requestClose,
         deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(

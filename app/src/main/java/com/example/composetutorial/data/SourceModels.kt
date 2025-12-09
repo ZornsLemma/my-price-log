@@ -1,11 +1,14 @@
 package com.example.composetutorial.data
 
 import android.os.Parcelable
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.example.composetutorial.R
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.common.formatDoubleForEditing
 import com.example.composetutorial.common.parseStringAsDoubleOrNull
@@ -127,10 +130,10 @@ fun EditableSource.toDomain(locale: Locale): Source? {
     )
 }
 
-enum class LoyaltyType(val id: Long) {
-    NONE(1),
-    BONUS(2),
-    DISCOUNT(3);
+enum class LoyaltyType(val id: Long, @field:StringRes val nameResource: Int, @field:StringRes val supportingTextResource: Int?) {
+    NONE(1, R.string.loyalty_type_none, null),
+    BONUS(2, R.string.loyalty_type_bonus, R.string.loyalty_type_bonus_supporting_text),
+    DISCOUNT(3, R.string.loyalty_type_discount, R.string.loyalty_type_discount_supporting_text);
 
     companion object {
         private val loyaltyTypeById = LoyaltyType.entries.associateBy { it.id }

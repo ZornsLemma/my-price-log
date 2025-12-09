@@ -35,11 +35,6 @@ data class EditPriceScreenStaticContent(
     val frozenLocale: Locale,
 ) : Parcelable
 
-// TODO: Here, and possibly in other ViewModels, there is a tendency to be passing parameters into
-// functions which are actually just taken out of the ViewModel's own state anyway. It may well be
-// worth removing these redundant parameters, but I will hold off for now on the vague grounds that
-// the parameters being explicit may be useful for unit testing later on. I can always refactor when
-// I've had a go at writing some tests.
 class EditPriceViewModel(
     private val repository: Repository,
     savedStateHandle: SavedStateHandle,
@@ -90,7 +85,6 @@ class EditPriceViewModel(
             maxDecimals = maxDecimals
         )
     }
-    // TODO: Maybe change members inside PersistentUiContent to remove the somewhat duplicate "content" from the three main members?
 
     @OptIn(SavedStateHandleSaveableApi::class)
     var firstPackSizeOrPriceChangeOccurred by savedStateHandle.saveable { mutableStateOf(false) }
