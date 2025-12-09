@@ -1352,7 +1352,6 @@ private fun RelativeTimeText(augmentedPrice: AugmentedPrice) {
 
     // getRelativeTimeSpanString() returns "0 min. ago" in English for ages under 60 seconds, and
     // presumably similar in other languages, so we special-case this.
-    Log.d("MyAppRTT", "$ageInSeconds $confirmedAt $now")
     val relativeTime = if (ageInSeconds < 60) stringResource(R.string.relative_time_span_string_now) else DateUtils.getRelativeTimeSpanString(
         confirmedAt.toEpochMilli(),
         now.toEpochMilli(),

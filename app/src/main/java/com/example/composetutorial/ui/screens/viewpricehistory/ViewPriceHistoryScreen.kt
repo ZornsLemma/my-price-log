@@ -76,8 +76,6 @@ fun ViewPriceHistoryScreen(
         viewModel.generatePriceHistoryDeltaList(priceHistoryList, locale, confirmedAtFormatter)
     }
 
-    Log.d("MyApp", "priceHistoryDeltaList $priceHistoryDeltaList")
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {

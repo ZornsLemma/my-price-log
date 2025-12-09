@@ -54,6 +54,8 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.Locale
 
+private const val TAG = "HomeViewModel"
+
 // We could make things work so a null sourceId represents "None", but in practice it's more trouble
 // than it's worth. (We could remove the UserPreferences map entry for the data set ID key to
 // represent a null value being associated with it.)
@@ -98,10 +100,6 @@ class HomeViewModel(
     private val repository: Repository,
     application: Application
 ) : ViewModel() {
-    init {
-        Log.d("MyApp", "HomeScreenViewModel created: $this")
-    }
-
     private val app = application
 
     fun setSelectedDataSetId(dataSetId: Long) {
@@ -199,7 +197,6 @@ class HomeViewModel(
             // lists of results for these queries are self-tagging, but we need to handle empty
             // lists correctly too.)
             val dataSetId = dataSetIdState.valueOrNull()
-            Log.d("MyFlow", "dataSetOnlyDatabaseFlow dataSetId $dataSetId")
             combine(
                 flowOf(dataSetId),
                 if (dataSetId != null) repository.getAllItems(dataSetId) else flowOf(
@@ -222,10 +219,6 @@ class HomeViewModel(
             dataSetIdAndItemIdFlow.flatMapLatest { (dataSetIdState, itemIdState) ->
                 val dataSetId = dataSetIdState.valueOrNull()
                 val itemId = itemIdState.valueOrNull()
-                Log.d(
-                    "MyFlow",
-                    "dataSetIdAndItemIdDatabaseFlow dataSetId $dataSetId, itemId $itemId"
-                )
                 val priceFlow = if (dataSetId != null && itemId != null)
                     repository.getPricesForItem(dataSetId = dataSetId, itemId = itemId)
                 else
@@ -261,8 +254,6 @@ class HomeViewModel(
         // allUserInputFlow emits.
         val completeUiStateFlow =
             todoRenameMeFlow.flatMapLatest { (databaseResults, priceAgeSettings, locale) ->
-                Log.d("MyAppPAS", "priceAgeSettings $priceAgeSettings")
-                Log.d("MyAppLO", "locale $locale")
                 val (dataSetList, taggedItemListAndSourceList, taggedPriceList) = databaseResults
                 // We can take the current UI values here because ultimately that's all we care
                 // about; if the current flow value we're processing is older, we want to discard it
@@ -281,13 +272,13 @@ class HomeViewModel(
 
                 if (taggedItemListAndSourceList.first != dataSetId) {
                     Log.d(
-                        "MyFlow",
+                        TAG,
                         "completeUiStateFlow discarding dataSetId ${taggedItemListAndSourceList.first}, want $dataSetId"
                     )
                     emptyFlow()
                 } else if (taggedPriceList.first != Pair(dataSetId, itemId)) {
                     Log.d(
-                        "MyFlow",
+                        TAG,
                         "completeUiStateFlow discarding (dataSetId, itemId) ${taggedPriceList.first}, want ${
                             Pair(
                                 dataSetIdState,
@@ -306,8 +297,8 @@ class HomeViewModel(
                     val source = sourceList.find { it.id == sourceId }
 
                     Log.d(
-                        "MyFlow",
-                        "completeUiStateFlow dataSetId ${selectedDataSetIdStateFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
+                        TAG,
+                        "completeUiStateFlow received dataSetId ${selectedDataSetIdStateFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
                     )
 
                     if (dataSet != null) {
@@ -319,8 +310,6 @@ class HomeViewModel(
                     // should shift (probably the whole database flow, but maybe just this work)
                     // onto a coroutine on a worker thread?
                     val priceAnalysis = analysePrices(priceList, sourceList, priceAgeSettings, locale)
-
-                    Log.d("MyFlow", "derived analysedPriceList")
 
                     debugDelay()
                     flowOf(

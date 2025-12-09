@@ -128,7 +128,6 @@ private fun diff(
     // the extra record entirely.
     val lhsConfirmedAt = confirmedAtFormatter.format(lhs.confirmedAt)
     val rhsConfirmedAt = confirmedAtFormatter.format(rhs.confirmedAt)
-    Log.d("MyApp", "lhsConfirmedAt $lhsConfirmedAt rhsConfirmedAt $rhsConfirmedAt")
     val confirmedAt = if (lhsConfirmedAt == rhsConfirmedAt) null else rhsConfirmedAt
     val notes = if (lhs.notes.trim() == rhs.notes.trim()) null else rhs.notes
     val priceOrQuantityChanged = (lhs.price != rhs.price) || (lhs.count != rhs.count) || (lhs.quantityInBaseUnit != rhs.quantityInBaseUnit)
