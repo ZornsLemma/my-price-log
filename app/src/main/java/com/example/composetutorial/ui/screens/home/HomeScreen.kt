@@ -162,39 +162,65 @@ fun HomeScreen(
         // wouldn't be unreasonable, *it* would split stuff out, but it would save boilerplate here. We
         // could almost inline HomeScreenScaffold given how trivial the above code now is, and perhaps
         // we should.
-        HomeScreenScaffold(
-            navController,
-            viewModel,
-            loading,
-            uiContent.dataSetIdState,
+        val asyncOperationStatus by viewModel.asyncOperationStatus.collectAsStateWithLifecycle()
+        // Unlike GeneralEditScreen(), we don't try to trap "back" and show a busy snackbar. We probably
+        // could but:
+        // - The data being saved here is "just" a confirm/undo confirm, it's not quite so critical or
+        //   "user has put effort into this data entry" as in GeneralEditScreen.
+        // - "Back" from the home screen would leave the app. It's not so clear we should even try to
+        //   stop the user doing that.
+        // - The user can use the home or overview buttons/gestures to leave the app, and we probably
+        //   can't and almost certainly shouldn't trap those if we are saving. (They can also do this
+        //   during GeneralEditScreen too. It's just that there "back" has an in-app meaning and is a
+        //   particularly expected case where we can reasonably interfere.)
+        // - A slow save is extremely unlikely anyway.
+        val dataSetListSorted = uiContent.dataSetList.rememberSortedByLocale { it.name }
+        val drawerState = rememberDrawerState(DrawerValue.Closed)
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        LaunchedEffect(navBackStackEntry) {
+            if (navBackStackEntry == null) {
+                // This screen has been navigated away from.
+                viewModel.previousPrice.value = null
+            }
+        }
+        HomeScreenNavigationDrawer(
+            drawerState,
             uiContent.dataSet,
-            uiContent.dataSetList,
-            onSelectedDataSetIdChange = {
+            dataSetListSorted,
+            onSelectedDataSetIdChange = { it: Long ->
                 viewModel.previousPrice.value = null
                 viewModel.setSelectedDataSetId(it)
-            },
-            uiContent.item,
-            uiContent.itemList,
-            onSelectedItemIdChange = {
-                viewModel.previousPrice.value = null
-                viewModel.setSelectedItemId(it)
-            },
-            uiContent.sourceIdState,
-            uiContent.source,
-            uiContent.sourceList,
-            onSelectedSourceIdChange = {
-                viewModel.previousPrice.value = null
-                viewModel.setSelectedSourceId(it)
-            },
-            uiContent.priceAnalysis,
-            onEditPriceClick = { onEditPriceClick(uiContent) },
-            onItemSearchClick = { onItemSearchClick(uiContent) },
-            onViewHistoryClick = { onViewHistoryClick(uiContent) },
-            onSelectDataSetClick = { onSelectDataSetClick(uiContent) },
-            onSelectItemClick = { onSelectItemClick(uiContent) },
-            onSelectSourceClick = { onSelectSourceClick(uiContent) },
-            onSettingsClick = onSettingsClick,
-        )
+            }) {
+
+            HomeScreenActualScaffold(
+                navController,
+                drawerState,
+                uiContent.dataSet,
+                onSelectDataSetClick = { onSelectDataSetClick(uiContent) },
+                onSelectItemClick = { onSelectItemClick(uiContent) },
+                onSelectSourceClick = { onSelectSourceClick(uiContent) },
+                onSettingsClick = onSettingsClick,
+                asyncOperationStatus = asyncOperationStatus
+            )
+            { innerPadding ->
+                HomeScreenContent(
+                    viewModel,
+                    uiContent,
+                    onSelectedSourceIdChange = { it: Long ->
+                        viewModel.previousPrice.value = null
+                        viewModel.setSelectedSourceId(it)
+                    },
+                    onEditPriceClick = { onEditPriceClick(uiContent) },
+                    onItemSearchClick = { onItemSearchClick(uiContent) },
+                    onViewHistoryClick = { onViewHistoryClick(uiContent) },
+                    asyncOperationStatus = asyncOperationStatus,
+                    innerPadding = innerPadding
+                )
+            }
+        }
+        HomeScreenStateManager(
+            viewModel, loading,
+            asyncOperationStatus)
     }
 }
 
@@ -422,91 +448,6 @@ private fun HomeScreenActualScaffold( // TODO: RENAME
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-// TODO: Function might be misnamed if we introduce navigation drawer, but I probably want to
-// refactor a lot of the composables anyway in order to get away from gigantic massively independent
-// functions.
-private fun HomeScreenScaffold(
-    navController: NavHostController,
-    viewModel: HomeViewModel,
-    loading: Boolean,
-    dataSetIdState: LoadState<Long>,
-    dataSet: DataSet?,
-    dataSetList: List<DataSet>,
-    onSelectedDataSetIdChange: (Long) -> Unit,
-    item: Item?,
-    itemList: List<Item>,
-    onSelectedItemIdChange: (Long) -> Unit,
-    sourceIdState: LoadState<Long>,
-    source: Source?,
-    sourceList: List<Source>,
-    onSelectedSourceIdChange: (Long) -> Unit,
-    priceAnalysis: PriceAnalysis,
-    onEditPriceClick: () -> Unit,
-    onItemSearchClick: () -> Unit,
-    onViewHistoryClick: () -> Unit,
-    onSelectDataSetClick: () -> Unit,
-    onSelectItemClick: () -> Unit,
-    onSelectSourceClick: () -> Unit,
-    onSettingsClick: () -> Unit,
-) {
-    val asyncOperationStatus by viewModel.asyncOperationStatus.collectAsStateWithLifecycle()
-
-    // Unlike GeneralEditScreen(), we don't try to trap "back" and show a busy snackbar. We probably
-    // could but:
-    // - The data being saved here is "just" a confirm/undo confirm, it's not quite so critical or
-    //   "user has put effort into this data entry" as in GeneralEditScreen.
-    // - "Back" from the home screen would leave the app. It's not so clear we should even try to
-    //   stop the user doing that.
-    // - The user can use the home or overview buttons/gestures to dleave the app, and we probably
-    //   can't and almost certainly shouldn't trap those if we are saving. (They can also do this
-    //   during GeneralEditScreen too. It's just that there "back" has an in-app meaning and is a
-    //   particularly expected case where we can reasonably interfere.)
-    // - A slow save is extremely unlikely anyway.
-
-    val dataSetListSorted = dataSetList.rememberSortedByLocale { it.name }
-
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
-    //val drawerRequested by remember { mutableStateOf(false) }
-
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    LaunchedEffect(navBackStackEntry) {
-        if (navBackStackEntry == null) {
-            // This screen has been navigated away from.
-            viewModel.previousPrice.value = null
-        }
-    }
-
-    HomeScreenNavigationDrawer(drawerState, dataSet, dataSetListSorted, onSelectedDataSetIdChange) {
-
-        HomeScreenActualScaffold(navController, drawerState, dataSet, onSelectDataSetClick, onSelectItemClick, onSelectSourceClick, onSettingsClick, asyncOperationStatus)
-        { innerPadding ->
-            HomeScreenContent(
-                viewModel,
-                dataSetIdState,
-                dataSet,
-                dataSetList,
-                item,
-                itemList,
-                onSelectedItemIdChange,
-                sourceIdState,
-                source,
-                sourceList,
-                onSelectedSourceIdChange,
-                priceAnalysis,
-                onEditPriceClick,
-                onItemSearchClick,
-                onViewHistoryClick,
-                asyncOperationStatus,
-                innerPadding
-            )
-        }
-    }
-
-    HomeScreenStateManager(viewModel, loading, asyncOperationStatus)
-}
-
 @Composable
 private fun HomeScreenStateManager(
     viewModel: HomeViewModel,
@@ -578,23 +519,22 @@ private fun HomeScreenStateManager(
 @Composable
 private fun HomeScreenContent(
     viewModel: HomeViewModel,
-    dataSetIdState: LoadState<Long>,
-    dataSet: DataSet?,
-    dataSetList: List<DataSet>,
-    item: Item?,
-    itemList: List<Item>,
-    onSelectedItemIdChange: (Long) -> Unit,
-    sourceIdState: LoadState<Long>,
-    source: Source?,
-    sourceList: List<Source>,
+    uiContent: HomeScreenUiContent,
     onSelectedSourceIdChange: (Long) -> Unit,
-    priceAnalysis: PriceAnalysis,
     onEditPriceClick: () -> Unit,
     onItemSearchClick: () -> Unit,
     onViewHistoryClick: () -> Unit,
     asyncOperationStatus: AsyncOperationStatus,
     innerPadding: PaddingValues,
 ) {
+    val dataSet = uiContent.dataSet
+    val dataSetList = uiContent.dataSetList
+    val source = uiContent.source
+    val sourceList = uiContent.sourceList
+    val item = uiContent.item
+    val itemList = uiContent.itemList
+    val priceAnalysis = uiContent.priceAnalysis
+
     var showDeletePriceConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
     Column(
