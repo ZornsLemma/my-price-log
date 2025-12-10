@@ -196,8 +196,6 @@ fun EditSourceScreen(
                             validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
                             numericTextFieldModifier = Modifier
                                 .fillMaxWidth(),
-                            // TODO: I can't help feeling this looks a bit confusing when it's
-                            // empty, maybe it's just lack of a "%" or something.
                             label = { Text(stringResource(R.string.label_loyalty_scheme_reward)) },
                             suffix = { Text("%") },
                             onValueChange = {

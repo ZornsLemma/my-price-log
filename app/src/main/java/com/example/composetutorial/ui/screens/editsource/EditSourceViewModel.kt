@@ -132,7 +132,9 @@ class EditSourceViewModel(
     }
 }
 
-// TODO: MOVE THIS IF IT LIVES - JUST HACKING IT IN HERE - also don't really like its name, we don't generall put "Flow" on the end of function names or variables, but if we take it off it becomes very clashy with the viewmodel variables it is used to initialise
+// TODO: MOVE THIS IF IT LIVES - JUST HACKING IT IN HERE - also don't really like its name, we don't
+// generall put "Flow" on the end of function names or variables, but if we take it off it becomes
+// very clashy with the viewmodel variables it is used to initialise
 // Create a name validation rules flow which will be null initially while we wait for the database
 // results to become available. By making composables which apply the rules treat null as "no rules"
 // and the view model's validateForSave() silently return false without emitting a validation event,
