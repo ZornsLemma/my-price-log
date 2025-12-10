@@ -14,9 +14,9 @@ import com.example.composetutorial.ui.common.EmptyParcelable
 import com.example.composetutorial.ui.common.PersistentUiContent
 import com.example.composetutorial.ui.common.UiText
 import com.example.composetutorial.ui.common.ValidationRule
+import com.example.composetutorial.ui.common.nameValidationRulesFlow
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenStateHolder
 import com.example.composetutorial.ui.common.validationRulesOk
-import com.example.composetutorial.ui.screens.editsource.nameValidationRulesFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow

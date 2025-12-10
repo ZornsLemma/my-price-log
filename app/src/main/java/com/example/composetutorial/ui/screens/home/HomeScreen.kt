@@ -672,7 +672,7 @@ private fun HomeScreenContent(
                     }
                 }
 
-                // TODO: Just possibly we should use AnimatedVisibility here. However, it's not
+                // ENHANCE: Just possibly we should use AnimatedVisibility here. However, it's not
                 // that big a deal (but maybe do look into it) as the only way to have item be
                 // null is if there *are* no items - unlike source, you can't deliberately set
                 // it to null. So this is not a particularly common case and the animation would

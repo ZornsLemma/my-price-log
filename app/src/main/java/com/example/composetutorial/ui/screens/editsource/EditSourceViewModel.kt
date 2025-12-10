@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import com.example.composetutorial.debug.debugDelay
 import com.example.composetutorial.data.LoyaltyType
 import com.example.composetutorial.ui.common.ValidationRule
-import com.example.composetutorial.ui.common.createNameValidationRules
 import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.data.DataSet
@@ -17,6 +16,7 @@ import com.example.composetutorial.data.EditableSource
 import com.example.composetutorial.data.toDomain
 import com.example.composetutorial.ui.common.PersistentUiContent
 import com.example.composetutorial.ui.common.Versioned
+import com.example.composetutorial.ui.common.nameValidationRulesFlow
 import com.example.composetutorial.ui.common.withVersion
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenStateHolder
 import com.example.composetutorial.ui.common.validationRulesOk
@@ -130,28 +130,4 @@ class EditSourceViewModel(
         myCheck(sourceId != 0L) { "Expected to delete an actual source but have ID 0" }
         val rowsDeleted = repository.deleteSourceById(sourceId)
     }
-}
-
-// TODO: MOVE THIS IF IT LIVES - JUST HACKING IT IN HERE - also don't really like its name, we don't
-// generall put "Flow" on the end of function names or variables, but if we take it off it becomes
-// very clashy with the viewmodel variables it is used to initialise
-// Create a name validation rules flow which will be null initially while we wait for the database
-// results to become available. By making composables which apply the rules treat null as "no rules"
-// and the view model's validateForSave() silently return false without emitting a validation event,
-// we get practically correct behaviour and fix a theoretical corner case where the user manages to
-// click Save before the rules have loaded and thereby skips validation. Instead Save will just be a
-// no-op in this case, which isn't ideal but it won't happen in practice and it protects the
-// integrity of the database. (It might be nice to disable the Save button until the rules load, but
-// this would cause a small unnecessary visual glitch and is also more intrusive to arrange than
-// it's worth.)
-fun nameValidationRulesFlow(
-    otherNameListFlow: Flow<List<String>>,
-    viewModelScope: CoroutineScope,
-) :  StateFlow<Versioned<out List<ValidationRule<String>>?>> {
-    return otherNameListFlow.map { createNameValidationRules(it) }
-    .withVersion().stateIn(
-        viewModelScope,
-        SharingStarted.Eagerly,
-        Versioned.initial(null as List<ValidationRule<String>>?)
-    )
 }

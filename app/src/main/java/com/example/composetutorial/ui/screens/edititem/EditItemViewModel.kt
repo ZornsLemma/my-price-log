@@ -12,9 +12,9 @@ import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.data.EditableItem
 import com.example.composetutorial.data.toDomain
 import com.example.composetutorial.ui.common.PersistentUiContent
+import com.example.composetutorial.ui.common.nameValidationRulesFlow
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenStateHolder
 import com.example.composetutorial.ui.common.validationRulesOk
-import com.example.composetutorial.ui.screens.editsource.nameValidationRulesFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOf
