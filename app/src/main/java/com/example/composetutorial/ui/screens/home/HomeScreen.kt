@@ -158,10 +158,6 @@ fun HomeScreen(
         // over to the current collection, nor do we want to show the "no collection is selected"
         // fallback texts.
     } else {
-        // TODO: HomeScreenScaffold could take uiContent instead of splitting it out here - that
-        // wouldn't be unreasonable, *it* would split stuff out, but it would save boilerplate here. We
-        // could almost inline HomeScreenScaffold given how trivial the above code now is, and perhaps
-        // we should.
         val asyncOperationStatus by viewModel.asyncOperationStatus.collectAsStateWithLifecycle()
         // Unlike GeneralEditScreen(), we don't try to trap "back" and show a busy snackbar. We probably
         // could but:
@@ -192,8 +188,7 @@ fun HomeScreen(
                 viewModel.setSelectedDataSetId(it)
             }) {
 
-            HomeScreenActualScaffold(
-                navController,
+            HomeScreenScaffold(
                 drawerState,
                 uiContent.dataSet,
                 onSelectDataSetClick = { onSelectDataSetClick(uiContent) },
@@ -370,8 +365,7 @@ private fun HomeScreenNavigationDrawer(
 }
 
 @Composable
-private fun HomeScreenActualScaffold( // TODO: RENAME
-    navController: NavHostController,
+private fun HomeScreenScaffold(
     drawerState: DrawerState,
     dataSet: DataSet?,
     onSelectDataSetClick: () -> Unit,
@@ -387,8 +381,7 @@ private fun HomeScreenActualScaffold( // TODO: RENAME
 
     Scaffold(
         modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Red /* TODO DEBUG HACK */),
+            .fillMaxSize(),
         topBar = {
             TopAppBar(
                 // We will almost always always have a DataSet to show the name of but we might as
@@ -440,7 +433,6 @@ private fun HomeScreenActualScaffold( // TODO: RENAME
                         })
                     }
                 },
-                modifier = Modifier.background(MaterialTheme.colorScheme.surface /* TODO? */)
             )
         },
     ) { innerPadding ->
@@ -571,23 +563,21 @@ private fun HomeScreenContent(
                         16.dp
                     )
                     .fillMaxWidth()
-                //.background(color = Color.Red) // TODO DEBUG HACK
             )
 
             if (dataSet != null) {
-                // TODO: While it has told me so much crap I don't trust it, ChatGPT suggests:
-                // var lastFoo by remember { mutableStateOf<Foo?>(null) }
-                //if (foo != null) lastFoo = foo
-                // and then using  lastFoo?.let { safeFoo ->
+                // ENHANCE: I don't know if this is remotely correct, but ChatGPT suggested:
+                //     var lastFoo by remember { mutableStateOf<Foo?>(null) }
+                //     if (foo != null) lastFoo = foo
+                // and then using:
+                //     lastFoo?.let { safeFoo ->
                 // to compose the contents of the AnimatedVisibility. This (might) give us
                 // consistent appearance as we animate out without requiring actual ability to
-                // handle null source/item  inside the content, and would (if this works) actually
+                // handle null source/item inside the content, and would (if this works) actually
                 // make things mildly *less* janky as the content would be *the same* not some
                 // null-based approximation. But there may well be subtleties.
                 AnimatedVisibility(
                     visible = item != null && source != null,
-                    // enter = TODO?
-                    // exit = TODO?
                 ) {
                     Column {
                         ItemSourceInfoLive(
@@ -607,7 +597,6 @@ private fun HomeScreenContent(
                             modifier = Modifier.height(
                                 16.dp
                             )
-                            //.background(color = Color.Red) // TODO DEBUG HACK
                         )
                     }
                 }
@@ -1014,23 +1003,9 @@ private fun ItemSourceInfoLive(
     onViewHistoryClick: () -> Unit,
     onDeletePriceClick: () -> Unit,
 ) {
-    /* TODO: Maybe this should live on the viewmodel - quick go with ChatpGPt suggests
-    class MyViewModel : ViewModel(), LifecycleObserver {
-
-    val previousPrice = mutableStateOf<Float?>(null)
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    fun onAppStop() {
-        previousPrice.value = null
-    }
-}
-
-and if that actually works, this might be cleaner and mroe logical
-    */
     OnAppLifecycleEvent { event ->
         if (event == Lifecycle.Event.ON_STOP) { // app has left the foreground
-            viewModel.previousPrice.value =
-                null // TODO: arguably we should do all this via a "call up to top level", but not sure it's necessary - perhaps more to the point we should be calling a function on viewmodel to do this
+            viewModel.previousPrice.value = null
         }
     }
 

@@ -65,8 +65,6 @@ const val sourceIdNone = -1L
 // complexity.
 const val itemIdNone = -1L
 
-// TODO: Not at all sure this belongs here, but I sort of want to see if there's any major
-// simplification I can with this area before I think about maybe moving it if it lives.
 data class HomeScreenUiContent(
     val dataSetIdState: LoadState<Long>,
     val dataSet: DataSet?,
@@ -160,7 +158,6 @@ class HomeViewModel(
         _localeFlow.value = locale
     }
 
-    // TODO: Rename UiContent->HomeScreenUiContent and/or scope it to this ViewModel?
     private val _uiState = MutableStateFlow(
         Pair(
             false,
