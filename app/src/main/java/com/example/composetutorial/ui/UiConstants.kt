@@ -93,3 +93,7 @@ const val maxSearchLength = 32
 // just under a million with two decimal places and a (manually entered) thousands separator, so we
 // could tighten this up a bit if desirable.
 const val maxDecimalLength = 11
+
+const val storePriceGridLeftColumnWeight = 0.55f
+const val storePriceGridRightColumnWeight = 0.45f
+val storePriceGridGutterWidth = 4.dp

@@ -1,6 +1,8 @@
 package com.example.composetutorial.ui.components
 
 import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -30,6 +33,9 @@ import com.example.composetutorial.ui.common.formatPrice
 import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.isNotBusy
+import com.example.composetutorial.ui.storePriceGridGutterWidth
+import com.example.composetutorial.ui.storePriceGridLeftColumnWeight
+import com.example.composetutorial.ui.storePriceGridRightColumnWeight
 import java.util.Currency.getInstance
 
 @Composable
@@ -50,27 +56,16 @@ fun PackPriceAndSizeRow(
     // BOTTOM RIGHT CELL. THIS MAY OR MAY NOT WORK OUT, IT MIGHT "FIT" FOR SPANISH AND ENGLISH
     // BUT NOT SURE ABOUT OTHER LANGUAGES, AND ALSO NEED TO DECIDE IF I LIKE THE LOOK. IT DOES
     // JUST ABOUT SEEM OK WITH SMALL PHONE LAYOUT AND MY DEMO PRICES THOUGH.
-    // TODO: Do we need some kind of spacer or padding or border to stop the two running together
-    // too much if the text happens to be just the wrong size? Maybe that's almost better. Be
-    // careful not to break the alignment of the second row of the grid - I suspect adding rhs
-    // padding or border to the shelf price might be the safest way to do this without it affecting other parts of the layout.
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(storePriceGridGutterWidth)
     ) {
-        // This Box(Row(LabeledItem, Spacer)) structure is to stop the LabeledItem touching the left
-        // edge of the unit price box if the text just happens to be precisely the right size, but
-        // using an "inner padding" rather than normal padding so the other row of the "2x2 grid"
-        // doesn't need to do the same thing. TODO: To be honest it might be as easy just to apply a
-        // right padding to the LabeledItem and the leftmost element of the second row. Or can we
-        // just use a row with a horizontal arrangement spacebetween?
-        Box(modifier = Modifier.weight(weight = 0.55f)) {
-            Row {
                 LabeledItem(
                     label = stringResource(R.string.label_shelf_price),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(storePriceGridLeftColumnWeight)
 
                 ) {
                     val formattedPrice = formatPrice(
@@ -94,9 +89,6 @@ fun PackPriceAndSizeRow(
                         }
                     )
                 }
-                Box(modifier = Modifier.width(4.dp))
-            }
-        }
 
         val relevantUnitFamilies =
             remember(dataSet) { dataSet.getRelevantUnitFamilies() }
@@ -148,7 +140,7 @@ fun PackPriceAndSizeRow(
             ).format(context, dataSet,LocalConfiguration.current.locales[0])
         val context = LocalContext.current
         LabeledItemWithDropdown(
-            modifier = Modifier.weight(0.45f), label = stringResource(R.string.label_unit_price),
+            modifier = Modifier.weight(storePriceGridRightColumnWeight), label = stringResource(R.string.label_unit_price),
             dropdownContentDescription = stringResource(R.string.content_description_select_unit),
             text = unitPriceString,
             enabled = asyncOperationStatus.isNotBusy(),

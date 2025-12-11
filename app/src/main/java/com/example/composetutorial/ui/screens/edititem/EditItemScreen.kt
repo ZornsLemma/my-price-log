@@ -179,7 +179,6 @@ fun EditItemScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            //.background(Color.Blue)
                             .then(clickableModifier)
                             .padding(horizontal = 8.dp)
                             .height(48.dp) // 40.dp is MD3 spec but we want extra space for our supporting text while still having some spacing between items

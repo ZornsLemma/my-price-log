@@ -114,6 +114,9 @@ import com.example.composetutorial.ui.oneLineListItemHeight
 import com.example.composetutorial.ui.screenHorizontalBorder
 import com.example.composetutorial.ui.screenVerticalBorder
 import com.example.composetutorial.ui.spinnerDelayMillis
+import com.example.composetutorial.ui.storePriceGridGutterWidth
+import com.example.composetutorial.ui.storePriceGridLeftColumnWeight
+import com.example.composetutorial.ui.storePriceGridRightColumnWeight
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.flowOf
@@ -955,19 +958,19 @@ private fun SourcePriceCardBody(
 
                 // TODO: Experimental - if we keep this, PriceJudgementIndicator should take a modifier rather than us wrapping it in a
                 // Box.
-                // TODO: Need to share the 0.55/0.45 constants here with the other code using them in PackPriceAndSizeRow.
-                Row(modifier = Modifier.padding(bottom = 8.dp)) {
+                Row(modifier = Modifier.padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(
+                    storePriceGridGutterWidth
+                )) {
                     LabeledItem(
-                        modifier = Modifier.weight(0.55f),
+                        modifier = Modifier.weight(storePriceGridLeftColumnWeight),
                         label = stringResource(R.string.label_confirmed)
                     ) {
                         RelativeTimeText(augmentedPrice)
                     }
 
-                    Box(modifier = Modifier.weight(0.45f).fillMaxSize().align(Alignment.CenterVertically)) {
+                    Box(modifier = Modifier.weight(storePriceGridRightColumnWeight).fillMaxSize().align(Alignment.CenterVertically)) {
                         PriceJudgementIndicator(augmentedPrice.priceJudgement)
                     }
-
                 }
 
                 if (price.notes.isNotEmpty()) {
