@@ -57,7 +57,7 @@ import java.util.Locale
 private const val TAG = "HomeViewModel"
 
 // We could make things work so a null sourceId represents "None", but in practice it's more trouble
-// than it's worth. (We could remove the UserPreferences map entry for the data set ID key to
+// than it's worth. (We could remove the CurrentSelections map entry for the data set ID key to
 // represent a null value being associated with it.)
 const val sourceIdNone = -1L
 // Null item IDs are even less of a thing outside transitional async loading delays. Using a -1 here

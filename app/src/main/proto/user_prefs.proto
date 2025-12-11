@@ -1,7 +1,6 @@
 syntax = "proto3";
 
-// TODO: Should we rename this "message"?! Something to indicate it is related to current selection?! After all I think this whole file can have multiple messages, so if we have other things in future, they can have their own "message"?
-message UserPreferences {
+message CurrentSelections {
   // The selected data set ID.
   int64 selected_data_set_id = 1;
 

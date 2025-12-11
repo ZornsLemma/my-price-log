@@ -6,46 +6,45 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
 import com.example.composetutorial.app.AppScope
-import com.example.composetutorial.ui.common.userPreferencesStore
 import com.google.protobuf.InvalidProtocolBufferException
 import kotlinx.coroutines.launch
 import java.io.InputStream
 import java.io.OutputStream
 
-object UserPreferencesSerializer : Serializer<UserPrefs.UserPreferences> {
-    override val defaultValue: UserPrefs.UserPreferences = UserPrefs.UserPreferences.getDefaultInstance()
+object CurrentSelectionsSerializer : Serializer<UserPrefs.CurrentSelections> {
+    override val defaultValue: UserPrefs.CurrentSelections = UserPrefs.CurrentSelections.getDefaultInstance()
 
-    override suspend fun readFrom(input: InputStream): UserPrefs.UserPreferences {
+    override suspend fun readFrom(input: InputStream): UserPrefs.CurrentSelections {
         try {
-            return UserPrefs.UserPreferences.parseFrom(input)
+            return UserPrefs.CurrentSelections.parseFrom(input)
         } catch (exception: InvalidProtocolBufferException) {
             throw CorruptionException("Cannot read proto.", exception)
         }
     }
 
-    override suspend fun writeTo(t: UserPrefs.UserPreferences, output: OutputStream) {
+    override suspend fun writeTo(t: UserPrefs.CurrentSelections, output: OutputStream) {
         t.writeTo(output)
     }
 }
 
-val Context.userPreferencesStore: DataStore<UserPrefs.UserPreferences> by dataStore(
+val Context.userPreferencesStore: DataStore<UserPrefs.CurrentSelections> by dataStore(
     fileName = "user_prefs.pb",
-    serializer = UserPreferencesSerializer
+    serializer = CurrentSelectionsSerializer
 )
 
 suspend fun setSelectedDataSetId(context: Context, dataSetId: Long) {
-    updateUserPreferences(context) { builder -> builder.setSelectedDataSetId(dataSetId) }
+    updateCurrentSelections(context) { builder -> builder.setSelectedDataSetId(dataSetId) }
 }
 
 suspend fun setSelectedItemId(context: Context, dataSetId: Long, itemId: Long) {
-    updateUserPreferences(context) { builder -> builder.putSelectedItemIdForDataSetId(dataSetId, itemId) }
+    updateCurrentSelections(context) { builder -> builder.putSelectedItemIdForDataSetId(dataSetId, itemId) }
 }
 
 suspend fun setSelectedSourceId(context: Context, dataSetId: Long, sourceId: Long) {
-    updateUserPreferences(context) { builder -> builder.putSelectedSourceIdForDataSetId(dataSetId, sourceId) }
+    updateCurrentSelections(context) { builder -> builder.putSelectedSourceIdForDataSetId(dataSetId, sourceId) }
 }
 
-suspend fun updateUserPreferences(context: Context, update: (UserPrefs.UserPreferences.Builder) -> Unit) {
+suspend fun updateCurrentSelections(context: Context, update: (UserPrefs.CurrentSelections.Builder) -> Unit) {
     context.userPreferencesStore.updateData { prefs ->
         prefs.toBuilder().apply(update).build() }
 }
