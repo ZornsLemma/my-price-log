@@ -68,7 +68,7 @@ fun LegalScreen(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Copyright $copyrightSymbol 2025 TODOMYNAME",
+                text = "Copyright $copyrightSymbol 2025 Steven Flintham",
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(modifier = Modifier.height(8.dp))

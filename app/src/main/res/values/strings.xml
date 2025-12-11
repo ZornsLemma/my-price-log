@@ -62,7 +62,6 @@
     <string name="content_description_stale_price">Stale price</string>
     <string name="content_description_ancient_price">Ancient price</string>
     <string name="title_price_comparison">Price comparison</string>
-    <!-- TODO: "subtitle_" prefix isn't getting much use? Get rid of it? Use it in other places?! -->
     <string name="subtitle_adjusted_for_discounts_and_age">Adjusted for loyalty discounts and old prices</string>
     <string name="message_no_prices_for_item_at_source">There are no prices recorded for this product at any store yet.</string>
     <string name="label_confirm_pack_size_and_price">Confirm pack size and price</string>
@@ -205,14 +204,12 @@
     <string name="unit_10">10</string>
     <string name="unit_100">100</string>
     <string name="unit_gram">gram</string>
-    <!-- TODO: Should unit_100_gram text be 100 gram*s* (not AFAICT grammes BTW, that is a bit dated even in UK)? I have a suspicion it is only ever used in contentDescription for the table, but not sure. -->
-    <string name="unit_100_gram">100 gram</string>
+    <string name="unit_100_grams">100 grams</string>
     <string name="unit_kilogram">kilogram</string>
     <string name="unit_ounce">ounce</string>
     <string name="unit_pound">pound</string>
     <string name="unit_millilitre">millilitre</string>
-    <!-- TODO: Should this be 100 millilitre*s*? make sure to change US translation too if appropriate -->
-    <string name="unit_100_millilitre">100 millilitre</string>
+    <string name="unit_100_millilitres">100 millilitres</string>
     <string name="unit_litre">litre</string>
     <string name="unit_fluid_ounce">fluid ounce</string>
     <string name="unit_pint">pint</string>

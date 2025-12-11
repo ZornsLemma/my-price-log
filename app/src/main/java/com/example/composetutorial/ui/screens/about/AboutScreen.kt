@@ -105,9 +105,9 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    ClickableLink(stringResource(R.string.title_user_manual), "https://yourappdocs.example.com", showRawUrl = true) // TODO!
+                    ClickableLink(stringResource(R.string.title_user_manual), "https://zornslemma.github.io/my-price-log-docs/", showRawUrl = true)
                     Spacer(modifier = Modifier.height(8.dp))
-                    ClickableLink(stringResource(R.string.title_source_code_on_github), "https://github.com/yourusername/yourapp", showRawUrl = true) // TODO!
+                    ClickableLink(stringResource(R.string.title_source_code_on_github), "https://github.com/ZornsLemma/my-price-log", showRawUrl = true)
                 }
             }
 

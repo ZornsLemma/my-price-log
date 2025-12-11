@@ -88,7 +88,7 @@ enum class MeasurementUnit(
         setOf(UnitFamily.METRIC),
         QuantityType.WEIGHT,
         R.string.unit_100_gram_symbol,
-        R.string.unit_100_gram,
+        R.string.unit_100_grams,
         2,
         100.0,
         true
@@ -128,7 +128,7 @@ enum class MeasurementUnit(
         setOf(UnitFamily.METRIC),
         QuantityType.VOLUME,
         R.string.unit_100_millilitre_symbol,
-        R.string.unit_100_millilitre,
+        R.string.unit_100_millilitres,
         2,
         100.0,
         true
