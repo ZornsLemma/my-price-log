@@ -68,7 +68,7 @@ enum class MeasurementUnit(
         setOf(UnitFamily.ITEM),
         QuantityType.ITEM,
         R.string.unit_each_symbol,
-        R.string.unit_each, // TODO: I added this as a semi-hack to support headerPriceContentDescription, may break grammar for non-screen reader
+        R.string.unit_each,
         0,
         1.0,
         false,

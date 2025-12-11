@@ -124,6 +124,8 @@ import kotlinx.coroutines.launch
 import java.time.Duration
 import java.time.Instant
 
+private const val TAG = "HomeScreen"
+
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
@@ -804,7 +806,7 @@ private fun PriceComparisonCard(
                     stringResource(R.string.content_description_header_price_no_per, stringResource(headerUnitPriceDenominator.fullName))
                 }
                 // TODO: TEST headerPriceContentDescription is correct once things settle down
-                Log.d("MyAppCD", "headerPriceContentDescription: $headerPriceContentDescription")
+                Log.d(TAG, "headerPriceContentDescription: $headerPriceContentDescription")
 
                 val headerTextModifiers = listOf(
                     Modifier,
