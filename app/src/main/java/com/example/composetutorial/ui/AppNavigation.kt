@@ -1,7 +1,7 @@
 package com.example.composetutorial.ui
 
 import android.app.Activity
-import android.util.Log
+import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -74,6 +74,8 @@ import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryS
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryScreenStaticContent
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryViewModel
 import kotlinx.coroutines.delay
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun AppNavigation() {
@@ -237,7 +239,7 @@ fun AppNavigation() {
                 viewModel(backStackEntry, factory = AppViewModelProvider.Factory),
                 navController,
                 onBackupClick = {
-                    backupLauncher.launch(defaultDatabaseBackupName)
+                    backupLauncher.launch(generateDefaultBackupFilename(context))
                 },
                 onRestoreClick = {
                     restoreLauncher.launch(arrayOf("*/*"))
@@ -660,4 +662,11 @@ object AppViewModelProvider {
             SettingsViewModel(app)
         }
     }
+}
+
+fun generateDefaultBackupFilename(context: Context): String {
+    val currentDate = LocalDate.now()
+    val formatter = DateTimeFormatter.ofPattern("yyyy_MM_dd")
+    val formattedDate = currentDate.format(formatter)
+    return context.getString(R.string.default_backup_filename, formattedDate)
 }

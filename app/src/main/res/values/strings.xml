@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">My Price Log</string>
     <string name="title_about_app_name">About My Price Log</string>
+    <string name="default_backup_filename">my_price_log_%1$s.db</string>
     <!-- We don't spell "Licence" in the UK style even though this file is generally UK English and
          we have regional overrides where necessary. I think in this computer/legal context, the US
          spelling is generally accepted. -->
