@@ -14,7 +14,7 @@ import kotlinx.parcelize.Parcelize
 
 @Parcelize
 data class SelectSourceScreenStaticContent(
-    val sourceList: List<Source>,
+    val initialList: List<Source>,
     val dataSet: DataSet
 ): Parcelable
 
@@ -36,7 +36,7 @@ class SelectSourceViewModel(
         GeneralSelectorScreenStateHolder<Source>(
             savedStateHandle,
             getName = { it.name },
-            uiContent.staticContent.sourceList /* TODO: rename initialList for consistency with other cases? */,
+            uiContent.staticContent.initialList,
             repository.getAllSources(uiContent.staticContent.dataSet.id),
             viewModelScope
         )

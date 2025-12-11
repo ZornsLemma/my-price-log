@@ -326,9 +326,6 @@ class HomeViewModel(
             }
 
         viewModelScope.launch(Dispatchers.Default) {
-            // TODO: MORE GROK MAGIC
-            // TODO: This *might* actually be correct. I need to look at it calmly and fresh, read
-            // up on channelFlow, give it more testing. But I think there is a chance it's sound.
             prefsFlow.distinctUntilChanged() // emits when a user input changes
                 .flatMapLatest {
                     channelFlow {
