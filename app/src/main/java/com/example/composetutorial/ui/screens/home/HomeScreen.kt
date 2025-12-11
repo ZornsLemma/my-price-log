@@ -956,8 +956,6 @@ private fun SourcePriceCardBody(
                     asyncOperationStatus
                 )
 
-                // TODO: Experimental - if we keep this, PriceJudgementIndicator should take a modifier rather than us wrapping it in a
-                // Box.
                 Row(modifier = Modifier.padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(
                     storePriceGridGutterWidth
                 )) {
@@ -981,12 +979,7 @@ private fun SourcePriceCardBody(
                     }
                 }
 
-                // TODO: Temporarily moved PriceJudgementIndicator elsewhere. If we keep this, we
-                // might want to e.g. remove the verticalAlignment on the Row
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    // PriceJudgementIndicator(augmentedPrice.priceJudgement)
-                    EditConfirmButtons(viewModel, asyncOperationStatus, augmentedPrice, onEditPriceClick)
-                }
+                EditConfirmButtons(viewModel, asyncOperationStatus, augmentedPrice, onEditPriceClick)
             }
         }
     }
