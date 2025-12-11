@@ -48,15 +48,6 @@ fun PackPriceAndSizeRow(
 ) {
     val context = LocalContext.current
 
-    // The two elements of this row share the space 60%/40%. The shelf price can get quite long for
-    // multipack items and 50%/50% starts to get tight on small phones. We don't really need that
-    // much space for the unit price either. This might ruin a proper 2x2 grid, but in practice at
-    // least for now the row below is "Confirmed" and it theoretically has the full width of the
-    // display. TODO HACKED TEMPORARILY TO 55/45 TO TRY TO MOVE THE PRICE INDICATOR INTO THE
-    // BOTTOM RIGHT CELL. THIS MAY OR MAY NOT WORK OUT, IT MIGHT "FIT" FOR SPANISH AND ENGLISH
-    // BUT NOT SURE ABOUT OTHER LANGUAGES, AND ALSO NEED TO DECIDE IF I LIKE THE LOOK. IT DOES
-    // JUST ABOUT SEEM OK WITH SMALL PHONE LAYOUT AND MY DEMO PRICES THOUGH.
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
