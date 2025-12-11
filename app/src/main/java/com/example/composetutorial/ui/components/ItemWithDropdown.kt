@@ -39,7 +39,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     getId: (T) -> ID,
     getItemText: (T) -> String,
     getDividerBetween: ((T, T) -> Boolean)? = null,
-    addBottomSpace: Boolean = false,
+    @Suppress("UNUSED_PARAMETER") addBottomSpace: Boolean = false,
     content: @Composable (expanded: Boolean) -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
@@ -92,13 +92,13 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
                 )
             }
 
-            /* TODO: I can re-enable this workaround but at least on one of my emulated phones it
-               no longer appears to be necessary. If I can't find a test phone where it is still
-               necessary, get rid of it.
+            /* ENHANCE: Remove this workaround later on. It no longer seems to be necessary on
+               any of my test phones. I suspect updating the dependency versions pulled in an
+               upstream fix.
             if (addBottomSpace) {
                 // This is a workaround suggested by Grok which seems to fix a problem (at least on
                 // Android 16 in the emulator) where the last bottom item in a very long dropdown
-                // menu won't scroll onto the screen fully so cannot be selected or is at least
+                // menu won't scroll onto the screen fully so cannot be selected, or is at least
                 // hard to read. It may be that the irregular height caused by my horizontal divider
                 // exacerbates this, but I don't believe that's an unreasonable thing to do in
                 // itself. In practice we really shouldn't be using such long dropdowns anyway, but
