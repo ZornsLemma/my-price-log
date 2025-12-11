@@ -62,6 +62,10 @@ class EditDataSetViewModel(
     val nameValidationRules = nameValidationRulesFlow(repository.getAllDataSets().map { dataSetList -> dataSetList.mapNotNull { dataSet -> if (dataSet.id != uiContent.originalContent.id) dataSet.name else null } },
         viewModelScope)
 
+    // ENHANCE: I don't think these validation rules can ever fail, as we aren't enforcing "is a
+    // valid code" (because it's redundant when the user can't enter free text) and we always
+    // default to a currency for new data sets and don't allow it to ever be set to empty. So this
+    // could possibly be deleted, although it is harmless.
     val currencyValidationRules = listOf(
         ValidationRule<String>(
             { it.isNotEmpty() },

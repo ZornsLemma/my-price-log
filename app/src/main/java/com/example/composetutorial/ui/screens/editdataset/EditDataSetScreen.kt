@@ -111,7 +111,6 @@ fun EditDataSetScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // TODO: Should we specify an offset of 4.dp here? Or should we perhaps just improve spacing?
         ValidationErrorHighlightBox(
             value = editableDataSet.currencyCode,
             validationRules = viewModel.currencyValidationRules,

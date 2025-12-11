@@ -26,7 +26,7 @@ fun <T> ValidatedNumericTextField(
     allowEmpty: Boolean,
     validationFlow: SharedFlow<T>,
     validationFlowFieldId: T,
-    errorHighlightOffset: Dp = defaultErrorHighlightOffset, // TODO JUST MAYBE GET RID OF DEFAULT?
+    errorHighlightOffset: Dp = defaultErrorHighlightOffset,
     baseValidatedTextFieldModifier: Modifier = Modifier,
     label: @Composable (() -> Unit)? = null,
     prefix: @Composable (() -> Unit)? = null,

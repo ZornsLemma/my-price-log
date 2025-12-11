@@ -241,13 +241,6 @@ private fun EditPriceScreenPackSize(
         editablePrice.measureValue
     )
 
-    // TODO: I wonder if this screen is actually a bit vertically (and even horizontally?) squashed
-    // together, now I see that I "need" offset = 4.dp here instead of the current default 6.dp. It
-    // might be I should increase the vertical spacing of the components on this screen and then
-    // make this 6.dp. (I don't know, but I may have already increased the vertical spacing. So try
-    // 6.dp here again - and check what other bits of the code use for their error offsets - before
-    // automatically increasing the spacing.)
-
     if (viewModel.showPackCount) {
         ValidatedNumericTextField(
             value = packCountNumber,
@@ -256,7 +249,6 @@ private fun EditPriceScreenPackSize(
             allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditPriceViewModel.EditableField.PACK_COUNT,
-            errorHighlightOffset = 4.dp, // TODO!?
             numericTextFieldModifier = Modifier.fillMaxWidth(),
             // TODO: Now this has an entire row to itself we could use a really explicit label like "Multipack count" or "Multipack quantity" if it would help - but it's probably as well not to, and don't forget ideally we are being consistent with the use of plain "count" on the supportingtext shown in the item definition for the multipack toggle
             label = { Text(stringResource(R.string.label_count)) },
