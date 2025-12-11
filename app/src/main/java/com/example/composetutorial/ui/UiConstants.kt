@@ -2,6 +2,11 @@ package com.example.composetutorial.ui
 
 import androidx.compose.ui.unit.dp
 
+// ENHANCE: Can/should we alter the default backup name so it includes the current date? If we use
+// YYYYMMDD or similar it is probably relatively international. This could be made controllable via
+// a setting (ideally not with full user controll, just "date or no date"). Having this might also
+// fit well with a later extension to automatically perform a backup once every n days, as it's nice
+// if automated backups don't overwrite other backups if we can help it.
 const val defaultDatabaseBackupName = "my_price_log_backup.db" // TODO: KEEP IN SYNC WITH APP NAME
 
 // Unicode characters expressed explicitly via variables to make it obvious where they are used
