@@ -71,19 +71,7 @@ class MainActivity : ComponentActivity() {
 // are basically unrecoverable and it's more-or-less OK if the process just dies, but I'm not sure
 // and we may be able to do better.
 
-// TODO: Move this into coding-notes.md once I'm sure I am respecting it and that it is in fact
-// appropriate etc.
-//
-// Note to self: Locale.getDefault() is initialised to the current locale when our app process
-// starts and is not automatically updated if the user changes the system locale while the app is
-// running. However, Compose's LocalConfiguration.current.locales[0] is updated live and immediately
-// reflects locale changes, triggering recompositions as needed.
-//
-// It is possible (though risky, due to race conditions with recomposition and non-composable code)
-// to update Locale.getDefault() via Locale.setDefault() to match
-// LocalConfiguration.current.locales[0], but we avoid this.
-//
-// Our strategy:
+// The user can change the current locale while the app is running. In order to try to handle this:
 // - For read-only screens, we react live to locale changes using
 //   LocalConfiguration.current.locales[0], passing it as needed to non-composable code.
 // - For editing screens, we "freeze" the locale from LocalConfiguration.current.locales[0] at the
@@ -97,6 +85,13 @@ class MainActivity : ComponentActivity() {
 //
 // In general, we avoid Locale.getDefault() and require explicit locale parameters to functions
 // (without defaults) to ensure we always consider the source of our locale.
+//
+// ENHANCE: I came up with the above trying to "do the right thing" in what is probably a very rare
+// case. I am not sure I have followed it consitstently, or that it's actually the right thing to
+// do. It would probably not be that much harder to just detect locale changes and have both the
+// old and new locales available, and do a "best effort" conversion of notionally numeric string
+// fields the user is editing by swapping the decimal separator and grouping characters accordingly.
+// I have left what I have as it is for now, because in practice it isn't that big a deal.
 
 // TODO: Eventually will need to remove misc Log.d() lines and/or replace them with permanent
 // well-thought-out ones if that is not inefficient.
@@ -133,12 +128,6 @@ class MainActivity : ComponentActivity() {
 // auto-backups, we could just possibly try to be clever and only do this if we haven't done an
 // auto-backup within the last hour or so. This limits the window of data loss while keeping backup
 // volume down.
-
-// TODO: ErrorHighlightBoxes and their offsets and the general layout of the forms they highlight is
-// probably a bit inconsistent and could do with a review.
-
-// TODO: General Kotlin point which may simplify my code - unlike in say C++, you can apparently
-// "call methods" on nulls, e.g. stringvariable.orEmpty().
 
 // ENHANCE: Is it worth worrying about the case where the user is editing (say) an item, changes it
 // name completely ("Coffee" -> "Eggs"), forgets about having done that and then hits "Delete"
