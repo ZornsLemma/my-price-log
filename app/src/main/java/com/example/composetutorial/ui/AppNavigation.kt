@@ -232,7 +232,7 @@ fun AppNavigation() {
         }
 
         composable(
-            "settings", enterTransition = { slideLeftTransition() }, popEnterTransition = { null },
+            "settings", enterTransition = { slideLeftTransition() }, exitTransition = { ExitTransition.None }, popEnterTransition = { EnterTransition.None },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
             SettingsScreen(
@@ -248,18 +248,19 @@ fun AppNavigation() {
         }
 
         composable(
-            "about", enterTransition = { slideLeftTransition() }, popEnterTransition = { null }, popExitTransition = { slideRightTransition() }, ) {
+            "about", enterTransition = { slideLeftTransition() }, exitTransition = { ExitTransition.None }, popEnterTransition = { EnterTransition.None }, popExitTransition = { slideRightTransition() }, ) {
             AboutScreen(navController, onViewLegalClick = { navController.navigate("legal") })
         }
 
         composable(
-            "legal", enterTransition = { slideLeftTransition() }, popEnterTransition = { null }, popExitTransition = { slideRightTransition() }, ) {
+            "legal", enterTransition = { slideLeftTransition() }, exitTransition = { ExitTransition.None }, popEnterTransition = { EnterTransition.None }, popExitTransition = { slideRightTransition() }, ) {
             LegalScreen(navController)
         }
 
         composable(
             "selectDataSet", enterTransition = { slideLeftTransition() },
-            popEnterTransition = { null },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
             screenWithViewModel<SelectDataSetViewModel>(
@@ -294,7 +295,8 @@ fun AppNavigation() {
 
         composable(
             "selectItem/{action}", enterTransition = { slideLeftTransition() },
-            popEnterTransition = { null },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
             val action = backStackEntry.arguments?.getString("action")
@@ -351,7 +353,8 @@ fun AppNavigation() {
 
         composable(
             "selectSource/{dataSetId}/{dataSetName}", enterTransition = { slideLeftTransition() },
-            popEnterTransition = { null },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
@@ -520,6 +523,8 @@ fun AppNavigation() {
         composable(
             "viewPriceHistory",
             enterTransition = { slideLeftTransition() },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
             val locale = LocalConfiguration.current.locales[0]
