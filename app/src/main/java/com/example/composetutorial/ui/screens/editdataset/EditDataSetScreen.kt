@@ -118,12 +118,6 @@ fun EditDataSetScreen(
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditDataSetViewModel.EditableField.CURRENCY_CODE
         ) { validationResult, interactionSource, validationInputHandle ->
-            // TODO: According to a long comment I wrote elsewhere, we probably should be using a
-            // frozen LocalConfiguration from when this screen was first opened here. However, at
-            // present it includes no floating point values that are awkward if the locale changes,
-            // and being responsive to any locale changes is both easy and may be helpful. If I keep
-            // doing it this way, I need to update that long comment elsewhere accordingly and make
-            // a permanent note here too.
             val currentLocalConfiguration = LocalConfiguration.current
             val currencyList = remember(currentLocalConfiguration.locales) {
                 createCurrencyList(currentLocalConfiguration.locales)
