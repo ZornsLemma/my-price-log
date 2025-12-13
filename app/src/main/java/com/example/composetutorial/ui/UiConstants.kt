@@ -71,6 +71,7 @@ val maxNavigationDrawerWidth = 360.dp
 // MD3 standard values
 val oneLineListItemHeight = 56.dp
 val listItemHorizontalPadding = 16.dp
+val buttonIconTextSpacing = 8.dp
 
 // These arbitrary lengths apply to the UI only (not the database) and are just intended to stop the
 // user typing insane amounts of text into TextFields and breaking layouts. They may need to be

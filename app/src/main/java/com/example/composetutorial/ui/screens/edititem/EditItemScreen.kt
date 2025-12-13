@@ -48,6 +48,7 @@ import com.example.composetutorial.domain.MeasurementUnit
 import com.example.composetutorial.domain.QuantityType
 import com.example.composetutorial.domain.getRelevantMeasurementUnits
 import com.example.composetutorial.domain.getRelevantUnitFamilies
+import com.example.composetutorial.ui.buttonIconTextSpacing
 import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.FilteredTextField
@@ -332,7 +333,7 @@ fun EditItemScreen(
                         contentDescription = stringResource(R.string.content_description_delete)
                     )
                 }
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(buttonIconTextSpacing))
                 Text(stringResource(R.string.button_delete_item))
             }
         }

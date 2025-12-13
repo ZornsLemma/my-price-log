@@ -40,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.data.LoyaltyType
 import com.example.composetutorial.R
+import com.example.composetutorial.ui.buttonIconTextSpacing
 import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.FilteredTextField
@@ -245,7 +246,7 @@ fun EditSourceScreen(
                         contentDescription = stringResource(R.string.content_description_delete)
                     )
                 }
-                Spacer(Modifier.width(8.dp))
+                Spacer(Modifier.width(buttonIconTextSpacing))
                 Text(stringResource(R.string.button_delete_store))
             }
         }

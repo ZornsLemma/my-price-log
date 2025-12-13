@@ -34,6 +34,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
 import com.example.composetutorial.debug.debugThrow
+import com.example.composetutorial.ui.buttonIconTextSpacing
 import com.example.composetutorial.ui.common.createCurrencyList
 import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.components.textOrNull
@@ -50,7 +51,7 @@ import com.example.composetutorial.ui.maxDataSetNameLength
 import com.example.composetutorial.ui.maxNotesLength
 
 private enum class UnitPreferenceOption(@field:StringRes val nameResource: Int) { METRIC(R.string.label_metric), IMPERIAL(R.string.label_imperial), US_CUSTOMARY(R.string.label_us_units) }
-// TODO: Seems quite a long function, can we factor out (even single use) chunks for readability?
+
 @Composable
 fun EditDataSetScreen(
     viewModel: EditDataSetViewModel,
@@ -125,6 +126,7 @@ fun EditDataSetScreen(
 
             // We try to do half-decent job by showing a gigantic list in an unwieldy dropdown but
             // putting the currencies the user is likely to care about at the top.
+            //
             // ENHANCE: In the longer term I see three options:
             // 1 - optionally allow the user to just enter a three letter currency code directly
             // 2 - optionally allow the user to define their own currency (in which case we don't
@@ -264,7 +266,7 @@ fun EditDataSetScreen(
                         contentDescription = stringResource(R.string.content_description_delete)
                     )
                 }
-                Spacer(Modifier.width(8.dp)) // TODO: Maybe 16.dp given spacing around measurement units?
+                Spacer(Modifier.width(buttonIconTextSpacing))
                 Text(stringResource(R.string.button_delete_collection))
             }
         }
