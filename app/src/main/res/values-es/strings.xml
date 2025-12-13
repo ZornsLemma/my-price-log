@@ -142,7 +142,7 @@
     <string name="supporting_text_must_be_no_greater_than_365">No debe ser mayor de 365</string>
     <string name="supporting_text_must_be_a_whole_number">Debe ser un número entero</string>
     <string name="supporting_text_must_be_zero_or_greater">Debe ser cero o mayor</string>
-    <string name="supporting_text_must_be_no_greater_than_1000">No debe ser mayor de 1000 %</string>
+    <string name="supporting_text_must_be_no_greater_than_1000">No debe ser mayor de 1000 %%</string>
     <string name="title_restore_from_backup">Restaurar desde copia de seguridad</string>
     <string name="message_restore_from_backup_warning">Esto reemplazará todos los datos actuales de la app por los de tu copia de seguridad. La acción es permanente y no se puede deshacer. ¿Quieres continuar?</string>
     <string name="button_restore">Restaurar</string>

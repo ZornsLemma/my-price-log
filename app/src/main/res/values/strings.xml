@@ -148,7 +148,7 @@
     <string name="supporting_text_must_be_no_greater_than_365">Must be no greater than 365</string>
     <string name="supporting_text_must_be_a_whole_number">Must be a whole number</string>
     <string name="supporting_text_must_be_zero_or_greater">Must be zero or greater</string>
-    <string name="supporting_text_must_be_no_greater_than_1000">Must be no greater than 1000%</string>
+    <string name="supporting_text_must_be_no_greater_than_1000">Must be no greater than 1000%%</string>
     <string name="title_restore_from_backup">Restore from backup</string>
     <string name="message_restore_from_backup_warning">This will replace all current app data with the data from your backup. This action is permanent and cannot be undone. Do you want to continue?</string>
     <string name="button_restore">Restore</string>
