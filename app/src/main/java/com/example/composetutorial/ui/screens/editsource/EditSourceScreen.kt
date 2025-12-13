@@ -141,7 +141,7 @@ fun EditSourceScreen(
                     title = stringResource(R.string.title_loyalty_scheme),
                     items = LoyaltyType.entries,
                     enabled = saveStatus.isNotBusy(),
-                    selectedId = selectedOption, // TODO: Rename?
+                    selectedId = selectedOption,
                     onItemSelected = { loyaltyType ->
                         viewModel.setUiContentEditableSource(
                             editableSource.copy(

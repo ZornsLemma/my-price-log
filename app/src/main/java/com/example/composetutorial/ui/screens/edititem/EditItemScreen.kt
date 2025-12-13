@@ -123,18 +123,6 @@ fun EditItemScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ENHANCE: supportingText is always null, remove it?
-        val options = listOf(
-            Pair<QuantityType,String?>(
-                QuantityType.ITEM,
-                null
-            ),
-            Pair(QuantityType.WEIGHT, null),
-            Pair(
-                QuantityType.VOLUME,
-                null,
-            ),
-        )
         val selectedOption = editableItem.quantityType
 
         // ENHANCE: When we disallow changing "sold by" because there are prices for the product,
@@ -162,9 +150,9 @@ fun EditItemScreen(
             ) {
                 RadioButtonGroup(
                     title = stringResource(R.string.label_sold_by),
-                    items = options, // TODO: inline/rename "options"->"items"?
+                    items = QuantityType.entries,
                     enabled = radioButtonsEnabled,
-                    selectedId = selectedOption, // TODO: rename?
+                    selectedId = selectedOption,
                     onItemSelected = { quantityType ->
                         viewModel.setUiContentEditableItem(
                         editableItem.copy(
@@ -172,8 +160,8 @@ fun EditItemScreen(
                         )
                         )
                     },
-                    getId = { it.first },
-                    getNameResource = { it.first.nameResource },
+                    getId = { it },
+                    getNameResource = { it.nameResource },
                     getSupportingTextResource = { null },
                 )
                 if (!isSimpleDelete) {
