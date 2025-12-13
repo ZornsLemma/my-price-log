@@ -757,9 +757,6 @@ private fun PriceComparisonCard(
             )
 
             if (priceAnalysis.augmentedPriceList.isEmpty()) {
-                // TODO: This is very similar to message_no_price_for_item_at_source. If I want the
-                // to be different that's fine, but I should think about this and see if I
-                // can/should share the same message.
                 Text(stringResource(R.string.message_no_prices_for_item_at_source))
             } else {
                 // It may be technically incorrect to show the currency symbol both in the header
