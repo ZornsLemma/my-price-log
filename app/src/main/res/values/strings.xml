@@ -228,6 +228,7 @@
     <string name="unit_fluid_ounce_symbol">fl oz</string>
     <string name="unit_pint_symbol">pt</string>
     <string name="unit_gallon_symbol">gal</string>
+    <string name="debug_version_suffix">(debug)</string>
     <plurals name="supporting_text_prices_considered_stale_after_x_days">
         <item quantity="one">Prices considered stale after %1$d day</item>
         <item quantity="other">Prices considered stale after %1$d days</item>

@@ -250,7 +250,6 @@ private fun EditPriceScreenPackSize(
             validationFlow = viewModel.saveValidationEvents,
             validationFlowFieldId = EditPriceViewModel.EditableField.PACK_COUNT,
             numericTextFieldModifier = Modifier.fillMaxWidth(),
-            // TODO: Now this has an entire row to itself we could use a really explicit label like "Multipack count" or "Multipack quantity" if it would help - but it's probably as well not to, and don't forget ideally we are being consistent with the use of plain "count" on the supportingtext shown in the item definition for the multipack toggle
             label = { Text(stringResource(R.string.label_count)) },
             onValueChange = {
                 packCountNumber = it

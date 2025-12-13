@@ -2,6 +2,7 @@
 
 package com.example.composetutorial.ui.screens.about
 
+import com.example.composetutorial.BuildConfig
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -81,8 +82,10 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Version
+                val version = if (BuildConfig.DEBUG) { getAppVersion() + " " + stringResource(R.string.debug_version_suffix)
+                } else { getAppVersion() }
                 Text(
-                    text = getAppVersion(),
+                    text = version,
                     style = MaterialTheme.typography.titleMedium
                 )
             }
