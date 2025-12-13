@@ -34,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
@@ -50,6 +51,7 @@ import com.example.composetutorial.domain.defaultAnnualInflationPercent
 import com.example.composetutorial.domain.defaultStalePriceThresholdDays
 import com.example.composetutorial.ui.common.failedValidationRuleOrNull
 import com.example.composetutorial.ui.common.UiText
+import com.example.composetutorial.ui.components.NumericTextField
 import com.example.composetutorial.ui.screenVerticalBorder
 import kotlinx.coroutines.delay
 
@@ -338,14 +340,17 @@ private fun SettingsDialog(
             selection = TextRange(currentValue.length))) }
     var error by remember { mutableStateOf<UiText?>(null) }
     val focusRequester = remember { FocusRequester() }
+    // TODO: Do we want to show "required" text when this is empty, given it's a single text field and save is disabled?
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
             Column {
                 Text(subtitle, modifier = Modifier.padding(bottom = 16.dp))
-                OutlinedTextField(
+                NumericTextField(
+                    filled = false,
                     value = textFieldValue,
+                    locale = LocalConfiguration.current.locales[0],
                     onValueChange = { textFieldValue = it; currentValue = it.text; error = failedValidationRuleOrNull(validationRules, it.text.trim())?.message },
                     label = { Text(label) },
                     suffix = suffix,
@@ -357,7 +362,6 @@ private fun SettingsDialog(
                     },
                     isError = error != null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .focusRequester(focusRequester)

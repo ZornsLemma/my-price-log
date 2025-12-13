@@ -267,12 +267,6 @@ class MainActivity : ComponentActivity() {
 // usefully tested. It would also be interesting and perhaps useful to add some unit tests for more
 // of the business logic, mocking the repository, etc.
 
-// TODO: Some and probably all of the settingsdialog things give silly error messages if you type
-// "-3a" or something. Do we need to tweak validation? Maybe have an initial "invalid number" check?
-// Can/should we be restricting to numeric input and/or hinting at using a numeric on screen
-// keyboard? Do we need to impose a maximum length? Should we be using (a variant of?) our existing
-// NumericTextField?
-
 // TODO: I've shoved in "cada uno" as a Spanish translation for "each" but this may not be right,
 // need to talk to LLMs. This is so I can test if it maybe works with my string constructions etc.
 // It is maybe a bit crap on the spacing (e.g. "$US cada undo" - albeit extreme - wraps in the

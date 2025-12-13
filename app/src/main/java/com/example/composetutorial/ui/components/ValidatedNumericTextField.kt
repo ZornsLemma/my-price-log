@@ -36,6 +36,7 @@ fun <T> ValidatedNumericTextField(
     enabled: Boolean,
     numericTextFieldModifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions,
+    filled: Boolean = true,
 ) {
     ValidationErrorHighlightBox(
         value.text,
@@ -64,6 +65,7 @@ fun <T> ValidatedNumericTextField(
             ),
             keyboardOptions = keyboardOptions,
             interactionSource = interactionSource,
+            filled = filled,
         )
     }
 }

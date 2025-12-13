@@ -3,6 +3,7 @@ package com.example.composetutorial.ui.components
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -34,33 +35,63 @@ fun FilteredTextField(
     interactionSource: MutableInteractionSource? = null,
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
+    filled: Boolean = true,
 ) {
-    TextField(
-        label = label,
-        value = value,
-        prefix = prefix,
-        suffix = suffix,
-        textStyle = textStyle,
-        onValueChange = { newValue: TextFieldValue ->
-            if (onCandidateValueChange(newValue.text)) {
-                onValueChange(newValue)
-            }
-        },
-        enabled = enabled,
-        keyboardOptions = keyboardOptions,
-        modifier = modifier,
-        supportingText = supportingText,
-        leadingIcon = leadingIcon,
-        trailingIcon = trailingIcon
-            ?: if (isError) {
-                {
-                    WarningIcon(contentDescription = stringResource(R.string.content_description_error))
+    if (filled) {
+        TextField(
+            label = label,
+            value = value,
+            prefix = prefix,
+            suffix = suffix,
+            textStyle = textStyle,
+            onValueChange = { newValue: TextFieldValue ->
+                if (onCandidateValueChange(newValue.text)) {
+                    onValueChange(newValue)
                 }
-            } else null,
-        isError = isError,
-        singleLine = singleLine,
-        interactionSource = interactionSource,
-    )
+            },
+            enabled = enabled,
+            keyboardOptions = keyboardOptions,
+            modifier = modifier,
+            supportingText = supportingText,
+            leadingIcon = leadingIcon,
+            trailingIcon = trailingIcon
+                ?: if (isError) {
+                    {
+                        WarningIcon(contentDescription = stringResource(R.string.content_description_error))
+                    }
+                } else null,
+            isError = isError,
+            singleLine = singleLine,
+            interactionSource = interactionSource,
+        )
+    } else {
+        OutlinedTextField(
+            label = label,
+            value = value,
+            prefix = prefix,
+            suffix = suffix,
+            textStyle = textStyle,
+            onValueChange = { newValue: TextFieldValue ->
+                if (onCandidateValueChange(newValue.text)) {
+                    onValueChange(newValue)
+                }
+            },
+            enabled = enabled,
+            keyboardOptions = keyboardOptions,
+            modifier = modifier,
+            supportingText = supportingText,
+            leadingIcon = leadingIcon,
+            trailingIcon = trailingIcon
+                ?: if (isError) {
+                    {
+                        WarningIcon(contentDescription = stringResource(R.string.content_description_error))
+                    }
+                } else null,
+            isError = isError,
+            singleLine = singleLine,
+            interactionSource = interactionSource,
+        )
+    }
 }
 
 // Note that if maxLength is reduced, the generated onCandidateValueChange will disallow any edits

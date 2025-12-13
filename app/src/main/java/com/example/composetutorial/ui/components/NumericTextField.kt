@@ -28,6 +28,7 @@ fun NumericTextField(
     supportingText: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions,
     interactionSource: MutableInteractionSource? = null,
+    filled: Boolean = true,
 ) {
     FilteredTextField(
         label = label,
@@ -49,6 +50,7 @@ fun NumericTextField(
         keyboardOptions = keyboardOptions,
         singleLine = true,
         interactionSource = interactionSource,
+        filled = filled,
     )
 }
 
