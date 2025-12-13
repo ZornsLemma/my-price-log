@@ -175,11 +175,6 @@ fun EditItemScreen(
                 if (selectedOption != QuantityType.ITEM) {
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // TODO: RelevantUnit* here are sort of copy and paste from ItemSourceInfo and
-                    // could possibly be factored out along with the code using them
-                    val relevantUnitFamilies =
-                        remember(dataSet) { dataSet.getRelevantUnitFamilies() }
-
                     val relevantUnitList =
                         remember(
                             dataSet,
@@ -226,8 +221,6 @@ fun EditItemScreen(
                 }
             }
         }
-
-        // TODO END COPY-AND-PASTE-ISH RADIO BUTTON CHUNK
 
         Spacer(modifier = Modifier.height(16.dp))
 
