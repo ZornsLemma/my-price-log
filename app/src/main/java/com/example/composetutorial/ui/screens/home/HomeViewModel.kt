@@ -168,8 +168,6 @@ class HomeViewModel(
 
     val settingsRepository = SettingsRepository(app.dataStore)
 
-    // TODO: This is quite long and could probably be improved by factoring stuff out into helper
-    // functions.
     init {
         // ENHANCE: I suspect this tree of flows is over-complex. In part we are trying to work
         // around problems where a getAllItems(dataSetId) or getAllSources(dataSetId) flow is not

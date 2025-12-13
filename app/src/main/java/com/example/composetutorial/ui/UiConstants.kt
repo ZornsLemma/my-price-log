@@ -88,6 +88,6 @@ const val maxSearchLength = 32
 // could tighten this up a bit if desirable.
 const val maxDecimalLength = 11
 
-const val storePriceGridLeftColumnWeight = 0.55f
-const val storePriceGridRightColumnWeight = 0.45f
+const val storePriceGridLeftColumnWeight = 0.5f
+const val storePriceGridRightColumnWeight = 0.5f
 val storePriceGridGutterWidth = 4.dp
