@@ -42,7 +42,6 @@ import java.util.Locale
         // We don't include data_set_id here because although some queries specify it along with item_id, it's just belt-and-braces - item_id already implies a data_set_id if all is well.
         Index(value = ["item_id"], unique = false),
         Index(value = ["source_id"], unique = false),
-        // TODO: I need to remember to manually apply this index to my own "production" db on O6.
         // We put item_id first in this index as it's likely to be more selective than source_id and
         // ENHANCE: it may allow us to remove the index on item_id by itself later on. This index is
         // not just for efficiency; it will also prevent data corruption if a bug causes us to try

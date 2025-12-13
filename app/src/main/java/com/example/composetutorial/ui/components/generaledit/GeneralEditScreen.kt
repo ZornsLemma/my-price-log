@@ -53,7 +53,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.launch
 
-// TODO: This is a very long function, can we split it up?
 @Composable
 fun GeneralEditScreen(
     stateHolder: GeneralEditScreenStateHolder,
