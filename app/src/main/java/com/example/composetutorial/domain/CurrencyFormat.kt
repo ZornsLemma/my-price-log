@@ -8,6 +8,8 @@ import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
 
+private const val TAG = "CurrencyFormat"
+
 data class CurrencyFormat(
     val decimalPlaces: Int,
     val prefix: String?,
@@ -28,7 +30,7 @@ fun DataSet.createCurrencyFormat(locale: Locale): CurrencyFormat {
     }
     val sampleFormattedCurrency = numberFormat.format(1.0)
     Log.d(
-        "MyApp",
+        TAG,
         "sampleFormattedCurrency for $currencyCode is '$sampleFormattedCurrency'"
     )
     val (prefix, suffix) = splitAroundDigits(sampleFormattedCurrency)

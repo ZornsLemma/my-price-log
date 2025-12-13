@@ -93,9 +93,6 @@ class MainActivity : ComponentActivity() {
 // fields the user is editing by swapping the decimal separator and grouping characters accordingly.
 // I have left what I have as it is for now, because in practice it isn't that big a deal.
 
-// TODO: Eventually will need to remove misc Log.d() lines and/or replace them with permanent
-// well-thought-out ones if that is not inefficient.
-
 // ENHANCE: Maybe I should have a settings option which completely hides or just disables all the
 // "delete" buttons. Users can turn that off if it makes them feel safer. We could possibly, if it
 // isn't a UI nightmare, allow delete to be enabled for the next 10 minutes or something, then
