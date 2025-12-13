@@ -53,6 +53,7 @@ import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
+import com.example.composetutorial.ui.components.RadioButtonGroup
 import com.example.composetutorial.ui.components.SmallCircularProgressIndicator
 import com.example.composetutorial.ui.components.ValidatedFilteredTextField
 import com.example.composetutorial.ui.components.createOnCandidateValueChangeMaxLength
@@ -122,9 +123,6 @@ fun EditItemScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // TODO: Probably can/should factor out a lot of this radio button stuff which I have just
-        // copied and pasted from EditSourceScreen for now.
-
         // ENHANCE: supportingText is always null, remove it?
         val options = listOf(
             Pair<QuantityType,String?>(
@@ -162,50 +160,22 @@ fun EditItemScreen(
                     .animateContentSize()
                     .padding(horizontal = 8.dp, vertical = 12.dp)
             ) {
-                Text(
-                    stringResource(R.string.label_sold_by),
-                    style = MaterialTheme.typography.titleSmall /* bodySmall */,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-                options.forEach { (quantityType, supportingText) ->
-                    val clickableModifier = if (!radioButtonsEnabled) Modifier else Modifier.clickable {
+                RadioButtonGroup(
+                    title = stringResource(R.string.label_sold_by),
+                    items = options, // TODO: inline/rename "options"->"items"?
+                    enabled = radioButtonsEnabled,
+                    selectedId = selectedOption, // TODO: rename?
+                    onItemSelected = { quantityType ->
                         viewModel.setUiContentEditableItem(
-                            editableItem.copy(
-                                quantityType = quantityType
-                            )
+                        editableItem.copy(
+                            quantityType = quantityType
                         )
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .then(clickableModifier)
-                            .padding(horizontal = 8.dp)
-                            .height(48.dp) // 40.dp is MD3 spec but we want extra space for our supporting text while still having some spacing between items
-                            .semantics {
-                                role = Role.RadioButton
-                            }, // for TalkBack / screen readers, since this is clickable not the RadioButton
-                    ) {
-                        RadioButton(
-                            selected = (selectedOption == quantityType),
-                            enabled = radioButtonsEnabled,
-                            onClick = null // the enclosing Row is clickable instead
                         )
-                        Column(modifier = Modifier.padding(start = 8.dp)) {
-                            Text(
-                                text = stringResource(quantityType.nameResource)
-                            )
-                            if (supportingText != null) {
-                                Text(
-                                    text = supportingText,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
-                    }
-                }
+                    },
+                    getId = { it.first },
+                    getNameResource = { it.first.nameResource },
+                    getSupportingTextResource = { null },
+                )
                 if (!isSimpleDelete) {
                     SupportingText(
                         stringResource(R.string.supporting_text_sold_by_cant_be_changed),

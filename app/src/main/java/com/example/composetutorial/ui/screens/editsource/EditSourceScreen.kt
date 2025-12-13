@@ -1,6 +1,7 @@
 package com.example.composetutorial.ui.screens.editsource
 
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -44,6 +45,7 @@ import com.example.composetutorial.ui.buttonIconTextSpacing
 import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.FilteredTextField
+import com.example.composetutorial.ui.components.RadioButtonGroup
 import com.example.composetutorial.ui.components.SmallCircularProgressIndicator
 import com.example.composetutorial.ui.components.ValidatedFilteredTextField
 import com.example.composetutorial.ui.components.ValidatedNumericTextField
@@ -135,51 +137,22 @@ fun EditSourceScreen(
                     .animateContentSize()
                     .padding(horizontal = 8.dp, vertical = 12.dp)
             ) {
-                Text(
-                    stringResource(R.string.title_loyalty_scheme),
-                    style = MaterialTheme.typography.titleSmall /* bodySmall */,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-                //Spacer(modifier = Modifier.height(8.dp))
-                LoyaltyType.entries.forEach { loyaltyType ->
-                    val clickableModifier = if (!saveStatus.isNotBusy()) Modifier else Modifier.clickable {
+                RadioButtonGroup(
+                    title = stringResource(R.string.title_loyalty_scheme),
+                    items = LoyaltyType.entries,
+                    enabled = saveStatus.isNotBusy(),
+                    selectedId = selectedOption, // TODO: Rename?
+                    onItemSelected = { loyaltyType ->
                         viewModel.setUiContentEditableSource(
                             editableSource.copy(
                                 loyaltyType = loyaltyType
                             )
                         )
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .then(clickableModifier)
-                            .padding(horizontal = 8.dp)
-                            .height(48.dp) // 40.dp is MD3 spec but we want extra space for our supporting text while still having some spacing between items
-                            .semantics {
-                                role = Role.RadioButton
-                            }, // for TalkBack / screen readers, since this is clickable not the RadioButton
-                    ) {
-                        RadioButton(
-                            selected = (selectedOption == loyaltyType),
-                            enabled = saveStatus.isNotBusy(),
-                            onClick = null // Row's Modifier.clickable() handles this
-                        )
-                        Column(modifier = Modifier.padding(start = 8.dp)) {
-                            Text(
-                                text = stringResource(loyaltyType.nameResource)
-                            )
-                            if (loyaltyType.supportingTextResource != null) {
-                                Text(
-                                    text = stringResource(loyaltyType.supportingTextResource),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
-                    }
-                }
+                    },
+                    getId = { it },
+                    getNameResource = { it.nameResource },
+                    getSupportingTextResource = { it.supportingTextResource },
+                )
 
                 if (selectedOption != LoyaltyType.NONE) {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -252,3 +225,4 @@ fun EditSourceScreen(
         }
     }
 }
+
