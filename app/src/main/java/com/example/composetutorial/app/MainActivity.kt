@@ -137,12 +137,6 @@ class MainActivity : ComponentActivity() {
 // with this, but I really don't want delete to be implemented on the list as it is a very rare and
 // potentially devastating operation.
 
-// TODO: May want to semi-formally document that "state" for a screen is "what's in the screen's
-// view model" (and arguably also in remembered stuff in composable etc), while "content" is what
-// gets passed in from the "caller" via the sharedviewmodel mechanism. This may help me feel better
-// and be more consistent about naming variables functions around the whole sharedviewmodel thing
-// and also the resulting structure inside the fooscreenviewmodel.
-
 // ENHANCE: We should probably implement a "recycle bin" type delete for data set/item/source - have
 // a "deleted" flag on all the tables, and when something is deleted we set that. (We would not
 // cascade-set this if we delete a data set; being unable to select the data set would effectively
@@ -266,14 +260,6 @@ class MainActivity : ComponentActivity() {
 // ENHANCE: It would be nice to add automated tests. At the very least, Quantity could be
 // usefully tested. It would also be interesting and perhaps useful to add some unit tests for more
 // of the business logic, mocking the repository, etc.
-
-// TODO: I've shoved in "cada uno" as a Spanish translation for "each" but this may not be right,
-// need to talk to LLMs. This is so I can test if it maybe works with my string constructions etc.
-// It is maybe a bit crap on the spacing (e.g. "$US cada undo" - albeit extreme - wraps in the
-// comparison table, and it is a smidge but borderline OK in the precio en la tienda unit price -
-// the chevron is pushed off screen!). I don't know if "cada uno" is correct or if it sometimes
-// needs to be "una." It is possible something like "c/u" is normal, but does that work with "0,25
-// US$/c/u" for example?
 
 // TODO: Spanish translation of message_no_data_set_selected seems to miss the *top* part out, but
 // the message_no_data_sets has it. Maybe worth querying this. - I have had a confusing chat with
