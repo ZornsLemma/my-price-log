@@ -57,20 +57,23 @@ class ViewPriceHistoryViewModel(
         // that deletion.
         (if (uiContent.staticContent.price == null) listOf(null) else emptyList()) +
                 // Now add on the main list of deltas.
-                // Remember that we are doing a "backwards delta" here - we show the very latest element in full,
-                // and for older elements we show differences between them and the next newest element. This zip
-                // has every member of priceHistoryList appear exactly once as oldPriceHistory.
-                // TODO: Once the dust settles, test this with a price being deleted then reinstated
-                // with no changes and check how it appears
-                // TODO: I think it's technically correct (but need to test properly) but we can end
-                // up with
-                // multiple adjacent deletes if the intermediate deltas are "empty". We should probably
-                // collapse multiple adjacent nulls down to one - it's probably not worth over-faffing to try
-                // to show the precise history or to force a diff card in there. Maybe it's OK as it is - it
-                // does kind of reflect reality (multiple deletes and we know - but it maybe looks odd -
-                // there were no real changes in between them because the diff cards are missing) - but I
-                // suspect it's more confusng than helpful and no one really cares about the history at that
-                // level of detail.
+                //
+                // Remember that we are doing a "backwards delta" here - we show the very latest
+                // element in full, and for older elements we show differences between them and the
+                // next newest element. This zip has every member of priceHistoryList appear exactly
+                // once as oldPriceHistory.
+                //
+                // The reason we have collapseNulls() is because if a price is deleted then
+                // reinstated identically then deleted again then reinstated identically again,
+                // diff() will eliminate the reinstated version between the two deletions and we'd
+                // show two deletions with nothing in between them.
+                //
+                // ENHANCE: It's possible the algorithm here could be better, particularly in
+                // considering how deletions interact with diffs, but it's not completely clear
+                // what's actually best. We could potentially consider a deletion as giving a "null
+                // record" and the following version therefore appears in its entirely regardless of
+                // how it compares to the previous version, but that might be over-verbose. In
+                // practice all of this is relatively unimportant corner cases.
                 (listOf(null) + priceHistoryList).zip(priceHistoryList)
                     .flatMap { (newPriceHistory, oldPriceHistory) ->
                         if (newPriceHistory == null) listOf(oldPriceHistory.toPriceHistoryDelta(
@@ -87,7 +90,16 @@ class ViewPriceHistoryViewModel(
                             subList
                         }
                     }
+                    .collapseNulls()
 }
+
+private fun <T> List<T?>.collapseNulls(): List<T?> =
+    fold(mutableListOf()) { acc, item ->
+        if (item != null || acc.lastOrNull() != null) {
+            acc.add(item)
+        }
+        acc
+    }
 
 data class PriceHistoryDelta(
     val priceHistory: PriceHistory,
