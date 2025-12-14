@@ -84,7 +84,7 @@ fun EditSourceScreen(
         ), dataSet.name),
         isDirty = { editableSource != originalSource },
         validateForSave = { viewModel.validateForSave() },
-        performSave = { viewModel.performSave() /* ; throw IllegalArgumentException("TODO2") */ },
+        performSave = { viewModel.performSave() },
         onIdle = {},
         requestClose = requestClose,
         deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
