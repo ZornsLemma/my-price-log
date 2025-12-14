@@ -2,7 +2,12 @@
 
 package com.example.composetutorial.ui.screens.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,6 +57,8 @@ import com.example.composetutorial.domain.defaultStalePriceThresholdDays
 import com.example.composetutorial.ui.common.failedValidationRuleOrNull
 import com.example.composetutorial.ui.common.UiText
 import com.example.composetutorial.ui.components.NumericTextField
+import com.example.composetutorial.ui.components.ValidateFieldState
+import com.example.composetutorial.ui.components.textOrNull
 import com.example.composetutorial.ui.screenVerticalBorder
 import kotlinx.coroutines.delay
 
@@ -314,13 +321,10 @@ private fun SettingsTile(
 }
 
 // Our full screen edit dialogs always have "Save" enabled but show warnings if a mandatory field is
-// empty only after you've tried to save for the first time. SettingsDialogs behave differently -
+// empty only after you've tried to save for the first time. SettingsDialog behaves differently -
 // "Save" is simply disabled when there's an error or the value is empty. I think this is fine,
 // because here there is a single text field so the user's attention is naturally focused on it,
 // unlike a full screen dialog with multiple editable fields.
-//
-// TODO: Can/should this have a small lag in updating supportingText as I think our normal full
-// screen edit dialogs did at one point (not sure if they still do)?
 @Composable
 private fun SettingsDialog(
     title: String,
@@ -338,44 +342,56 @@ private fun SettingsDialog(
             text = currentValue,
             // Put the caret at the end of the string - this is why we need a TextFieldValue.
             selection = TextRange(currentValue.length))) }
-    var error by remember { mutableStateOf<UiText?>(null) }
     val focusRequester = remember { FocusRequester() }
-    // TODO: Do we want to show "required" text when this is empty, given it's a single text field and save is disabled?
+    // By passing allowEmpty here, we don't validate empty strings and therefore the rule to treat
+    // empty strings as invalid in the validationRules passed in to this function is irrelevant.
+    // This feels like the best option here, given this is a dialog box with a single field and we
+    // explicitly disable save if the field is empty. ENHANCE: We could remove that rule.
+    val validatedFieldState = ValidateFieldState(
+        value = currentValue,
+        validationRules = validationRules,
+        allowEmpty = true,
+    )
+    val validationResult = validatedFieldState.validationResult.value
+
+    // I can't get any form of AnimatedVisibility or animateContentSize() to work with the
+    // supportingText appearing and disappearing here, no matter where I try to put them. I don't
+    // think it's a big deal. We could use an empty supportingText when there is no error to avoid
+    // the dialog size changing abruptly, but I think it's probably nicer not to have the extra
+    // blank space shown all the time and accept the abrupt size change.
     AlertDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(title) },
         text = {
             Column {
                 Text(subtitle, modifier = Modifier.padding(bottom = 16.dp))
-                NumericTextField(
-                    filled = false,
-                    value = textFieldValue,
-                    locale = LocalConfiguration.current.locales[0],
-                    onValueChange = { textFieldValue = it; currentValue = it.text; error = failedValidationRuleOrNull(validationRules, it.text.trim())?.message },
-                    label = { Text(label) },
-                    suffix = suffix,
-                    supportingText = {
-                        if (error != null) Text(
-                            error!!.asString(),
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    },
-                    isError = error != null,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(focusRequester)
-                )
+                    NumericTextField(
+                        filled = false,
+                        value = textFieldValue,
+                        locale = LocalConfiguration.current.locales[0],
+                        onValueChange = {
+                            textFieldValue = it; currentValue = it.text
+                        },
+                        label = { Text(label) },
+                        suffix = suffix,
+                        supportingText = textOrNull(validationResult),
+                        isError = validationResult != null,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester),
+                        interactionSource = validatedFieldState.interactionSource,
+                    )
             }
         },
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (error == null) {
+                    if (validationResult == null) {
                         onConfirm(currentValue.trim())
                     }
                 },
-                enabled = currentValue.trim().isNotEmpty() && error == null
+                enabled = currentValue.trim().isNotEmpty() && validationResult == null
             ) { Text(stringResource(R.string.button_save)) }
         },
         dismissButton = {
