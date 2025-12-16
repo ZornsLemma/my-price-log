@@ -1,4 +1,5 @@
 package com.example.composetutorial.data
+// TODO: I NEED TO RENAME THE PACKAGE!
 
 import android.os.Parcelable
 import androidx.room.ColumnInfo
