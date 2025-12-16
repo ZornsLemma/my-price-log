@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
@@ -73,7 +74,10 @@ import com.example.composetutorial.ui.screens.settings.SettingsViewModel
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryScreen
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryScreenStaticContent
 import com.example.composetutorial.ui.screens.viewpricehistory.ViewPriceHistoryViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -88,15 +92,21 @@ fun AppNavigation() {
 
     val context = LocalContext.current
     val activity = context as? Activity
+    val scope = rememberCoroutineScope()
 
     val backupLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/octet-stream"),
         onResult = { uri ->
             if (uri != null) {
-                try {
-                    backupDatabase(context, uri)
-                } catch (e: Exception) {
-                    errorMessage = e.localizedMessage ?: context.getString(R.string.message_an_unknown_error_occurred)
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        backupDatabase(context, uri)
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            errorMessage = e.localizedMessage
+                                ?: context.getString(R.string.message_an_unknown_error_occurred)
+                        }
+                    }
                 }
             }
         }
@@ -106,14 +116,19 @@ fun AppNavigation() {
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri ->
             if (uri != null) {
-                try {
-                    restoreDatabase(context, uri)
-                    // All sorts of internal state is probably outdated. This is a rare operation
-                    // and we don't want to massively complicate our code (e.g. the flows feeding
-                    // the home screen) to handle it, so we just force a restart.
-                    showRestartDialog = true
-                } catch (e: Exception) {
-                    errorMessage = e.localizedMessage ?: context.getString(R.string.message_an_unknown_error_occurred)
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        restoreDatabase(context, uri)
+                        // All sorts of internal state is probably outdated. This is a rare operation
+                        // and we don't want to massively complicate our code (e.g. the flows feeding
+                        // the home screen) to handle it, so we just force a restart.
+                        showRestartDialog = true
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            errorMessage = e.localizedMessage
+                                ?: context.getString(R.string.message_an_unknown_error_occurred)
+                        }
+                    }
                 }
             }
         }

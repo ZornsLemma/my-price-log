@@ -240,11 +240,6 @@ class MainActivity : ComponentActivity() {
 // a validation failure, which feels consistent with how e.g. entering an invalid number will
 // immediately trigger a validation failure.
 
-// TODO: Make sure to do some testing and check the log for strict mode violations towards end of
-// dev.
-// - OK, doing a backup from within settings causes one, as does restoring database. Otherwise
-//   everything seems OK.
-
 // ENHANCE: It would be nice to add automated tests. At the very least, Quantity could be
 // usefully tested. It would also be interesting and perhaps useful to add some unit tests for more
 // of the business logic, mocking the repository, etc.
