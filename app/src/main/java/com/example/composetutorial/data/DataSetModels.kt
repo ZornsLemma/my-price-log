@@ -4,16 +4,15 @@ import android.os.Parcelable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.example.composetutorial.ui.common.currencyOrNull
 import com.example.composetutorial.domain.UnitFamily
-import kotlinx.parcelize.Parcelize
+import com.example.composetutorial.ui.common.currencyOrNull
 import java.util.Locale
+import kotlinx.parcelize.Parcelize
 
 @Entity(tableName = "data_set")
 @Parcelize
 data class DataSet(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     @ColumnInfo(name = "currency_code") val currencyCode: String,
     // ENHANCE: For now, I think I will ask the system to format currencies using the currency_code.
@@ -37,36 +36,46 @@ fun DataSet?.toEditable(locale: Locale): EditableDataSet {
             "",
             locale.currencyOrNull()?.currencyCode ?: "",
             UnitPreferences(
-            allowMetric = UnitFamily.METRIC in defaultUnitFamilies,
-            allowImperial = UnitFamily.IMPERIAL in defaultUnitFamilies,
-            allowUSCustomary = UnitFamily.US_CUSTOMARY in defaultUnitFamilies,),
-            notes = ""
+                allowMetric = UnitFamily.METRIC in defaultUnitFamilies,
+                allowImperial = UnitFamily.IMPERIAL in defaultUnitFamilies,
+                allowUSCustomary = UnitFamily.US_CUSTOMARY in defaultUnitFamilies,
+            ),
+            notes = "",
         )
     } else {
         return EditableDataSet(
             id = id,
             name = name,
             currencyCode = currencyCode,
-            unitPreferences = UnitPreferences(allowMetric = allowMetric, allowImperial = allowImperial, allowUSCustomary =  allowUSCustomary),
-            notes = notes
+            unitPreferences =
+                UnitPreferences(
+                    allowMetric = allowMetric,
+                    allowImperial = allowImperial,
+                    allowUSCustomary = allowUSCustomary,
+                ),
+            notes = notes,
         )
     }
 }
 
-fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> = when (locale.country.uppercase()) {
-    // ChatGPT suggests it's common to have dual metric and US customary labelling in US
-    // supermarkets and that some users may want to use metric, so we enable it by default. I'll do
-    // the same for Liberia and Myanmar too for now.
-    "US", "LR", "MM" -> setOf(UnitFamily.ITEM, UnitFamily.METRIC, UnitFamily.US_CUSTOMARY)
-    "GB" -> setOf(UnitFamily.ITEM, UnitFamily.METRIC, UnitFamily.IMPERIAL)
-    else -> setOf(UnitFamily.ITEM, UnitFamily.METRIC)
-}
+fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> =
+    when (locale.country.uppercase()) {
+        // ChatGPT suggests it's common to have dual metric and US customary labelling in US
+        // supermarkets and that some users may want to use metric, so we enable it by default. I'll
+        // do
+        // the same for Liberia and Myanmar too for now.
+        "US",
+        "LR",
+        "MM" -> setOf(UnitFamily.ITEM, UnitFamily.METRIC, UnitFamily.US_CUSTOMARY)
+        "GB" -> setOf(UnitFamily.ITEM, UnitFamily.METRIC, UnitFamily.IMPERIAL)
+        else -> setOf(UnitFamily.ITEM, UnitFamily.METRIC)
+    }
 
 @Parcelize
 data class UnitPreferences(
     val allowMetric: Boolean,
     val allowImperial: Boolean,
-    val allowUSCustomary: Boolean
+    val allowUSCustomary: Boolean,
 ) : Parcelable
 
 @Parcelize
@@ -94,6 +103,6 @@ fun EditableDataSet.toDomain(): DataSet? {
         allowMetric = unitPreferences.allowMetric,
         allowImperial = unitPreferences.allowImperial,
         allowUSCustomary = unitPreferences.allowUSCustomary,
-        notes = notes
+        notes = notes,
     )
 }

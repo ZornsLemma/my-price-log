@@ -12,9 +12,7 @@ import androidx.compose.ui.Modifier
 // LabeledItem() attempts to mimic the label style of a TextField but for "read-only" content. It
 // works best with a simple Text() child, but other things are possible.
 @Composable
-fun LabeledItem(
-    label: String, modifier: Modifier = Modifier, content: @Composable () -> Unit
-) {
+fun LabeledItem(label: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(modifier = modifier) {
         Text(
             text = label,
@@ -27,7 +25,7 @@ fun LabeledItem(
         // than the content being consistent internally but the wrong size/colour.
         CompositionLocalProvider(
             LocalTextStyle provides MaterialTheme.typography.bodyLarge,
-            LocalContentColor provides MaterialTheme.colorScheme.onSurface
+            LocalContentColor provides MaterialTheme.colorScheme.onSurface,
         ) {
             content()
         }

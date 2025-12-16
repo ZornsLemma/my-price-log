@@ -1,8 +1,6 @@
 package com.example.composetutorial.ui.common
 
 import android.os.LocaleList
-import android.util.Log
-import com.example.composetutorial.ui.common.sortedByLocale
 import java.util.Currency
 import java.util.Locale
 
@@ -19,28 +17,177 @@ fun Locale.currencyOrNull(): Currency? {
 // so much junk (e.g. historical currency codes, which are irrelevant for our purposes) that I had
 // to give up on the idea. The following list is a manual combination of the results from the
 // following lists:
-// - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-one.xls
-// - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-two.doc
-// - https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-three.xls
+// -
+// https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-one.xls
+// -
+// https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-two.doc
+// -
+// https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-three.xls
 // with a few additional tweaks.
 // @formatter:off
-private val validCurrencyCodes = setOf(
-    "AED", "AFN", "ALL", "AMD", "AOA", "ARS", "AUD", "AWG", "AZN", "BAM", "BBD", "BDT", "BGN",
-    "BHD", "BIF", "BMD", "BND", "BOB", "BRL", "BSD", "BTN", "BWP", "BYN", "BZD", "CAD", "CDF",
-    "CHF", "CLP", "CNY", "COP", "CRC", "CUP", "CVE", "CZK", "DJF", "DKK", "DOP", "DZD", "EGP",
-    "ERN", "ETB", "EUR", "FJD", "FKP", "GBP", "GEL", "GHS", "GIP", "GMD", "GNF", "GTQ", "GYD",
-    "HKD", "HNL", "HTG", "HUF", "ILS", "INR", "IQD", "IRR", "ISK", "JMD", "JOD", "JPY", "KES",
-    "KGS", "KHR", "KMF", "KPW", "KRW", "KWD", "KYD", "KZT", "LAK", "LBP", "LKR", "LRD", "LSL",
-    "LYD", "MAD", "MDL", "MGA", "MKD", "MMK", "MNT", "MOP", "MRU", "MUR", "MVR", "MWK", "MXN",
-    "MYR", "MZN", "NAD", "NGN", "NIO", "NOK", "NPR", "NZD", "OMR", "PAB", "PEN", "PGK", "PHP",
-    "PKR", "PLN", "PYG", "QAR", "RON", "RSD", "RUB", "RWF", "SAR", "SBD", "SCR", "SDG", "SEK",
-    "SGD", "SHP", "SLE", "SOS", "SRD", "SSP", "STN", "SVC", "SYP", "SZL", "THB", "TJS", "TMT",
-    "TND", "TOP", "TRY", "TTD", "TWD", "TZS", "UAH", "UGX", "USD", "UYU", "UZS", "VED", "VES",
-    "VND", "VUV", "WST", "XAF", "XCD", "XCG", "XOF", "XPF", "YER", "ZAR", "ZMW", "ZWG"
-)
+private val validCurrencyCodes =
+    setOf(
+        "AED",
+        "AFN",
+        "ALL",
+        "AMD",
+        "AOA",
+        "ARS",
+        "AUD",
+        "AWG",
+        "AZN",
+        "BAM",
+        "BBD",
+        "BDT",
+        "BGN",
+        "BHD",
+        "BIF",
+        "BMD",
+        "BND",
+        "BOB",
+        "BRL",
+        "BSD",
+        "BTN",
+        "BWP",
+        "BYN",
+        "BZD",
+        "CAD",
+        "CDF",
+        "CHF",
+        "CLP",
+        "CNY",
+        "COP",
+        "CRC",
+        "CUP",
+        "CVE",
+        "CZK",
+        "DJF",
+        "DKK",
+        "DOP",
+        "DZD",
+        "EGP",
+        "ERN",
+        "ETB",
+        "EUR",
+        "FJD",
+        "FKP",
+        "GBP",
+        "GEL",
+        "GHS",
+        "GIP",
+        "GMD",
+        "GNF",
+        "GTQ",
+        "GYD",
+        "HKD",
+        "HNL",
+        "HTG",
+        "HUF",
+        "ILS",
+        "INR",
+        "IQD",
+        "IRR",
+        "ISK",
+        "JMD",
+        "JOD",
+        "JPY",
+        "KES",
+        "KGS",
+        "KHR",
+        "KMF",
+        "KPW",
+        "KRW",
+        "KWD",
+        "KYD",
+        "KZT",
+        "LAK",
+        "LBP",
+        "LKR",
+        "LRD",
+        "LSL",
+        "LYD",
+        "MAD",
+        "MDL",
+        "MGA",
+        "MKD",
+        "MMK",
+        "MNT",
+        "MOP",
+        "MRU",
+        "MUR",
+        "MVR",
+        "MWK",
+        "MXN",
+        "MYR",
+        "MZN",
+        "NAD",
+        "NGN",
+        "NIO",
+        "NOK",
+        "NPR",
+        "NZD",
+        "OMR",
+        "PAB",
+        "PEN",
+        "PGK",
+        "PHP",
+        "PKR",
+        "PLN",
+        "PYG",
+        "QAR",
+        "RON",
+        "RSD",
+        "RUB",
+        "RWF",
+        "SAR",
+        "SBD",
+        "SCR",
+        "SDG",
+        "SEK",
+        "SGD",
+        "SHP",
+        "SLE",
+        "SOS",
+        "SRD",
+        "SSP",
+        "STN",
+        "SVC",
+        "SYP",
+        "SZL",
+        "THB",
+        "TJS",
+        "TMT",
+        "TND",
+        "TOP",
+        "TRY",
+        "TTD",
+        "TWD",
+        "TZS",
+        "UAH",
+        "UGX",
+        "USD",
+        "UYU",
+        "UZS",
+        "VED",
+        "VES",
+        "VND",
+        "VUV",
+        "WST",
+        "XAF",
+        "XCD",
+        "XCG",
+        "XOF",
+        "XPF",
+        "YER",
+        "ZAR",
+        "ZMW",
+        "ZWG",
+    )
+
 // @formatter:on
 
-// Returns a list of (currency codes as IDs, currency display names) with the most likely ones (based
+// Returns a list of (currency codes as IDs, currency display names) with the most likely ones
+// (based
 // on the current locales) at the top. The last of the "most likely" currency codes is also returned
 // as a string so we can use it to add a divider after this entry.
 //
@@ -83,13 +230,18 @@ fun createCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Stri
     // from validCurrencyCodes if the system doesn't understand it.
     val otherCurrencyList =
         Currency.getAvailableCurrencies().mapNotNull { currency ->
-            if (currency.currencyCode in mainCurrencyCodeSet ||
-                currency.currencyCode !in validCurrencyCodes) {
-                null } else { createPair(currency) }
+            if (
+                currency.currencyCode in mainCurrencyCodeSet ||
+                    currency.currencyCode !in validCurrencyCodes
+            ) {
+                null
+            } else {
+                createPair(currency)
+            }
         }
 
     return Pair(
         mainCurrencyList.last().first,
-        mainCurrencyList.toList() + otherCurrencyList.sortedByLocale( { it.second }, locales[0])
+        mainCurrencyList.toList() + otherCurrencyList.sortedByLocale({ it.second }, locales[0]),
     )
 }

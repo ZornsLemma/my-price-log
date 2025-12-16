@@ -4,33 +4,31 @@ import android.os.Parcelable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.data.Source
+import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.ui.common.EmptyParcelable
 import com.example.composetutorial.ui.common.PersistentUiContent
 import com.example.composetutorial.ui.components.generalselector.GeneralSelectorScreenStateHolder
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class SelectSourceScreenStaticContent(
-    val initialList: List<Source>,
-    val dataSet: DataSet
-): Parcelable
+data class SelectSourceScreenStaticContent(val initialList: List<Source>, val dataSet: DataSet) :
+    Parcelable
 
 class SelectSourceViewModel(
     repository: Repository,
     savedStateHandle: SavedStateHandle,
     initialStaticContent: SelectSourceScreenStaticContent?,
-) : ViewModel()
-{
-    val uiContent = PersistentUiContent(
-        this,
-        savedStateHandle,
-        "SelectSource",
-        EmptyParcelable(),
-        initialStaticContent
-    )
+) : ViewModel() {
+    val uiContent =
+        PersistentUiContent(
+            this,
+            savedStateHandle,
+            "SelectSource",
+            EmptyParcelable(),
+            initialStaticContent,
+        )
 
     val generalSelectorScreenStateHolder =
         GeneralSelectorScreenStateHolder<Source>(
@@ -38,7 +36,6 @@ class SelectSourceViewModel(
             getName = { it.name },
             uiContent.staticContent.initialList,
             repository.getAllSources(uiContent.staticContent.dataSet.id),
-            viewModelScope
+            viewModelScope,
         )
-
-    }
+}

@@ -9,13 +9,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import com.example.composetutorial.R
-import com.example.composetutorial.ui.components.textOrNull
 import com.example.composetutorial.ui.common.UiText
 import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.defaultErrorHighlightOffset
-import kotlinx.coroutines.flow.SharedFlow
 import java.text.DecimalFormatSymbols
 import java.util.Locale
+import kotlinx.coroutines.flow.SharedFlow
 
 @Composable
 fun <T> ValidatedNumericTextField(
@@ -46,10 +45,11 @@ fun <T> ValidatedNumericTextField(
         validationFlow,
         validationFlowFieldId,
         errorHighlightOffset,
-        modifier = baseValidatedTextFieldModifier
+        modifier = baseValidatedTextFieldModifier,
     ) { validationResult, interactionSource, validationInputHandle ->
         NumericTextField(
-            modifier = numericTextFieldModifier.validationInputHandleFocusRequester(validationInputHandle),
+            modifier =
+                numericTextFieldModifier.validationInputHandleFocusRequester(validationInputHandle),
             label = label,
             value = value,
             locale = locale,
@@ -59,10 +59,7 @@ fun <T> ValidatedNumericTextField(
             onValueChange = onValueChange,
             enabled = enabled,
             isError = validationResult != null,
-            supportingText = textOrNull(
-                validationResult,
-                color = MaterialTheme.colorScheme.error
-            ),
+            supportingText = textOrNull(validationResult, color = MaterialTheme.colorScheme.error),
             keyboardOptions = keyboardOptions,
             interactionSource = interactionSource,
             filled = filled,
@@ -93,38 +90,48 @@ fun numericValidationRules(
 
     return listOfNotNull(
         if (required) {
-            ValidationRule({ it.trim().isNotEmpty() },
-                UiText.Res(R.string.supporting_text_required)) } else null,
-
+            ValidationRule(
+                { it.trim().isNotEmpty() },
+                UiText.Res(R.string.supporting_text_required),
+            )
+        } else null,
         ValidationRule(
             { it.count { char -> char == decimalSeparator } <= maxDecimalSeparators },
             // ENHANCE: There might be an argument for allowing a single decimal separator with no
             // trailing contents even when only whole numbers are allowed.
-            if (allowDecimals) UiText.Res(R.string.supporting_text_only_one_decimal_point_allowed) else UiText.Res(R.string.supporting_text_only_whole_numbers_allowed)
+            if (allowDecimals) UiText.Res(R.string.supporting_text_only_one_decimal_point_allowed)
+            else UiText.Res(R.string.supporting_text_only_whole_numbers_allowed),
         ),
-
         if (maxDecimals != null) {
-            ValidationRule({
-                val parts = sanitiseCandidate(it).split(decimalSeparator)
-                parts.size != 2 || parts[1].length <= maxDecimals
-            }, UiText.PluralsRes(R.plurals.supporting_text_no_more_than_x_decimal_places_allowed, maxDecimals, listOf(maxDecimals)))
+            ValidationRule(
+                {
+                    val parts = sanitiseCandidate(it).split(decimalSeparator)
+                    parts.size != 2 || parts[1].length <= maxDecimals
+                },
+                UiText.PluralsRes(
+                    R.plurals.supporting_text_no_more_than_x_decimal_places_allowed,
+                    maxDecimals,
+                    listOf(maxDecimals),
+                ),
+            )
         } else {
             null
         },
-
         if (!allowZero) {
             // This message assumes you can't enter a negative value because input filtering rejects
             // '-'.
-            ValidationRule({ attemptedParse(it) != 0.0 },
-                UiText.Res(R.string.supporting_text_must_be_greater_than_zero))
+            ValidationRule(
+                { attemptedParse(it) != 0.0 },
+                UiText.Res(R.string.supporting_text_must_be_greater_than_zero),
+            )
         } else {
             null
         },
-
         if (maxValue != null) {
-            ValidationRule( { (attemptedParse(it) ?: 0.0) <= maxValue },
-                UiText.Res(
-                    R.string.supporting_text_must_be_no_greater_than_x, listOf(maxValue)))
+            ValidationRule(
+                { (attemptedParse(it) ?: 0.0) <= maxValue },
+                UiText.Res(R.string.supporting_text_must_be_no_greater_than_x, listOf(maxValue)),
+            )
         } else {
             null
         },
@@ -132,7 +139,9 @@ fun numericValidationRules(
         // This is a catch-all; in practice we expect to catch all problems before this, but we
         // don't want to have a string which can't be converted (which would cause an error on
         // trying to save) which the user hasn't been warned about.
-        ValidationRule({ (!required && it.trim().isEmpty()) || attemptedParse(it) != null },
-            UiText.Res(R.string.supporting_text_invalid_number)),
+        ValidationRule(
+            { (!required && it.trim().isEmpty()) || attemptedParse(it) != null },
+            UiText.Res(R.string.supporting_text_invalid_number),
+        ),
     )
 }

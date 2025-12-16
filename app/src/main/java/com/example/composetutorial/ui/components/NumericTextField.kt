@@ -6,7 +6,6 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import com.example.composetutorial.ui.maxDecimalLength
 import java.text.DecimalFormatSymbols
@@ -41,7 +40,9 @@ fun NumericTextField(
         // now. We could potentially accept some options from our caller which say whether decimal
         // point (locale sensitive) or minus signs are allowed and tweak the internally-assigned
         // onCandidate... function here.
-        onCandidateValueChange = { isValidTransitionalDecimal(locale, it) && it.length <= maxDecimalLength },
+        onCandidateValueChange = {
+            isValidTransitionalDecimal(locale, it) && it.length <= maxDecimalLength
+        },
         onValueChange = onValueChange,
         enabled = enabled,
         isError = isError,

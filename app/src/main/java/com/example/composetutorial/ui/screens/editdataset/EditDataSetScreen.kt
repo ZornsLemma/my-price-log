@@ -1,8 +1,5 @@
 package com.example.composetutorial.ui.screens.editdataset
 
-import com.example.composetutorial.ui.components.ValidationErrorHighlightBox
-import com.example.composetutorial.ui.components.SupportingText
-import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,60 +30,76 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
-import com.example.composetutorial.debug.debugThrow
 import com.example.composetutorial.ui.buttonIconTextSpacing
 import com.example.composetutorial.ui.common.createCurrencyList
-import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
-import com.example.composetutorial.ui.components.textOrNull
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
 import com.example.composetutorial.ui.components.SmallCircularProgressIndicator
+import com.example.composetutorial.ui.components.SupportingText
 import com.example.composetutorial.ui.components.ValidatedFilteredTextField
+import com.example.composetutorial.ui.components.ValidationErrorHighlightBox
 import com.example.composetutorial.ui.components.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.ui.components.generaledit.GeneralEditAndDeleteScreen
 import com.example.composetutorial.ui.components.keyboardCapitalization
+import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
+import com.example.composetutorial.ui.components.textOrNull
 import com.example.composetutorial.ui.components.validationInputHandleFocusRequester
 import com.example.composetutorial.ui.maxDataSetNameLength
 import com.example.composetutorial.ui.maxNotesLength
 
-private enum class UnitPreferenceOption(@field:StringRes val nameResource: Int) { METRIC(R.string.label_metric), IMPERIAL(R.string.label_imperial), US_CUSTOMARY(R.string.label_us_units) }
+private enum class UnitPreferenceOption(@field:StringRes val nameResource: Int) {
+    METRIC(R.string.label_metric),
+    IMPERIAL(R.string.label_imperial),
+    US_CUSTOMARY(R.string.label_us_units),
+}
 
 @Composable
 fun EditDataSetScreen(
     viewModel: EditDataSetViewModel,
     navController: NavHostController,
-    requestClose: (Long?) -> Unit
+    requestClose: (Long?) -> Unit,
 ) {
     val originalDataSet = viewModel.uiContent.originalContent
     val editableDataSet by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
 
-    val dataSetReferenceCount by viewModel.dataSetReferenceCountFlow.collectAsStateWithLifecycle(null)
+    val dataSetReferenceCount by
+        viewModel.dataSetReferenceCountFlow.collectAsStateWithLifecycle(null)
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
-    val saveStatus by viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by
+        viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = dataSetReferenceCount == 0L
-    val dialogTitle = stringResource(if (isSimpleDelete) R.string.title_delete_data_set else R.string.title_delete_data_set_and_associated_data)
-    val dialogSubtitle = stringResource(if (isSimpleDelete) R.string.message_delete_data_set_no_associated_data else R.string.message_delete_data_set_associated_data)
+    val dialogTitle =
+        stringResource(
+            if (isSimpleDelete) R.string.title_delete_data_set
+            else R.string.title_delete_data_set_and_associated_data
+        )
+    val dialogSubtitle =
+        stringResource(
+            if (isSimpleDelete) R.string.message_delete_data_set_no_associated_data
+            else R.string.message_delete_data_set_associated_data
+        )
 
     GeneralEditAndDeleteScreen(
         stateHolder = viewModel.generalEditScreenStateHolder,
         navController = navController,
-        title = { Text(if (originalDataSet.id == 0L) stringResource(R.string.title_add_data_set) else stringResource(
-            R.string.title_edit_data_set
-        )) },
+        title = {
+            Text(
+                if (originalDataSet.id == 0L) stringResource(R.string.title_add_data_set)
+                else stringResource(R.string.title_edit_data_set)
+            )
+        },
         isDirty = { editableDataSet != originalDataSet },
         validateForSave = { viewModel.validateForSave() },
-        performSave = { viewModel.performSave(); },
+        performSave = { viewModel.performSave() },
         onIdle = {},
         requestClose = requestClose,
-        deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
-            isSimpleDelete,
-            { Text(dialogTitle) },
-            { Text(dialogSubtitle) },
-        ),
+        deleteConfirmationDetails =
+            if (!showDeleteConfirmDialog) null
+            else Triple(isSimpleDelete, { Text(dialogTitle) }, { Text(dialogSubtitle) }),
         performDelete = { viewModel.performDelete() },
         onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
     ) { showDeleteSpinner ->
@@ -94,7 +107,10 @@ fun EditDataSetScreen(
         val nameValidationRules by viewModel.nameValidationRules.collectAsStateWithLifecycle()
         ValidatedFilteredTextField(
             label = { Text(stringResource(R.string.label_name)) },
-            keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_data_set_name)),
+            keyboardOptions =
+                KeyboardOptions(
+                    keyboardCapitalization(R.string.keyboard_capitalization_data_set_name)
+                ),
             value = name,
             maxLength = maxDataSetNameLength,
             onValueChange = {
@@ -107,7 +123,7 @@ fun EditDataSetScreen(
             allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
             singleLine = true,
             validationFlow = viewModel.saveValidationEvents,
-            validationFlowFieldId = EditDataSetViewModel.EditableField.NAME
+            validationFlowFieldId = EditDataSetViewModel.EditableField.NAME,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -117,12 +133,13 @@ fun EditDataSetScreen(
             validationRules = viewModel.currencyValidationRules,
             allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
             validationFlow = viewModel.saveValidationEvents,
-            validationFlowFieldId = EditDataSetViewModel.EditableField.CURRENCY_CODE
+            validationFlowFieldId = EditDataSetViewModel.EditableField.CURRENCY_CODE,
         ) { validationResult, interactionSource, validationInputHandle ->
             val currentLocalConfiguration = LocalConfiguration.current
-            val currencyList = remember(currentLocalConfiguration.locales) {
-                createCurrencyList(currentLocalConfiguration.locales)
-            }
+            val currencyList =
+                remember(currentLocalConfiguration.locales) {
+                    createCurrencyList(currentLocalConfiguration.locales)
+                }
 
             // We try to do half-decent job by showing a gigantic list in an unwieldy dropdown but
             // putting the currencies the user is likely to care about at the top.
@@ -142,17 +159,13 @@ fun EditDataSetScreen(
             // instead of scrolling through a giant dropdown.
 
             MyExposedDropdownMenuBox(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .validationInputHandleFocusRequester(validationInputHandle),
-
-                selectedId = if (editableDataSet.currencyCode != "") editableDataSet.currencyCode else null,
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .validationInputHandleFocusRequester(validationInputHandle),
+                selectedId =
+                    if (editableDataSet.currencyCode != "") editableDataSet.currencyCode else null,
                 onItemSelected = {
-                    viewModel.setUiContentEditableDataSet(
-                        editableDataSet.copy(
-                            currencyCode = it
-                        )
-                    )
+                    viewModel.setUiContentEditableDataSet(editableDataSet.copy(currencyCode = it))
                 },
                 enabled = saveStatus.isNotBusy(),
                 label = { Text(stringResource(R.string.label_currency)) },
@@ -160,10 +173,8 @@ fun EditDataSetScreen(
                 getId = { it.first },
                 getItemText = { it.second },
                 getDividerBetween = { firstItem, _ -> firstItem.first == currencyList.first },
-                supportingText = textOrNull(
-                    validationResult,
-                    color = MaterialTheme.colorScheme.error,
-                ),
+                supportingText =
+                    textOrNull(validationResult, color = MaterialTheme.colorScheme.error),
                 addBottomSpace = true,
             )
         }
@@ -177,40 +188,51 @@ fun EditDataSetScreen(
             value = editableDataSet.unitPreferences,
             validationRules = viewModel.measurementSystemValidationRules,
             validationFlow = viewModel.saveValidationEvents,
-            validationFlowFieldId = EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM
+            validationFlowFieldId = EditDataSetViewModel.EditableField.MEASUREMENT_SYSTEM,
         ) { validationResult, interactionSource, scrollToFocusableHandle ->
             Text(
                 stringResource(R.string.label_measurement_units),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             // We *don't* call Modifier.validationFocusRequester() as you can't focus a segmented
             // button, and this will force a clear focus to happen on validation errors instead.
-            MultiChoiceSegmentedButtonRow(
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            MultiChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 UnitPreferenceOption.entries.forEachIndexed { index, label ->
                     val unit = UnitPreferenceOption.entries[index]
                     val oldUnitPreferences = editableDataSet.unitPreferences
-                    val checked = when (unit) {
-                        UnitPreferenceOption.METRIC -> oldUnitPreferences.allowMetric
-                        UnitPreferenceOption.IMPERIAL -> oldUnitPreferences.allowImperial
-                        UnitPreferenceOption.US_CUSTOMARY -> oldUnitPreferences.allowUSCustomary
-                    }
+                    val checked =
+                        when (unit) {
+                            UnitPreferenceOption.METRIC -> oldUnitPreferences.allowMetric
+                            UnitPreferenceOption.IMPERIAL -> oldUnitPreferences.allowImperial
+                            UnitPreferenceOption.US_CUSTOMARY -> oldUnitPreferences.allowUSCustomary
+                        }
                     SegmentedButton(
-                        shape = SegmentedButtonDefaults.itemShape(
-                            index = index,
-                            count = UnitPreferenceOption.entries.size
-                        ),
+                        shape =
+                            SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = UnitPreferenceOption.entries.size,
+                            ),
                         onCheckedChange = {
                             // If imperial is selected, we force US customary to be deselected and
                             // vice versa. This allows us to use shorter names like "pt" instead of
                             // "pt (US)" without practical ambiguity.
-                            val newUnitPreferences = when (unit) {
-                                UnitPreferenceOption.METRIC -> oldUnitPreferences.copy(allowMetric = it)
-                                UnitPreferenceOption.IMPERIAL -> oldUnitPreferences.copy(allowImperial = it, allowUSCustomary = !it && oldUnitPreferences.allowUSCustomary)
-                                UnitPreferenceOption.US_CUSTOMARY -> oldUnitPreferences.copy(allowUSCustomary = it, allowImperial = !it && oldUnitPreferences.allowImperial)
-                            }
+                            val newUnitPreferences =
+                                when (unit) {
+                                    UnitPreferenceOption.METRIC ->
+                                        oldUnitPreferences.copy(allowMetric = it)
+                                    UnitPreferenceOption.IMPERIAL ->
+                                        oldUnitPreferences.copy(
+                                            allowImperial = it,
+                                            allowUSCustomary =
+                                                !it && oldUnitPreferences.allowUSCustomary,
+                                        )
+                                    UnitPreferenceOption.US_CUSTOMARY ->
+                                        oldUnitPreferences.copy(
+                                            allowUSCustomary = it,
+                                            allowImperial = !it && oldUnitPreferences.allowImperial,
+                                        )
+                                }
                             viewModel.setUiContentEditableDataSet(
                                 editableDataSet.copy(unitPreferences = newUnitPreferences)
                             )
@@ -218,7 +240,7 @@ fun EditDataSetScreen(
                         checked = checked,
                         colors = SegmentedButtonDefaults.colors(),
                         icon = { SegmentedButtonDefaults.Icon(active = checked) },
-                        enabled = true
+                        enabled = true,
                     ) {
                         Text(stringResource(label.nameResource))
                     }
@@ -229,7 +251,7 @@ fun EditDataSetScreen(
                 SupportingText(
                     validationResult,
                     isError = true,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
         }
@@ -240,7 +262,8 @@ fun EditDataSetScreen(
         FilteredTextField(
             label = { Text(stringResource(R.string.label_notes)) },
             value = notes,
-            keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_notes)),
+            keyboardOptions =
+                KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_notes)),
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
                 notes = it
@@ -255,15 +278,17 @@ fun EditDataSetScreen(
             OutlinedButton(
                 onClick = { showDeleteConfirmDialog = true },
                 enabled = saveStatus.isNotBusy() && dataSetReferenceCount != null,
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                colors =
+                    ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                // colors = ButtonDefaults.textButtonColors(contentColor =
+                // MaterialTheme.colorScheme.onSurfaceVariant)
             ) {
                 if (showDeleteSpinner) {
                     SmallCircularProgressIndicator()
                 } else {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = stringResource(R.string.content_description_delete)
+                        contentDescription = stringResource(R.string.content_description_delete),
                     )
                 }
                 Spacer(Modifier.width(buttonIconTextSpacing))

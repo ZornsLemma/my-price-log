@@ -12,10 +12,6 @@ import com.example.composetutorial.ui.bulletPoint
 fun BulletPoint(text: String) {
     Row(modifier = Modifier.fillMaxWidth()) {
         Text("$bulletPoint ", style = MaterialTheme.typography.bodyMedium)
-        Text(
-            text,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.weight(1f)
-        )
+        Text(text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
     }
 }

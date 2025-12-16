@@ -2,7 +2,6 @@
 
 package com.example.composetutorial.ui.screens.home
 
-import com.example.composetutorial.ui.components.myTextFieldColors
 import android.text.format.DateUtils
 import android.util.Log
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
@@ -81,23 +80,23 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.composetutorial.R
+import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.data.Item
+import com.example.composetutorial.data.Source
 import com.example.composetutorial.domain.AgeClass
 import com.example.composetutorial.domain.AugmentedPrice
 import com.example.composetutorial.domain.PriceAnalysis
 import com.example.composetutorial.domain.PriceJudgement
-import com.example.composetutorial.R
 import com.example.composetutorial.domain.createCurrencyFormat
 import com.example.composetutorial.domain.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily
 import com.example.composetutorial.domain.withFriendlyDenominator
-import com.example.composetutorial.ui.common.formatPrice
-import com.example.composetutorial.data.DataSet
-import com.example.composetutorial.data.Item
-import com.example.composetutorial.data.Source
-import com.example.composetutorial.ui.common.rememberSortedByLocale
-import com.example.composetutorial.ui.common.sortedByLocale
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.LoadState
+import com.example.composetutorial.ui.common.formatPrice
 import com.example.composetutorial.ui.common.isNotBusy
+import com.example.composetutorial.ui.common.rememberSortedByLocale
+import com.example.composetutorial.ui.common.sortedByLocale
 import com.example.composetutorial.ui.components.AsyncOperationErrorAlertDialog
 import com.example.composetutorial.ui.components.CardTitle
 import com.example.composetutorial.ui.components.CellAlignment
@@ -108,6 +107,7 @@ import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
 import com.example.composetutorial.ui.components.OnAppLifecycleEvent
 import com.example.composetutorial.ui.components.OverflowMenu
 import com.example.composetutorial.ui.components.PackPriceAndSizeRow
+import com.example.composetutorial.ui.components.myTextFieldColors
 import com.example.composetutorial.ui.listItemHorizontalPadding
 import com.example.composetutorial.ui.maxNavigationDrawerWidth
 import com.example.composetutorial.ui.oneLineListItemHeight
@@ -117,12 +117,12 @@ import com.example.composetutorial.ui.spinnerDelayMillis
 import com.example.composetutorial.ui.storePriceGridGutterWidth
 import com.example.composetutorial.ui.storePriceGridLeftColumnWeight
 import com.example.composetutorial.ui.storePriceGridRightColumnWeight
+import java.time.Duration
+import java.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import java.time.Duration
-import java.time.Instant
 
 private const val TAG = "HomeScreen"
 
@@ -164,15 +164,21 @@ fun HomeScreen(
         // fallback texts.
     } else {
         val asyncOperationStatus by viewModel.asyncOperationStatus.collectAsStateWithLifecycle()
-        // Unlike GeneralEditScreen(), we don't try to trap "back" and show a busy snackbar. We probably
+        // Unlike GeneralEditScreen(), we don't try to trap "back" and show a busy snackbar. We
+        // probably
         // could but:
-        // - The data being saved here is "just" a confirm/undo confirm, it's not quite so critical or
+        // - The data being saved here is "just" a confirm/undo confirm, it's not quite so critical
+        // or
         //   "user has put effort into this data entry" as in GeneralEditScreen.
-        // - "Back" from the home screen would leave the app. It's not so clear we should even try to
+        // - "Back" from the home screen would leave the app. It's not so clear we should even try
+        // to
         //   stop the user doing that.
-        // - The user can use the home or overview buttons/gestures to leave the app, and we probably
-        //   can't and almost certainly shouldn't trap those if we are saving. (They can also do this
-        //   during GeneralEditScreen too. It's just that there "back" has an in-app meaning and is a
+        // - The user can use the home or overview buttons/gestures to leave the app, and we
+        // probably
+        //   can't and almost certainly shouldn't trap those if we are saving. (They can also do
+        // this
+        //   during GeneralEditScreen too. It's just that there "back" has an in-app meaning and is
+        // a
         //   particularly expected case where we can reasonably interfere.)
         // - A slow save is extremely unlikely anyway.
         val dataSetListSorted = uiContent.dataSetList.rememberSortedByLocale { it.name }
@@ -191,8 +197,8 @@ fun HomeScreen(
             onSelectedDataSetIdChange = { it: Long ->
                 viewModel.previousPrice.value = null
                 viewModel.setSelectedDataSetId(it)
-            }) {
-
+            },
+        ) {
             HomeScreenScaffold(
                 drawerState,
                 uiContent.dataSet,
@@ -200,9 +206,8 @@ fun HomeScreen(
                 onSelectItemClick = { onSelectItemClick(uiContent) },
                 onSelectSourceClick = { onSelectSourceClick(uiContent) },
                 onSettingsClick = onSettingsClick,
-                asyncOperationStatus = asyncOperationStatus
-            )
-            { innerPadding ->
+                asyncOperationStatus = asyncOperationStatus,
+            ) { innerPadding ->
                 HomeScreenContent(
                     viewModel,
                     uiContent,
@@ -214,13 +219,11 @@ fun HomeScreen(
                     onItemSearchClick = { onItemSearchClick(uiContent) },
                     onViewHistoryClick = { onViewHistoryClick(uiContent) },
                     asyncOperationStatus = asyncOperationStatus,
-                    innerPadding = innerPadding
+                    innerPadding = innerPadding,
                 )
             }
         }
-        HomeScreenStateManager(
-            viewModel, loading,
-            asyncOperationStatus)
+        HomeScreenStateManager(viewModel, loading, asyncOperationStatus)
     }
 }
 
@@ -267,22 +270,20 @@ private fun ScrimWithSpinner(visible: Boolean, delayMillis: Long? = null) {
                         dispatcher?.onBackPressed()
                     }
                 },
-                properties = PopupProperties(
-                    focusable = true, // prevent touches from going through
-                    dismissOnBackPress = true,
-                    dismissOnClickOutside = false
-                )
+                properties =
+                    PopupProperties(
+                        focusable = true, // prevent touches from going through
+                        dismissOnBackPress = true,
+                        dismissOnClickOutside = false,
+                    ),
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f)),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f)),
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
                 }
             }
-
         }
     }
 }
@@ -293,7 +294,7 @@ private fun HomeScreenNavigationDrawer(
     dataSet: DataSet?,
     dataSetListSorted: List<DataSet>,
     onSelectedDataSetIdChange: (Long) -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     // ENHANCE: Navigation drawer is being deprecated in favour of expanded navigation rail in
     // Material 3 Expressive from May 2025. However, it appears to be a rotten fit for my
@@ -319,21 +320,22 @@ private fun HomeScreenNavigationDrawer(
             // width on a portrait smartphone. If nothing else, that makes how to dismiss it feel
             // less discoverable.
             ModalDrawerSheet(
-                modifier = Modifier
-                    .wrapContentWidth()
-                    .widthIn(
-                        max = min(
-                            LocalConfiguration.current.screenWidthDp.dp * 2f / 3f,
-                            maxNavigationDrawerWidth
+                modifier =
+                    Modifier.wrapContentWidth()
+                        .widthIn(
+                            max =
+                                min(
+                                    LocalConfiguration.current.screenWidthDp.dp * 2f / 3f,
+                                    maxNavigationDrawerWidth,
+                                )
                         )
-                    )
             ) {
                 Column {
                     Box(
-                        modifier = Modifier
-                            .height(oneLineListItemHeight)
-                            .padding(start = listItemHorizontalPadding),
-                        contentAlignment = Alignment.CenterStart
+                        modifier =
+                            Modifier.height(oneLineListItemHeight)
+                                .padding(start = listItemHorizontalPadding),
+                        contentAlignment = Alignment.CenterStart,
                     ) {
                         Text(
                             text = stringResource(R.string.label_data_set),
@@ -344,26 +346,31 @@ private fun HomeScreenNavigationDrawer(
                         items(dataSetListSorted) { item ->
                             val selected = dataSet?.id == item.id
                             NavigationDrawerItem(
-                                modifier = Modifier
-                                    .padding(horizontal = 12.dp)
-                                    .height(oneLineListItemHeight),
+                                modifier =
+                                    Modifier.padding(horizontal = 12.dp)
+                                        .height(oneLineListItemHeight),
                                 label = {
                                     Text(
                                         item.name,
-                                        // color = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        style = MaterialTheme.typography.labelLarge
+                                        // color = if (selected)
+                                        // MaterialTheme.colorScheme.onSecondaryContainer else
+                                        // MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.labelLarge,
                                     )
                                 },
                                 selected = selected,
                                 onClick = {
-                                    coroutineScope.launch { onSelectedDataSetIdChange(item.id); drawerState.close() }
-                                }
+                                    coroutineScope.launch {
+                                        onSelectedDataSetIdChange(item.id)
+                                        drawerState.close()
+                                    }
+                                },
                             )
                         }
                     }
                 }
             }
-        }
+        },
     ) {
         content()
     }
@@ -378,15 +385,13 @@ private fun HomeScreenScaffold(
     onSelectSourceClick: () -> Unit,
     onSettingsClick: () -> Unit,
     asyncOperationStatus: AsyncOperationStatus,
-    content: @Composable (innerPadding: PaddingValues) -> Unit
-
+    content: @Composable (innerPadding: PaddingValues) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     var menuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 // We will almost always always have a DataSet to show the name of but we might as
@@ -395,47 +400,60 @@ private fun HomeScreenScaffold(
                 navigationIcon = {
                     IconButton(
                         enabled = asyncOperationStatus.isNotBusy(),
-                        onClick = { coroutineScope.launch { drawerState.open() } }) {
+                        onClick = { coroutineScope.launch { drawerState.open() } },
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Menu,
-                            contentDescription = stringResource(R.string.content_description_open_drawer)
+                            contentDescription =
+                                stringResource(R.string.content_description_open_drawer),
                         )
                     }
                 },
                 actions = {
                     IconButton(
                         enabled = asyncOperationStatus.isNotBusy(),
-                        onClick = { menuExpanded = true }) {
+                        onClick = { menuExpanded = true },
+                    ) {
                         Icon(
                             Icons.Default.MoreVert,
-                            contentDescription = stringResource(R.string.content_description_menu)
+                            contentDescription = stringResource(R.string.content_description_menu),
                         )
                     }
 
                     DropdownMenu(
-                        expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        MyDropdownMenuItem(text = { Text(stringResource(R.string.menu_item_edit_data_sets)) }, onClick = {
-                            menuExpanded = false
-                            onSelectDataSetClick()
-                        })
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false },
+                    ) {
+                        MyDropdownMenuItem(
+                            text = { Text(stringResource(R.string.menu_item_edit_data_sets)) },
+                            onClick = {
+                                menuExpanded = false
+                                onSelectDataSetClick()
+                            },
+                        )
                         MyDropdownMenuItem(
                             text = { Text(stringResource(R.string.menu_item_edit_items)) },
                             enabled = dataSet != null,
                             onClick = {
                                 menuExpanded = false
                                 onSelectItemClick()
-                            })
+                            },
+                        )
                         MyDropdownMenuItem(
                             text = { Text(stringResource(R.string.menu_item_edit_sources)) },
                             enabled = dataSet != null,
                             onClick = {
                                 menuExpanded = false
                                 onSelectSourceClick()
-                            })
-                        MyDropdownMenuItem(text = { Text(stringResource(R.string.menu_item_settings)) }, onClick = {
-                            menuExpanded = false
-                            onSettingsClick()
-                        })
+                            },
+                        )
+                        MyDropdownMenuItem(
+                            text = { Text(stringResource(R.string.menu_item_settings)) },
+                            onClick = {
+                                menuExpanded = false
+                                onSettingsClick()
+                            },
+                        )
                     }
                 },
             )
@@ -449,7 +467,7 @@ private fun HomeScreenScaffold(
 private fun HomeScreenStateManager(
     viewModel: HomeViewModel,
     loading: Boolean,
-    asyncOperationStatus: AsyncOperationStatus
+    asyncOperationStatus: AsyncOperationStatus,
 ) {
     var showErrorDialogMessage by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -459,11 +477,14 @@ private fun HomeScreenStateManager(
         viewModel.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
                 AsyncOperationStatus.Busy -> {
-                    // We expect the operation to complete quickly so we don't want the visual distraction
-                    // of a progress indicator appearing straight away. Let the progress indicator kick
+                    // We expect the operation to complete quickly so we don't want the visual
+                    // distraction
+                    // of a progress indicator appearing straight away. Let the progress indicator
+                    // kick
                     // in after a short delay if we're still here waiting.
                     delay(spinnerDelayMillis)
-                    // The state might not be busy any more, so check first before updating to avoid a race condition.
+                    // The state might not be busy any more, so check first before updating to avoid
+                    // a race condition.
                     if (viewModel.asyncOperationStatus.state.value == AsyncOperationStatus.Busy) {
                         viewModel.asyncOperationStatus.update(AsyncOperationStatus.BusyForAWhile)
                     }
@@ -506,10 +527,15 @@ private fun HomeScreenStateManager(
     // Note that we do not pass a delayMillis parameter here. The delay before the scrim appears is
     // implemented in the logic which sets the loading flag or BusyForAWhile state, so as soon as
     // either is true we want to show the scrim.
-    ScrimWithSpinner(visible = loading || asyncOperationStatus == AsyncOperationStatus.BusyForAWhile)
+    ScrimWithSpinner(
+        visible = loading || asyncOperationStatus == AsyncOperationStatus.BusyForAWhile
+    )
 
     if (showErrorDialogMessage != null) {
-        AsyncOperationErrorAlertDialog(onDismissRequest = { showErrorDialogMessage = null }, message = showErrorDialogMessage!!)
+        AsyncOperationErrorAlertDialog(
+            onDismissRequest = { showErrorDialogMessage = null },
+            message = showErrorDialogMessage!!,
+        )
     }
 }
 
@@ -535,12 +561,12 @@ private fun HomeScreenContent(
     var showDeletePriceConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(innerPadding)
-            .consumeWindowInsets(innerPadding)
-            .padding(horizontal = screenHorizontalBorder, vertical = screenVerticalBorder)
+        modifier =
+            Modifier.fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
+                .padding(horizontal = screenHorizontalBorder, vertical = screenVerticalBorder)
     ) {
         if (dataSet == null) {
             // These are corner cases, caused by the current data set being deleted or all data
@@ -562,13 +588,7 @@ private fun HomeScreenContent(
                 onItemSearchClick = onItemSearchClick,
             )
 
-            Spacer(
-                modifier = Modifier
-                    .height(
-                        16.dp
-                    )
-                    .fillMaxWidth()
-            )
+            Spacer(modifier = Modifier.height(16.dp).fillMaxWidth())
 
             if (dataSet != null) {
                 // ENHANCE: I don't know if this is remotely correct, but ChatGPT suggested:
@@ -581,9 +601,7 @@ private fun HomeScreenContent(
                 // handle null source/item inside the content, and would (if this works) actually
                 // make things mildly *less* janky as the content would be *the same* not some
                 // null-based approximation. But there may well be subtleties.
-                AnimatedVisibility(
-                    visible = item != null && source != null,
-                ) {
+                AnimatedVisibility(visible = item != null && source != null) {
                     Column {
                         ItemSourceInfoLive(
                             viewModel = viewModel,
@@ -592,17 +610,16 @@ private fun HomeScreenContent(
                             item = item,
                             source = source,
                             sourceList = sourceList,
-                            augmentedPrice = priceAnalysis.augmentedPriceList.singleOrNull { it.basePrice.sourceId == source?.id },
+                            augmentedPrice =
+                                priceAnalysis.augmentedPriceList.singleOrNull {
+                                    it.basePrice.sourceId == source?.id
+                                },
                             onEditPriceClick = onEditPriceClick,
                             onViewHistoryClick = onViewHistoryClick,
                             onDeletePriceClick = { showDeletePriceConfirmDialog = true },
                         )
 
-                        Spacer(
-                            modifier = Modifier.height(
-                                16.dp
-                            )
-                        )
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
 
@@ -615,9 +632,12 @@ private fun HomeScreenContent(
                 // changed within the screen itself" animation like having source go between
                 // null and non-null is.
                 if (item != null) {
-                    // Clicking on one of the items on this card selects its source, just as if it had
-                    // been selected via the source dropdown. This is technically redundant but I found
-                    // myself wanting to do it all the time to quickly see the details of a price, so
+                    // Clicking on one of the items on this card selects its source, just as if it
+                    // had
+                    // been selected via the source dropdown. This is technically redundant but I
+                    // found
+                    // myself wanting to do it all the time to quickly see the details of a price,
+                    // so
                     // I've implemented it. (The dropdown is still needed, as it's the only way to
                     // select sources which don't appear on the price comparison card.)
                     PriceComparisonCard(
@@ -625,16 +645,21 @@ private fun HomeScreenContent(
                         source,
                         priceAnalysis,
                         onClick = { onSelectedSourceIdChange(it) },
-                        asyncOperationStatus)
+                        asyncOperationStatus,
+                    )
                 }
-
             }
         }
     }
 
     if (showDeletePriceConfirmDialog) {
-        val augmentedPrice = priceAnalysis.augmentedPriceList.single { it.basePrice.sourceId == source?.id }
-        DeletePriceConfirmDialog(viewModel, augmentedPrice, onDismissRequest = { showDeletePriceConfirmDialog = false })
+        val augmentedPrice =
+            priceAnalysis.augmentedPriceList.single { it.basePrice.sourceId == source?.id }
+        DeletePriceConfirmDialog(
+            viewModel,
+            augmentedPrice,
+            onDismissRequest = { showDeletePriceConfirmDialog = false },
+        )
     }
 }
 
@@ -642,7 +667,7 @@ private fun HomeScreenContent(
 private fun DeletePriceConfirmDialog(
     viewModel: HomeViewModel,
     augmentedPrice: AugmentedPrice,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
 ) {
     AlertDialog(
         icon = null,
@@ -656,11 +681,15 @@ private fun DeletePriceConfirmDialog(
             TextButton(onClick = onDismissRequest) { Text(stringResource(R.string.button_cancel)) }
         },
         confirmButton = {
-            TextButton(onClick = {
-                onDismissRequest()
-                viewModel.deletePrice(augmentedPrice.basePrice)
-            }) { Text(stringResource(R.string.button_delete)) }
-        }
+            TextButton(
+                onClick = {
+                    onDismissRequest()
+                    viewModel.deletePrice(augmentedPrice.basePrice)
+                }
+            ) {
+                Text(stringResource(R.string.button_delete))
+            }
+        },
     )
 }
 
@@ -732,28 +761,21 @@ private fun PriceComparisonCard(
     // probably offer all the user's selected units of the right type, as the unit price dropdown on
     // ItemSourceInfo does.
     val locale = LocalConfiguration.current.locales[0]
-    val currencyFormat = remember(dataSet, locale) {
-        dataSet.createCurrencyFormat(locale)
-    }
+    val currencyFormat = remember(dataSet, locale) { dataSet.createCurrencyFormat(locale) }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        modifier = Modifier.fillMaxWidth(),
+        colors =
+            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         // The extra padding at the bottom compared to the top is to try to visually keep the sharp
         // corners of the table away from the rounded edges of the card.
         Column(
-            modifier = Modifier.padding(
-                start = 16.dp,
-                end = 16.dp,
-                top = 12.dp,
-                bottom = 16.dp
-            )
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 16.dp)
         ) {
             CardTitle(
                 title = stringResource(R.string.title_price_comparison),
-                subtitle = stringResource(R.string.subtitle_adjusted_for_discounts_and_age)
+                subtitle = stringResource(R.string.subtitle_adjusted_for_discounts_and_age),
             )
 
             if (priceAnalysis.augmentedPriceList.isEmpty()) {
@@ -769,25 +791,30 @@ private fun PriceComparisonCard(
                 // denominator and (of course) use that same denominator for all the unit
                 // prices.
                 val bestValueAugmentedPrice = priceAnalysis.augmentedPriceList.first()
-                val headerUnitPriceDenominator = remember(bestValueAugmentedPrice) {
-                    val candidateDenominators = dataSet.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
-                        bestValueAugmentedPrice.basePrice.quantity.unit,
-                        includeDisplayOnly = true
-                    )
-                    bestValueAugmentedPrice.unitPrice.withFriendlyDenominator(
-                        preferredUnit = bestValueAugmentedPrice.basePrice.quantity.unit,
-                        currencyDecimalPlaces = currencyFormat.decimalPlaces,
-                        candidateDenominators = candidateDenominators
-                    ).denominator
-                }
+                val headerUnitPriceDenominator =
+                    remember(bestValueAugmentedPrice) {
+                        val candidateDenominators =
+                            dataSet.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
+                                bestValueAugmentedPrice.basePrice.quantity.unit,
+                                includeDisplayOnly = true,
+                            )
+                        bestValueAugmentedPrice.unitPrice
+                            .withFriendlyDenominator(
+                                preferredUnit = bestValueAugmentedPrice.basePrice.quantity.unit,
+                                currencyDecimalPlaces = currencyFormat.decimalPlaces,
+                                candidateDenominators = candidateDenominators,
+                            )
+                            .denominator
+                    }
                 // We use "prefix or suffix" in the header because although the prefix or suffix
                 // nature of a currency symbol in a locale matters in some other places, here it is
                 // appearing in isolation *without* a price next to it.
-                val header = listOf(
-                    stringResource(R.string.label_source),
-                    "${currencyFormat.prefix ?: currencyFormat.suffix ?: ""}${headerUnitPriceDenominator.perSymbol}${stringResource(headerUnitPriceDenominator.symbol)}",
-                    ""
-                )
+                val header =
+                    listOf(
+                        stringResource(R.string.label_source),
+                        "${currencyFormat.prefix ?: currencyFormat.suffix ?: ""}${headerUnitPriceDenominator.perSymbol}${stringResource(headerUnitPriceDenominator.symbol)}",
+                        "",
+                    )
                 // We use a custom content description with the idea that a screen reader may not be
                 // able to read "£/oz" out correctly, particularly when it appears like that with no
                 // context rather than in a sentence. Using the word "Price" instead of the currency
@@ -797,74 +824,88 @@ private fun PriceComparisonCard(
                 // unusable for some languages, but let's start here and address issues as they
                 // arise. We might be better off just having a localised string on each unit with
                 // the full equivalent of "Price (per) <this unit full name>".
-                val headerPriceContentDescription = if (headerUnitPriceDenominator.perSymbol.trim().isNotEmpty()) {
-                    stringResource(R.string.content_description_header_price_per, stringResource(headerUnitPriceDenominator.fullName))
-                } else {
-                    stringResource(R.string.content_description_header_price_no_per, stringResource(headerUnitPriceDenominator.fullName))
-                }
+                val headerPriceContentDescription =
+                    if (headerUnitPriceDenominator.perSymbol.trim().isNotEmpty()) {
+                        stringResource(
+                            R.string.content_description_header_price_per,
+                            stringResource(headerUnitPriceDenominator.fullName),
+                        )
+                    } else {
+                        stringResource(
+                            R.string.content_description_header_price_no_per,
+                            stringResource(headerUnitPriceDenominator.fullName),
+                        )
+                    }
                 Log.d(TAG, "headerPriceContentDescription: $headerPriceContentDescription")
 
-                val headerTextModifiers = listOf(
-                    Modifier,
-                    Modifier.semantics { contentDescription = headerPriceContentDescription },
-                    Modifier
-                )
+                val headerTextModifiers =
+                    listOf(
+                        Modifier,
+                        Modifier.semantics { contentDescription = headerPriceContentDescription },
+                        Modifier,
+                    )
                 val highlightRow =
-                    priceAnalysis.augmentedPriceList.indexOfFirst { it.sourceName == source?.name }
+                    priceAnalysis.augmentedPriceList
+                        .indexOfFirst { it.sourceName == source?.name }
                         .takeIf { it != -1 }
 
-                val columns = remember(dataSet, locale, headerUnitPriceDenominator) {
-                    listOf<@Composable (AugmentedPrice) -> Unit>(
-                        { augmentedPrice -> Text(augmentedPrice.sourceName) },
-                        { augmentedPrice ->
-                            Text(
-                                formatPrice(
-                                    augmentedPrice.unitPrice.withDenominator(headerUnitPriceDenominator).numerator,
-                                    dataSet,
-                                    locale
+                val columns =
+                    remember(dataSet, locale, headerUnitPriceDenominator) {
+                        listOf<@Composable (AugmentedPrice) -> Unit>(
+                            { augmentedPrice -> Text(augmentedPrice.sourceName) },
+                            { augmentedPrice ->
+                                Text(
+                                    formatPrice(
+                                        augmentedPrice.unitPrice
+                                            .withDenominator(headerUnitPriceDenominator)
+                                            .numerator,
+                                        dataSet,
+                                        locale,
+                                    )
                                 )
-                            )
-                        },
-                        // ENHANCE: We could add blank icons here so we have a column of "judgement"
-                        // icons and a column of "age class" icons. Not sure if that would look
-                        // better or not.
-                        { augmentedPrice ->
-                            Row {
-                                if (augmentedPrice.ageClass != AgeClass.ANCIENT) {
-                                    when (augmentedPrice.priceJudgement) {
-                                        PriceJudgement.NONE -> {}
-                                        PriceJudgement.GOOD -> GoodPriceIcon()
-                                        PriceJudgement.OK -> OkPriceIcon()
-                                        PriceJudgement.BAD -> BadPriceIcon()
+                            },
+                            // ENHANCE: We could add blank icons here so we have a column of
+                            // "judgement"
+                            // icons and a column of "age class" icons. Not sure if that would look
+                            // better or not.
+                            { augmentedPrice ->
+                                Row {
+                                    if (augmentedPrice.ageClass != AgeClass.ANCIENT) {
+                                        when (augmentedPrice.priceJudgement) {
+                                            PriceJudgement.NONE -> {}
+                                            PriceJudgement.GOOD -> GoodPriceIcon()
+                                            PriceJudgement.OK -> OkPriceIcon()
+                                            PriceJudgement.BAD -> BadPriceIcon()
+                                        }
+                                    }
+
+                                    if (augmentedPrice.ageClass == AgeClass.STALE) {
+                                        StalePriceIcon()
+                                    } else if (augmentedPrice.ageClass == AgeClass.ANCIENT) {
+                                        AncientPriceIcon()
                                     }
                                 }
-
-                                if (augmentedPrice.ageClass == AgeClass.STALE) {
-                                    StalePriceIcon()
-                                } else if (augmentedPrice.ageClass == AgeClass.ANCIENT) {
-                                    AncientPriceIcon()
-                                }
-                            }
-                        },
-                    )
-                }
+                            },
+                        )
+                    }
                 DataTable(
                     header = header,
                     headerTextModifiers = headerTextModifiers,
                     items = priceAnalysis.augmentedPriceList,
                     columns = columns,
                     highlightRow = highlightRow,
-                    // ENHANCE: It might be better to calculate the space needed for the longest unit
+                    // ENHANCE: It might be better to calculate the space needed for the longest
+                    // unit
                     // price and the longest number of icons, then assign anything left over to the
                     // source name. In practice these simple fixed weights seem to be working quite
                     // well for now.
                     columnWeights = listOf(1.7f, 1.1f, 0.8f),
-                    columnAlignments = listOf(
-                        CellAlignment.Start,
-                        CellAlignment.End,
-                        CellAlignment.Start
-                    ),
-                    onClick = if (asyncOperationStatus.isNotBusy()) { { augmentedPrice -> onClick(augmentedPrice.basePrice.sourceId) } } else null,
+                    columnAlignments =
+                        listOf(CellAlignment.Start, CellAlignment.End, CellAlignment.Start),
+                    onClick =
+                        if (asyncOperationStatus.isNotBusy()) {
+                            { augmentedPrice -> onClick(augmentedPrice.basePrice.sourceId) }
+                        } else null,
                 )
             }
         }
@@ -919,9 +960,9 @@ private fun SourcePriceCardBody(
     // All this said, because the "Store" dropdown tends to obscure this card in practice,
     // this isn't all that noticeable.
     Column(
-        modifier = Modifier
-            .animateContentSize()
-            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
+        modifier =
+            Modifier.animateContentSize()
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
     ) {
         CardTitle(stringResource(R.string.title_source_price))
 
@@ -931,11 +972,11 @@ private fun SourcePriceCardBody(
                     Text(stringResource(R.string.message_no_price_for_item_at_source))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
+                        horizontalArrangement = Arrangement.End,
                     ) {
                         FilledTonalButton(
                             onClick = onEditPriceClick,
-                            shape = MaterialTheme.shapes.small
+                            shape = MaterialTheme.shapes.small,
                         ) {
                             Text(stringResource(R.string.button_add))
                         }
@@ -949,38 +990,46 @@ private fun SourcePriceCardBody(
                     price.count,
                     price.quantity,
                     dataSet,
-                    asyncOperationStatus
+                    asyncOperationStatus,
                 )
 
-                Row(modifier = Modifier.padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(
-                    storePriceGridGutterWidth
-                )) {
+                Row(
+                    modifier = Modifier.padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(storePriceGridGutterWidth),
+                ) {
                     LabeledItem(
                         modifier = Modifier.weight(storePriceGridLeftColumnWeight),
-                        label = stringResource(R.string.label_confirmed)
+                        label = stringResource(R.string.label_confirmed),
                     ) {
                         RelativeTimeText(augmentedPrice)
                     }
 
-                    Box(modifier = Modifier.weight(storePriceGridRightColumnWeight).fillMaxSize().align(Alignment.CenterVertically)) {
+                    Box(
+                        modifier =
+                            Modifier.weight(storePriceGridRightColumnWeight)
+                                .fillMaxSize()
+                                .align(Alignment.CenterVertically)
+                    ) {
                         PriceJudgementIndicator(augmentedPrice.priceJudgement)
                     }
                 }
 
                 if (price.notes.isNotEmpty()) {
                     Row(modifier = Modifier.padding(bottom = 8.dp)) {
-                        LabeledItem(stringResource(R.string.label_notes)) {
-                            Text(price.notes)
-                        }
+                        LabeledItem(stringResource(R.string.label_notes)) { Text(price.notes) }
                     }
                 }
 
-                EditConfirmButtons(viewModel, asyncOperationStatus, augmentedPrice, onEditPriceClick)
+                EditConfirmButtons(
+                    viewModel,
+                    asyncOperationStatus,
+                    augmentedPrice,
+                    onEditPriceClick,
+                )
             }
         }
     }
 }
-
 
 @Composable
 private fun ItemSourceInfoLive(
@@ -1007,11 +1056,28 @@ private fun ItemSourceInfoLive(
     // probably can be used for this.
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        colors =
+            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Box {
-            SourcePriceCardBody(viewModel, asyncOperationStatus, dataSet, augmentedPrice, onEditPriceClick)
-            SourcePriceCardMenu(viewModel, asyncOperationStatus, dataSet, item, source, augmentedPrice, onViewHistoryClick, onDeletePriceClick, menuModifier = Modifier.align(Alignment.TopEnd))
+            SourcePriceCardBody(
+                viewModel,
+                asyncOperationStatus,
+                dataSet,
+                augmentedPrice,
+                onEditPriceClick,
+            )
+            SourcePriceCardMenu(
+                viewModel,
+                asyncOperationStatus,
+                dataSet,
+                item,
+                source,
+                augmentedPrice,
+                onViewHistoryClick,
+                onDeletePriceClick,
+                menuModifier = Modifier.align(Alignment.TopEnd),
+            )
         }
     }
 }
@@ -1028,27 +1094,33 @@ private fun SourcePriceCardMenu(
     onDeletePriceClick: () -> Unit,
     menuModifier: Modifier,
 ) {
-    val priceHistoryCount by remember(dataSet.id, item?.id, source?.id) {
-        if (item != null && source != null) {
-            viewModel.countPriceHistory(dataSet.id, item.id, source.id)
-        } else {
-            flowOf(0L)
-        }
-    }.collectAsStateWithLifecycle(initialValue = 0L)
+    val priceHistoryCount by
+        remember(dataSet.id, item?.id, source?.id) {
+                if (item != null && source != null) {
+                    viewModel.countPriceHistory(dataSet.id, item.id, source.id)
+                } else {
+                    flowOf(0L)
+                }
+            }
+            .collectAsStateWithLifecycle(initialValue = 0L)
 
-    OverflowMenu(
-        enabled = asyncOperationStatus.isNotBusy(),
-        modifier = menuModifier
-    ) { requestMenuClose ->
+    OverflowMenu(enabled = asyncOperationStatus.isNotBusy(), modifier = menuModifier) {
+        requestMenuClose ->
         MyDropdownMenuItem(
             text = { Text(stringResource(R.string.menu_item_view_history)) },
             enabled = priceHistoryCount > 0,
-            onClick = { requestMenuClose(); onViewHistoryClick() }
+            onClick = {
+                requestMenuClose()
+                onViewHistoryClick()
+            },
         )
         MyDropdownMenuItem(
             text = { Text(stringResource(R.string.menu_item_delete_price)) },
             enabled = augmentedPrice != null,
-            onClick = { requestMenuClose(); onDeletePriceClick() }
+            onClick = {
+                requestMenuClose()
+                onDeletePriceClick()
+            },
         )
     }
 }
@@ -1060,10 +1132,7 @@ private fun EditConfirmButtons(
     augmentedPrice: AugmentedPrice,
     onEditPriceClick: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
         FilledTonalButton(
             onClick = onEditPriceClick,
             shape = MaterialTheme.shapes.small,
@@ -1109,7 +1178,8 @@ private fun EditConfirmButtons(
                     viewModel.confirmPrice(augmentedPrice.basePrice)
                 } else {
                     viewModel.undoConfirmPrice(
-                        augmentedPrice.basePrice, viewModel.previousPrice.value!!
+                        augmentedPrice.basePrice,
+                        viewModel.previousPrice.value!!,
                     )
                 }
             },
@@ -1121,11 +1191,13 @@ private fun EditConfirmButtons(
                 // I hope the user observing the transition from "Confirm"->"Undo" will act as a
                 // hint), but at least on my small emulated phone, "Undo confirm" looks a bit ugly
                 // or (with "Good price") doesn't fit and causes the button to become multi-line.
-                Text(if (showConfirm) stringResource(R.string.button_confirm) else stringResource(R.string.button_undo))
+                Text(
+                    if (showConfirm) stringResource(R.string.button_confirm)
+                    else stringResource(R.string.button_undo)
+                )
             }
         }
     }
-
 }
 
 @Composable
@@ -1138,15 +1210,14 @@ private fun ItemSourceSelector(
     onSelectedSourceIdChange: (Long) -> Unit,
     onItemSearchClick: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         // Item selector
-        val clickableModifier = if (asyncOperationStatus.isNotBusy()) {
-            Modifier.clickable { onItemSearchClick() }
-        } else {
-            Modifier
-        }
+        val clickableModifier =
+            if (asyncOperationStatus.isNotBusy()) {
+                Modifier.clickable { onItemSearchClick() }
+            } else {
+                Modifier
+            }
         // For reasons I don't quite understand, using key() here avoids a frame or two of delay in
         // applying the new colors= selection when asyncOperationStatus changes. I think the basic
         // idea (according to ChatGPT) is that this forces the whole thing to be recomposed, but it
@@ -1157,47 +1228,45 @@ private fun ItemSourceSelector(
                 onValueChange = { /* No-op, read-only */ },
                 label = { Text(stringResource(R.string.label_item)) },
                 enabled = false, // so Modifier.clickable() works
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(clickableModifier),
+                modifier = Modifier.fillMaxWidth().then(clickableModifier),
                 readOnly = true,
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = stringResource(R.string.content_description_search_products),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        contentDescription =
+                            stringResource(R.string.content_description_search_products),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 },
                 // There might be an argument that this should "sometimes" get the focused colours,
                 // but since clicking on it immediately opens a full screen dialog, I think it's
                 // probably reasonable to hard-code false here.
-                colors = if (asyncOperationStatus.isNotBusy()) myTextFieldColors(false) else TextFieldDefaults.colors(),
+                colors =
+                    if (asyncOperationStatus.isNotBusy()) myTextFieldColors(false)
+                    else TextFieldDefaults.colors(),
                 // It is rare to have no item selected, but if this happens and some items are
                 // defined, the user should fairly easily figure out what's happening (they just
                 // need to tap this TextField to open the selector). So we show a supportingText
                 // only if there are no items at all.
-                supportingText = if (item != null || itemList.isNotEmpty()) null else { {
-                    Text(stringResource(R.string.supporting_text_no_items_in_data_set))
-                } }
+                supportingText =
+                    if (item != null || itemList.isNotEmpty()) null
+                    else {
+                        { Text(stringResource(R.string.supporting_text_no_items_in_data_set)) }
+                    },
             )
         }
 
-        Spacer(
-            modifier = Modifier
-                .height(
-                    16.dp
-                )
-                .fillMaxWidth()
-        )
+        Spacer(modifier = Modifier.height(16.dp).fillMaxWidth())
 
         // If sourceList is empty this will generate a single-item menu with just "None" in,
         // but that is probably better than the "skeleton" menu we get with no items in.
         val locale = LocalConfiguration.current.locales[0]
         val sourceNameNone = stringResource(R.string.source_name_none)
-        val sourceListSorted = remember(sourceNameNone, sourceList, locale) {
-            listOf(Pair(sourceIdNone, sourceNameNone)) + sourceList.sortedByLocale({ it.name }, locale)
-                .map { Pair(it.id, it.name) }
-        }
+        val sourceListSorted =
+            remember(sourceNameNone, sourceList, locale) {
+                listOf(Pair(sourceIdNone, sourceNameNone)) +
+                    sourceList.sortedByLocale({ it.name }, locale).map { Pair(it.id, it.name) }
+            }
         // ENHANCE: I did wonder if MyExposedDropdownMenuBox should allow null IDs in "items" to
         // avoid the need for the sourceIdNone hack here, but I really didn't want to have to make
         // every user of it be null-tolerant when it won't hand you a null itself unless you gave it
@@ -1207,9 +1276,10 @@ private fun ItemSourceSelector(
         // just felt too much just to fix this where sourceIdNone is an easy hack.
         key(asyncOperationStatus) { // improves appearance, see similar key() above
             MyExposedDropdownMenuBox(
-                modifier = Modifier
-                    // .padding(bottom = 8.dp)
-                    .fillMaxWidth(),
+                modifier =
+                    Modifier
+                        // .padding(bottom = 8.dp)
+                        .fillMaxWidth(),
                 // Note that if source is null, we pass that null through to selectedId so the
                 // dropdown starts off with nothing selected and the "Store" label expands to form a
                 // large "prompt". We could turn null into sourceIdNone and have "None" shown, but
@@ -1220,9 +1290,11 @@ private fun ItemSourceSelector(
                 label = { Text(stringResource(R.string.label_source)) },
                 // It's normal to have no source selected, but if there are no sources defined at
                 // all it seems best to offer the user a hint.
-                supportingText = if (sourceList.isNotEmpty()) null else { {
-                    Text(stringResource(R.string.supporting_text_no_sources_in_data_set))
-                } },
+                supportingText =
+                    if (sourceList.isNotEmpty()) null
+                    else {
+                        { Text(stringResource(R.string.supporting_text_no_sources_in_data_set)) }
+                    },
                 items = sourceListSorted,
                 getId = { it.first },
                 getItemText = { it.second },
@@ -1248,11 +1320,12 @@ private fun RelativeTimeText(augmentedPrice: AugmentedPrice) {
             // so we're not executing every second for the first minute when the display only has
             // minute resolution.
             val ageInMinutes = Duration.between(confirmedAt, Instant.now()).toMinutes()
-            val delayDuration = when {
-                ageInMinutes < 1       -> 1_000L           // update every second for first minute
-                ageInMinutes < 24 * 60 -> 60_000L          // every minute for first day
-                else                   -> 60 * 60 * 1_000L // every hour after that
-            }
+            val delayDuration =
+                when {
+                    ageInMinutes < 1 -> 1_000L // update every second for first minute
+                    ageInMinutes < 24 * 60 -> 60_000L // every minute for first day
+                    else -> 60 * 60 * 1_000L // every hour after that
+                }
             delay(delayDuration)
             now = Instant.now()
         }
@@ -1260,16 +1333,22 @@ private fun RelativeTimeText(augmentedPrice: AugmentedPrice) {
 
     // getRelativeTimeSpanString() returns "0 min. ago" in English for ages under 60 seconds, and
     // presumably similar in other languages, so we special-case this.
-    val relativeTime = if (ageInSeconds < 60) stringResource(R.string.relative_time_span_string_now) else DateUtils.getRelativeTimeSpanString(
-        confirmedAt.toEpochMilli(),
-        now.toEpochMilli(),
-        DateUtils.MINUTE_IN_MILLIS,
-        DateUtils.FORMAT_ABBREV_RELATIVE
-    ).toString()
+    val relativeTime =
+        if (ageInSeconds < 60) stringResource(R.string.relative_time_span_string_now)
+        else
+            DateUtils.getRelativeTimeSpanString(
+                    confirmedAt.toEpochMilli(),
+                    now.toEpochMilli(),
+                    DateUtils.MINUTE_IN_MILLIS,
+                    DateUtils.FORMAT_ABBREV_RELATIVE,
+                )
+                .toString()
     // ENHANCE: I don't know if it's slightly weird to color this to indicate it's stale without
     // showing a stale icon or having some supporting text. May want to revisit this in the future.
     Text(
         relativeTime,
-        color = if (augmentedPrice.ageClass == AgeClass.FRESH) Color.Unspecified else MaterialTheme.colorScheme.error
+        color =
+            if (augmentedPrice.ageClass == AgeClass.FRESH) Color.Unspecified
+            else MaterialTheme.colorScheme.error,
     )
 }

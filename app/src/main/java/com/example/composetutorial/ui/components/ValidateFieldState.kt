@@ -20,7 +20,7 @@ private const val TAG = "ValidateFieldState"
 
 class ValidatedFieldState(
     val interactionSource: MutableInteractionSource = MutableInteractionSource(),
-    val validationResult: State<String?>
+    val validationResult: State<String?>,
 )
 
 @Composable
@@ -33,7 +33,7 @@ fun <T> ValidateFieldState(
     // it somewhere it ought to have a more sophisticated condition ("add new X" will immediately
     // show a "name is empty" warning without waiting for a save attempt first). It is just about
     // worth having a default so cases where this isn't meaningful don't have to specify it.
-    allowEmpty: Boolean = false
+    allowEmpty: Boolean = false,
 ): ValidatedFieldState {
     // We create our own MutableInteractionSource which needs to be passed through to the TextField
     // we want to validate, so that we can track when that TextField is/is not focused.
@@ -41,11 +41,8 @@ fun <T> ValidateFieldState(
     val isFocused by interactionSource.collectIsFocusedAsState()
 
     val validationResult = remember { mutableStateOf<String?>(null) }
-    var failedValidationRule by remember(validationRulesKey) {
-        mutableStateOf<ValidationRule<T>?>(
-            null
-        )
-    }
+    var failedValidationRule by
+        remember(validationRulesKey) { mutableStateOf<ValidationRule<T>?>(null) }
 
     val context = LocalContext.current
     var oldValue by remember { mutableStateOf(value) }
@@ -70,14 +67,18 @@ fun <T> ValidateFieldState(
         // we end up with two copies of it) so that if multiple validation rules are failing, we
         // don't flip-flop between them - once a rule is reported as failing it is "sticky" until is
         // fixed.
-        var shouldValidate = when (value) {
-            is String -> !(allowEmpty && value.trim().isEmpty())
-            else -> true // allowEmpty has no meaning for other types
-        }
-        failedValidationRule = if (shouldValidate) failedValidationRuleOrNull(
-            listOfNotNull<ValidationRule<T>>(failedValidationRule) + validationRules,
-            value
-        ) else null
+        var shouldValidate =
+            when (value) {
+                is String -> !(allowEmpty && value.trim().isEmpty())
+                else -> true // allowEmpty has no meaning for other types
+            }
+        failedValidationRule =
+            if (shouldValidate)
+                failedValidationRuleOrNull(
+                    listOfNotNull<ValidationRule<T>>(failedValidationRule) + validationRules,
+                    value,
+                )
+            else null
 
         Log.d(TAG, "failedValidationRule: $failedValidationRule")
         validationResult.value = failedValidationRule?.message?.asString(context)

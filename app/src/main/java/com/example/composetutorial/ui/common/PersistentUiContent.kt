@@ -19,10 +19,10 @@ private const val TAG = "PersistentUiContent"
 // EmptyParcelable is used as a type parameter for PersistentUiContent where we don't want both
 // editable content and static content. In practice this seems to save a lot of complexity compared
 // to making these type parameters nullable.
-@Parcelize
-class EmptyParcelable : Parcelable
+@Parcelize class EmptyParcelable : Parcelable
 
-/** PersistentUiContent persists:
+/**
+ * PersistentUiContent persists:
  * - a fixed original EditableContentType value
  * - a modifiable value of EditContentType, initialised from the original value
  * - a static value of StaticContentType
@@ -39,14 +39,17 @@ class PersistentUiContent<EditableContentType : Parcelable, StaticContentType : 
     val savedStateHandle: SavedStateHandle,
     keySuffix: String,
     initialContent: EditableContentType?,
-    initialStaticContent: StaticContentType?
-
+    initialStaticContent: StaticContentType?,
 ) {
     private val editableKey = "editable$keySuffix"
     private val originalKey = "original$keySuffix"
     private val staticKey = "static$keySuffix"
 
-    private fun<T> getKeyWithDefaultAndUpdate(savedStateHandle: SavedStateHandle, key: String, initialValue: T?): T {
+    private fun <T> getKeyWithDefaultAndUpdate(
+        savedStateHandle: SavedStateHandle,
+        key: String,
+        initialValue: T?,
+    ): T {
         val savedValue: T? = savedStateHandle[key]
         if (savedValue != null) {
             if (initialValue == null) {
@@ -58,21 +61,25 @@ class PersistentUiContent<EditableContentType : Parcelable, StaticContentType : 
                 if (initialValue !is EmptyParcelable) {
                     Log.w(
                         TAG,
-                        "Using $key saved value '$savedValue' but there is an initialValue of '$initialValue'"
+                        "Using $key saved value '$savedValue' but there is an initialValue of '$initialValue'",
                     )
                 }
             }
             return savedValue
         } else {
-            checkNotNull(initialValue) { "initialValue is null and nothing in SavedStateHandle for $key" }
+            checkNotNull(initialValue) {
+                "initialValue is null and nothing in SavedStateHandle for $key"
+            }
             Log.d(TAG, "Initialising $key saved value: $initialValue")
             savedStateHandle[key] = initialValue
             return initialValue
         }
     }
 
-    val staticContent: StaticContentType = getKeyWithDefaultAndUpdate(savedStateHandle, staticKey, initialStaticContent)
-    val originalContent: EditableContentType = getKeyWithDefaultAndUpdate(savedStateHandle, originalKey, initialContent)
+    val staticContent: StaticContentType =
+        getKeyWithDefaultAndUpdate(savedStateHandle, staticKey, initialStaticContent)
+    val originalContent: EditableContentType =
+        getKeyWithDefaultAndUpdate(savedStateHandle, originalKey, initialContent)
 
     private val _editableContent = run {
         getKeyWithDefaultAndUpdate(savedStateHandle, editableKey, initialContent)
@@ -90,12 +97,10 @@ class PersistentUiContent<EditableContentType : Parcelable, StaticContentType : 
 
     init {
         viewModel.viewModelScope.launch {
-            _editableContent
-                .debounce(inputPersistenceDebounceTimeMillis)
-                .collectLatest {
-                    savedStateHandle[editableKey] = it
-                    Log.d(TAG, "Saving $editableKey value: $it")
-                }
+            _editableContent.debounce(inputPersistenceDebounceTimeMillis).collectLatest {
+                savedStateHandle[editableKey] = it
+                Log.d(TAG, "Saving $editableKey value: $it")
+            }
         }
     }
 }

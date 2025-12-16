@@ -18,13 +18,13 @@ fun topAppBarTitle(title: String, subtitle: String?): @Composable (() -> Unit) =
                     text = title,
                     style = MaterialTheme.typography.titleLarge,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }

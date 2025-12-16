@@ -2,7 +2,6 @@
 
 package com.example.composetutorial.ui.components.generaledit
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -63,7 +62,7 @@ fun GeneralEditScreen(
     performSave: suspend () -> Long,
     onIdle: () -> Unit,
     requestClose: (Long?) -> Unit,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val saveStatus by stateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
     val isNotBusy = saveStatus.isNotBusy()
@@ -81,7 +80,11 @@ fun GeneralEditScreen(
     // We can't use dropUnlessResumed here as we have a parameter, so pseudo-inline it.
     val localLifecycleOwner = LocalLifecycleOwner.current
     fun requestCloseDebounced(id: Long?) {
-        if (localLifecycleOwner.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+        if (
+            localLifecycleOwner.lifecycle.currentState.isAtLeast(
+                androidx.lifecycle.Lifecycle.State.RESUMED
+            )
+        ) {
             requestClose(id)
         }
     }
@@ -110,11 +113,14 @@ fun GeneralEditScreen(
         stateHolder.asyncOperationStatus.events.buffer().collect { event ->
             when (event) {
                 AsyncOperationStatus.Busy -> {
-                    // We expect the operation to complete quickly so we don't want the visual distraction
-                    // of a progress indicator appearing straight away. Let the progress indicator kick
+                    // We expect the operation to complete quickly so we don't want the visual
+                    // distraction
+                    // of a progress indicator appearing straight away. Let the progress indicator
+                    // kick
                     // in after a short delay if we're still here waiting.
                     delay(spinnerDelayMillis)
-                    // The state might not be busy any more, so check first before updating to avoid a race condition.
+                    // The state might not be busy any more, so check first before updating to avoid
+                    // a race condition.
                     if (stateHolder.asyncOperationStatus.state.value == AsyncOperationStatus.Busy) {
                         stateHolder.asyncOperationStatus.update(AsyncOperationStatus.BusyForAWhile)
                     }
@@ -155,27 +161,35 @@ fun GeneralEditScreen(
             TopAppBar(
                 navigationIcon = {
                     IconButton(enabled = isNotBusy, onClick = { requestDismiss() }) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.content_description_close))
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(R.string.content_description_close),
+                        )
                     }
                 },
                 title = title,
                 actions = {
-                    TextButton(enabled = isNotBusy, onClick = {
-                        // We could check isDirty here and just dismiss without saving if there's
-                        // nothing to save, but it's probably best (given there's no history table
-                        // which would get bloated) just to save regardless.
-                        stateHolder.saveAttempted = true
-                        runGeneralEditScreenOperation(
-                            stateHolder = stateHolder,
-                            coroutineScope = coroutineScope,
-                            isSafeToPerform = validateForSave,
-                            perform = {
-                                saving = true
-                                debugDelay()
-                                performSave()
-                            }
-                        )
-                    }) {
+                    TextButton(
+                        enabled = isNotBusy,
+                        onClick = {
+                            // We could check isDirty here and just dismiss without saving if
+                            // there's
+                            // nothing to save, but it's probably best (given there's no history
+                            // table
+                            // which would get bloated) just to save regardless.
+                            stateHolder.saveAttempted = true
+                            runGeneralEditScreenOperation(
+                                stateHolder = stateHolder,
+                                coroutineScope = coroutineScope,
+                                isSafeToPerform = validateForSave,
+                                perform = {
+                                    saving = true
+                                    debugDelay()
+                                    performSave()
+                                },
+                            )
+                        },
+                    ) {
                         // We do get rid of the spinner when we reach "success"; this might cause a
                         // small but legitimate visual glitch as the disabled "Save" button
                         // re-enables, but it feels confusing to close while showing the spinner,
@@ -190,18 +204,18 @@ fun GeneralEditScreen(
                 },
             )
         },
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
-        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.surface) // because this is a full-screen dialog
-                .fillMaxSize()
-                .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)
-                .padding(horizontal = fullScreenDialogHorizontalBorder)
-                .verticalScroll(scrollState)
+            modifier =
+                Modifier.background(
+                        MaterialTheme.colorScheme.surface
+                    ) // because this is a full-screen dialog
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding)
+                    .padding(horizontal = fullScreenDialogHorizontalBorder)
+                    .verticalScroll(scrollState)
         ) {
             // The two vertical spacers here are to create a vertical border which we *can* draw
             // over using ErrorHighlightBox. (If we add "vertical = fullScreenDialogVerticalBorder"
@@ -226,22 +240,23 @@ fun GeneralEditScreen(
             text = { Text(stringResource(R.string.message_unsaved_changes)) },
             onDismissRequest = { showConfirmDiscardDialog = false },
             dismissButton = {
-                TextButton(onClick = {
-                    showConfirmDiscardDialog = false
-                }) { Text(stringResource(R.string.button_keep_editing)) }
+                TextButton(onClick = { showConfirmDiscardDialog = false }) {
+                    Text(stringResource(R.string.button_keep_editing))
+                }
             },
             confirmButton = {
                 TextButton(onClick = { requestCloseDebounced(null) }) {
-                    Text(
-                        stringResource(R.string.button_discard)
-                    )
+                    Text(stringResource(R.string.button_discard))
                 }
             },
         )
     }
 
     if (showErrorDialogMessage != null) {
-        AsyncOperationErrorAlertDialog(onDismissRequest = { showErrorDialogMessage = null }, message = showErrorDialogMessage!!)
+        AsyncOperationErrorAlertDialog(
+            onDismissRequest = { showErrorDialogMessage = null },
+            message = showErrorDialogMessage!!,
+        )
     }
 
     val messageBusyPleaseWait = stringResource(R.string.message_busy_please_wait)
@@ -268,7 +283,11 @@ fun runGeneralEditScreenOperation(
                 debugDelay()
                 stateHolder.asyncOperationStatus.update(AsyncOperationStatus.Success(id))
             } catch (e: Exception) {
-                stateHolder.asyncOperationStatus.update(AsyncOperationStatus.Error("runGeneralEditScreenOperation failed: ${e.toString()}"))
+                stateHolder.asyncOperationStatus.update(
+                    AsyncOperationStatus.Error(
+                        "runGeneralEditScreenOperation failed: ${e.toString()}"
+                    )
+                )
             }
         }
     }

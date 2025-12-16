@@ -1,7 +1,5 @@
 package com.example.composetutorial.ui.screens.editprice
 
-import androidx.compose.ui.text.input.KeyboardType
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,23 +21,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
-import com.example.composetutorial.domain.areDifferentUnitFamilies
-import com.example.composetutorial.debug.myCheck
-import com.example.composetutorial.domain.MeasurementUnit
-import com.example.composetutorial.domain.QuantityType
-import com.example.composetutorial.domain.getRelevantMeasurementUnits
 import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.data.EditablePrice
 import com.example.composetutorial.data.Item
-import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
-import com.example.composetutorial.ui.components.textOrNull
+import com.example.composetutorial.debug.myCheck
+import com.example.composetutorial.domain.MeasurementUnit
+import com.example.composetutorial.domain.QuantityType
+import com.example.composetutorial.domain.areDifferentUnitFamilies
+import com.example.composetutorial.domain.getRelevantMeasurementUnits
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.components.MyExposedDropdownMenuBox
@@ -47,6 +43,8 @@ import com.example.composetutorial.ui.components.ValidatedNumericTextField
 import com.example.composetutorial.ui.components.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.ui.components.generaledit.GeneralEditScreen
 import com.example.composetutorial.ui.components.keyboardCapitalization
+import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
+import com.example.composetutorial.ui.components.textOrNull
 import com.example.composetutorial.ui.components.topAppBarTitle
 import com.example.composetutorial.ui.maxNotesLength
 import com.example.composetutorial.ui.nonBreakingSpace
@@ -56,7 +54,7 @@ import com.example.composetutorial.ui.nonBreakingSpace
 fun EditPriceScreen(
     viewModel: EditPriceViewModel,
     navController: NavHostController,
-    requestClose: (Long?) -> Unit
+    requestClose: (Long?) -> Unit,
 ) {
     val originalPrice = viewModel.uiContent.originalContent
     val editablePrice by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
@@ -64,7 +62,8 @@ fun EditPriceScreen(
     val item = viewModel.uiContent.staticContent.item
     val source = viewModel.uiContent.staticContent.source
 
-    val saveStatus by viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by
+        viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
 
     fun onPackSizeOrPriceChange() {
         // On the first change to the pack size or price, we set the "to confirm" switch to true, on
@@ -74,14 +73,17 @@ fun EditPriceScreen(
         // trying the product at home and making a note that a certain brand isn't very nice and not
         // to consider it as acceptable in future.) We only do this on the first change so we don't
         // fight with the user if they toggle this back off afterwards.
-        // ENHANCE: We might want to gate this logic behind a Settings option, i.e. have an option to
+        // ENHANCE: We might want to gate this logic behind a Settings option, i.e. have an option
+        // to
         // let the confirm always stay off unless the user explicitly turns it on. That said, in my
         // own personal use, this logic seems to work well.
         if (!viewModel.firstPackSizeOrPriceChangeOccurred) {
             // Note that we must not use the captured editablePrice here, because this function is
             // likely to be called after editableContent has been changed but before a
             // recomposition has updated editablePrice and this function has been re-defined.
-            viewModel.setUiContentEditablePrice(viewModel.uiContent.editableContent.value.copy(toConfirm = true))
+            viewModel.setUiContentEditablePrice(
+                viewModel.uiContent.editableContent.value.copy(toConfirm = true)
+            )
             viewModel.firstPackSizeOrPriceChangeOccurred = true
         }
     }
@@ -91,8 +93,7 @@ fun EditPriceScreen(
         navController = navController,
         title = topAppBarTitle(item.name, source.name),
         isDirty = {
-            editablePrice.copy(toConfirm = false) !=
-                    originalPrice.copy(toConfirm = false)
+            editablePrice.copy(toConfirm = false) != originalPrice.copy(toConfirm = false)
         },
         validateForSave = { viewModel.validateForSave() },
         performSave = { viewModel.performSave() },
@@ -122,17 +123,17 @@ fun EditPriceScreen(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = stringResource(R.string.label_confirm_pack_size_and_price),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
                         text = stringResource(R.string.supporting_text_details_correct_right_now),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.bodySmall,
                     )
                 }
                 Spacer(modifier = Modifier.width(4.dp))
@@ -140,12 +141,9 @@ fun EditPriceScreen(
                     enabled = saveStatus.isNotBusy(),
                     checked = editablePrice.toConfirm,
                     onCheckedChange = {
-                        viewModel.setUiContentEditablePrice(
-                            editablePrice.copy(
-                                toConfirm = it
-                            )
-                        )
-                    })
+                        viewModel.setUiContentEditablePrice(editablePrice.copy(toConfirm = it))
+                    },
+                )
             }
         } else {
             myCheck(editablePrice.toConfirm) {
@@ -161,7 +159,8 @@ fun EditPriceScreen(
         FilteredTextField(
             modifier = Modifier.fillMaxWidth(),
             label = { Text(stringResource(R.string.label_notes)) },
-            keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_notes)),
+            keyboardOptions =
+                KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_notes)),
             value = notes,
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
@@ -177,11 +176,12 @@ fun EditPriceScreen(
 private fun EditPriceScreenPrice(
     viewModel: EditPriceViewModel,
     editablePrice: EditablePrice,
-    onChange: () -> Unit
+    onChange: () -> Unit,
 ) {
     val uiContent = viewModel.uiContent
 
-    val saveStatus by viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by
+        viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
 
     var packPrice by rememberSyncedTextFieldValue(editablePrice.price)
     val currencyFormat = viewModel.currencyFormat
@@ -196,15 +196,15 @@ private fun EditPriceScreenPrice(
         validationFlow = viewModel.saveValidationEvents,
         validationFlowFieldId = EditPriceViewModel.EditableField.PRICE,
         errorHighlightOffset = 4.dp,
-        numericTextFieldModifier = Modifier
-            .fillMaxWidth(),
+        numericTextFieldModifier = Modifier.fillMaxWidth(),
         // We use the same label text here as on the home screen, since it's the same value.
         label = { Text(stringResource(R.string.label_shelf_price)) },
         prefix = textOrNull(currencyFormat.prefix),
         suffix = textOrNull(currencyFormat.suffix),
-        textStyle = if (currencyFormat.prefix == null && currencyFormat.suffix != null) LocalTextStyle.current.copy(
-            textAlign = TextAlign.End
-        ) else LocalTextStyle.current,
+        textStyle =
+            if (currencyFormat.prefix == null && currencyFormat.suffix != null)
+                LocalTextStyle.current.copy(textAlign = TextAlign.End)
+            else LocalTextStyle.current,
         onValueChange = {
             packPrice = it
             if (editablePrice.price != it.text) {
@@ -213,7 +213,12 @@ private fun EditPriceScreenPrice(
             }
         },
         enabled = saveStatus.isNotBusy(),
-        keyboardOptions = KeyboardOptions(keyboardType = if (currencyFormat.decimalPlaces == 0) KeyboardType.Number else KeyboardType.Decimal),
+        keyboardOptions =
+            KeyboardOptions(
+                keyboardType =
+                    if (currencyFormat.decimalPlaces == 0) KeyboardType.Number
+                    else KeyboardType.Decimal
+            ),
     )
 }
 
@@ -223,23 +228,22 @@ private fun EditPriceScreenPackSize(
     editablePrice: EditablePrice,
     dataSet: DataSet,
     item: Item,
-    onChange: () -> Unit
+    onChange: () -> Unit,
 ) {
     val uiContent = viewModel.uiContent
 
-    val saveStatus by viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by
+        viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val units: List<MeasurementUnit> =
         remember(dataSet, item.defaultUnit.quantityType) {
             dataSet.getRelevantMeasurementUnits(
                 item.defaultUnit.quantityType,
-                includeDisplayOnly = false
+                includeDisplayOnly = false,
             )
         }
     var packCountNumber by rememberSyncedTextFieldValue(editablePrice.count)
-    var packSizeNumber by rememberSyncedTextFieldValue(
-        editablePrice.measureValue
-    )
+    var packSizeNumber by rememberSyncedTextFieldValue(editablePrice.measureValue)
 
     if (viewModel.showPackCount) {
         ValidatedNumericTextField(
@@ -254,11 +258,7 @@ private fun EditPriceScreenPackSize(
             onValueChange = {
                 packCountNumber = it
                 if (editablePrice.count != it.text) {
-                    viewModel.setUiContentEditablePrice(
-                        editablePrice.copy(
-                            count = it.text
-                        )
-                    )
+                    viewModel.setUiContentEditablePrice(editablePrice.copy(count = it.text))
                     onChange()
                 }
             },
@@ -284,18 +284,19 @@ private fun EditPriceScreenPackSize(
             onValueChange = {
                 packSizeNumber = it
                 if (editablePrice.measureValue != it.text) {
-                    viewModel.setUiContentEditablePrice(
-                        editablePrice.copy(
-                            measureValue = it.text
-                        )
-                    )
+                    viewModel.setUiContentEditablePrice(editablePrice.copy(measureValue = it.text))
                     onChange()
                 }
             },
             enabled = saveStatus.isNotBusy(),
-            numericTextFieldModifier = Modifier
-                .fillMaxSize(),
-            keyboardOptions = KeyboardOptions(keyboardType = if (uiContent.editableContent.value.measurementUnit.maxDecimals == 0) KeyboardType.Number else KeyboardType.Decimal),
+            numericTextFieldModifier = Modifier.fillMaxSize(),
+            keyboardOptions =
+                KeyboardOptions(
+                    keyboardType =
+                        if (uiContent.editableContent.value.measurementUnit.maxDecimals == 0)
+                            KeyboardType.Number
+                        else KeyboardType.Decimal
+                ),
         )
 
         if (item.defaultUnit.quantityType != QuantityType.ITEM) {
@@ -312,9 +313,7 @@ private fun EditPriceScreenPackSize(
                     }
                     if (editablePrice.measurementUnit != measurementUnit!!) {
                         viewModel.setUiContentEditablePrice(
-                            editablePrice.copy(
-                                measurementUnit = measurementUnit
-                            )
+                            editablePrice.copy(measurementUnit = measurementUnit)
                         )
                         onChange()
                     }
@@ -328,16 +327,16 @@ private fun EditPriceScreenPackSize(
                 // allowing a natural break. So we turn the non-breaking space back into a regular
                 // space. "fl"/"oz" is better than "fl o"/"z" if we are forced to wrap, although I
                 // suspect we are very unlikely to need to.
-                getCollapsedItemText = { context.getString(it.symbol).replace("$nonBreakingSpace", " ") },
-                getItemText = { "${context.getString(it.fullName)} (${context.getString(it.symbol)})" },
+                getCollapsedItemText = {
+                    context.getString(it.symbol).replace("$nonBreakingSpace", " ")
+                },
+                getItemText = {
+                    "${context.getString(it.fullName)} (${context.getString(it.symbol)})"
+                },
                 getDividerBetween = { previousItem, item ->
-                    areDifferentUnitFamilies(
-                        previousItem,
-                        item
-                    )
+                    areDifferentUnitFamilies(previousItem, item)
                 },
             )
         }
-
     }
 }

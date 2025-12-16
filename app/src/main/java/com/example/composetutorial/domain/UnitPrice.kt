@@ -1,12 +1,12 @@
 package com.example.composetutorial.domain
 
-import android.util.Log
-import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.common.roundTo
+import com.example.composetutorial.debug.myRequire
 import java.util.Locale
 import kotlin.math.abs
 
-data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) : Comparable<UnitPrice> {
+data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) :
+    Comparable<UnitPrice> {
     override fun compareTo(other: UnitPrice): Int {
         myRequire(denominator.quantityType == other.denominator.quantityType) {
             "UnitPrices with denominators $denominator and ${other.denominator} are incommensurable"
@@ -34,7 +34,7 @@ data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) : 
             price: Double,
             count: Long,
             quantity: Quantity,
-            denominator: MeasurementUnit = quantity.unit.quantityType.baseUnit()
+            denominator: MeasurementUnit = quantity.unit.quantityType.baseUnit(),
         ): UnitPrice {
             myRequire(count > 0) { "Expected positive count" }
             return UnitPrice(price / (count * quantity.asValue(denominator)), denominator)
@@ -58,7 +58,7 @@ data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) : 
 fun UnitPrice.withFriendlyDenominator(
     preferredUnit: MeasurementUnit,
     currencyDecimalPlaces: Int,
-    candidateDenominators: List<MeasurementUnit>
+    candidateDenominators: List<MeasurementUnit>,
 ): UnitPrice {
     myRequire(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
     var bestScore: Double = Double.MAX_VALUE
@@ -77,10 +77,18 @@ fun UnitPrice.withFriendlyDenominator(
         //   part isn't under our control; we will always have currencyDecimalPlaces of it.) But we
         //   don't like to have "0.xx" because then we're wasting the digit before the decimal
         //   separator which we always have to display.
-        val relativeError = abs(candidateUnitPrice.numerator.roundTo(currencyDecimalPlaces) - candidateUnitPrice.numerator) / candidateUnitPrice.numerator
-        val displayIntegerPart = String.format(Locale.US, "%.${currencyDecimalPlaces}f", candidateUnitPrice.numerator).substringBefore('.')
+        val relativeError =
+            abs(
+                candidateUnitPrice.numerator.roundTo(currencyDecimalPlaces) -
+                    candidateUnitPrice.numerator
+            ) / candidateUnitPrice.numerator
+        val displayIntegerPart =
+            String.format(Locale.US, "%.${currencyDecimalPlaces}f", candidateUnitPrice.numerator)
+                .substringBefore('.')
         val displayIntegerLength = if (displayIntegerPart == "0") 0 else displayIntegerPart.length
-        val candidateScore = abs(displayIntegerLength - 1) + (10.0 * relativeError) - (if (candidateUnitPrice.denominator == preferredUnit) 1.1 else 0.0)
+        val candidateScore =
+            abs(displayIntegerLength - 1) + (10.0 * relativeError) -
+                (if (candidateUnitPrice.denominator == preferredUnit) 1.1 else 0.0)
         if (candidateScore < bestScore) {
             bestScore = candidateScore
             bestUnitPrice = candidateUnitPrice

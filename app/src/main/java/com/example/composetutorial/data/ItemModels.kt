@@ -13,12 +13,17 @@ import com.example.composetutorial.domain.getRelevantMeasurementUnits
 import kotlinx.parcelize.Parcelize
 
 @Entity(
-    tableName = "item", foreignKeys = [ForeignKey(
-        entity = DataSet::class,
-        parentColumns = ["id"],
-        childColumns = ["data_set_id"],
-        onDelete = ForeignKey.CASCADE
-    )], indices = [Index(value = ["data_set_id"], unique = false)]
+    tableName = "item",
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = DataSet::class,
+                parentColumns = ["id"],
+                childColumns = ["data_set_id"],
+                onDelete = ForeignKey.CASCADE,
+            )
+        ],
+    indices = [Index(value = ["data_set_id"], unique = false)],
 )
 @Parcelize
 data class Item(
@@ -35,16 +40,19 @@ data class Item(
 fun Item?.toEditable(dataSet: DataSet): EditableItem {
     val defaultUnitByQuantityType =
         QuantityType.entries.associateWithTo(mutableMapOf()) { quantityType ->
-            dataSet.getRelevantMeasurementUnits(
-                quantityType, includeDisplayOnly = false
-            ).first()
+            dataSet.getRelevantMeasurementUnits(quantityType, includeDisplayOnly = false).first()
         }
     if (this == null) {
         // It's probably reasonable to default to sold by weight, and it's nice not to have
         // the possibility of a null state.
         return EditableItem(
-            0, dataSet.id, "", QuantityType.WEIGHT,
-            defaultUnitByQuantityType, false, ""
+            0,
+            dataSet.id,
+            "",
+            QuantityType.WEIGHT,
+            defaultUnitByQuantityType,
+            false,
+            "",
         )
     } else {
         myCheck(dataSet.id == dataSetId) {
@@ -58,13 +66,15 @@ fun Item?.toEditable(dataSet: DataSet): EditableItem {
             defaultUnit.quantityType,
             defaultUnitByQuantityType,
             allowMultipack,
-            notes
+            notes,
         )
     }
 }
 
-// Note that we have the surprisingly horrific code around defaultUnitIdByQuantityTypeOrdinal instead
-// of a simple "val defaultUnit: MeasurementUnit" because I thought it would be user-friendly to keep
+// Note that we have the surprisingly horrific code around defaultUnitIdByQuantityTypeOrdinal
+// instead
+// of a simple "val defaultUnit: MeasurementUnit" because I thought it would be user-friendly to
+// keep
 // the selected unit for each quantity type while the user is editing, and then it turns into a
 // nightmare of un-parcelizable types and working with ordinals and IDs rather than enum class
 // objects themselves. It probably isn't that bad in hindsight, but the code is way more complex
@@ -80,8 +90,7 @@ data class EditableItem(
     val notes: String,
 ) : Parcelable {
     val defaultUnit: MeasurementUnit
-        get() =
-            defaultUnitByQuantityType[quantityType]!!
+        get() = defaultUnitByQuantityType[quantityType]!!
 }
 
 fun EditableItem.toDomain(): Item? {
@@ -103,6 +112,6 @@ fun EditableItem.toDomain(): Item? {
         name = trimmedName,
         defaultUnit = defaultUnit,
         allowMultipack = allowMultipack,
-        notes = notes
+        notes = notes,
     )
 }

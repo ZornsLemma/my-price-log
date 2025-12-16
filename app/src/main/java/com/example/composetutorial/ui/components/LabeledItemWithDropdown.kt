@@ -45,20 +45,21 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
     ) { expanded ->
         LabeledItem(label = label) {
             Row {
-
                 Box {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         // ENHANCE: This text doesn't change colour when enabled is false, TBH this
-                        // probably looks OK and it might actually look ugly if it did in my specific
-                        // UI, but maybe it ought to. And equally maybe the LabeledItem itself should
+                        // probably looks OK and it might actually look ugly if it did in my
+                        // specific
+                        // UI, but maybe it ought to. And equally maybe the LabeledItem itself
+                        // should
                         // change colour when disabled.
                         Text(text)
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = dropdownContentDescription,
-                            modifier = Modifier.size(iconSize /* 16.dp */).rotate(if (expanded) 180f else 0f)
+                            modifier =
+                                Modifier.size(iconSize /* 16.dp */)
+                                    .rotate(if (expanded) 180f else 0f),
                         )
                     }
                 }

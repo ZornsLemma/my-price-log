@@ -17,16 +17,19 @@ import java.util.Locale
 // Turkish case users want to search for "istanbul" and have it match "İstanbul" even though they
 // are different according to the locale, simply because it's a lot more convenient to type the
 // former.
-fun String.normalizedForSearch() = Normalizer.normalize(this, Normalizer.Form.NFD)
-    // Remove diacritics
-    .replace("\\p{M}".toRegex(), "")
-    // Remove all forms of apostrophes/quotes
-    .replace("['’ʻʼʽʾˮˈˌʹʺ˝]".toRegex(), "")
-    // Replace all remaining punctuation with spaces. ENHANCE: LLM suggestion was to include \\p{Symbol} but it's apparently not supported in Java/Kotlin, so I've removed it without replacing it with anything.
-    .replace("[\\p{Punct}]".toRegex(), " ")
-    // Collapse adjacent whitespace into single spaces
-    .replace("\\s+".toRegex(), " ")
-    // Trim leading/trailing whitespace
-    .trim()
-    // Lowercase using invariant rules to ensure case insensitivity
-    .lowercase(Locale.ROOT)
+fun String.normalizedForSearch() =
+    Normalizer.normalize(this, Normalizer.Form.NFD)
+        // Remove diacritics
+        .replace("\\p{M}".toRegex(), "")
+        // Remove all forms of apostrophes/quotes
+        .replace("['’ʻʼʽʾˮˈˌʹʺ˝]".toRegex(), "")
+        // Replace all remaining punctuation with spaces. ENHANCE: LLM suggestion was to include
+        // \\p{Symbol} but it's apparently not supported in Java/Kotlin, so I've removed it without
+        // replacing it with anything.
+        .replace("[\\p{Punct}]".toRegex(), " ")
+        // Collapse adjacent whitespace into single spaces
+        .replace("\\s+".toRegex(), " ")
+        // Trim leading/trailing whitespace
+        .trim()
+        // Lowercase using invariant rules to ensure case insensitivity
+        .lowercase(Locale.ROOT)

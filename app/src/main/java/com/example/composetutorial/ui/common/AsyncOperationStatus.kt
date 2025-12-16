@@ -2,9 +2,13 @@ package com.example.composetutorial.ui.common
 
 sealed class AsyncOperationStatus {
     object Idle : AsyncOperationStatus()
+
     object Busy : AsyncOperationStatus()
+
     object BusyForAWhile : AsyncOperationStatus()
+
     data class Success(val id: Long?) : AsyncOperationStatus()
+
     data class Error(val message: String) : AsyncOperationStatus()
 }
 

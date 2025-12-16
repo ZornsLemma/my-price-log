@@ -1,20 +1,19 @@
 package com.example.composetutorial.ui.screens.edititem
 
 import android.os.Parcelable
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.composetutorial.debug.debugDelay
-import com.example.composetutorial.debug.myCheck
-import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.data.EditableItem
 import com.example.composetutorial.data.toDomain
+import com.example.composetutorial.debug.debugDelay
+import com.example.composetutorial.debug.myCheck
+import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.ui.common.PersistentUiContent
 import com.example.composetutorial.ui.common.nameValidationRulesFlow
-import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenStateHolder
 import com.example.composetutorial.ui.common.validationRulesOk
+import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenStateHolder
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOf
@@ -23,10 +22,7 @@ import kotlinx.parcelize.Parcelize
 
 // This class seems a bit pointless but it makes it clearer what is being retrieved from
 // PersistentUiContent.staticContent.
-@Parcelize
-data class EditItemScreenStaticContent(
-    val dataSet: DataSet,
-) : Parcelable
+@Parcelize data class EditItemScreenStaticContent(val dataSet: DataSet) : Parcelable
 
 class EditItemViewModel(
     private val repository: Repository,
@@ -34,21 +30,23 @@ class EditItemViewModel(
     initialEditableContent: EditableItem?,
     initialStaticContent: EditItemScreenStaticContent?,
 ) : ViewModel() {
-    val uiContent = PersistentUiContent(
-        this,
-        savedStateHandle,
-        "Item",
-        initialEditableContent,
-        initialStaticContent
-    )
+    val uiContent =
+        PersistentUiContent(
+            this,
+            savedStateHandle,
+            "Item",
+            initialEditableContent,
+            initialStaticContent,
+        )
 
-    val itemReferenceCountFlow = uiContent.originalContent.id.let { itemId ->
-        if (itemId != 0L) {
-            repository.countPricesForItem(itemId)
-        } else {
-            flowOf(0L) // new items have no references
+    val itemReferenceCountFlow =
+        uiContent.originalContent.id.let { itemId ->
+            if (itemId != 0L) {
+                repository.countPricesForItem(itemId)
+            } else {
+                flowOf(0L) // new items have no references
+            }
         }
-    }
 
     val generalEditScreenStateHolder = GeneralEditScreenStateHolder(savedStateHandle)
 
@@ -56,10 +54,15 @@ class EditItemViewModel(
         uiContent.update(newEditableItem)
     }
 
-    val nameValidationRules = nameValidationRulesFlow(
-        repository.getAllItems(uiContent.originalContent.dataSetId).map { itemList ->
-            itemList.mapNotNull { item -> if (item.id != uiContent.originalContent.id ) item.name else null } },
-        viewModelScope)
+    val nameValidationRules =
+        nameValidationRulesFlow(
+            repository.getAllItems(uiContent.originalContent.dataSetId).map { itemList ->
+                itemList.mapNotNull { item ->
+                    if (item.id != uiContent.originalContent.id) item.name else null
+                }
+            },
+            viewModelScope,
+        )
 
     enum class EditableField {
         NAME
@@ -70,25 +73,23 @@ class EditItemViewModel(
 
     suspend fun validateForSave(): Boolean {
         val nameValidationRules = nameValidationRules.value.value ?: return false
-        if (!validationRulesOk(
-                nameValidationRules,
-                uiContent.editableContent.value.name
-            )
-        ) {
+        if (!validationRulesOk(nameValidationRules, uiContent.editableContent.value.name)) {
             _saveValidationEvents.emit(EditableField.NAME)
             return false
         }
         return true
     }
 
-    suspend fun performSave() : Long {
+    suspend fun performSave(): Long {
         val item = uiContent.editableContent.value.toDomain()
         if (item == null) {
-            throw IllegalStateException("performSave() called with an inconvertible EditableItem: ${uiContent.editableContent.value}")
+            throw IllegalStateException(
+                "performSave() called with an inconvertible EditableItem: ${uiContent.editableContent.value}"
+            )
         }
         debugDelay()
         // updateOrInsertItem() returns -1 if it's an update or the new ID if it was an insert.
-        val newId =  repository.updateOrInsertItem(item)
+        val newId = repository.updateOrInsertItem(item)
         return if (newId == -1L) item.id else newId
     }
 

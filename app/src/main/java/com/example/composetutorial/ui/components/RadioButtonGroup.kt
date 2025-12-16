@@ -34,33 +34,34 @@ fun <T, ID : Comparable<ID>> RadioButtonGroup(
             text = title,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            modifier = Modifier.padding(horizontal = 8.dp),
         )
 
         items.forEach { item ->
-            val clickableModifier = if (!enabled) Modifier else Modifier.clickable {
-                onItemSelected(getId(item))
-            }
+            val clickableModifier =
+                if (!enabled) Modifier else Modifier.clickable { onItemSelected(getId(item)) }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .then(clickableModifier)
-                    .padding(horizontal = 8.dp)
-                    .height(48.dp) // 40.dp is MD3 spec but we want extra space for our supporting text while still having some spacing between items
-                    .semantics {
-                        role = Role.RadioButton
-                    }, // for TalkBack / screen readers, since this is clickable not the RadioButton
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .then(clickableModifier)
+                        .padding(horizontal = 8.dp)
+                        .height(
+                            48.dp
+                        ) // 40.dp is MD3 spec but we want extra space for our supporting text while
+                        // still having some spacing between items
+                        .semantics {
+                            role = Role.RadioButton
+                        }, // for TalkBack / screen readers, since this is clickable not the
+                // RadioButton
             ) {
                 RadioButton(
                     selected = getId(item) == selectedId,
                     enabled = enabled,
-                    onClick = null // the enclosing Row is clickable instead
+                    onClick = null, // the enclosing Row is clickable instead
                 )
                 Column(modifier = Modifier.padding(start = 8.dp)) {
-                    Text(
-                        text = stringResource(getNameResource(item))
-                    )
+                    Text(text = stringResource(getNameResource(item)))
                     getSupportingTextResource(item)?.let { supportingTextResource ->
                         Text(
                             text = stringResource(supportingTextResource),

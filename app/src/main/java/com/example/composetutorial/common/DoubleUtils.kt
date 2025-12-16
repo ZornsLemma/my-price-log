@@ -12,7 +12,7 @@ fun formatDouble(
     minDecimals: Int,
     maxDecimals: Int,
     useLocaleGrouping: Boolean,
-    locale: Locale
+    locale: Locale,
 ): String {
     val numberFormat = NumberFormat.getNumberInstance(locale)
     numberFormat.minimumFractionDigits = minDecimals

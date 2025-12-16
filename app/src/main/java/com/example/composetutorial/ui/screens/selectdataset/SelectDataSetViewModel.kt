@@ -11,12 +11,13 @@ class SelectDataSetViewModel(
     savedStateHandle: SavedStateHandle,
     initialList: List<DataSet>?,
     dataQuery: Flow<List<DataSet>>,
-)  : ViewModel() {
-    val generalSelectorScreenStateHolder =  GeneralSelectorScreenStateHolder<DataSet>(
-        savedStateHandle,
-        getName = { it.name },
-        initialList,
-        dataQuery,
-        viewModelScope
-    )
+) : ViewModel() {
+    val generalSelectorScreenStateHolder =
+        GeneralSelectorScreenStateHolder<DataSet>(
+            savedStateHandle,
+            getName = { it.name },
+            initialList,
+            dataQuery,
+            viewModelScope,
+        )
 }

@@ -6,7 +6,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
-import com.example.composetutorial.ui.components.textOrNull
 import com.example.composetutorial.ui.common.ValidationRule
 import kotlinx.coroutines.flow.SharedFlow
 
@@ -23,7 +22,7 @@ fun <T> ValidatedFilteredTextField(
     allowEmpty: Boolean = false,
     singleLine: Boolean = false,
     validationFlow: SharedFlow<T>,
-    validationFlowFieldId: T
+    validationFlowFieldId: T,
 ) {
     ValidationErrorHighlightBox(
         value = value.text,
@@ -40,16 +39,12 @@ fun <T> ValidatedFilteredTextField(
             onValueChange = onValueChange,
             enabled = enabled,
             isError = validationResult != null,
-            supportingText = textOrNull(
-                validationResult,
-                color = MaterialTheme.colorScheme.error
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .validationInputHandleFocusRequester(validationInputHandle),
+            supportingText = textOrNull(validationResult, color = MaterialTheme.colorScheme.error),
+            modifier =
+                Modifier.fillMaxWidth().validationInputHandleFocusRequester(validationInputHandle),
             keyboardOptions = keyboardOptions,
             singleLine = singleLine,
-            interactionSource = interactionSource
+            interactionSource = interactionSource,
         )
     }
 }

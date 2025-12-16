@@ -25,7 +25,9 @@ fun AsyncOperationErrorAlertDialog(onDismissRequest: () -> Unit, message: String
         text = { Text(message) },
         onDismissRequest = onDismissRequest,
         confirmButton = {
-            TextButton(onClick = { onDismissRequest() }) { Text(stringResource(R.string.button_ok)) }
-        }
+            TextButton(onClick = { onDismissRequest() }) {
+                Text(stringResource(R.string.button_ok))
+            }
+        },
     )
 }

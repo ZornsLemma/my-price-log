@@ -1,12 +1,8 @@
 package com.example.composetutorial.ui.screens.editsource
 
-import android.util.Log
-import androidx.annotation.StringRes
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,28 +17,21 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
-import com.example.composetutorial.data.LoyaltyType
 import com.example.composetutorial.R
+import com.example.composetutorial.data.LoyaltyType
 import com.example.composetutorial.ui.buttonIconTextSpacing
-import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.common.isNotBusy
 import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.components.RadioButtonGroup
@@ -52,6 +41,7 @@ import com.example.composetutorial.ui.components.ValidatedNumericTextField
 import com.example.composetutorial.ui.components.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.ui.components.generaledit.GeneralEditAndDeleteScreen
 import com.example.composetutorial.ui.components.keyboardCapitalization
+import com.example.composetutorial.ui.components.rememberSyncedTextFieldValue
 import com.example.composetutorial.ui.components.topAppBarTitle
 import com.example.composetutorial.ui.maxNotesLength
 import com.example.composetutorial.ui.maxSourceNameLength
@@ -60,7 +50,7 @@ import com.example.composetutorial.ui.maxSourceNameLength
 fun EditSourceScreen(
     viewModel: EditSourceViewModel,
     navController: NavHostController,
-    requestClose: (Long?) -> Unit
+    requestClose: (Long?) -> Unit,
 ) {
     val originalSource = viewModel.uiContent.originalContent
     val editableSource by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
@@ -70,28 +60,38 @@ fun EditSourceScreen(
 
     var showDeleteConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
-    val saveStatus by viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
+    val saveStatus by
+        viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
 
     val isSimpleDelete = sourceReferenceCount == 0L
-    val dialogTitle = stringResource(if (isSimpleDelete) R.string.title_delete_source else R.string.title_delete_source_and_prices)
-    val dialogSubtitle = stringResource(if (isSimpleDelete) R.string.message_delete_source_no_associated_prices else R.string.message_delete_source_associated_prices)
+    val dialogTitle =
+        stringResource(
+            if (isSimpleDelete) R.string.title_delete_source
+            else R.string.title_delete_source_and_prices
+        )
+    val dialogSubtitle =
+        stringResource(
+            if (isSimpleDelete) R.string.message_delete_source_no_associated_prices
+            else R.string.message_delete_source_associated_prices
+        )
 
     GeneralEditAndDeleteScreen(
         stateHolder = viewModel.generalEditScreenStateHolder,
         navController = navController,
-        title = topAppBarTitle(if (originalSource.id == 0L) stringResource(R.string.title_add_source) else stringResource(
-            R.string.title_edit_source
-        ), dataSet.name),
+        title =
+            topAppBarTitle(
+                if (originalSource.id == 0L) stringResource(R.string.title_add_source)
+                else stringResource(R.string.title_edit_source),
+                dataSet.name,
+            ),
         isDirty = { editableSource != originalSource },
         validateForSave = { viewModel.validateForSave() },
         performSave = { viewModel.performSave() },
         onIdle = {},
         requestClose = requestClose,
-        deleteConfirmationDetails = if (!showDeleteConfirmDialog) null else Triple(
-            isSimpleDelete,
-            { Text(dialogTitle) },
-            { Text(dialogSubtitle) },
-        ),
+        deleteConfirmationDetails =
+            if (!showDeleteConfirmDialog) null
+            else Triple(isSimpleDelete, { Text(dialogTitle) }, { Text(dialogSubtitle) }),
         performDelete = { viewModel.performDelete() },
         onDeleteConfirmDismissRequest = { showDeleteConfirmDialog = false },
     ) { showDeleteSpinner ->
@@ -99,7 +99,10 @@ fun EditSourceScreen(
         val nameValidationRules by viewModel.nameValidationRules.collectAsStateWithLifecycle()
         ValidatedFilteredTextField(
             label = { Text(stringResource(R.string.label_name)) },
-            keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_source_name)),
+            keyboardOptions =
+                KeyboardOptions(
+                    keyboardCapitalization(R.string.keyboard_capitalization_source_name)
+                ),
             value = name,
             maxLength = maxSourceNameLength,
             onValueChange = {
@@ -112,7 +115,7 @@ fun EditSourceScreen(
             allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
             singleLine = true,
             validationFlow = viewModel.saveValidationEvents,
-            validationFlowFieldId = EditSourceViewModel.EditableField.NAME
+            validationFlowFieldId = EditSourceViewModel.EditableField.NAME,
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -121,7 +124,8 @@ fun EditSourceScreen(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+            colors =
+                CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         ) {
             // We would like to use horizontal padding of 16.dp on this Column, but we don't want
             // the ripple effect on the radio button Rows to "stop" at the left edge of the circular
@@ -130,12 +134,15 @@ fun EditSourceScreen(
             // maybe it's a bit weird the ripple effect is "wider" than everything else - but it's
             // probably OK.
             Column(
-                modifier = Modifier
-                    // NB: We must do .animateContentSize() *before* .padding(), otherwise the clipping
-                    // bounds the former imposes are too tight and will prevent ErrorHighlightBox
-                    // drawing correctly.
-                    .animateContentSize()
-                    .padding(horizontal = 8.dp, vertical = 12.dp)
+                modifier =
+                    Modifier
+                        // NB: We must do .animateContentSize() *before* .padding(), otherwise the
+                        // clipping
+                        // bounds the former imposes are too tight and will prevent
+                        // ErrorHighlightBox
+                        // drawing correctly.
+                        .animateContentSize()
+                        .padding(horizontal = 8.dp, vertical = 12.dp)
             ) {
                 RadioButtonGroup(
                     title = stringResource(R.string.title_loyalty_scheme),
@@ -144,9 +151,7 @@ fun EditSourceScreen(
                     selectedId = selectedOption,
                     onItemSelected = { loyaltyType ->
                         viewModel.setUiContentEditableSource(
-                            editableSource.copy(
-                                loyaltyType = loyaltyType
-                            )
+                            editableSource.copy(loyaltyType = loyaltyType)
                         )
                     },
                     getId = { it },
@@ -157,7 +162,8 @@ fun EditSourceScreen(
                 if (selectedOption != LoyaltyType.NONE) {
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    var loyaltyPercentage by rememberSyncedTextFieldValue(editableSource.loyaltyPercentage)
+                    var loyaltyPercentage by
+                        rememberSyncedTextFieldValue(editableSource.loyaltyPercentage)
                     Box(modifier = Modifier.padding(8.dp)) {
                         ValidatedNumericTextField(
                             value = loyaltyPercentage,
@@ -165,21 +171,19 @@ fun EditSourceScreen(
                             validationRules = viewModel.loyaltyPercentageValidationRules,
                             allowEmpty = !viewModel.generalEditScreenStateHolder.saveAttempted,
                             validationFlow = viewModel.saveValidationEvents,
-                            validationFlowFieldId = EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
-                            numericTextFieldModifier = Modifier
-                                .fillMaxWidth(),
+                            validationFlowFieldId =
+                                EditSourceViewModel.EditableField.LOYALTY_PERCENTAGE,
+                            numericTextFieldModifier = Modifier.fillMaxWidth(),
                             label = { Text(stringResource(R.string.label_loyalty_scheme_reward)) },
                             suffix = { Text("%") },
                             onValueChange = {
                                 loyaltyPercentage = it
                                 viewModel.setUiContentEditableSource(
-                                    editableSource.copy(
-                                        loyaltyPercentage = it.text
-                                    )
+                                    editableSource.copy(loyaltyPercentage = it.text)
                                 )
                             },
                             enabled = saveStatus.isNotBusy(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         )
                     }
                 }
@@ -191,7 +195,8 @@ fun EditSourceScreen(
         var notes by rememberSyncedTextFieldValue(editableSource.notes)
         FilteredTextField(
             label = { Text(stringResource(R.string.label_notes)) },
-            keyboardOptions = KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_notes)),
+            keyboardOptions =
+                KeyboardOptions(keyboardCapitalization(R.string.keyboard_capitalization_notes)),
             value = notes,
             onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxNotesLength),
             onValueChange = {
@@ -207,15 +212,17 @@ fun EditSourceScreen(
             OutlinedButton(
                 onClick = { showDeleteConfirmDialog = true },
                 enabled = saveStatus.isNotBusy() && sourceReferenceCount != null,
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                // colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                colors =
+                    ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                // colors = ButtonDefaults.textButtonColors(contentColor =
+                // MaterialTheme.colorScheme.onSurfaceVariant)
             ) {
                 if (showDeleteSpinner) {
                     SmallCircularProgressIndicator()
                 } else {
                     Icon(
                         Icons.Default.Delete,
-                        contentDescription = stringResource(R.string.content_description_delete)
+                        contentDescription = stringResource(R.string.content_description_delete),
                     )
                 }
                 Spacer(Modifier.width(buttonIconTextSpacing))
@@ -224,4 +231,3 @@ fun EditSourceScreen(
         }
     }
 }
-

@@ -11,6 +11,6 @@ fun WarningIcon(contentDescription: String) {
     Icon(
         imageVector = Icons.Default.Warning,
         contentDescription = contentDescription,
-        tint = MaterialTheme.colorScheme.error
+        tint = MaterialTheme.colorScheme.error,
     )
 }

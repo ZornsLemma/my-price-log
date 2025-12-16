@@ -2,8 +2,6 @@
 
 package com.example.composetutorial.ui.components.generalselector
 
-import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +21,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -41,8 +38,8 @@ import com.example.composetutorial.ui.common.rememberSortedByLocale
 import com.example.composetutorial.ui.components.FilteredTextField
 import com.example.composetutorial.ui.components.createOnCandidateValueChangeMaxLength
 import com.example.composetutorial.ui.maxSearchLength
-import com.example.composetutorial.ui.screenVerticalBorder
 import com.example.composetutorial.ui.screenHorizontalBorder
+import com.example.composetutorial.ui.screenVerticalBorder
 
 // ENHANCE: Unlike other re-usable composables in this app, here we pass the actual T to
 // onItemSelected instead of an ID. I believe the original reason for this was an LLM suggestion
@@ -63,26 +60,27 @@ fun <T> GeneralSelectorScreen(
 ) {
     val dataList by stateHolder.dataFlow.collectAsStateWithLifecycle()
 
-    val floatingActionButton: (@Composable () -> Unit) = if (onAddClick == null) {
-        {}
-    } else {
-        @Composable {
-            // The commented out options here would (I think) be MD3 compliant (picking the
-            // "default" colour combination) but they seem to be the defaults anyway.
-            FloatingActionButton(
-                onClick = dropUnlessResumed { onAddClick() },
-                // containerColor = MaterialTheme.colorScheme.primaryContainer,
-                // contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                // shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(
-                    // modifier = Modifier.size(24.dp),
-                    imageVector = Icons.Default.Add,
-                    contentDescription = addContentDescription
-                )
+    val floatingActionButton: (@Composable () -> Unit) =
+        if (onAddClick == null) {
+            {}
+        } else {
+            @Composable {
+                // The commented out options here would (I think) be MD3 compliant (picking the
+                // "default" colour combination) but they seem to be the defaults anyway.
+                FloatingActionButton(
+                    onClick = dropUnlessResumed { onAddClick() }
+                    // containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    // contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    // shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(
+                        // modifier = Modifier.size(24.dp),
+                        imageVector = Icons.Default.Add,
+                        contentDescription = addContentDescription,
+                    )
+                }
             }
         }
-    }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -92,10 +90,11 @@ fun <T> GeneralSelectorScreen(
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                            contentDescription = stringResource(R.string.content_description_back)
+                            contentDescription = stringResource(R.string.content_description_back),
                         )
                     }
-                })
+                },
+            )
         },
         floatingActionButton = floatingActionButton,
     ) { innerPadding ->
@@ -111,11 +110,11 @@ fun <T> GeneralSelectorScreen(
             //
             // We don't need Modifier.verticalScroll(rememberScrollState()) here - probably because
             // of the LazyColumn - and in fact adding it causes a crash.
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)
-                .padding(vertical = screenVerticalBorder)
+            modifier =
+                Modifier.fillMaxSize()
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding)
+                    .padding(vertical = screenVerticalBorder)
         ) {
             // ENHANCE: We could show a warning icon and/or some supporting text if nothing matches
             // the substring, rather than just showing an empty list.
@@ -136,29 +135,27 @@ fun <T> GeneralSelectorScreen(
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.content_description_clear_search_text),
-                            modifier = Modifier.clickable { stateHolder.searchStringFlow.value = TextFieldValue("") },
+                            contentDescription =
+                                stringResource(R.string.content_description_clear_search_text),
+                            modifier =
+                                Modifier.clickable {
+                                    stateHolder.searchStringFlow.value = TextFieldValue("")
+                                },
                         )
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = screenHorizontalBorder)
-                        .padding(bottom = 8.dp),
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .padding(horizontal = screenHorizontalBorder)
+                            .padding(bottom = 8.dp),
                     singleLine = true,
                 )
             }
 
             val dataListSorted = dataList.rememberSortedByLocale { getName(it) }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 dataList.forEach { println("Item: $it, ID: ${getId(it)}") }
                 LazyColumn {
-                    items(
-                        items = dataListSorted,
-                        key = { item -> getId(item) }
-                    ) { item ->
+                    items(items = dataListSorted, key = { item -> getId(item) }) { item ->
                         GeneralSelectorScreenListItem(
                             id = getId(item),
                             name = getName(item),
@@ -181,8 +178,5 @@ fun <T> GeneralSelectorScreen(
 // possible workarounds feel worse than just keeping this function.
 @Composable
 private fun GeneralSelectorScreenListItem(id: Long, name: String, onItemSelected: () -> Unit) {
-    ListItem(
-        headlineContent = { Text(name) },
-        modifier = Modifier.clickable { onItemSelected() },
-    )
+    ListItem(headlineContent = { Text(name) }, modifier = Modifier.clickable { onItemSelected() })
 }

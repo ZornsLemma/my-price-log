@@ -52,5 +52,3 @@ class Converters {
         return value?.let { LoyaltyType.fromValue(it) }
     }
 }
-
-

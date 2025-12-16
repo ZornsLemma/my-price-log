@@ -18,8 +18,7 @@ class SyncedStateEvent<T>(initialState: T) {
     val state: StateFlow<T> = _state
     val events: SharedFlow<T> = _events
 
-    @Composable
-    fun collectAsStateWithLifecycle(): State<T> = _state.collectAsStateWithLifecycle()
+    @Composable fun collectAsStateWithLifecycle(): State<T> = _state.collectAsStateWithLifecycle()
 
     suspend fun update(value: T) {
         _state.value = value

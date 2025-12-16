@@ -2,18 +2,17 @@ package com.example.composetutorial.data
 
 import android.os.Parcelable
 import androidx.annotation.StringRes
-import androidx.compose.ui.res.stringResource
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.composetutorial.R
-import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.common.formatDoubleForEditing
 import com.example.composetutorial.common.parseStringAsDoubleOrNull
-import kotlinx.parcelize.Parcelize
+import com.example.composetutorial.debug.myCheck
 import java.util.Locale
+import kotlinx.parcelize.Parcelize
 
 // The to*() functions here contains logic to convert loyalty percentages to/from price multipliers.
 // 5% bonus is not the same as 5% discount/cashback. Suppose we want to buy something costing £100:
@@ -31,20 +30,21 @@ import java.util.Locale
 // spending.
 
 @Entity(
-    tableName = "source", foreignKeys = [
-        ForeignKey(
-            entity = DataSet::class,
-            parentColumns = ["id"],
-            childColumns = ["data_set_id"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ],
-    indices = [Index(value = ["data_set_id"], unique = false)]
+    tableName = "source",
+    foreignKeys =
+        [
+            ForeignKey(
+                entity = DataSet::class,
+                parentColumns = ["id"],
+                childColumns = ["data_set_id"],
+                onDelete = ForeignKey.CASCADE,
+            )
+        ],
+    indices = [Index(value = ["data_set_id"], unique = false)],
 )
 @Parcelize
 data class Source(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     @ColumnInfo(name = "data_set_id") val dataSetId: Long,
     val name: String,
     @ColumnInfo(name = "loyalty_type") val loyaltyType: LoyaltyType,
@@ -59,36 +59,30 @@ fun Source?.toEditable(dataSetId: Long, locale: Locale): EditableSource {
         myCheck(dataSetId == dataSetId) {
             "Expected identical dataSetIds but have dataSetId $dataSetId and dataSetId $dataSetId"
         }
-        val loyaltyPercentage = when (loyaltyType) {
-            LoyaltyType.NONE -> {
-                ""
-            }
+        val loyaltyPercentage =
+            when (loyaltyType) {
+                LoyaltyType.NONE -> {
+                    ""
+                }
 
-            LoyaltyType.BONUS -> {
-                formatDoubleForEditing(
-                    100.0 / loyaltyMultiplier - 100.0,
-                    minDecimals = 0,
-                    maxDecimals = 2,
-                    locale
-                )
+                LoyaltyType.BONUS -> {
+                    formatDoubleForEditing(
+                        100.0 / loyaltyMultiplier - 100.0,
+                        minDecimals = 0,
+                        maxDecimals = 2,
+                        locale,
+                    )
+                }
+                LoyaltyType.DISCOUNT -> {
+                    formatDoubleForEditing(
+                        100.0 * (1 - loyaltyMultiplier),
+                        minDecimals = 0,
+                        maxDecimals = 2,
+                        locale,
+                    )
+                }
             }
-            LoyaltyType.DISCOUNT -> {
-                formatDoubleForEditing(
-                    100.0 * (1 - loyaltyMultiplier),
-                    minDecimals = 0,
-                    maxDecimals = 2,
-                    locale
-                )
-            }
-        }
-        return EditableSource(
-            id,
-            dataSetId,
-            name,
-            loyaltyType,
-            loyaltyPercentage,
-            notes
-        )
+        return EditableSource(id, dataSetId, name, loyaltyType, loyaltyPercentage, notes)
     }
 }
 
@@ -112,11 +106,14 @@ fun EditableSource.toDomain(locale: Locale): Source? {
         return null
     }
     val loyaltyPercentage = parseStringAsDoubleOrNull(locale, loyaltyPercentage)
-    val loyaltyMultiplier = when (loyaltyType) {
-        LoyaltyType.NONE -> 1.0
-        LoyaltyType.BONUS -> if (loyaltyPercentage != null) 100.0 / (100.0 + loyaltyPercentage) else null
-        LoyaltyType.DISCOUNT -> if (loyaltyPercentage != null) 1.0 - (loyaltyPercentage / 100.0) else null
-    }
+    val loyaltyMultiplier =
+        when (loyaltyType) {
+            LoyaltyType.NONE -> 1.0
+            LoyaltyType.BONUS ->
+                if (loyaltyPercentage != null) 100.0 / (100.0 + loyaltyPercentage) else null
+            LoyaltyType.DISCOUNT ->
+                if (loyaltyPercentage != null) 1.0 - (loyaltyPercentage / 100.0) else null
+        }
     if (loyaltyMultiplier == null) {
         return null
     }
@@ -126,11 +123,15 @@ fun EditableSource.toDomain(locale: Locale): Source? {
         name = trimmedName,
         loyaltyType = loyaltyType,
         loyaltyMultiplier = loyaltyMultiplier,
-        notes = notes
+        notes = notes,
     )
 }
 
-enum class LoyaltyType(val id: Long, @field:StringRes val nameResource: Int, @field:StringRes val supportingTextResource: Int?) {
+enum class LoyaltyType(
+    val id: Long,
+    @field:StringRes val nameResource: Int,
+    @field:StringRes val supportingTextResource: Int?,
+) {
     NONE(1, R.string.loyalty_type_none, null),
     BONUS(2, R.string.loyalty_type_bonus, R.string.loyalty_type_bonus_supporting_text),
     DISCOUNT(3, R.string.loyalty_type_discount, R.string.loyalty_type_discount_supporting_text);

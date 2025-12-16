@@ -1,8 +1,8 @@
 package com.example.composetutorial.ui.common
 
 import android.content.Context
-import com.example.composetutorial.domain.UnitPrice
 import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.domain.UnitPrice
 import com.example.composetutorial.ui.nonBreakingSpace
 import com.example.composetutorial.ui.zeroWidthSpace
 import java.text.NumberFormat
@@ -14,9 +14,10 @@ fun formatPrice(price: Double, dataSet: DataSet, locale: Locale): String {
     // throw if given currency code "AAAA", so it seems safest to catch exceptions and have a
     // fallback, even if it's not great.
     try {
-        val numberFormat = NumberFormat.getCurrencyInstance(locale).apply {
-            currency = Currency.getInstance(dataSet.currencyCode)
-        }
+        val numberFormat =
+            NumberFormat.getCurrencyInstance(locale).apply {
+                currency = Currency.getInstance(dataSet.currencyCode)
+            }
         // Note that the returned string appears to use a non-breaking space as a separator.
         return numberFormat.format(price)
     } catch (e: Exception) {
@@ -38,6 +39,6 @@ fun UnitPrice.format(context: Context, dataSet: DataSet, locale: Locale) =
     "${formatPrice(
         numerator,
         dataSet,
-        locale
+        locale,
     )
     }${denominator.perSymbol}${zeroWidthSpace}${context.getString(denominator.symbol)}"

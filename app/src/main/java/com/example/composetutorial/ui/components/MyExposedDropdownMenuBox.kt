@@ -60,7 +60,8 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             // while allowing it to be wider (mainly for dropdowns on TextFields which don't occupy
             // the full screen width). ENHANCE: In practice this probably works well, but we might
             // want to add parameters to allow our caller to force exact width or other variations.
-            dropdownModifier = Modifier.widthIn(min = with(LocalDensity.current) { textFieldWidth.toDp() }),
+            dropdownModifier =
+                Modifier.widthIn(min = with(LocalDensity.current) { textFieldWidth.toDp() }),
             selectedId = selectedId,
             onItemSelected = onItemSelected,
             enabled = enabled,
@@ -72,10 +73,13 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             addBottomSpace = addBottomSpace,
         ) {
             val itemMap = items.associateBy { getId(it) }
-            val valueString = if (selectedId == null) "" else {
-                val item = itemMap[selectedId]
-                if (item != null) (getCollapsedItemText ?: getItemText)(item) else "Invalid ID $selectedId"
-            }
+            val valueString =
+                if (selectedId == null) ""
+                else {
+                    val item = itemMap[selectedId]
+                    if (item != null) (getCollapsedItemText ?: getItemText)(item)
+                    else "Invalid ID $selectedId"
+                }
             TextField(
                 value = valueString, // pulled out just to improve code formatting
                 onValueChange = { /* No-op, handled by dropdown */ },
@@ -91,12 +95,11 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
                         // the "Text field" configuration at the bottom of
                         // https://m3.material.io/components/menus/specs seems to show this, so
                         // let's go with it.
-                        modifier = Modifier.rotate(if (expanded) 180f else 0f)
+                        modifier = Modifier.rotate(if (expanded) 180f else 0f),
                     )
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned { coordinates ->
+                modifier =
+                    Modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
                         textFieldWidth = coordinates.size.width
                     },
                 // ENHANCE: It isn't ideal to use expanded as a substitute for focus here, but it
@@ -104,7 +107,7 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
                 // in order to make it clickable, it doesn't seem to actually get focus as far as
                 // onFocusChanged is concerned (even when it gets that "it's focus but it's not
                 // focus" D-pad navigation focus).
-                colors = if (enabled) myTextFieldColors(expanded) else TextFieldDefaults.colors()
+                colors = if (enabled) myTextFieldColors(expanded) else TextFieldDefaults.colors(),
             )
         }
         // If we let TextField display supportingText itself it gets included in the bounding box
@@ -115,14 +118,12 @@ fun <T, ID : Comparable<ID>> MyExposedDropdownMenuBox(
             Box(modifier = Modifier.padding(start = menuLeftPadding, top = 4.dp)) {
                 ProvideTextStyle(MaterialTheme.typography.bodySmall) {
                     CompositionLocalProvider(
-                        LocalContentColor provides
-                                MaterialTheme.colorScheme.onSurfaceVariant
+                        LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
                     ) {
                         supportingText.invoke()
                     }
                 }
             }
         }
-
     }
 }

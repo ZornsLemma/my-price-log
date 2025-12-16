@@ -7,28 +7,30 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.composetutorial.debug.debugDelay
-import com.example.composetutorial.domain.SettingsRepository
-import com.example.composetutorial.domain.analysePrices
-import com.example.composetutorial.domain.dataStore
-import com.example.composetutorial.debug.myCheck
-import com.example.composetutorial.domain.PriceAnalysis
-import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.data.Item
 import com.example.composetutorial.data.Price
 import com.example.composetutorial.data.Source
+import com.example.composetutorial.debug.debugDelay
 import com.example.composetutorial.debug.debugThrow
+import com.example.composetutorial.debug.myCheck
+import com.example.composetutorial.domain.PriceAnalysis
+import com.example.composetutorial.domain.Repository
+import com.example.composetutorial.domain.SettingsRepository
+import com.example.composetutorial.domain.analysePrices
+import com.example.composetutorial.domain.dataStore
 import com.example.composetutorial.domain.sanitisePriceUnits
-import com.example.composetutorial.ui.common.setSelectedDataSetIdAsync
-import com.example.composetutorial.ui.common.setSelectedItemIdAsync
-import com.example.composetutorial.ui.common.setSelectedSourceIdAsync
 import com.example.composetutorial.ui.common.AsyncOperationStatus
 import com.example.composetutorial.ui.common.LoadState
 import com.example.composetutorial.ui.common.SyncedStateEvent
+import com.example.composetutorial.ui.common.setSelectedDataSetIdAsync
+import com.example.composetutorial.ui.common.setSelectedItemIdAsync
+import com.example.composetutorial.ui.common.setSelectedSourceIdAsync
+import com.example.composetutorial.ui.common.userPreferencesStore
 import com.example.composetutorial.ui.common.valueOrNull
 import com.example.composetutorial.ui.spinnerDelayMillis
-import com.example.composetutorial.ui.common.userPreferencesStore
+import java.time.Instant
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -51,8 +53,6 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.util.Locale
 
 private const val TAG = "HomeViewModel"
 
@@ -94,15 +94,13 @@ data class HomeScreenUiContent(
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class HomeViewModel(
-    private val repository: Repository,
-    application: Application
-) : ViewModel() {
+class HomeViewModel(private val repository: Repository, application: Application) : ViewModel() {
     private val app = application
 
     fun setSelectedDataSetId(dataSetId: Long) {
         setSelectedDataSetIdAsync(app, dataSetId)
     }
+
     fun setSelectedItemId(itemId: Long) {
         val dataSetId = selectedDataSetIdStateFlow.value.valueOrNull()
         // We don't have the concept of a null selected data set ID (if a data set is deleted we
@@ -111,45 +109,42 @@ class HomeViewModel(
         // valueOrNull() can only return null during initial async data loading. But if we haven't
         // even loaded the current data set ID it shouldn't be possible for the user to see any
         // items, let alone select one.
-        myCheck(dataSetId != null) {
-            "dataSetId is null even though we are selecting an item"
-        }
+        myCheck(dataSetId != null) { "dataSetId is null even though we are selecting an item" }
         setSelectedItemIdAsync(app, dataSetId!!, itemId)
     }
 
     fun setSelectedSourceId(sourceId: Long) {
         val dataSetId = selectedDataSetIdStateFlow.value.valueOrNull()
         // See comment in setSelectedItemId() for more on this check.
-        myCheck(dataSetId != null) {
-            "dataSetId is null even though we are selecting a source"
-        }
+        myCheck(dataSetId != null) { "dataSetId is null even though we are selecting a source" }
         setSelectedSourceIdAsync(app, dataSetId!!, sourceId)
     }
 
-    private fun <T> Flow<T>.asLoadState(): StateFlow<LoadState<T>> = this
-        .map<T, LoadState<T>> { LoadState.Loaded(it) }
-        .distinctUntilChanged()
-        .onStart { emit(LoadState.Loading) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading)
+    private fun <T> Flow<T>.asLoadState(): StateFlow<LoadState<T>> =
+        this.map<T, LoadState<T>> { LoadState.Loaded(it) }
+            .distinctUntilChanged()
+            .onStart { emit(LoadState.Loading) }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.Loading)
 
-    private val prefsFlow = app.userPreferencesStore.data
-        .shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
+    private val prefsFlow =
+        app.userPreferencesStore.data.shareIn(viewModelScope, SharingStarted.Eagerly, replay = 1)
 
-    private val selectedDataSetIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
-        .map { it.selectedDataSetId }
-        .asLoadState()
+    private val selectedDataSetIdStateFlow: StateFlow<LoadState<Long>> =
+        prefsFlow.map { it.selectedDataSetId }.asLoadState()
 
-    private val selectedItemIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
-        .map { prefs ->
-            prefs.selectedItemIdForDataSetIdMap[prefs.selectedDataSetId] ?: itemIdNone
-        }
-        .asLoadState()
+    private val selectedItemIdStateFlow: StateFlow<LoadState<Long>> =
+        prefsFlow
+            .map { prefs ->
+                prefs.selectedItemIdForDataSetIdMap[prefs.selectedDataSetId] ?: itemIdNone
+            }
+            .asLoadState()
 
-    private val selectedSourceIdStateFlow: StateFlow<LoadState<Long>> = prefsFlow
-        .map { prefs ->
-            prefs.selectedSourceIdForDataSetIdMap[prefs.selectedDataSetId] ?: sourceIdNone
-        }
-        .asLoadState()
+    private val selectedSourceIdStateFlow: StateFlow<LoadState<Long>> =
+        prefsFlow
+            .map { prefs ->
+                prefs.selectedSourceIdForDataSetIdMap[prefs.selectedDataSetId] ?: sourceIdNone
+            }
+            .asLoadState()
 
     private val _localeFlow = MutableStateFlow(Locale.getDefault())
     private val localeFlow: StateFlow<Locale> = _localeFlow
@@ -158,12 +153,7 @@ class HomeViewModel(
         _localeFlow.value = locale
     }
 
-    private val _uiState = MutableStateFlow(
-        Pair(
-            false,
-            HomeScreenUiContent.createEmpty()
-        )
-    )
+    private val _uiState = MutableStateFlow(Pair(false, HomeScreenUiContent.createEmpty()))
     val uiState = _uiState.asStateFlow()
 
     val settingsRepository = SettingsRepository(app.dataStore)
@@ -178,71 +168,70 @@ class HomeViewModel(
 
         val dataSetFlow = repository.getAllDataSets()
 
-        val dataSetOnlyDatabaseFlow = selectedDataSetIdStateFlow.flatMapLatest { dataSetIdState ->
-            // dataSetId can be null here (e.g. during startup when we haven't yet got the
-            // preference yet, and maybe also if the user deletes all the data in the database) so
-            // we need to deal with it. I think it would be wrong to use filterNotNull(), because we
-            // do want to emit something - in particular, during startup, if datasetId is null and
-            // *stays* null (e.g. empty database and SELECTED_DATA_SET_ID_KEY has been set to null
-            // as a result), any flow that combine()s this one would never see combine() emit. This
-            // just might work out OK, but it feels dangerous. I think empty lists are perfect valid
-            // results to emit in the null case.
-            // We are combining freshly-created DAO flows, so we cannot see "stale" data here, so
-            // the dataSetId we are tagging the results with will be correct. (In practice non-empty
-            // lists of results for these queries are self-tagging, but we need to handle empty
-            // lists correctly too.)
-            val dataSetId = dataSetIdState.valueOrNull()
-            combine(
-                flowOf(dataSetId),
-                if (dataSetId != null) repository.getAllItems(dataSetId) else flowOf(
-                    emptyList()
-                ),
-                if (dataSetId != null) repository.getAllSources(dataSetId) else flowOf(
-                    emptyList()
-                ),
-                ::Triple
-            )
-        }
+        val dataSetOnlyDatabaseFlow =
+            selectedDataSetIdStateFlow.flatMapLatest { dataSetIdState ->
+                // dataSetId can be null here (e.g. during startup when we haven't yet got the
+                // preference yet, and maybe also if the user deletes all the data in the database)
+                // so
+                // we need to deal with it. I think it would be wrong to use filterNotNull(),
+                // because we
+                // do want to emit something - in particular, during startup, if datasetId is null
+                // and
+                // *stays* null (e.g. empty database and SELECTED_DATA_SET_ID_KEY has been set to
+                // null
+                // as a result), any flow that combine()s this one would never see combine() emit.
+                // This
+                // just might work out OK, but it feels dangerous. I think empty lists are perfect
+                // valid
+                // results to emit in the null case.
+                // We are combining freshly-created DAO flows, so we cannot see "stale" data here,
+                // so
+                // the dataSetId we are tagging the results with will be correct. (In practice
+                // non-empty
+                // lists of results for these queries are self-tagging, but we need to handle empty
+                // lists correctly too.)
+                val dataSetId = dataSetIdState.valueOrNull()
+                combine(
+                    flowOf(dataSetId),
+                    if (dataSetId != null) repository.getAllItems(dataSetId)
+                    else flowOf(emptyList()),
+                    if (dataSetId != null) repository.getAllSources(dataSetId)
+                    else flowOf(emptyList()),
+                    ::Triple,
+                )
+            }
 
-        val dataSetIdAndItemIdFlow = combine(
-            selectedDataSetIdStateFlow,
-            selectedItemIdStateFlow,
-            ::Pair
-        )
+        val dataSetIdAndItemIdFlow =
+            combine(selectedDataSetIdStateFlow, selectedItemIdStateFlow, ::Pair)
 
         val dataSetIdAndItemIdDatabaseFlow =
             dataSetIdAndItemIdFlow.flatMapLatest { (dataSetIdState, itemIdState) ->
                 val dataSetId = dataSetIdState.valueOrNull()
                 val itemId = itemIdState.valueOrNull()
-                val priceFlow = if (dataSetId != null && itemId != null)
-                    repository.getPricesForItem(dataSetId = dataSetId, itemId = itemId)
-                else
-                    flowOf(emptyList())
+                val priceFlow =
+                    if (dataSetId != null && itemId != null)
+                        repository.getPricesForItem(dataSetId = dataSetId, itemId = itemId)
+                    else flowOf(emptyList())
                 // We are creating a flow based on a freshly created DAO flow, so we cannot see
                 // "stale" data here and thus the IDs we are tagging the results with will be
                 // correct.
                 priceFlow.flatMapLatest { priceList ->
-                    flowOf(
-                        Pair(
-                            Pair(dataSetId, itemId),
-                            priceList
-                        )
-                    )
+                    flowOf(Pair(Pair(dataSetId, itemId), priceList))
                 }
             }
 
-        val combinedDatabaseFlow = combine(
-            dataSetFlow,
-            dataSetOnlyDatabaseFlow,
-            dataSetIdAndItemIdDatabaseFlow,
-            ::Triple)
+        val combinedDatabaseFlow =
+            combine(dataSetFlow, dataSetOnlyDatabaseFlow, dataSetIdAndItemIdDatabaseFlow, ::Triple)
 
-        val todoRenameMeFlow = combine(
-            selectedSourceIdStateFlow,
-            combinedDatabaseFlow,
-            settingsRepository.priceAgeSettingsFlow,
-            localeFlow
-        ) { _, databaseResults, priceAgeSettings, locale -> Triple(databaseResults, priceAgeSettings, locale) }
+        val todoRenameMeFlow =
+            combine(
+                selectedSourceIdStateFlow,
+                combinedDatabaseFlow,
+                settingsRepository.priceAgeSettingsFlow,
+                localeFlow,
+            ) { _, databaseResults, priceAgeSettings, locale ->
+                Triple(databaseResults, priceAgeSettings, locale)
+            }
 
         // completeUiStateFlow delivers complete, consistent results which reflect the user's
         // selection. However, it doesn't make any guarantees as to how long it takes to emit after
@@ -268,7 +257,7 @@ class HomeViewModel(
                 if (taggedItemListAndSourceList.first != dataSetId) {
                     Log.d(
                         TAG,
-                        "completeUiStateFlow discarding dataSetId ${taggedItemListAndSourceList.first}, want $dataSetId"
+                        "completeUiStateFlow discarding dataSetId ${taggedItemListAndSourceList.first}, want $dataSetId",
                     )
                     emptyFlow()
                 } else if (taggedPriceList.first != Pair(dataSetId, itemId)) {
@@ -277,9 +266,9 @@ class HomeViewModel(
                         "completeUiStateFlow discarding (dataSetId, itemId) ${taggedPriceList.first}, want ${
                             Pair(
                                 dataSetIdState,
-                                itemIdState
+                                itemIdState,
                             )
-                        }"
+                        }",
                     )
                     emptyFlow()
                 } else {
@@ -293,7 +282,7 @@ class HomeViewModel(
 
                     Log.d(
                         TAG,
-                        "completeUiStateFlow received dataSetId ${selectedDataSetIdStateFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})"
+                        "completeUiStateFlow received dataSetId ${selectedDataSetIdStateFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})",
                     )
 
                     if (dataSet != null) {
@@ -304,7 +293,8 @@ class HomeViewModel(
                     // fine doing it in this coroutine on the main thread, but just possibly we
                     // should shift (probably the whole database flow, but maybe just this work)
                     // onto a coroutine on a worker thread?
-                    val priceAnalysis = analysePrices(priceList, sourceList, priceAgeSettings, locale)
+                    val priceAnalysis =
+                        analysePrices(priceList, sourceList, priceAgeSettings, locale)
 
                     debugDelay()
                     flowOf(
@@ -317,25 +307,26 @@ class HomeViewModel(
                             sourceIdState,
                             source,
                             sourceList,
-                            priceAnalysis
+                            priceAnalysis,
                         )
                     )
                 }
             }
 
         viewModelScope.launch(Dispatchers.Default) {
-            prefsFlow.distinctUntilChanged() // emits when a user input changes
+            prefsFlow
+                .distinctUntilChanged() // emits when a user input changes
                 .flatMapLatest {
                     channelFlow {
                         var loadingJob: Job? = null
 
                         // Data stream
                         /* val dataJob = */ launch {
-                        completeUiStateFlow.collect { data ->
-                            loadingJob?.cancel()
-                            send(false to data)
+                            completeUiStateFlow.collect { data ->
+                                loadingJob?.cancel()
+                                send(false to data)
+                            }
                         }
-                    }
 
                         // Loading timer
                         loadingJob = launch {
@@ -346,9 +337,7 @@ class HomeViewModel(
                         }
                     }
                 }
-                .collectLatest { (isLoading, data) ->
-                    _uiState.value = isLoading to data
-                }
+                .collectLatest { (isLoading, data) -> _uiState.value = isLoading to data }
         }
     }
 
@@ -367,7 +356,9 @@ class HomeViewModel(
                 asyncOperationStatus.update(AsyncOperationStatus.Success(null))
             } catch (e: Exception) {
                 e("HomeViewModel", "Unexpected exception", e)
-                asyncOperationStatus.update(AsyncOperationStatus.Error("updatePrice failed: ${e.toString()}"))
+                asyncOperationStatus.update(
+                    AsyncOperationStatus.Error("updatePrice failed: ${e.toString()}")
+                )
             }
         }
     }
@@ -379,13 +370,15 @@ class HomeViewModel(
                 debugDelay()
                 repository.revertPrice(
                     priceBeforeRevert = priceBeforeRevert,
-                    priceAfterRevert = priceAfterRevert
+                    priceAfterRevert = priceAfterRevert,
                 )
                 previousPrice.value = null
                 asyncOperationStatus.update(AsyncOperationStatus.Success(null))
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "Unexpected exception", e)
-                asyncOperationStatus.update(AsyncOperationStatus.Error("undoConfirmPrice failed: ${e.toString()}"))
+                asyncOperationStatus.update(
+                    AsyncOperationStatus.Error("undoConfirmPrice failed: ${e.toString()}")
+                )
             }
         }
     }
@@ -400,13 +393,15 @@ class HomeViewModel(
                 asyncOperationStatus.update(AsyncOperationStatus.Success(null))
             } catch (e: Exception) {
                 Log.e("HomeViewModel", "Unexpected exception", e)
-                asyncOperationStatus.update(AsyncOperationStatus.Error("deletePrice failed: ${e.toString()}"))
+                asyncOperationStatus.update(
+                    AsyncOperationStatus.Error("deletePrice failed: ${e.toString()}")
+                )
             }
         }
     }
 
-    fun countPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long) = repository.countPriceHistory(dataSetId, itemId, sourceId)
+    fun countPriceHistory(dataSetId: Long, itemId: Long, sourceId: Long) =
+        repository.countPriceHistory(dataSetId, itemId, sourceId)
 
     val asyncOperationStatus = SyncedStateEvent<AsyncOperationStatus>(AsyncOperationStatus.Idle)
-
 }

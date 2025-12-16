@@ -7,12 +7,13 @@ import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
 import com.example.composetutorial.app.AppScope
 import com.google.protobuf.InvalidProtocolBufferException
-import kotlinx.coroutines.launch
 import java.io.InputStream
 import java.io.OutputStream
+import kotlinx.coroutines.launch
 
 object CurrentSelectionsSerializer : Serializer<UserPrefs.CurrentSelections> {
-    override val defaultValue: UserPrefs.CurrentSelections = UserPrefs.CurrentSelections.getDefaultInstance()
+    override val defaultValue: UserPrefs.CurrentSelections =
+        UserPrefs.CurrentSelections.getDefaultInstance()
 
     override suspend fun readFrom(input: InputStream): UserPrefs.CurrentSelections {
         try {
@@ -27,40 +28,40 @@ object CurrentSelectionsSerializer : Serializer<UserPrefs.CurrentSelections> {
     }
 }
 
-val Context.userPreferencesStore: DataStore<UserPrefs.CurrentSelections> by dataStore(
-    fileName = "user_prefs.pb",
-    serializer = CurrentSelectionsSerializer
-)
+val Context.userPreferencesStore: DataStore<UserPrefs.CurrentSelections> by
+    dataStore(fileName = "user_prefs.pb", serializer = CurrentSelectionsSerializer)
 
 suspend fun setSelectedDataSetId(context: Context, dataSetId: Long) {
     updateCurrentSelections(context) { builder -> builder.setSelectedDataSetId(dataSetId) }
 }
 
 suspend fun setSelectedItemId(context: Context, dataSetId: Long, itemId: Long) {
-    updateCurrentSelections(context) { builder -> builder.putSelectedItemIdForDataSetId(dataSetId, itemId) }
+    updateCurrentSelections(context) { builder ->
+        builder.putSelectedItemIdForDataSetId(dataSetId, itemId)
+    }
 }
 
 suspend fun setSelectedSourceId(context: Context, dataSetId: Long, sourceId: Long) {
-    updateCurrentSelections(context) { builder -> builder.putSelectedSourceIdForDataSetId(dataSetId, sourceId) }
+    updateCurrentSelections(context) { builder ->
+        builder.putSelectedSourceIdForDataSetId(dataSetId, sourceId)
+    }
 }
 
-suspend fun updateCurrentSelections(context: Context, update: (UserPrefs.CurrentSelections.Builder) -> Unit) {
-    context.userPreferencesStore.updateData { prefs ->
-        prefs.toBuilder().apply(update).build() }
+suspend fun updateCurrentSelections(
+    context: Context,
+    update: (UserPrefs.CurrentSelections.Builder) -> Unit,
+) {
+    context.userPreferencesStore.updateData { prefs -> prefs.toBuilder().apply(update).build() }
 }
 
 fun setSelectedDataSetIdAsync(context: Context, dataSetId: Long) {
-    AppScope.io.launch {
-        setSelectedDataSetId(context, dataSetId)
-    }
+    AppScope.io.launch { setSelectedDataSetId(context, dataSetId) }
 }
+
 fun setSelectedItemIdAsync(context: Context, dataSetId: Long, itemId: Long) {
-    AppScope.io.launch {
-        setSelectedItemId(context, dataSetId, itemId)
-    }
+    AppScope.io.launch { setSelectedItemId(context, dataSetId, itemId) }
 }
+
 fun setSelectedSourceIdAsync(context: Context, dataSetId: Long, sourceId: Long) {
-    AppScope.io.launch {
-        setSelectedSourceId(context, dataSetId, sourceId)
-    }
+    AppScope.io.launch { setSelectedSourceId(context, dataSetId, sourceId) }
 }

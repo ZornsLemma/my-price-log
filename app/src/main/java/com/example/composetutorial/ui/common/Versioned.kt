@@ -3,10 +3,7 @@ package com.example.composetutorial.ui.common
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-data class Versioned<T>(
-    val version: Long,
-    val value: T
-) {
+data class Versioned<T>(val version: Long, val value: T) {
     companion object {
         fun <T> initial(initialValue: T): Versioned<T> =
             Versioned(version = -1L, value = initialValue)

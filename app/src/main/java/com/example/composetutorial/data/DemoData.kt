@@ -2,8 +2,8 @@ package com.example.composetutorial.data
 
 import android.content.Context
 import com.example.composetutorial.R
-import com.example.composetutorial.domain.Quantity
 import com.example.composetutorial.domain.MeasurementUnit
+import com.example.composetutorial.domain.Quantity
 import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.ui.common.setSelectedDataSetId
 import com.example.composetutorial.ui.common.setSelectedItemId
@@ -27,81 +27,89 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     // have unrealistic but at least workable prices for currencies like JPY. The prices aren't
     // meant to be realistic anyway.
     val currencyMultiplier = 10.0.pow(2 - currency.defaultFractionDigits)
-    val dataSetId = repository.updateOrInsertDataSet(
-        DataSet(
-            name = context.getString(R.string.demo_groceries_data_set_name),
-            currencyCode = currency.currencyCode,
-            allowMetric = true,
-            allowImperial = true,
-            allowUSCustomary = false,
-            notes = context.getString(R.string.demo_groceries_data_set_notes),
+    val dataSetId =
+        repository.updateOrInsertDataSet(
+            DataSet(
+                name = context.getString(R.string.demo_groceries_data_set_name),
+                currencyCode = currency.currencyCode,
+                allowMetric = true,
+                allowImperial = true,
+                allowUSCustomary = false,
+                notes = context.getString(R.string.demo_groceries_data_set_notes),
+            )
         )
-    )
-    val itemIdGroundCoffee = repository.updateOrInsertItem(
-        Item(
-            dataSetId = dataSetId,
-            name = context.getString(R.string.demo_groceries_item_name_coffee_ground),
-            defaultUnit = MeasurementUnit.G,
-            allowMultipack = false,
-            notes = ""
+    val itemIdGroundCoffee =
+        repository.updateOrInsertItem(
+            Item(
+                dataSetId = dataSetId,
+                name = context.getString(R.string.demo_groceries_item_name_coffee_ground),
+                defaultUnit = MeasurementUnit.G,
+                allowMultipack = false,
+                notes = "",
+            )
         )
-    )
-    val itemIdWholeMilk = repository.updateOrInsertItem(
-        Item(
-            dataSetId = dataSetId,
-            name = context.getString(R.string.demo_groceries_item_name_milk_whole),
-            defaultUnit = MeasurementUnit.L,
-            allowMultipack = false,
-            notes = "",
+    val itemIdWholeMilk =
+        repository.updateOrInsertItem(
+            Item(
+                dataSetId = dataSetId,
+                name = context.getString(R.string.demo_groceries_item_name_milk_whole),
+                defaultUnit = MeasurementUnit.L,
+                allowMultipack = false,
+                notes = "",
+            )
         )
-    )
-    val itemIdTeabags = repository.updateOrInsertItem(
-        Item(
-            dataSetId = dataSetId,
-            name = context.getString(R.string.demo_groceries_item_name_teabags),
-            defaultUnit = MeasurementUnit.EACH,
-            allowMultipack = false,
-            notes = "",
+    val itemIdTeabags =
+        repository.updateOrInsertItem(
+            Item(
+                dataSetId = dataSetId,
+                name = context.getString(R.string.demo_groceries_item_name_teabags),
+                defaultUnit = MeasurementUnit.EACH,
+                allowMultipack = false,
+                notes = "",
+            )
         )
-    )
-    val itemIdCola = repository.updateOrInsertItem(
-        Item(
-            dataSetId = dataSetId,
-            name = context.getString(R.string.demo_groceries_item_name_cola),
-            defaultUnit = MeasurementUnit.ML,
-            allowMultipack = true,
-            notes = ""
+    val itemIdCola =
+        repository.updateOrInsertItem(
+            Item(
+                dataSetId = dataSetId,
+                name = context.getString(R.string.demo_groceries_item_name_cola),
+                defaultUnit = MeasurementUnit.ML,
+                allowMultipack = true,
+                notes = "",
+            )
         )
-    )
     // We have three sources with sample prices, because you need three non-ancient prices in order
     // to get good/OK/bad judgments and we want to show those off to new users.
-    val sourceIdValueMart = repository.updateOrInsertSource(
-        Source(
-            dataSetId = dataSetId,
-            name = context.getString(R.string.demo_groceries_source_name_valuemart),
-            loyaltyType = LoyaltyType.NONE,
-            loyaltyMultiplier = 1.0,
-            notes = ""
+    val sourceIdValueMart =
+        repository.updateOrInsertSource(
+            Source(
+                dataSetId = dataSetId,
+                name = context.getString(R.string.demo_groceries_source_name_valuemart),
+                loyaltyType = LoyaltyType.NONE,
+                loyaltyMultiplier = 1.0,
+                notes = "",
+            )
         )
-    )
-    val sourceIdSuperiorStore = repository.updateOrInsertSource(
-        Source(
-            dataSetId = dataSetId,
-            name = context.getString(R.string.demo_groceries_source_name_superiorstore),
-            loyaltyType = LoyaltyType.NONE,
-            loyaltyMultiplier = 1.0,
-            notes = ""
+    val sourceIdSuperiorStore =
+        repository.updateOrInsertSource(
+            Source(
+                dataSetId = dataSetId,
+                name = context.getString(R.string.demo_groceries_source_name_superiorstore),
+                loyaltyType = LoyaltyType.NONE,
+                loyaltyMultiplier = 1.0,
+                notes = "",
+            )
         )
-    )
-    val sourceIdGrandways = repository.updateOrInsertSource(
-        Source(
-            dataSetId = dataSetId,
-            name = context.getString(R.string.demo_groceries_source_name_grandways),
-            loyaltyType = LoyaltyType.NONE,
-            loyaltyMultiplier = 1.0,
-            notes = ""
+    val sourceIdGrandways =
+        repository.updateOrInsertSource(
+            Source(
+                dataSetId = dataSetId,
+                name = context.getString(R.string.demo_groceries_source_name_grandways),
+                loyaltyType = LoyaltyType.NONE,
+                loyaltyMultiplier = 1.0,
+                notes = "",
+            )
         )
-    )
     // Newco deliberately has no prices to start with.
     repository.updateOrInsertSource(
         Source(
@@ -109,7 +117,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             name = context.getString(R.string.demo_groceries_source_name_newco),
             loyaltyType = LoyaltyType.NONE,
             loyaltyMultiplier = 1.0,
-            notes = context.getString(R.string.demo_groceries_source_notes_newco)
+            notes = context.getString(R.string.demo_groceries_source_notes_newco),
         )
     )
     val now = Instant.now()
@@ -124,7 +132,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             confirmedAt = now.minus(2, ChronoUnit.MINUTES),
             notes = context.getString(R.string.demo_groceries_notes_large_pack_own_brand),
             itemDefaultUnit = MeasurementUnit.G,
-            modifiedAt = now.minus(2, ChronoUnit.MINUTES)
+            modifiedAt = now.minus(2, ChronoUnit.MINUTES),
         )
     )
     repository.updateOrInsertPrice(
@@ -162,10 +170,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdValueMart,
             price = 1.99 * currencyMultiplier,
             count = 1,
-            quantity = Quantity(
-                4.0,
-                MeasurementUnit.IMPERIAL_PINT
-            ),
+            quantity = Quantity(4.0, MeasurementUnit.IMPERIAL_PINT),
             confirmedAt = now,
             notes = "",
             itemDefaultUnit = MeasurementUnit.L,
@@ -193,10 +198,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
             sourceId = sourceIdGrandways,
             price = 3.28 * currencyMultiplier,
             count = 1,
-            quantity = Quantity(
-                6.0,
-                MeasurementUnit.IMPERIAL_PINT
-            ),
+            quantity = Quantity(6.0, MeasurementUnit.IMPERIAL_PINT),
             confirmedAt = now.minus(14, ChronoUnit.DAYS),
             notes = "",
             itemDefaultUnit = MeasurementUnit.L,

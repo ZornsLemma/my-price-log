@@ -8,7 +8,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-private fun createNameValidationRules(existingNameList: List<String>): List<ValidationRule<String>> {
+private fun createNameValidationRules(
+    existingNameList: List<String>
+): List<ValidationRule<String>> {
     // We could use Collator.PRIMARY to do this comparison (probably combined with squashing spaces
     // and trim()-ing) but it's probably better to use normalizedForSearch() here.
     // ENHANCE: We use one validation rule per possibly-clashing name here partly so we have the
@@ -16,17 +18,15 @@ private fun createNameValidationRules(existingNameList: List<String>): List<Vali
     // useful. (Remember the name clash is post-normalisation, so the clash may not be completely
     // obvious.)
     return listOf<ValidationRule<String>>(
-        ValidationRule(
-            { it.isNotEmpty() },
-            UiText.Res(R.string.supporting_text_required)
-        )
-    ) + existingNameList.map { existingName ->
-        val normalizedExistingName = existingName.normalizedForSearch()
-        ValidationRule(
-            { candidateName -> candidateName.normalizedForSearch() != normalizedExistingName },
-            UiText.Res(R.string.supporting_text_name_must_be_unique)
-        )
-    }
+        ValidationRule({ it.isNotEmpty() }, UiText.Res(R.string.supporting_text_required))
+    ) +
+        existingNameList.map { existingName ->
+            val normalizedExistingName = existingName.normalizedForSearch()
+            ValidationRule(
+                { candidateName -> candidateName.normalizedForSearch() != normalizedExistingName },
+                UiText.Res(R.string.supporting_text_name_must_be_unique),
+            )
+        }
 }
 
 // Create a name validation rules flow which will be null initially while we wait for the database
@@ -41,11 +41,13 @@ private fun createNameValidationRules(existingNameList: List<String>): List<Vali
 fun nameValidationRulesFlow(
     otherNameListFlow: Flow<List<String>>,
     viewModelScope: CoroutineScope,
-) :  StateFlow<Versioned<out List<ValidationRule<String>>?>> {
-    return otherNameListFlow.map { createNameValidationRules(it) }
-        .withVersion().stateIn(
+): StateFlow<Versioned<out List<ValidationRule<String>>?>> {
+    return otherNameListFlow
+        .map { createNameValidationRules(it) }
+        .withVersion()
+        .stateIn(
             viewModelScope,
             SharingStarted.Eagerly,
-            Versioned.initial(null as List<ValidationRule<String>>?)
+            Versioned.initial(null as List<ValidationRule<String>>?),
         )
 }

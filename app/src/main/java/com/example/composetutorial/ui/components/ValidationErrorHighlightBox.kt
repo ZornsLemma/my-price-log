@@ -25,25 +25,28 @@ fun <T, U> ValidationErrorHighlightBox(
     validationFlowFieldId: U,
     errorHighlightOffset: Dp = defaultErrorHighlightOffset,
     modifier: Modifier = Modifier,
-    content: @Composable (
-        validationResult: String?,
-        interactionSource: MutableInteractionSource,
-        validationInputHandle: ValidationInputHandle,
-    ) -> Unit
+    content:
+        @Composable
+        (
+            validationResult: String?,
+            interactionSource: MutableInteractionSource,
+            validationInputHandle: ValidationInputHandle,
+        ) -> Unit,
 ) {
     val validationInputHandle = rememberValidationInputHandle()
 
-    val validatedFieldState = ValidateFieldState(
-        value = value,
-        validationRules = validationRules,
-        validationRulesKey = validationRulesKey,
-        allowEmpty = allowEmpty
-    )
+    val validatedFieldState =
+        ValidateFieldState(
+            value = value,
+            validationRules = validationRules,
+            validationRulesKey = validationRulesKey,
+            allowEmpty = allowEmpty,
+        )
 
     ErrorHighlightBox(
         offset = errorHighlightOffset,
         validationInputHandle = validationInputHandle,
-        modifier = modifier
+        modifier = modifier,
     ) {
         Column(modifier = Modifier.animateContentSize()) {
             content(

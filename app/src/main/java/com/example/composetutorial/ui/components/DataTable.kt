@@ -22,7 +22,11 @@ import androidx.compose.ui.unit.dp
 import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.ui.oneLineListItemHeight
 
-enum class CellAlignment { Start, Center, End }
+enum class CellAlignment {
+    Start,
+    Center,
+    End,
+}
 
 // ENHANCE: I suspect this is going to need some tweaking to give even a half-decent experience with
 // a screen reader.
@@ -37,72 +41,85 @@ fun <T> DataTable(
     columnAlignments: List<CellAlignment> = List(header.size) { CellAlignment.Start },
     onClick: ((T) -> Unit)? = null,
 ) {
-    myRequire(header.size == columns.size) { "Expected same header and columns size but have ${header.size} and ${columns.size} respectively" }
-    myRequire(header.size == columnWeights.size) { "Expected same header and columnWeights size but have ${header.size} and ${columnWeights.size} respectively" }
-    myRequire(header.size == columnAlignments.size) { "Expected same header and columnAlignments size but have ${header.size} and ${columnAlignments.size} respectively" }
-
-    fun alignmentModifier(cellAlignment: CellAlignment): Modifier = when (cellAlignment) {
-        CellAlignment.Start -> Modifier.wrapContentWidth(Alignment.Start)
-        CellAlignment.Center -> Modifier.wrapContentWidth(Alignment.CenterHorizontally)
-        CellAlignment.End -> Modifier.wrapContentWidth(Alignment.End)
+    myRequire(header.size == columns.size) {
+        "Expected same header and columns size but have ${header.size} and ${columns.size} respectively"
     }
+    myRequire(header.size == columnWeights.size) {
+        "Expected same header and columnWeights size but have ${header.size} and ${columnWeights.size} respectively"
+    }
+    myRequire(header.size == columnAlignments.size) {
+        "Expected same header and columnAlignments size but have ${header.size} and ${columnAlignments.size} respectively"
+    }
+
+    fun alignmentModifier(cellAlignment: CellAlignment): Modifier =
+        when (cellAlignment) {
+            CellAlignment.Start -> Modifier.wrapContentWidth(Alignment.Start)
+            CellAlignment.Center -> Modifier.wrapContentWidth(Alignment.CenterHorizontally)
+            CellAlignment.End -> Modifier.wrapContentWidth(Alignment.End)
+        }
 
     Column {
         // ENHANCE: If we allow user-selectable units in this header via a dropdown, its height may
         // need increasing to oneLineListItemHeight.
         Row(
-            modifier = Modifier.background(color = MaterialTheme.colorScheme.surfaceContainerHighest),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier.background(color = MaterialTheme.colorScheme.surfaceContainerHighest),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             header.forEachIndexed { colIndex, title ->
                 Box(
-                    Modifier
-                        .weight(columnWeights[colIndex])
+                    Modifier.weight(columnWeights[colIndex])
                         .padding(8.dp)
                         .then(alignmentModifier(columnAlignments[colIndex]))
                 ) {
-                    Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.then(headerTextModifiers?.get(colIndex) ?: Modifier))
+                    Text(
+                        title,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.then(headerTextModifiers?.get(colIndex) ?: Modifier),
+                    )
                 }
             }
         }
-        HorizontalDivider(
-            thickness = 1.dp, color = MaterialTheme.colorScheme.outline /* Variant */
-        )
+        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outline /* Variant */)
 
         items.forEachIndexed { rowIndex, item ->
             val isHighlighted = rowIndex == highlightRow
-            val textStyle = if (isHighlighted) {
-                MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
-            } else {
-                MaterialTheme.typography.bodyLarge
-            }
-            val textColor = if (isHighlighted) {
-                MaterialTheme.colorScheme.onSecondaryContainer
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            }
-            val rowBackground = if (isHighlighted) {
-                MaterialTheme.colorScheme.secondaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerHigh
-            }
-
+            val textStyle =
+                if (isHighlighted) {
+                    MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+                } else {
+                    MaterialTheme.typography.bodyLarge
+                }
+            val textColor =
+                if (isHighlighted) {
+                    MaterialTheme.colorScheme.onSecondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                }
+            val rowBackground =
+                if (isHighlighted) {
+                    MaterialTheme.colorScheme.secondaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceContainerHigh
+                }
 
             CompositionLocalProvider(
                 LocalTextStyle provides textStyle,
-                LocalContentColor provides textColor
+                LocalContentColor provides textColor,
             ) {
                 Row(
-                    modifier = Modifier
-                        .background(rowBackground)
-                        .height(oneLineListItemHeight)
-                        .then(if (onClick != null) Modifier.clickable { onClick(item) } else Modifier)
-                    , verticalAlignment = Alignment.CenterVertically
+                    modifier =
+                        Modifier.background(rowBackground)
+                            .height(oneLineListItemHeight)
+                            .then(
+                                if (onClick != null) Modifier.clickable { onClick(item) }
+                                else Modifier
+                            ),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     columns.forEachIndexed { colIndex, cell ->
                         Box(
-                            Modifier
-                                .weight(columnWeights[colIndex])
+                            Modifier.weight(columnWeights[colIndex])
                                 .padding(8.dp)
                                 .then(alignmentModifier(columnAlignments[colIndex]))
                         ) {

@@ -2,15 +2,9 @@ package com.example.composetutorial.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,8 +14,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
-import com.example.composetutorial.ui.menuLeftPadding
-import com.example.composetutorial.ui.menuRightPadding
 
 // ENHANCE: Note that selectedId is not used. I would like to use this to focus the previously
 // selected item when expanding the dropdown using a D-pad, instead of defaulting to the first item.
@@ -46,16 +38,21 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
 
     val focusManager = LocalFocusManager.current
     Box(
-        modifier = modifier.then(
-            if (enabled) Modifier.clickable {
-                // We remove focus from anything else that has it in order to "fake" this component
-                // getting the focus. Without this, if a TextField has focus it retains it (including
-                // its focused colors) when the dropdown appears, which feels wrong.
-                focusManager.clearFocus(force = true)
-                expanded = true
-                @Suppress("KotlinConstantConditions") onExpand(expanded)
-            }
-            else Modifier)
+        modifier =
+            modifier.then(
+                if (enabled)
+                    Modifier.clickable {
+                        // We remove focus from anything else that has it in order to "fake" this
+                        // component
+                        // getting the focus. Without this, if a TextField has focus it retains it
+                        // (including
+                        // its focused colors) when the dropdown appears, which feels wrong.
+                        focusManager.clearFocus(force = true)
+                        expanded = true
+                        @Suppress("KotlinConstantConditions") onExpand(expanded)
+                    }
+                else Modifier
+            )
     ) {
         content(expanded)
 
@@ -66,29 +63,26 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
             onDismissRequest = {
                 expanded = false
                 @Suppress("KotlinConstantConditions") onExpand(expanded)
-            }) {
+            },
+        ) {
             items.forEach { item ->
                 // We could make the first argument of getDividerBetween take null and call it every
                 // time, but I'm fairly sure it makes no sense to have a divider at the very top
                 // of the menu anyway.
-                if (previousItem != null && getDividerBetween?.invoke(
-                        previousItem!!,
-                        item
-                    ) == true
+                if (
+                    previousItem != null && getDividerBetween?.invoke(previousItem!!, item) == true
                 ) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 }
                 previousItem = item
 
                 MyDropdownMenuItem(
-                    text = {
-                        Text(getItemText(item))
-                    },
+                    text = { Text(getItemText(item)) },
                     onClick = {
                         onItemSelected(getId(item))
                         expanded = false
                         @Suppress("KotlinConstantConditions") onExpand(expanded)
-                    }
+                    },
                 )
             }
 
@@ -109,4 +103,3 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
         }
     }
 }
-

@@ -2,7 +2,6 @@
 
 package com.example.composetutorial.ui.screens.about
 
-import com.example.composetutorial.BuildConfig
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -42,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.composetutorial.BuildConfig
 import com.example.composetutorial.R
 import com.example.composetutorial.ui.components.BulletPoint
 import com.example.composetutorial.ui.components.ClickableLink
@@ -53,41 +53,48 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.title_about_app_name)) }, navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back)
-                    )
-                }
-            })
+            TopAppBar(
+                title = { Text(stringResource(R.string.title_about_app_name)) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+            )
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)
-                .padding(horizontal = fullScreenDialogHorizontalBorder)
-                .verticalScroll(rememberScrollState()),
+            modifier =
+                Modifier.fillMaxSize()
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding)
+                    .padding(horizontal = fullScreenDialogHorizontalBorder)
+                    .verticalScroll(rememberScrollState())
         ) {
             // We manually implement the vertical border so it is part of the scrollable region, not
             // something which reduces the size of the scrollable region. This feels a bit better to
             // me and (albeit not for the same reason) matches what we do in GeneralEditScreen().
             Spacer(modifier = Modifier.height(fullScreenDialogVerticalBorder))
-            Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
                 // App icon
                 LauncherIcon(size = 96.dp)
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Version
-                val version = if (BuildConfig.DEBUG) { getAppVersion() + " " + stringResource(R.string.debug_version_suffix)
-                } else { getAppVersion() }
-                Text(
-                    text = version,
-                    style = MaterialTheme.typography.titleMedium
-                )
+                val version =
+                    if (BuildConfig.DEBUG) {
+                        getAppVersion() + " " + stringResource(R.string.debug_version_suffix)
+                    } else {
+                        getAppVersion()
+                    }
+                Text(text = version, style = MaterialTheme.typography.titleMedium)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -95,22 +102,36 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
             // Links card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         stringResource(R.string.title_resources),
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+                        style =
+                            MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.SemiBold
+                            ),
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         stringResource(R.string.message_links_below_will_open_in_your_browser),
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = 8.dp),
                     )
-                    ClickableLink(stringResource(R.string.title_user_manual), "https://zornslemma.github.io/my-price-log-docs/", showRawUrl = true)
+                    ClickableLink(
+                        stringResource(R.string.title_user_manual),
+                        "https://zornslemma.github.io/my-price-log-docs/",
+                        showRawUrl = true,
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
-                    ClickableLink(stringResource(R.string.title_source_code_on_github), "https://github.com/ZornsLemma/my-price-log", showRawUrl = true)
+                    ClickableLink(
+                        stringResource(R.string.title_source_code_on_github),
+                        "https://github.com/ZornsLemma/my-price-log",
+                        showRawUrl = true,
+                    )
                 }
             }
 
@@ -119,7 +140,10 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
             // Attributions card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    ),
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     // This is where we give credit for third-party components we are using in a
@@ -127,10 +151,15 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
                     // doesn't go here, it goes on LegalScreen().
                     Text(
                         stringResource(R.string.title_attributions),
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+                        style =
+                            MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.SemiBold
+                            ),
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    BulletPoint(stringResource(R.string.message_material_design_icons_google_apache_2_0))
+                    BulletPoint(
+                        stringResource(R.string.message_material_design_icons_google_apache_2_0)
+                    )
                     /* For future reference:
                     BulletPoint("ExampleLibrary (MIT) — placeholder for future third-party library")
                     */
@@ -140,14 +169,13 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Button to legal screen
-            FilledTonalButton(onClick = onViewLegalClick,    shape = MaterialTheme.shapes.small) {
+            FilledTonalButton(onClick = onViewLegalClick, shape = MaterialTheme.shapes.small) {
                 Text(stringResource(R.string.button_view_full_legal_information))
             }
             Spacer(modifier = Modifier.height(fullScreenDialogVerticalBorder))
         }
     }
 }
-
 
 private fun Drawable.toBitmap(width: Int, height: Int): Bitmap {
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -166,7 +194,7 @@ private fun LauncherIcon(size: Dp = 120.dp) {
     Image(
         bitmap = bitmap.asImageBitmap(),
         contentDescription = stringResource(R.string.content_description_app_icon),
-        modifier = Modifier.size(size)
+        modifier = Modifier.size(size),
     )
 }
 
@@ -181,12 +209,12 @@ private fun getAppVersion(): String {
             // minSdk is currently 30 and we don't even use versionCode, but let's keep this logic
             // around for now. It's borderline possible we'll drop minSdk to 24 at some point.
             @Suppress("UnusedVariable")
-            val versionCode = if (android.os.Build.VERSION.SDK_INT >= 28) {
-                pInfo.longVersionCode
-            } else {
-                @Suppress("DEPRECATION")
-                pInfo.versionCode.toLong()
-            }
+            val versionCode =
+                if (android.os.Build.VERSION.SDK_INT >= 28) {
+                    pInfo.longVersionCode
+                } else {
+                    @Suppress("DEPRECATION") pInfo.versionCode.toLong()
+                }
             context.getString(R.string.label_version, versionName) // could add " ($versionCode)"?
         } catch (e: PackageManager.NameNotFoundException) {
             "Version unknown"

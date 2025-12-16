@@ -16,7 +16,11 @@ const val defaultStalePriceThresholdDays = 30
 const val defaultAncientPriceThresholdDays = 180
 const val defaultAnnualInflationPercent = 5
 
-data class PriceAgeSettings(val stalePriceThresholdDays: Int, val ancientPriceThresholdDays: Int, val annualInflationPercent: Int)
+data class PriceAgeSettings(
+    val stalePriceThresholdDays: Int,
+    val ancientPriceThresholdDays: Int,
+    val annualInflationPercent: Int,
+)
 
 class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     private object Keys {
@@ -25,16 +29,33 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val ANNUAL_INFLATION_PERCENT_KEY = intPreferencesKey("annual_inflation_percent")
     }
 
-    val stalePriceThresholdDaysFlow: Flow<Int> = dataStore.data
-        .map { prefs -> prefs[Keys.STALE_PRICE_THRESHOLD_DAYS_KEY] ?: defaultStalePriceThresholdDays }
+    val stalePriceThresholdDaysFlow: Flow<Int> =
+        dataStore.data.map { prefs ->
+            prefs[Keys.STALE_PRICE_THRESHOLD_DAYS_KEY] ?: defaultStalePriceThresholdDays
+        }
 
-    val ancientPriceThresholdDaysFlow: Flow<Int> = dataStore.data.map { prefs -> prefs[Keys.ANCIENT_PRICE_THRESHOLD_DAYS_KEY] ?: defaultAncientPriceThresholdDays }
+    val ancientPriceThresholdDaysFlow: Flow<Int> =
+        dataStore.data.map { prefs ->
+            prefs[Keys.ANCIENT_PRICE_THRESHOLD_DAYS_KEY] ?: defaultAncientPriceThresholdDays
+        }
 
-    val annualInflationPercentFlow: Flow<Int> = dataStore.data.map { prefs -> prefs[Keys.ANNUAL_INFLATION_PERCENT_KEY] ?: defaultAnnualInflationPercent }
+    val annualInflationPercentFlow: Flow<Int> =
+        dataStore.data.map { prefs ->
+            prefs[Keys.ANNUAL_INFLATION_PERCENT_KEY] ?: defaultAnnualInflationPercent
+        }
 
-    val priceAgeSettingsFlow: Flow<PriceAgeSettings> = combine(stalePriceThresholdDaysFlow, ancientPriceThresholdDaysFlow, annualInflationPercentFlow) { stalePriceThresholdDays, ancientPriceThresholdDays, annualInflationPercent ->
-        PriceAgeSettings(stalePriceThresholdDays, ancientPriceThresholdDays, annualInflationPercent)
-    }
+    val priceAgeSettingsFlow: Flow<PriceAgeSettings> =
+        combine(
+            stalePriceThresholdDaysFlow,
+            ancientPriceThresholdDaysFlow,
+            annualInflationPercentFlow,
+        ) { stalePriceThresholdDays, ancientPriceThresholdDays, annualInflationPercent ->
+            PriceAgeSettings(
+                stalePriceThresholdDays,
+                ancientPriceThresholdDays,
+                annualInflationPercent,
+            )
+        }
 
     fun setStalePriceThresholdAsync(stalePriceThreshold: Int) {
         setValueAsync(Keys.STALE_PRICE_THRESHOLD_DAYS_KEY, stalePriceThreshold)
@@ -49,9 +70,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     }
 
     private fun <T> setValueAsync(key: Preferences.Key<T>, value: T) {
-        AppScope.io.launch {
-            dataStore.edit { it[key] = value }
-        }
+        AppScope.io.launch { dataStore.edit { it[key] = value } }
     }
 }
 

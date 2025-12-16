@@ -2,12 +2,7 @@
 
 package com.example.composetutorial.ui.screens.settings
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,8 +18,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -49,15 +42,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import com.example.composetutorial.R
-import com.example.composetutorial.ui.common.ValidationRule
-import com.example.composetutorial.ui.components.WarningIcon
 import com.example.composetutorial.domain.defaultAncientPriceThresholdDays
 import com.example.composetutorial.domain.defaultAnnualInflationPercent
 import com.example.composetutorial.domain.defaultStalePriceThresholdDays
-import com.example.composetutorial.ui.common.failedValidationRuleOrNull
 import com.example.composetutorial.ui.common.UiText
+import com.example.composetutorial.ui.common.ValidationRule
 import com.example.composetutorial.ui.components.NumericTextField
 import com.example.composetutorial.ui.components.ValidateFieldState
+import com.example.composetutorial.ui.components.WarningIcon
 import com.example.composetutorial.ui.components.textOrNull
 import com.example.composetutorial.ui.screenVerticalBorder
 import kotlinx.coroutines.delay
@@ -68,11 +60,20 @@ fun SettingsScreen(
     navController: NavHostController,
     onBackupClick: () -> Unit,
     onRestoreClick: () -> Unit,
-    onAboutClick: () -> Unit
+    onAboutClick: () -> Unit,
 ) {
-    val stalePriceThresholdDays by viewModel.settingsRepository.stalePriceThresholdDaysFlow.collectAsStateWithLifecycle(initialValue = defaultStalePriceThresholdDays)
-    val ancientPriceThresholdDays by viewModel.settingsRepository.ancientPriceThresholdDaysFlow.collectAsStateWithLifecycle(initialValue =defaultAncientPriceThresholdDays)
-    val annualInflationPercent by viewModel.settingsRepository.annualInflationPercentFlow.collectAsStateWithLifecycle(initialValue = defaultAnnualInflationPercent)
+    val stalePriceThresholdDays by
+        viewModel.settingsRepository.stalePriceThresholdDaysFlow.collectAsStateWithLifecycle(
+            initialValue = defaultStalePriceThresholdDays
+        )
+    val ancientPriceThresholdDays by
+        viewModel.settingsRepository.ancientPriceThresholdDaysFlow.collectAsStateWithLifecycle(
+            initialValue = defaultAncientPriceThresholdDays
+        )
+    val annualInflationPercent by
+        viewModel.settingsRepository.annualInflationPercentFlow.collectAsStateWithLifecycle(
+            initialValue = defaultAnnualInflationPercent
+        )
     var showStalePriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var showAncientPriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var showAnnualInflationPercentDialog by rememberSaveable { mutableStateOf(false) }
@@ -81,25 +82,28 @@ fun SettingsScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.title_settings)) }, navigationIcon = {
-                IconButton(onClick = { navController.navigateUp() }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                        contentDescription = stringResource(R.string.content_description_back)
-                    )
-                }
-            })
+            TopAppBar(
+                title = { Text(stringResource(R.string.title_settings)) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
+                    }
+                },
+            )
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .consumeWindowInsets(innerPadding)
-                // Padding here follows the same approach as GeneralSelectorScreen() - see the
-                // comment there.
-                .padding(vertical = screenVerticalBorder)
-                .verticalScroll(rememberScrollState())
+            modifier =
+                Modifier.fillMaxSize()
+                    .padding(innerPadding)
+                    .consumeWindowInsets(innerPadding)
+                    // Padding here follows the same approach as GeneralSelectorScreen() - see the
+                    // comment there.
+                    .padding(vertical = screenVerticalBorder)
+                    .verticalScroll(rememberScrollState())
         ) {
             // ENHANCE: Since stale price threshold and ancient price threshold have interrelated
             // validation, there just might be an argument for allowing them to be edited
@@ -110,55 +114,54 @@ fun SettingsScreen(
 
             SettingsTile(
                 title = stringResource(R.string.title_stale_price_threshold),
-                subtitle = pluralStringResource(
-                    R.plurals.supporting_text_prices_considered_stale_after_x_days,
-                    count = stalePriceThresholdDays,stalePriceThresholdDays
-                ),
-                onClick = {
-                    showStalePriceThresholdDialog = true
-                }
+                subtitle =
+                    pluralStringResource(
+                        R.plurals.supporting_text_prices_considered_stale_after_x_days,
+                        count = stalePriceThresholdDays,
+                        stalePriceThresholdDays,
+                    ),
+                onClick = { showStalePriceThresholdDialog = true },
             )
 
             SettingsTile(
                 title = stringResource(R.string.title_ancient_price_threshold),
-                subtitle = pluralStringResource(
-                    R.plurals.supporting_text_prices_considered_ancient_after_x_days,
-                    count = ancientPriceThresholdDays, ancientPriceThresholdDays
-                ),
-                onClick = {
-                    showAncientPriceThresholdDialog = true
-                }
+                subtitle =
+                    pluralStringResource(
+                        R.plurals.supporting_text_prices_considered_ancient_after_x_days,
+                        count = ancientPriceThresholdDays,
+                        ancientPriceThresholdDays,
+                    ),
+                onClick = { showAncientPriceThresholdDialog = true },
             )
 
             SettingsTile(
                 title = stringResource(R.string.title_annual_inflation),
                 // Ancient prices increase in the same way too, but it's probably best to keep the
                 // subtitle simple here rather than being over-precise.
-                subtitle = stringResource(
-                    R.string.supporting_text_stale_prices_increase_by_percent_per_year,
-                    annualInflationPercent
-                ),
-                onClick = {
-                    showAnnualInflationPercentDialog = true
-                }
+                subtitle =
+                    stringResource(
+                        R.string.supporting_text_stale_prices_increase_by_percent_per_year,
+                        annualInflationPercent,
+                    ),
+                onClick = { showAnnualInflationPercentDialog = true },
             )
 
             SettingsTile(
                 title = stringResource(R.string.title_backup),
                 subtitle = stringResource(R.string.supporting_text_back_up_your_data_to_a_file),
-                onClick = onBackupClick
+                onClick = onBackupClick,
             )
 
             SettingsTile(
                 title = stringResource(R.string.title_restore),
                 subtitle = stringResource(R.string.supporting_text_replace_all_data_with_a_backup),
-                onClick = { showRestoreConfirmDialog = true }
+                onClick = { showRestoreConfirmDialog = true },
             )
 
             SettingsTile(
                 title = stringResource(R.string.title_about_app_name),
                 subtitle = "", // empty subtitle gives consistent layout with other tiles
-                onClick = onAboutClick
+                onClick = onAboutClick,
             )
         }
 
@@ -172,33 +175,38 @@ fun SettingsScreen(
                 // default to pluralising-as-if it is 99 or something otherwise?)?
                 suffix = { Text(stringResource(R.string.suffix_days)) },
                 initialValue = stalePriceThresholdDays.toString(),
-                validationRules = listOfNotNull(
-                    ValidationRule({ it.trim().isNotEmpty() }, UiText.Res(R.string.supporting_text_required)),
-                    ValidationRule(
-                        {
-                            val days = it.toIntOrNull()
-                            days != null && days >= 1
-                        },
-                        UiText.Res(R.string.supporting_text_must_be_positive)
+                validationRules =
+                    listOfNotNull(
+                        ValidationRule(
+                            { it.trim().isNotEmpty() },
+                            UiText.Res(R.string.supporting_text_required),
+                        ),
+                        ValidationRule(
+                            {
+                                val days = it.toIntOrNull()
+                                days != null && days >= 1
+                            },
+                            UiText.Res(R.string.supporting_text_must_be_positive),
+                        ),
+                        ValidationRule(
+                            {
+                                val days = it.toIntOrNull()
+                                days != null && days < ancientPriceThresholdDays
+                            },
+                            UiText.Res(
+                                R.string
+                                    .supporting_text_must_be_less_than_x_ancient_price_threshold,
+                                listOf(ancientPriceThresholdDays),
+                            ),
+                        ),
                     ),
-                    ValidationRule(
-                        {
-                            val days = it.toIntOrNull()
-                            days != null && days < ancientPriceThresholdDays
-                        },
-                        UiText.Res(
-                            R.string.supporting_text_must_be_less_than_x_ancient_price_threshold,
-                            listOf(ancientPriceThresholdDays)
-                        )
-                    )
-                ),
                 onConfirm = { stalePriceThresholdDaysString ->
                     showStalePriceThresholdDialog = false
-                    viewModel.settingsRepository.setStalePriceThresholdAsync(stalePriceThresholdDaysString.toInt())
+                    viewModel.settingsRepository.setStalePriceThresholdAsync(
+                        stalePriceThresholdDaysString.toInt()
+                    )
                 },
-                onDismissRequest = {
-                    showStalePriceThresholdDialog = false
-                }
+                onDismissRequest = { showStalePriceThresholdDialog = false },
             )
         }
 
@@ -209,34 +217,38 @@ fun SettingsScreen(
                 label = stringResource(R.string.title_ancient_price_threshold),
                 suffix = { Text(stringResource(R.string.suffix_days)) },
                 initialValue = ancientPriceThresholdDays.toString(),
-                validationRules = listOfNotNull(
-                    ValidationRule({ it.trim().isNotEmpty() }, UiText.Res(R.string.supporting_text_required)),
-                    ValidationRule(
-                        {
-                            val days = it.toIntOrNull()
-                            days != null && days > stalePriceThresholdDays
-                        },
-                        UiText.Res(
-                            R.string.supporting_text_must_be_greater_than_x_stale_price_threshold,
-                            listOf(stalePriceThresholdDays)
-                        )
+                validationRules =
+                    listOfNotNull(
+                        ValidationRule(
+                            { it.trim().isNotEmpty() },
+                            UiText.Res(R.string.supporting_text_required),
+                        ),
+                        ValidationRule(
+                            {
+                                val days = it.toIntOrNull()
+                                days != null && days > stalePriceThresholdDays
+                            },
+                            UiText.Res(
+                                R.string
+                                    .supporting_text_must_be_greater_than_x_stale_price_threshold,
+                                listOf(stalePriceThresholdDays),
+                            ),
+                        ),
+                        ValidationRule(
+                            {
+                                val days = it.toIntOrNull()
+                                days != null && days <= 365
+                            },
+                            UiText.Res(R.string.supporting_text_must_be_no_greater_than_365),
+                        ),
                     ),
-                    ValidationRule(
-                        {
-                            val days = it.toIntOrNull()
-                            days != null && days <= 365
-                        },
-                        UiText.Res(R.string.supporting_text_must_be_no_greater_than_365)
-                    ),
-                ),
                 onConfirm = { ancientPriceThresholdDaysString ->
                     showAncientPriceThresholdDialog = false
                     viewModel.settingsRepository.setAncientPriceThresholdDaysAsync(
-                        ancientPriceThresholdDaysString.toInt())
+                        ancientPriceThresholdDaysString.toInt()
+                    )
                 },
-                onDismissRequest = {
-                    showAncientPriceThresholdDialog = false
-                }
+                onDismissRequest = { showAncientPriceThresholdDialog = false },
             )
         }
 
@@ -247,38 +259,41 @@ fun SettingsScreen(
                 label = stringResource(R.string.title_annual_inflation),
                 suffix = { Text("%") },
                 initialValue = annualInflationPercent.toString(),
-                validationRules = listOfNotNull(
-                    ValidationRule({ it.trim().isNotEmpty() }, UiText.Res(R.string.supporting_text_required)),
-                    ValidationRule(
-                        {
-                            val inflation = it.toIntOrNull()
-                            inflation != null
-                        },
-                        UiText.Res(R.string.supporting_text_must_be_a_whole_number),
+                validationRules =
+                    listOfNotNull(
+                        ValidationRule(
+                            { it.trim().isNotEmpty() },
+                            UiText.Res(R.string.supporting_text_required),
+                        ),
+                        ValidationRule(
+                            {
+                                val inflation = it.toIntOrNull()
+                                inflation != null
+                            },
+                            UiText.Res(R.string.supporting_text_must_be_a_whole_number),
+                        ),
+                        ValidationRule(
+                            {
+                                val inflation = it.toIntOrNull()
+                                inflation != null && inflation >= 0
+                            },
+                            UiText.Res(R.string.supporting_text_must_be_zero_or_greater),
+                        ),
+                        ValidationRule(
+                            {
+                                val inflation = it.toIntOrNull()
+                                inflation != null && inflation <= 1000
+                            },
+                            UiText.Res(R.string.supporting_text_must_be_no_greater_than_1000),
+                        ),
                     ),
-                    ValidationRule(
-                        {
-                            val inflation = it.toIntOrNull()
-                            inflation != null && inflation >= 0
-                        },
-                        UiText.Res(R.string.supporting_text_must_be_zero_or_greater)
-                    ),
-                    ValidationRule(
-                        {
-                            val inflation = it.toIntOrNull()
-                            inflation != null && inflation <= 1000
-                        },
-                        UiText.Res(R.string.supporting_text_must_be_no_greater_than_1000)
-                    ),
-                ),
                 onConfirm = { annualInflationPercentString ->
                     showAnnualInflationPercentDialog = false
                     viewModel.settingsRepository.setAnnualInflationPercentAsync(
-                        annualInflationPercentString.toInt())
+                        annualInflationPercentString.toInt()
+                    )
                 },
-                onDismissRequest = {
-                    showAnnualInflationPercentDialog = false
-                }
+                onDismissRequest = { showAnnualInflationPercentDialog = false },
             )
         }
 
@@ -290,33 +305,40 @@ fun SettingsScreen(
             // restore when they meant to tap on backup - both of which would otherwise go straight
             // into a system file selection dialog.
             AlertDialog(
-                icon = { WarningIcon(contentDescription = stringResource(R.string.content_description_warning)) },
+                icon = {
+                    WarningIcon(
+                        contentDescription = stringResource(R.string.content_description_warning)
+                    )
+                },
                 title = { Text(stringResource(R.string.title_restore_from_backup)) },
                 text = { Text(stringResource(R.string.message_restore_from_backup_warning)) },
                 onDismissRequest = { showRestoreConfirmDialog = false },
                 dismissButton = {
-                    TextButton(onClick = { showRestoreConfirmDialog = false }) { Text(stringResource(R.string.button_cancel)) }
+                    TextButton(onClick = { showRestoreConfirmDialog = false }) {
+                        Text(stringResource(R.string.button_cancel))
+                    }
                 },
                 confirmButton = {
-                    TextButton(onClick = { showRestoreConfirmDialog = false; onRestoreClick() }) { Text(
-                        stringResource(R.string.button_restore)
-                    ) }
-                }
+                    TextButton(
+                        onClick = {
+                            showRestoreConfirmDialog = false
+                            onRestoreClick()
+                        }
+                    ) {
+                        Text(stringResource(R.string.button_restore))
+                    }
+                },
             )
         }
     }
 }
 
 @Composable
-private fun SettingsTile(
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
+private fun SettingsTile(title: String, subtitle: String, onClick: () -> Unit) {
     ListItem(
         headlineContent = { Text(title) },
         supportingContent = { Text(subtitle) },
-        modifier = Modifier.clickable(onClick = onClick)
+        modifier = Modifier.clickable(onClick = onClick),
     )
 }
 
@@ -337,21 +359,26 @@ private fun SettingsDialog(
     suffix: @Composable (() -> Unit)? = null,
 ) {
     var currentValue by rememberSaveable { mutableStateOf(initialValue) }
-    var textFieldValue by remember { mutableStateOf(
-        TextFieldValue(
-            text = currentValue,
-            // Put the caret at the end of the string - this is why we need a TextFieldValue.
-            selection = TextRange(currentValue.length))) }
+    var textFieldValue by remember {
+        mutableStateOf(
+            TextFieldValue(
+                text = currentValue,
+                // Put the caret at the end of the string - this is why we need a TextFieldValue.
+                selection = TextRange(currentValue.length),
+            )
+        )
+    }
     val focusRequester = remember { FocusRequester() }
     // By passing allowEmpty here, we don't validate empty strings and therefore the rule to treat
     // empty strings as invalid in the validationRules passed in to this function is irrelevant.
     // This feels like the best option here, given this is a dialog box with a single field and we
     // explicitly disable save if the field is empty. ENHANCE: We could remove that rule.
-    val validatedFieldState = ValidateFieldState(
-        value = currentValue,
-        validationRules = validationRules,
-        allowEmpty = true,
-    )
+    val validatedFieldState =
+        ValidateFieldState(
+            value = currentValue,
+            validationRules = validationRules,
+            allowEmpty = true,
+        )
     val validationResult = validatedFieldState.validationResult.value
 
     // I can't get any form of AnimatedVisibility or animateContentSize() to work with the
@@ -365,23 +392,22 @@ private fun SettingsDialog(
         text = {
             Column {
                 Text(subtitle, modifier = Modifier.padding(bottom = 16.dp))
-                    NumericTextField(
-                        filled = false,
-                        value = textFieldValue,
-                        locale = LocalConfiguration.current.locales[0],
-                        onValueChange = {
-                            textFieldValue = it; currentValue = it.text
-                        },
-                        label = { Text(label) },
-                        suffix = suffix,
-                        supportingText = textOrNull(validationResult),
-                        isError = validationResult != null,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focusRequester),
-                        interactionSource = validatedFieldState.interactionSource,
-                    )
+                NumericTextField(
+                    filled = false,
+                    value = textFieldValue,
+                    locale = LocalConfiguration.current.locales[0],
+                    onValueChange = {
+                        textFieldValue = it
+                        currentValue = it.text
+                    },
+                    label = { Text(label) },
+                    suffix = suffix,
+                    supportingText = textOrNull(validationResult),
+                    isError = validationResult != null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                    interactionSource = validatedFieldState.interactionSource,
+                )
             }
         },
         confirmButton = {
@@ -391,18 +417,21 @@ private fun SettingsDialog(
                         onConfirm(currentValue.trim())
                     }
                 },
-                enabled = currentValue.trim().isNotEmpty() && validationResult == null
-            ) { Text(stringResource(R.string.button_save)) }
+                enabled = currentValue.trim().isNotEmpty() && validationResult == null,
+            ) {
+                Text(stringResource(R.string.button_save))
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismissRequest) { Text(stringResource(R.string.button_cancel)) }
-        }
+        },
     )
 
     LaunchedEffect(Unit) {
-        // This delay is a ChatGPT-suggested magic value to let the dialog animation complete before showing the keyboard. Apparently some versions of Android may not show the keyboard if focus is requested before this point.
+        // This delay is a ChatGPT-suggested magic value to let the dialog animation complete before
+        // showing the keyboard. Apparently some versions of Android may not show the keyboard if
+        // focus is requested before this point.
         delay(150)
         focusRequester.requestFocus()
     }
-
 }

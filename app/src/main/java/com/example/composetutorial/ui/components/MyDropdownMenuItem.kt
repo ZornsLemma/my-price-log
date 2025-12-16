@@ -12,11 +12,7 @@ import com.example.composetutorial.ui.menuRightPadding
 // ENHANCE: This isn't fully general as I don't want to add stuff that isn't going to get tested; I
 // can always expand it later.
 @Composable
-fun MyDropdownMenuItem(
-    text: @Composable () -> Unit,
-    onClick: () -> Unit,
-    enabled: Boolean = true,
-) {
+fun MyDropdownMenuItem(text: @Composable () -> Unit, onClick: () -> Unit, enabled: Boolean = true) {
     DropdownMenuItem(
         text = {
             ProvideTextStyle(MaterialTheme.typography.bodyLarge) {
@@ -29,4 +25,3 @@ fun MyDropdownMenuItem(
         onClick = onClick,
     )
 }
-

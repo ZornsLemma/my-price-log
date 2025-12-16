@@ -18,22 +18,16 @@ import com.example.composetutorial.R
 fun OverflowMenu(
     enabled: Boolean = true,
     modifier: Modifier,
-    content: @Composable (requestMenuClose: () -> Unit) -> Unit
+    content: @Composable (requestMenuClose: () -> Unit) -> Unit,
 ) {
     var menuExpanded by rememberSaveable { mutableStateOf(false) }
-    IconButton(
-        enabled = enabled,
-        onClick = { menuExpanded = true },
-        modifier = modifier,
-    ) {
+    IconButton(enabled = enabled, onClick = { menuExpanded = true }, modifier = modifier) {
         Icon(
             imageVector = Icons.Default.MoreVert,
-            contentDescription = stringResource(R.string.content_description_more_options)
+            contentDescription = stringResource(R.string.content_description_more_options),
         )
-        DropdownMenu(
-            expanded = menuExpanded, onDismissRequest = { menuExpanded = false }
-        ) {
-            content({menuExpanded = false })
+        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+            content({ menuExpanded = false })
         }
     }
 }

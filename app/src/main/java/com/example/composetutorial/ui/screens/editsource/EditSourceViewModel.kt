@@ -1,64 +1,55 @@
 package com.example.composetutorial.ui.screens.editsource
 
 import android.os.Parcelable
-import com.example.composetutorial.ui.components.numericValidationRules
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.composetutorial.debug.debugDelay
-import com.example.composetutorial.data.LoyaltyType
-import com.example.composetutorial.ui.common.ValidationRule
-import com.example.composetutorial.debug.myCheck
-import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.data.EditableSource
+import com.example.composetutorial.data.LoyaltyType
 import com.example.composetutorial.data.toDomain
+import com.example.composetutorial.debug.debugDelay
+import com.example.composetutorial.debug.myCheck
+import com.example.composetutorial.domain.Repository
 import com.example.composetutorial.ui.common.PersistentUiContent
-import com.example.composetutorial.ui.common.Versioned
 import com.example.composetutorial.ui.common.nameValidationRulesFlow
-import com.example.composetutorial.ui.common.withVersion
-import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenStateHolder
 import com.example.composetutorial.ui.common.validationRulesOk
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
+import com.example.composetutorial.ui.components.generaledit.GeneralEditScreenStateHolder
+import com.example.composetutorial.ui.components.numericValidationRules
+import java.util.Locale
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.parcelize.Parcelize
-import java.util.Locale
 
 @Parcelize
-data class EditSourceScreenStaticContent(
-    val dataSet: DataSet,
-    val frozenLocale: Locale
-) : Parcelable
+data class EditSourceScreenStaticContent(val dataSet: DataSet, val frozenLocale: Locale) :
+    Parcelable
 
 class EditSourceViewModel(
     private val repository: Repository,
     val savedStateHandle: SavedStateHandle,
     initialEditableContent: EditableSource?,
     initialStaticContent: EditSourceScreenStaticContent?,
-    ) : ViewModel() {
-    val uiContent = PersistentUiContent(
-        this,
-        savedStateHandle,
-        "Source",
-        initialEditableContent,
-        initialStaticContent
-    )
+) : ViewModel() {
+    val uiContent =
+        PersistentUiContent(
+            this,
+            savedStateHandle,
+            "Source",
+            initialEditableContent,
+            initialStaticContent,
+        )
 
-    val sourceReferenceCountFlow = uiContent.originalContent.id.let { sourceId ->
-        if (sourceId != 0L) {
-            repository.countPricesForSource(sourceId)
-        } else {
-            flowOf(0L) // new sources have no references
+    val sourceReferenceCountFlow =
+        uiContent.originalContent.id.let { sourceId ->
+            if (sourceId != 0L) {
+                repository.countPricesForSource(sourceId)
+            } else {
+                flowOf(0L) // new sources have no references
+            }
         }
-    }
 
     val generalEditScreenStateHolder = GeneralEditScreenStateHolder(savedStateHandle)
 
@@ -69,21 +60,26 @@ class EditSourceViewModel(
     val nameValidationRules =
         nameValidationRulesFlow(
             repository.getAllSources(uiContent.originalContent.dataSetId).map { sourceList ->
-                sourceList.mapNotNull { source -> if (source.id != uiContent.originalContent.id) source.name else null } },
-            viewModelScope)
+                sourceList.mapNotNull { source ->
+                    if (source.id != uiContent.originalContent.id) source.name else null
+                }
+            },
+            viewModelScope,
+        )
 
     // ENHANCE: Maybe we should allow zero here? We might need to tweak some messages accordingly.
     // Zero isn't necessary as you can choose "None", but maybe it's a bit persnickety not to allow
     // the user just to type 0 directly with one of the other options as well.
-    val loyaltyPercentageValidationRules = numericValidationRules(
-        uiContent.staticContent.frozenLocale,
-        allowDecimals = true,
-        allowZero = false,
-        maxDecimals = 2,
-        // A discount of 100% or more might lead to corner cases, so let's choose an already
-        // unrealistically high maximum of 99% as an easy workaround.
-        maxValue = 99,
-    )
+    val loyaltyPercentageValidationRules =
+        numericValidationRules(
+            uiContent.staticContent.frozenLocale,
+            allowDecimals = true,
+            allowZero = false,
+            maxDecimals = 2,
+            // A discount of 100% or more might lead to corner cases, so let's choose an already
+            // unrealistically high maximum of 99% as an easy workaround.
+            maxValue = 99,
+        )
 
     enum class EditableField {
         NAME,
@@ -95,18 +91,16 @@ class EditSourceViewModel(
 
     suspend fun validateForSave(): Boolean {
         val nameValidationRules = nameValidationRules.value.value ?: return false
-        if (!validationRulesOk(
-                nameValidationRules,
-                uiContent.editableContent.value.name
-            )
-        ) {
+        if (!validationRulesOk(nameValidationRules, uiContent.editableContent.value.name)) {
             _saveValidationEvents.emit(EditableField.NAME)
             return false
         }
-        if (uiContent.editableContent.value.loyaltyType != LoyaltyType.NONE && !validationRulesOk(
-                loyaltyPercentageValidationRules,
-                uiContent.editableContent.value.loyaltyPercentage
-            )
+        if (
+            uiContent.editableContent.value.loyaltyType != LoyaltyType.NONE &&
+                !validationRulesOk(
+                    loyaltyPercentageValidationRules,
+                    uiContent.editableContent.value.loyaltyPercentage,
+                )
         ) {
             _saveValidationEvents.emit(EditableField.LOYALTY_PERCENTAGE)
             return false
@@ -117,7 +111,9 @@ class EditSourceViewModel(
     suspend fun performSave(): Long {
         val source = uiContent.editableContent.value.toDomain(uiContent.staticContent.frozenLocale)
         if (source == null) {
-            throw IllegalStateException("performSave() called with an inconvertible EditableSource: ${uiContent.editableContent.value}")
+            throw IllegalStateException(
+                "performSave() called with an inconvertible EditableSource: ${uiContent.editableContent.value}"
+            )
         }
         debugDelay()
         // updateOrInsertSource() returns -1 if it's an update or the new ID if it was an insert.

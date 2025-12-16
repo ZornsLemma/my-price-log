@@ -14,8 +14,8 @@ import androidx.navigation.NavHostController
 import com.example.composetutorial.R
 import com.example.composetutorial.debug.debugDelay
 import com.example.composetutorial.debug.debugThrow
-import com.example.composetutorial.ui.components.WarningIcon
 import com.example.composetutorial.ui.common.AsyncOperationStatus
+import com.example.composetutorial.ui.components.WarningIcon
 
 @Composable
 fun GeneralEditAndDeleteScreen(
@@ -49,9 +49,7 @@ fun GeneralEditAndDeleteScreen(
         },
         requestClose = requestClose,
     ) {
-        content(
-            deleting && saveStatus == AsyncOperationStatus.BusyForAWhile
-        )
+        content(deleting && saveStatus == AsyncOperationStatus.BusyForAWhile)
     }
 
     if (deleteConfirmationDetails != null) {
@@ -61,31 +59,42 @@ fun GeneralEditAndDeleteScreen(
 
         val contentDescriptionWarning = stringResource(R.string.content_description_warning)
         AlertDialog(
-            icon = if (isSimpleDelete) null else { { WarningIcon(contentDescription = contentDescriptionWarning) } },
+            icon =
+                if (isSimpleDelete) null
+                else {
+                    { WarningIcon(contentDescription = contentDescriptionWarning) }
+                },
             title = dialogTitle,
             text = dialogText,
             onDismissRequest = { onDeleteConfirmDismissRequest() },
             dismissButton = {
-                TextButton(onClick = { onDeleteConfirmDismissRequest() }) { Text(stringResource(R.string.button_cancel)) }
+                TextButton(onClick = { onDeleteConfirmDismissRequest() }) {
+                    Text(stringResource(R.string.button_cancel))
+                }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    onDeleteConfirmDismissRequest()
-                    runGeneralEditScreenOperation(
-                        stateHolder = stateHolder,
-                        coroutineScope = coroutineScope,
-                        isSafeToPerform = { true },
-                        perform = {
-                            deleting = true
-                            debugDelay()
-                            debugThrow()
-                            performDelete()
-                            // We return null since we don't want to change the selected entity on
-                            // the home screen.
-                            null
-                        }
-                    )
-                }) { Text(stringResource(R.string.button_delete)) }
+                TextButton(
+                    onClick = {
+                        onDeleteConfirmDismissRequest()
+                        runGeneralEditScreenOperation(
+                            stateHolder = stateHolder,
+                            coroutineScope = coroutineScope,
+                            isSafeToPerform = { true },
+                            perform = {
+                                deleting = true
+                                debugDelay()
+                                debugThrow()
+                                performDelete()
+                                // We return null since we don't want to change the selected entity
+                                // on
+                                // the home screen.
+                                null
+                            },
+                        )
+                    }
+                ) {
+                    Text(stringResource(R.string.button_delete))
+                }
             },
         )
     }

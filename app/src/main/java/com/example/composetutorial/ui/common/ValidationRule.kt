@@ -10,10 +10,14 @@ package com.example.composetutorial.ui.common
 // via copy() might be finicky and error prone, and this would perhaps add subtle behavioural quirks
 // around the ordering of the list which might be brittle. (Then again, with respect to brittleness,
 // some rules' error messages might implicitly assume earlier rules already filtered out some
-// unacceptable cases anyway.) For example, ValidateFieldState() re-orders the list locally, which would probably break this, although of course it could be changed not to do that.
+// unacceptable cases anyway.) For example, ValidateFieldState() re-orders the list locally, which
+// would probably break this, although of course it could be changed not to do that.
 data class ValidationRule<T>(val validate: (T) -> Boolean, val message: UiText)
 
-fun <T> failedValidationRuleOrNull(validationRules: List<ValidationRule<T>>, value: T): ValidationRule<T>? {
+fun <T> failedValidationRuleOrNull(
+    validationRules: List<ValidationRule<T>>,
+    value: T,
+): ValidationRule<T>? {
     for (validationRule in validationRules) {
         if (!validationRule.validate(value)) {
             return validationRule

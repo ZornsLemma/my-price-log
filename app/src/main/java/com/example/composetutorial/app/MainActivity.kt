@@ -8,12 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
 import com.example.composetutorial.debug.DebugFlags
 import com.example.composetutorial.debug.DebugFlags.ALLOW_ROTATION_ON_PHONE
 import com.example.composetutorial.ui.AppNavigation
@@ -40,31 +34,24 @@ class MainActivity : ComponentActivity() {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
 
-        // Target SDK >=35 directly enables edge-to-edge (see e.g. https://stackoverflow.com/questions/79018063/trying-to-understand-edge-to-edge-in-android). We don't particularly want this, but we can work with it so we don't try to fight it.
+        // Target SDK >=35 directly enables edge-to-edge (see e.g.
+        // https://stackoverflow.com/questions/79018063/trying-to-understand-edge-to-edge-in-android). We don't particularly want this, but we can work with it so we don't try to fight it.
         // We call it here to be explicit.
         enableEdgeToEdge()
 
         if (DebugFlags.USE_STRICT_MODE) {
             StrictMode.setThreadPolicy(
-                StrictMode.ThreadPolicy.Builder()
-                    .detectAll()
-                    .penaltyLog()
-                    .build()
+                StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build()
             )
         }
 
         setContent {
             val darkTheme = isSystemInDarkTheme()
 
-            AppTheme(darkTheme = darkTheme) {
-                AppNavigation()
-            }
+            AppTheme(darkTheme = darkTheme) { AppNavigation() }
         }
     }
 }
-
-
-
 
 // ENHANCE: I have completely ignored "unlikely" errors (like exceptions being thrown when accessing
 // the database) in most of this code - what can/should we do about this? I suspect most such errors

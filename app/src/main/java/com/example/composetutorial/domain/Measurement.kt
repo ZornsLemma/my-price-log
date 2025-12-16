@@ -4,14 +4,14 @@ import android.content.Context
 import android.os.Parcelable
 import androidx.annotation.StringRes
 import com.example.composetutorial.R
-import com.example.composetutorial.debug.myCheck
-import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.common.formatDouble
 import com.example.composetutorial.common.intersectionIsEmpty
 import com.example.composetutorial.data.DataSet
+import com.example.composetutorial.debug.myCheck
+import com.example.composetutorial.debug.myRequire
 import com.example.composetutorial.ui.nonBreakingSpace
-import kotlinx.parcelize.Parcelize
 import java.util.Locale
+import kotlinx.parcelize.Parcelize
 
 // Enum class to represent whether something is sold by "count of items" ($4 for 6 bananas),
 // weight or volume. This is fundamental as we make no effort to convert between them using some
@@ -19,7 +19,10 @@ import java.util.Locale
 // be varied much more freely.
 enum class QuantityType(val id: Int, @field:StringRes val nameResource: Int) {
     ITEM(1, R.string.label_sold_by_item),
-    WEIGHT(2, R.string.label_sold_by_weight), // technically mass but everyone says "price per weight"
+    WEIGHT(
+        2,
+        R.string.label_sold_by_weight,
+    ), // technically mass but everyone says "price per weight"
     VOLUME(3, R.string.label_sold_by_volume);
 
     companion object {
@@ -31,11 +34,12 @@ enum class QuantityType(val id: Int, @field:StringRes val nameResource: Int) {
     }
 }
 
-fun QuantityType.baseUnit() = when (this) {
-    QuantityType.WEIGHT -> MeasurementUnit.G
-    QuantityType.VOLUME -> MeasurementUnit.ML
-    QuantityType.ITEM -> MeasurementUnit.EACH
-}
+fun QuantityType.baseUnit() =
+    when (this) {
+        QuantityType.WEIGHT -> MeasurementUnit.G
+        QuantityType.VOLUME -> MeasurementUnit.ML
+        QuantityType.ITEM -> MeasurementUnit.EACH
+    }
 
 enum class UnitFamily {
     ITEM,
@@ -74,15 +78,38 @@ enum class MeasurementUnit(
         false,
         perSymbol = " ",
     ),
-    EACH10(102, setOf(UnitFamily.ITEM), QuantityType.ITEM, R.string.unit_10,
-        R.string.unit_10, 1, 10.0, true),
-    EACH100(103, setOf(UnitFamily.ITEM), QuantityType.ITEM, R.string.unit_100,
-        R.string.unit_100,2, 100.0, true),
+    EACH10(
+        102,
+        setOf(UnitFamily.ITEM),
+        QuantityType.ITEM,
+        R.string.unit_10,
+        R.string.unit_10,
+        1,
+        10.0,
+        true,
+    ),
+    EACH100(
+        103,
+        setOf(UnitFamily.ITEM),
+        QuantityType.ITEM,
+        R.string.unit_100,
+        R.string.unit_100,
+        2,
+        100.0,
+        true,
+    ),
 
     // Weight (metric)
-    G(201, setOf(UnitFamily.METRIC), QuantityType.WEIGHT,
+    G(
+        201,
+        setOf(UnitFamily.METRIC),
+        QuantityType.WEIGHT,
         R.string.unit_gram_symbol,
-        R.string.unit_gram,0, 1.0, false),
+        R.string.unit_gram,
+        0,
+        1.0,
+        false,
+    ),
     G100(
         202,
         setOf(UnitFamily.METRIC),
@@ -91,11 +118,18 @@ enum class MeasurementUnit(
         R.string.unit_100_grams,
         2,
         100.0,
-        true
+        true,
     ),
-    KG(203, setOf(UnitFamily.METRIC), QuantityType.WEIGHT,
+    KG(
+        203,
+        setOf(UnitFamily.METRIC),
+        QuantityType.WEIGHT,
         R.string.unit_kilogram_symbol,
-        R.string.unit_kilogram,3, 1000.0, false),
+        R.string.unit_kilogram,
+        3,
+        1000.0,
+        false,
+    ),
 
     // Weight (imperial/US customary)
     OZ(
@@ -106,7 +140,7 @@ enum class MeasurementUnit(
         R.string.unit_ounce,
         3, // allow for eighths
         28.349523125,
-        false
+        false,
     ),
     LB(
         212,
@@ -116,13 +150,20 @@ enum class MeasurementUnit(
         R.string.unit_pound,
         3, // allow for eighths
         453.59237,
-        false
+        false,
     ),
 
     // Volume (metric)
-    ML(301, setOf(UnitFamily.METRIC), QuantityType.VOLUME,
+    ML(
+        301,
+        setOf(UnitFamily.METRIC),
+        QuantityType.VOLUME,
         R.string.unit_millilitre_symbol,
-        R.string.unit_millilitre,0, 1.0, false),
+        R.string.unit_millilitre,
+        0,
+        1.0,
+        false,
+    ),
     ML100(
         302,
         setOf(UnitFamily.METRIC),
@@ -131,11 +172,18 @@ enum class MeasurementUnit(
         R.string.unit_100_millilitres,
         2,
         100.0,
-        true
+        true,
     ),
-    L(303, setOf(UnitFamily.METRIC), QuantityType.VOLUME,
+    L(
+        303,
+        setOf(UnitFamily.METRIC),
+        QuantityType.VOLUME,
         R.string.unit_litre_symbol,
-        R.string.unit_litre, 3, 1000.0, false),
+        R.string.unit_litre,
+        3,
+        1000.0,
+        false,
+    ),
 
     // Volume (imperial)
     IMPERIAL_FLOZ(
@@ -146,7 +194,7 @@ enum class MeasurementUnit(
         R.string.unit_fluid_ounce,
         3, // allow for eighths
         28.4130625,
-        false
+        false,
     ),
     IMPERIAL_PINT(
         312,
@@ -156,7 +204,7 @@ enum class MeasurementUnit(
         R.string.unit_pint,
         3, // allow for eighths
         568.26125,
-        false
+        false,
     ),
     IMPERIAL_GAL(
         313,
@@ -166,7 +214,7 @@ enum class MeasurementUnit(
         R.string.unit_gallon,
         3, // allow for eighths
         4546.09,
-        false
+        false,
     ),
 
     // Volume (US customary)
@@ -178,7 +226,7 @@ enum class MeasurementUnit(
         R.string.unit_fluid_ounce,
         3, // allow for eighths
         29.5735295625,
-        false
+        false,
     ),
     US_CUSTOMARY_PINT(
         322,
@@ -188,7 +236,7 @@ enum class MeasurementUnit(
         R.string.unit_pint,
         3, // allow for eighths
         473.176473,
-        false
+        false,
     ),
     US_CUSTOMARY_GAL(
         323,
@@ -198,13 +246,14 @@ enum class MeasurementUnit(
         R.string.unit_gallon,
         3, // allow for eighths
         3785.411784,
-        false
+        false,
     );
 
     companion object {
         private val measurementUnitById = entries.associateBy { it.id }
 
-        fun fromId(measurementUnitId: Long): MeasurementUnit? = measurementUnitById[measurementUnitId]
+        fun fromId(measurementUnitId: Long): MeasurementUnit? =
+            measurementUnitById[measurementUnitId]
     }
 }
 
@@ -213,7 +262,8 @@ fun areDifferentUnitFamilies(lhs: MeasurementUnit, rhs: MeasurementUnit) =
 
 @Parcelize
 data class Quantity(val value: Double, val unit: MeasurementUnit) : Parcelable {
-    private val quantityType: QuantityType get() = unit.quantityType
+    private val quantityType: QuantityType
+        get() = unit.quantityType
 
     fun to(unit: MeasurementUnit): Quantity {
         myRequire(this.quantityType == unit.quantityType) {
@@ -245,26 +295,32 @@ data class Quantity(val value: Double, val unit: MeasurementUnit) : Parcelable {
             minDecimals = 0,
             maxDecimals = unit.maxDecimals,
             useLocaleGrouping = false,
-            locale
-        ) + if (quantityType == QuantityType.ITEM) "" else "$nonBreakingSpace${context.getString(unit.symbol)}"
+            locale,
+        ) +
+            if (quantityType == QuantityType.ITEM) ""
+            else "$nonBreakingSpace${context.getString(unit.symbol)}"
 }
 
 fun DataSet.getRelevantUnitFamilies(): Set<UnitFamily> {
-    val relevantUnitFamilies = setOfNotNull(
-        if (allowMetric) UnitFamily.METRIC else null,
-        if (allowImperial) UnitFamily.IMPERIAL else null,
-        if (allowUSCustomary) UnitFamily.US_CUSTOMARY else null,
-        UnitFamily.ITEM,
-    )
+    val relevantUnitFamilies =
+        setOfNotNull(
+            if (allowMetric) UnitFamily.METRIC else null,
+            if (allowImperial) UnitFamily.IMPERIAL else null,
+            if (allowUSCustomary) UnitFamily.US_CUSTOMARY else null,
+            UnitFamily.ITEM,
+        )
     myCheck(relevantUnitFamilies.isNotEmpty()) { "Data set ID $id has no unit families enabled" }
-    myCheck(!(allowImperial && allowUSCustomary)) { "Data set ID $id has both imperial and US customary unit families enabled" }
+    myCheck(!(allowImperial && allowUSCustomary)) {
+        "Data set ID $id has both imperial and US customary unit families enabled"
+    }
     return relevantUnitFamilies
 }
 
 // Returns a sensibly-ordered list (which will probably be shown to the user in this order) of all
 // the measurement units for dataSet and quantityType.
 // ENHANCE: Where multiple unit families are enabled in the data set, this will currently always
-// follow the order in MeasurementUnit. So metric will always come before imperial/US customary if they
+// follow the order in MeasurementUnit. So metric will always come before imperial/US customary if
+// they
 // are enabled. It might be desirable to have some global or per-data set configuration which says
 // something like "I prefer family X to come first where it's included" or (in practice mostly
 // equivalent) "I prefer {metric/non-metric} to come first when both are available". The precise
@@ -273,46 +329,51 @@ fun DataSet.getRelevantUnitFamilies(): Set<UnitFamily> {
 // choice is "metric first or non-metric first"?.
 fun DataSet.getRelevantMeasurementUnits(
     quantityType: QuantityType,
-    includeDisplayOnly: Boolean
+    includeDisplayOnly: Boolean,
 ): List<MeasurementUnit> {
     val relevantUnitFamilies = getRelevantUnitFamilies()
-    val relevantMeasurementUnits = MeasurementUnit.entries.filter { measurementUnit ->
-        measurementUnit.quantityType == quantityType &&
+    val relevantMeasurementUnits =
+        MeasurementUnit.entries.filter { measurementUnit ->
+            measurementUnit.quantityType == quantityType &&
                 measurementUnit.unitFamilies.any { it in relevantUnitFamilies } &&
                 (!measurementUnit.displayOnly || includeDisplayOnly)
-    }
+        }
     myCheck(relevantMeasurementUnits.isNotEmpty()) {
         "Expected at least one relevant measure unit for QuantityType ${quantityType.name} in " +
-                "the context of data set ID $id but found none"
+            "the context of data set ID $id but found none"
     }
     return relevantMeasurementUnits
 }
 
-// Return a list of the MeasurementUnits of the same QuantityType and UnitFamily as measurementUnit. Note
+// Return a list of the MeasurementUnits of the same QuantityType and UnitFamily as measurementUnit.
+// Note
 // that measurementUnit itself will be included in the results. The results are in the same order as
 // in MeasurementUnit.entries, but in practice I don't believe this matters.
 fun DataSet.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
     measurementUnit: MeasurementUnit,
-    includeDisplayOnly: Boolean
+    includeDisplayOnly: Boolean,
 ): List<MeasurementUnit> {
-    // dataSet is used here to decide which of the possible multiple families measurementUnit belongs to
+    // dataSet is used here to decide which of the possible multiple families measurementUnit
+    // belongs to
     // is the one we're interested in. Suppose we have OZ - it could be imperial or US customary. As
     // it happens, in all cases where a MeasurementUnit belongs to two families, the families as we
     // currently define them are identical anyway so the distinction doesn't matter. But we do the
     // right thing anyway just to be cautious. (It's not likely but to see why this matters, suppose
     // we add support for the cubic inch as a volume measurement. It's the same in imperial and US
-    // customary. But if measurementUnit were CUBIC_INCH, the family would matter in deciding whether
+    // customary. But if measurementUnit were CUBIC_INCH, the family would matter in deciding
+    // whether
     // the returned MeasurementUnits are US or imperial floz/pint/gallon.)
     val unitFamilies = measurementUnit.unitFamilies.intersect(getRelevantUnitFamilies())
     myCheck(unitFamilies.size == 1) {
         "measurementUnit ${measurementUnit.id} should belong to one unit family for data set " +
-                "$id, not $unitFamilies"
+            "$id, not $unitFamilies"
     }
-    val result = MeasurementUnit.entries.filter {
-        it.quantityType == measurementUnit.quantityType &&
+    val result =
+        MeasurementUnit.entries.filter {
+            it.quantityType == measurementUnit.quantityType &&
                 unitFamilies.single() in it.unitFamilies &&
                 (!it.displayOnly || includeDisplayOnly)
-    }
+        }
     myCheck(result.isNotEmpty()) {
         "measurementUnit ${measurementUnit.id} belongs to no unit families for data set $id"
     }

@@ -1,6 +1,5 @@
 package com.example.composetutorial.ui.components.generalselector
 
-import android.util.Log
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
 import com.example.composetutorial.debug.debugDelay
@@ -36,19 +35,20 @@ class GeneralSelectorScreenStateHolder<T>(
     val searchStringFlow = MutableStateFlow(TextFieldValue(""))
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val dataFlow = combine(
-        dataQuery.flatMapLatest { data -> debugDelay(); flowOf(data) },
-        searchStringFlow.map { searchString -> searchString.text.normalizedForSearch() }
-    ) { data, normalizedQuery ->
-        data.filter {
-            getName(it).normalizedForSearch().contains(normalizedQuery)
-        }
-    }
-        .onEach { emittedList -> debugDelay()
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = initialList ?: emptyList()
-        )
+    val dataFlow =
+        combine(
+                dataQuery.flatMapLatest { data ->
+                    debugDelay()
+                    flowOf(data)
+                },
+                searchStringFlow.map { searchString -> searchString.text.normalizedForSearch() },
+            ) { data, normalizedQuery ->
+                data.filter { getName(it).normalizedForSearch().contains(normalizedQuery) }
+            }
+            .onEach { emittedList -> debugDelay() }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = initialList ?: emptyList(),
+            )
 }

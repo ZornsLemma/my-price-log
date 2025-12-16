@@ -11,7 +11,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import com.example.composetutorial.R
-import com.example.composetutorial.ui.components.WarningIcon
 
 // Like TextField, but with some simple logic to allow input to be filtered and discarded via an
 // onCandidateValueChange callback. It also - although this is just a convenience and isn't
@@ -54,12 +53,16 @@ fun FilteredTextField(
             modifier = modifier,
             supportingText = supportingText,
             leadingIcon = leadingIcon,
-            trailingIcon = trailingIcon
-                ?: if (isError) {
-                    {
-                        WarningIcon(contentDescription = stringResource(R.string.content_description_error))
-                    }
-                } else null,
+            trailingIcon =
+                trailingIcon
+                    ?: if (isError) {
+                        {
+                            WarningIcon(
+                                contentDescription =
+                                    stringResource(R.string.content_description_error)
+                            )
+                        }
+                    } else null,
             isError = isError,
             singleLine = singleLine,
             interactionSource = interactionSource,
@@ -81,12 +84,16 @@ fun FilteredTextField(
             modifier = modifier,
             supportingText = supportingText,
             leadingIcon = leadingIcon,
-            trailingIcon = trailingIcon
-                ?: if (isError) {
-                    {
-                        WarningIcon(contentDescription = stringResource(R.string.content_description_error))
-                    }
-                } else null,
+            trailingIcon =
+                trailingIcon
+                    ?: if (isError) {
+                        {
+                            WarningIcon(
+                                contentDescription =
+                                    stringResource(R.string.content_description_error)
+                            )
+                        }
+                    } else null,
             isError = isError,
             singleLine = singleLine,
             interactionSource = interactionSource,
@@ -109,5 +116,6 @@ fun FilteredTextField(
 // kind of transitory supportingText message (not one of the more persistent ones our validation
 // infrastructure generates), but even ignoring the implementation difficulties I am not sure that
 // would be better than just silently dropping input.
-fun createOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean =
-    { it.length <= maxLength }
+fun createOnCandidateValueChangeMaxLength(maxLength: Int): (String) -> Boolean = {
+    it.length <= maxLength
+}

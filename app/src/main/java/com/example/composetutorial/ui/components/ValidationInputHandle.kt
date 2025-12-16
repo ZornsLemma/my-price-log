@@ -2,7 +2,6 @@
 
 package com.example.composetutorial.ui.components
 
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
@@ -43,23 +42,19 @@ class ValidationInputHandle(
 
 @Composable
 fun rememberValidationInputHandle(): ValidationInputHandle {
-    return remember {
-        ValidationInputHandle()
-    }
+    return remember { ValidationInputHandle() }
 }
 
 @Composable
 fun Modifier.validationInputHandleBringIntoViewRequester(
     handle: ValidationInputHandle,
-    offset: Dp = 0.dp
+    offset: Dp = 0.dp,
 ): Modifier {
     handle.bringIntoViewOffset = with(LocalDensity.current) { offset.toPx() }
-    return this
-        .onGloballyPositioned { coordinates ->
+    return this.onGloballyPositioned { coordinates ->
             handle.bringIntoViewHeight = coordinates.size.height
         }
         .bringIntoViewRequester(handle.bringIntoViewRequester)
-
 }
 
 fun Modifier.validationInputHandleFocusRequester(handle: ValidationInputHandle): Modifier {
@@ -84,7 +79,7 @@ suspend fun ValidationInputHandle.requestUserAttention(focusManager: FocusManage
             left = 0f,
             top = -bringIntoViewOffset,
             right = 0f,
-            bottom = bringIntoViewHeight + 2 * bringIntoViewOffset
+            bottom = bringIntoViewHeight + 2 * bringIntoViewOffset,
         )
     )
 

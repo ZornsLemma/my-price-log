@@ -20,7 +20,10 @@ fun keyboardCapitalization(@StringRes resId: Int): KeyboardCapitalization =
         "sentences" -> KeyboardCapitalization.Sentences
         "words" -> KeyboardCapitalization.Words
         else -> {
-            Log.w(TAG, "Resource '${resourceName(LocalContext.current, resId)}' has unknown keyboard capitalization option '$option'")
+            Log.w(
+                TAG,
+                "Resource '${resourceName(LocalContext.current, resId)}' has unknown keyboard capitalization option '$option'",
+            )
             KeyboardCapitalization.None
         }
     }

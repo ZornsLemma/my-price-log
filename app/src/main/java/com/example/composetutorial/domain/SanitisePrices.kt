@@ -1,10 +1,10 @@
 package com.example.composetutorial.domain
 
-import com.example.composetutorial.debug.myCheck
 import com.example.composetutorial.common.intersectionIsEmpty
 import com.example.composetutorial.data.DataSet
 import com.example.composetutorial.data.Price
 import com.example.composetutorial.data.PriceHistory
+import com.example.composetutorial.debug.myCheck
 
 // Returns a version of priceList where any price measurements which are expressed in units not
 // supported by the data set are changed to use a unit that is supported. This avoids some awkward
@@ -45,7 +45,9 @@ import com.example.composetutorial.data.PriceHistory
 // ambiguity in interpreting the units shown to the user.
 fun DataSet.sanitisePriceUnits(priceList: List<Price>): List<Price> {
     val relevantUnitFamilies = getRelevantUnitFamilies()
-    myCheck(relevantUnitFamilies.isNotEmpty()) { "Expected at least one relevant unit family for dataSet $id" }
+    myCheck(relevantUnitFamilies.isNotEmpty()) {
+        "Expected at least one relevant unit family for dataSet $id"
+    }
     // getRelevantUnitFamilies() will in practice generate a LinkedHashSet, so first() here will be
     // deterministic and return the first family inserted. If this were to change in future, it
     // wouldn't be the end of the world, we'd just see some modest inconsistency in the results for
@@ -55,7 +57,15 @@ fun DataSet.sanitisePriceUnits(priceList: List<Price>): List<Price> {
         if (!intersectionIsEmpty(price.quantity.unit.unitFamilies, relevantUnitFamilies)) {
             price
         } else {
-            price.copy(quantity = price.quantity.to(MeasurementUnit.entries.first { replacementUnitFamily in it.unitFamilies && price.quantity.unit.quantityType == it.quantityType }))
+            price.copy(
+                quantity =
+                    price.quantity.to(
+                        MeasurementUnit.entries.first {
+                            replacementUnitFamily in it.unitFamilies &&
+                                price.quantity.unit.quantityType == it.quantityType
+                        }
+                    )
+            )
         }
     }
 }
@@ -64,13 +74,21 @@ fun DataSet.sanitisePriceUnits(priceList: List<Price>): List<Price> {
 // the commonality which isn't worse than the repetition.
 fun DataSet.sanitisePriceHistoryUnits(priceHistoryList: List<PriceHistory>): List<PriceHistory> {
     val relevantUnitFamilies = getRelevantUnitFamilies()
-    myCheck(relevantUnitFamilies.isNotEmpty()) { "Expected at least one relevant unit family for dataSet $id" }
+    myCheck(relevantUnitFamilies.isNotEmpty()) {
+        "Expected at least one relevant unit family for dataSet $id"
+    }
     val replacementUnitFamily = relevantUnitFamilies.first() // see sanitisePriceUnits() comment
     return priceHistoryList.map { priceHistory ->
         if (!intersectionIsEmpty(priceHistory.userUnit.unitFamilies, relevantUnitFamilies)) {
             priceHistory
         } else {
-            priceHistory.copy(userUnit = MeasurementUnit.entries.first { replacementUnitFamily in it.unitFamilies && priceHistory.userUnit.quantityType == it.quantityType })
+            priceHistory.copy(
+                userUnit =
+                    MeasurementUnit.entries.first {
+                        replacementUnitFamily in it.unitFamilies &&
+                            priceHistory.userUnit.quantityType == it.quantityType
+                    }
+            )
         }
     }
 }

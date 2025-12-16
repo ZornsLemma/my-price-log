@@ -6,8 +6,7 @@ sealed interface LoadState<out T> {
     // Empty isn't currently used, but it feels like it might be a good option in some future case
     // so I'll keep it around for now. T could be a nullable type to represent this concept, but
     // depending on the precise situation Empty+a non-nullable T might be better.
-    @Suppress("unused")
-    data object Empty : LoadState<Nothing>
+    @Suppress("unused") data object Empty : LoadState<Nothing>
 
     data class Loaded<T>(val value: T) : LoadState<T>
 }

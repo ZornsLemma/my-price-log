@@ -23,7 +23,7 @@ fun ErrorHighlightBox(
     offset: Dp = defaultErrorHighlightOffset,
     modifier: Modifier = Modifier,
     validationInputHandle: ValidationInputHandle,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     var visible = validationInputHandle.errorHighlightBoxVisible.value
     var alpha = remember { Animatable(0f) }
@@ -36,13 +36,13 @@ fun ErrorHighlightBox(
             while (true) {
                 alpha.animateTo(
                     targetValue = 1f,
-                    animationSpec = tween(1000, easing = LinearEasing)
+                    animationSpec = tween(1000, easing = LinearEasing),
                 )
                 alpha.animateTo(
                     // We don't animate down to 0% alpha, as it's kind of jarring having the box
                     // completely disappear.
                     targetValue = 0.1f,
-                    animationSpec = tween(1000, easing = LinearEasing)
+                    animationSpec = tween(1000, easing = LinearEasing),
                 )
             }
         } else {
@@ -55,28 +55,31 @@ fun ErrorHighlightBox(
 
     val borderColor = MaterialTheme.colorScheme.error
     Box(
-        modifier = modifier
-            .drawWithContent {
-                // Draw the content (e.g., TextField or SegmentedButton)
-                // Useful for debugging: drawRect(Color.Green.copy(alpha=0.3f))
-                drawContent()
-                // Draw an outline slightly larger than the content
-                val borderWidthPx = borderWidth.toPx()
-                val offsetPx = offset.toPx()
-                drawRect(
-                    color = borderColor,
-                    alpha = alpha.value,
-                    style = Stroke(width = borderWidthPx),
-                    topLeft = Offset(-offsetPx, -offsetPx),
-                    size = size.copy(
-                        width = size.width + 2 * offsetPx, height = size.height + 2 * offsetPx
+        modifier =
+            modifier
+                .drawWithContent {
+                    // Draw the content (e.g., TextField or SegmentedButton)
+                    // Useful for debugging: drawRect(Color.Green.copy(alpha=0.3f))
+                    drawContent()
+                    // Draw an outline slightly larger than the content
+                    val borderWidthPx = borderWidth.toPx()
+                    val offsetPx = offset.toPx()
+                    drawRect(
+                        color = borderColor,
+                        alpha = alpha.value,
+                        style = Stroke(width = borderWidthPx),
+                        topLeft = Offset(-offsetPx, -offsetPx),
+                        size =
+                            size.copy(
+                                width = size.width + 2 * offsetPx,
+                                height = size.height + 2 * offsetPx,
+                            ),
                     )
+                }
+                .validationInputHandleBringIntoViewRequester(
+                    validationInputHandle,
+                    offset = offset + 2 * borderWidth,
                 )
-
-            }
-            .validationInputHandleBringIntoViewRequester(
-                validationInputHandle, offset = offset + 2 * borderWidth
-            )
     ) {
         content()
     }
