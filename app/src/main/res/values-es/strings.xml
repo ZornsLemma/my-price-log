@@ -20,9 +20,9 @@
     <string name="demo_groceries_notes_soft_pack_own_brand">Paquete blando de marca propia</string>
     <string name="label_item">Producto</string>
     <string name="content_description_search_products">Buscar productos</string>
-    <string name="supporting_text_no_items_in_data_set">No hay productos en esta colección. Añade uno desde el menú de desborde en la parte superior derecha.</string>
+    <string name="supporting_text_no_items_in_data_set">No hay productos en esta colección. Añade uno desde el menú de los tres puntos en la parte superior derecha.</string>
     <string name="label_source">Tienda</string>
-    <string name="supporting_text_no_sources_in_data_set">No hay tiendas en esta colección. Añade una desde el menú de desborde en la parte superior derecha.</string>
+    <string name="supporting_text_no_sources_in_data_set">No hay tiendas en esta colección. Añade una desde el menú de los tres puntos en la parte superior derecha.</string>
     <string name="source_name_none">Ninguna</string>
     <string name="content_description_expand">Expandir</string>
     <string name="relative_time_span_string_now">ahora</string>
@@ -48,8 +48,8 @@
     <string name="menu_item_edit_items">Editar productos</string>
     <string name="menu_item_edit_sources">Editar tiendas</string>
     <string name="menu_item_settings">Ajustes</string>
-    <string name="message_no_data_sets">No hay colecciones. Añade una desde los tres puntos de la parte superior derecha.</string>
-    <string name="message_no_data_set_selected">No hay ninguna colección seleccionada. Usa el menú de la izquierda para elegir una.</string>
+    <string name="message_no_data_sets">No hay colecciones. Añade una desde el menú de los tres puntos de la parte superior derecha.</string>
+    <string name="message_no_data_set_selected">No hay ninguna colección seleccionada. Usa el menú de la izquierda (el de las tres rayas) para elegir una.</string>
     <string name="title_delete_price">Eliminar precio</string>
     <string name="message_confirm_delete_price">¿Seguro que quieres eliminar este precio?</string>
     <string name="button_cancel">Cancelar</string>
@@ -64,7 +64,6 @@
     <string name="message_no_prices_for_item_at_source">Aún no hay precios registrados para este producto en ninguna tienda.</string>
     <string name="label_confirm_pack_size_and_price">Confirmar tamaño y precio</string>
     <string name="supporting_text_details_correct_right_now">Los datos arriba son los actuales</string>
-    <string name="label_pack_price">Precio del paquete</string>
     <string name="label_count">Cantidad</string>
     <string name="label_size">Tamaño</string>
     <string name="label_unit">Unidad</string>

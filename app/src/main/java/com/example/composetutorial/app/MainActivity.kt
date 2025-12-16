@@ -261,13 +261,6 @@ class MainActivity : ComponentActivity() {
 // usefully tested. It would also be interesting and perhaps useful to add some unit tests for more
 // of the business logic, mocking the repository, etc.
 
-// TODO: Spanish translation of message_no_data_set_selected seems to miss the *top* part out, but
-// the message_no_data_sets has it. Maybe worth querying this. - I have had a confusing chat with
-// Grok and ChatGPT and have tweaked this. However, I am far from convinced it's right even now but we're going round in circles. Even if it is right, I MAY STILL NEED TO FIX SOME OTHER USES OF HAMBURGUESA
-// AND DESBORDE IN OTHER MENU ITEMS FOR CONSISTENCY NOW WE AREN'T USING THEM IN THESE REVISED ONES.
-
-// TODO: Is the "hamburger" and "overflow menu" terminology OK *in English*?!
-
 // TODO: Not sure it's a problem but FWIW there may be a corner case where you change the currency
 // on a data set after prices exist and you are shown prices with more decimal places than yo can
 // enter - e.g. we have 0.76 MGA but MGA only allows 0 dp (I think - check what Android says, web
