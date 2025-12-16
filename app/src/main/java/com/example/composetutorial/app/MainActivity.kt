@@ -243,16 +243,13 @@ class MainActivity : ComponentActivity() {
 // break diffs so I should be careful when I do it - maybe when the code is very stable and
 // shortly before release?
 
-// TODO: When validating fields, we control allowEmpty based on whether a save has been attempted or
-// not. Given we do generally validate everything live, I am wondering if instead we should control
-// allowEmpty based off this *and* whether we are editing an existing item or adding a new one. I
-// think the main motivation for this exception was that when you start adding a new entry,
-// everything is blank and you don't want a sea of validation errors. But if you're editing a new
-// entry, is it any more reasonable/unreasoanble to get a validation error when you temporarily
-// blank out a field to enter something new than it is if you enter "3.25" in a field which only
-// allows 1dp? I suppose there is an argument that it's slightly difference because you're perhaps
-// (?) more likely to blank out a field to replace it in a moment than you are to temporarily edit a
-// number into an invalid state while changing it.
+// ENHANCE: In general, we set allowEmpty for our full screen dialogs based on whether a save has
+// been attempted or not. The intent here is to avoid showing errors for fields which haven't been
+// filled in, primarily to handle the case of adding a completely new entity where all fields start
+// off blank. It might be better to set allowEmpty to "isNewEntity && !saveAttempted". This way when
+// editing an existing entity, clearing out a field that can't remain empty will immediately trigger
+// a validation failure, which feels consistent with how e.g. entering an invalid number will
+// immediately trigger a validation failure.
 
 // TODO: Make sure to do some testing and check the log for strict mode violations towards end of
 // dev.
