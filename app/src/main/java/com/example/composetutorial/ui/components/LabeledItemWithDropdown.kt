@@ -55,9 +55,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = dropdownContentDescription,
-                            modifier =
-                                Modifier.size(iconSize)
-                                    .rotate(if (expanded) 180f else 0f),
+                            modifier = Modifier.size(iconSize).rotate(if (expanded) 180f else 0f),
                         )
                     }
                 }

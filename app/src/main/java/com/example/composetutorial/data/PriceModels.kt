@@ -319,23 +319,17 @@ fun EditablePrice.toDomain(locale: Locale): Price? {
         ],
     indices =
         [
-            // TODO: I AM NOT SURE ABOUT THE AUTOFORMAT HERE, ESPECIALLY WITH THE LONG COMMENT
             Index(value = ["data_set_id"], unique = false), // because this is a foreign key
             Index(value = ["source_id"], unique = false), // because this is a foreign key
-            Index(
-                value = ["item_id"],
-                unique = false,
-            ), // because this is a foreign key, although the composite index below might well be
-            // good enough we'll add this one too to play it safe
+            Index(value = ["item_id"], unique = false), // because this is a foreign key
+
             // We don't include data_set_id in this index as it's technically redundant - item_id
-            // and
-            // source_id both imply a data_set_id and it should be the same. We put item_id first
-            // because it feels more likely we might want to select history using just item_id than
-            // just
-            // source_id in the future. I also suspect it helps that item_id is far more selective
-            // than
-            // source_id - there will typically be many more items than sources and our queries will
-            // be using equality conditions..
+            // and source_id both imply a data_set_id and it should be the same. We put item_id
+            // first because it feels more likely we might want to select history using just item_id
+            // than just source_id in the future. I also suspect it helps that item_id is far more
+            // selective than source_id - there will typically be many more items than sources and
+            // our queries will be using equality conditions. The index above on just item_id is
+            // probably redundant because of this, but in practice it's not a big deal to have it.
             Index(value = ["item_id", "source_id"], unique = false),
         ],
 )
