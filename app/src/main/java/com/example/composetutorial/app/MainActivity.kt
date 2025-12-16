@@ -223,17 +223,6 @@ class MainActivity : ComponentActivity() {
 // want to hide or grey out the "system" option on these versions. Need to think this through at the
 // time and find out what's normal and what the possibilities are.
 
-// TODO: I need to carefully test things around deleting prices and adding new ones via main GUI
-// and "reverting" to old ones via history. A quick test now suggests this is working but at one
-// point I did end up with the same store appearing multiple times in the price comparison on the
-// home screen for a single item. I suspect this was caused by bugs during development but it's
-// hard to be sure. Since then I have added a unique index on (item_id, source_id) so any remaining
-// bugs here (which I am not sure exist) will probably trigger an error on database writes rather
-// than breaking in precisely this way, but I still need to test to make sure all is working OK. I
-// didn't necessarily test this all that thoroughly to start with but the most likely source of
-// breakage is the fact that when "restoring" a historical price after a deletion, there is no
-// "current" price ID to update, we are instead inserting a new price with a new ID.
-
 // ENHANCE: It is possible that using SQLDelight would simplify the database queries. In particular,
 // it may avoid the problem where Room flows are not clearly tagged with the query parameters that
 // originated them, which I think is responsible for some of my data flow complexity in
@@ -253,6 +242,8 @@ class MainActivity : ComponentActivity() {
 
 // TODO: Make sure to do some testing and check the log for strict mode violations towards end of
 // dev.
+// - OK, doing a backup from within settings causes one, as does restoring database. Otherwise
+//   everything seems OK.
 
 // ENHANCE: It would be nice to add automated tests. At the very least, Quantity could be
 // usefully tested. It would also be interesting and perhaps useful to add some unit tests for more
