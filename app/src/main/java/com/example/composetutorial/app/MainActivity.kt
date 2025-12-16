@@ -261,12 +261,6 @@ class MainActivity : ComponentActivity() {
 // usefully tested. It would also be interesting and perhaps useful to add some unit tests for more
 // of the business logic, mocking the repository, etc.
 
-// TODO: Not sure it's a problem but FWIW there may be a corner case where you change the currency
-// on a data set after prices exist and you are shown prices with more decimal places than yo can
-// enter - e.g. we have 0.76 MGA but MGA only allows 0 dp (I think - check what Android says, web
-// hints at 2 but vaguely hints otherwise as well) so if we edit an old price of 0.76 as new it
-// turns into 1. This may just be a bug I am misinterpreting, but I think this is what's happening.
-
 // ENHANCE: It may be a good idea to handle onQuotaExceeded() and show a notification in this case.
 // This is part of the "Auto Backup for Apps" framework, which will be present on full "Google
 // Android" phones and possibly some other versions of Android with ties to cloud backup. If the
