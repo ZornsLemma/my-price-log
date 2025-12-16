@@ -216,10 +216,6 @@ class MainActivity : ComponentActivity() {
 // originated them, which I think is responsible for some of my data flow complexity in
 // HomeViewModel.
 
-// TODO: At some point I should apply the spotless auto-formatting, but that will obviously
-// break diffs so I should be careful when I do it - maybe when the code is very stable and
-// shortly before release?
-
 // ENHANCE: In general, we set allowEmpty for our full screen dialogs based on whether a save has
 // been attempted or not. The intent here is to avoid showing errors for fields which haven't been
 // filled in, primarily to handle the case of adding a completely new entity where all fields start

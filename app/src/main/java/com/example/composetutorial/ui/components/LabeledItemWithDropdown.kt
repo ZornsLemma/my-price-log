@@ -56,7 +56,7 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
                             imageVector = Icons.Default.ArrowDropDown,
                             contentDescription = dropdownContentDescription,
                             modifier =
-                                Modifier.size(iconSize /* 16.dp */)
+                                Modifier.size(iconSize)
                                     .rotate(if (expanded) 180f else 0f),
                         )
                     }
@@ -65,5 +65,3 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
         }
     }
 }
-
-// TODO: Check for random comments with things like /* 16.dp */ in - they are probably more dev-experimental notes and shouldn't be in the final source.
