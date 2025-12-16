@@ -802,7 +802,6 @@ private fun PriceComparisonCard(
                 } else {
                     stringResource(R.string.content_description_header_price_no_per, stringResource(headerUnitPriceDenominator.fullName))
                 }
-                // TODO: TEST headerPriceContentDescription is correct once things settle down
                 Log.d(TAG, "headerPriceContentDescription: $headerPriceContentDescription")
 
                 val headerTextModifiers = listOf(
