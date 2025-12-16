@@ -86,8 +86,7 @@ fun GeneralEditAndDeleteScreen(
                                 debugThrow()
                                 performDelete()
                                 // We return null since we don't want to change the selected entity
-                                // on
-                                // the home screen.
+                                // on the home screen.
                                 null
                             },
                         )

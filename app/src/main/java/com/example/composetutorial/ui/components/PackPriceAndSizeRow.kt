@@ -85,17 +85,16 @@ fun PackPriceAndSizeRow(
         // recomposition. We *must not* use rememberSaveable(), because it does *not* recompute when
         // navigating back after a new item is selected in another screen, due to saved state
         // restoration behaviour. We could force recomputation by adding a composite key like
-        // "$dataSet-$price-$measure", but that's a hack and not an ideal solution.
-        // ENHANCE: That's not even the whole story. selectedUnitPriceUnit is
-        // *initialised* by an expensive computation, but the user can change it, and we really
-        // ought to be remembering what they select fairly persistently, at least across config
-        // changes (e.g. dark mode toggle). This would seem to argue for some use of
-        // rememberSaveable()
-        // but there is some hellishly subtle behaviour here whether with keys or "inputs=" and if
-        // we're not careful we end up crashing as well because we preserve a denominator of the
-        // wrong quantity type as the item changes. On top of these technical complexities, I am
-        // not even sure when we should preserve the user's value - if for example the price changes
-        // enough that our recommended denominator changes, should we override the user's selection?
+        // "$dataSet-$price-$measure", but that's a hack and not an ideal solution. ENHANCE: That's
+        // not even the whole story. selectedUnitPriceUnit is *initialised* by an expensive
+        // computation, but the user can change it, and we really ought to be remembering what they
+        // select fairly persistently, at least across config changes (e.g. dark mode toggle). This
+        // would seem to argue for some use of rememberSaveable() but there is some hellishly subtle
+        // behaviour here whether with keys or "inputs=" and if we're not careful we end up crashing
+        // as well because we preserve a denominator of the wrong quantity type as the item changes.
+        // On top of these technical complexities, I am not even sure when we should preserve the
+        // user's value - if for example the price changes enough that our recommended denominator
+        // changes, should we override the user's selection?
         var selectedUnitPriceUnit by
             remember(dataSet, price, count, quantity) {
                 val candidateDenominators =

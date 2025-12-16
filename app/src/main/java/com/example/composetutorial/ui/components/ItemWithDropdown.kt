@@ -43,10 +43,9 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
                 if (enabled)
                     Modifier.clickable {
                         // We remove focus from anything else that has it in order to "fake" this
-                        // component
-                        // getting the focus. Without this, if a TextField has focus it retains it
-                        // (including
-                        // its focused colors) when the dropdown appears, which feels wrong.
+                        // component getting the focus. Without this, if a TextField has focus it
+                        // retains it (including its focused colors) when the dropdown appears,
+                        // which feels wrong.
                         focusManager.clearFocus(force = true)
                         expanded = true
                         @Suppress("KotlinConstantConditions") onExpand(expanded)

@@ -70,8 +70,7 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
 
         // Delete existing database files for clean slate. I don't know if this is necessary but at
         // one point Grok suggested this might be useful to avoid old SHM/WAL files hanging around
-        // and
-        // confusing things. I don't think this will hurt so let's be cautious.
+        // and confusing things. I don't think this will hurt so let's be cautious.
         context.deleteDatabase(DB_NAME)
 
         // Copy tempFile to internal database location.

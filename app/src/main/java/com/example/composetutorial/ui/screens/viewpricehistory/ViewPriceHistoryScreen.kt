@@ -104,11 +104,10 @@ fun ViewPriceHistoryScreen(
                 remember(locale, zoneId) {
                     // I don't know if this is the best way to do it or if it might have subtle
                     // localisation concerns, but I really do want to have the day of the week in
-                    // there
-                    // and FormatStyle.LONG (which is the only FormatStyle to include the day of the
-                    // week) is too long. The idea here is that the day of the week might help to
-                    // make
-                    // it easier to connect to memories of going to the shop for recent visits.
+                    // there and FormatStyle.LONG (which is the only FormatStyle to include the day
+                    // of the week) is too long. The idea here is that the day of the week might
+                    // help to make it easier to connect to memories of going to the shop for recent
+                    // visits.
                     DateTimeFormatterBuilder()
                         .appendPattern("EEE")
                         .appendLiteral(" ")

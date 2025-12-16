@@ -29,12 +29,9 @@ fun ClickableLink(text: String, url: String, showRawUrl: Boolean = true) {
             modifier =
                 Modifier.clickable { uriHandler.openUri(url) }
                     // This padding feels slightly visually unattractive (although it's growing on
-                    // me a
-                    // bit), but we want to allow some clearance so the "tappable area" to click on
-                    // the
-                    // links isn't too small, roughly in accordance with MD3 guidelines even if
-                    // we're
-                    // not following them formally here.
+                    // me a bit), but we want to allow some clearance so the "tappable area" to
+                    // click on the links isn't too small, roughly in accordance with MD3 guidelines
+                    // even if we're not following them formally here.
                     .padding(vertical = 8.dp),
         )
 

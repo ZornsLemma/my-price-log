@@ -17,12 +17,11 @@ fun Locale.currencyOrNull(): Currency? {
 // so much junk (e.g. historical currency codes, which are irrelevant for our purposes) that I had
 // to give up on the idea. The following list is a manual combination of the results from the
 // following lists:
-// -
+//
 // https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-one.xls
-// -
 // https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-two.doc
-// -
 // https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-three.xls
+//
 // with a few additional tweaks.
 // @formatter:off
 private val validCurrencyCodes =
@@ -187,9 +186,8 @@ private val validCurrencyCodes =
 // @formatter:on
 
 // Returns a list of (currency codes as IDs, currency display names) with the most likely ones
-// (based
-// on the current locales) at the top. The last of the "most likely" currency codes is also returned
-// as a string so we can use it to add a divider after this entry.
+// (based on the current locales) at the top. The last of the "most likely" currency codes is also
+// returned as a string so we can use it to add a divider after this entry.
 //
 // In Spanish, the display names are all lower case with no initial capital. ChatGPT assures me that
 // this is what a native speaker would expect, so I'm not coercing the first character into upper

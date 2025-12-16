@@ -34,12 +34,9 @@ data class AugmentedPrice(
         ): AugmentedPrice {
             val loyaltyPrice = price.price * source.loyaltyMultiplier
             // We use an integer ageDays as there's little value in working to sub-day resolution
-            // and it
-            // will make the calculation a bit more repeatable/easy to follow for humans. If we add
-            // a screen
-            // showing how the calculation was done, ageDays will not be constantly increasing
-            // slightly
-            // every time it's shown.
+            // and it will make the calculation a bit more repeatable/easy to follow for humans. If
+            // we add a screen showing how the calculation was done, ageDays will not be constantly
+            // increasing slightly every time it's shown.
             val ageDays = Duration.between(price.confirmedAt, Instant.now()).toDays()
             val inflatedLoyaltyPrice =
                 inflationAdjustedPrice(loyaltyPrice, ageDays, priceAgeSettings)
@@ -76,8 +73,7 @@ private fun inflationAdjustedPrice(
         return price
     } else {
         // Note that inflation starts to apply only from stalePriceThresholdDays; the exponent here
-        // is
-        // ageDays - stalePriceThresholdDays. We don't want to suddenly apply the previous
+        // is ageDays - stalePriceThresholdDays. We don't want to suddenly apply the previous
         // stalePriceThresholdDays' worth of inflation the instant a price becomes stale.
         return price *
             (1.0 + priceAgeSettings.annualInflationPercent / 100.0).pow(
@@ -156,8 +152,7 @@ fun analysePrices(
         priceList
             .mapNotNull { price ->
                 // I don't think we can have a Price but not the corresponding Source, but we play
-                // it safe
-                // just in case.
+                // it safe just in case.
                 sourceById[price.sourceId]?.let { source ->
                     AugmentedPrice.fromPrice(price, source, priceAgeSettings)
                 }
@@ -182,19 +177,14 @@ fun analysePrices(
             null
         } else {
             // This isn't necessarily the ideal way to classify things but it's what I settled on
-            // after
-            // much discussion with ChatGPT and thinking about it. We have so little data that we
-            // can't
-            // go full on stats nerd. We calculate a buffered IQR [Q1*(1-k), Q3+(1+k)] and use that
-            // to
-            // classify prices as good, OK or bad. The idea is not to obsess over small price
-            // variations
-            // when making our recommendation. Note that we only do this if we have at least three
-            // recent enough prices to work with. There are numerous flaws with this, but we're just
-            // trying to give an at-a-glance recommendation which is reasonably trustworthy. Users
-            // can
-            // obviously see the actual list of unit prices by store and judge from that if they
-            // prefer.
+            // after much discussion with ChatGPT and thinking about it. We have so little data that
+            // we can't go full on stats nerd. We calculate a buffered IQR [Q1*(1-k), Q3+(1+k)] and
+            // use that to classify prices as good, OK or bad. The idea is not to obsess over small
+            // price variations when making our recommendation. Note that we only do this if we have
+            // at least three recent enough prices to work with. There are numerous flaws with this,
+            // but we're just trying to give an at-a-glance recommendation which is reasonably
+            // trustworthy. Users can obviously see the actual list of unit prices by store and
+            // judge from that if they prefer.
             val lowerQuartile = quantile(recentEnoughPriceList, 0.25)
             val upperQuartile = quantile(recentEnoughPriceList, 0.75)
             val k = 0.1 // ENHANCE: Make this configurable in settings? May be too "advanced"...
@@ -207,8 +197,7 @@ fun analysePrices(
     augmentedPriceList =
         augmentedPriceList.map { augmentedPrice ->
             // We classify prices even if they aren't fresh. This seems best, they are marked as
-            // stale
-            // so the user can tell, but it's not unreasonable to offer a judgement.
+            // stale so the user can tell, but it's not unreasonable to offer a judgement.
             // ENHANCE: Possibly we should not offer a judgement on ancient prices?
             augmentedPrice.copy(
                 priceJudgement = augmentedPrice.judge(priceClassificationThresholds)

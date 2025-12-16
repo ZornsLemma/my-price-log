@@ -320,9 +320,8 @@ fun DataSet.getRelevantUnitFamilies(): Set<UnitFamily> {
 // the measurement units for dataSet and quantityType.
 // ENHANCE: Where multiple unit families are enabled in the data set, this will currently always
 // follow the order in MeasurementUnit. So metric will always come before imperial/US customary if
-// they
-// are enabled. It might be desirable to have some global or per-data set configuration which says
-// something like "I prefer family X to come first where it's included" or (in practice mostly
+// they are enabled. It might be desirable to have some global or per-data set configuration which
+// says something like "I prefer family X to come first where it's included" or (in practice mostly
 // equivalent) "I prefer {metric/non-metric} to come first when both are available". The precise
 // wording and level of control would have to be decided, though in practice we are unlikely to add
 // new unit families so there isn't too much need for amazing amounts of flexibility - the real
@@ -346,23 +345,20 @@ fun DataSet.getRelevantMeasurementUnits(
 }
 
 // Return a list of the MeasurementUnits of the same QuantityType and UnitFamily as measurementUnit.
-// Note
-// that measurementUnit itself will be included in the results. The results are in the same order as
-// in MeasurementUnit.entries, but in practice I don't believe this matters.
+// Note that measurementUnit itself will be included in the results. The results are in the same
+// order as in MeasurementUnit.entries, but in practice I don't believe this matters.
 fun DataSet.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
     measurementUnit: MeasurementUnit,
     includeDisplayOnly: Boolean,
 ): List<MeasurementUnit> {
     // dataSet is used here to decide which of the possible multiple families measurementUnit
-    // belongs to
-    // is the one we're interested in. Suppose we have OZ - it could be imperial or US customary. As
-    // it happens, in all cases where a MeasurementUnit belongs to two families, the families as we
-    // currently define them are identical anyway so the distinction doesn't matter. But we do the
-    // right thing anyway just to be cautious. (It's not likely but to see why this matters, suppose
-    // we add support for the cubic inch as a volume measurement. It's the same in imperial and US
-    // customary. But if measurementUnit were CUBIC_INCH, the family would matter in deciding
-    // whether
-    // the returned MeasurementUnits are US or imperial floz/pint/gallon.)
+    // belongs to is the one we're interested in. Suppose we have OZ - it could be imperial or US
+    // customary. As it happens, in all cases where a MeasurementUnit belongs to two families, the
+    // families as we currently define them are identical anyway so the distinction doesn't matter.
+    // But we do the right thing anyway just to be cautious. (It's not likely but to see why this
+    // matters, suppose we add support for the cubic inch as a volume measurement. It's the same in
+    // imperial and US customary. But if measurementUnit were CUBIC_INCH, the family would matter in
+    // deciding whether the returned MeasurementUnits are US or imperial floz/pint/gallon.)
     val unitFamilies = measurementUnit.unitFamilies.intersect(getRelevantUnitFamilies())
     myCheck(unitFamilies.size == 1) {
         "measurementUnit ${measurementUnit.id} should belong to one unit family for data set " +

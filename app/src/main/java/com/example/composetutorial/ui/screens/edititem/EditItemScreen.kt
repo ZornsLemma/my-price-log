@@ -152,10 +152,8 @@ fun EditItemScreen(
                 modifier =
                     Modifier
                         // NB: We must do .animateContentSize() *before* .padding(), otherwise the
-                        // clipping
-                        // bounds the former imposes are too tight and will prevent
-                        // ErrorHighlightBox
-                        // drawing correctly.
+                        // clipping bounds the former imposes are too tight and will prevent
+                        // ErrorHighlightBox drawing correctly.
                         .animateContentSize()
                         .padding(horizontal = 8.dp, vertical = 12.dp)
             ) {

@@ -43,10 +43,8 @@ class MyApplication : Application() {
                         // Manually adjust the starting sequence values for various tables. This
                         // increases the chances that foreign key bugs cause constraint violations,
                         // rather than silently referencing the wrong record. It also makes it
-                        // easier to
-                        // identify the type of ID during debugging based on its numeric range. We
-                        // don't
-                        // rely on IDs being non-overlapping for correctness.
+                        // easier to identify the type of ID during debugging based on its numeric
+                        // range. We don't rely on IDs being non-overlapping for correctness.
                         //
                         // We leave data_set's sequence alone and let it start IDs at 1.
                         db.openHelper.writableDatabase.execSQL(

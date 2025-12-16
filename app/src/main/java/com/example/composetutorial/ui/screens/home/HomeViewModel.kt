@@ -172,24 +172,16 @@ class HomeViewModel(private val repository: Repository, application: Application
             selectedDataSetIdStateFlow.flatMapLatest { dataSetIdState ->
                 // dataSetId can be null here (e.g. during startup when we haven't yet got the
                 // preference yet, and maybe also if the user deletes all the data in the database)
-                // so
-                // we need to deal with it. I think it would be wrong to use filterNotNull(),
-                // because we
-                // do want to emit something - in particular, during startup, if datasetId is null
-                // and
-                // *stays* null (e.g. empty database and SELECTED_DATA_SET_ID_KEY has been set to
-                // null
-                // as a result), any flow that combine()s this one would never see combine() emit.
-                // This
-                // just might work out OK, but it feels dangerous. I think empty lists are perfect
-                // valid
-                // results to emit in the null case.
-                // We are combining freshly-created DAO flows, so we cannot see "stale" data here,
-                // so
-                // the dataSetId we are tagging the results with will be correct. (In practice
-                // non-empty
-                // lists of results for these queries are self-tagging, but we need to handle empty
-                // lists correctly too.)
+                // so we need to deal with it. I think it would be wrong to use filterNotNull(),
+                // because we do want to emit something - in particular, during startup, if
+                // datasetId is null and *stays* null (e.g. empty database and
+                // SELECTED_DATA_SET_ID_KEY has been set to null as a result), any flow that
+                // combine()s this one would never see combine() emit. This just might work out OK,
+                // but it feels dangerous. I think empty lists are perfect valid results to emit in
+                // the null case. We are combining freshly-created DAO flows, so we cannot see
+                // "stale" data here, so the dataSetId we are tagging the results with will be
+                // correct. (In practice non-empty lists of results for these queries are
+                // self-tagging, but we need to handle empty lists correctly too.)
                 val dataSetId = dataSetIdState.valueOrNull()
                 combine(
                     flowOf(dataSetId),

@@ -71,14 +71,6 @@ fun Item?.toEditable(dataSet: DataSet): EditableItem {
     }
 }
 
-// Note that we have the surprisingly horrific code around defaultUnitIdByQuantityTypeOrdinal
-// instead
-// of a simple "val defaultUnit: MeasurementUnit" because I thought it would be user-friendly to
-// keep
-// the selected unit for each quantity type while the user is editing, and then it turns into a
-// nightmare of un-parcelizable types and working with ordinals and IDs rather than enum class
-// objects themselves. It probably isn't that bad in hindsight, but the code is way more complex
-// than feels necessary.
 @Parcelize
 data class EditableItem(
     val id: Long,

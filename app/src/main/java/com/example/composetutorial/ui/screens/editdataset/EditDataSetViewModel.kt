@@ -89,14 +89,12 @@ class EditDataSetViewModel(
     val measurementSystemValidationRules =
         listOf(
             // We say "measurement system" in the error message here even though the caption above
-            // the
-            // segmented button is "measurement units". The former is technically correct, the
-            // latter is
-            // more colloquial and I think it works well as a caption, but I think in this error
-            // message
-            // context, "measurement unit" does not work - it sounds as if the user is expected to
-            // choose at least one thing like "miles" or "litres". If "measurement system" is a bit
-            // technical, I hope the overall context with the caption above will make it clear.
+            // the segmented button is "measurement units". The former is technically correct, the
+            // latter is more colloquial and I think it works well as a caption, but I think in this
+            // error message context, "measurement unit" does not work - it sounds as if the user is
+            // expected to choose at least one thing like "miles" or "litres". If "measurement
+            // system" is a bit technical, I hope the overall context with the caption above will
+            // make it clear.
             ValidationRule<UnitPreferences>(
                 { it -> it.allowMetric || it.allowImperial || it.allowUSCustomary },
                 UiText.Res(

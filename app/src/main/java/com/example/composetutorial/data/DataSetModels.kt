@@ -62,8 +62,7 @@ fun getDefaultUnitFamilies(locale: Locale): Set<UnitFamily> =
     when (locale.country.uppercase()) {
         // ChatGPT suggests it's common to have dual metric and US customary labelling in US
         // supermarkets and that some users may want to use metric, so we enable it by default. I'll
-        // do
-        // the same for Liberia and Myanmar too for now.
+        // do the same for Liberia and Myanmar too for now.
         "US",
         "LR",
         "MM" -> setOf(UnitFamily.ITEM, UnitFamily.METRIC, UnitFamily.US_CUSTOMARY)

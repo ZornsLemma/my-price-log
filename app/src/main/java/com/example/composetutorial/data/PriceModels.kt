@@ -51,12 +51,9 @@ import kotlinx.parcelize.Parcelize
             Index(value = ["item_id"], unique = false),
             Index(value = ["source_id"], unique = false),
             // We put item_id first in this index as it's likely to be more selective than source_id
-            // and
-            // ENHANCE: it may allow us to remove the index on item_id by itself later on. This
-            // index is
-            // not just for efficiency; it will also prevent data corruption if a bug causes us to
-            // try
-            // to insert more than one price for an (item, source) pair.
+            // and ENHANCE: it may allow us to remove the index on item_id by itself later on. This
+            // index is not just for efficiency; it will also prevent data corruption if a bug
+            // causes us to try to insert more than one price for an (item, source) pair.
             Index(value = ["item_id", "source_id"], unique = true),
         ],
 )
@@ -207,8 +204,7 @@ fun Price.toEditable(locale: Locale, currencyFormat: CurrencyFormat): EditablePr
             ),
         // Rounding is particularly important here - for non-metric measures, which are stored in
         // doubles in metric base units in the database, if we didn't round we could end up with
-        // some
-        // visible noise in the least significant decimal places.
+        // some visible noise in the least significant decimal places.
         measureValue =
             formatDoubleForEditing(
                 quantity.value,
@@ -296,15 +292,12 @@ fun EditablePrice.toDomain(locale: Locale): Price? {
     tableName = "price_history",
     foreignKeys =
         [
-            // We don't declare a foreign key relationship of our price_id to price.id. At some
-            // point it
-            // will probably be possible to delete a price but retain the history, which wouldn't
-            // work
-            // with such a foreign key relationship. Arguably we don't need price_id at all on this
-            // table, but having it will (e.g.) allow us to observe when it changes for the same
-            // (data_set_id, source_id, item_id) combination and infer a price deletion at that
-            // point in
-            // the history.
+            // We don't declare a foreign key relationship of our price_id to price.id. It is
+            // possible to delete a price but retain the history, which wouldn't work with such a
+            // foreign key relationship. Arguably we don't need price_id at all on this table, but
+            // having it will allow us to observe when it changes for the same (data_set_id,
+            // source_id, item_id) combination and infer a price deletion at that point in the
+            // history.
             ForeignKey(
                 entity = DataSet::class,
                 parentColumns = ["id"],
@@ -326,6 +319,7 @@ fun EditablePrice.toDomain(locale: Locale): Price? {
         ],
     indices =
         [
+            // TODO: I AM NOT SURE ABOUT THE AUTOFORMAT HERE, ESPECIALLY WITH THE LONG COMMENT
             Index(value = ["data_set_id"], unique = false), // because this is a foreign key
             Index(value = ["source_id"], unique = false), // because this is a foreign key
             Index(

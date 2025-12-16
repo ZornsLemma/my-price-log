@@ -35,8 +35,9 @@ class MainActivity : ComponentActivity() {
         }
 
         // Target SDK >=35 directly enables edge-to-edge (see e.g.
-        // https://stackoverflow.com/questions/79018063/trying-to-understand-edge-to-edge-in-android). We don't particularly want this, but we can work with it so we don't try to fight it.
-        // We call it here to be explicit.
+        // https://stackoverflow.com/questions/79018063/trying-to-understand-edge-to-edge-in-android).
+        // We don't particularly want this, but we can work with it so we don't try to fight it. We
+        // call it here to be explicit.
         enableEdgeToEdge()
 
         if (DebugFlags.USE_STRICT_MODE) {

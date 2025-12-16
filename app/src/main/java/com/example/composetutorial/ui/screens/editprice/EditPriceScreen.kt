@@ -74,9 +74,8 @@ fun EditPriceScreen(
         // to consider it as acceptable in future.) We only do this on the first change so we don't
         // fight with the user if they toggle this back off afterwards.
         // ENHANCE: We might want to gate this logic behind a Settings option, i.e. have an option
-        // to
-        // let the confirm always stay off unless the user explicitly turns it on. That said, in my
-        // own personal use, this logic seems to work well.
+        // to let the confirm always stay off unless the user explicitly turns it on. That said, in
+        // my own personal use, this logic seems to work well.
         if (!viewModel.firstPackSizeOrPriceChangeOccurred) {
             // Note that we must not use the captured editablePrice here, because this function is
             // likely to be called after editableContent has been changed but before a

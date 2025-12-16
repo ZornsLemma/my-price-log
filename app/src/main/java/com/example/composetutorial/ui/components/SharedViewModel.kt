@@ -95,8 +95,7 @@ class SharedViewModel : ViewModel() {
 
     fun setViewPriceHistoryScreenInitialUiContent(uiContent: HomeScreenUiContent) {
         // !! is justified because uiContent was shown on the home screen and the view history
-        // option
-        // was enabled, which can only happen if we have all three available.
+        // option was enabled, which can only happen if we have all three available.
         val dataSet = uiContent.dataSet!!
         val item = uiContent.item!!
         val source = uiContent.source!!

@@ -165,21 +165,15 @@ fun HomeScreen(
     } else {
         val asyncOperationStatus by viewModel.asyncOperationStatus.collectAsStateWithLifecycle()
         // Unlike GeneralEditScreen(), we don't try to trap "back" and show a busy snackbar. We
-        // probably
-        // could but:
+        // probably could but:
         // - The data being saved here is "just" a confirm/undo confirm, it's not quite so critical
-        // or
-        //   "user has put effort into this data entry" as in GeneralEditScreen.
+        //   or "user has put effort into this data entry" as in GeneralEditScreen.
         // - "Back" from the home screen would leave the app. It's not so clear we should even try
-        // to
-        //   stop the user doing that.
+        //   to stop the user doing that.
         // - The user can use the home or overview buttons/gestures to leave the app, and we
-        // probably
-        //   can't and almost certainly shouldn't trap those if we are saving. (They can also do
-        // this
-        //   during GeneralEditScreen too. It's just that there "back" has an in-app meaning and is
-        // a
-        //   particularly expected case where we can reasonably interfere.)
+        //   probably can't and almost certainly shouldn't trap those if we are saving. (They can
+        //   also do this during GeneralEditScreen too. It's just that there "back" has an in-app
+        //   meaning and is a particularly expected case where we can reasonably interfere.)
         // - A slow save is extremely unlikely anyway.
         val dataSetListSorted = uiContent.dataSetList.rememberSortedByLocale { it.name }
         val drawerState = rememberDrawerState(DrawerValue.Closed)
@@ -478,10 +472,8 @@ private fun HomeScreenStateManager(
             when (event) {
                 AsyncOperationStatus.Busy -> {
                     // We expect the operation to complete quickly so we don't want the visual
-                    // distraction
-                    // of a progress indicator appearing straight away. Let the progress indicator
-                    // kick
-                    // in after a short delay if we're still here waiting.
+                    // distraction of a progress indicator appearing straight away. Let the progress
+                    // indicator kick in after a short delay if we're still here waiting.
                     delay(spinnerDelayMillis)
                     // The state might not be busy any more, so check first before updating to avoid
                     // a race condition.
@@ -633,13 +625,10 @@ private fun HomeScreenContent(
                 // null and non-null is.
                 if (item != null) {
                     // Clicking on one of the items on this card selects its source, just as if it
-                    // had
-                    // been selected via the source dropdown. This is technically redundant but I
-                    // found
-                    // myself wanting to do it all the time to quickly see the details of a price,
-                    // so
-                    // I've implemented it. (The dropdown is still needed, as it's the only way to
-                    // select sources which don't appear on the price comparison card.)
+                    // had been selected via the source dropdown. This is technically redundant but
+                    // I found myself wanting to do it all the time to quickly see the details of a
+                    // price, so I've implemented it. (The dropdown is still needed, as it's the
+                    // only way to select sources which don't appear on the price comparison card.)
                     PriceComparisonCard(
                         dataSet,
                         source,
@@ -865,9 +854,8 @@ private fun PriceComparisonCard(
                                 )
                             },
                             // ENHANCE: We could add blank icons here so we have a column of
-                            // "judgement"
-                            // icons and a column of "age class" icons. Not sure if that would look
-                            // better or not.
+                            // "judgement" icons and a column of "age class" icons. Not sure if that
+                            // would look better or not.
                             { augmentedPrice ->
                                 Row {
                                     if (augmentedPrice.ageClass != AgeClass.ANCIENT) {
@@ -895,10 +883,9 @@ private fun PriceComparisonCard(
                     columns = columns,
                     highlightRow = highlightRow,
                     // ENHANCE: It might be better to calculate the space needed for the longest
-                    // unit
-                    // price and the longest number of icons, then assign anything left over to the
-                    // source name. In practice these simple fixed weights seem to be working quite
-                    // well for now.
+                    // unit price and the longest number of icons, then assign anything left over to
+                    // the source name. In practice these simple fixed weights seem to be working
+                    // quite well for now.
                     columnWeights = listOf(1.7f, 1.1f, 0.8f),
                     columnAlignments =
                         listOf(CellAlignment.Start, CellAlignment.End, CellAlignment.Start),

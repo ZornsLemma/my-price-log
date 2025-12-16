@@ -124,10 +124,9 @@ fun AppNavigation() {
                         try {
                             restoreDatabase(context, uri)
                             // All sorts of internal state is probably outdated. This is a rare
-                            // operation
-                            // and we don't want to massively complicate our code (e.g. the flows
-                            // feeding
-                            // the home screen) to handle it, so we just force a restart.
+                            // operation and we don't want to massively complicate our code (e.g.
+                            // the flows feeding the home screen) to handle it, so we just force a
+                            // restart.
                             showRestartDialog = true
                         } catch (e: Exception) {
                             withContext(Dispatchers.Main) {
@@ -635,10 +634,8 @@ fun AppNavigation() {
                                 priceHistory.toEditable(
                                     // It's important we provide the current price ID, since we must
                                     // update the current existing record instead of adding a new
-                                    // one.
-                                    // The price ID might in principle have changed since the
-                                    // history
-                                    // record was created.
+                                    // one. The price ID might in principle have changed since the
+                                    // history record was created.
                                     priceId = viewModel.uiContent.staticContent.price?.id ?: 0,
                                     locale,
                                     viewModel.uiContent.staticContent.dataSet,

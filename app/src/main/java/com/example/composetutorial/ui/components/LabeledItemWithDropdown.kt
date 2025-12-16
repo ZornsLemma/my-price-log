@@ -49,10 +49,8 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         // ENHANCE: This text doesn't change colour when enabled is false, TBH this
                         // probably looks OK and it might actually look ugly if it did in my
-                        // specific
-                        // UI, but maybe it ought to. And equally maybe the LabeledItem itself
-                        // should
-                        // change colour when disabled.
+                        // specific UI, but maybe it ought to. And equally maybe the LabeledItem
+                        // itself should change colour when disabled.
                         Text(text)
                         Icon(
                             imageVector = Icons.Default.ArrowDropDown,
@@ -67,3 +65,5 @@ fun <T, ID : Comparable<ID>> LabeledItemWithDropdown(
         }
     }
 }
+
+// TODO: Check for random comments with things like /* 16.dp */ in - they are probably more dev-experimental notes and shouldn't be in the final source.
