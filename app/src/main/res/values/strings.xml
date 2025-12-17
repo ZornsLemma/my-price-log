@@ -75,7 +75,7 @@
     <string name="message_unsaved_changes">You have changes that won\'t be saved if you close.</string>
     <string name="button_keep_editing">Keep editing</string>
     <string name="button_discard">Discard</string>
-    <string name="message_busy_please_wait">Busy, please wait...</string>
+    <string name="message_busy_please_wait">Busy, please wait…</string>
     <string name="title_error">Error</string>
     <string name="button_ok">OK</string>
     <string name="content_description_warning">Warning</string>

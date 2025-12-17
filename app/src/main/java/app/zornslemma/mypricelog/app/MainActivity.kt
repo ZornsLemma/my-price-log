@@ -1,5 +1,6 @@
 package app.zornslemma.mypricelog.app
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.os.Bundle
@@ -16,6 +17,7 @@ import app.zornslemma.mypricelog.ui.theme.AppTheme
 private fun Context.isPhone(): Boolean = resources.configuration.smallestScreenWidthDp < 600
 
 class MainActivity : ComponentActivity() {
+    @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

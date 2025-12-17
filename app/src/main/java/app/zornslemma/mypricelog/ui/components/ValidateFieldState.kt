@@ -24,7 +24,7 @@ class ValidatedFieldState(
 )
 
 @Composable
-fun <T> ValidateFieldState(
+fun <T> validateFieldState(
     value: T,
     validationRules: List<ValidationRule<T>>,
     validationRulesKey: Any? = null,

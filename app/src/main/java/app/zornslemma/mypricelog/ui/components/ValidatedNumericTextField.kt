@@ -38,14 +38,14 @@ fun <T> ValidatedNumericTextField(
     filled: Boolean = true,
 ) {
     ValidationErrorHighlightBox(
-        value.text,
-        validationRules,
-        validationRulesKey,
-        allowEmpty,
-        validationFlow,
-        validationFlowFieldId,
-        errorHighlightOffset,
+        value = value.text,
+        validationRules = validationRules,
+        validationFlow = validationFlow,
+        validationFlowFieldId = validationFlowFieldId,
         modifier = baseValidatedTextFieldModifier,
+        validationRulesKey = validationRulesKey,
+        allowEmpty = allowEmpty,
+        errorHighlightOffset = errorHighlightOffset,
     ) { validationResult, interactionSource, validationInputHandle ->
         NumericTextField(
             modifier =

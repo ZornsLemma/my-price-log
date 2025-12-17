@@ -3,6 +3,7 @@ package app.zornslemma.mypricelog.ui
 import android.app.Activity
 import android.content.Context
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -84,7 +85,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-    val sharedViewModel: SharedViewModel = viewModel(LocalContext.current as ComponentActivity)
+    val sharedViewModel: SharedViewModel = viewModel()
 
     var errorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var showRestartDialog by rememberSaveable { mutableStateOf(false) }
@@ -279,7 +280,7 @@ fun AppNavigation() {
             popEnterTransition = { EnterTransition.None },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<SelectDataSetViewModel>(
+            ScreenWithViewModel<SelectDataSetViewModel>(
                 backStackEntry = backStackEntry,
                 clearUiContent = { sharedViewModel.selectDataSetScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -321,7 +322,7 @@ fun AppNavigation() {
             val action = backStackEntry.arguments?.getString("action")
             myRequire(action == "edit" || action == "select") { "Invalid action: $action" }
             val select = action == "select"
-            screenWithViewModel<SelectItemViewModel>(
+            ScreenWithViewModel<SelectItemViewModel>(
                 backStackEntry = backStackEntry,
                 clearUiContent = { sharedViewModel.selectItemScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -390,7 +391,7 @@ fun AppNavigation() {
         ) { backStackEntry ->
             val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
-            screenWithViewModel<SelectSourceViewModel>(
+            ScreenWithViewModel<SelectSourceViewModel>(
                 backStackEntry = backStackEntry,
                 clearUiContent = { sharedViewModel.selectSourceScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -438,7 +439,7 @@ fun AppNavigation() {
             enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<EditPriceViewModel>(
+            ScreenWithViewModel<EditPriceViewModel>(
                 backStackEntry = backStackEntry,
                 clearUiContent = { sharedViewModel.editPriceScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -469,7 +470,7 @@ fun AppNavigation() {
             enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<EditDataSetViewModel>(
+            ScreenWithViewModel<EditDataSetViewModel>(
                 backStackEntry = backStackEntry,
                 clearUiContent = { sharedViewModel.editDataSetScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -502,7 +503,7 @@ fun AppNavigation() {
             enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<EditItemViewModel>(
+            ScreenWithViewModel<EditItemViewModel>(
                 backStackEntry = backStackEntry,
                 clearUiContent = { sharedViewModel.editItemScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -550,7 +551,7 @@ fun AppNavigation() {
             enterTransition = { slideUpTransition() },
             popExitTransition = { slideDownTransition() },
         ) { backStackEntry ->
-            screenWithViewModel<EditSourceViewModel>(
+            ScreenWithViewModel<EditSourceViewModel>(
                 backStackEntry = backStackEntry,
                 clearUiContent = { sharedViewModel.editSourceScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -591,7 +592,7 @@ fun AppNavigation() {
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
             val locale = LocalConfiguration.current.locales[0]
-            screenWithViewModel<ViewPriceHistoryViewModel>(
+            ScreenWithViewModel<ViewPriceHistoryViewModel>(
                 backStackEntry = backStackEntry,
                 clearUiContent = { sharedViewModel.viewPriceHistoryScreenInitialUiContent = null },
                 buildViewModel = { app, handle ->
@@ -680,7 +681,7 @@ fun AppNavigation() {
 // ENHANCE: This function was mostly written by ChatGPT. I'm loosely aware of what it does but I
 // don't pretend to understand the details at this point.
 @Composable
-private inline fun <reified VM : ViewModel> screenWithViewModel(
+private inline fun <reified VM : ViewModel> ScreenWithViewModel(
     backStackEntry: NavBackStackEntry,
     noinline clearUiContent: () -> Unit,
     noinline buildViewModel: @DisallowComposableCalls (MyApplication, SavedStateHandle) -> VM,

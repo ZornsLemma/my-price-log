@@ -19,9 +19,9 @@ import app.zornslemma.mypricelog.ui.defaultErrorHighlightOffset
 
 @Composable
 fun ErrorHighlightBox(
+    modifier: Modifier = Modifier,
     borderWidth: Dp = 2.dp,
     offset: Dp = defaultErrorHighlightOffset,
-    modifier: Modifier = Modifier,
     validationInputHandle: ValidationInputHandle,
     content: @Composable () -> Unit,
 ) {

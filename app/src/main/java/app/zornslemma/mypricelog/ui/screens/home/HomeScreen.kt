@@ -68,6 +68,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -319,7 +320,7 @@ private fun HomeScreenNavigationDrawer(
                         .widthIn(
                             max =
                                 min(
-                                    LocalConfiguration.current.screenWidthDp.dp * 2f / 3f,
+                                    LocalWindowInfo.current.containerSize.width.dp * 2f / 3f,
                                     maxNavigationDrawerWidth,
                                 )
                         )

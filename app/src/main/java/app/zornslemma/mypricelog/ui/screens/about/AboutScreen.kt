@@ -2,6 +2,7 @@
 
 package app.zornslemma.mypricelog.ui.screens.about
 
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -47,6 +48,7 @@ import app.zornslemma.mypricelog.ui.components.BulletPoint
 import app.zornslemma.mypricelog.ui.components.ClickableLink
 import app.zornslemma.mypricelog.ui.fullScreenDialogHorizontalBorder
 import app.zornslemma.mypricelog.ui.fullScreenDialogVerticalBorder
+import androidx.core.graphics.createBitmap
 
 @Composable
 fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) {
@@ -178,7 +180,7 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
 }
 
 private fun Drawable.toBitmap(width: Int, height: Int): Bitmap {
-    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val bitmap = createBitmap(width, height)
     val canvas = Canvas(bitmap)
     setBounds(0, 0, canvas.width, canvas.height)
     draw(canvas)
@@ -198,6 +200,7 @@ private fun LauncherIcon(size: Dp = 120.dp) {
     )
 }
 
+@SuppressLint("ObsoleteSdkInt")
 @Composable
 private fun getAppVersion(): String {
     val context = LocalContext.current

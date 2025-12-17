@@ -48,9 +48,9 @@ import app.zornslemma.mypricelog.domain.defaultStalePriceThresholdDays
 import app.zornslemma.mypricelog.ui.common.UiText
 import app.zornslemma.mypricelog.ui.common.ValidationRule
 import app.zornslemma.mypricelog.ui.components.NumericTextField
-import app.zornslemma.mypricelog.ui.components.ValidateFieldState
 import app.zornslemma.mypricelog.ui.components.WarningIcon
 import app.zornslemma.mypricelog.ui.components.textOrNull
+import app.zornslemma.mypricelog.ui.components.validateFieldState
 import app.zornslemma.mypricelog.ui.screenVerticalBorder
 import kotlinx.coroutines.delay
 
@@ -374,7 +374,7 @@ private fun SettingsDialog(
     // This feels like the best option here, given this is a dialog box with a single field and we
     // explicitly disable save if the field is empty. ENHANCE: We could remove that rule.
     val validatedFieldState =
-        ValidateFieldState(
+        validateFieldState(
             value = currentValue,
             validationRules = validationRules,
             allowEmpty = true,

@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -230,6 +231,7 @@ private fun EditPriceScreenPackSize(
     onChange: () -> Unit,
 ) {
     val uiContent = viewModel.uiContent
+    val editableContent by uiContent.editableContent.collectAsStateWithLifecycle()
 
     val saveStatus by
         viewModel.generalEditScreenStateHolder.asyncOperationStatus.collectAsStateWithLifecycle()
@@ -292,7 +294,7 @@ private fun EditPriceScreenPackSize(
             keyboardOptions =
                 KeyboardOptions(
                     keyboardType =
-                        if (uiContent.editableContent.value.measurementUnit.maxDecimals == 0)
+                        if (editableContent.measurementUnit.maxDecimals == 0)
                             KeyboardType.Number
                         else KeyboardType.Decimal
                 ),

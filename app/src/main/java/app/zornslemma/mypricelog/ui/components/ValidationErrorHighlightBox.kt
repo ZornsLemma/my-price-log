@@ -19,12 +19,12 @@ private const val TAG = "ValidationErrorHighlightBox"
 fun <T, U> ValidationErrorHighlightBox(
     value: T,
     validationRules: List<ValidationRule<T>>,
-    validationRulesKey: Any? = null,
-    allowEmpty: Boolean = false,
     validationFlow: SharedFlow<U>,
     validationFlowFieldId: U,
-    errorHighlightOffset: Dp = defaultErrorHighlightOffset,
     modifier: Modifier = Modifier,
+    validationRulesKey: Any? = null,
+    allowEmpty: Boolean = false,
+    errorHighlightOffset: Dp = defaultErrorHighlightOffset,
     content:
         @Composable
         (
@@ -36,7 +36,7 @@ fun <T, U> ValidationErrorHighlightBox(
     val validationInputHandle = rememberValidationInputHandle()
 
     val validatedFieldState =
-        ValidateFieldState(
+        validateFieldState(
             value = value,
             validationRules = validationRules,
             validationRulesKey = validationRulesKey,
