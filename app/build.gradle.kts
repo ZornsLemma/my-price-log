@@ -31,11 +31,11 @@ protobuf {
 }
 
 android {
-    namespace = "com.example.composetutorial"
+    namespace = "app.zornslemma.mypricelog"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.composetutorial"
+        applicationId = "app.zornslemma.mypricelog"
         // minSdk could almost be 24 but because we use VACUUM INTO for the sqlite backup we need
         // minSdk 30 to have a sqlite version supporting it. There are rather faffy workarounds
         // which could perhaps allow lowering this later on, but for now let's just accept this.
