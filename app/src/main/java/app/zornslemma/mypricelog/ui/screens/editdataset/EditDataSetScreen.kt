@@ -28,7 +28,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import app.zornslemma.mypricelog.R
 import app.zornslemma.mypricelog.ui.buttonIconTextSpacing
 import app.zornslemma.mypricelog.ui.common.createCurrencyList
@@ -57,7 +56,6 @@ private enum class UnitPreferenceOption(@field:StringRes val nameResource: Int) 
 @Composable
 fun EditDataSetScreen(
     viewModel: EditDataSetViewModel,
-    navController: NavHostController,
     requestClose: (Long?) -> Unit,
 ) {
     val originalDataSet = viewModel.uiContent.originalContent
@@ -85,7 +83,6 @@ fun EditDataSetScreen(
 
     GeneralEditAndDeleteScreen(
         stateHolder = viewModel.generalEditScreenStateHolder,
-        navController = navController,
         title = {
             Text(
                 if (originalDataSet.id == 0L) stringResource(R.string.title_add_data_set)

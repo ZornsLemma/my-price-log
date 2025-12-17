@@ -22,7 +22,6 @@ import app.zornslemma.mypricelog.domain.UnitPrice
 import app.zornslemma.mypricelog.domain.areDifferentUnitFamilies
 import app.zornslemma.mypricelog.domain.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily
 import app.zornslemma.mypricelog.domain.getRelevantMeasurementUnits
-import app.zornslemma.mypricelog.domain.getRelevantUnitFamilies
 import app.zornslemma.mypricelog.domain.withFriendlyDenominator
 import app.zornslemma.mypricelog.ui.common.AsyncOperationStatus
 import app.zornslemma.mypricelog.ui.common.format

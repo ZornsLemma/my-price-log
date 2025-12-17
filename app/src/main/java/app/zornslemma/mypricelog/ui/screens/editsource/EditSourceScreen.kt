@@ -28,7 +28,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import app.zornslemma.mypricelog.R
 import app.zornslemma.mypricelog.data.LoyaltyType
 import app.zornslemma.mypricelog.ui.buttonIconTextSpacing
@@ -49,7 +48,6 @@ import app.zornslemma.mypricelog.ui.maxSourceNameLength
 @Composable
 fun EditSourceScreen(
     viewModel: EditSourceViewModel,
-    navController: NavHostController,
     requestClose: (Long?) -> Unit,
 ) {
     val originalSource = viewModel.uiContent.originalContent
@@ -77,7 +75,6 @@ fun EditSourceScreen(
 
     GeneralEditAndDeleteScreen(
         stateHolder = viewModel.generalEditScreenStateHolder,
-        navController = navController,
         title =
             topAppBarTitle(
                 if (originalSource.id == 0L) stringResource(R.string.title_add_source)

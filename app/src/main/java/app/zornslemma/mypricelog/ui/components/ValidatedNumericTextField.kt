@@ -1,5 +1,6 @@
 package app.zornslemma.mypricelog.ui.components
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +27,7 @@ fun <T> ValidatedNumericTextField(
     validationFlow: SharedFlow<T>,
     validationFlowFieldId: T,
     errorHighlightOffset: Dp = defaultErrorHighlightOffset,
-    baseValidatedTextFieldModifier: Modifier = Modifier,
+    @SuppressLint("ModifierParameter") baseValidatedTextFieldModifier: Modifier = Modifier,
     label: @Composable (() -> Unit)? = null,
     prefix: @Composable (() -> Unit)? = null,
     suffix: @Composable (() -> Unit)? = null,

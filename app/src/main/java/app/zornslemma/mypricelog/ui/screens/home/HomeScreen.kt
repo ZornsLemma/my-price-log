@@ -2,6 +2,7 @@
 
 package app.zornslemma.mypricelog.ui.screens.home
 
+import android.annotation.SuppressLint
 import android.text.format.DateUtils
 import android.util.Log
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
@@ -583,60 +584,57 @@ private fun HomeScreenContent(
 
             Spacer(modifier = Modifier.height(16.dp).fillMaxWidth())
 
-            if (dataSet != null) {
-                // ENHANCE: I don't know if this is remotely correct, but ChatGPT suggested:
-                //     var lastFoo by remember { mutableStateOf<Foo?>(null) }
-                //     if (foo != null) lastFoo = foo
-                // and then using:
-                //     lastFoo?.let { safeFoo ->
-                // to compose the contents of the AnimatedVisibility. This (might) give us
-                // consistent appearance as we animate out without requiring actual ability to
-                // handle null source/item inside the content, and would (if this works) actually
-                // make things mildly *less* janky as the content would be *the same* not some
-                // null-based approximation. But there may well be subtleties.
-                AnimatedVisibility(visible = item != null && source != null) {
-                    Column {
-                        ItemSourceInfoLive(
-                            viewModel = viewModel,
-                            asyncOperationStatus = asyncOperationStatus,
-                            dataSet = dataSet,
-                            item = item,
-                            source = source,
-                            augmentedPrice =
-                                priceAnalysis.augmentedPriceList.singleOrNull {
-                                    it.basePrice.sourceId == source?.id
-                                },
-                            onEditPriceClick = onEditPriceClick,
-                            onViewHistoryClick = onViewHistoryClick,
-                            onDeletePriceClick = { showDeletePriceConfirmDialog = true },
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-                }
-
-                // ENHANCE: Just possibly we should use AnimatedVisibility here. However, it's not
-                // that big a deal (but maybe do look into it) as the only way to have item be
-                // null is if there *are* no items - unlike source, you can't deliberately set
-                // it to null. So this is not a particularly common case and the animation would
-                // only be firing if we were navigating back from an edit item screen where
-                // we've removed the last item or something like that - it's not a "something
-                // changed within the screen itself" animation like having source go between
-                // null and non-null is.
-                if (item != null) {
-                    // Clicking on one of the items on this card selects its source, just as if it
-                    // had been selected via the source dropdown. This is technically redundant but
-                    // I found myself wanting to do it all the time to quickly see the details of a
-                    // price, so I've implemented it. (The dropdown is still needed, as it's the
-                    // only way to select sources which don't appear on the price comparison card.)
-                    PriceComparisonCard(
-                        dataSet,
-                        source,
-                        priceAnalysis,
-                        onClick = { onSelectedSourceIdChange(it) },
-                        asyncOperationStatus,
+            // ENHANCE: I don't know if this is remotely correct, but ChatGPT suggested:
+            //     var lastFoo by remember { mutableStateOf<Foo?>(null) }
+            //     if (foo != null) lastFoo = foo
+            // and then using:
+            //     lastFoo?.let { safeFoo ->
+            // to compose the contents of the AnimatedVisibility. This (might) give us consistent
+            // appearance as we animate out without requiring actual ability to handle null
+            // source/item inside the content, and would (if this works) actually make things mildly
+            // *less* janky as the content would be *the same* not some null-based approximation.
+            // But there may well be subtleties.
+            AnimatedVisibility(visible = item != null && source != null) {
+                Column {
+                    ItemSourceInfoLive(
+                        viewModel = viewModel,
+                        asyncOperationStatus = asyncOperationStatus,
+                        dataSet = dataSet,
+                        item = item,
+                        source = source,
+                        augmentedPrice =
+                            priceAnalysis.augmentedPriceList.singleOrNull {
+                                it.basePrice.sourceId == source?.id
+                            },
+                        onEditPriceClick = onEditPriceClick,
+                        onViewHistoryClick = onViewHistoryClick,
+                        onDeletePriceClick = { showDeletePriceConfirmDialog = true },
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
+            }
+
+            // ENHANCE: Just possibly we should use AnimatedVisibility here. However, it's not that
+            // big a deal (but maybe do look into it) as the only way to have item be null is if
+            // there *are* no items - unlike source, you can't deliberately set it to null. So this
+            // is not a particularly common case and the animation would only be firing if we were
+            // navigating back from an edit item screen where we've removed the last item or
+            // something like that - it's not a "something changed within the screen itself"
+            // animation like having source go between null and non-null is.
+            if (item != null) {
+                // Clicking on one of the items on this card selects its source, just as if it had
+                // been selected via the source dropdown. This is technically redundant but I found
+                // myself wanting to do it all the time to quickly see the details of a price, so
+                // I've implemented it. (The dropdown is still needed, as it's the only way to
+                // select sources which don't appear on the price comparison card.)
+                PriceComparisonCard(
+                    dataSet,
+                    source,
+                    priceAnalysis,
+                    onClick = { onSelectedSourceIdChange(it) },
+                    asyncOperationStatus,
+                )
             }
         }
     }
@@ -1076,7 +1074,7 @@ private fun SourcePriceCardMenu(
     augmentedPrice: AugmentedPrice?,
     onViewHistoryClick: () -> Unit,
     onDeletePriceClick: () -> Unit,
-    menuModifier: Modifier,
+    @SuppressLint("ModifierParameter") menuModifier: Modifier,
 ) {
     val priceHistoryCount by
         remember(dataSet.id, item?.id, source?.id) {

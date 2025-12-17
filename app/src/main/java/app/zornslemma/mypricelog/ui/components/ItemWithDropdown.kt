@@ -23,7 +23,9 @@ import androidx.compose.ui.unit.dp
 fun <T, ID : Comparable<ID>> ItemWithDropdown(
     modifier: Modifier = Modifier,
     dropdownModifier: Modifier = Modifier,
-    @Suppress("unused") selectedId: ID?, // see above
+    @Suppress("unused", "RedundantSuppression", "RedundantSuppression",
+        "RedundantSuppression"
+    ) selectedId: ID?, // see above
     onItemSelected: (ID) -> Unit,
     enabled: Boolean = true,
     onExpand: (Boolean) -> Unit = {},

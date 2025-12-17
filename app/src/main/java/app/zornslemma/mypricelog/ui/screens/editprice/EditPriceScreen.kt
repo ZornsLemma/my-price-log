@@ -26,7 +26,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import app.zornslemma.mypricelog.R
 import app.zornslemma.mypricelog.data.DataSet
 import app.zornslemma.mypricelog.data.EditablePrice
@@ -53,7 +52,6 @@ import app.zornslemma.mypricelog.ui.nonBreakingSpace
 @Composable
 fun EditPriceScreen(
     viewModel: EditPriceViewModel,
-    navController: NavHostController,
     requestClose: (Long?) -> Unit,
 ) {
     val originalPrice = viewModel.uiContent.originalContent

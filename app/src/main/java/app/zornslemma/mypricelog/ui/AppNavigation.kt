@@ -385,7 +385,6 @@ fun AppNavigation() {
             popEnterTransition = { EnterTransition.None },
             popExitTransition = { slideRightTransition() },
         ) { backStackEntry ->
-            val dataSetId = backStackEntry.arguments?.getString("dataSetId")!!.toLong()
             val dataSetName = backStackEntry.arguments?.getString("dataSetName")
             ScreenWithViewModel<SelectSourceViewModel>(
                 backStackEntry = backStackEntry,
@@ -449,7 +448,6 @@ fun AppNavigation() {
             ) { viewModel ->
                 EditPriceScreen(
                     viewModel,
-                    navController,
                     requestClose = { id ->
                         if (id == null) {
                             navController.popBackStack()
@@ -480,7 +478,6 @@ fun AppNavigation() {
                 val context = LocalContext.current.applicationContext
                 EditDataSetScreen(
                     viewModel,
-                    navController,
                     requestClose = { newSelectedDataSetId ->
                         if (newSelectedDataSetId == null) {
                             navController.popBackStack()
@@ -514,7 +511,6 @@ fun AppNavigation() {
             ) { viewModel ->
                 EditItemScreen(
                     viewModel,
-                    navController,
                     requestClose = { newSelectedItemId ->
                         // It might be somewhat logical to just do popBackStack() here, but in
                         // reality if I've added or edited an item it's almost always because I want
@@ -560,7 +556,6 @@ fun AppNavigation() {
                 val context = LocalContext.current.applicationContext
                 EditSourceScreen(
                     viewModel,
-                    navController,
                     requestClose = { newSelectedSourceId ->
                         if (newSelectedSourceId == null) {
                             navController.popBackStack()

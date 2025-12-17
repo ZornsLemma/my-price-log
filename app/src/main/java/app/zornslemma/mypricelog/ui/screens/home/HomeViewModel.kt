@@ -2,7 +2,6 @@ package app.zornslemma.mypricelog.ui.screens.home
 
 import android.app.Application
 import android.util.Log
-import android.util.Log.e
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -24,7 +23,6 @@ import app.zornslemma.mypricelog.ui.common.AsyncOperationStatus
 import app.zornslemma.mypricelog.ui.common.LoadState
 import app.zornslemma.mypricelog.ui.common.SyncedStateEvent
 import app.zornslemma.mypricelog.ui.common.setSelectedDataSetIdAsync
-import app.zornslemma.mypricelog.ui.common.setSelectedItemIdAsync
 import app.zornslemma.mypricelog.ui.common.setSelectedSourceIdAsync
 import app.zornslemma.mypricelog.ui.common.userPreferencesStore
 import app.zornslemma.mypricelog.ui.common.valueOrNull
@@ -341,7 +339,7 @@ class HomeViewModel(private val repository: Repository, application: Application
                 previousPrice.value = price
                 asyncOperationStatus.update(AsyncOperationStatus.Success(null))
             } catch (e: Exception) {
-                e("HomeViewModel", "Unexpected exception", e)
+                Log.e("HomeViewModel", "Unexpected exception", e)
                 asyncOperationStatus.update(
                     AsyncOperationStatus.Error("updatePrice failed: ${e.toString()}")
                 )

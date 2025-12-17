@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
         // looks a bit odd. ENHANCE: In the future it might be nice to add alternative layouts to
         // work better on larger devices like tablets or foldables in both landscape and portrait
         // mode. This is probably not a common use case though.
-        @Suppress("SimplifyBooleanWithConstants")
+        @Suppress("SimplifyBooleanWithConstants", "KotlinConstantConditions")
         if (isPhone() && !ALLOW_ROTATION_ON_PHONE) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }

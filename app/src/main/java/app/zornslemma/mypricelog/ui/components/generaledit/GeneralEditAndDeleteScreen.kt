@@ -10,7 +10,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
-import androidx.navigation.NavHostController
 import app.zornslemma.mypricelog.R
 import app.zornslemma.mypricelog.debug.debugDelay
 import app.zornslemma.mypricelog.debug.debugThrow
@@ -20,7 +19,6 @@ import app.zornslemma.mypricelog.ui.components.WarningIcon
 @Composable
 fun GeneralEditAndDeleteScreen(
     stateHolder: GeneralEditScreenStateHolder,
-    navController: NavHostController,
     title: @Composable () -> Unit,
     isDirty: () -> Boolean,
     validateForSave: suspend () -> Boolean,

@@ -32,7 +32,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import app.zornslemma.mypricelog.R
 import app.zornslemma.mypricelog.debug.myCheck
 import app.zornslemma.mypricelog.domain.MeasurementUnit
@@ -58,7 +57,6 @@ import app.zornslemma.mypricelog.ui.maxNotesLength
 @Composable
 fun EditItemScreen(
     viewModel: EditItemViewModel,
-    navController: NavHostController,
     requestClose: (newSelectedItemId: Long?) -> Unit,
 ) {
     val originalItem = viewModel.uiContent.originalContent
@@ -85,7 +83,6 @@ fun EditItemScreen(
         )
     GeneralEditAndDeleteScreen(
         stateHolder = viewModel.generalEditScreenStateHolder,
-        navController = navController,
         title =
             topAppBarTitle(
                 if (viewModel.uiContent.originalContent.id == 0L)
