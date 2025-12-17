@@ -1,0 +1,11 @@
+Registra y compara precios de productos en tiendas locales, completamente sin conexión:
+
+- Crea tu lista de tiendas y productos.
+- Introduce y actualiza los precios mientras compras.
+- Consulta el precio unitario de un producto en todas las tiendas que lo venden y decide dónde comprar.
+
+La interfaz está pensada para usar rápidamente en el pasillo del supermercado, con una mano sujetando la cesta y la otra el móvil.
+
+Las conversiones de unidades se hacen automáticamente (métricas, imperiales y estadounidenses).
+
+La app registra la fecha de cada precio, para que sepas si la información es reciente o está desactualizada.
