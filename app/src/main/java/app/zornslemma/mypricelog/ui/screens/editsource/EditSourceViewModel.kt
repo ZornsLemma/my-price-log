@@ -124,6 +124,6 @@ class EditSourceViewModel(
     suspend fun performDelete() {
         val sourceId = uiContent.editableContent.value.id
         myCheck(sourceId != 0L) { "Expected to delete an actual source but have ID 0" }
-        val rowsDeleted = repository.deleteSourceById(sourceId)
+        repository.deleteSourceById(sourceId)
     }
 }

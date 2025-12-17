@@ -72,8 +72,6 @@ fun PackPriceAndSizeRow(
             )
         }
 
-        val relevantUnitFamilies = remember(dataSet) { dataSet.getRelevantUnitFamilies() }
-
         val relevantUnitList =
             remember(dataSet, quantity.unit.quantityType) {
                 dataSet.getRelevantMeasurementUnits(

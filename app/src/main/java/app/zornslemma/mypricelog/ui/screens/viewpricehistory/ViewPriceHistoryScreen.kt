@@ -33,7 +33,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import app.zornslemma.mypricelog.R
 import app.zornslemma.mypricelog.data.DataSet
 import app.zornslemma.mypricelog.data.PriceHistory
@@ -55,7 +54,6 @@ import java.time.format.FormatStyle
 @Composable
 fun ViewPriceHistoryScreen(
     viewModel: ViewPriceHistoryViewModel,
-    navController: NavHostController,
     requestClose: () -> Unit,
     requestEditAsNew: (priceHistory: PriceHistory) -> Unit,
 ) {

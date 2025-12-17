@@ -96,6 +96,6 @@ class EditItemViewModel(
     suspend fun performDelete() {
         val itemId = uiContent.editableContent.value.id
         myCheck(itemId != 0L) { "Expected to delete an actual item but have ID 0" }
-        val rowsDeleted = repository.deleteItemById(itemId)
+        repository.deleteItemById(itemId)
     }
 }

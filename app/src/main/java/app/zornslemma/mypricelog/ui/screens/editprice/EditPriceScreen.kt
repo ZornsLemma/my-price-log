@@ -15,7 +15,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -90,7 +89,6 @@ fun EditPriceScreen(
 
     GeneralEditScreen(
         stateHolder = viewModel.generalEditScreenStateHolder,
-        navController = navController,
         title = topAppBarTitle(item.name, source.name),
         isDirty = {
             editablePrice.copy(toConfirm = false) != originalPrice.copy(toConfirm = false)
@@ -329,7 +327,7 @@ private fun EditPriceScreenPackSize(
                 // space. "fl"/"oz" is better than "fl o"/"z" if we are forced to wrap, although I
                 // suspect we are very unlikely to need to.
                 getCollapsedItemText = {
-                    context.getString(it.symbol).replace("$nonBreakingSpace", " ")
+                    context.getString(it.symbol).replace(nonBreakingSpace, " ")
                 },
                 getItemText = {
                     "${context.getString(it.fullName)} (${context.getString(it.symbol)})"

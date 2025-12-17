@@ -101,7 +101,7 @@ class HomeViewModel(private val repository: Repository, application: Application
         setSelectedDataSetIdAsync(app, dataSetId)
     }
 
-    fun setSelectedItemId(itemId: Long) {
+    fun setSelectedSourceId(sourceId: Long) {
         val dataSetId = selectedDataSetIdStateFlow.value.valueOrNull()
         // We don't have the concept of a null selected data set ID (if a data set is deleted we
         // keep the old ID "selected", as we do for sources and items, and just end up with null
@@ -109,13 +109,6 @@ class HomeViewModel(private val repository: Repository, application: Application
         // valueOrNull() can only return null during initial async data loading. But if we haven't
         // even loaded the current data set ID it shouldn't be possible for the user to see any
         // items, let alone select one.
-        myCheck(dataSetId != null) { "dataSetId is null even though we are selecting an item" }
-        setSelectedItemIdAsync(app, dataSetId!!, itemId)
-    }
-
-    fun setSelectedSourceId(sourceId: Long) {
-        val dataSetId = selectedDataSetIdStateFlow.value.valueOrNull()
-        // See comment in setSelectedItemId() for more on this check.
         myCheck(dataSetId != null) { "dataSetId is null even though we are selecting a source" }
         setSelectedSourceIdAsync(app, dataSetId!!, sourceId)
     }

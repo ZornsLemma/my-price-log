@@ -123,7 +123,7 @@ fun <T> GeneralSelectorScreen(
                 FilteredTextField(
                     value = searchString,
                     onCandidateValueChange = createOnCandidateValueChangeMaxLength(maxSearchLength),
-                    onValueChange = { it -> stateHolder.searchStringFlow.value = it },
+                    onValueChange = { stateHolder.searchStringFlow.value = it },
                     label = { Text(stringResource(R.string.label_search)) },
                     leadingIcon = {
                         Icon(
@@ -157,7 +157,6 @@ fun <T> GeneralSelectorScreen(
                 LazyColumn {
                     items(items = dataListSorted, key = { item -> getId(item) }) { item ->
                         GeneralSelectorScreenListItem(
-                            id = getId(item),
                             name = getName(item),
                             onItemSelected = dropUnlessResumed { onItemSelected(item) },
                         )
@@ -177,6 +176,6 @@ fun <T> GeneralSelectorScreen(
 // rather than simplifying the code. But inlining causes problems with dropUnlessResumed and the
 // possible workarounds feel worse than just keeping this function.
 @Composable
-private fun GeneralSelectorScreenListItem(id: Long, name: String, onItemSelected: () -> Unit) {
+private fun GeneralSelectorScreenListItem(name: String, onItemSelected: () -> Unit) {
     ListItem(headlineContent = { Text(name) }, modifier = Modifier.clickable { onItemSelected() })
 }

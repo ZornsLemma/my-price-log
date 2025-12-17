@@ -32,16 +32,17 @@ class MainActivity : ComponentActivity() {
         // looks a bit odd. ENHANCE: In the future it might be nice to add alternative layouts to
         // work better on larger devices like tablets or foldables in both landscape and portrait
         // mode. This is probably not a common use case though.
+        @Suppress("SimplifyBooleanWithConstants")
         if (isPhone() && !ALLOW_ROTATION_ON_PHONE) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
 
         // Target SDK >=35 directly enables edge-to-edge (see e.g.
         // https://stackoverflow.com/questions/79018063/trying-to-understand-edge-to-edge-in-android).
-        // We don't particularly want this, but we can work with it so we don't try to fight it. We
-        // call it here to be explicit.
+        // We call it here to be explicit.
         enableEdgeToEdge()
 
+        @Suppress("KotlinConstantConditions")
         if (DebugFlags.USE_STRICT_MODE) {
             StrictMode.setThreadPolicy(
                 StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build()

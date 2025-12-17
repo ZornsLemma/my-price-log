@@ -52,7 +52,6 @@ fun restoreDatabase(context: Context, sourceUri: Uri) {
     val tempFile = File(context.cacheDir, "temp_backup.db")
     try {
         // Copy sourceUri to temp file.
-        null
         context.contentResolver.openInputStream(sourceUri)?.use { input ->
             FileOutputStream(tempFile).use { output -> input.copyTo(output) }
         }

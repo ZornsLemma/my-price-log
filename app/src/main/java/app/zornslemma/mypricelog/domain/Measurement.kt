@@ -27,7 +27,6 @@ enum class QuantityType(val id: Int, @field:StringRes val nameResource: Int) {
 
     companion object {
         // This is unused but it supports Converters.toQuantityType(), which we want to keep around.
-        @Suppress("unused")
         fun fromId(id: Int): QuantityType? {
             return entries.find { it.id == id }
         }

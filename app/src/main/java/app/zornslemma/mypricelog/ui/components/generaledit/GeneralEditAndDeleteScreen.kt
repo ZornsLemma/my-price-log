@@ -38,7 +38,6 @@ fun GeneralEditAndDeleteScreen(
 
     GeneralEditScreen(
         stateHolder = stateHolder,
-        navController = navController,
         title = title,
         isDirty = isDirty,
         validateForSave = validateForSave,

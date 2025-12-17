@@ -29,7 +29,7 @@ data class ViewPriceHistoryScreenStaticContent(
 ) : Parcelable
 
 class ViewPriceHistoryViewModel(
-    private val repository: Repository,
+    repository: Repository,
     savedStateHandle: SavedStateHandle,
     initialStaticContent: ViewPriceHistoryScreenStaticContent?,
 ) : ViewModel() {
@@ -55,7 +55,7 @@ class ViewPriceHistoryViewModel(
 
     fun generatePriceHistoryDeltaList(
         priceHistoryList: List<PriceHistory>,
-        locale: Locale,
+        @Suppress("unused") locale: Locale,
         confirmedAtFormatter: DateTimeFormatter,
     ) =
         // If there is no current price (it's been deleted), start the list with a null to represent

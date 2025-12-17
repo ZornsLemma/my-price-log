@@ -25,5 +25,6 @@ sealed class UiText {
                 context.resources.getQuantityString(resId, quantity, *args.toTypedArray())
         }
 
+    @Suppress("unused")
     @Composable fun asString(): String = asString(LocalContext.current)
 }

@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 fun <T, ID : Comparable<ID>> ItemWithDropdown(
     modifier: Modifier = Modifier,
     dropdownModifier: Modifier = Modifier,
-    @Suppress("UNUSED_PARAMETER") selectedId: ID?, // see above
+    @Suppress("unused") selectedId: ID?, // see above
     onItemSelected: (ID) -> Unit,
     enabled: Boolean = true,
     onExpand: (Boolean) -> Unit = {},
@@ -31,7 +31,7 @@ fun <T, ID : Comparable<ID>> ItemWithDropdown(
     getId: (T) -> ID,
     getItemText: (T) -> String,
     getDividerBetween: ((T, T) -> Boolean)? = null,
-    @Suppress("UNUSED_PARAMETER") addBottomSpace: Boolean = false,
+    @Suppress("unused") addBottomSpace: Boolean = false,
     content: @Composable (expanded: Boolean) -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }

@@ -96,7 +96,7 @@ class EditDataSetViewModel(
             // system" is a bit technical, I hope the overall context with the caption above will
             // make it clear.
             ValidationRule<UnitPreferences>(
-                { it -> it.allowMetric || it.allowImperial || it.allowUSCustomary },
+                { it.allowMetric || it.allowImperial || it.allowUSCustomary },
                 UiText.Res(
                     R.string.supporting_text_at_least_one_measurement_system_must_be_selected
                 ),
@@ -155,6 +155,6 @@ class EditDataSetViewModel(
     suspend fun performDelete() {
         val dataSetId = uiContent.editableContent.value.id
         myCheck(dataSetId != 0L) { "Expected to delete an actual data set but have ID 0" }
-        val rowsDeleted = repository.deleteDataSetById(dataSetId)
+        repository.deleteDataSetById(dataSetId)
     }
 }

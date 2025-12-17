@@ -53,6 +53,7 @@ abstract class AppDatabase : RoomDatabase() {
                 ?: synchronized(this) {
                     Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME)
                         .apply {
+                            @Suppress("KotlinConstantConditions")
                             if (DebugFlags.LOG_SQL) {
                                 setQueryCallback(
                                     { sqlQuery, bindArgs ->

@@ -602,7 +602,6 @@ private fun HomeScreenContent(
                             dataSet = dataSet,
                             item = item,
                             source = source,
-                            sourceList = sourceList,
                             augmentedPrice =
                                 priceAnalysis.augmentedPriceList.singleOrNull {
                                     it.basePrice.sourceId == source?.id
@@ -954,67 +953,65 @@ private fun SourcePriceCardBody(
     ) {
         CardTitle(stringResource(R.string.title_source_price))
 
-        if (true) {
-            if (augmentedPrice == null) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(stringResource(R.string.message_no_price_for_item_at_source))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        FilledTonalButton(
-                            onClick = onEditPriceClick,
-                            shape = MaterialTheme.shapes.small,
-                        ) {
-                            Text(stringResource(R.string.button_add))
-                        }
-                    }
-                }
-            } else {
-                val price = augmentedPrice.basePrice
-
-                PackPriceAndSizeRow(
-                    price.price,
-                    price.count,
-                    price.quantity,
-                    dataSet,
-                    asyncOperationStatus,
-                )
-
+        if (augmentedPrice == null) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.message_no_price_for_item_at_source))
                 Row(
-                    modifier = Modifier.padding(bottom = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(storePriceGridGutterWidth),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
                 ) {
-                    LabeledItem(
-                        modifier = Modifier.weight(storePriceGridLeftColumnWeight),
-                        label = stringResource(R.string.label_confirmed),
+                    FilledTonalButton(
+                        onClick = onEditPriceClick,
+                        shape = MaterialTheme.shapes.small,
                     ) {
-                        RelativeTimeText(augmentedPrice)
-                    }
-
-                    Box(
-                        modifier =
-                            Modifier.weight(storePriceGridRightColumnWeight)
-                                .fillMaxSize()
-                                .align(Alignment.CenterVertically)
-                    ) {
-                        PriceJudgementIndicator(augmentedPrice.priceJudgement)
+                        Text(stringResource(R.string.button_add))
                     }
                 }
-
-                if (price.notes.isNotEmpty()) {
-                    Row(modifier = Modifier.padding(bottom = 8.dp)) {
-                        LabeledItem(stringResource(R.string.label_notes)) { Text(price.notes) }
-                    }
-                }
-
-                EditConfirmButtons(
-                    viewModel,
-                    asyncOperationStatus,
-                    augmentedPrice,
-                    onEditPriceClick,
-                )
             }
+        } else {
+            val price = augmentedPrice.basePrice
+
+            PackPriceAndSizeRow(
+                price.price,
+                price.count,
+                price.quantity,
+                dataSet,
+                asyncOperationStatus,
+            )
+
+            Row(
+                modifier = Modifier.padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(storePriceGridGutterWidth),
+            ) {
+                LabeledItem(
+                    modifier = Modifier.weight(storePriceGridLeftColumnWeight),
+                    label = stringResource(R.string.label_confirmed),
+                ) {
+                    RelativeTimeText(augmentedPrice)
+                }
+
+                Box(
+                    modifier =
+                        Modifier.weight(storePriceGridRightColumnWeight)
+                            .fillMaxSize()
+                            .align(Alignment.CenterVertically)
+                ) {
+                    PriceJudgementIndicator(augmentedPrice.priceJudgement)
+                }
+            }
+
+            if (price.notes.isNotEmpty()) {
+                Row(modifier = Modifier.padding(bottom = 8.dp)) {
+                    LabeledItem(stringResource(R.string.label_notes)) { Text(price.notes) }
+                }
+            }
+
+            EditConfirmButtons(
+                viewModel,
+                asyncOperationStatus,
+                augmentedPrice,
+                onEditPriceClick,
+            )
         }
     }
 }
@@ -1026,7 +1023,6 @@ private fun ItemSourceInfoLive(
     dataSet: DataSet,
     item: Item?,
     source: Source?,
-    sourceList: List<Source>,
     augmentedPrice: AugmentedPrice?,
     onEditPriceClick: () -> Unit,
     onViewHistoryClick: () -> Unit,
@@ -1157,7 +1153,6 @@ private fun EditConfirmButtons(
         // button users click on most on this card (most of the time prices
         // won't have changed on subsequent visits) - so it gets the position on
         // the right.
-        val locale = LocalConfiguration.current.locales[0]
         val showConfirmButton = viewModel.previousPrice.value == null
         FilledTonalButton(
             /* modifier = Modifier.width(confirmButtonWidth) ,*/
@@ -1296,7 +1291,6 @@ private fun RelativeTimeText(augmentedPrice: AugmentedPrice) {
     val confirmedAt = augmentedPrice.basePrice.confirmedAt
     var now by remember(confirmedAt) { mutableStateOf(Instant.now()) }
     val ageInSeconds = Duration.between(confirmedAt, now).seconds
-    val secondsPerDay = 24 * 60 * 60
 
     // This LaunchedEffect causes the *state variable* "now" to update periodically, forcing a
     // recomposition so the user can see the age increasing.

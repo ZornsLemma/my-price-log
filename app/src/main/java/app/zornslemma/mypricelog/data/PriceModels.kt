@@ -350,7 +350,7 @@ data class PriceHistory(
     @ColumnInfo(name = "confirmed_at") val confirmedAt: Instant,
     val notes: String,
     @ColumnInfo(name = "modified_at") val modifiedAt: Instant,
-) {}
+)
 
 fun PriceHistory.toPrice(): Price {
     return Price(

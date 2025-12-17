@@ -56,8 +56,8 @@ fun Source?.toEditable(dataSetId: Long, locale: Locale): EditableSource {
     if (this == null) {
         return EditableSource(0, dataSetId, "", LoyaltyType.NONE, "", "")
     } else {
-        myCheck(dataSetId == dataSetId) {
-            "Expected identical dataSetIds but have dataSetId $dataSetId and dataSetId $dataSetId"
+        myCheck(this.dataSetId == dataSetId) {
+            "Expected identical dataSetIds but have this.dataSetId ${this.dataSetId} and dataSetId $dataSetId"
         }
         val loyaltyPercentage =
             when (loyaltyType) {

@@ -2,8 +2,6 @@ package app.zornslemma.mypricelog.ui
 
 import android.app.Activity
 import android.content.Context
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -45,7 +43,6 @@ import app.zornslemma.mypricelog.data.backupDatabase
 import app.zornslemma.mypricelog.data.restoreDatabase
 import app.zornslemma.mypricelog.data.toEditable
 import app.zornslemma.mypricelog.debug.myRequire
-import app.zornslemma.mypricelog.domain.dataStore
 import app.zornslemma.mypricelog.ui.common.setSelectedDataSetIdAsync
 import app.zornslemma.mypricelog.ui.common.setSelectedItemIdAsync
 import app.zornslemma.mypricelog.ui.common.setSelectedSourceIdAsync
@@ -336,7 +333,6 @@ fun AppNavigation() {
                     )
                 },
             ) { viewModel ->
-                val dataStore = LocalContext.current.applicationContext.dataStore
                 val context = LocalContext.current.applicationContext
                 GeneralSelectorScreen(
                     viewModel.generalSelectorScreenStateHolder,
@@ -481,7 +477,6 @@ fun AppNavigation() {
                     )
                 },
             ) { viewModel ->
-                val dataStore = LocalContext.current.applicationContext.dataStore
                 val context = LocalContext.current.applicationContext
                 EditDataSetScreen(
                     viewModel,
@@ -517,7 +512,6 @@ fun AppNavigation() {
                     )
                 },
             ) { viewModel ->
-                val dataStore = LocalContext.current.applicationContext.dataStore
                 EditItemScreen(
                     viewModel,
                     navController,
@@ -563,7 +557,6 @@ fun AppNavigation() {
                     )
                 },
             ) { viewModel ->
-                val dataStore = LocalContext.current.applicationContext.dataStore
                 val context = LocalContext.current.applicationContext
                 EditSourceScreen(
                     viewModel,
@@ -612,7 +605,6 @@ fun AppNavigation() {
             ) { viewModel ->
                 ViewPriceHistoryScreen(
                     viewModel,
-                    navController,
                     requestClose = { navController.popBackStack() },
                     requestEditAsNew = { priceHistory ->
                         // ENHANCE: There might be some value into copying priceHistory.id onto the

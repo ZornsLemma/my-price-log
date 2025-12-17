@@ -64,7 +64,7 @@ class MyApplication : Application() {
                     }
                 }
 
-                dataStore.edit() { it[demoDataInsertedKey] = true }
+                dataStore.edit { it[demoDataInsertedKey] = true }
             }
         }
     }

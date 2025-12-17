@@ -35,7 +35,7 @@ private const val TAG = "PersistentUiContent"
  */
 @OptIn(FlowPreview::class)
 class PersistentUiContent<EditableContentType : Parcelable, StaticContentType : Parcelable>(
-    val viewModel: ViewModel,
+    viewModel: ViewModel,
     val savedStateHandle: SavedStateHandle,
     keySuffix: String,
     initialContent: EditableContentType?,

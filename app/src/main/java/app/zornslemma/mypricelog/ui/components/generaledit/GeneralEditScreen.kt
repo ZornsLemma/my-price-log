@@ -36,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.navigation.NavHostController
 import app.zornslemma.mypricelog.R
 import app.zornslemma.mypricelog.debug.debugDelay
 import app.zornslemma.mypricelog.debug.debugThrow
@@ -55,7 +54,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun GeneralEditScreen(
     stateHolder: GeneralEditScreenStateHolder,
-    navController: NavHostController,
     title: @Composable () -> Unit,
     isDirty: () -> Boolean,
     validateForSave: suspend () -> Boolean,
