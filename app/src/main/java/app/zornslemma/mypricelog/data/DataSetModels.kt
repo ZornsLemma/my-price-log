@@ -1,5 +1,4 @@
 package app.zornslemma.mypricelog.data
-// TODO: I NEED TO LOOK AT ALL COMPILE WARNINGS
 
 import android.os.Parcelable
 import androidx.room.ColumnInfo
