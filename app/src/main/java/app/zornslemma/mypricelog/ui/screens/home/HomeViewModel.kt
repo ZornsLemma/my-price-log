@@ -206,7 +206,7 @@ class HomeViewModel(private val repository: Repository, application: Application
         val combinedDatabaseFlow =
             combine(dataSetFlow, dataSetOnlyDatabaseFlow, dataSetIdAndItemIdDatabaseFlow, ::Triple)
 
-        val todoRenameMeFlow =
+        val allUiStateInputsFlow =
             combine(
                 selectedSourceIdStateFlow,
                 combinedDatabaseFlow,
@@ -220,8 +220,7 @@ class HomeViewModel(private val repository: Repository, application: Application
         // selection. However, it doesn't make any guarantees as to how long it takes to emit after
         // allUserInputFlow emits.
         val completeUiStateFlow =
-            // TODO: FIX NAME HERE!
-            todoRenameMeFlow.flatMapLatest { (databaseResults, priceAgeSettings, locale) ->
+            allUiStateInputsFlow.flatMapLatest { (databaseResults, priceAgeSettings, locale) ->
                 val (dataSetList, taggedItemListAndSourceList, taggedPriceList) = databaseResults
                 // We can take the current UI values here because ultimately that's all we care
                 // about; if the current flow value we're processing is older, we want to discard it
