@@ -85,7 +85,7 @@ class ViewPriceHistoryViewModel(
                     if (newPriceHistory == null)
                         listOf(oldPriceHistory.toPriceHistoryDelta(confirmedAtFormatter))
                     else {
-                        var subList = mutableListOf<PriceHistoryDelta?>()
+                        val subList = mutableListOf<PriceHistoryDelta?>()
                         if (newPriceHistory.priceId != oldPriceHistory.priceId) {
                             subList.add(null)
                         }

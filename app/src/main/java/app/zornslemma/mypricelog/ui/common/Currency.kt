@@ -5,11 +5,11 @@ import java.util.Currency
 import java.util.Locale
 
 fun Locale.currencyOrNull(): Currency? {
-    try {
-        return Currency.getInstance(this)
+    return try {
+        Currency.getInstance(this)
     } catch (e: IllegalArgumentException) {
         // Some locales (e.g. zz_ZZ) might not have a valid currency.
-        return null
+        null
     }
 }
 
@@ -198,10 +198,10 @@ fun createCurrencyList(locales: LocaleList): Pair<String, List<Pair<String, Stri
     fun createPair(currency: Currency): Pair<String, String> {
         val currencyCode = currency.currencyCode
         val displayName = currency.getDisplayName(locales[0])
-        if (displayName.contains(currencyCode)) {
-            return Pair(currency.currencyCode, displayName)
+        return if (displayName.contains(currencyCode)) {
+            Pair(currency.currencyCode, displayName)
         } else {
-            return Pair(currency.currencyCode, "$displayName ($currencyCode)")
+            Pair(currency.currencyCode, "$displayName ($currencyCode)")
         }
     }
 

@@ -159,11 +159,9 @@ class EditPriceViewModel(
             return uiContent.editableContent.value.id
         }
         val price = uiContent.editableContent.value.toDomain(uiContent.staticContent.frozenLocale)
-        if (price == null) {
-            throw IllegalStateException(
+            ?: throw IllegalStateException(
                 "saveEditablePrice() called with an inconvertible editablePrice: ${uiContent.editableContent.value}"
             )
-        }
         return repository.updateOrInsertPrice(price)
     }
 }

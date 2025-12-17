@@ -27,7 +27,7 @@ fun OverflowMenu(
             contentDescription = stringResource(R.string.content_description_more_options),
         )
         DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-            content({ menuExpanded = false })
+            content { menuExpanded = false }
         }
     }
 }

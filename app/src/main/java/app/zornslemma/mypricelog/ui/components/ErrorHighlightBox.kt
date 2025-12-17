@@ -25,8 +25,8 @@ fun ErrorHighlightBox(
     validationInputHandle: ValidationInputHandle,
     content: @Composable () -> Unit,
 ) {
-    var visible = validationInputHandle.errorHighlightBoxVisible.value
-    var alpha = remember { Animatable(0f) }
+    val visible = validationInputHandle.errorHighlightBoxVisible.value
+    val alpha = remember { Animatable(0f) }
     LaunchedEffect(visible) {
         if (visible) {
             // Start animating from completely transparent.

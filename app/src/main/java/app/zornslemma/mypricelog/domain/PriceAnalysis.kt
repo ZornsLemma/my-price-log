@@ -69,16 +69,16 @@ private fun inflationAdjustedPrice(
     priceAgeSettings: PriceAgeSettings,
 ): Double {
     // We use the word "after" in the Settings descriptions of these thresholds, so we use <= here.
-    if (ageDays <= priceAgeSettings.stalePriceThresholdDays) {
-        return price
+    return if (ageDays <= priceAgeSettings.stalePriceThresholdDays) {
+        price
     } else {
         // Note that inflation starts to apply only from stalePriceThresholdDays; the exponent here
         // is ageDays - stalePriceThresholdDays. We don't want to suddenly apply the previous
         // stalePriceThresholdDays' worth of inflation the instant a price becomes stale.
-        return price *
-            (1.0 + priceAgeSettings.annualInflationPercent / 100.0).pow(
-                (ageDays - priceAgeSettings.stalePriceThresholdDays) / 365.25
-            )
+        price *
+                (1.0 + priceAgeSettings.annualInflationPercent / 100.0).pow(
+                    (ageDays - priceAgeSettings.stalePriceThresholdDays) / 365.25
+                )
     }
 }
 
@@ -98,14 +98,14 @@ enum class PriceJudgement {
 private fun AugmentedPrice.judge(
     priceClassificationThresholds: PriceClassificationThresholds?
 ): PriceJudgement {
-    if (priceClassificationThresholds == null) {
-        return PriceJudgement.NONE
+    return if (priceClassificationThresholds == null) {
+        PriceJudgement.NONE
     } else if (unitPrice < priceClassificationThresholds.good) {
-        return PriceJudgement.GOOD
+        PriceJudgement.GOOD
     } else if (unitPrice <= priceClassificationThresholds.bad) {
-        return PriceJudgement.OK
+        PriceJudgement.OK
     } else {
-        return PriceJudgement.BAD
+        PriceJudgement.BAD
     }
 }
 

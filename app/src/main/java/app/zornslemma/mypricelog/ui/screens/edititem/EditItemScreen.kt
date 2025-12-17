@@ -201,8 +201,8 @@ fun EditItemScreen(
                             }
                             if (editableItem.defaultUnit != defaultUnit!!) {
                                 val defaultUnitByQuantityType =
-                                    editableItem.defaultUnitByQuantityType.toMutableMap().also {
-                                        it[editableItem.quantityType] = defaultUnit
+                                    editableItem.defaultUnitByQuantityType.toMutableMap().also { map ->
+                                        map[editableItem.quantityType] = defaultUnit
                                     }
                                 viewModel.setUiContentEditableItem(
                                     editableItem.copy(

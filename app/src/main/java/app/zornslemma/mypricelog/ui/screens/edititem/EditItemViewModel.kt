@@ -81,12 +81,9 @@ class EditItemViewModel(
     }
 
     suspend fun performSave(): Long {
-        val item = uiContent.editableContent.value.toDomain()
-        if (item == null) {
-            throw IllegalStateException(
-                "performSave() called with an inconvertible EditableItem: ${uiContent.editableContent.value}"
-            )
-        }
+        val item = uiContent.editableContent.value.toDomain() ?: throw IllegalStateException(
+            "performSave() called with an inconvertible EditableItem: ${uiContent.editableContent.value}"
+        )
         debugDelay()
         // updateOrInsertItem() returns -1 if it's an update or the new ID if it was an insert.
         val newId = repository.updateOrInsertItem(item)

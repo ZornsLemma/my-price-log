@@ -65,7 +65,7 @@ private fun splitAroundDigits(input: String): Pair<String, String> {
     if (firstDigitIndex == -1) {
         firstDigitIndex = 0
     }
-    val prefix = input.substring(0, firstDigitIndex)
+    val prefix = input.take(firstDigitIndex)
 
     val lastDigitIndex = input.indexOfLast { it.isDigit() }
     val suffix =

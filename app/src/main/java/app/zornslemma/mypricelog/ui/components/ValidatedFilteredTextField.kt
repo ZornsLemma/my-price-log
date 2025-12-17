@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.SharedFlow
 
 @Composable
 fun <T> ValidatedFilteredTextField(
-    label: @Composable() (() -> Unit)? = null,
+    label: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     value: TextFieldValue,
     maxLength: Int,

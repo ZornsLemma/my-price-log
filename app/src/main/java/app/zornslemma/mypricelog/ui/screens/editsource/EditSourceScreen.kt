@@ -120,7 +120,7 @@ fun EditSourceScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        var selectedOption = editableSource.loyaltyType
+        val selectedOption = editableSource.loyaltyType
 
         Card(
             modifier = Modifier.fillMaxWidth(),

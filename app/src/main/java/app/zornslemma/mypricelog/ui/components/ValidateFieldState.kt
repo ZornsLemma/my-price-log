@@ -67,7 +67,7 @@ fun <T> validateFieldState(
         // we end up with two copies of it) so that if multiple validation rules are failing, we
         // don't flip-flop between them - once a rule is reported as failing it is "sticky" until is
         // fixed.
-        var shouldValidate =
+        val shouldValidate =
             when (value) {
                 is String -> !(allowEmpty && value.trim().isEmpty())
                 else -> true // allowEmpty has no meaning for other types
