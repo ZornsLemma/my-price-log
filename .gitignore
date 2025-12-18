@@ -15,6 +15,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+/.kotlin
 
 # ChatGPT advice, not necessarily correct: Ignore workspace and other personal IDE files
 .idea/workspace.xml
