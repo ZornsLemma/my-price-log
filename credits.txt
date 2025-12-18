@@ -1,0 +1,6 @@
+During development of the app I had extensive discussions with the free versions of:
+* ChatGPT
+* duck.ai (various models)
+* Grok
+* Perplexity
+They have been both useful and incredibly frustrating, misleading and obtuse. Very little of the actual code was written by any of these systems.

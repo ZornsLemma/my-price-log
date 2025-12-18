@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="unit_millilitre">milliliter</string>
+    <string name="unit_100_millilitres">100 milliliters</string>
+    <string name="unit_litre">liter</string>
+</resources>
