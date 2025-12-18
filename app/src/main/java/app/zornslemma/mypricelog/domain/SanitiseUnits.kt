@@ -2,6 +2,7 @@ package app.zornslemma.mypricelog.domain
 
 import app.zornslemma.mypricelog.common.intersectionIsEmpty
 import app.zornslemma.mypricelog.data.DataSet
+import app.zornslemma.mypricelog.data.Item
 import app.zornslemma.mypricelog.data.Price
 import app.zornslemma.mypricelog.data.PriceHistory
 import app.zornslemma.mypricelog.debug.myCheck
@@ -90,5 +91,25 @@ fun DataSet.sanitisePriceHistoryUnits(priceHistoryList: List<PriceHistory>): Lis
                     }
             )
         }
+    }
+}
+
+// Similar to sanitisePriceUnits(), but for the item's default unit.
+fun DataSet.sanitiseItems(itemList: List<Item>): List<Item> {
+    val relevantUnitFamilies = getRelevantUnitFamilies()
+    myCheck(relevantUnitFamilies.isNotEmpty()) {
+        "Expected at least one relevant unit family for dataSet $id"
+    }
+    val replacementUnitFamily = relevantUnitFamilies.first() // see sanitisePriceUnits() comment
+    return itemList.map { item ->
+        if (!intersectionIsEmpty(item.defaultUnit.unitFamilies, relevantUnitFamilies)) {
+            item
+        } else {
+            item.copy(defaultUnit =                     MeasurementUnit.entries.first {
+                replacementUnitFamily in it.unitFamilies &&
+                        item.defaultUnit.quantityType == it.quantityType
+            })
+        }
+
     }
 }

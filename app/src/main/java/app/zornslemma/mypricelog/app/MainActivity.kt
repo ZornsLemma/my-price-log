@@ -249,6 +249,3 @@ class MainActivity : ComponentActivity() {
 // need to implement a certain class and mention it in AndroidManifest.xml, but do check. FWIW the
 // limit on Google Drive is currently 25MB per app and my personal live database is about 110K, so
 // in reality it is pretty unlikely this is ever going to be a problem in the first place.
-
-// TODO: If you disable a measurement system, the default unit on "Edit product" can show as
-// "Invalid ID xxx".

@@ -11,6 +11,7 @@ import app.zornslemma.mypricelog.data.Price
 import app.zornslemma.mypricelog.data.Source
 import app.zornslemma.mypricelog.data.toEditable
 import app.zornslemma.mypricelog.domain.createCurrencyFormat
+import app.zornslemma.mypricelog.domain.sanitiseItems
 import app.zornslemma.mypricelog.ui.screens.editprice.EditPriceScreenStaticContent
 import app.zornslemma.mypricelog.ui.screens.editsource.EditSourceScreenStaticContent
 import app.zornslemma.mypricelog.ui.screens.home.HomeScreenUiContent
@@ -158,7 +159,8 @@ class SharedViewModel : ViewModel() {
     var editItemScreenInitialUiContent: EditItemScreenInitialUiContent? = null
 
     fun setEditItemScreenInitialUiContent(item: Item?, dataSet: DataSet) {
-        val editableItem = item.toEditable(dataSet)
+        val sanitisedItem: Item? = item?.let { dataSet.sanitiseItems(listOf(it)).first() }
+        val editableItem = sanitisedItem.toEditable(dataSet)
         editItemScreenInitialUiContent = EditItemScreenInitialUiContent(editableItem, dataSet)
     }
 

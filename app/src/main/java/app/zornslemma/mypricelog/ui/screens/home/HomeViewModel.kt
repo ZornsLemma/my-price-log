@@ -18,6 +18,7 @@ import app.zornslemma.mypricelog.domain.Repository
 import app.zornslemma.mypricelog.domain.SettingsRepository
 import app.zornslemma.mypricelog.domain.analysePrices
 import app.zornslemma.mypricelog.domain.dataStore
+import app.zornslemma.mypricelog.domain.sanitiseItems
 import app.zornslemma.mypricelog.domain.sanitisePriceUnits
 import app.zornslemma.mypricelog.ui.common.AsyncOperationStatus
 import app.zornslemma.mypricelog.ui.common.LoadState
@@ -255,22 +256,24 @@ class HomeViewModel(private val repository: Repository, application: Application
                     )
                     emptyFlow()
                 } else {
-                    val itemList = taggedItemListAndSourceList.second
+                    var itemList = taggedItemListAndSourceList.second
                     val sourceList = taggedItemListAndSourceList.third
                     var priceList = taggedPriceList.second
 
                     val dataSet = dataSetList.find { it.id == dataSetId }
+
+
+                    if (dataSet != null) {
+                        itemList = dataSet.sanitiseItems(itemList)
+                        priceList = dataSet.sanitisePriceUnits(priceList)
+                    }
+
                     val item = itemList.find { it.id == itemId }
                     val source = sourceList.find { it.id == sourceId }
-
                     Log.d(
                         TAG,
                         "completeUiStateFlow received dataSetId ${selectedDataSetIdStateFlow.value} ${dataSet?.id} (list size ${dataSetList.size}), itemId ${item?.id} (list size ${itemList.size}), sourceId ${source?.id} (list size ${sourceList.size})",
                     )
-
-                    if (dataSet != null) {
-                        priceList = dataSet.sanitisePriceUnits(priceList)
-                    }
 
                     // ENHANCE: I suspect in practice this analysis is lightweight enough we are
                     // fine doing it in this coroutine on the main thread, but just possibly we
