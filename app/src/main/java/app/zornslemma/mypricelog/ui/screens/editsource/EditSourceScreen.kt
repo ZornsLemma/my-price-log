@@ -46,10 +46,7 @@ import app.zornslemma.mypricelog.ui.maxNotesLength
 import app.zornslemma.mypricelog.ui.maxSourceNameLength
 
 @Composable
-fun EditSourceScreen(
-    viewModel: EditSourceViewModel,
-    requestClose: (Long?) -> Unit,
-) {
+fun EditSourceScreen(viewModel: EditSourceViewModel, requestClose: (Long?) -> Unit) {
     val originalSource = viewModel.uiContent.originalContent
     val editableSource by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
     val dataSet = viewModel.uiContent.staticContent.dataSet

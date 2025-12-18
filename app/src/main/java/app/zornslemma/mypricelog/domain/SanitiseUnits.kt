@@ -105,11 +105,13 @@ fun DataSet.sanitiseItems(itemList: List<Item>): List<Item> {
         if (!intersectionIsEmpty(item.defaultUnit.unitFamilies, relevantUnitFamilies)) {
             item
         } else {
-            item.copy(defaultUnit =                     MeasurementUnit.entries.first {
-                replacementUnitFamily in it.unitFamilies &&
-                        item.defaultUnit.quantityType == it.quantityType
-            })
+            item.copy(
+                defaultUnit =
+                    MeasurementUnit.entries.first {
+                        replacementUnitFamily in it.unitFamilies &&
+                            item.defaultUnit.quantityType == it.quantityType
+                    }
+            )
         }
-
     }
 }

@@ -954,10 +954,7 @@ private fun SourcePriceCardBody(
         if (augmentedPrice == null) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.message_no_price_for_item_at_source))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                ) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     FilledTonalButton(
                         onClick = onEditPriceClick,
                         shape = MaterialTheme.shapes.small,
@@ -1004,12 +1001,7 @@ private fun SourcePriceCardBody(
                 }
             }
 
-            EditConfirmButtons(
-                viewModel,
-                asyncOperationStatus,
-                augmentedPrice,
-                onEditPriceClick,
-            )
+            EditConfirmButtons(viewModel, asyncOperationStatus, augmentedPrice, onEditPriceClick)
         }
     }
 }

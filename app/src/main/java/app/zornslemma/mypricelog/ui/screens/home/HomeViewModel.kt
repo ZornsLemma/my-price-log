@@ -262,7 +262,6 @@ class HomeViewModel(private val repository: Repository, application: Application
 
                     val dataSet = dataSetList.find { it.id == dataSetId }
 
-
                     if (dataSet != null) {
                         itemList = dataSet.sanitiseItems(itemList)
                         priceList = dataSet.sanitisePriceUnits(priceList)

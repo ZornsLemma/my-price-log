@@ -50,10 +50,7 @@ import app.zornslemma.mypricelog.ui.nonBreakingSpace
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditPriceScreen(
-    viewModel: EditPriceViewModel,
-    requestClose: (Long?) -> Unit,
-) {
+fun EditPriceScreen(viewModel: EditPriceViewModel, requestClose: (Long?) -> Unit) {
     val originalPrice = viewModel.uiContent.originalContent
     val editablePrice by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
     val dataSet = viewModel.uiContent.staticContent.dataSet
@@ -290,8 +287,7 @@ private fun EditPriceScreenPackSize(
             keyboardOptions =
                 KeyboardOptions(
                     keyboardType =
-                        if (editableContent.measurementUnit.maxDecimals == 0)
-                            KeyboardType.Number
+                        if (editableContent.measurementUnit.maxDecimals == 0) KeyboardType.Number
                         else KeyboardType.Decimal
                 ),
         )

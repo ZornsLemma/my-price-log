@@ -76,9 +76,9 @@ private fun inflationAdjustedPrice(
         // is ageDays - stalePriceThresholdDays. We don't want to suddenly apply the previous
         // stalePriceThresholdDays' worth of inflation the instant a price becomes stale.
         price *
-                (1.0 + priceAgeSettings.annualInflationPercent / 100.0).pow(
-                    (ageDays - priceAgeSettings.stalePriceThresholdDays) / 365.25
-                )
+            (1.0 + priceAgeSettings.annualInflationPercent / 100.0).pow(
+                (ageDays - priceAgeSettings.stalePriceThresholdDays) / 365.25
+            )
     }
 }
 

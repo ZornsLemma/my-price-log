@@ -54,10 +54,7 @@ private enum class UnitPreferenceOption(@field:StringRes val nameResource: Int) 
 }
 
 @Composable
-fun EditDataSetScreen(
-    viewModel: EditDataSetViewModel,
-    requestClose: (Long?) -> Unit,
-) {
+fun EditDataSetScreen(viewModel: EditDataSetViewModel, requestClose: (Long?) -> Unit) {
     val originalDataSet = viewModel.uiContent.originalContent
     val editableDataSet by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
 

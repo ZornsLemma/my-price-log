@@ -41,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.createBitmap
 import androidx.navigation.NavHostController
 import app.zornslemma.mypricelog.BuildConfig
 import app.zornslemma.mypricelog.R
@@ -48,7 +49,6 @@ import app.zornslemma.mypricelog.ui.components.BulletPoint
 import app.zornslemma.mypricelog.ui.components.ClickableLink
 import app.zornslemma.mypricelog.ui.fullScreenDialogHorizontalBorder
 import app.zornslemma.mypricelog.ui.fullScreenDialogVerticalBorder
-import androidx.core.graphics.createBitmap
 
 @Composable
 fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) {

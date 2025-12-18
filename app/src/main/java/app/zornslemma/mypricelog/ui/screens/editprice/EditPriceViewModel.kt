@@ -158,10 +158,11 @@ class EditPriceViewModel(
             Log.d(TAG, "performSave() is a no-op; returning early to avoid bloating price history")
             return uiContent.editableContent.value.id
         }
-        val price = uiContent.editableContent.value.toDomain(uiContent.staticContent.frozenLocale)
-            ?: throw IllegalStateException(
-                "saveEditablePrice() called with an inconvertible editablePrice: ${uiContent.editableContent.value}"
-            )
+        val price =
+            uiContent.editableContent.value.toDomain(uiContent.staticContent.frozenLocale)
+                ?: throw IllegalStateException(
+                    "saveEditablePrice() called with an inconvertible editablePrice: ${uiContent.editableContent.value}"
+                )
         return repository.updateOrInsertPrice(price)
     }
 }

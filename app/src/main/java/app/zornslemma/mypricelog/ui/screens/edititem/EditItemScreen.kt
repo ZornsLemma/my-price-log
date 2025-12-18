@@ -55,10 +55,7 @@ import app.zornslemma.mypricelog.ui.maxItemNameLength
 import app.zornslemma.mypricelog.ui.maxNotesLength
 
 @Composable
-fun EditItemScreen(
-    viewModel: EditItemViewModel,
-    requestClose: (newSelectedItemId: Long?) -> Unit,
-) {
+fun EditItemScreen(viewModel: EditItemViewModel, requestClose: (newSelectedItemId: Long?) -> Unit) {
     val originalItem = viewModel.uiContent.originalContent
     val editableItem by viewModel.uiContent.editableContent.collectAsStateWithLifecycle()
     val dataSet = viewModel.uiContent.staticContent.dataSet
@@ -198,7 +195,8 @@ fun EditItemScreen(
                             }
                             if (editableItem.defaultUnit != defaultUnit!!) {
                                 val defaultUnitByQuantityType =
-                                    editableItem.defaultUnitByQuantityType.toMutableMap().also { map ->
+                                    editableItem.defaultUnitByQuantityType.toMutableMap().also { map
+                                        ->
                                         map[editableItem.quantityType] = defaultUnit
                                     }
                                 viewModel.setUiContentEditableItem(

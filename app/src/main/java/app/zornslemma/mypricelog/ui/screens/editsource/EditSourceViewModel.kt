@@ -109,10 +109,11 @@ class EditSourceViewModel(
     }
 
     suspend fun performSave(): Long {
-        val source = uiContent.editableContent.value.toDomain(uiContent.staticContent.frozenLocale)
-            ?: throw IllegalStateException(
-                "performSave() called with an inconvertible EditableSource: ${uiContent.editableContent.value}"
-            )
+        val source =
+            uiContent.editableContent.value.toDomain(uiContent.staticContent.frozenLocale)
+                ?: throw IllegalStateException(
+                    "performSave() called with an inconvertible EditableSource: ${uiContent.editableContent.value}"
+                )
         debugDelay()
         // updateOrInsertSource() returns -1 if it's an update or the new ID if it was an insert.
         val newId = repository.updateOrInsertSource(source)

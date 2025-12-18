@@ -141,9 +141,11 @@ class EditDataSetViewModel(
     }
 
     suspend fun performSave(): Long {
-        val dataSet = uiContent.editableContent.value.toDomain() ?: throw IllegalStateException(
-            "performSave() called with an inconvertible EditableDataSet: ${uiContent.editableContent.value}"
-        )
+        val dataSet =
+            uiContent.editableContent.value.toDomain()
+                ?: throw IllegalStateException(
+                    "performSave() called with an inconvertible EditableDataSet: ${uiContent.editableContent.value}"
+                )
         // updateOrInsertDataSet() returns -1 if it's an update or the new ID if it was an insert.
         val newId = repository.updateOrInsertDataSet(dataSet)
         return if (newId == -1L) dataSet.id else newId
