@@ -1,0 +1,26 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+/.idea/deploymentTargetSelector.xml
+/.idea/markdown.xml
+/.idea/.name
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+/.kotlin
+
+# ChatGPT advice, not necessarily correct: Ignore workspace and other personal IDE files
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries/
+.idea/caches/
+.idea/usage.statistics.xml

@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+message CurrentSelections {
+  // The selected data set ID.
+  int64 selected_data_set_id = 1;
+
+  // The selected item ID for each data set ID.
+  map<int64, int64> selected_item_id_for_data_set_id = 2;
+
+  // The selected source ID for each data set ID.
+  map<int64, int64> selected_source_id_for_data_set_id = 3;
+}
