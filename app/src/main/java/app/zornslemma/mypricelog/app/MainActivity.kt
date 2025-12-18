@@ -139,6 +139,11 @@ class MainActivity : ComponentActivity() {
 // screens to select things to undelete, and maybe some other facility somewhere else to purge
 // some/all things in the "recycle bin" for real. But it probably is the way to go long term.
 
+// ENHANCE: Log.d() output is not guaranteed to be useful in a release build, particularly where
+// toString() is involved. Since there is no concrete need for this to work right now, I have not
+// altered it - but we may want to e.g. use Log.i() and/or toJson() logging if/when some genuine
+// support case would benefit from it.
+
 // ENHANCE: The list of prices for product across stores at bottom of home screen should probably
 // have some way of expanding in place or (more likely) opening a new screen showing a read-only
 // explanation of how the augmented price was arrived at (store level discounts, pseudo-inflation
@@ -244,3 +249,6 @@ class MainActivity : ComponentActivity() {
 // need to implement a certain class and mention it in AndroidManifest.xml, but do check. FWIW the
 // limit on Google Drive is currently 25MB per app and my personal live database is about 110K, so
 // in reality it is pretty unlikely this is ever going to be a problem in the first place.
+
+// TODO: If you disable a measurement system, the default unit on "Edit product" can show as
+// "Invalid ID xxx".
