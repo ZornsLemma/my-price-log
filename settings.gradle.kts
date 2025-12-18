@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ComposeTutorial"
+rootProject.name = "MyPriceLog"
 include(":app")
  
