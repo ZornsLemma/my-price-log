@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -210,6 +211,7 @@ fun GeneralEditScreen(
                     .consumeWindowInsets(innerPadding)
                     .padding(horizontal = fullScreenDialogHorizontalBorder)
                     .verticalScroll(scrollState)
+                    .imePadding()
         ) {
             // The two vertical spacers here are to create a vertical border which we *can* draw
             // over using ErrorHighlightBox. (If we add "vertical = fullScreenDialogVerticalBorder"

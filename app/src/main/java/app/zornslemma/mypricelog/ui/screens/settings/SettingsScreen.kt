@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -104,6 +105,7 @@ fun SettingsScreen(
                     // comment there.
                     .padding(vertical = screenVerticalBorder)
                     .verticalScroll(rememberScrollState())
+                    .imePadding()
         ) {
             // ENHANCE: Since stale price threshold and ancient price threshold have interrelated
             // validation, there just might be an argument for allowing them to be edited

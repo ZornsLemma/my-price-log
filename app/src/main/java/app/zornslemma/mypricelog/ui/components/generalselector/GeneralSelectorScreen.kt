@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -115,6 +116,7 @@ fun <T> GeneralSelectorScreen(
                     .padding(innerPadding)
                     .consumeWindowInsets(innerPadding)
                     .padding(vertical = screenVerticalBorder)
+                    .imePadding()
         ) {
             // ENHANCE: We could show a warning icon and/or some supporting text if nothing matches
             // the substring, rather than just showing an empty list.
