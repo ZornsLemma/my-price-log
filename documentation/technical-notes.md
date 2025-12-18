@@ -77,3 +77,7 @@ TL;DR: I hope I'm doing the Right Thing except that I have added "const" in some
 * Check for missing or out-of-date translations.
 
 * Run spotless autoformatter.
+
+* Bump versionCode and versionName in app/build.gradle.kts.
+
+* Update CHANGELOG.md.
