@@ -81,3 +81,5 @@ TL;DR: I hope I'm doing the Right Thing except that I have added "const" in some
 * Bump versionCode and versionName in app/build.gradle.kts.
 
 * Update CHANGELOG.md.
+
+* Create metadata/changelogs entry for new versionCode.
