@@ -34,6 +34,10 @@ android {
     namespace = "app.zornslemma.mypricelog"
     compileSdk = 36
 
+    dependenciesInfo {
+        includeInApk = false
+    }
+
     defaultConfig {
         applicationId = "app.zornslemma.mypricelog"
         // minSdk could almost be 24 but because we use VACUUM INTO for the sqlite backup we need
