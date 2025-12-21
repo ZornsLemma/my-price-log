@@ -1,8 +1,10 @@
 Tracks prices of products at local stores and compares them. Works entirely offline:
-- You enter a list of stores.
-- You enter a list of products sold at those stores.
-- You enter, update and confirm the prices of those products at those stores as you shop.
-- The app shows you the unit price of a product at all the stores which sell it, allowing you to decide where to buy it.
+<ul>
+<li>You enter a list of stores.</li>
+<li>You enter a list of products sold at those stores.</li>
+<li>You enter, update and confirm the prices of those products at those stores as you shop.</li>
+<li>The app shows you the unit price of a product at all the stores which sell it, allowing you to decide where to buy it.</li>
+</ul>
 
 The user interface is designed for minimal fuss when you're standing in the supermarket aisle with a basket in one hand and your phone in the other.
 
