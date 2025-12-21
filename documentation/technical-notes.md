@@ -83,3 +83,7 @@ TL;DR: I hope I'm doing the Right Thing except that I have added "const" in some
 * Update CHANGELOG.md.
 
 * Create metadata/changelogs entry for new versionCode.
+
+* Tag the release.
+
+* Perform a clean signed build in Android Studio after tagging, to make sure it has the correct commit hash embedded.
