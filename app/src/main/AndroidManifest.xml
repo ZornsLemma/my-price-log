@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:name=".app.MyApplication"
         android:allowBackup="true"
@@ -14,6 +17,10 @@
         android:theme="@style/Theme.App"
         tools:targetApi="30"
         tools:ignore="ObsoleteSdkInt">
+        <activity
+            android:name=".feature.nfceimport.NfceImportActivity"
+            android:exported="false"
+            android:theme="@style/Theme.App" />
         <activity
             android:name=".app.MainActivity"
             android:windowSoftInputMode="adjustResize"

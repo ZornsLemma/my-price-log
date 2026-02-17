@@ -142,6 +142,7 @@ fun HomeScreen(
     onSelectItemClick: (HomeScreenUiContent) -> Unit,
     onSelectSourceClick: (HomeScreenUiContent) -> Unit,
     onSettingsClick: () -> Unit,
+    onImportNfceClick: () -> Unit,
 ) {
     // In order to minimise jank, we want the previous UI state to be available during the *very
     // first composition* when this screen is re-entered (e.g. after navigating back from another
@@ -207,6 +208,7 @@ fun HomeScreen(
                 onSelectItemClick = { onSelectItemClick(uiContent) },
                 onSelectSourceClick = { onSelectSourceClick(uiContent) },
                 onSettingsClick = onSettingsClick,
+                onImportNfceClick = onImportNfceClick,
                 asyncOperationStatus = asyncOperationStatus,
             ) { innerPadding ->
                 HomeScreenContent(
@@ -384,6 +386,7 @@ private fun HomeScreenScaffold(
     onSelectItemClick: () -> Unit,
     onSelectSourceClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onImportNfceClick: () -> Unit,
     asyncOperationStatus: AsyncOperationStatus,
     content: @Composable (innerPadding: PaddingValues) -> Unit,
 ) {
@@ -445,6 +448,14 @@ private fun HomeScreenScaffold(
                             onClick = {
                                 menuExpanded = false
                                 onSelectSourceClick()
+                            },
+                        )
+                        MyDropdownMenuItem(
+                            text = { Text(stringResource(R.string.menu_item_import_nfce_qr_sp)) },
+                            enabled = dataSet != null,
+                            onClick = {
+                                menuExpanded = false
+                                onImportNfceClick()
                             },
                         )
                         MyDropdownMenuItem(

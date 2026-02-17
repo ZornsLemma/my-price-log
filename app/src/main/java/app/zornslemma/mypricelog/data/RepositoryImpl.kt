@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Insert
+import androidx.room.migration.Migration
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Room
@@ -12,6 +13,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.Upsert
 import androidx.room.withTransaction
+import androidx.sqlite.db.SupportSQLiteDatabase
 import app.zornslemma.mypricelog.debug.DebugFlags
 import app.zornslemma.mypricelog.debug.myCheck
 import app.zornslemma.mypricelog.debug.myRequire
@@ -24,11 +26,18 @@ import kotlinx.coroutines.flow.map
 private const val TAG = "RepositoryImpl"
 
 const val DB_NAME = "main.db"
-const val DB_VERSION = 1
+const val DB_VERSION = 2
 
 @Database(
     entities =
-        [DataSet::class, Item::class, Source::class, PriceEntity::class, PriceHistory::class],
+        [
+            DataSet::class,
+            Item::class,
+            Source::class,
+            PriceEntity::class,
+            PriceHistory::class,
+            app.zornslemma.mypricelog.feature.nfceimport.NfceImport::class,
+        ],
     version = DB_VERSION,
     exportSchema = false,
 )
@@ -44,8 +53,19 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun priceHistoryDao(): PriceHistoryDao
 
+    abstract fun nfceImportDao(): app.zornslemma.mypricelog.feature.nfceimport.NfceImportDao
+
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
+
+        private val MIGRATION_1_2 =
+            object : Migration(1, 2) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `nfce_import` (`key` TEXT NOT NULL, `data_set_id` INTEGER NOT NULL, `imported_at` INTEGER NOT NULL, `source_url` TEXT NOT NULL, PRIMARY KEY(`key`))"
+                    )
+                }
+            }
 
         fun getDatabase(context: Context): AppDatabase {
             // if the Instance is not null, return it, otherwise create a new database instance.
@@ -53,6 +73,7 @@ abstract class AppDatabase : RoomDatabase() {
                 ?: synchronized(this) {
                     Room.databaseBuilder(context, AppDatabase::class.java, DB_NAME)
                         .apply {
+                            addMigrations(MIGRATION_1_2)
                             @Suppress("KotlinConstantConditions")
                             if (DebugFlags.LOG_SQL) {
                                 setQueryCallback(
@@ -126,6 +147,9 @@ interface SourceDao {
 @Dao
 interface PriceDao {
     @Upsert suspend fun upsert(price: PriceEntity): Long
+
+    @Query("SELECT * FROM price WHERE data_set_id = :dataSetId AND item_id = :itemId AND source_id = :sourceId LIMIT 1")
+    suspend fun getCurrentPriceEntity(dataSetId: Long, itemId: Long, sourceId: Long): PriceEntity?
 
     @Query(
         "SELECT price.*, item.default_unit FROM price JOIN item ON price.item_id = item.id " +

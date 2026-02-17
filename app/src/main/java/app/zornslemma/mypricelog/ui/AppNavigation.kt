@@ -47,6 +47,7 @@ import app.zornslemma.mypricelog.ui.common.setSelectedDataSetIdAsync
 import app.zornslemma.mypricelog.ui.common.setSelectedItemIdAsync
 import app.zornslemma.mypricelog.ui.common.setSelectedSourceIdAsync
 import app.zornslemma.mypricelog.ui.components.SharedViewModel
+import app.zornslemma.mypricelog.feature.nfceimport.NfceImportEntry
 import app.zornslemma.mypricelog.ui.components.generalselector.GeneralSelectorScreen
 import app.zornslemma.mypricelog.ui.components.topAppBarTitle
 import app.zornslemma.mypricelog.ui.screens.about.AboutScreen
@@ -232,6 +233,7 @@ fun AppNavigation() {
                     )
                 },
                 onSettingsClick = { navController.navigate("settings") },
+                onImportNfceClick = { context.startActivity(NfceImportEntry.createIntent(context)) },
             )
         }
 
