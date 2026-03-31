@@ -30,7 +30,7 @@ const val DB_VERSION = 1
     entities =
         [DataSet::class, Item::class, Source::class, PriceEntity::class, PriceHistory::class],
     version = DB_VERSION,
-    exportSchema = false,
+    exportSchema = false, // TODO: We should almost certainly set this to true and configure the JSON output to be saved in the git repository ASAP
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
