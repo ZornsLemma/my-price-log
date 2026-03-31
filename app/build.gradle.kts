@@ -30,6 +30,10 @@ protobuf {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 android {
     namespace = "app.zornslemma.mypricelog"
     compileSdk = 36

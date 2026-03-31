@@ -1,0 +1,521 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "21c94884b39498763b686d85bd35f099",
+    "entities": [
+      {
+        "tableName": "data_set",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `currency_code` TEXT NOT NULL, `allow_metric` INTEGER NOT NULL, `allow_imperial` INTEGER NOT NULL, `allow_us_customary` INTEGER NOT NULL, `notes` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currencyCode",
+            "columnName": "currency_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "allowMetric",
+            "columnName": "allow_metric",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "allowImperial",
+            "columnName": "allow_imperial",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "allowUSCustomary",
+            "columnName": "allow_us_customary",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "item",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `data_set_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `default_unit` INTEGER NOT NULL, `allow_multipack` INTEGER NOT NULL, `notes` TEXT NOT NULL, FOREIGN KEY(`data_set_id`) REFERENCES `data_set`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dataSetId",
+            "columnName": "data_set_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "defaultUnit",
+            "columnName": "default_unit",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "allowMultipack",
+            "columnName": "allow_multipack",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_item_data_set_id",
+            "unique": false,
+            "columnNames": [
+              "data_set_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_item_data_set_id` ON `${TABLE_NAME}` (`data_set_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "data_set",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "data_set_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "source",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `data_set_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `loyalty_type` INTEGER NOT NULL, `loyalty_multiplier` REAL NOT NULL, `notes` TEXT NOT NULL, FOREIGN KEY(`data_set_id`) REFERENCES `data_set`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dataSetId",
+            "columnName": "data_set_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "loyaltyType",
+            "columnName": "loyalty_type",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "loyaltyMultiplier",
+            "columnName": "loyalty_multiplier",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_source_data_set_id",
+            "unique": false,
+            "columnNames": [
+              "data_set_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_source_data_set_id` ON `${TABLE_NAME}` (`data_set_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "data_set",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "data_set_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "price",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `data_set_id` INTEGER NOT NULL, `item_id` INTEGER NOT NULL, `source_id` INTEGER NOT NULL, `price` REAL NOT NULL, `count` INTEGER NOT NULL, `quantity_in_base_unit` REAL NOT NULL, `user_unit` INTEGER NOT NULL, `confirmed_at` INTEGER NOT NULL, `notes` TEXT NOT NULL, `modified_at` INTEGER NOT NULL, FOREIGN KEY(`data_set_id`) REFERENCES `data_set`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`item_id`) REFERENCES `item`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`source_id`) REFERENCES `source`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dataSetId",
+            "columnName": "data_set_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemId",
+            "columnName": "item_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceId",
+            "columnName": "source_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "price",
+            "columnName": "price",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "count",
+            "columnName": "count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantityInBaseUnit",
+            "columnName": "quantity_in_base_unit",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userUnit",
+            "columnName": "user_unit",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "confirmedAt",
+            "columnName": "confirmed_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modifiedAt",
+            "columnName": "modified_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_price_data_set_id",
+            "unique": false,
+            "columnNames": [
+              "data_set_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_price_data_set_id` ON `${TABLE_NAME}` (`data_set_id`)"
+          },
+          {
+            "name": "index_price_item_id",
+            "unique": false,
+            "columnNames": [
+              "item_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_price_item_id` ON `${TABLE_NAME}` (`item_id`)"
+          },
+          {
+            "name": "index_price_source_id",
+            "unique": false,
+            "columnNames": [
+              "source_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_price_source_id` ON `${TABLE_NAME}` (`source_id`)"
+          },
+          {
+            "name": "index_price_item_id_source_id",
+            "unique": true,
+            "columnNames": [
+              "item_id",
+              "source_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_price_item_id_source_id` ON `${TABLE_NAME}` (`item_id`, `source_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "data_set",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "data_set_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "item",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "item_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "source",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "source_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "price_history",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `price_id` INTEGER NOT NULL, `data_set_id` INTEGER NOT NULL, `item_id` INTEGER NOT NULL, `source_id` INTEGER NOT NULL, `price` REAL NOT NULL, `count` INTEGER NOT NULL, `quantity_in_base_unit` REAL NOT NULL, `user_unit` INTEGER NOT NULL, `confirmed_at` INTEGER NOT NULL, `notes` TEXT NOT NULL, `modified_at` INTEGER NOT NULL, FOREIGN KEY(`data_set_id`) REFERENCES `data_set`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`item_id`) REFERENCES `item`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`source_id`) REFERENCES `source`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "priceId",
+            "columnName": "price_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dataSetId",
+            "columnName": "data_set_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemId",
+            "columnName": "item_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceId",
+            "columnName": "source_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "price",
+            "columnName": "price",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "count",
+            "columnName": "count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantityInBaseUnit",
+            "columnName": "quantity_in_base_unit",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "userUnit",
+            "columnName": "user_unit",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "confirmedAt",
+            "columnName": "confirmed_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "modifiedAt",
+            "columnName": "modified_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_price_history_data_set_id",
+            "unique": false,
+            "columnNames": [
+              "data_set_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_price_history_data_set_id` ON `${TABLE_NAME}` (`data_set_id`)"
+          },
+          {
+            "name": "index_price_history_source_id",
+            "unique": false,
+            "columnNames": [
+              "source_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_price_history_source_id` ON `${TABLE_NAME}` (`source_id`)"
+          },
+          {
+            "name": "index_price_history_item_id",
+            "unique": false,
+            "columnNames": [
+              "item_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_price_history_item_id` ON `${TABLE_NAME}` (`item_id`)"
+          },
+          {
+            "name": "index_price_history_item_id_source_id",
+            "unique": false,
+            "columnNames": [
+              "item_id",
+              "source_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_price_history_item_id_source_id` ON `${TABLE_NAME}` (`item_id`, `source_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "data_set",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "data_set_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "item",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "item_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "source",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "source_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '21c94884b39498763b686d85bd35f099')"
+    ]
+  }
+}
