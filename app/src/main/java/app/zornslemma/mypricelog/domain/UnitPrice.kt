@@ -1,9 +1,14 @@
 package app.zornslemma.mypricelog.domain
 
-import app.zornslemma.mypricelog.common.roundTo
+import android.util.Log
+import app.zornslemma.mypricelog.data.DataSet
 import app.zornslemma.mypricelog.debug.myRequire
-import java.util.Locale
-import kotlin.math.abs
+import java.util.Currency
+import kotlin.math.floor
+import kotlin.math.log10
+import kotlin.math.max
+
+private const val TAG = "UnitPrice"
 
 data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) :
     Comparable<UnitPrice> {
@@ -29,6 +34,8 @@ data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) :
         return UnitPrice(numerator * newDenominator.toBase / denominator.toBase, newDenominator)
     }
 
+    // operator fun times(other: Double): UnitPrice = UnitPrice(numerator * other, denominator)
+
     companion object {
         fun calculate(
             price: Double,
@@ -42,57 +49,86 @@ data class UnitPrice(val numerator: Double, val denominator: MeasurementUnit) :
     }
 }
 
-// This takes currencyDecimalPlaces not a CurrencyFormat because we only need the number of decimal
-// places and our caller will not always have a locale to get a CurrencyFormat with.
-// ENHANCE: While this function probably does a fairly good job in practice (albeit I haven't used
-// it much in anger yet), it might be nice to record the user's last-chosen unit price unit for each
-// (item, source) combination. This way, even if this function makes a poor choice, it will not
-// matter much in the long run as the user will just change the selected unit once per (item,
-// source) and that's that. We could do store this in a separate database table and write to it
-// asynchronously on a best-effort basis (as opposed to the "save is initiated and we make the user
-// wait, trapped, until it completes" saves for critical data). Based on discussions with ChatGPT
-// this is the way to go, rather than trying to put it in any form of shared preferences, as even
-// the more modern DataStore is not optimised for this. Although this would involve a database
-// upgrade to add later, it is just adding a new table which would start off empty with no data
-// migration, so it's probably not too scary.
-fun UnitPrice.withFriendlyDenominator(
-    preferredUnit: MeasurementUnit,
-    currencyDecimalPlaces: Int,
-    candidateDenominators: List<MeasurementUnit>,
-): UnitPrice {
-    myRequire(candidateDenominators.isNotEmpty()) { "Expected at least one candidate denominator" }
+fun calculateFriendlyUnitPriceDenominator(
+    dataSet: DataSet,
+    preferredUnit: MeasurementUnit?,
+    unitPriceList: List<UnitPrice>,
+): MeasurementUnit? {
+    if (unitPriceList.isEmpty()) {
+        return null
+    }
+
+    if (preferredUnit == null) {
+        // ENHANCE: We really don't expect this to happen, but we do cope with it below in case of
+        // unforeseen corner cases.
+        Log.w(
+            TAG,
+            "Unexpected: preferredUnit should not be null in calculateFriendlyUnitPriceDenominator() with a non-empty price list",
+        )
+    }
+    val candidateDenominators =
+        dataSet.getMeasurementUnitsOfSameQuantityTypeAndUnitFamily(
+            preferredUnit ?: unitPriceList.first().denominator,
+            includeDisplayOnly = true,
+        )
+    val currencyDecimalPlaces = Currency.getInstance(dataSet.currencyCode).defaultFractionDigits
+
+    // ENHANCE: I wonder if we should derive min/max values from unitPriceList (and perhaps add a
+    // 10% buffer around those to give some stability if prices change a small amount?) and use
+    // those to decide our denominator instead of assessing each individual price. Not sure if this
+    // would be better, or how to do it (although we could perhaps use the same algorithm but with
+    // the min and max as the two values considered).
+
     var bestScore: Double = Double.MAX_VALUE
-    var bestUnitPrice: UnitPrice? = null
+    var bestDenominator: MeasurementUnit? = null
     for (candidateDenominator in candidateDenominators) {
-        val candidateUnitPrice = withDenominator(candidateDenominator)
-        // We compute a score (lower is better) for candidateUnitPrice. This is based on an ad-hoc
-        // weighted combination of factors:
-        // - We like to minimise relative error caused by significant figures being rounded off at
-        //   currencyDecimalPlaces.
-        // - We like to use the same unit the price is expressed in if it's practical. This is more
-        //   of an issue with non-metric, where e.g. milk might be sold in 4 pint containers and
-        //   without this preference we might express the unit price per gallon, which is OK but
-        //   not so clear in my opinion.
-        // - We like to have an integer part which is a short as possible. (Remember the non-integer
-        //   part isn't under our control; we will always have currencyDecimalPlaces of it.) But we
-        //   don't like to have "0.xx" because then we're wasting the digit before the decimal
-        //   separator which we always have to display.
-        val relativeError =
-            abs(
-                candidateUnitPrice.numerator.roundTo(currencyDecimalPlaces) -
-                    candidateUnitPrice.numerator
-            ) / candidateUnitPrice.numerator
-        val displayIntegerPart =
-            String.format(Locale.US, "%.${currencyDecimalPlaces}f", candidateUnitPrice.numerator)
-                .substringBefore('.')
-        val displayIntegerLength = if (displayIntegerPart == "0") 0 else displayIntegerPart.length
         val candidateScore =
-            abs(displayIntegerLength - 1) + (10.0 * relativeError) -
-                (if (candidateUnitPrice.denominator == preferredUnit) 1.1 else 0.0)
+            unitPriceList.maxOf {
+                scoreUnitPrice(it.withDenominator(candidateDenominator), currencyDecimalPlaces)
+            }
         if (candidateScore < bestScore) {
             bestScore = candidateScore
-            bestUnitPrice = candidateUnitPrice
+            bestDenominator = candidateDenominator
         }
     }
-    return bestUnitPrice!!
+    return bestDenominator!!
+}
+
+// We compute a score (lower is better) for candidateUnitPrice. This is somewhat ad-hoc but the
+// basic idea is that we want to show at least targetSignificantFigures, allowing for the fact that
+// the resulting currency amount will be shown with currencyDecimalPlaces, but we don't want to
+// include excessive precision which is likely to be more confusing than helpful and (for currencies
+// like USD, GBP or EUR at least) is likely to create unnecessary extra digits in front of the
+// decimal point. This is definitely not perfect for currencies with very low per-unit values and
+// particularly those which still have near-redundant decimal places, but ENHANCE: it feels better
+// to react to user feedback than try to pre-emptively make this work perfectly for every currency.
+// ENHANCE: We could allow targetSignificantFigures to be user-defined in each data set, and/or we
+// could hard-code overrides of it for some currencies. I haven't checked it, but ChatGPT suggests
+// COP and IDR are the two currencies that might benefit from hard-coded overrides to be 0 d.p.
+private fun scoreUnitPrice(candidateUnitPrice: UnitPrice, currencyDecimalPlaces: Int): Double {
+    // We could refuse to operate on zero numerator unit prices but it feels a bit petty and
+    // there are corner cases (calculating on-the-fly unit prices when the user is editing a
+    // price) where this can occur unless we take steps to avoid it.
+    val numerator = max(candidateUnitPrice.numerator, 0.0001)
+
+    // This table shows roughly how this code works. The number in square brackets is
+    // currencyDecimalPlaces; remember numerator would always be shown with this number of decimal
+    // places. It isn't perfect - 0.0099 would round to 0.01 with 2 dp, so maybe there's an argument
+    // this is 1 sf - but I think it captures the basic idea fairly well. We could round numerator
+    // before computing digitsBeforeDecimalSeparator to try to capture this, but I want to avoid
+    // halfway points triggering changes in scoring.
+    //
+    // numerator  digitsBeforeDecimalSeparator  effectiveSF[2]  effectiveSF[3]
+    //   10                                  2               4              5
+    //    9.99                               1               3              4
+    //    1                                  1               3              4
+    //    0.1                                0               2              3
+    //    0.099                             -1               1              2
+    //    0.01                              -1               1              2
+    //    0.0099                            -2               0              1
+    val digitsBeforeDecimalSeparator = floor(log10(numerator)) + 1 // can be negative
+    val effectiveSignificantFigures = digitsBeforeDecimalSeparator + currencyDecimalPlaces
+    val targetSignificantFigures = 3
+    val delta = effectiveSignificantFigures - targetSignificantFigures
+    return if (delta > 0) delta * 0.5 else -delta
 }

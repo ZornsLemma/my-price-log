@@ -1,9 +1,7 @@
 package app.zornslemma.mypricelog.ui.screens.edititem
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,7 +16,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,7 +23,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -41,6 +37,7 @@ import app.zornslemma.mypricelog.domain.getRelevantMeasurementUnits
 import app.zornslemma.mypricelog.ui.buttonIconTextSpacing
 import app.zornslemma.mypricelog.ui.common.isNotBusy
 import app.zornslemma.mypricelog.ui.components.FilteredTextField
+import app.zornslemma.mypricelog.ui.components.LabelledSwitch
 import app.zornslemma.mypricelog.ui.components.MyExposedDropdownMenuBox
 import app.zornslemma.mypricelog.ui.components.RadioButtonGroup
 import app.zornslemma.mypricelog.ui.components.SmallCircularProgressIndicator
@@ -225,30 +222,15 @@ fun EditItemScreen(viewModel: EditItemViewModel, requestClose: (newSelectedItemI
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Column {
-                Text(
-                    text = stringResource(R.string.label_may_be_sold_in_multipacks),
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text = stringResource(R.string.supporting_text_may_be_sold_in_multipacks),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            Switch(
-                enabled = saveStatus.isNotBusy(),
-                checked = editableItem.allowMultipack,
-                onCheckedChange = {
-                    viewModel.setUiContentEditableItem(editableItem.copy(allowMultipack = it))
-                },
-            )
-        }
+        LabelledSwitch(
+            title = stringResource(R.string.label_may_be_sold_in_multipacks),
+            supportingText = stringResource(R.string.supporting_text_may_be_sold_in_multipacks),
+            enabled = saveStatus.isNotBusy(),
+            checked = editableItem.allowMultipack,
+            onCheckedChange = {
+                viewModel.setUiContentEditableItem(editableItem.copy(allowMultipack = it))
+            },
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 

@@ -37,12 +37,15 @@ import app.zornslemma.mypricelog.R
 import app.zornslemma.mypricelog.data.DataSet
 import app.zornslemma.mypricelog.data.PriceHistory
 import app.zornslemma.mypricelog.debug.myCheck
+import app.zornslemma.mypricelog.domain.MeasurementUnit
 import app.zornslemma.mypricelog.ui.common.AsyncOperationStatus
 import app.zornslemma.mypricelog.ui.components.CardTitle
 import app.zornslemma.mypricelog.ui.components.LabeledItem
 import app.zornslemma.mypricelog.ui.components.MyDropdownMenuItem
 import app.zornslemma.mypricelog.ui.components.OverflowMenu
 import app.zornslemma.mypricelog.ui.components.PackPriceAndSizeRow
+import app.zornslemma.mypricelog.ui.components.SharedViewModel
+import app.zornslemma.mypricelog.ui.components.selectUnitPriceDenominator
 import app.zornslemma.mypricelog.ui.components.topAppBarTitle
 import app.zornslemma.mypricelog.ui.screenHorizontalBorder
 import app.zornslemma.mypricelog.ui.screenVerticalBorder
@@ -53,6 +56,7 @@ import java.time.format.FormatStyle
 
 @Composable
 fun ViewPriceHistoryScreen(
+    sharedViewModel: SharedViewModel,
     viewModel: ViewPriceHistoryViewModel,
     requestClose: () -> Unit,
     requestEditAsNew: (priceHistory: PriceHistory) -> Unit,
@@ -61,6 +65,7 @@ fun ViewPriceHistoryScreen(
     val item = viewModel.uiContent.staticContent.item
     val source = viewModel.uiContent.staticContent.source
     val price = viewModel.uiContent.staticContent.price
+    val autoUnitPriceDenominator = viewModel.uiContent.staticContent.autoUnitPriceDenominator
 
     val locale = LocalConfiguration.current.locales[0]
     val zoneId = ZoneId.systemDefault()
@@ -130,8 +135,10 @@ fun ViewPriceHistoryScreen(
                     } else {
                         Box {
                             ItemSourceInfoHistory(
+                                sharedViewModel,
                                 dataSet,
                                 priceHistoryDelta,
+                                autoUnitPriceDenominator,
                                 dateFormatter,
                                 timeFormatter,
                             )
@@ -192,11 +199,16 @@ private fun HorizontalDividerWithText(text: String) {
 
 @Composable
 private fun ItemSourceInfoHistory(
+    sharedViewModel: SharedViewModel,
     dataSet: DataSet,
     priceHistoryDelta: PriceHistoryDelta,
+    autoUnitPriceDenominator: MeasurementUnit,
     modifiedAtTitleFormatter: DateTimeFormatter,
     modifiedAtSubtitleFormatter: DateTimeFormatter,
 ) {
+    val userUnitPriceDenominator by
+        sharedViewModel.userUnitPriceDenominatorFlow.collectAsStateWithLifecycle()
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors =
@@ -226,6 +238,14 @@ private fun ItemSourceInfoHistory(
                     priceHistoryDelta.price!!,
                     priceHistoryDelta.count!!,
                     priceHistoryDelta.quantity!!,
+                    unitPriceDenominator =
+                        selectUnitPriceDenominator(
+                            autoUnitPriceDenominator,
+                            userUnitPriceDenominator,
+                        )!!,
+                    onUnitPriceDenominatorChange = {
+                        sharedViewModel.updateUserUnitPriceDenominator(it)
+                    },
                     dataSet,
                     AsyncOperationStatus.Idle,
                 )

@@ -1,0 +1,3 @@
+- Añadir traducción al italiano (DZ-Aladan). ¡Gracias!
+
+- Añadir una opción para introducir los precios (por ejemplo) en centavos en lugar de unidades monetarias, con un separador decimal implícito. Gracias a naul06 por la sugerencia.

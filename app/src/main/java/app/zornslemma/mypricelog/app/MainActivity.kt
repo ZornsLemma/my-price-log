@@ -249,3 +249,33 @@ class MainActivity : ComponentActivity() {
 // need to implement a certain class and mention it in AndroidManifest.xml, but do check. FWIW the
 // limit on Google Drive is currently 25MB per app and my personal live database is about 110K, so
 // in reality it is pretty unlikely this is ever going to be a problem in the first place.
+
+// ENHANCE: It might be nice to record the user's last-chosen unit price denominator for each (item,
+// source) combination. We could store this in a separate database table and write to it
+// asynchronously on a best-effort basis (as opposed to the "save is initiated and we make the user
+// wait, trapped, until it completes" saves for critical data). Based on discussions with ChatGPT
+// this is the way to go, rather than trying to put it in any form of shared preferences, as even
+// the more modern DataStore is not optimised for this. Although this would involve a database
+// upgrade to add later, it is just adding a new table which would start off empty with no data
+// migration, so it's probably not too scary. All this said, I am not sure this is a good idea - for
+// example, if a price drifts with inflation, this algorithm will auto-adjust the default unit
+// whereas a user's selection would be sticky.
+
+// ENHANCE: We could add a "quality multiplier" to an (item, source) pair. This would allow the user
+// to model things like "these own brand beans taste fine but the can has a lot more sauce and a lot
+// less beans than most other brands" by setting the multiplier to something like 0.8, which would
+// be applied to the unit price when comparing. The multiplier could also be >1. This is just an
+// idea, it might be more trouble than it's worth and it invites the user to numerically quantify
+// something which isn't inherently all that quantifiable. (Admittedly in the beans case someone
+// could drain the sauce off and weigh just the beans to quantify this properly, but in general I'm
+// thinking this would be used for vague "this brand is somehow a bit nicer/worse and I'm willing to
+// pay slightly more/less per unit for it" type things.) This is probably not really within the
+// spirit of the app, but think about it. (It shouldn't justify doing it anyway even if it's a bad
+// idea, but we could default this to 1.0 and hide the ability to edit it unless the user enables it
+// at global settings, data set or product level.)
+
+// ENHANCE: Could we offer an option to show the notes (or an initial part thereof, if long) as a
+// sort of subtitle on the "select item/source/product from list" screens? I am not sure this is a
+// good idea but it just might be nice for some users who would like to qualify a product name in
+// some way without literally baking it right into the name. (I'm thinking the display style of the
+// items in the selection list would be a bit like the Settings tiles.)

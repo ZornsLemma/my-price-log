@@ -13,10 +13,13 @@ import app.zornslemma.mypricelog.data.Source
 import app.zornslemma.mypricelog.debug.debugDelay
 import app.zornslemma.mypricelog.debug.debugThrow
 import app.zornslemma.mypricelog.debug.myCheck
+import app.zornslemma.mypricelog.domain.MeasurementUnit
 import app.zornslemma.mypricelog.domain.PriceAnalysis
 import app.zornslemma.mypricelog.domain.Repository
 import app.zornslemma.mypricelog.domain.SettingsRepository
+import app.zornslemma.mypricelog.domain.UnitPrice
 import app.zornslemma.mypricelog.domain.analysePrices
+import app.zornslemma.mypricelog.domain.calculateFriendlyUnitPriceDenominator
 import app.zornslemma.mypricelog.domain.dataStore
 import app.zornslemma.mypricelog.domain.sanitiseItems
 import app.zornslemma.mypricelog.domain.sanitisePriceUnits
@@ -74,6 +77,7 @@ data class HomeScreenUiContent(
     val source: Source?,
     val sourceList: List<Source>,
     val priceAnalysis: PriceAnalysis,
+    val autoUnitPriceDenominator: MeasurementUnit?,
 ) {
     companion object {
         fun createEmpty(): HomeScreenUiContent {
@@ -87,6 +91,7 @@ data class HomeScreenUiContent(
                 source = null,
                 sourceList = emptyList(),
                 priceAnalysis = PriceAnalysis(emptyList(), null),
+                autoUnitPriceDenominator = null,
             )
         }
     }
@@ -139,7 +144,7 @@ class HomeViewModel(private val repository: Repository, application: Application
             .asLoadState()
 
     private val _localeFlow = MutableStateFlow(Locale.getDefault())
-    private val localeFlow: StateFlow<Locale> = _localeFlow
+    private val localeFlow: StateFlow<Locale> = _localeFlow.asStateFlow()
 
     fun updateLocale(locale: Locale) {
         _localeFlow.value = locale
@@ -281,6 +286,35 @@ class HomeViewModel(private val repository: Repository, application: Application
                     val priceAnalysis =
                         analysePrices(priceList, sourceList, priceAgeSettings, locale)
 
+                    val augmentedPrice =
+                        priceAnalysis.augmentedPriceList.singleOrNull {
+                            it.basePrice.sourceId == source?.id
+                        }
+
+                    // We choose autoUnitPriceDenominator based on the whole list of augmented
+                    // prices if it's not empty. The idea here is that the auto denominator will not
+                    // change as the user switches between sources. (We do still specify
+                    // preferredUnit based on the current price, so if there is a mixture of unit
+                    // families on the prices the auto denominator will effectively be chosen
+                    // separately for each family but based on all the prices across families.)
+                    // ENHANCE: Arguably we should use the inflation and loyalty adjusted prices
+                    // here as well/instead, since the denominator chosen for the price comparison
+                    // card is the auto denominator for the best value product.
+                    val autoUnitPriceDenominator =
+                        if (dataSet == null || priceAnalysis.augmentedPriceList.isEmpty()) {
+                            item?.defaultUnit
+                        } else {
+                            calculateFriendlyUnitPriceDenominator(
+                                dataSet,
+                                (augmentedPrice?.basePrice?.quantity?.unit) ?: (item?.defaultUnit),
+                                priceAnalysis.augmentedPriceList.map { augmentedPrice ->
+                                    augmentedPrice.basePrice.let {
+                                        UnitPrice.calculate(it.price, it.count, it.quantity)
+                                    }
+                                },
+                            )
+                        }
+
                     debugDelay()
                     flowOf(
                         HomeScreenUiContent(
@@ -293,6 +327,7 @@ class HomeViewModel(private val repository: Repository, application: Application
                             source,
                             sourceList,
                             priceAnalysis,
+                            autoUnitPriceDenominator,
                         )
                     )
                 }

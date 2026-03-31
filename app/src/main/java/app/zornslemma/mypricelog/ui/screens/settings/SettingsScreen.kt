@@ -2,7 +2,9 @@
 
 package app.zornslemma.mypricelog.ui.screens.settings
 
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -75,6 +78,10 @@ fun SettingsScreen(
         viewModel.settingsRepository.annualInflationPercentFlow.collectAsStateWithLifecycle(
             initialValue = defaultAnnualInflationPercent
         )
+    val minorUnitPriceEntry by
+        viewModel.settingsRepository.minorUnitPriceEntryFlow.collectAsStateWithLifecycle(
+            initialValue = false
+        )
     var showStalePriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var showAncientPriceThresholdDialog by rememberSaveable { mutableStateOf(false) }
     var showAnnualInflationPercentDialog by rememberSaveable { mutableStateOf(false) }
@@ -114,7 +121,7 @@ fun SettingsScreen(
             // practice. Editing these should not be an everyday activity so even if it is a bit
             // fiddly it doesn't matter that much.
 
-            SettingsTile(
+            ListItemSettingsTile(
                 title = stringResource(R.string.title_stale_price_threshold),
                 subtitle =
                     pluralStringResource(
@@ -125,7 +132,7 @@ fun SettingsScreen(
                 onClick = { showStalePriceThresholdDialog = true },
             )
 
-            SettingsTile(
+            ListItemSettingsTile(
                 title = stringResource(R.string.title_ancient_price_threshold),
                 subtitle =
                     pluralStringResource(
@@ -136,7 +143,7 @@ fun SettingsScreen(
                 onClick = { showAncientPriceThresholdDialog = true },
             )
 
-            SettingsTile(
+            ListItemSettingsTile(
                 title = stringResource(R.string.title_annual_inflation),
                 // Ancient prices increase in the same way too, but it's probably best to keep the
                 // subtitle simple here rather than being over-precise.
@@ -148,19 +155,29 @@ fun SettingsScreen(
                 onClick = { showAnnualInflationPercentDialog = true },
             )
 
-            SettingsTile(
+            SwitchSettingsTile(
+                title = stringResource(R.string.title_price_entry_using_minor_unit),
+                subtitle =
+                    if (minorUnitPriceEntry)
+                        stringResource(R.string.supporting_text_minor_unit_price_entry)
+                    else stringResource(R.string.supporting_text_major_unit_price_entry),
+                checked = minorUnitPriceEntry,
+                onCheckedChange = { viewModel.settingsRepository.setMinorUnitPriceEntryAsync(it) },
+            )
+
+            ListItemSettingsTile(
                 title = stringResource(R.string.title_backup),
                 subtitle = stringResource(R.string.supporting_text_back_up_your_data_to_a_file),
                 onClick = onBackupClick,
             )
 
-            SettingsTile(
+            ListItemSettingsTile(
                 title = stringResource(R.string.title_restore),
                 subtitle = stringResource(R.string.supporting_text_replace_all_data_with_a_backup),
                 onClick = { showRestoreConfirmDialog = true },
             )
 
-            SettingsTile(
+            ListItemSettingsTile(
                 title = stringResource(R.string.title_about_app_name),
                 subtitle = "", // empty subtitle gives consistent layout with other tiles
                 onClick = onAboutClick,
@@ -336,11 +353,43 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SettingsTile(title: String, subtitle: String, onClick: () -> Unit) {
+private fun ListItemSettingsTile(title: String, subtitle: String, onClick: () -> Unit) {
     ListItem(
         headlineContent = { Text(title) },
         supportingContent = { Text(subtitle) },
         modifier = Modifier.clickable(onClick = onClick),
+    )
+}
+
+@Composable
+private fun SwitchSettingsTile(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    // This implementation is a bit fiddly but comes from discussion with ChatGPT. We want the whole
+    // row to be clickable and we want the animation to look "OK" whether the user clicks on the row
+    // or specifically on the switch. This seems to be the best-looking combination.
+
+    // Create a separate InteractionSource for the ListItem ripple
+    val rowInteractionSource = remember { MutableInteractionSource() }
+
+    ListItem(
+        headlineContent = { Text(title) },
+        supportingContent = { Text(subtitle) },
+        trailingContent = {
+            // Let the Switch handle its own internal animation
+            Switch(checked = checked, onCheckedChange = onCheckedChange)
+        },
+        modifier =
+            Modifier.fillMaxWidth().clickable(
+                interactionSource = rowInteractionSource,
+                indication = LocalIndication.current, // ripple for the row
+            ) {
+                // Toggle the switch if the user taps outside it
+                onCheckedChange(!checked)
+            },
     )
 }
 

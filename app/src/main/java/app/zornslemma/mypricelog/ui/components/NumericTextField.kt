@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import app.zornslemma.mypricelog.ui.maxDecimalLength
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -24,6 +25,7 @@ fun NumericTextField(
     onValueChange: (TextFieldValue) -> Unit,
     enabled: Boolean = true,
     isError: Boolean = false,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     supportingText: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions,
     interactionSource: MutableInteractionSource? = null,
@@ -46,6 +48,7 @@ fun NumericTextField(
         onValueChange = onValueChange,
         enabled = enabled,
         isError = isError,
+        visualTransformation = visualTransformation,
         modifier = modifier,
         supportingText = supportingText,
         keyboardOptions = keyboardOptions,

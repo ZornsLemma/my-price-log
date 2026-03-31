@@ -24,3 +24,4 @@ local.properties
 .idea/dictionaries/
 .idea/caches/
 .idea/usage.statistics.xml
+.aider*

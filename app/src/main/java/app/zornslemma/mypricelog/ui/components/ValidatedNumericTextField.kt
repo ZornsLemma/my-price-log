@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.Dp
 import app.zornslemma.mypricelog.R
 import app.zornslemma.mypricelog.ui.common.UiText
@@ -34,6 +35,7 @@ fun <T> ValidatedNumericTextField(
     textStyle: TextStyle = LocalTextStyle.current,
     onValueChange: (TextFieldValue) -> Unit,
     enabled: Boolean,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     numericTextFieldModifier: Modifier = Modifier,
     keyboardOptions: KeyboardOptions,
     filled: Boolean = true,
@@ -60,6 +62,7 @@ fun <T> ValidatedNumericTextField(
             onValueChange = onValueChange,
             enabled = enabled,
             isError = validationResult != null,
+            visualTransformation = visualTransformation,
             supportingText = textOrNull(validationResult, color = MaterialTheme.colorScheme.error),
             keyboardOptions = keyboardOptions,
             interactionSource = interactionSource,

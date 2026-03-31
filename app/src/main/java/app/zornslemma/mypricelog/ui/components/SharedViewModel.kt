@@ -1,5 +1,7 @@
 package app.zornslemma.mypricelog.ui.components
 
+import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import app.zornslemma.mypricelog.data.DataSet
 import app.zornslemma.mypricelog.data.EditableDataSet
@@ -10,14 +12,43 @@ import app.zornslemma.mypricelog.data.Item
 import app.zornslemma.mypricelog.data.Price
 import app.zornslemma.mypricelog.data.Source
 import app.zornslemma.mypricelog.data.toEditable
+import app.zornslemma.mypricelog.domain.MeasurementUnit
 import app.zornslemma.mypricelog.domain.createCurrencyFormat
 import app.zornslemma.mypricelog.domain.sanitiseItems
 import app.zornslemma.mypricelog.ui.screens.editprice.EditPriceScreenStaticContent
 import app.zornslemma.mypricelog.ui.screens.editsource.EditSourceScreenStaticContent
 import app.zornslemma.mypricelog.ui.screens.home.HomeScreenUiContent
 import java.util.Locale
+import kotlinx.coroutines.flow.StateFlow
 
-class SharedViewModel : ViewModel() {
+private const val TAG = "SharedViewModel"
+
+class SharedViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
+    companion object {
+        private const val KEY_USER_UNIT_PRICE_DENOMINATOR = "userUnitPriceDenominator"
+        private const val KEY_USER_UNIT_PRICE_DENOMINATOR_ITEM_ID = "userUnitPriceDenominatorItemId"
+    }
+
+    val userUnitPriceDenominatorFlow: StateFlow<MeasurementUnit?> =
+        savedStateHandle.getStateFlow(KEY_USER_UNIT_PRICE_DENOMINATOR, null)
+
+    fun updateUserUnitPriceDenominator(userUnitPriceDenominator: MeasurementUnit?) {
+        savedStateHandle[KEY_USER_UNIT_PRICE_DENOMINATOR] = userUnitPriceDenominator
+    }
+
+    private var userUnitPriceDenominatorItemId: Long?
+        get() = savedStateHandle[KEY_USER_UNIT_PRICE_DENOMINATOR_ITEM_ID]
+        set(value) {
+            savedStateHandle[KEY_USER_UNIT_PRICE_DENOMINATOR_ITEM_ID] = value
+        }
+
+    fun resetUserUnitPriceDenominatorOnItemChange(itemId: Long?) {
+        if (itemId != null && itemId != userUnitPriceDenominatorItemId) {
+            updateUserUnitPriceDenominator(null)
+            userUnitPriceDenominatorItemId = itemId
+        }
+    }
+
     data class EditPriceScreenInitialUiContent(
         val editablePrice: EditablePrice,
         val staticContent: EditPriceScreenStaticContent,
@@ -31,6 +62,17 @@ class SharedViewModel : ViewModel() {
         val dataSet = uiContent.dataSet!!
         val item = uiContent.item!!
         val source = uiContent.source!!
+        val autoUnitPriceDenominator =
+            if (uiContent.autoUnitPriceDenominator != null) uiContent.autoUnitPriceDenominator
+            else {
+                // We really don't expect this to happen but as this is UI code we supply a
+                // reasonable default to avoid crashing if it does.
+                Log.w(
+                    TAG,
+                    "Unexpected: autoUnitPriceDenominator should not be null in setEditPriceScreenInitialUiContent()",
+                )
+                item.defaultUnit
+            }
 
         val price =
             uiContent.priceAnalysis.augmentedPriceList
@@ -56,6 +98,7 @@ class SharedViewModel : ViewModel() {
                         dataSet = dataSet,
                         item = item,
                         source = source,
+                        autoUnitPriceDenominator = autoUnitPriceDenominator,
                         nonLinearEdit = false,
                         frozenLocale = frozenLocale,
                     ),
@@ -66,6 +109,7 @@ class SharedViewModel : ViewModel() {
         dataSet: DataSet,
         item: Item,
         source: Source,
+        autoUnitPriceDenominator: MeasurementUnit,
         editablePrice: EditablePrice,
         frozenLocale: Locale,
     ) {
@@ -77,6 +121,7 @@ class SharedViewModel : ViewModel() {
                         dataSet = dataSet,
                         item = item,
                         source = source,
+                        autoUnitPriceDenominator = autoUnitPriceDenominator,
                         nonLinearEdit = true,
                         frozenLocale = frozenLocale,
                     ),
@@ -88,6 +133,7 @@ class SharedViewModel : ViewModel() {
         val item: Item,
         val source: Source,
         val price: Price?,
+        val autoUnitPriceDenominator: MeasurementUnit,
     )
 
     var viewPriceHistoryScreenInitialUiContent: ViewPriceHistoryScreenInitialUiContent? = null
@@ -104,6 +150,17 @@ class SharedViewModel : ViewModel() {
                 .find {
                     it.dataSetId == dataSet.id && it.itemId == item.id && it.sourceId == source.id
                 }
+        val autoUnitPriceDenominator =
+            if (uiContent.autoUnitPriceDenominator != null) uiContent.autoUnitPriceDenominator
+            else {
+                // We really don't expect this to happen but as this is UI code we supply a
+                // reasonable default to avoid crashing if it does.
+                Log.w(
+                    TAG,
+                    "Unexpected: autoUnitPriceDenominator should not be null in setViewPriceHistoryScreenInitialUiContent()",
+                )
+                item.defaultUnit
+            }
 
         viewPriceHistoryScreenInitialUiContent =
             ViewPriceHistoryScreenInitialUiContent(
@@ -111,6 +168,7 @@ class SharedViewModel : ViewModel() {
                 item = item,
                 source = source,
                 price = price,
+                autoUnitPriceDenominator = autoUnitPriceDenominator,
             )
     }
 
@@ -126,8 +184,8 @@ class SharedViewModel : ViewModel() {
     var selectSourceScreenInitialUiContent: SelectSourceScreenInitialUiContent? = null
 
     // If it's helpful for debugging, one way to make it possible to see that the initial list is
-    // used for the follow select screen is to add a tweaked copy of the list to itself. This gives
-    // a doubled-up list initially which is then replaced when the database query returns. For
+    // used for the following select screen is to add a tweaked copy of the list to itself. This
+    // gives a doubled-up list initially which is then replaced when the database query returns. For
     // example:
     //     selectDataSetScreenInitialUiContent =
     //         uiContent.dataSetList +

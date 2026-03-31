@@ -5,6 +5,7 @@ import app.zornslemma.mypricelog.data.DataSet
 import app.zornslemma.mypricelog.domain.UnitPrice
 import app.zornslemma.mypricelog.ui.nonBreakingSpace
 import app.zornslemma.mypricelog.ui.zeroWidthSpace
+import java.math.RoundingMode
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
@@ -18,6 +19,9 @@ fun formatPrice(price: Double, dataSet: DataSet, locale: Locale): String {
             NumberFormat.getCurrencyInstance(locale).apply {
                 currency = Currency.getInstance(dataSet.currencyCode)
             }
+        // The default rounding mode of HALF_EVEN is counterintuitive here, and we're not adding
+        // the rounded values up so we don't need to worry about bias.
+        numberFormat.roundingMode = RoundingMode.HALF_UP
         // Note that the returned string appears to use a non-breaking space as a separator.
         return numberFormat.format(price)
     } catch (e: Exception) {

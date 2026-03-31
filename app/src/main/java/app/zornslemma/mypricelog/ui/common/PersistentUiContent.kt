@@ -61,7 +61,7 @@ class PersistentUiContent<EditableContentType : Parcelable, StaticContentType : 
                 if (initialValue !is EmptyParcelable) {
                     Log.w(
                         TAG,
-                        "Using $key saved value '$savedValue' but there is an initialValue of '$initialValue'",
+                        "Unexpected: Using $key saved value '$savedValue' but there is an initialValue of '$initialValue'",
                     )
                 }
             }

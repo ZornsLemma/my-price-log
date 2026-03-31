@@ -1,11 +1,1 @@
-Registra y compara precios de productos en tiendas locales, completamente sin conexión:
-
-- Crea tus listas de tiendas y productos.  
-- Introduce y actualiza los precios mientras haces tus compras.  
-- Consulta el precio unitario de cada producto en todas las tiendas donde se venda y decide dónde comprar.  
-
-La interfaz está diseñada para usarse rápidamente en el pasillo del supermercado, con una mano sosteniendo la cesta y la otra el móvil.  
-
-Las conversiones de unidades se realizan automáticamente (métricas, imperiales y estadounidenses).  
-
-La app registra la fecha de cada precio para que sepas si la información sigue siendo reciente o está desactualizada.
+<p>Mi Registro de Precios te ayuda a registrar precios de productos en tiendas locales y compararlos. Funciona completamente sin conexión:</p><ul><li>Introduces una lista de tiendas.</li><li>Introduces una lista de productos que se venden en esas tiendas.</li><li>Registras, actualizas y confirmas los precios de esos productos en cada tienda mientras haces la compra.</li><li>La app muestra el precio por unidad de un producto en todas las tiendas que lo venden, para que puedas decidir dónde comprarlo.</li></ul><p>No hay nada especialmente sofisticado ni ingenioso aquí. Es una base de datos sencilla y especializada, con una interfaz de usuario optimizada para usarla fácilmente cuando estás en un pasillo del supermercado con una cesta o un carrito.</p><p>La app registra la antigüedad de cada precio, para que no te confíes en precios desactualizados. Los precios antiguos se indican con iconos y se les aplica un ajuste de inflación sencillo para intentar que sigan siendo útiles, aunque para obtener mejores resultados conviene actualizar los precios manualmente. Si lo deseas, puedes ver el historial de un precio para comprobar cómo ha cambiado con el tiempo.</p><p>Si hay suficiente información, la app indica si un precio es bueno, normal o caro. También se muestra una lista de precios por unidad para que puedas decidir por ti mismo.</p><p>Se pueden definir descuentos de programas de fidelidad para cada tienda, y estos se utilizan para ajustar el precio por unidad al comparar entre tiendas.</p><p>Las conversiones de unidades se gestionan automáticamente, tanto dentro de un mismo sistema de medida como entre sistemas distintos. Se admiten unidades métricas, imperiales y estadounidenses.</p>

@@ -3,6 +3,7 @@ package app.zornslemma.mypricelog.domain
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 const val defaultStalePriceThresholdDays = 30
 const val defaultAncientPriceThresholdDays = 180
 const val defaultAnnualInflationPercent = 5
+const val defaultMinorUnitPriceEntry = false
 
 data class PriceAgeSettings(
     val stalePriceThresholdDays: Int,
@@ -27,6 +29,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         val STALE_PRICE_THRESHOLD_DAYS_KEY = intPreferencesKey("stale_price_threshold_days")
         val ANCIENT_PRICE_THRESHOLD_DAYS_KEY = intPreferencesKey("ancient_price_threshold_days")
         val ANNUAL_INFLATION_PERCENT_KEY = intPreferencesKey("annual_inflation_percent")
+        val MINOR_UNIT_PRICE_ENTRY_KEY = booleanPreferencesKey("minor_unit_price_entry")
     }
 
     val stalePriceThresholdDaysFlow: Flow<Int> =
@@ -42,6 +45,11 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
     val annualInflationPercentFlow: Flow<Int> =
         dataStore.data.map { prefs ->
             prefs[Keys.ANNUAL_INFLATION_PERCENT_KEY] ?: defaultAnnualInflationPercent
+        }
+
+    val minorUnitPriceEntryFlow: Flow<Boolean> =
+        dataStore.data.map { prefs ->
+            prefs[Keys.MINOR_UNIT_PRICE_ENTRY_KEY] ?: defaultMinorUnitPriceEntry
         }
 
     val priceAgeSettingsFlow: Flow<PriceAgeSettings> =
@@ -67,6 +75,10 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
 
     fun setAnnualInflationPercentAsync(annualInflationPercent: Int) {
         setValueAsync(Keys.ANNUAL_INFLATION_PERCENT_KEY, annualInflationPercent)
+    }
+
+    fun setMinorUnitPriceEntryAsync(enabled: Boolean) {
+        setValueAsync(Keys.MINOR_UNIT_PRICE_ENTRY_KEY, enabled)
     }
 
     private fun <T> setValueAsync(key: Preferences.Key<T>, value: T) {

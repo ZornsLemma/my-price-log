@@ -43,6 +43,8 @@ import app.zornslemma.mypricelog.data.backupDatabase
 import app.zornslemma.mypricelog.data.restoreDatabase
 import app.zornslemma.mypricelog.data.toEditable
 import app.zornslemma.mypricelog.debug.myRequire
+import app.zornslemma.mypricelog.domain.SettingsRepository
+import app.zornslemma.mypricelog.domain.dataStore
 import app.zornslemma.mypricelog.ui.common.setSelectedDataSetIdAsync
 import app.zornslemma.mypricelog.ui.common.setSelectedItemIdAsync
 import app.zornslemma.mypricelog.ui.common.setSelectedSourceIdAsync
@@ -198,6 +200,7 @@ fun AppNavigation() {
                 viewModel<HomeViewModel>(backStackEntry, factory = AppViewModelProvider.Factory)
             LaunchedEffect(locale) { viewModel.updateLocale(locale) }
             HomeScreen(
+                sharedViewModel,
                 viewModel,
                 navController,
                 onEditPriceClick = { uiContent ->
@@ -440,6 +443,7 @@ fun AppNavigation() {
                 buildViewModel = { app, handle ->
                     EditPriceViewModel(
                         app.repository,
+                        SettingsRepository(app.dataStore),
                         handle,
                         sharedViewModel.editPriceScreenInitialUiContent?.editablePrice,
                         sharedViewModel.editPriceScreenInitialUiContent?.staticContent,
@@ -447,6 +451,7 @@ fun AppNavigation() {
                 },
             ) { viewModel ->
                 EditPriceScreen(
+                    sharedViewModel,
                     viewModel,
                     requestClose = { id ->
                         if (id == null) {
@@ -593,12 +598,14 @@ fun AppNavigation() {
                                 it.item,
                                 it.source,
                                 it.price,
+                                it.autoUnitPriceDenominator,
                             )
                         },
                     )
                 },
             ) { viewModel ->
                 ViewPriceHistoryScreen(
+                    sharedViewModel,
                     viewModel,
                     requestClose = { navController.popBackStack() },
                     requestEditAsNew = { priceHistory ->
@@ -618,6 +625,7 @@ fun AppNavigation() {
                             viewModel.uiContent.staticContent.dataSet,
                             viewModel.uiContent.staticContent.item,
                             viewModel.uiContent.staticContent.source,
+                            viewModel.uiContent.staticContent.autoUnitPriceDenominator,
                             editablePrice =
                                 priceHistory.toEditable(
                                     // It's important we provide the current price ID, since we must

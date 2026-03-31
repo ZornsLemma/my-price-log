@@ -227,6 +227,13 @@
     <string name="unit_pint_symbol">pt</string>
     <string name="unit_gallon_symbol">gal</string>
     <string name="debug_version_suffix">(debug)</string>
+    <string name="label_existing_unit_price">Existing unit price</string>
+    <string name="label_new_unit_price">New unit price</string>
+    <string name="label_change">Change</string>
+    <string name="message_italian_translation_attribution">Italian translation by DZ-Aladan</string>
+    <string name="title_price_entry_using_minor_unit">Price entry using minor unit</string>
+    <string name="supporting_text_minor_unit_price_entry">Type 37 for $0.37, 493 for $4.93</string>
+    <string name="supporting_text_major_unit_price_entry">Type 0.37 for $0.37, 4 for $4.00</string>
     <plurals name="supporting_text_prices_considered_stale_after_x_days">
         <item quantity="one">Prices considered stale after %1$d day</item>
         <item quantity="other">Prices considered stale after %1$d days</item>

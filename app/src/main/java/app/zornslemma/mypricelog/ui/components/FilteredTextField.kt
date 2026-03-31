@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import app.zornslemma.mypricelog.R
 
 // Like TextField, but with some simple logic to allow input to be filtered and discarded via an
@@ -28,6 +29,7 @@ fun FilteredTextField(
     onValueChange: (TextFieldValue) -> Unit,
     enabled: Boolean = true,
     isError: Boolean = false,
+    visualTransformation: VisualTransformation = VisualTransformation.None,
     supportingText: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     singleLine: Boolean = false,
@@ -64,6 +66,7 @@ fun FilteredTextField(
                         }
                     } else null,
             isError = isError,
+            visualTransformation = visualTransformation,
             singleLine = singleLine,
             interactionSource = interactionSource,
         )
@@ -95,6 +98,7 @@ fun FilteredTextField(
                         }
                     } else null,
             isError = isError,
+            visualTransformation = visualTransformation,
             singleLine = singleLine,
             interactionSource = interactionSource,
         )

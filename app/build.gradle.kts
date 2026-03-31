@@ -34,6 +34,10 @@ android {
     namespace = "app.zornslemma.mypricelog"
     compileSdk = 36
 
+    dependenciesInfo {
+        includeInApk = false
+    }
+
     defaultConfig {
         applicationId = "app.zornslemma.mypricelog"
         // minSdk could almost be 24 but because we use VACUUM INTO for the sqlite backup we need
@@ -43,8 +47,8 @@ android {
         // we revert to minSdk 24 later on, these may need re-enabling.
         minSdk = 30
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = 4
+        versionName = "0.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

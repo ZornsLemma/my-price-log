@@ -162,6 +162,7 @@ fun AboutScreen(navController: NavHostController, onViewLegalClick: () -> Unit) 
                     BulletPoint(
                         stringResource(R.string.message_material_design_icons_google_apache_2_0)
                     )
+                    BulletPoint(stringResource(R.string.message_italian_translation_attribution))
                     /* For future reference:
                     BulletPoint("ExampleLibrary (MIT) — placeholder for future third-party library")
                     */

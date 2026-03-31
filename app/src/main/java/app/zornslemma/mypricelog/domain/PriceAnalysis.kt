@@ -139,10 +139,6 @@ fun analysePrices(
     priceAgeSettings: PriceAgeSettings,
     locale: Locale,
 ): PriceAnalysis {
-    if (priceList.isEmpty()) {
-        return PriceAnalysis(emptyList(), null)
-    }
-
     // It's important for our calls to quantile() below that augmentedPriceList is sorted on unit
     // price. We use sourceName as a tie breaker just to improve visual consistency of the results
     // when shown to the user.
@@ -161,6 +157,9 @@ fun analysePrices(
                 compareBy<AugmentedPrice> { it.unitPrice }
                     .thenComparing({ it.sourceName }, collator)
             )
+    if (augmentedPriceList.isEmpty()) {
+        return PriceAnalysis(emptyList(), null)
+    }
 
     // fromPrice() should have generated all unit prices using the base unit, but let's check
     // as otherwise recentEnoughPriceList (which discards the denominators) will be meaningless.

@@ -1,0 +1,3 @@
+- Aggiunta la traduzione italiana da parte di DZ-Aladan. Grazie!
+
+- Aggiunta un'opzione per inserire i prezzi (ad esempio) in centesimi anziché in euro, con virgola decimale implicita.

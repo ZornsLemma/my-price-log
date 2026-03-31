@@ -68,7 +68,7 @@ fun LegalScreen(navController: NavHostController, modifier: Modifier = Modifier)
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Copyright $copyrightSymbol 2025 Steven Flintham",
+                text = "Copyright $copyrightSymbol 2025-2026 Steven Flintham",
                 style = MaterialTheme.typography.bodySmall,
             )
             Spacer(modifier = Modifier.height(8.dp))

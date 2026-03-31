@@ -1,0 +1,14 @@
+on: [pull_request, push]
+jobs:
+  validate-metadata:
+    # required to run on Linux because this is a docker container action
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ashutoshgngwr/validate-fastlane-supply-metadata@v2
+        with:
+          fastlaneDir: metadata
+          # Bare "es" isn't accepted by Play Store but I'd rather not use "es-ES"
+          # or whatever as my metadata is supposed to be internationally
+          # acceptable.
+          usePlayStoreLocales: false

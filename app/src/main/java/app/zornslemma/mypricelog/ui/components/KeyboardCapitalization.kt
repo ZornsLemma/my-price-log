@@ -22,7 +22,7 @@ fun keyboardCapitalization(@StringRes resId: Int): KeyboardCapitalization =
         else -> {
             Log.w(
                 TAG,
-                "Resource '${resourceName(LocalContext.current, resId)}' has unknown keyboard capitalization option '$option'",
+                "Unexpected: Resource '${resourceName(LocalContext.current, resId)}' has unknown keyboard capitalization option '$option'",
             )
             KeyboardCapitalization.None
         }

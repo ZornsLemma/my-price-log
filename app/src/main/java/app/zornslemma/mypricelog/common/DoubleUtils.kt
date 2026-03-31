@@ -1,26 +1,74 @@
 package app.zornslemma.mypricelog.common
 
+import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.pow
 
-// The arguments are mandatory here so we're forced to think about what's correct when we call this.
-// For miscellaneous debug output we can just use string interpolation of course.
+// The arguments are mandatory on formatDouble() and formatPercent() so we're forced to think about
+// what's correct when we call this. For miscellaneous debug output we can just use string
+// interpolation of course.
+
 fun formatDouble(
     value: Double,
     minDecimals: Int,
     maxDecimals: Int,
     useLocaleGrouping: Boolean,
     locale: Locale,
+    useLeadingPlus: Boolean = false,
 ): String {
     val numberFormat = NumberFormat.getNumberInstance(locale)
+    return commonFormat(
+        numberFormat,
+        value,
+        minDecimals,
+        maxDecimals,
+        useLocaleGrouping,
+        locale,
+        useLeadingPlus,
+    )
+}
+
+fun formatPercent(
+    value: Double,
+    minDecimals: Int,
+    maxDecimals: Int,
+    useLocaleGrouping: Boolean,
+    locale: Locale,
+    useLeadingPlus: Boolean = false,
+): String {
+    val numberFormat = NumberFormat.getPercentInstance(locale)
+    return commonFormat(
+        numberFormat,
+        value,
+        minDecimals,
+        maxDecimals,
+        useLocaleGrouping,
+        locale,
+        useLeadingPlus,
+    )
+}
+
+private fun commonFormat(
+    numberFormat: NumberFormat,
+    value: Double,
+    minDecimals: Int,
+    maxDecimals: Int,
+    useLocaleGrouping: Boolean,
+    locale: Locale,
+    useLeadingPlus: Boolean = false,
+): String {
     numberFormat.minimumFractionDigits = minDecimals
     numberFormat.maximumFractionDigits = maxDecimals
     if (!useLocaleGrouping) {
         numberFormat.isGroupingUsed = false
     }
-    return numberFormat.format(value)
+    val decimalFormat = numberFormat as DecimalFormat
+    if (useLeadingPlus) {
+        decimalFormat.positivePrefix = "+"
+    }
+    return decimalFormat.format(value)
 }
 
 // Format a double to be edited by the user as a string in a TextField. Grouping is *not* used -

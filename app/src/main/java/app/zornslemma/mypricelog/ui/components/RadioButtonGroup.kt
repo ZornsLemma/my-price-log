@@ -4,7 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -46,10 +46,11 @@ fun <T, ID : Comparable<ID>> RadioButtonGroup(
                     Modifier.fillMaxWidth()
                         .then(clickableModifier)
                         .padding(horizontal = 8.dp)
-                        .height(
+                        .heightIn(
                             48.dp
                         ) // 40.dp is MD3 spec but we want extra space for our supporting text while
-                        // still having some spacing between items
+                        // still having some spacing between items. We use .heightIn() not .height()
+                        // so lines can wrap on smaller screens if necessary.
                         .semantics {
                             role = Role.RadioButton
                         }, // for TalkBack / screen readers, since this is clickable not the

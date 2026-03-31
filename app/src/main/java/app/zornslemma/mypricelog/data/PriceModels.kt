@@ -13,6 +13,7 @@ import app.zornslemma.mypricelog.debug.myCheck
 import app.zornslemma.mypricelog.domain.CurrencyFormat
 import app.zornslemma.mypricelog.domain.MeasurementUnit
 import app.zornslemma.mypricelog.domain.Quantity
+import app.zornslemma.mypricelog.domain.UnitPrice
 import app.zornslemma.mypricelog.domain.baseUnit
 import app.zornslemma.mypricelog.domain.createCurrencyFormat
 import java.time.Instant
@@ -259,7 +260,11 @@ data class EditablePrice(
     }
 }
 
-fun EditablePrice.toDomain(locale: Locale): Price? {
+// PriceFundamentals is just used to factor out the string-to-double logic from toDomain() so it can
+// also be used in unitPrice().
+private data class PriceFundamentals(val count: Long, val price: Double, val quantity: Quantity)
+
+private fun EditablePrice.priceFundamentals(locale: Locale): PriceFundamentals? {
     val priceDouble = parseStringAsDoubleOrNull(locale, price)
     // If we are adding a first price for a non-multipack item, count may be an empty string and we
     // interpret that as 1. It's up to the validation rules whether to allow an empty string to make
@@ -267,25 +272,40 @@ fun EditablePrice.toDomain(locale: Locale): Price? {
     val countLong =
         if (count.trim().isEmpty()) 1L else parseStringAsDoubleOrNull(locale, count)?.toLong()
     val measureValueDouble = parseStringAsDoubleOrNull(locale, measureValue)
-    return if (priceDouble == null || countLong == null || measureValueDouble == null) {
-        null
-    } else {
+    return if (priceDouble == null || countLong == null || measureValueDouble == null) null
+    else
+        PriceFundamentals(
+            count = countLong,
+            price = priceDouble,
+            quantity = Quantity(measureValueDouble, measurementUnit),
+        )
+}
+
+fun EditablePrice.toDomain(locale: Locale): Price? =
+    priceFundamentals(locale)?.let {
         val now = Instant.now()
-        Price(
+        return Price(
             id = id,
             dataSetId = dataSetId,
             itemId = itemId,
             sourceId = sourceId,
-            price = priceDouble,
-            count = countLong,
-            quantity = Quantity(measureValueDouble, measurementUnit),
+            count = it.count,
+            price = it.price,
+            quantity = it.quantity,
             confirmedAt = if (toConfirm) now else confirmedAt,
             notes = notes,
             modifiedAt = now,
             itemDefaultUnit = itemDefaultUnit,
         )
     }
-}
+
+fun EditablePrice.unitPrice(locale: Locale): UnitPrice? =
+    priceFundamentals(locale)?.let {
+        if (it.count == 0L || it.quantity.value == 0.0) null
+        else {
+            UnitPrice.calculate(it.price, it.count, it.quantity)
+        }
+    }
 
 // This must be kept in sync with any changes to PriceEntity.
 @Entity(
@@ -336,7 +356,7 @@ fun EditablePrice.toDomain(locale: Locale): Price? {
 // I like the table name price_history but am less keen on having this class called PriceHistory,
 // which sounds like it represents the total history of a price and not a single historical version
 // of the price. However, I like the table name and don't like the idea of breaking the obvious
-// mapping between the table name and this class, so let's stick with it..
+// mapping between the table name and this class, so let's stick with it.
 data class PriceHistory(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     @ColumnInfo(name = "price_id") val priceId: Long,

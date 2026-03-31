@@ -8,6 +8,7 @@ import app.zornslemma.mypricelog.data.Item
 import app.zornslemma.mypricelog.data.Price
 import app.zornslemma.mypricelog.data.PriceHistory
 import app.zornslemma.mypricelog.data.Source
+import app.zornslemma.mypricelog.domain.MeasurementUnit
 import app.zornslemma.mypricelog.domain.Quantity
 import app.zornslemma.mypricelog.domain.Repository
 import app.zornslemma.mypricelog.domain.baseUnit
@@ -26,6 +27,7 @@ data class ViewPriceHistoryScreenStaticContent(
     val item: Item,
     val source: Source,
     val price: Price?,
+    val autoUnitPriceDenominator: MeasurementUnit,
 ) : Parcelable
 
 class ViewPriceHistoryViewModel(
