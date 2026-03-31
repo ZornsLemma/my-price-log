@@ -63,6 +63,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // We use the debug key for the release build. This allows us to switch between debug
+            // and release builds freely during development. This would *not* be correct for a true
+            // public release, but those are performed manually using the Build->Generate Signed...
+            // option in Android Studio anyway and need the keystore password to be entered
+            // manually.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
