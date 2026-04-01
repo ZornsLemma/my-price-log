@@ -155,7 +155,6 @@ fun <T> GeneralSelectorScreen(
 
             val dataListSorted = dataList.rememberSortedByLocale { getName(it) }
             Box(modifier = Modifier.fillMaxWidth()) {
-                dataList.forEach { println("Item: $it, ID: ${getId(it)}") }
                 LazyColumn {
                     items(items = dataListSorted, key = { item -> getId(item) }) { item ->
                         GeneralSelectorScreenListItem(
