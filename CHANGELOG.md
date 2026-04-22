@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3 - 4 (2026-03-03)
+## v0.3 - 4 (2026-03-30)
 
 - Add Italian translation by DZ-Aladan. Thanks!
 
