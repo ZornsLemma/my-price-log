@@ -121,4 +121,5 @@ dependencies {
     implementation(libs.androidx.datastore)
     implementation(libs.androidx.datastore.core)
     implementation(libs.google.protobuf.javalite)
+    implementation(libs.androidx.appcompat)
 }
