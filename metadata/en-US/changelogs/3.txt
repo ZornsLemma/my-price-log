@@ -1,1 +1,9 @@
-[truncated]
+- Show a unit price on the add/edit price screen, along with the current unit price and a percentage change when editing an existing price.
+
+- Improve the automatic selection of unit price denominators.
+
+- Persist a manually selected unit price denominator until a different product is selected.
+
+- Use half-up rounding mode when displaying currency amounts.
+
+- Restrict the home screen's navigation drawer to 2/3 of the screen width on narrow screens and close it when back is pressed.
