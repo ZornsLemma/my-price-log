@@ -1,0 +1,1 @@
+- Show a dark mode splash screen when the app starts up with the system in dark mode. Thanks to dav23r for reporting this.

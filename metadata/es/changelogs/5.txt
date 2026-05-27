@@ -1,0 +1,1 @@
+- Mostrar la pantalla de inicio en modo oscuro cuando la aplicación se inicie con el sistema en modo oscuro. Gracias a dav23r por reportarlo.

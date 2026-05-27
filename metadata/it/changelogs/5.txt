@@ -1,0 +1,1 @@
+- Mostrare la schermata iniziale in modalità scura quando l'app si avvia con il sistema in modalità scuro. Grazie a dav23r per la segnalazione.
