@@ -4,6 +4,8 @@
 
 - Show a dark mode splash screen when the app starts up with the system in dark mode. Thanks to dav23r for reporting this (issue #13).
 
+- Set exportSchema=true.
+
 ## v0.3 - 4 (2026-03-30)
 
 - Add Italian translation by DZ-Aladan. Thanks!
