@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3.1 - TODO
+## v0.3.1 - 5 (TODO)
 
 - Show a dark mode splash screen when the app starts up with the system in dark mode. Thanks to dav23r for reporting this (issue #13).
 

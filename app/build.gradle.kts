@@ -51,8 +51,8 @@ android {
         // we revert to minSdk 24 later on, these may need re-enabling.
         minSdk = 30
         targetSdk = 36
-        versionCode = 4
-        versionName = "0.3"
+        versionCode = 5
+        versionName = "0.3.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
