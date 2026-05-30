@@ -1,10 +1,10 @@
 # Changelog
 
-## v0.3.1 - 5 (TODO)
+## v0.3.1 - 5 (2026-05-30)
 
 - Show a dark mode splash screen when the app starts up with the system in dark mode. Thanks to dav23r for reporting this (issue #13).
 
-- Set exportSchema=true.
+- Set exportSchema=true. This should help Room validate database upgrades in future.
 
 ## v0.3 - 4 (2026-03-30)
 
