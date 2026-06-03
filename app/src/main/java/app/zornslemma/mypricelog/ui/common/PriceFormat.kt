@@ -3,6 +3,7 @@ package app.zornslemma.mypricelog.ui.common
 import android.content.Context
 import app.zornslemma.mypricelog.data.DataSet
 import app.zornslemma.mypricelog.domain.UnitPrice
+import app.zornslemma.mypricelog.domain.effectiveFractionDigits
 import app.zornslemma.mypricelog.ui.nonBreakingSpace
 import app.zornslemma.mypricelog.ui.zeroWidthSpace
 import java.math.RoundingMode
@@ -15,13 +16,18 @@ fun formatPrice(price: Double, dataSet: DataSet, locale: Locale): String {
     // throw if given currency code "AAAA", so it seems safest to catch exceptions and have a
     // fallback, even if it's not great.
     try {
+        val formatCurrency = Currency.getInstance(dataSet.currencyCode)
         val numberFormat =
             NumberFormat.getCurrencyInstance(locale).apply {
-                currency = Currency.getInstance(dataSet.currencyCode)
+                currency = formatCurrency
+                // Use effectiveFractionDigits instead of relying on the formatter defaults (which,
+                // FWIW, do not necessarily match formatCurrency.defaultFractionDigits).
+                minimumFractionDigits = formatCurrency.effectiveFractionDigits
+                maximumFractionDigits = formatCurrency.effectiveFractionDigits
+                // The default rounding mode of HALF_EVEN is counterintuitive here, and we're not
+                // adding the rounded values up so we don't need to worry about bias.
+                roundingMode = RoundingMode.HALF_UP
             }
-        // The default rounding mode of HALF_EVEN is counterintuitive here, and we're not adding
-        // the rounded values up so we don't need to worry about bias.
-        numberFormat.roundingMode = RoundingMode.HALF_UP
         // Note that the returned string appears to use a non-breaking space as a separator.
         return numberFormat.format(price)
     } catch (e: Exception) {

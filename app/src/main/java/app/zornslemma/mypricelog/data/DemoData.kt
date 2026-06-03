@@ -5,6 +5,7 @@ import app.zornslemma.mypricelog.R
 import app.zornslemma.mypricelog.domain.MeasurementUnit
 import app.zornslemma.mypricelog.domain.Quantity
 import app.zornslemma.mypricelog.domain.Repository
+import app.zornslemma.mypricelog.domain.effectiveFractionDigits
 import app.zornslemma.mypricelog.ui.common.setSelectedDataSetId
 import app.zornslemma.mypricelog.ui.common.setSelectedItemId
 import app.zornslemma.mypricelog.ui.common.setSelectedSourceId
@@ -26,7 +27,7 @@ suspend fun populateDemoData(repository: Repository, context: Context) {
     // The demo data uses 2 decimal places so we scale it by currencyMultiplier when inserting so we
     // have unrealistic but at least workable prices for currencies like JPY. The prices aren't
     // meant to be realistic anyway.
-    val currencyMultiplier = 10.0.pow(2 - currency.defaultFractionDigits)
+    val currencyMultiplier = 10.0.pow(2 - currency.effectiveFractionDigits)
     val dataSetId =
         repository.updateOrInsertDataSet(
             DataSet(

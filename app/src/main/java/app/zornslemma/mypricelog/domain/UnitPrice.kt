@@ -71,7 +71,7 @@ fun calculateFriendlyUnitPriceDenominator(
             preferredUnit ?: unitPriceList.first().denominator,
             includeDisplayOnly = true,
         )
-    val currencyDecimalPlaces = Currency.getInstance(dataSet.currencyCode).defaultFractionDigits
+    val currencyDecimalPlaces = Currency.getInstance(dataSet.currencyCode).effectiveFractionDigits
 
     // ENHANCE: I wonder if we should derive min/max values from unitPriceList (and perhaps add a
     // 10% buffer around those to give some stability if prices change a small amount?) and use
@@ -103,8 +103,9 @@ fun calculateFriendlyUnitPriceDenominator(
 // particularly those which still have near-redundant decimal places, but ENHANCE: it feels better
 // to react to user feedback than try to pre-emptively make this work perfectly for every currency.
 // ENHANCE: We could allow targetSignificantFigures to be user-defined in each data set, and/or we
-// could hard-code overrides of it for some currencies. I haven't checked it, but ChatGPT suggests
-// COP and IDR are the two currencies that might benefit from hard-coded overrides to be 0 d.p.
+// could hard-code overrides of it for some currencies. The introduction of effectiveFractionDigits
+// may go part way towards this, but it's possible that this isn't enough. Let's wait until we have
+// a concrete problem to solve before trying to fix this though.
 private fun scoreUnitPrice(candidateUnitPrice: UnitPrice, currencyDecimalPlaces: Int): Double {
     // We could refuse to operate on zero numerator unit prices but it feels a bit petty and
     // there are corner cases (calculating on-the-fly unit prices when the user is editing a

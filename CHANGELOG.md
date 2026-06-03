@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.3 - 7 (2026-06-03)
+
+- Always use 0 fractional digits for COP and IDR currencies.
+
 ## v0.3.2 - 6 (2026-06-03)
 
 - Add missing IDR currency. Thanks to RudzLong for reporting this.
