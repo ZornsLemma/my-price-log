@@ -151,7 +151,6 @@ private val validCurrencyCodes =
         "SRD",
         "SSP",
         "STN",
-        "SVC", // ENHANCE: This may be practically irrelevant
         "SYP",
         "SZL",
         "THB",
@@ -168,7 +167,9 @@ private val validCurrencyCodes =
         "USD",
         "UYU",
         "UZS",
-        "VED", // ENHANCE: This may not be relevant to our use case ("VES" is the current code)
+        // ENHANCE: One of VED and VES may be obsolete, but I am receiving contradictory information
+        // as to which. It's probably best to leave both in for now.
+        "VED",
         "VES",
         "VND",
         "VUV",
