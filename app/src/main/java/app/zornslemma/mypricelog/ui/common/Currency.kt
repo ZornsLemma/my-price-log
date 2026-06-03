@@ -82,6 +82,7 @@ private val validCurrencyCodes =
         "HNL",
         "HTG",
         "HUF",
+        "IDR",
         "ILS",
         "INR",
         "IQD",

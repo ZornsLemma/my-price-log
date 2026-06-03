@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.2 - 6 (2026-06-03)
+
+- Add missing IDR currency. Thanks to RudzLong for reporting this.
+
 ## v0.3.1 - 5 (2026-05-30)
 
 - Show a dark mode splash screen when the app starts up with the system in dark mode. Thanks to dav23r for reporting this (issue #13).

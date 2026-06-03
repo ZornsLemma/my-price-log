@@ -1,0 +1,1 @@
+- Add missing IDR currency. Thanks to RudzLong for reporting this.

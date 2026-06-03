@@ -1,0 +1,1 @@
+- Se añadió la moneda IDR que faltaba. Gracias a RudzLong por reportarlo.
