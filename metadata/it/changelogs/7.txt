@@ -1,0 +1,3 @@
+- Utilizzare sempre 0 cifre decimali per le valute COP e IDR.
+
+- Rimuovere la valuta SVC.

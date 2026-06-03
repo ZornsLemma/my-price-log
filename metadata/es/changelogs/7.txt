@@ -1,0 +1,3 @@
+- Utilizar siempre 0 decimales para las monedas COP e IDR.
+
+- Eliminar la moneda SVC.

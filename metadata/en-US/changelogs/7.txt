@@ -1,0 +1,3 @@
+- Always use 0 fractional digits for COP and IDR currencies.
+
+- Remove SVC currency.
