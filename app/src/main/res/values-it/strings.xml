@@ -231,6 +231,7 @@
     <string name="label_new_unit_price">Nuovo prezzo unitario</string>
     <string name="label_change">Cambia</string>
     <string name="message_italian_translation_attribution">Traduzione in italiano di DZ-Aladan</string>
+    <string name="message_french_translation_attribution">Traduzione francese di MonsieurSpirale e oleole39</string>
     <string name="title_price_entry_using_minor_unit">Inserimento del prezzo in unità minori</string>
     <string name="supporting_text_minor_unit_price_entry">Inserisci 37 per $0.37, 493 per $4.93</string>
     <string name="supporting_text_major_unit_price_entry">Inserisci 0.37 per $0.37, 4 per $4.00</string>

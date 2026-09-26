@@ -237,6 +237,7 @@
     <string name="label_new_unit_price">Precio por unidad nuevo</string>
     <string name="label_change">Cambio</string>
     <string name="message_italian_translation_attribution">Traducción al italiano por DZ-Aladan</string>
+    <string name="message_french_translation_attribution">Traducción al francés por MonsieurSpirale y oleole39</string>
     <string name="title_price_entry_using_minor_unit">Ingreso del precio en unidades menores</string>
     <string name="supporting_text_minor_unit_price_entry">Introduce 37 para $0.37, 493 para $4.93</string>
     <string name="supporting_text_major_unit_price_entry">Introduce 0.37 para $0.37, 4 para $4.00</string>
