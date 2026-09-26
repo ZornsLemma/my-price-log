@@ -1,1 +1,3 @@
 - Add French translation by MonsieurSpirale and oleole39. Thanks!
+
+- Support setting the app language independently of the system language.

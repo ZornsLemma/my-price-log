@@ -1,1 +1,3 @@
 - Añadida la traducción al francés por MonsieurSpirale y oleole39. ¡Gracias!
+
+- Permitir configurar el idioma de la aplicación independientemente del idioma del sistema.

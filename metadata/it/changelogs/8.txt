@@ -1,1 +1,3 @@
 - Aggiunta la traduzione in francese a cura di MonsieurSpirale e oleole39. Grazie!
+
+- Consentire di impostare la lingua dell'app indipendentemente dalla lingua del sistema.
