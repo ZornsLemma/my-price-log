@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">Mon Registre de Prix</string>
-    <string name="title_about_app_name">Au sujet de Mon Registre de Prix</string>
-    <string name="default_backup_filename">mon_reg_prix_%1$s.db</string>
-    <string name="title_app_name_license">Mon Registre de Prix — Licence MIT</string>
+    <string name="app_name">Mon Comparateur de Prix</string>
+    <string name="title_about_app_name">Au sujet de Mon Comparateur de Prix</string>
+    <string name="default_backup_filename">mon_comp_prix_%1$s.db</string>
+    <string name="title_app_name_license">Mon Comparateur de Prix — Licence MIT</string>
     <string name="demo_groceries_data_set_name">Provisions (exemple)</string>
     <string name="demo_groceries_data_set_notes">Un exemple de produits aux prix irréalistes pour des magasins imaginaires. Le but étant de vous donner un exemple avec lequel tester le fonctionnement de l'application après une première installation.</string>
     <string name="demo_groceries_item_name_coffee_ground">Café (moulu)</string>
@@ -26,7 +26,7 @@
     <string name="content_description_expand">Étendre</string>
     <string name="relative_time_span_string_now">maintenant</string>
     <string name="title_source_price">Prix en magasin</string>
-    <string name="message_no_price_for_item_at_source">Il n'y a pas encore de prix enregistré pour ce produit dans ce magasin.</string>
+    <string name="message_no_price_for_item_at_source">Il n'y a pas encore de prix en pour ce produit dans ce magasin.</string>
     <string name="button_add">Ajouter</string>
     <string name="label_confirmed">Confirmé</string>
     <string name="label_notes">Notes</string>
@@ -60,7 +60,7 @@
     <string name="content_description_ancient_price">Ancien prix</string>
     <string name="title_price_comparison">Comparaison des prix</string>
     <string name="subtitle_adjusted_for_discounts_and_age">Inclut les réductions fidélité et l'ajustement à l'inflation</string>
-    <string name="message_no_prices_for_item_at_source">Il n'y a encore aucun prix d'enregistré pour ce produit dans aucun magasin.</string>
+    <string name="message_no_prices_for_item_at_source">Il n'y a encore aucun prix d'en pour ce produit dans aucun magasin.</string>
     <string name="label_confirm_pack_size_and_price">Confirmez le nombre de pièces incluses et le prix</string>
     <string name="supporting_text_details_correct_right_now">Les détails ci-dessus restent valides actuellement</string>
     <string name="label_count">Nombre de pièces</string>
@@ -91,7 +91,7 @@
     <string name="label_sold_by_weight">Poids</string>
     <string name="label_sold_by_volume">Volume</string>
     <string name="label_sold_by">Vendu par</string>
-    <string name="supporting_text_sold_by_cant_be_changed">Le paramètre \'Vendu par'\ ne peut pas être changé, car il y a des prix enregistrés pour ce produit.</string>
+    <string name="supporting_text_sold_by_cant_be_changed">Le paramètre \'Vendu par'\ ne peut pas être changé, car il y a des prix ens pour ce produit.</string>
     <string name="label_default_unit">Unité par défaut</string>
     <string name="supporting_text_default_unit">Utilisé seulement par défaut lorsqu'un prix est entré pour la première fois. Vous pouvez toujours sélectionner une autre unité.</string>
     <string name="label_may_be_sold_in_multipacks">Peut être vendu en emballage groupé</string>
