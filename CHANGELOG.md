@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.4 - 8 (2026-09-26)
+
+- Add French translation by MonsieurSpirale and oleole39. Thanks!
+
 ## v0.3.3 - 7 (2026-06-03)
 
 - Always use 0 fractional digits for COP and IDR currencies.
