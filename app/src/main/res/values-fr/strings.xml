@@ -30,7 +30,7 @@
     <string name="button_add">Ajouter</string>
     <string name="label_confirmed">Confirmé</string>
     <string name="label_notes">Notes</string>
-    <string name="keyboard_capitalization_notes">phrases</string>
+    <string name="keyboard_capitalization_notes">sentences</string>
     <string name="content_description_more_options">Plus d'options</string>
     <string name="menu_item_view_history">Voir l'historique</string>
     <string name="menu_item_delete_price">Supprimer le prix</string>
@@ -83,10 +83,10 @@
     <string name="message_delete_item_no_associated_prices">Il n'y a pas de prix associés à ce produit, donc le supprimer ne modifiera rien d'autre.</string>
     <string name="message_delete_item_associated_prices">Supprimer ce produit va aussi supprimer les prix qui lui sont associés dans l'ensemble des magasins. Il ne sera pas possible de revenir en arrière.</string>
     <string name="label_name">Nom</string>
-    <string name="keyboard_capitalization_data_set_name">phrases</string>
-    <string name="keyboard_capitalization_item_name">phrases</string>
+    <string name="keyboard_capitalization_data_set_name">sentences</string>
+    <string name="keyboard_capitalization_item_name">sentences</string>
     <!-- We use "words" for source name because this is likely to be a store brand name. -->
-    <string name="keyboard_capitalization_source_name">mots</string>
+    <string name="keyboard_capitalization_source_name">words</string>
     <string name="label_sold_by_item">Élément</string>
     <string name="label_sold_by_weight">Poids</string>
     <string name="label_sold_by_volume">Volume</string>
