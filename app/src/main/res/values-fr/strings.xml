@@ -77,7 +77,7 @@
     <string name="button_ok">OK</string>
     <string name="content_description_warning">Attention</string>
     <string name="title_add_item">Modifier le produit</string>
-    <string name="title_edit_item">MOdifier le produit</string>
+    <string name="title_edit_item">Modifier le produit</string>
     <string name="title_delete_item">Supprimer le produit ?</string>
     <string name="title_delete_item_and_prices">Supprimer le produit et ses prix ?</string>
     <string name="message_delete_item_no_associated_prices">Il n\'y a pas de prix associés à ce produit, donc le supprimer ne modifiera rien d\'autre.</string>
