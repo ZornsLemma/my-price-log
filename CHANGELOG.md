@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3.4 - 8 (2026-09-26)
+## v0.3.4 - 8 (2026-09-28)
 
 - Add French translation by MonsieurSpirale and oleole39. Thanks!
 
