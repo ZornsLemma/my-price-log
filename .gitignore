@@ -25,4 +25,5 @@ local.properties
 .idea/caches/
 .idea/usage.statistics.xml
 .idea/misc.xml
+.idea/vcs.xml
 .aider*
