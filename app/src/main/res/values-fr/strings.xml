@@ -26,7 +26,7 @@
     <string name="content_description_expand">Étendre</string>
     <string name="relative_time_span_string_now">maintenant</string>
     <string name="title_source_price">Prix en magasin</string>
-    <string name="message_no_price_for_item_at_source">Il n\'y a pas encore de prix en pour ce produit dans ce magasin.</string>
+    <string name="message_no_price_for_item_at_source">Il n\'y a pas encore de prix pour ce produit dans ce magasin.</string>
     <string name="button_add">Ajouter</string>
     <string name="label_confirmed">Confirmé</string>
     <string name="label_notes">Notes</string>
@@ -60,7 +60,7 @@
     <string name="content_description_ancient_price">Ancien prix</string>
     <string name="title_price_comparison">Comparaison des prix</string>
     <string name="subtitle_adjusted_for_discounts_and_age">Inclut les réductions fidélité et l\'ajustement à l\'inflation</string>
-    <string name="message_no_prices_for_item_at_source">Il n\'y a encore aucun prix d\'en pour ce produit dans aucun magasin.</string>
+    <string name="message_no_prices_for_item_at_source">Il n\'y a encore aucun prix pour ce produit dans aucun magasin.</string>
     <string name="label_confirm_pack_size_and_price">Confirmez le nombre de pièces incluses et le prix</string>
     <string name="supporting_text_details_correct_right_now">Les détails ci-dessus restent valides actuellement</string>
     <string name="label_count">Nombre de pièces</string>
@@ -76,7 +76,7 @@
     <string name="title_error">Erreur</string>
     <string name="button_ok">OK</string>
     <string name="content_description_warning">Attention</string>
-    <string name="title_add_item">Modifier le produit</string>
+    <string name="title_add_item">Ajouter un produit</string>
     <string name="title_edit_item">Modifier le produit</string>
     <string name="title_delete_item">Supprimer le produit ?</string>
     <string name="title_delete_item_and_prices">Supprimer le produit et ses prix ?</string>
@@ -91,7 +91,7 @@
     <string name="label_sold_by_weight">Poids</string>
     <string name="label_sold_by_volume">Volume</string>
     <string name="label_sold_by">Vendu par</string>
-    <string name="supporting_text_sold_by_cant_be_changed">Le paramètre \'Vendu par\' ne peut pas être changé, car il y a des prix ens pour ce produit.</string>
+    <string name="supporting_text_sold_by_cant_be_changed">Le paramètre \'Vendu par\' ne peut pas être changé, car il y a des prix enregistrés pour ce produit.</string>
     <string name="label_default_unit">Unité par défaut</string>
     <string name="supporting_text_default_unit">Utilisé seulement par défaut lorsqu\'un prix est entré pour la première fois. Vous pouvez toujours sélectionner une autre unité.</string>
     <string name="label_may_be_sold_in_multipacks">Peut être vendu en emballage groupé</string>
@@ -122,8 +122,8 @@
     <string name="label_measurement_units">Unité de mesure</string>
     <string name="button_delete_collection">Supprimer la catégorie</string>
     <string name="supporting_text_required">Requis</string>
-    <string name="supporting_text_only_one_decimal_point_allowed">N'utiliser qu'un seul séparateur décimal</string>
-    <string name="supporting_text_only_whole_numbers_allowed">Seul les nombres entiers sont acceptés</string>
+    <string name="supporting_text_only_one_decimal_point_allowed">N\'utiliser qu\'un seul séparateur décimal</string>
+    <string name="supporting_text_only_whole_numbers_allowed">Seuls les nombres entiers sont acceptés</string>
     <string name="supporting_text_must_be_greater_than_zero">Doit être supérieur à zéro</string>
     <string name="supporting_text_invalid_number">Nombre invalide</string>
     <string name="content_description_error">Erreur</string>
@@ -190,7 +190,7 @@
     <string name="supporting_text_annual_inflation">Les prix caducs augmentent à ce taux annuel. Ceci n\'est qu\'une estimation — mettez à jour les prix dès que vous pouvez pour davantage de précision.</string>
     <string name="label_version">Version %1$s</string>
     <string name="label_metric">Métrique</string>
-    <string name="label_imperial">Imperial</string>
+    <string name="label_imperial">Impérial</string>
     <string name="label_us_units">US</string>
     <string name="unit_each">pièce</string>
     <string name="unit_10">10</string>
@@ -227,8 +227,8 @@
     <string name="message_italian_translation_attribution">Traduction en italien par DZ-Aladan</string>
     <string name="message_french_translation_attribution">Traduction française par MonsieurSpirale et oleole39</string>
     <string name="title_price_entry_using_minor_unit">Saisie de petits prix</string>
-    <string name="supporting_text_minor_unit_price_entry">Tapez 37 pour 0.37€, 493 pour 4.93€</string>
-    <string name="supporting_text_major_unit_price_entry">Tapez 0.37 pour 0.37€, 4 pour 4.00€</string>
+    <string name="supporting_text_minor_unit_price_entry">Tapez 37 pour 0,37 €, 493 pour 4,93 €</string>
+    <string name="supporting_text_major_unit_price_entry">Tapez 0,37 pour 0,37 €, 4 pour 4,00 €</string>
     <plurals name="supporting_text_prices_considered_stale_after_x_days">
         <item quantity="one">Prix considérés comme caducs après %1$d jour</item>
         <item quantity="other">Prix considérés comme caducs après %1$d jours</item>
@@ -238,7 +238,7 @@
         <item quantity="other">Prix considérés comme anciens après %1$d jours</item>
     </plurals>
     <plurals name="supporting_text_no_more_than_x_decimal_places_allowed">
-        <item quantity="one">Seul %1$d chiffre après la virgule est accepté"</item>
+        <item quantity="one">Seul %1$d chiffre après la virgule est accepté</item>
         <item quantity="other">Seuls %1$d chiffres après la virgule sont acceptés</item>
     </plurals>
 </resources>
